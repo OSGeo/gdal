@@ -1753,6 +1753,157 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     VSIFree($4);
 }
 
+
+%fragment("DecomposeSequenceOf4DCoordinates","header") %{
+static int
+DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *y, double *z, double *t )
+{
+  for( int i = 0; i<nCount; ++i )
+  {
+
+    PyObject *o = PySequence_GetItem(seq, i);
+    if ( !PySequence_Check(o) )
+    {
+        Py_DECREF(o);
+        PyErr_SetString(PyExc_TypeError, "not a sequence");
+
+        return FALSE;
+    }
+
+    Py_ssize_t len = PySequence_Size(o);
+
+    if (len >= 2 && len <= 4)
+    {
+        PyObject *o1 = PySequence_GetItem(o, 0);
+        if (!PyNumber_Check(o1))
+        {
+            Py_DECREF(o); Py_DECREF(o1);
+            PyErr_SetString(PyExc_TypeError, "not a number");
+
+            return FALSE;
+        }
+        x[i] = PyFloat_AsDouble(o1);
+        Py_DECREF(o1);
+
+        o1 = PySequence_GetItem(o, 1);
+        if (!PyNumber_Check(o1))
+        {
+            Py_DECREF(o); Py_DECREF(o1);
+            PyErr_SetString(PyExc_TypeError, "not a number");
+
+            return FALSE;
+        }
+        y[i] = PyFloat_AsDouble(o1);
+        Py_DECREF(o1);
+
+        /* The 3rd coordinate is optional, default 0.0 */
+        if (len >= 3)
+        {
+            o1 = PySequence_GetItem(o, 2);
+            if (!PyNumber_Check(o1))
+            {
+                Py_DECREF(o); Py_DECREF(o1);
+                PyErr_SetString(PyExc_TypeError, "not a number");
+
+                return FALSE;
+            }
+            z[i] = PyFloat_AsDouble(o1);
+            Py_DECREF(o1);
+        }
+        else
+        {
+            z[i] = 0.0;
+        }
+
+        /* The 4th coordinate is optional, default 0.0 */
+        if (len >= 4)
+        {
+            o1 = PySequence_GetItem(o, 3);
+            if (!PyNumber_Check(o1))
+            {
+                Py_DECREF(o); Py_DECREF(o1);
+                PyErr_SetString(PyExc_TypeError, "not a number");
+
+                return FALSE;
+            }
+            t[i] = PyFloat_AsDouble(o1);
+            Py_DECREF(o1);
+        }
+        else
+        {
+            t[i] = 0.0;
+        }
+    }
+    else
+    {
+        Py_DECREF(o);
+        PyErr_SetString(PyExc_TypeError, "invalid coordinate");
+
+        return FALSE;
+    }
+
+    Py_DECREF(o);
+  }
+
+  return TRUE;
+}
+%}
+
+%typemap(in,numinputs=1,fragment="DecomposeSequenceOf4DCoordinates") (int nCount, double *x, double *y, double *z, double *t)
+{
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
+  $2 = (double*) VSIMalloc($1*sizeof(double));
+  $3 = (double*) VSIMalloc($1*sizeof(double));
+  $4 = (double*) VSIMalloc($1*sizeof(double));
+  $5 = (double*) VSIMalloc($1*sizeof(double));
+
+  if ($2 == NULL || $3 == NULL || $4 == NULL || $5 == NULL)
+  {
+      PyErr_SetString( PyExc_RuntimeError, "Out of memory" );
+      SWIG_fail;
+  }
+
+  if (!DecomposeSequenceOf4DCoordinates($input,$1,$2,$3,$4,$5)) {
+    SWIG_fail;
+  }
+}
+
+%typemap(argout)  (int nCount, double *x, double *y, double *z, double *t)
+{
+  /* %typemap(argout)  (int nCount, double *x, double *y, double *z, double *t) */
+  Py_DECREF($result);
+  PyObject *out = PyList_New( $1 );
+  for( int i=0; i< $1; i++ ) {
+    PyObject *tuple = PyTuple_New( 4 );
+    PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( ($2)[i] ) );
+    PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( ($3)[i] ) );
+    PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( ($4)[i] ) );
+    PyTuple_SetItem( tuple, 3, PyFloat_FromDouble( ($5)[i] ) );
+    PyList_SetItem( out, i, tuple );
+  }
+  $result = out;
+}
+
+%typemap(freearg)  (int nCount, double *x, double *y, double *z, double *t)
+{
+    /* %typemap(freearg)  (int nCount, double *x, double *y, double *z, double *t) */
+    VSIFree($2);
+    VSIFree($3);
+    VSIFree($4);
+    VSIFree($5);
+}
+
+
 /***************************************************
  * Typemaps for Transform.TransformPoints()
  ***************************************************/

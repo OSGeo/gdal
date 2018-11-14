@@ -502,7 +502,7 @@ OGRErr GNMFileNetwork::DeleteLayer(int nIndex)
 }
 
 OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
-                                CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                                OGRSpatialReference * /* poSpatialRef */,
                                 OGRwkbGeometryType eGType, char **papszOptions)
 {
     if(nullptr == m_poLayerDriver)

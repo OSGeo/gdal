@@ -809,7 +809,7 @@ CPLErr RasterliteDataset::GetGeoTransform( double* padfGeoTransform )
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char* RasterliteDataset::GetProjectionRef()
+const char* RasterliteDataset::_GetProjectionRef()
 {
     if (pszSRS)
         return pszSRS;

@@ -6288,6 +6288,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     }
 
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     int bSRSOK = FALSE;
     if (nEPSGCode != 0 &&
         oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
@@ -6455,9 +6456,9 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char* PDFDataset::GetProjectionRef()
+const char* PDFDataset::_GetProjectionRef()
 {
-    const char* pszPAMProjection = GDALPamDataset::GetProjectionRef();
+    const char* pszPAMProjection = GDALPamDataset::_GetProjectionRef();
     if( pszPAMProjection != nullptr && pszPAMProjection[0] != '\0' )
         return pszPAMProjection;
 
@@ -6487,10 +6488,10 @@ CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
 /*                            SetProjection()                           */
 /************************************************************************/
 
-CPLErr PDFDataset::SetProjection(const char* pszWKTIn)
+CPLErr PDFDataset::_SetProjection(const char* pszWKTIn)
 {
     if( eAccess == GA_ReadOnly )
-        GDALPamDataset::SetProjection(pszWKTIn);
+        GDALPamDataset::_SetProjection(pszWKTIn);
 
     CPLFree(pszWKT);
     pszWKT = pszWKTIn ? CPLStrdup(pszWKTIn) : CPLStrdup("");
@@ -6732,7 +6733,7 @@ int PDFDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char * PDFDataset::GetGCPProjection()
+const char * PDFDataset::_GetGCPProjection()
 {
     if (pszWKT != nullptr && nGCPCount != 0)
         return pszWKT;
@@ -6752,7 +6753,7 @@ const GDAL_GCP * PDFDataset::GetGCPs()
 /*                               SetGCPs()                              */
 /************************************************************************/
 
-CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+CPLErr PDFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                             const char *pszGCPProjectionIn )
 {
     const char* pszGEO_ENCODING =

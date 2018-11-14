@@ -564,16 +564,7 @@ def test_ogr_shape_18():
 
     assert srs_lyr is not None, 'Missing projection definition.'
 
-    # data/poly.shp has arbitrarily assigned EPSG:27700
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(27700)
-    # srs.StripCTParms()
-
-    if not srs_lyr.IsSame(srs):
-        print('')
-        print('expected = %s' % srs.ExportToPrettyWkt())
-        print('existing = %s' % srs_lyr.ExportToPrettyWkt())
-        pytest.fail('Projections differ')
+    assert srs_lyr.GetAuthorityCode(None) == '27700'
 
     
 ###############################################################################
@@ -3830,8 +3821,8 @@ def test_ogr_shape_99():
             AUTHORITY["EPSG","9122"]],
         AUTHORITY["EPSG","4149"]],
     PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
-    PARAMETER["latitude_of_center",46.95240555555556],
-    PARAMETER["longitude_of_center",7.439583333333333],
+    PARAMETER["latitude_of_center",46.9524055555556],
+    PARAMETER["longitude_of_center",7.43958333333333],
     PARAMETER["azimuth",90],
     PARAMETER["rectified_grid_angle",90],
     PARAMETER["scale_factor",1],
@@ -3839,12 +3830,12 @@ def test_ogr_shape_99():
     PARAMETER["false_northing",200000],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]],
-    AXIS["Y",EAST],
-    AXIS["X",NORTH],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH],
     AUTHORITY["EPSG","21781"]]"""
     ds = None
 
-    assert got_wkt == expected_wkt, 'Projections differ'
+    assert got_wkt == expected_wkt, ('Projections differ: got %s' % got_wkt)
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_99.shp')
 

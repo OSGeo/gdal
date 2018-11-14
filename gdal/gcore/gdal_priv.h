@@ -495,8 +495,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual void FlushCache(void);
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * pszProjection );
+    virtual const OGRSpatialReference* GetSpatialRef() const;
+    virtual CPLErr SetSpatialRef(const OGRSpatialReference* poSRS);
+
+    // Compatibility layer
+    const char *GetProjectionRef(void) const;
+    CPLErr SetProjection( const char * pszProjection );
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual CPLErr SetGeoTransform( double * padfTransform );
@@ -510,11 +514,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual     const char* GetDriverName();
 
+    virtual const OGRSpatialReference* GetGCPSpatialRef() const;
     virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const OGRSpatialReference * poGCP_SRS );
+
+    // Compatibility layer
+    const char *GetGCPProjection();
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection );
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
@@ -790,6 +799,22 @@ private:
     OGRErr              ProcessSQLAlterTableRenameColumn( const char * );
 
     OGRStyleTable      *m_poStyleTable = nullptr;
+
+    // Compatibility layers
+    const OGRSpatialReference* GetSpatialRefFromOldGetProjectionRef() const;
+    CPLErr OldSetProjectionFromSetSpatialRef(const OGRSpatialReference* poSRS);
+    const OGRSpatialReference* GetGCPSpatialRefFromOldGetGCPProjection() const;
+    CPLErr OldSetGCPsFromNew( int nGCPCount, const GDAL_GCP *pasGCPList,
+                              const OGRSpatialReference * poGCP_SRS );
+
+    friend class GDALProxyPoolDataset;
+    virtual const char *_GetProjectionRef();
+    const char *GetProjectionRefFromSpatialRef(const OGRSpatialReference*) const;
+    virtual const char *_GetGCPProjection();
+    const char *GetGCPProjectionFromSpatialRef(const OGRSpatialReference* poSRS) const;
+    virtual CPLErr _SetProjection( const char * pszProjection );
+    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection );
 //! @endcond
 
   private:
@@ -1827,18 +1852,14 @@ double GDALAdjustNoDataCloseToFloatMax(double dfVal);
 // (minimum value, maximum value, etc.)
 #define GDALSTAT_APPROX_NUMSAMPLES 2500
 
-CPL_C_START
-/* Caution: for technical reason this declaration is duplicated in gdal_crs.c */
-/* so any signature change should be reflected there too */
 void GDALSerializeGCPListToXML( CPLXMLNode* psParentNode,
                                 GDAL_GCP* pasGCPList,
                                 int nGCPCount,
-                                const char* pszGCPProjection );
+                                const OGRSpatialReference* poGCP_SRS );
 void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
                                     GDAL_GCP** ppasGCPList,
                                     int* pnGCPCount,
-                                    char** ppszGCPProjection );
-CPL_C_END
+                                    OGRSpatialReference** ppoGCP_SRS );
 
 void GDALSerializeOpenOptionsToXML( CPLXMLNode* psParentNode, char** papszOpenOptions);
 char** GDALDeserializeOpenOptionsFromXML( CPLXMLNode* psParentNode );

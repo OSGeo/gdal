@@ -603,7 +603,7 @@ def test_wms_14():
         'wrong size or bands'
 
     wkt = ds.GetProjectionRef()
-    assert wkt.startswith('PROJCS["Google Maps Global Mercator"'), \
+    assert 'EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"]' in wkt, \
         ('Got wrong SRS: ' + wkt)
 
     gt = ds.GetGeoTransform()

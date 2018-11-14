@@ -581,7 +581,7 @@ class OGRTigerDataSource : public OGRDataSource
     void                AddLayer( OGRTigerLayer * );
     int                 TestCapability( const char * ) override;
 
-    OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
+    OGRSpatialReference *DSGetSpatialRef() { return poSpatialRef; }
 
     const char          *GetDirPath() { return pszPath; }
     char                *BuildFilename( const char * pszModule,

@@ -902,7 +902,7 @@ CPLErr GRIBDataset::GetGeoTransform( double *padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *GRIBDataset::GetProjectionRef() { return pszProjection; }
+const char *GRIBDataset::_GetProjectionRef() { return pszProjection; }
 
 /************************************************************************/
 /*                            Identify()                                */
@@ -1135,6 +1135,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
 
     // Image projection.
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     switch(meta->gds.projType)
     {
@@ -1230,7 +1231,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
              && std::abs(fInv-298.257223563) < 1e-9 ) // WGS84
         {
             if( meta->gds.projType == GS3_LATLON )
-                oSRS.SetFromUserInput( SRS_WKT_WGS84 );
+                oSRS.SetFromUserInput( SRS_WKT_WGS84_LAT_LONG );
             else
             {
                 oSRS.SetGeogCS("Coordinate System imported from GRIB file",
@@ -1252,6 +1253,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     }
 
     OGRSpatialReference oLL;  // Construct the "geographic" part of oSRS.
+    oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     oLL.CopyGeogCSFrom(&oSRS);
 
     double rMinX = 0.0;

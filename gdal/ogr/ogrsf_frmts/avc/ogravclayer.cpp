@@ -179,7 +179,7 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
     if( poFeatureDefn && poFeatureDefn->GetGeomFieldDefn(0) )
     {
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
-            poDS->GetSpatialRef());
+            poDS->DSGetSpatialRef());
     }
 
     SetDescription( pszName );

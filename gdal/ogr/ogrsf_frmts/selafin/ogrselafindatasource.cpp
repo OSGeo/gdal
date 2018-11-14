@@ -399,6 +399,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     }
     if (poHeader->nEpsg!=0) {
         poSpatialRef=new OGRSpatialReference();
+        poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poSpatialRef->importFromEPSG(poHeader->nEpsg)!=OGRERR_NONE) {
             CPLError( CE_Warning, CPLE_AppDefined, "EPSG %d not found. Could not set datasource SRS.\n", poHeader->nEpsg);
             delete poSpatialRef;

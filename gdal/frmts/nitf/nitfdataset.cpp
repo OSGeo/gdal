@@ -1078,6 +1078,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         oSRS_AEQD.importFromProj4(pszPolarProjection);
 
         oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
+        oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         CPLPushErrorHandler( CPLQuietErrorHandler );
         OGRCoordinateTransformationH hCT =
@@ -1770,6 +1771,7 @@ static OGRErr LoadDODDatum( OGRSpatialReference *poSRS,
 
     CPLString osEName = CSVGetField( pszGTEllipse, "CODE", osEllipseCode,
                                      CC_ApproxString, "NAME" );
+    osEName = osEName.Trim();
     if( osEName.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -2107,7 +2109,7 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
 /*                               SetGCPs()                              */
 /************************************************************************/
 
-CPLErr NITFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+CPLErr NITFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                               const char *pszGCPProjectionIn )
 {
     if( nGCPCountIn != 4 )
@@ -2197,20 +2199,20 @@ CPLErr NITFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *NITFDataset::GetProjectionRef()
+const char *NITFDataset::_GetProjectionRef()
 
 {
     if( bGotGeoTransform )
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
 /*                            SetProjection()                           */
 /************************************************************************/
 
-CPLErr NITFDataset::SetProjection(const char* _pszProjection)
+CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
 
 {
     int    bNorth;
@@ -3205,7 +3207,7 @@ int NITFDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *NITFDataset::GetGCPProjection()
+const char *NITFDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 && pszGCPProjection != nullptr )

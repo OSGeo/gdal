@@ -119,7 +119,7 @@ class OGRS57DataSource : public OGRDataSource
     void                AddLayer( OGRS57Layer * );
     int                 TestCapability( const char * ) override;
 
-    OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
+    OGRSpatialReference *DSGetSpatialRef() { return poSpatialRef; }
 
     int                 GetModuleCount() { return nModules; }
     S57Reader          *GetModule( int );

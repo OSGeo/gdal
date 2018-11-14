@@ -100,7 +100,7 @@ def test_pds4_1():
     PARAMETER["central_meridian",-117],
     PARAMETER["scale_factor",0.9996],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]
+    PARAMETER["false_northing",0],UNIT["meter",1]]
 """
     gt = (-59250.0, 60.0, 0.0, 3751290.0, 0.0, -60.0)
 
@@ -135,6 +135,27 @@ def test_pds4_2():
     with hide_substitution_warnings_error_handler():
         ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
     return ret
+
+
+###############################################################################
+def test_pds4_write_utm():
+
+    src_ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PDS4').CreateCopy('/vsimem/temp.xml', src_ds)
+    ds = gdal.Open('/vsimem/temp.xml')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    f = gdal.VSIFOpenL('/vsimem/temp.xml', 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert '<cart:west_bounding_coordinate unit="deg">-117.6411686' in data, data
+    assert '<cart:east_bounding_coordinate unit="deg">-117.6281108' in data, data
+    assert '<cart:north_bounding_coordinate unit="deg">33.90241956' in data, data
+    assert '<cart:south_bounding_coordinate unit="deg">33.891530168' in data, data
+    gdal.GetDriverByName('PDS4').Delete('/vsimem/temp.xml')
+
 
 ###############################################################################
 # Test CreateCopy() with explicit INTERLEAVE=BSQ
@@ -198,15 +219,15 @@ def test_pds4_7():
 def test_pds4_8():
 
     filename = '/vsimem/out.xml'
-    for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                  '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_1SP
-                  '+proj=lcc +lat_1=9 +lat_2=11 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_2SP
-                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
-                  '+proj=omerc +lat_0=10 +lon_1=11 +lat_1=12 +lon_2=13 +lat_2=14 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
-                  '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Polar Stereographic
-                  '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                  '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                  '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
+    for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_1SP
+                  '+proj=lcc +lat_0=10 +lon_0=-112.5 +lat_1=9 +lat_2=11 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_2SP
+                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +gamma=12 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
+                  '+proj=omerc +lat_0=10 +lat_1=12 +lon_1=11 +lat_2=14 +lon_2=13 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
+                  '+proj=stere +lat_0=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Polar Stereographic
+                  '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                  ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
@@ -229,7 +250,7 @@ def test_pds4_8():
     # longlat doesn't roundtrip as such
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():
@@ -239,8 +260,9 @@ def test_pds4_8():
     sr = osr.SpatialReference()
     sr.SetFromUserInput(wkt)
     got_proj4 = sr.ExportToProj4().strip()
-    proj4 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs'
+    proj4 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs'
     assert got_proj4 == proj4, ''
+
     got_gt = ds.GetGeoTransform()
     expected_gt = (85151.12354629935, 42575.561773149675, 0.0, 2086202.5268843342, 0.0, -85151.12354629935)
     assert max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1, ''
@@ -550,7 +572,7 @@ def test_pds4_12():
                                                       'LONGITUDE_DIRECTION=Positive West',
                                                       'IMAGE_FILENAME=/vsimem/myimage.raw'])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     ds = None
@@ -878,7 +900,7 @@ def test_pds4_14():
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
                                              options=['TEMPLATE=' + template])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     gdal.ErrorReset()
@@ -996,7 +1018,7 @@ def test_pds4_16():
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
                                              options=['TEMPLATE=' + template])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with hide_substitution_warnings_error_handler():
@@ -1071,7 +1093,7 @@ def test_pds4_18():
 
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=['RADII=1,2'])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():

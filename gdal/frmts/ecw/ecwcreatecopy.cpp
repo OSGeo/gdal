@@ -1620,9 +1620,15 @@ class ECWWriteDataset : public GDALDataset
     virtual void   FlushCache( void ) override;
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char* GetProjectionRef() override;
+    virtual const char* _GetProjectionRef() override;
     virtual CPLErr SetGeoTransform( double * ) override;
-    virtual CPLErr SetProjection( const char *pszWKT ) override;
+    virtual CPLErr _SetProjection( const char *pszWKT ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
 #ifdef OPTIMIZED_FOR_GDALWARP
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
@@ -1768,7 +1774,7 @@ void ECWWriteDataset::FlushCache()
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char*  ECWWriteDataset::GetProjectionRef()
+const char*  ECWWriteDataset::_GetProjectionRef()
 {
     return pszProjection;
 }
@@ -1799,7 +1805,7 @@ CPLErr ECWWriteDataset::SetGeoTransform( double *padfGeoTransform )
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr ECWWriteDataset::SetProjection( const char *pszWKT )
+CPLErr ECWWriteDataset::_SetProjection( const char *pszWKT )
 
 {
     CPLFree( pszProjection );

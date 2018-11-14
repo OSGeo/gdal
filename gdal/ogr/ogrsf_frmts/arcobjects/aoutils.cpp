@@ -312,9 +312,10 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
     return false;
   }
 
-  *ppSR = new OGRSpatialReference(strESRIWKT);
+  *ppSR = new OGRSpatialReference();
+  (*ppSR)->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-  OGRErr result = (*ppSR)->morphFromESRI();
+  OGRErr result = (*ppSR)->importFromWkt(strESRIWKT);
 
   if (result == OGRERR_NONE)
   {

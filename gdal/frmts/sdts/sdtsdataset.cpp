@@ -63,7 +63,10 @@ class SDTSDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual CPLErr GetGeoTransform( double * ) override;
 };
 
@@ -240,8 +243,6 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     else /* if( EQUAL(poXREF->pszDatum, "WGE") ) or default */
         oSRS.SetWellKnownGeogCS( "WGS84" );
 
-    oSRS.Fixup();
-
     poDS->pszProjection = nullptr;
     if( oSRS.exportToWkt( &poDS->pszProjection ) != OGRERR_NONE )
         poDS->pszProjection = CPLStrdup("");
@@ -316,7 +317,7 @@ CPLErr SDTSDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *SDTSDataset::GetProjectionRef()
+const char *SDTSDataset::_GetProjectionRef()
 
 {
     return pszProjection;

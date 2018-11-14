@@ -451,6 +451,7 @@ OGRSpatialReference* OGRCARTOLayer::GetSRS(const char* pszGeomCol,
     {
         const char* pszSRTEXT = json_object_get_string(poSRTEXT);
         l_poSRS = new OGRSpatialReference();
+        l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( l_poSRS->importFromWkt(pszSRTEXT) != OGRERR_NONE )
         {
             delete l_poSRS;

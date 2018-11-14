@@ -584,20 +584,20 @@ void EHdrDataset::RewriteCLR( GDALRasterBand* poBand ) const
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *EHdrDataset::GetProjectionRef()
+const char *EHdrDataset::_GetProjectionRef()
 
 {
     if (pszProjection && strlen(pszProjection) > 0)
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr EHdrDataset::SetProjection( const char *pszSRS )
+CPLErr EHdrDataset::_SetProjection( const char *pszSRS )
 
 {
     // Reset coordinate system on the dataset.

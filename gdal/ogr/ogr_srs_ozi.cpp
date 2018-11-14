@@ -482,8 +482,6 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     if( IsLocal() || IsProjected() )
         SetLinearUnits( SRS_UL_METER, 1.0 );
 
-    FixupOrdering();
-
     CSLDestroy(papszProj);
     CSLDestroy(papszProjParms);
     CSLDestroy(papszDatum);

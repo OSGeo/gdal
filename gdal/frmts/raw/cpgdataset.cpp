@@ -85,10 +85,16 @@ class CPGDataset final: public RawDataset
     ~CPGDataset() override;
 
     int GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP *GetGCPs() override;
 
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     CPLErr GetGeoTransform( double * ) override;
 
     char **GetFileList() override;
@@ -1172,7 +1178,7 @@ int CPGDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *CPGDataset::GetGCPProjection()
+const char *CPGDataset::_GetGCPProjection()
 
 {
   return pszGCPProjection;
@@ -1192,7 +1198,7 @@ const GDAL_GCP *CPGDataset::GetGCPs()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *CPGDataset::GetProjectionRef()
+const char *CPGDataset::_GetProjectionRef()
 
 {
     return pszProjection;

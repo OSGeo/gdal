@@ -26,7 +26,7 @@ sudo i386 chroot "$chroot" add-apt-repository -y ppa:ubuntugis/ubuntugis-unstabl
 sudo i386 chroot "$chroot" apt-get update
 # Disable postgresql since it draws ssl-cert that doesn't install cleanly
 # postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev
-sudo i386 chroot "$chroot" apt-get install -y --force-yes python-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev  liblcms2-2 libpcre3-dev libcrypto++-dev ccache
+sudo i386 chroot "$chroot" apt-get install -y --force-yes python-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev  liblcms2-2 libpcre3-dev libcrypto++-dev ccache autoconf automake sqlite3
 # libgta-dev
 sudo i386 chroot "$chroot" apt-get install -y make
 sudo i386 chroot "$chroot" apt-get install -y python-dev

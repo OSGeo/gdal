@@ -546,3 +546,49 @@ def test_basic_test_17():
         assert not flag, 'expected failure'
         assert not gdal.GetUseExceptions()
         assert not ogr.GetUseExceptions()
+
+
+def test_gdal_getspatialref():
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetSpatialRef() is not None
+
+    ds = gdal.Open('data/minfloat.tif')
+    assert ds.GetSpatialRef() is None
+
+
+def test_gdal_setspatialref():
+
+    ds = gdal.Open('data/byte.tif')
+    sr = ds.GetSpatialRef()
+    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    ds.SetSpatialRef(sr)
+    sr_got = ds.GetSpatialRef()
+    assert sr_got
+    assert sr_got.IsSame(sr)
+
+
+def test_gdal_getgcpspatialref():
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetGCPSpatialRef() is None
+
+    ds = gdal.Open('data/byte_gcp.tif')
+    assert ds.GetGCPSpatialRef() is not None
+
+
+def test_gdal_setgcpspatialref():
+
+    ds = gdal.Open('data/byte.tif')
+    sr = ds.GetSpatialRef()
+    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    gcp = gdal.GCP()
+    gcp.GCPPixel = 0
+    gcp.GCPLine = 0
+    gcp.GCPX = 440720.000
+    gcp.GCPY = 3751320.000
+    ds.SetGCPs([gcp], sr)
+    sr_got = ds.GetGCPSpatialRef()
+    assert sr_got
+    assert sr_got.IsSame(sr)
+

@@ -84,7 +84,10 @@ class IGNFHeightASCIIGridDataset final: public GDALPamDataset
         IGNFHeightASCIIGridDataset() = default;
 
         CPLErr GetGeoTransform(double* padfGeoTransform) override;
-        const char* GetProjectionRef() override { return SRS_WKT_WGS84; }
+        const char* _GetProjectionRef() override { return SRS_WKT_WGS84_LAT_LONG; }
+        const OGRSpatialReference* GetSpatialRef() const override {
+            return GetSpatialRefFromOldGetProjectionRef();
+        }
 
         static int IdentifyMNT(GDALOpenInfo* poOpenInfo);
         static int IdentifyGRA(GDALOpenInfo* poOpenInfo);

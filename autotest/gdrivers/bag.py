@@ -116,7 +116,7 @@ def test_bag_3():
     assert cs == 33216, ('Wrong checksum on band 2, got %d.' % cs)
 
     pj = ds.GetProjection()
-    assert 'Southern Hemisphere' in pj, 'Southern Hemisphere not in projection'
+    assert 'PARAMETER["central_meridian",-105]' in pj, 'PARAMETER["central_meridian",-105] not in projection'
     assert 'PARAMETER["false_northing",10000000]' in pj, \
         'Did not find false_northing of 10000000'
 
@@ -132,7 +132,7 @@ def test_bag_vr_normal():
     ds = gdal.Open('data/test_vr.bag')
     assert ds is not None
 
-    got_md = gdal.Info(ds, computeChecksum=True, format='json')
+    got_md = gdal.Info(ds, computeChecksum=True, format='json', wktFormat='WKT1')
     expected_md = {
         'bands': [
             {'band': 1,
@@ -155,7 +155,7 @@ def test_bag_vr_normal():
              'min': 0.0,
              'noDataValue': 1000000.0,
              'type': 'Float32'}],
-        'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North American Datum 1983",\n            SPHEROID["GRS 1980",6378137,298.2572221010041,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator",\n        AUTHORITY["EPSG","16010"]],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AUTHORITY["EPSG","26910"]]'},
+        'coordinateSystem': { 'dataAxisToSRSAxisMapping': [1, 2], 'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
         'geoTransform': [85.0, 30.0, 0.0, 500112.0, 0.0, -32.0],
         'metadata': {'': {'AREA_OR_POINT': 'Point',
                           'BAG_DATETIME': '2018-08-08T12:34:56',
@@ -180,7 +180,7 @@ def test_bag_vr_normal():
                          open_options=['MODE=LOW_RES_GRID', 'MINX=0'])
     assert gdal.GetLastErrorMsg() != '', 'warning expected'
 
-    got_md2 = gdal.Info(ds, computeChecksum=True, format='json')
+    got_md2 = gdal.Info(ds, computeChecksum=True, format='json', wktFormat='WKT1')
     assert got_md2 == got_md
 
 ###############################################################################
@@ -253,7 +253,7 @@ def test_bag_vr_open_supergrids():
     ds = gdal.Open('BAG:"data/test_vr.bag":supergrid:0:0')
     assert ds is not None
 
-    got_md = gdal.Info(ds, computeChecksum=True, format='json')
+    got_md = gdal.Info(ds, computeChecksum=True, format='json', wktFormat='WKT1')
     expected_md = {
         'bands': [
             {'band': 1,
@@ -272,7 +272,7 @@ def test_bag_vr_open_supergrids():
              'metadata': {},
              'noDataValue': 1000000.0,
              'type': 'Float32'}],
-        'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North American Datum 1983",\n            SPHEROID["GRS 1980",6378137,298.2572221010041,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator",\n        AUTHORITY["EPSG","16010"]],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AUTHORITY["EPSG","26910"]]'},
+        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2], 'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
         'geoTransform': [70.10000038146973,
                          29.899999618530273,
                          0.0,
@@ -322,7 +322,7 @@ def test_bag_vr_resampled():
     ds = gdal.OpenEx('data/test_vr.bag', open_options=['MODE=RESAMPLED_GRID'])
     assert ds is not None
 
-    got_md = gdal.Info(ds, computeChecksum=True, format='json')
+    got_md = gdal.Info(ds, computeChecksum=True, format='json', wktFormat='WKT1')
     expected_md = {
         'bands': [
             {'band': 1,
@@ -345,7 +345,7 @@ def test_bag_vr_resampled():
              'min': 0.0,
              'noDataValue': 1000000.0,
              'type': 'Float32'}],
-        'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North American Datum 1983",\n            SPHEROID["GRS 1980",6378137,298.2572221010041,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator",\n        AUTHORITY["EPSG","16010"]],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AUTHORITY["EPSG","26910"]]'},
+        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2], 'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
         'geoTransform': [85.0,
                          4.983333110809326,
                          0.0,

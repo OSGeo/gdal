@@ -101,7 +101,10 @@ public:
     virtual ~PDSDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     virtual char      **GetFileList(void) override;
 
@@ -258,13 +261,13 @@ CPLErr PDSDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *PDSDataset::GetProjectionRef()
+const char *PDSDataset::_GetProjectionRef()
 
 {
     if( !osProjection.empty() )
         return osProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/

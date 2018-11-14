@@ -136,4 +136,14 @@ def test_gdallocationinfo_6():
 
 
 
+def test_gdallocationinfo_wgs84():
+    if test_cli_utilities.get_gdallocationinfo_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -valonly -wgs84 ../gcore/data/byte.tif -117.6354747 33.8970515')
+
+    expected_ret = """115"""
+    assert expected_ret in ret
+
+
 

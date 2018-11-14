@@ -94,7 +94,10 @@ class JDEMDataset : public GDALPamDataset
     static int Identify( GDALOpenInfo * );
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 };
 
 /************************************************************************/
@@ -252,7 +255,7 @@ CPLErr JDEMDataset::GetGeoTransform( double *padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *JDEMDataset::GetProjectionRef()
+const char *JDEMDataset::_GetProjectionRef()
 
 {
     return

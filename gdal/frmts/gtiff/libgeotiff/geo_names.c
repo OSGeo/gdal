@@ -16,6 +16,9 @@
 #include "geotiffio.h"
 #include "geonames.h"
 #include "geo_tiffp.h" /* for tag names */
+#include "geo_keyp.h"
+
+#include "proj.h"
 
 static const KeyInfo _formatInfo[] =  {
    {TYPE_BYTE,    "Byte"},
@@ -70,7 +73,7 @@ char *GTIFTagName(int tag)
    return FindName( &_tagInfo[0],tag);
 }
 
-char *GTIFValueName(geokey_t key, int value)
+static const KeyInfo* FindTable(geokey_t key)
 {
    const KeyInfo *info;
 
@@ -81,7 +84,7 @@ char *GTIFValueName(geokey_t key, int value)
 	case ProjLinearUnitsGeoKey:
 	case GeogAngularUnitsGeoKey:
 	case GeogAzimuthUnitsGeoKey:
-    case VerticalUnitsGeoKey:
+	case VerticalUnitsGeoKey:
 		                      info=_geounitsValue; break;
 
    	/* put other key-dependent lists here */
@@ -101,7 +104,131 @@ char *GTIFValueName(geokey_t key, int value)
    	default:                      info = _csdefaultValue;break;
    }
 
-   return FindName( info,value);
+   return info;
+}
+
+char *GTIFValueName(geokey_t key, int value)
+{
+
+   return FindName(FindTable(key), value);
+}
+
+static void GetNameFromDatabase(GTIF* gtif,
+                                const char* pszCode,
+                                PJ_CATEGORY category,
+                                char* pszOut,
+                                size_t nOutSize)
+{
+    PJ* obj = proj_create_from_database(
+        gtif->pj_context, "EPSG", pszCode, category,
+        FALSE, NULL);
+    if( obj )
+    {
+        const char* pszName = proj_get_name(obj);
+        if( pszName )
+        {
+            strncpy(pszOut, pszName, nOutSize);
+            pszOut[nOutSize-1] = 0;
+        }
+        proj_destroy(obj);
+    }
+    else
+    {
+        pszOut[0] = 0;
+    }
+}
+
+const char *GTIFValueNameEx(GTIF* gtif, geokey_t key, int value)
+{
+    const KeyInfo *info = FindTable(key);
+
+    while (info->ki_key>=0 && info->ki_key != value) info++;
+
+    if (info->ki_key<0)
+    {
+        sprintf(gtif->szTmpBufferForGTIFValueNameEx,"Unknown-%d", value );
+
+        if( gtif->pj_context == NULL )
+        {
+            gtif->pj_context = proj_context_create();
+            if( gtif->pj_context )
+            {
+                gtif->own_pj_context = TRUE;
+            }
+        }
+        if( gtif->pj_context )
+        {
+            char szCode[12];
+            char szName[120];
+
+            szName[0] = 0;
+            sprintf(szCode, "%d", value);
+
+            switch (key)
+            {
+                /* All codes using linear/angular/whatever units */
+                case GeogLinearUnitsGeoKey:
+                case ProjLinearUnitsGeoKey:
+                case GeogAngularUnitsGeoKey:
+                case GeogAzimuthUnitsGeoKey:
+                case VerticalUnitsGeoKey:
+                {
+                    const char* pszName = NULL;
+                    if( proj_uom_get_info_from_database(gtif->pj_context,
+                         "EPSG", szCode, &pszName, NULL, NULL) && pszName )
+                    {
+                        strncpy(szName, pszName, sizeof(szName));
+                        szName[sizeof(szName)-1] = 0;
+                    }
+                    break;
+                }
+
+                case GeogGeodeticDatumGeoKey:
+                case VerticalDatumGeoKey:
+                    GetNameFromDatabase(gtif, szCode, PJ_CATEGORY_DATUM,
+                                        szName, sizeof(szName));
+                    break;
+
+                case GeogEllipsoidGeoKey:
+                    GetNameFromDatabase(gtif, szCode, PJ_CATEGORY_ELLIPSOID,
+                                        szName, sizeof(szName));
+                    break;
+
+                case GeogPrimeMeridianGeoKey:
+                    GetNameFromDatabase(gtif, szCode,
+                                        PJ_CATEGORY_PRIME_MERIDIAN,
+                                        szName, sizeof(szName));
+                    break;
+
+                case GeographicTypeGeoKey:
+                case ProjectedCSTypeGeoKey:
+                case VerticalCSTypeGeoKey:
+                    GetNameFromDatabase(gtif, szCode,
+                                        PJ_CATEGORY_CRS,
+                                        szName, sizeof(szName));
+                    break;
+
+                case ProjectionGeoKey:
+                    GetNameFromDatabase(gtif, szCode,
+                                        PJ_CATEGORY_COORDINATE_OPERATION,
+                                        szName, sizeof(szName));
+                    break;
+
+                default:
+                    break;
+            }
+
+            if( szName[0] != 0 )
+            {
+                sprintf(gtif->szTmpBufferForGTIFValueNameEx,
+                        "Code-%d (%s)", value, szName );
+            }
+
+        }
+
+        return gtif->szTmpBufferForGTIFValueNameEx;
+    }
+    return info->ki_name;
 }
 
 /*
@@ -120,6 +247,11 @@ static int FindCode(const KeyInfo *info,char *key)
 	{
 		int code=-1;
 		sscanf(key,"Unknown-%d",&code);
+		return code;
+	} else if (!strncmp(key,"Code-",5))
+	{
+		int code=-1;
+		sscanf(key,"Code-%d",&code);
 		return code;
 	}
 	else return -1;
@@ -149,34 +281,5 @@ int GTIFTagCode(char *tag)
  */
 int GTIFValueCode(geokey_t key, char *name)
 {
-   const KeyInfo *info;
-
-   switch (key)
-   {
-	/* All codes using linear/angular/whatever units */
-	case GeogLinearUnitsGeoKey:
-	case ProjLinearUnitsGeoKey:
-	case GeogAngularUnitsGeoKey:
-	case GeogAzimuthUnitsGeoKey:
-    case VerticalUnitsGeoKey:
-		                      info=_geounitsValue; break;
-
-   	/* put other key-dependent lists here */
-	case GTModelTypeGeoKey:       info=_modeltypeValue; break;
-	case GTRasterTypeGeoKey:      info=_rastertypeValue; break;
-	case GeographicTypeGeoKey:    info=_geographicValue; break;
-	case GeogGeodeticDatumGeoKey: info=_geodeticdatumValue; break;
-	case GeogEllipsoidGeoKey:     info=_ellipsoidValue; break;
-	case GeogPrimeMeridianGeoKey: info=_primemeridianValue; break;
-	case ProjectedCSTypeGeoKey:   info=_pcstypeValue; break;
-	case ProjectionGeoKey:        info=_projectionValue; break;
-	case ProjCoordTransGeoKey:    info=_coordtransValue; break;
-	case VerticalCSTypeGeoKey:    info=_vertcstypeValue; break;
-	case VerticalDatumGeoKey:     info=_vdatumValue; break;
-
-	/* And if all else fails... */
-   	default:                      info = _csdefaultValue;break;
-   }
-
-   return FindCode( info,name);
+   return FindCode(FindTable(key),name);
 }

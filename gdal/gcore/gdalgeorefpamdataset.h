@@ -68,10 +68,17 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
     CPLErr TryLoadXML(char **papszSiblingFiles = nullptr) override;
 
     CPLErr          GetGeoTransform( double * ) override;
-    const char     *GetProjectionRef() override;
+
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     int             GetGCPCount() override;
-    const char     *GetGCPProjection() override;
+    const char     *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP *GetGCPs() override;
 
     char      **GetMetadata( const char * pszDomain = "" ) override;

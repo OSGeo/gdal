@@ -471,8 +471,17 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
     }
 
     poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
-    poLayer->SetDeferredCreation(eGType, poSpatialRef,
+
+    OGRSpatialReference* poSRSClone = poSpatialRef;
+    if( poSRSClone )
+    {
+        poSRSClone = poSRSClone->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    poLayer->SetDeferredCreation(eGType, poSRSClone,
                                  bGeomNullable, bCartoify);
+    if( poSRSClone )
+        poSRSClone->Release();
     papoLayers = (OGRCARTOTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTOTableLayer*));
     papoLayers[nLayers ++] = poLayer;

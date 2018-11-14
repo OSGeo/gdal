@@ -117,8 +117,11 @@ int32 (*for_trans[])(double, double, double *, double *))
     *iflg = 0;
     
     hOutSourceSRS = OSRNewSpatialReference( NULL );
+    OSRSetAxisMappingStrategy(hOutSourceSRS, OAMS_TRADITIONAL_GIS_ORDER);
+
     OSRImportFromUSGS( hOutSourceSRS, outsys, outzone, outparm, outdatum     );
-    hLatLong = OSRNewSpatialReference ( SRS_WKT_WGS84 );
+    hLatLong = OSRNewSpatialReference ( SRS_WKT_WGS84_LAT_LONG );
+    OSRSetAxisMappingStrategy(hLatLong, OAMS_TRADITIONAL_GIS_ORDER);
 
     hForCT = OCTNewCoordinateTransformation( hLatLong, hOutSourceSRS );
 
@@ -174,10 +177,12 @@ int32 (*inv_trans[])(double, double, double*, double*))
     *iflg = 0;
     
     hInSourceSRS = OSRNewSpatialReference( NULL );
+    OSRSetAxisMappingStrategy(hInSourceSRS, OAMS_TRADITIONAL_GIS_ORDER);
     OSRImportFromUSGS( hInSourceSRS, insys, inzone, inparm, indatum );
 
-    hLatLong = OSRNewSpatialReference ( SRS_WKT_WGS84 );
-    
+    hLatLong = OSRNewSpatialReference ( SRS_WKT_WGS84_LAT_LONG );
+    OSRSetAxisMappingStrategy(hLatLong, OAMS_TRADITIONAL_GIS_ORDER);
+
     hInvCT = OCTNewCoordinateTransformation( hInSourceSRS, hLatLong );
 
     OSRDestroySpatialReference( hInSourceSRS );

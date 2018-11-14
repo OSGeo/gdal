@@ -321,10 +321,16 @@ public:
         return CE_None;
     }
 
-    virtual const char *GetProjectionRef() override { return projection; }
-    virtual CPLErr SetProjection(const char *proj) override {
+    virtual const char *_GetProjectionRef() override { return projection; }
+    virtual CPLErr _SetProjection(const char *proj) override {
         projection = proj;
         return CE_None;
+    }
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
     }
 
     virtual CPLString const &GetPhotometricInterpretation() { return photometric; }

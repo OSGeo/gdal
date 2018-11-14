@@ -1601,7 +1601,161 @@ def test_gdalwarp_lib_insufficient_dst_band_count():
     with gdaltest.error_handler():
         assert gdal.Warp(dst_ds, src_ds) == 0
 
-    
+
+###############################################################################
+# Test -ct
+
+def test_gdalwarp_lib_ct():
+
+    dstDS = gdal.Warp('', '../gcore/data/byte.tif', options = '-r cubic -f MEM -t_srs EPSG:4326 -ct "proj=pipeline step inv proj=utm zone=11 ellps=clrk66 step proj=unitconvert xy_in=rad xy_out=deg step proj=axisswap order=2,1"')
+
+    assert dstDS.GetRasterBand(1).Checksum() == 4705, 'Bad checksum'
+
+
+def test_gdalwarp_lib_ct_wkt():
+
+    wkt = """CONCATENATEDOPERATION["Inverse of UTM zone 11N + Null geographic offset from NAD27 to WGS 84",
+    SOURCECRS[
+        PROJCRS["NAD27 / UTM zone 11N",
+            BASEGEOGCRS["NAD27",
+                DATUM["North American Datum 1927",
+                    ELLIPSOID["Clarke 1866",6378206.4,294.978698213898,
+                        LENGTHUNIT["metre",1]]],
+                PRIMEM["Greenwich",0,
+                    ANGLEUNIT["degree",0.0174532925199433]]],
+            CONVERSION["UTM zone 11N",
+                METHOD["Transverse Mercator",
+                    ID["EPSG",9807]],
+                PARAMETER["Latitude of natural origin",0,
+                    ANGLEUNIT["degree",0.0174532925199433],
+                    ID["EPSG",8801]],
+                PARAMETER["Longitude of natural origin",-117,
+                    ANGLEUNIT["degree",0.0174532925199433],
+                    ID["EPSG",8802]],
+                PARAMETER["Scale factor at natural origin",0.9996,
+                    SCALEUNIT["unity",1],
+                    ID["EPSG",8805]],
+                PARAMETER["False easting",500000,
+                    LENGTHUNIT["metre",1],
+                    ID["EPSG",8806]],
+                PARAMETER["False northing",0,
+                    LENGTHUNIT["metre",1],
+                    ID["EPSG",8807]]],
+            CS[Cartesian,2],
+                AXIS["(E)",east,
+                    ORDER[1],
+                    LENGTHUNIT["metre",1]],
+                AXIS["(N)",north,
+                    ORDER[2],
+                    LENGTHUNIT["metre",1]],
+            USAGE[
+                SCOPE["unknown"],
+                AREA["North America - 120°W to 114°W and NAD27 by country - onshore"],
+                BBOX[26.93,-120,78.13,-114]],
+            ID["EPSG",26711]]],
+    TARGETCRS[
+        GEOGCRS["WGS 84",
+            DATUM["World Geodetic System 1984",
+                ELLIPSOID["WGS 84",6378137,298.257223563,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            CS[ellipsoidal,2],
+                AXIS["geodetic latitude (Lat)",north,
+                    ORDER[1],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+                AXIS["geodetic longitude (Lon)",east,
+                    ORDER[2],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+            USAGE[
+                SCOPE["unknown"],
+                AREA["World"],
+                BBOX[-90,-180,90,180]],
+            ID["EPSG",4326]]],
+    STEP[
+        CONVERSION["Inverse of UTM zone 11N",
+            METHOD["Inverse of Transverse Mercator",
+                ID["INVERSE(EPSG)",9807]],
+            PARAMETER["Latitude of natural origin",0,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",-117,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",0.9996,
+                SCALEUNIT["unity",1],
+                ID["EPSG",8805]],
+            PARAMETER["False easting",500000,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8806]],
+            PARAMETER["False northing",0,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8807]],
+            ID["INVERSE(EPSG)",16011]]],
+    STEP[
+        COORDINATEOPERATION["Null geographic offset from NAD27 to WGS 84",
+            SOURCECRS[
+                GEOGCRS["NAD27",
+                    DATUM["North American Datum 1927",
+                        ELLIPSOID["Clarke 1866",6378206.4,294.978698213898,
+                            LENGTHUNIT["metre",1]]],
+                    PRIMEM["Greenwich",0,
+                        ANGLEUNIT["degree",0.0174532925199433]],
+                    CS[ellipsoidal,2],
+                        AXIS["geodetic latitude (Lat)",north,
+                            ORDER[1],
+                            ANGLEUNIT["degree",0.0174532925199433]],
+                        AXIS["geodetic longitude (Lon)",east,
+                            ORDER[2],
+                            ANGLEUNIT["degree",0.0174532925199433]],
+                    USAGE[
+                        SCOPE["unknown"],
+                        AREA["North America - NAD27"],
+                        BBOX[7.15,167.65,83.17,-47.74]],
+                    ID["EPSG",4267]]],
+            TARGETCRS[
+                GEOGCRS["WGS 84",
+                    DATUM["World Geodetic System 1984",
+                        ELLIPSOID["WGS 84",6378137,298.257223563,
+                            LENGTHUNIT["metre",1]]],
+                    PRIMEM["Greenwich",0,
+                        ANGLEUNIT["degree",0.0174532925199433]],
+                    CS[ellipsoidal,2],
+                        AXIS["geodetic latitude (Lat)",north,
+                            ORDER[1],
+                            ANGLEUNIT["degree",0.0174532925199433]],
+                        AXIS["geodetic longitude (Lon)",east,
+                            ORDER[2],
+                            ANGLEUNIT["degree",0.0174532925199433]],
+                    USAGE[
+                        SCOPE["unknown"],
+                        AREA["World"],
+                        BBOX[-90,-180,90,180]],
+                    ID["EPSG",4326]]],
+            METHOD["Geographic2D offsets",
+                ID["EPSG",9619]],
+            PARAMETER["Latitude offset",0,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8601]],
+            PARAMETER["Longitude offset",0,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8602]],
+            USAGE[
+                SCOPE["unknown"],
+                AREA["World"],
+                BBOX[-90,-180,90,180]]]],
+    USAGE[
+        SCOPE["unknown"],
+        AREA["World"],
+        BBOX[-90,-180,90,180]]]"""
+
+    dstDS = gdal.Warp('', '../gcore/data/byte.tif',
+                      resampleAlg=gdal.GRIORA_Cubic, format='MEM',
+                      dstSRS='EPSG:4326',
+                      coordinateOperation=wkt)
+
+    assert dstDS.GetRasterBand(1).Checksum() == 4705, 'Bad checksum'
+
 ###############################################################################
 # Cleanup
 

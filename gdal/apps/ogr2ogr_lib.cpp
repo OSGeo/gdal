@@ -150,6 +150,9 @@ struct GDALVectorTranslateOptions
     /*! override source SRS */
     char *pszSourceSRSDef;
 
+    /*! PROJ pipeline */
+    char *pszCTPipeline;
+
     bool bNullifyOutputSRS;
 
     /*! If set to false, then field name matching between source and existing target layer is done
@@ -358,6 +361,7 @@ typedef struct
     int          iSrcFIDField;
     int          iRequestedSrcGeomField;
     bool         bPreserveFID;
+    const char  *m_pszCTPipeline;
 } TargetLayerInfo;
 
 typedef struct
@@ -397,6 +401,7 @@ public:
     bool                  m_bCopyMD;
     bool                  m_bNativeData;
     bool                  m_bNewDataSource;
+    const char           *m_pszCTPipeline;
 
     TargetLayerInfo*            Setup(OGRLayer * poSrcLayer,
                                       const char *pszNewLayerName,
@@ -969,29 +974,9 @@ public:
     virtual OGRSpatialReference *GetTargetCS() override { return poSRS; }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = nullptr ) override
-    {
-        int *pabSuccess = static_cast<int *>(CPLMalloc(sizeof(int) * nCount));
-
-        bool bOverallSuccess = CPL_TO_BOOL(TransformEx( nCount, x, y, z, pabSuccess ));
-
-        for( int i = 0; i < nCount; ++i )
-        {
-            if( !pabSuccess[i] )
-            {
-                bOverallSuccess = false;
-                break;
-            }
-        }
-
-        CPLFree( pabSuccess );
-
-        return bOverallSuccess;
-    }
-
-    virtual int TransformEx( int nCount,
-                             double *x, double *y, double *z = nullptr,
-                             int *pabSuccess = nullptr ) override
+                           double *x, double *y, double *z,
+                           double * /* t */,
+                           int *pabSuccess ) override
     {
         if( bUseTPS )
             return GDALTPSTransform( hTransformArg, FALSE,
@@ -1011,17 +996,24 @@ class CompositeCT : public OGRCoordinateTransformation
 public:
 
     OGRCoordinateTransformation* poCT1;
+    bool bOwnCT1;
     OGRCoordinateTransformation* poCT2;
+    bool bOwnCT2;
 
-    CompositeCT( OGRCoordinateTransformation* poCT1In, /* will not be deleted */
-                 OGRCoordinateTransformation* poCT2In  /* deleted with OGRCoordinateTransformation::DestroyCT() */ ) :
+    CompositeCT( OGRCoordinateTransformation* poCT1In, bool bOwnCT1In,
+                 OGRCoordinateTransformation* poCT2In, bool bOwnCT2In ) :
         poCT1(poCT1In),
-        poCT2(poCT2In)
+        bOwnCT1(bOwnCT1In),
+        poCT2(poCT2In),
+        bOwnCT2(bOwnCT2In)
     {}
 
     virtual ~CompositeCT()
     {
-        OGRCoordinateTransformation::DestroyCT(poCT2);
+        if( bOwnCT1 )
+            delete poCT1;
+        if( bOwnCT2 )
+            delete poCT2;
     }
 
     virtual OGRSpatialReference *GetSourceCS() override
@@ -1037,26 +1029,77 @@ public:
     }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = nullptr ) override
+                           double *x, double *y, double *z,
+                           double *t,
+                           int *pabSuccess ) override
     {
         int nResult = TRUE;
         if( poCT1 )
-            nResult = poCT1->Transform(nCount, x, y, z);
+            nResult = poCT1->Transform(nCount, x, y, z, t, pabSuccess);
         if( nResult && poCT2 )
-            nResult = poCT2->Transform(nCount, x, y, z);
+            nResult = poCT2->Transform(nCount, x, y, z, t, pabSuccess);
         return nResult;
     }
+};
 
-    virtual int TransformEx( int nCount,
-                             double *x, double *y, double *z = nullptr,
-                             int *pabSuccess = nullptr ) override
+/************************************************************************/
+/*                    AxisMappingCoordinateTransformation               */
+/************************************************************************/
+
+class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
+{
+public:
+
+    bool bSwapXY = false;
+
+    AxisMappingCoordinateTransformation( const std::vector<int>& mappingIn,
+                                         const std::vector<int>& mappingOut )
     {
-        int nResult = TRUE;
-        if( poCT1 )
-            nResult = poCT1->TransformEx(nCount, x, y, z, pabSuccess);
-        if( nResult && poCT2 )
-            nResult = poCT2->TransformEx(nCount, x, y, z, pabSuccess);
-        return nResult;
+        if( mappingIn.size() >= 2 && mappingIn[0] == 1 && mappingIn[1] == 2 &&
+            mappingOut.size() >= 2 && mappingOut[0] == 2 && mappingOut[1] == 1 )
+        {
+            bSwapXY = true;
+        }
+        else if( mappingIn.size() >= 2 && mappingIn[0] == 2 && mappingIn[1] == 1 &&
+                 mappingOut.size() >= 2 && mappingOut[0] == 1 && mappingOut[1] == 2 )
+        {
+            bSwapXY = true;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                      "Unsupported axis transformation");
+        }
+    }
+
+    ~AxisMappingCoordinateTransformation() override
+    {
+    }
+
+    virtual OGRSpatialReference *GetSourceCS() override
+    {
+        return nullptr;
+    }
+
+    virtual OGRSpatialReference *GetTargetCS() override
+    {
+        return nullptr;
+    }
+
+    virtual int Transform( int nCount,
+                           double *x, double *y,
+                           double * /*z*/,
+                           double * /*t*/,
+                           int *pabSuccess ) override
+    {
+        for(int i = 0; i < nCount; i++ )
+        {
+            if( pabSuccess )
+                pabSuccess[i] = true;
+            if( bSwapXY )
+                std::swap(x[i], y[i]);
+        }
+        return true;
     }
 };
 
@@ -1185,6 +1228,7 @@ GDALVectorTranslateOptions* GDALVectorTranslateOptionsClone(const GDALVectorTran
 
     if( psOptionsIn->pszFormat) psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
     if( psOptionsIn->pszOutputSRSDef ) psOptions->pszOutputSRSDef = CPLStrdup(psOptionsIn->pszOutputSRSDef);
+    if( psOptionsIn->pszCTPipeline ) psOptions->pszCTPipeline = CPLStrdup(psOptionsIn->pszCTPipeline);
     if( psOptionsIn->pszSourceSRSDef ) psOptions->pszSourceSRSDef = CPLStrdup(psOptionsIn->pszSourceSRSDef);
     if( psOptionsIn->pszNewLayerName ) psOptions->pszNewLayerName = CPLStrdup(psOptionsIn->pszNewLayerName);
     if( psOptionsIn->pszWHERE ) psOptions->pszWHERE = CPLStrdup(psOptionsIn->pszWHERE);
@@ -1323,8 +1367,7 @@ GDALVectorTranslateWrappedLayer* GDALVectorTranslateWrappedLayer::New(
                     CPLError( CE_Failure, CPLE_AppDefined,
                         "Failed to create coordinate transformation between the\n"
                         "following coordinate systems.  This may be because they\n"
-                        "are not transformable, or because projection services\n"
-                        "(PROJ.4 DLL/.so) could not be loaded." );
+                        "are not transformable." );
 
                     char *pszWKT = nullptr;
                     poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
@@ -1741,6 +1784,7 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
     if( psOptions->pszOutputSRSDef )
     {
         oOutputSRSHolder.assignNoRefIncrease(new OGRSpatialReference());
+        oOutputSRSHolder.get()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( oOutputSRSHolder.get()->
                 SetFromUserInput( psOptions->pszOutputSRSDef ) != OGRERR_NONE )
         {
@@ -2356,6 +2400,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     if( psOptions->pszOutputSRSDef != nullptr )
     {
         oOutputSRSHolder.assignNoRefIncrease(new OGRSpatialReference());
+        oOutputSRSHolder.get()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( oOutputSRSHolder.get()->
                 SetFromUserInput( psOptions->pszOutputSRSDef ) != OGRERR_NONE )
         {
@@ -2374,6 +2419,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     OGRSpatialReference *poSourceSRS = nullptr;
     if( psOptions->pszSourceSRSDef != nullptr )
     {
+        oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( oSourceSRS.SetFromUserInput( psOptions->pszSourceSRSDef ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
@@ -2401,6 +2447,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         }
         OGREnvelope sEnvelope;
         OGR_G_GetEnvelope(psOptions->hSpatialFilter, &sEnvelope);
+        oSpatSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( oSpatSRS.SetFromUserInput( psOptions->pszSpatSRSDef ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
@@ -2461,6 +2508,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oSetup.m_bCopyMD = psOptions->bCopyMD;
     oSetup.m_bNativeData = psOptions->bNativeData;
     oSetup.m_bNewDataSource = bNewDataSource;
+    oSetup.m_pszCTPipeline = psOptions->pszCTPipeline;
 
     LayerTranslator oTranslator;
     oTranslator.m_poSrcDS = poDS;
@@ -4156,6 +4204,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     else
         psInfo->iRequestedSrcGeomField = -1;
     psInfo->bPreserveFID = bPreserveFID;
+    psInfo->m_pszCTPipeline = m_pszCTPipeline;
 
     return psInfo;
 }
@@ -4206,6 +4255,7 @@ static bool SetupCT( TargetLayerInfo* psInfo,
         char** papszTransformOptions = nullptr;
 
         int iSrcGeomField;
+        auto poDstGeomFieldDefn = poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
         if( psInfo->iRequestedSrcGeomField >= 0 )
         {
             iSrcGeomField = psInfo->iRequestedSrcGeomField;
@@ -4213,7 +4263,7 @@ static bool SetupCT( TargetLayerInfo* psInfo,
         else
         {
             iSrcGeomField = poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
-                poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetNameRef());
+                poDstGeomFieldDefn->GetNameRef());
             if( iSrcGeomField < 0 )
             {
                 if( nDstGeomFieldCount == 1 &&
@@ -4228,33 +4278,30 @@ static bool SetupCT( TargetLayerInfo* psInfo,
             }
         }
 
-        if( bTransform || bWrapDateline )
+        if( psInfo->nFeaturesRead == 0 )
         {
-            if( psInfo->nFeaturesRead == 0 )
-            {
-                poSourceSRS = poUserSourceSRS;
-                if( poSourceSRS == nullptr )
-                {
-                    if( iSrcGeomField > 0 )
-                        poSourceSRS = poSrcLayer->GetLayerDefn()->
-                            GetGeomFieldDefn(iSrcGeomField)->GetSpatialRef();
-                    else
-                        poSourceSRS = poSrcLayer->GetSpatialRef();
-                }
-            }
+            poSourceSRS = poUserSourceSRS;
             if( poSourceSRS == nullptr )
             {
-                OGRGeometry* poSrcGeometry =
-                    poFeature->GetGeomFieldRef(iSrcGeomField);
-                if( poSrcGeometry )
-                    poSourceSRS = poSrcGeometry->getSpatialReference();
-                psInfo->bPerFeatureCT = true;
+                if( iSrcGeomField > 0 )
+                    poSourceSRS = poSrcLayer->GetLayerDefn()->
+                        GetGeomFieldDefn(iSrcGeomField)->GetSpatialRef();
+                else
+                    poSourceSRS = poSrcLayer->GetSpatialRef();
             }
+        }
+        if( poSourceSRS == nullptr )
+        {
+            OGRGeometry* poSrcGeometry =
+                poFeature->GetGeomFieldRef(iSrcGeomField);
+            if( poSrcGeometry )
+                poSourceSRS = poSrcGeometry->getSpatialReference();
+            psInfo->bPerFeatureCT = (bTransform || bWrapDateline);
         }
 
         if( bTransform )
         {
-            if( poSourceSRS == nullptr )
+            if( poSourceSRS == nullptr && psInfo->m_pszCTPipeline == nullptr )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Can't transform coordinates, source layer has no\n"
                         "coordinate system.  Use -s_srs to set one." );
@@ -4262,8 +4309,11 @@ static bool SetupCT( TargetLayerInfo* psInfo,
                 return false;
             }
 
-            CPLAssert( nullptr != poSourceSRS );
-            CPLAssert( nullptr != poOutputSRS );
+            if( psInfo->m_pszCTPipeline == nullptr )
+            {
+                CPLAssert( nullptr != poSourceSRS );
+                CPLAssert( nullptr != poOutputSRS );
+            }
 
             if( psInfo->papoCT[iGeom] != nullptr &&
                 psInfo->papoCT[iGeom]->GetSourceCS() == poSourceSRS )
@@ -4272,28 +4322,38 @@ static bool SetupCT( TargetLayerInfo* psInfo,
             }
             else
             {
-                poCT = OGRCreateCoordinateTransformation( poSourceSRS, poOutputSRS );
+                OGRCoordinateTransformationOptions options;
+                if( psInfo->m_pszCTPipeline )
+                {
+                    options.SetCoordinateOperation( psInfo->m_pszCTPipeline, false );
+                }
+                poCT = OGRCreateCoordinateTransformation( poSourceSRS, poOutputSRS, options );
                 if( poCT == nullptr )
                 {
                     char        *pszWKT = nullptr;
 
-                    CPLError( CE_Failure, CPLE_AppDefined, "Failed to create coordinate transformation between the\n"
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                        "Failed to create coordinate transformation between the\n"
                         "following coordinate systems.  This may be because they\n"
-                        "are not transformable, or because projection services\n"
-                        "(PROJ.4 DLL/.so) could not be loaded." );
+                        "are not transformable." );
 
-                    poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
-                    CPLError( CE_Failure, CPLE_AppDefined,  "Source:\n%s", pszWKT );
-                    CPLFree(pszWKT);
+                    if( poSourceSRS )
+                    {
+                        poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
+                        CPLError( CE_Failure, CPLE_AppDefined,  "Source:\n%s", pszWKT );
+                        CPLFree(pszWKT);
+                    }
 
-                    poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
-                    CPLError( CE_Failure, CPLE_AppDefined,  "Target:\n%s", pszWKT );
-                    CPLFree(pszWKT);
+                    if( poOutputSRS )
+                    {
+                        poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
+                        CPLError( CE_Failure, CPLE_AppDefined,  "Target:\n%s", pszWKT );
+                        CPLFree(pszWKT);
+                    }
 
                     return false;
                 }
-                if( poGCPCoordTrans != nullptr )
-                    poCT = new CompositeCT( poGCPCoordTrans, poCT );
+                poCT = new CompositeCT( poGCPCoordTrans, false, poCT, true );
             }
 
             if( poCT != psInfo->papoCT[iGeom] )
@@ -4304,7 +4364,32 @@ static bool SetupCT( TargetLayerInfo* psInfo,
         }
         else
         {
-            poCT = poGCPCoordTrans;
+            const char* const apszOptions[] = {
+                "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+                "CRITERION=EQUIVALENT", nullptr };
+            auto poDstGeomFieldDefnSpatialRef = poDstGeomFieldDefn->GetSpatialRef();
+            if( poSourceSRS && poDstGeomFieldDefnSpatialRef &&
+                poSourceSRS->GetDataAxisToSRSAxisMapping() !=
+                    poDstGeomFieldDefnSpatialRef->GetDataAxisToSRSAxisMapping() &&
+                poSourceSRS->IsSame(poDstGeomFieldDefnSpatialRef, apszOptions) )
+            {
+                delete psInfo->papoCT[iGeom];
+                psInfo->papoCT[iGeom] = new CompositeCT(
+                    new AxisMappingCoordinateTransformation(
+                        poSourceSRS->GetDataAxisToSRSAxisMapping(),
+                        poDstGeomFieldDefnSpatialRef->GetDataAxisToSRSAxisMapping()),
+                    true,
+                    poGCPCoordTrans,
+                    false);
+                poCT = psInfo->papoCT[iGeom];
+            }
+            else if( poGCPCoordTrans )
+            {
+                delete psInfo->papoCT[iGeom];
+                psInfo->papoCT[iGeom] = new CompositeCT(
+                    poGCPCoordTrans, false, nullptr, false);
+                poCT = psInfo->papoCT[iGeom];
+            }
         }
 
         if (bWrapDateline)
@@ -4405,6 +4490,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
     bool bRet = true;
     CPLErrorReset();
+    OGRGeometryFactory::TransformWithOptionsCache transformWithOptionsCache;
     while( true )
     {
         if( m_nLimit >= 0 && psInfo->nFeaturesRead >= m_nLimit )
@@ -4643,14 +4729,13 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 }
 
                 OGRCoordinateTransformation* poCT = psInfo->papoCT[iGeom];
-                if( !m_bTransform )
-                    poCT = m_poGCPCoordTrans;
                 char** papszTransformOptions = psInfo->papapszTransformOptions[iGeom];
 
                 if( poCT != nullptr || papszTransformOptions != nullptr)
                 {
                     OGRGeometry* poReprojectedGeom =
-                        OGRGeometryFactory::transformWithOptions(poDstGeometry, poCT, papszTransformOptions);
+                        OGRGeometryFactory::transformWithOptions(
+                            poDstGeometry, poCT, papszTransformOptions, transformWithOptionsCache);
                     if( poReprojectedGeom == nullptr )
                     {
                         if( psOptions->nGroupTransactions )
@@ -4885,6 +4970,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->bAddMissingFields = false;
     psOptions->pszOutputSRSDef = nullptr;
     psOptions->pszSourceSRSDef = nullptr;
+    psOptions->pszCTPipeline = nullptr;
     psOptions->bNullifyOutputSRS = false;
     psOptions->bExactFieldNameMatch = true;
     psOptions->pszNewLayerName = nullptr;
@@ -5141,6 +5227,12 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         {
             CPLFree(psOptions->pszOutputSRSDef);
             psOptions->pszOutputSRSDef = CPLStrdup(papszArgv[++i]);
+            psOptions->bTransform = true;
+        }
+        else if( i+1 < nArgc && EQUAL(papszArgv[i],"-ct") )
+        {
+            CPLFree(psOptions->pszCTPipeline);
+            psOptions->pszCTPipeline = CPLStrdup(papszArgv[++i]);
             psOptions->bTransform = true;
         }
         else if( i+4 < nArgc && EQUAL(papszArgv[i],"-spat") )
@@ -5582,6 +5674,7 @@ void GDALVectorTranslateOptionsFree( GDALVectorTranslateOptions *psOptions )
     CPLFree( psOptions->pszFormat );
     CPLFree( psOptions->pszOutputSRSDef);
     CPLFree( psOptions->pszSourceSRSDef);
+    CPLFree( psOptions->pszCTPipeline );
     CPLFree( psOptions->pszNewLayerName);
     CPLFree( psOptions->pszWHERE );
     CPLFree( psOptions->pszGeomField );

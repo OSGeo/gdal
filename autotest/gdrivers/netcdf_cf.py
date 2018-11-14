@@ -672,7 +672,7 @@ def test_netcdf_cf_6():
         sr.ImportFromWkt(prj)
         proj_out = sr.ExportToProj4()
 
-        assert proj_out == '+proj=longlat +ellps=WGS84 +no_defs '
+        assert proj_out == '+proj=longlat +ellps=WGS84 +no_defs'
 
 
 ###############################################################################

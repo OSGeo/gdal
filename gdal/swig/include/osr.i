@@ -67,6 +67,7 @@
 
 #ifndef SWIGCSHARP
 typedef int OGRAxisOrientation;
+typedef int OSRAxisMappingStrategy;
 #ifdef SWIGJAVA
 %javaconst(1);
 #endif
@@ -77,6 +78,11 @@ typedef int OGRAxisOrientation;
 %constant OAO_West=4;
 %constant OAO_Up=5;
 %constant OAO_Down=6;
+
+%constant OAMS_TRADITIONAL_GIS_ORDER=0;
+%constant OAMS_AUTHORITY_COMPLIANT=1;
+%constant OAMS_CUSTOM=2;
+
 #ifdef SWIGJAVA
 %javaconst(0);
 #endif
@@ -92,6 +98,15 @@ typedef enum OGRAxisOrientation
     OAO_Up=5,
     OAO_Down=6
 };
+
+%rename (AxisMappingStrategy) OSRAxisMappingStrategy;
+typedef enum
+{
+    OAMS_TRADITIONAL_GIS_ORDER,
+    OAMS_AUTHORITY_COMPLIANT,
+    OAMS_CUSTOM
+} OSRAxisMappingStrategy;
+
 #endif
 
 #if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
@@ -170,43 +185,10 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 }
 %}
 
-/************************************************************************/
-/*                        GetProjectionMethods()                        */
-/************************************************************************/
-/*
- * Python has it's own custom interface to GetProjectionMethods().which returns
- * fairly complex structure.
- *
- * All other languages will have a more simplistic interface which is
- * exactly the same as the C api.
- *
- */
-
-#if !defined(SWIGPYTHON)
-%rename (GetProjectionMethods) OPTGetProjectionMethods;
-%apply (char **CSL) {(char **)};
-char **OPTGetProjectionMethods();
-%clear (char **);
-
-%rename (GetProjectionMethodParameterList) OPTGetParameterList;
 #ifdef SWIGJAVA
-%apply (char **retAsStringArrayAndFree) {(char **)};
-%apply (char **OUTPUT) { char **username };
-#elif defined(SWIGPERL)
-%apply (char **CSL_REF) {(char **)};
-#else
-%apply (char **CSL) {(char **)};
-#endif
-char **OPTGetParameterList( char *method, char **username );
-%clear (char **);
-
-%rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
-#ifdef SWIGJAVA
-%apply (char **OUTPUT) { char **usrname, char **type };
-%apply (double *OUTPUT) { double *defaultval };
-#endif
-void OPTGetParameterInfo( char *method, char *param, char **usrname,
-                          char **type, double *defaultval );
+%{
+typedef int* retIntArray;
+%}
 #endif
 
 /******************************************************************************
@@ -257,9 +239,17 @@ public:
     return buf;
   }
 #endif
+
+  const char* GetName() {
+    return OSRGetName( self );
+  }
+
 %apply Pointer NONNULL {OSRSpatialReferenceShadow* rhs};
-  int IsSame( OSRSpatialReferenceShadow *rhs ) {
-    return OSRIsSame( self, rhs );
+#ifndef SWIGJAVA
+  %feature("kwargs") IsSame;
+#endif
+  int IsSame( OSRSpatialReferenceShadow *rhs, char **options = NULL ) {
+    return OSRIsSameEx( self, rhs, options );
   }
 
   int IsSameGeogCS( OSRSpatialReferenceShadow *rhs ) {
@@ -402,6 +392,33 @@ public:
     OSRGetAxis( self, target_key, iAxis, &orientation );
     return orientation;
   }
+
+  OSRAxisMappingStrategy GetAxisMappingStrategy() {
+    return OSRGetAxisMappingStrategy(self);
+  }
+
+  void SetAxisMappingStrategy(OSRAxisMappingStrategy strategy) {
+    OSRSetAxisMappingStrategy(self, strategy);
+  }
+
+#if defined(SWIGJAVA)
+  retIntArray GetDataAxisToSRSAxisMapping(int *nLen, const int **pList) {
+      *pList = OSRGetDataAxisToSRSAxisMapping(self, nLen);
+      return (retIntArray)*pList;
+  }
+#elif defined(SWIGCSHARP)
+  %apply (int *intList) {const int *};
+  %apply (int *hasval) {int *count};
+  const int *GetDataAxisToSRSAxisMapping(int *count) {
+      return OSRGetDataAxisToSRSAxisMapping(self, count);
+  }
+  %clear (const int *);
+  %clear (int *count);
+#else
+  void GetDataAxisToSRSAxisMapping(int *nLen, const int **pList) {
+      *pList = OSRGetDataAxisToSRSAxisMapping(self, nLen);
+  }
+#endif
 
   OGRErr SetUTM( int zone, int north =1 ) {
     return OSRSetUTM( self, zone, north );
@@ -893,8 +910,8 @@ public:
     return OSRImportFromOzi( self, papszLines );
   }
 
-  OGRErr ExportToWkt( char **argout ) {
-    return OSRExportToWkt( self, argout );
+  OGRErr ExportToWkt( char **argout, char **options = NULL ) {
+    return OSRExportToWktEx( self, argout, options );
   }
 
   OGRErr ExportToPrettyWkt( char **argout, int simplify = 0 ) {
@@ -943,18 +960,6 @@ public:
     return OSRValidate(self);
   }
 
-  OGRErr StripCTParms() {
-    return OSRStripCTParms(self);
-  }
-
-  OGRErr FixupOrdering() {
-    return OSRFixupOrdering(self);
-  }
-
-  OGRErr Fixup() {
-    return OSRFixup(self);
-  }
-
   OGRErr MorphToESRI() {
     return OSRMorphToESRI(self);
   }
@@ -977,6 +982,36 @@ public:
  *  CoordinateTransformation Object
  *
  */
+ 
+%rename (CoordinateTransformationOptions) OGRCoordinateTransformationOptions;
+class OGRCoordinateTransformationOptions {
+private:
+  OGRCoordinateTransformationOptions();
+public:
+%extend {
+
+  OGRCoordinateTransformationOptions() {
+    return OCTNewCoordinateTransformationOptions();
+  }
+
+  ~OGRCoordinateTransformationOptions() {
+    OCTDestroyCoordinateTransformationOptions( self );
+  }
+  
+  bool SetAreaOfInterest( double westLongitudeDeg,
+                          double southLatitudeDeg,
+                          double eastLongitudeDeg,
+                          double northLatitudeDeg ) {
+    return OCTCoordinateTransformationOptionsSetAreaOfInterest(self,
+        westLongitudeDeg, southLatitudeDeg,
+        eastLongitudeDeg, northLatitudeDeg);
+  }
+
+  bool SetOperation(const char* operation) {
+    return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
+  }
+} /*extend */
+};
 
 // NEEDED
 // Custom python __init__ which takes a tuple.
@@ -990,8 +1025,12 @@ public:
 %extend {
 
   OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
-    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
-    return obj;
+    return (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation(src, dst);
+  }
+
+  OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options ) {
+    return (OSRCoordinateTransformationShadow*) 
+        options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
   }
 
   ~OSRCoordinateTransformationShadow() {
@@ -1013,6 +1052,19 @@ public:
   }
 %clear (double inout[3]);
 
+#ifdef SWIGJAVA
+%apply (double argout[ANY]) {(double inout[4])};
+#else
+%apply (double argout[ANY]) {(double inout[4])};
+%apply (double argin[ANY]) {(double inout[4])};
+#endif
+  void TransformPoint( double inout[4] ) {
+    if (self == NULL)
+        return;
+    OCTTransform4D( self, 1, &inout[0], &inout[1], &inout[2], &inout[3], NULL );
+  }
+%clear (double inout[4]);
+
   void TransformPoint( double argout[3], double x, double y, double z = 0.0 ) {
     if (self == NULL)
         return;
@@ -1022,14 +1074,34 @@ public:
     OCTTransform( self, 1, &argout[0], &argout[1], &argout[2] );
   }
 
+  void TransformPoint( double argout[4], double x, double y, double z, double t ) {
+    if (self == NULL)
+        return;
+    argout[0] = x;
+    argout[1] = y;
+    argout[2] = z;
+    argout[3] = t;
+    OCTTransform4D( self, 1, &argout[0], &argout[1], &argout[2], &argout[3], NULL );
+  }
+
 #ifdef SWIGCSHARP
   %apply (double *inout) {(double*)};
 #endif
+
+#ifndef SWIGPYTHON
   void TransformPoints( int nCount, double *x, double *y, double *z ) {
     if (self == NULL)
         return;
     OCTTransform( self, nCount, x, y, z );
   }
+#else
+  void TransformPoints( int nCount, double *x, double *y, double *z, double *t ) {
+    if (self == NULL)
+        return;
+    OCTTransform4D( self, nCount, x, y, z, t, NULL );
+  }
+#endif
+
 #ifdef SWIGCSHARP
   %clear (double*);
 #endif
@@ -1040,9 +1112,9 @@ public:
 /* New in GDAL 1.10 */
 %newobject CreateCoordinateTransformation;
 %inline %{
-  OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
-    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
-    return obj;
+  OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
+    return (OSRCoordinateTransformationShadow*) 
+        options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
 }
 %}
 

@@ -1771,12 +1771,12 @@ int JPGDatasetCommon::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *JPGDatasetCommon::GetGCPProjection()
+const char *JPGDatasetCommon::_GetGCPProjection()
 
 {
     const int nPAMGCPCount = GDALPamDataset::GetGCPCount();
     if( nPAMGCPCount != 0 )
-        return GDALPamDataset::GetGCPProjection();
+        return GDALPamDataset::_GetGCPProjection();
 
     LoadWorldFileOrTab();
 

@@ -299,10 +299,23 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
     {
         /* Process srtext directly if specified */
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromWkt( pszSRText ) != OGRERR_NONE )
         {
             delete poSRS;
             poSRS = nullptr;
+        }
+        else
+        {
+            const char* pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+            const char* pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+            if( pszAuthorityName && pszAuthorityCode &&
+                EQUAL(pszAuthorityName, "EPSG") )
+            {
+                const int nCode = atoi(pszAuthorityCode);
+                poSRS->Clear();
+                poSRS->importFromEPSG(nCode);
+            }
         }
     }
 

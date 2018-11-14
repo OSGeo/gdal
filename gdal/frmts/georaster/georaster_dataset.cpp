@@ -1349,7 +1349,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
             if( ! poDstDS->bForcedSRID ) /* forced by create option SRID */
             {
-                poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+                poDstDS->SetSpatialRef( poSrcDS->GetSpatialRef() );
             }
         }
     }
@@ -1362,7 +1362,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     {
         poDstDS->SetGCPs( poSrcDS->GetGCPCount(), 
                           poSrcDS->GetGCPs(), 
-                          poSrcDS->GetGCPProjection() );
+                          poSrcDS->GetGCPSpatialRef() );
     }
 
     // --------------------------------------------------------------------
@@ -1837,7 +1837,7 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 //                                                           GetProjectionRef()
 //  ---------------------------------------------------------------------------
 
-const char* GeoRasterDataset::GetProjectionRef( void )
+const char* GeoRasterDataset::_GetProjectionRef( void )
 {
     if( poGeoRaster->phRPC )
     {
@@ -2041,7 +2041,7 @@ CPLErr GeoRasterDataset::SetGeoTransform( double *padfTransform )
 //                                                              SetProjection()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
+CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
 {
     OGRSpatialReference oSRS;
 
@@ -2087,8 +2087,6 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     // ----------------------------------------------------------------
 
     OGRSpatialReference *poSRS2 = oSRS.Clone();
-    
-    poSRS2->StripCTParms();
 
     double dfAngularUnits = poSRS2->GetAngularUnits( nullptr );
     
@@ -2101,7 +2099,8 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     char* pszCloneWKT = nullptr;
 
-    if( poSRS2->exportToWkt( &pszCloneWKT ) != OGRERR_NONE )
+    const char* const apszOptions[] = { "FORMAT=SFSQL", nullptr };
+    if( poSRS2->exportToWkt( &pszCloneWKT, apszOptions ) != OGRERR_NONE )
     {
         delete poSRS2;
         return CE_Failure;
@@ -2636,7 +2635,7 @@ int GeoRasterDataset::GetGCPCount()
 //                                                                    SetGCPs()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+CPLErr GeoRasterDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                                   const char *pszGCPProjection )
 {
     if( GetAccess() == GA_Update )
@@ -2668,7 +2667,7 @@ const GDAL_GCP* GeoRasterDataset::GetGCPs()
 //                                                           GetGCPProjection()
 //  ---------------------------------------------------------------------------
 
-const char* GeoRasterDataset::GetGCPProjection()
+const char* GeoRasterDataset::_GetGCPProjection()
 {
     if( poGeoRaster && poGeoRaster->nGCPCount > 0 )
         return pszProjection;

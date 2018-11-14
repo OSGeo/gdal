@@ -296,6 +296,8 @@ OGRFeatureDefn * OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object
                         if( pszSRText != nullptr )
                         {
                             l_poSRS = new OGRSpatialReference();
+                            l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
                             if( l_poSRS->importFromWkt(pszSRText) != OGRERR_NONE )
                             {
                                 delete l_poSRS;
@@ -641,8 +643,15 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
             poGeomField->SetName( "the_geom" );
     }
-    poGeomField->SetSpatialRef(poGeomFieldIn->GetSpatialRef());
-    
+    auto l_poSRS = poGeomFieldIn->GetSpatialRef();
+    if( l_poSRS )
+    {
+        l_poSRS = l_poSRS->Clone();
+        l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poGeomField->SetSpatialRef(l_poSRS);
+        l_poSRS->Release();
+    }
+
     if( bLaunderColumnNames )
     {
         char *pszSafeName = OGRPGCommonLaunderName( poGeomField->GetNameRef(), "PG" );

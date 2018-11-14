@@ -502,6 +502,7 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
     }
 
     OGRSpatialReference* sr = new OGRSpatialReference();
+    sr->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRErr eImportFromEPSGErr = sr->importFromEPSG(nEPSG);
     if (eImportFromEPSGErr != OGRERR_NONE)
     {
@@ -770,6 +771,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         {
             int nEPSG = 28400 + nZoneEnv;
             passport.stMapDescription.pSpatRef = new OGRSpatialReference();
+            passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);
             SetVertCS(iVCS, passport);
             return eErr;
@@ -802,6 +804,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
             nEPSG = 32700 + nZoneEnv;
         }
         passport.stMapDescription.pSpatRef = new OGRSpatialReference();
+        passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);
         SetVertCS(iVCS, passport);
         return eErr;
@@ -809,6 +812,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     else if (iEllips == 45 && iProjSys == 35) //Mercator 3857 on sphere wgs84
     {
         passport.stMapDescription.pSpatRef = new OGRSpatialReference("PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]");
+        passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3857);
         SetVertCS(iVCS, passport);
         return eErr;
@@ -816,6 +820,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     else if (iEllips == 9 && iProjSys == 35) //Mercator 3395 on ellips wgs84
     {
         passport.stMapDescription.pSpatRef = new OGRSpatialReference();
+        passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(3395);
         SetVertCS(iVCS, passport);
         return eErr;
@@ -823,6 +828,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     else if (iEllips == 9 && iProjSys == 34) //Miller 54003 on sphere wgs84
     {
         passport.stMapDescription.pSpatRef = new OGRSpatialReference("PROJCS[\"World_Miller_Cylindrical\",GEOGCS[\"GCS_GLOBE\", DATUM[\"GLOBE\", SPHEROID[\"GLOBE\", 6367444.6571, 0.0]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Miller_Cylindrical\"],PARAMETER[\"False_Easting\",0],PARAMETER[\"False_Northing\",0],PARAMETER[\"Central_Meridian\",0],UNIT[\"Meter\",1],AUTHORITY[\"EPSG\",\"54003\"]]");
+        passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3395);
         //OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(54003);
 
@@ -832,7 +838,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     else if (iEllips == 9 && iProjSys == 33 &&
         passport.stMapDescription.eUnitInPlan == SXF_COORD_MU_DEGREE)
     {
-        passport.stMapDescription.pSpatRef = new OGRSpatialReference(SRS_WKT_WGS84);
+        passport.stMapDescription.pSpatRef = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
+        passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = OGRERR_NONE;
         SetVertCS(iVCS, passport);
         return eErr;
@@ -856,6 +863,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     //
 
     passport.stMapDescription.pSpatRef = new OGRSpatialReference();
+    passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRErr eErr = passport.stMapDescription.pSpatRef->importFromPanorama(anData[2], anData[3], anData[0], adfPrjParams);
     SetVertCS(iVCS, passport);
     return eErr;

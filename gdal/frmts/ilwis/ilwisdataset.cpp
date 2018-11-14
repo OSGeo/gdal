@@ -603,7 +603,7 @@ CPLErr ILWISDataset::WriteGeoReference()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *ILWISDataset::GetProjectionRef()
+const char *ILWISDataset::_GetProjectionRef()
 
 {
    return pszProjection;
@@ -613,7 +613,7 @@ const char *ILWISDataset::GetProjectionRef()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr ILWISDataset::SetProjection( const char * pszNewProjection )
+CPLErr ILWISDataset::_SetProjection( const char * pszNewProjection )
 
 {
     CPLFree( pszProjection );

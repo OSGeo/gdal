@@ -89,7 +89,9 @@ int main(int argc, char* argv[])
     }
 
     oSrcSRS.importFromEPSG(4326);
+    oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     oDstSRS.importFromEPSG(32631);
+    oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poCT = OGRCreateCoordinateTransformation(&oSrcSRS,&oDstSRS);
     if (poCT == nullptr)
         return -1;

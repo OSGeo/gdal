@@ -413,7 +413,7 @@ OGRErr GNMDatabaseNetwork::DeleteLayer(int nIndex)
 }
 
 OGRLayer *GNMDatabaseNetwork::ICreateLayer(const char *pszName,
-                                CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                                OGRSpatialReference * /*poSpatialRef*/,
                                 OGRwkbGeometryType eGType, char **papszOptions)
 {
     //check if layer with such name exist

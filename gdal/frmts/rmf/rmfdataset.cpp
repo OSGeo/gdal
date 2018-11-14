@@ -804,7 +804,7 @@ CPLErr RMFDataset::SetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *RMFDataset::GetProjectionRef()
+const char *RMFDataset::_GetProjectionRef()
 {
     if( pszProjection )
         return pszProjection;
@@ -816,7 +816,7 @@ const char *RMFDataset::GetProjectionRef()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr RMFDataset::SetProjection( const char * pszNewProjection )
+CPLErr RMFDataset::_SetProjection( const char * pszNewProjection )
 
 {
     CPLFree( pszProjection );

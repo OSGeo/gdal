@@ -84,7 +84,7 @@ class OGRAVCDataSource : public OGRDataSource
                         OGRAVCDataSource();
     virtual ~OGRAVCDataSource();
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *DSGetSpatialRef();
 
     const char          *GetCoverageName();
 };
@@ -226,7 +226,7 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
 
     OGRLayer *GetLayer( int ) override;
     int TestCapability( const char * ) override;
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    virtual OGRSpatialReference *DSGetSpatialRef() override;
 };
 
 #endif /* OGR_AVC_H_INCLUDED */

@@ -35,6 +35,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "gdal_alg.h"
+#include "ogr_spatialref.h"
 
 CPL_C_START
 
@@ -216,6 +217,26 @@ struct FloatEqualityTest
 {
     bool operator()(float a, float b) { return GDALFloatEquals(a,b) == TRUE; }
 };
+
+bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
+                               double adfGT[6],
+                               int nXSize,
+                               int nYSize,
+                               double& dfWestLongitudeDeg,
+                               double& dfSouthLatitudeDeg,
+                               double& dfEastLongitudeDeg,
+                               double& dfNorthLatitudeDeg );
+
+bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
+                               double dfX1,
+                               double dfY1,
+                               double dfX2,
+                               double dfY2,
+                               double& dfWestLongitudeDeg,
+                               double& dfSouthLatitudeDeg,
+                               double& dfEastLongitudeDeg,
+                               double& dfNorthLatitudeDeg );
+
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

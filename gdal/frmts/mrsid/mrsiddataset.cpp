@@ -2991,7 +2991,6 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* -------------------------------------------------------------------- */
 /*      Return the WKT serialization of the object.                     */
 /* -------------------------------------------------------------------- */
-    oSRS.FixupOrdering();
 
     char *pszWKT = nullptr;
     if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )

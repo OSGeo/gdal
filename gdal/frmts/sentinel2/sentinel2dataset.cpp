@@ -2206,7 +2206,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
                     }
                 }
 
-                poDS->SetGCPs( nGCPCount, asGCPList, SRS_WKT_WGS84 );
+                poDS->SetGCPs( nGCPCount, asGCPList, SRS_WKT_WGS84_LAT_LONG );
                 GDALDeinitGCPs( nGCPCount, asGCPList );
             }
         }

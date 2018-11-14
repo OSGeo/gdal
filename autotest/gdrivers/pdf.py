@@ -225,7 +225,7 @@ def test_pdf_1(poppler_or_pdfium):
     for i in range(6):
         assert abs(gt[i] - expected_gt[i]) <= 1e-6, 'bad geotransform'
 
-    expected_wkt = 'PROJCS["WGS_1984_UTM_Zone_20N",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-63.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
+    expected_wkt = 'PROJCS["WGS 84 / UTM zone 20N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-63],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     assert wkt == expected_wkt, 'bad WKT'
 
     if pdf_checksum_available():
@@ -1325,10 +1325,6 @@ def test_pdf_write_ogr(poppler_or_pdfium):
 
 
 def test_pdf_write_ogr_with_reprojection(poppler_or_pdfium):
-    from osr import osr_ct
-    osr_ct.test_osr_ct_1()
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
 
     f = gdal.VSIFOpenL('tmp/test.csv', 'wb')
     data = """WKT,id

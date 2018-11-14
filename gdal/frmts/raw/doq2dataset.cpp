@@ -78,7 +78,10 @@ class DOQ2Dataset final: public RawDataset
                 ~DOQ2Dataset();
 
     CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char  *GetProjectionRef( void ) override;
+    const char  *_GetProjectionRef( void ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -131,7 +134,7 @@ CPLErr DOQ2Dataset::GetGeoTransform( double * padfTransform )
 /*                        GetProjectionString()                         */
 /************************************************************************/
 
-const char *DOQ2Dataset::GetProjectionRef()
+const char *DOQ2Dataset::_GetProjectionRef()
 
 {
     return pszProjection;

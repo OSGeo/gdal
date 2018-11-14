@@ -15,6 +15,8 @@
 
 #include <stdlib.h> /* for size_t */
 
+#include "proj.h"
+
 /*
  * This structure contains the internal program
  * representation of the key entry.
@@ -107,6 +109,11 @@ struct gtiff {
 
    GTErrorCallback  gt_error_callback;
    void*      gt_user_data;
+
+   PJ_CONTEXT *pj_context;      /* PROJ context */
+   int         own_pj_context;  /* whether we own the PROJ context */
+
+   char        szTmpBufferForGTIFValueNameEx[160];
 };
 
 typedef enum {

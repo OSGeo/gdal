@@ -43,7 +43,7 @@ import pytest
 def test_pds_1():
 
     tst = gdaltest.GDALTest('PDS', 'mc02_truncated.img', 1, 47151)
-    expected_prj = """PROJCS["SIMPLE_CYLINDRICAL "MARS"",GEOGCS["GCS_"MARS"",DATUM["D_"MARS"",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0]]"""
+    expected_prj = """PROJCS["SIMPLE_CYLINDRICAL MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0],UNIT["metre",1]]"""
     expected_gt = (-10668384.903788566589355, 926.115274429321289, 0, 3852176.483988761901855, 0, -926.115274429321289)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
@@ -68,7 +68,7 @@ def test_pds_2():
     PROJECTION["Sinusoidal"],
     PARAMETER["longitude_of_center",18],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],UNIT["metre",1]]"""
     expected_gt = (587861.55900404998, 75.000002980232239, 0.0, -7815243.4746123618, 0.0, -75.000002980232239)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
@@ -153,7 +153,7 @@ def test_pds_6():
 
     assert len(ds.GetFileList()) == 2, 'failed to get expected file list.'
 
-    expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",180],PARAMETER["standard_parallel_1",15],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
+    expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Equirectangular"],PARAMETER["standard_parallel_1",15],PARAMETER["central_meridian",180],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     wkt = ds.GetProjection()
     if expected_wkt != wkt:
         print('Got: ', wkt)
@@ -181,7 +181,7 @@ def test_pds_7():
     PARAMETER["central_meridian",180],
     PARAMETER["standard_parallel_1",0],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],UNIT["metre",1]]"""
 
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')

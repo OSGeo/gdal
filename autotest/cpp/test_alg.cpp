@@ -273,7 +273,7 @@ namespace tut
         GDALDatasetUniquePtr poDS(
             GDALDriver::FromHandle(
                 GDALGetDriverByName("MEM"))->Create("", 1, 1, 1, GDT_Byte, nullptr));
-        poDS->SetProjection( SRS_WKT_WGS84);
+        poDS->SetProjection( SRS_WKT_WGS84_LAT_LONG );
         double adfGeoTransform[6] = { 10, 1, 0, 20, 0, -1 };
         poDS->SetGeoTransform(adfGeoTransform);
         GDALWarpOptions* psOptions = GDALCreateWarpOptions();

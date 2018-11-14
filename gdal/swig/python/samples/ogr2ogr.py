@@ -643,6 +643,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 # --------------------------------------------------------------------
     if pszOutputSRSDef is not None:
         poOutputSRS = osr.SpatialReference()
+        poOutputSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         if poOutputSRS.SetFromUserInput(pszOutputSRSDef) != 0:
             print("Failed to process SRS definition: %s" % pszOutputSRSDef)
             return False
@@ -652,6 +653,7 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
 # --------------------------------------------------------------------
     if pszSourceSRSDef is not None:
         poSourceSRS = osr.SpatialReference()
+        poSourceSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         if poSourceSRS.SetFromUserInput(pszSourceSRSDef) != 0:
             print("Failed to process SRS definition: %s" % pszSourceSRSDef)
             return False
@@ -1225,16 +1227,12 @@ def SetupTargetLayer(poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName,
             return None
 
         poCT = osr.CoordinateTransformation(poSourceSRS, poOutputSRS)
-        if gdal.GetLastErrorMsg().find('Unable to load PROJ.4 library') != -1:
-            poCT = None
-
         if poCT is None:
             pszWKT = None
 
             print("Failed to create coordinate transformation between the\n" +
                   "following coordinate systems.  This may be because they\n" +
-                  "are not transformable, or because projection services\n" +
-                  "(PROJ.4 DLL/.so) could not be loaded.")
+                  "are not transformable.")
 
             pszWKT = poSourceSRS.ExportToPrettyWkt(0)
             print("Source:\n" + pszWKT)

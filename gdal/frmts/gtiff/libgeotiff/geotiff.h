@@ -128,6 +128,7 @@ void  GTIF_DLL  GTIFPrint(GTIF *gtif, GTIFPrintMethod print, void *aux);
 int   GTIF_DLL  GTIFImport(GTIF *gtif, GTIFReadMethod scan, void *aux);
 char  GTIF_DLL *GTIFKeyName(geokey_t key);
 char  GTIF_DLL *GTIFValueName(geokey_t key,int value);
+const char GTIF_DLL *GTIFValueNameEx(GTIF* gtif, geokey_t key,int value);
 char  GTIF_DLL *GTIFTypeName(tagtype_t type);
 char  GTIF_DLL *GTIFTagName(int tag);
 int   GTIF_DLL  GTIFKeyCode(char * key);

@@ -28,10 +28,8 @@ OBJ =	ogrgeometryfactory.o \
 	ogrfielddefn.o \
 	ogrspatialreference.o \
 	ogr_srsnode.o \
-	ogr_srs_proj4.o \
 	ogr_fromepsg.o \
 	ogrct.o \
-	ogr_opt.o \
 	ogr_srs_esri.o \
 	ogr_srs_pci.o \
 	ogr_srs_usgs.o \
@@ -45,7 +43,6 @@ OBJ =	ogrgeometryfactory.o \
 	swq_select.o \
 	swq_op_registrar.o \
 	swq_op_general.o \
-	ogr_srs_validate.o \
 	ogr_srs_xml.o \
 	ograssemblepolygon.o \
 	ogr2gmlgeometry.o \
@@ -54,9 +51,8 @@ OBJ =	ogrgeometryfactory.o \
 	ogrpgeogeometry.o \
 	ogrgeomediageometry.o \
 	ogr_geocoding.o \
-	osr_cs_wkt.o \
-	osr_cs_wkt_parser.o \
 	ogrgeomfielddefn.o \
 	ograpispy.o \
 	ogr_xerces.o \
-	ogr_geo_utils.o
+	ogr_geo_utils.o \
+	ogr_proj_p.o

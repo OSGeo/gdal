@@ -1,9 +1,8 @@
 /******************************************************************************
- * $Id: geo_extra.c 2741 2016-09-04 18:50:49Z rouault $
+ * $Id$
  *
  * Project:  libgeotiff
- * Purpose:  Code to normalize a few common PCS values without use of CSV
- *           files.
+ * Purpose:  Code to normalize a few common PCS values
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -532,9 +531,9 @@ int	GTIFMapSysToProj( int MapSys, int nZone )
  * The datum (really this is the GCS) is set to a GCS_ value such as GCS_NAD27.
  *
  * This function is useful to recognise (most) UTM and State Plane coordinate
- * systems, even if CSV files aren't available to translate them automatically.
+ * systems.
  * It is used as a fallback mechanism by GTIFGetDefn() for normalization when
- * CSV files aren't found.
+ * PROJ database is not found.
  */
 
 int GTIFPCSToMapSys( int PCSCode, int * pDatum, int * pZone )

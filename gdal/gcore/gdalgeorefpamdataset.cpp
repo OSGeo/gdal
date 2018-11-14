@@ -219,7 +219,7 @@ int GDALGeorefPamDataset::GetGCPCount()
 /*      inside our file, unless GDAL_GEOREF_SOURCES is defined.         */
 /************************************************************************/
 
-const char *GDALGeorefPamDataset::GetGCPProjection()
+const char *GDALGeorefPamDataset::_GetGCPProjection()
 
 {
     const int nPAMIndex = GetPAMGeorefSrcIndex();
@@ -227,7 +227,7 @@ const char *GDALGeorefPamDataset::GetGCPProjection()
         ((pszProjection != nullptr && nPAMIndex < m_nProjectionGeorefSrcIndex) ||
          m_nProjectionGeorefSrcIndex < 0 || pszProjection == nullptr) )
     {
-        const char* pszPAMGCPProjection = GDALPamDataset::GetGCPProjection();
+        const char* pszPAMGCPProjection = GDALPamDataset::_GetGCPProjection();
         if( pszPAMGCPProjection != nullptr && strlen(pszPAMGCPProjection) > 0 )
             return pszPAMGCPProjection;
     }
@@ -268,7 +268,7 @@ const GDAL_GCP *GDALGeorefPamDataset::GetGCPs()
 /*      inside our file, unless GDAL_GEOREF_SOURCES is defined.         */
 /************************************************************************/
 
-const char *GDALGeorefPamDataset::GetProjectionRef()
+const char *GDALGeorefPamDataset::_GetProjectionRef()
 
 {
     if( GetGCPCount() > 0 )
@@ -279,7 +279,7 @@ const char *GDALGeorefPamDataset::GetProjectionRef()
         ((pszProjection != nullptr && nPAMIndex < m_nProjectionGeorefSrcIndex) ||
          m_nProjectionGeorefSrcIndex < 0 || pszProjection == nullptr) )
     {
-        const char* pszPAMProjection = GDALPamDataset::GetProjectionRef();
+        const char* pszPAMProjection = GDALPamDataset::_GetProjectionRef();
         if( pszPAMProjection != nullptr && strlen(pszPAMProjection) > 0 )
             return pszPAMProjection;
     }

@@ -623,8 +623,16 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     // Create layer.
     std::string osKey = CSLFetchNameValueDef( papszOptions, "KEY", "");
     std::string osDesc = CSLFetchNameValueDef( papszOptions, "DESCRIPTION", "");
-    OGRNGWLayer *poLayer = new OGRNGWLayer( this, pszNameIn, poSpatialRef, eGType,
+    OGRSpatialReference* poSRSClone = poSpatialRef;
+    if( poSRSClone )
+    {
+        poSRSClone = poSRSClone->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    OGRNGWLayer *poLayer = new OGRNGWLayer( this, pszNameIn, poSRSClone, eGType,
         osKey, osDesc );
+    if( poSRSClone )
+        poSRSClone->Release();
     papoLayers = (OGRNGWLayer**) CPLRealloc(papoLayers, (nLayers + 1) *
         sizeof(OGRNGWLayer*));
     papoLayers[nLayers++] = poLayer;
@@ -1149,13 +1157,13 @@ OGRLayer *OGRNGWDataset::ExecuteSQL( const char *pszStatement,
 /*
  * GetProjectionRef()
  */
-const char *OGRNGWDataset::GetProjectionRef(void)
+const OGRSpatialReference *OGRNGWDataset::GetSpatialRef() const
 {
     if( poRasterDS != nullptr )
     {
-        return poRasterDS->GetProjectionRef();
+        return poRasterDS->GetSpatialRef();
     }
-    return GDALDataset::GetProjectionRef();
+    return GDALDataset::GetSpatialRef();
 }
 
 /*

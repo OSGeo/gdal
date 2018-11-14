@@ -72,7 +72,7 @@ static void Usage( const char* pszErrorMsg = nullptr )
            "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-rl] [-so] [-fields={YES/NO}]\n"
            "               [-geom={YES/NO/SUMMARY}] [[-oo NAME=VALUE] ...]\n"
            "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
-           "               [-nocount] [-noextent]\n"
+           "               [-nocount] [-noextent] [-wkt_format WKT1|WKT2|...]\n"
            "               datasource_name [layer [layer ...]]\n");
 
     if( pszErrorMsg != nullptr )
@@ -202,7 +202,8 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                            bool bShowMetadata,
                            char** papszExtraMDDomains,
                            bool bFeatureCount,
-                           bool bExtent )
+                           bool bExtent,
+                           const char* pszWKTFormat )
 {
     OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
 
@@ -294,6 +295,20 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                       oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
         }
 
+        const auto displayDataAxisMapping = [](const OGRSpatialReference* poSRS) {
+            const auto mapping = poSRS->GetDataAxisToSRSAxisMapping();
+            printf("Data axis to CRS axis mapping: ");
+            for( size_t i = 0; i < mapping.size(); i++ )
+            {
+                if( i > 0 )
+                {
+                    printf(",");
+                }
+                printf("%d", mapping[i]);
+            }
+            printf("\n");
+        };
+
         if( nGeomFieldCount > 1 )
         {
             for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
@@ -308,28 +323,41 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                 }
                 else
                 {
-                    poSRS->exportToPrettyWkt(&pszWKT);
+                    CPLString osWKTFormat("FORMAT=");
+                    osWKTFormat += pszWKTFormat;
+                    const char* const apszWKTOptions[] =
+                        { osWKTFormat.c_str(), "MULTILINE=YES", nullptr };
+                    poSRS->exportToWkt(&pszWKT, apszWKTOptions);
                 }
 
                 printf("SRS WKT (%s):\n%s\n",
                        poGFldDefn->GetNameRef(), pszWKT);
                 CPLFree(pszWKT);
+                if( poSRS )
+                {
+                    displayDataAxisMapping(poSRS);
+                }
             }
         }
         else
         {
             char *pszWKT = nullptr;
-            if( poLayer->GetSpatialRef() == nullptr )
+            auto poSRS = poLayer->GetSpatialRef();
+            if( poSRS == nullptr )
             {
                 pszWKT = CPLStrdup("(unknown)");
             }
             else
             {
-                poLayer->GetSpatialRef()->exportToPrettyWkt(&pszWKT);
+                poSRS->exportToPrettyWkt(&pszWKT);
             }
 
             printf("Layer SRS WKT:\n%s\n", pszWKT);
             CPLFree(pszWKT);
+            if( poSRS )
+            {
+                displayDataAxisMapping(poSRS);
+            }
         }
 
         if( strlen(poLayer->GetFIDColumn()) > 0 )
@@ -482,6 +510,7 @@ MAIN_START(nArgc, papszArgv)
     bool bDatasetGetNextFeature = false;
     bool bReadOnly = false;
     bool bUpdate = false;
+    const char* pszWKTFormat = "WKT2";
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -655,6 +684,12 @@ MAIN_START(nArgc, papszArgv)
         {
             bDatasetGetNextFeature = true;
         }
+        else if( EQUAL(papszArgv[iArg], "-wkt_format") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszWKTFormat = papszArgv[++iArg];
+        }
+
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
@@ -844,7 +879,8 @@ MAIN_START(nArgc, papszArgv)
                                   bListMDD, bShowMetadata,
                                   papszExtraMDDomains,
                                   bFeatureCount,
-                                  bExtent);
+                                  bExtent,
+                                  pszWKTFormat);
                     bSummaryOnly = bSummaryOnlyBackup;
                 }
                 if( !bSuperQuiet && !bSummaryOnly )
@@ -886,11 +922,11 @@ MAIN_START(nArgc, papszArgv)
                 ReportOnLayer(poResultSet, nullptr,
                               pszGeomField, poSpatialFilter,
                               bListMDD, bShowMetadata, papszExtraMDDomains,
-                              bFeatureCount, bExtent);
+                              bFeatureCount, bExtent, pszWKTFormat);
             else
                 ReportOnLayer(poResultSet, nullptr, nullptr, nullptr,
                               bListMDD, bShowMetadata, papszExtraMDDomains,
-                              bFeatureCount, bExtent);
+                              bFeatureCount, bExtent, pszWKTFormat);
             poDS->ReleaseResultSet(poResultSet);
         }
     }
@@ -956,7 +992,7 @@ MAIN_START(nArgc, papszArgv)
                     ReportOnLayer(poLayer, pszWHERE,
                                   pszGeomField, poSpatialFilter,
                                   bListMDD, bShowMetadata, papszExtraMDDomains,
-                                  bFeatureCount, bExtent);
+                                  bFeatureCount, bExtent, pszWKTFormat);
                 }
             }
         }
@@ -984,7 +1020,7 @@ MAIN_START(nArgc, papszArgv)
 
                 ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter,
                               bListMDD, bShowMetadata, papszExtraMDDomains,
-                              bFeatureCount, bExtent);
+                              bFeatureCount, bExtent, pszWKTFormat);
             }
         }
     }

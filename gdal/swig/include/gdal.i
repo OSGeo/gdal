@@ -66,6 +66,7 @@ using namespace std;
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "gdalwarper.h"
+#include "ogr_srs_api.h"
 
 typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;

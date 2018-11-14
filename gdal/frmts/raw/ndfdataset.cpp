@@ -57,7 +57,10 @@ class NDFDataset final: public RawDataset
     ~NDFDataset() override;
 
     CPLErr  GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef(void) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -98,7 +101,7 @@ NDFDataset::~NDFDataset()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *NDFDataset::GetProjectionRef()
+const char *NDFDataset::_GetProjectionRef()
 
 {
     return pszProjection;

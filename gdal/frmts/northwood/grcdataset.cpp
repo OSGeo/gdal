@@ -68,7 +68,10 @@ class NWT_GRCDataset : public GDALPamDataset
     static int Identify( GDALOpenInfo * poOpenInfo );
 
     CPLErr GetGeoTransform( double *padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 };
 
 /************************************************************************/
@@ -288,7 +291,7 @@ CPLErr NWT_GRCDataset::GetGeoTransform( double *padfTransform )
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
-const char *NWT_GRCDataset::GetProjectionRef()
+const char *NWT_GRCDataset::_GetProjectionRef()
 {
     if (pszProjection == nullptr)
     {

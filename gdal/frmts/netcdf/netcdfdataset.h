@@ -905,8 +905,14 @@ class netCDFDataset final: public GDALPamDataset
     /* Projection/GT */
     CPLErr      GetGeoTransform( double * ) override;
     CPLErr      SetGeoTransform (double *) override;
-    const char * GetProjectionRef() override;
-    CPLErr      SetProjection (const char *) override;
+    const char * _GetProjectionRef() override;
+    CPLErr      _SetProjection (const char *) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     virtual char      **GetMetadataDomainList() override;
     char ** GetMetadata( const char * ) override;

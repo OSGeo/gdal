@@ -522,14 +522,10 @@ public:
 
     virtual OGRSpatialReference *GetTargetCS() override { return nullptr; }
 
-    virtual int Transform( int nCount, double *x, double *y, double *z )
-                                                                    override
-    {
-        return TransformEx( nCount, x, y, z, nullptr );
-    }
 
-    virtual int TransformEx( int nCount, double *x, double *y, double * /*z*/,
-                             int *pabSuccess ) override
+    virtual int Transform( int nCount, double *x, double *y,
+                           double * /*z*/, double * /*t*/,
+                           int *pabSuccess ) override
     {
         for( int i = 0; i < nCount; i++ )
         {

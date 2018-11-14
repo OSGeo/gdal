@@ -59,10 +59,10 @@ def test_tiff_srs_without_linear_units():
     assert sr.IsSame(sr2) == 1, 'did not get expected SRS'
 
 ###############################################################################
-# Test COMPDCS without VerticalCSType
+# Test writing a COMPDCS without VerticalCSType
 
 
-def test_tiff_srs_compd_cs():
+def test_srs_write_compd_cs():
 
     sr = osr.SpatialReference()
     # EPSG:7400 without the Authority
@@ -98,6 +98,19 @@ def test_tiff_srs_compd_cs():
     gdal.Unlink('/vsimem/tiff_srs_compd_cs.tif')
 
     assert sr.IsSame(sr2) == 1, 'did not get expected SRS'
+
+###############################################################################
+# Test reading a COMPDCS without VerticalCSType
+
+
+def test_srs_read_compd_cs():
+
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', 'YES')
+    ds = gdal.Open('data/vertcs_user_defined.tif')
+    wkt = ds.GetProjectionRef()
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', None)
+
+    assert wkt == 'COMPD_CS["NAD27 / UTM zone 11N + EGM2008 height",PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]],VERT_CS["EGM2008 height",VERT_DATUM["EGM2008 geoid",2005,AUTHORITY["EPSG","1027"]],UNIT["foot",0.3048,AUTHORITY["EPSG","9002"]],AXIS["Up",UP]]]'
 
 ###############################################################################
 # Test reading a GeoTIFF with both StdParallel1 and ScaleAtNatOrigin defined (#5791)
@@ -149,20 +162,27 @@ def test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
     wkt = sr.ExportToPrettyWkt()
     ds = None
 
-    assert wkt == """PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",
-    GEOGCS["GCS_WGS_1984",
-        DATUM["D_WGS_1984",
-            SPHEROID["WGS_1984",6378137.0,298.257223563]],
-        PRIMEM["Greenwich",0.0],
-        UNIT["Degree",0.0174532925199433]],
-    PROJECTION["Mercator_Auxiliary_Sphere"],
-    PARAMETER["False_Easting",0.0],
-    PARAMETER["False_Northing",0.0],
-    PARAMETER["Central_Meridian",0.0],
-    PARAMETER["Standard_Parallel_1",0.0],
-    PARAMETER["Auxiliary_Sphere_Type",0.0],
-    UNIT["Meter",1.0],
-    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"]]"""
+    assert wkt == """PROJCS["WGS 84 / Pseudo-Mercator",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH],
+    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"]]"""
 
 ###############################################################################
 # Test writing and reading various angular units
@@ -179,8 +199,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert ('UNIT["arc-second",4.848136811095361e-06]' in wkt or \
-       'UNIT["arc-second",4.848136811095361e-006]' in wkt)
+    assert 'UNIT["arc-second",4.84813681109536E-06' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -192,7 +211,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert 'UNIT["arc-minute",0.0002908882086657216]' in wkt
+    assert 'UNIT["arc-minute",0.000290888208665722]' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -204,7 +223,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert 'UNIT["grad",0.01570796326794897]' in wkt
+    assert 'UNIT["grad",0.015707963267949' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -216,7 +235,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert 'UNIT["gon",0.01570796326794897]' in wkt
+    assert 'UNIT["gon",0.015707963267949]' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -260,7 +279,7 @@ def test_tiff_custom_datum_known_ellipsoid():
     ds = None
     ds = gdal.Open('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
     wkt = ds.GetProjectionRef()
-    assert wkt == 'GEOGCS["WGS 84 based",DATUM["WGS_1984_based",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    assert wkt == 'GEOGCS["WGS 84 based",DATUM["WGS_1984_based",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
     ds = None
 
     gdal.Unlink('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
@@ -309,7 +328,7 @@ def test_tiff_srs_PCSCitationGeoKey_LUnits():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif')
     wkt = ds.GetProjectionRef()
-    assert wkt == 'PROJCS["UTM Zone 32, Northern Hemisphere",GEOGCS["GRS 1980(IUGG, 1980)",DATUM["unknown",SPHEROID["GRS80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",50000000],PARAMETER["false_northing",0],UNIT["Centimeter",0.01]]'
+    assert wkt == 'PROJCS["UTM Zone 32, Northern Hemisphere",GEOGCS["GRS 1980(IUGG, 1980)",DATUM["unknown",SPHEROID["GRS80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",50000000],PARAMETER["false_northing",0],UNIT["Centimeter",0.01],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     ds = None
 
     gdal.Unlink('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif')
@@ -324,7 +343,7 @@ def test_tiff_srs_projection_3856():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert 'EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' in wkt
+    assert 'EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs' in wkt
 
 ###############################################################################
 # Test reading a geotiff with a LOCAL_CS and a Imagine citation
@@ -336,7 +355,7 @@ def test_tiff_srs_imagine_localcs_citation():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert wkt == 'LOCAL_CS["Projection Name = UTM Units = meters GeoTIFF Units = meters",UNIT["unknown",1]]'
+    assert wkt.startswith('LOCAL_CS["Projection Name = UTM Units = meters GeoTIFF Units = meters"')
 
 ###############################################################################
 # Test reading a geotiff with a EPSG code and a TOWGS84 key that must
@@ -349,7 +368,7 @@ def test_tiff_srs_towgs84_override():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert 'TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]' in wkt
+    assert 'TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]' in wkt, wkt
 
 ###############################################################################
 # Test reading PCSCitationGeoKey (#7199)
@@ -362,6 +381,16 @@ def test_tiff_srs_pcscitation():
     ds = None
 
     assert wkt.startswith('PROJCS["mycitation",')
+
+###############################################################################
+# Test reading file with ProjectedCSTypeGeoKey and GeographicTypeGeoKey
+
+
+def test_tiff_srs_ProjectedCSTypeGeoKey_GeographicTypeGeoKey():
+
+    ds = gdal.Open('data/utmsmall.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == "26711"
 
 
 def _test_tiff_srs(sr, expect_fail):
@@ -396,15 +425,16 @@ def _test_tiff_srs(sr, expect_fail):
 # Write a geotiff and read it back to check its SRS
 
 epsg_list = [
-    [2758, False],  # tmerc
-    [2036, False],  # sterea
-    [2046, False],  # tmerc
+    [3814, False],  # tmerc
+    [28991, False],  # sterea
+    # [2046, False],  # tmerc south oriented DISABLED. Not sure about the axis
     [3031, False],  # polar stere (ticket #3220)
     [3032, False],  # polar stere (ticket #3220)
     [32661, False],  # stere
-    [3035, False],  # laea
+    [3408, False],  # laea
     [2062, False],  # lcc 1SP
-    [2065, True],  # krovak
+    #[2065, True],  # krovak South-West
+    [5221, True],  # krovak east-north
     [2066, False],  # cass
     [2964, False],  # aea
     [3410, False],  # cea
@@ -428,7 +458,6 @@ epsg_list = [
     [32630, False],  # UTM WGS84 north special case
     [32730, False],  # UTM WGS84 south special case
     [22700, False],  # unknown datum 'Deir_ez_Zor'
-    [31491, False],  # Germany Zone projection
     [3857, True],  # Web Mercator
     [102113, True],  # ESRI WGS_1984_Web_Mercator
 ]
@@ -442,7 +471,10 @@ epsg_list = [
 )
 def test_tiff_srs(use_epsg_code, epsg_code, epsg_proj4_broken):
     sr = osr.SpatialReference()
-    sr.ImportFromEPSG(epsg_code)
+    if epsg_code > 32767:
+        sr.SetFromUserInput('ESRI:' + str(epsg_code))
+    else:
+        sr.ImportFromEPSG(epsg_code)
     expect_fail = False
     if use_epsg_code == 0:
         proj4str = sr.ExportToProj4()

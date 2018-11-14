@@ -91,7 +91,10 @@ public:
     ~SIGDEMDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;
-    const char* GetProjectionRef(void) override;
+    const char* _GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     static GDALDataset *CreateCopy(
         const char *pszFilename,

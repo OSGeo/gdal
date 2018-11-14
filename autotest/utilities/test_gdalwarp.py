@@ -38,6 +38,7 @@ import gdaltest
 import test_cli_utilities
 import pytest
 
+
 ###############################################################################
 # Simple test
 
@@ -552,12 +553,13 @@ def test_gdalwarp_27():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif -overwrite')
 
     ds = gdal.Open('tmp/testgdalwarp27.tif')
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
+    # 22615 for MacOSX
     assert cs == 22006 or cs == 22615, 'Bad checksum'
 
     gt = ds.GetGeoTransform()
@@ -581,22 +583,15 @@ def test_gdalwarp_28():
     assert ds is not None
 
     # Check that there is no hole at the south pole location
-    # First is gcc unoptimized with proj 5.1
-    # Second is clang with proj 4.8
-    # Third is mingw_w64 with proj 4.9.2
-    # Fourth is macosx with proj 5.0.1
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs in (37509, 46728, 26309, 32622), 'Bad checksum'
+    # 1219 for MacOSX
+    assert cs in (1794,1219), 'Bad checksum'
 
     gt = ds.GetGeoTransform()
-    # First is GCC; Second is MSVC 6.0. Third is proj 4.9.2. Fourth is proj 4.9.3
-    expected_gt1 = [-10009026.853177125, 43693.733128680084, 0.0, 5024463.6669970695, 0.0, -43693.733128680084]
-    expected_gt2 = [-10009026.853177125, 43691.280523668691, 0.0, 5022121.8610583926, 0.0, -43691.280523668691]
-    expected_gt3 = [-19976414.463615071, 95707.390034570519, 0.0, 20003931.458625447, 0.0, -95707.390034570519]
-    expected_gt4 = (-19976414.463615071, 95709.342728086922, 0.0, 19004529.751051534, 0.0, -95474.761005714157)
+    expected_gt1 = [-18494092.97555049, 93907.15126464187, 0.0, 20003931.458625447, 0.0, -93907.15126464187]
     for i in range(6):
-        assert abs(gt[i] - expected_gt1[i]) <= 1 or abs(gt[i] - expected_gt2[i]) <= 1 or abs(gt[i] - expected_gt3[i]) <= 1 or abs(gt[i] - expected_gt4[i]) <= 1, \
-            'Bad gt'
+        assert abs(gt[i] - expected_gt1[i]) <= 1 , \
+            ('Bad gt', gt)
 
     ds = None
 

@@ -45,7 +45,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
 {
     printf( "Usage: gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
             "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
-            "                [-listmdd] [-mdd domain|`all`]*\n"
+            "                [-listmdd] [-mdd domain|`all`] [-wkt_format WKT1|WKT2|...]*\n"
             "                [-sd subdataset] [-oo NAME=VALUE]* datasetname\n" );
 
     if( pszErrorMsg != nullptr )

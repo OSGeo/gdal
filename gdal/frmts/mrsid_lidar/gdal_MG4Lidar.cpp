@@ -86,7 +86,10 @@ public:
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
    CPLErr         GetGeoTransform( double * padfTransform ) override;
-   const char *GetProjectionRef() override;
+   const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
 protected:
    MG4PointReader *reader;
@@ -577,7 +580,7 @@ CPLErr MG4LidarDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *MG4LidarDataset::GetProjectionRef()
+const char *MG4LidarDataset::_GetProjectionRef()
 
 {
    const char * wkt = CPLGetXMLValue(poXMLPCView, "GeoReference", nullptr);

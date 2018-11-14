@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn) :
     poDS(poDSIn),
     poFeatureDefn(nullptr),
-    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG)),
     nNextInSeq(0),
     iGeometryField(-1),
     iLatitudeField(-1),
@@ -47,7 +47,9 @@ OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn) :
     nOffset(0),
     bEOF(FALSE),
     bFirstTokenIsFID(FALSE)
-{}
+{
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                            ~OGRGFTLayer()                            */

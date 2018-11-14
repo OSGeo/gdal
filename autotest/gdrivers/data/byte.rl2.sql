@@ -1,6 +1,6 @@
 -- SQL SQLITE
 CREATE TABLE spatial_ref_sys(srid INTEGER PRIMARY KEY,auth_name,auth_srid,ref_sys_name,proj4text,srtext);
-INSERT INTO spatial_ref_sys VALUES(26711,'epsg',26711,'','','PROJCS["",GEOGCS["",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982]],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000]],AUTHORITY["EPSG","26711"]]');
+INSERT INTO spatial_ref_sys VALUES(26711,'epsg',26711,'','','PROJCS["",GEOGCS["",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],UNIT["meter",1],AUTHORITY["EPSG","26711"]]');
 CREATE TABLE geometry_columns(f_table_name,f_geometry_column,geometry_type,coord_dimension,srid,spatial_index_enabled);
 INSERT INTO geometry_columns VALUES('byte_sections','geometry',3,2,26711,1);
 INSERT INTO geometry_columns VALUES('byte_tiles','geometry',3,2,26711,1);

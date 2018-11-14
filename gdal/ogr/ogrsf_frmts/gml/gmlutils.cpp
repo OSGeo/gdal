@@ -165,6 +165,7 @@ class SRSCache
         oLastDesc.osSRSName = osSRSName;
         oLastDesc.bAxisInvert = GML_IsSRSLatLongOrder(osSRSName.c_str());
         oLastDesc.poSRS = new OGRSpatialReference();
+        oLastDesc.poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( oLastDesc.poSRS->SetFromUserInput(osSRSName.c_str()) !=
             OGRERR_NONE )
         {
@@ -320,26 +321,17 @@ char *GML_GetSRSName(const OGRSpatialReference *poSRS,
     if (poSRS == nullptr)
         return CPLStrdup("");
 
-    const char *pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
-    const char *pszAuthName = poSRS->GetAuthorityName(pszTarget);
-    const char *pszAuthCode = poSRS->GetAuthorityCode(pszTarget);
+    const auto& map = poSRS->GetDataAxisToSRSAxisMapping();
+    if( eSRSNameFormat != SRSNAME_SHORT &&
+        map.size() >= 2 && map[0] == 2 && map[1] == 1 )
+    {
+        *pbCoordSwap = true;
+    }
+
+    const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
+    const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
     if( nullptr != pszAuthName && nullptr != pszAuthCode )
     {
-        if( EQUAL( pszAuthName, "EPSG" ) &&
-            eSRSNameFormat != SRSNAME_SHORT &&
-            !(const_cast<OGRSpatialReference *>(poSRS)->EPSGTreatsAsLatLong() ||
-              const_cast<OGRSpatialReference *>(poSRS)->
-                  EPSGTreatsAsNorthingEasting()))
-        {
-            OGRSpatialReference oSRS;
-            if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
-            {
-                if(oSRS.EPSGTreatsAsLatLong() ||
-                   oSRS.EPSGTreatsAsNorthingEasting())
-                    *pbCoordSwap = true;
-            }
-        }
-
         if (eSRSNameFormat == SRSNAME_SHORT)
         {
             return CPLStrdup(

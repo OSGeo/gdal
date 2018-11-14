@@ -79,7 +79,10 @@ class LCPDataset final: public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    const char *GetProjectionRef(void) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 };
 
 /************************************************************************/
@@ -1196,8 +1199,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     // we fail.
     double adfSrcGeoTransform[6] = { 0.0 };
     poSrcDS->GetGeoTransform( adfSrcGeoTransform );
-    OGRSpatialReference oSrcSRS;
-    const char *pszWkt = poSrcDS->GetProjectionRef();
+    const OGRSpatialReference* poSrcSRS = poSrcDS->GetSpatialRef();
     double dfLongitude = 0.0;
     double dfLatitude = 0.0;
 
@@ -1207,14 +1209,14 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     {
         dfLatitude = nLatitude;
     }
-    else if( !EQUAL( pszWkt, "" ) )
+    else if( poSrcSRS )
     {
-        oSrcSRS.importFromWkt( pszWkt );
         OGRSpatialReference oDstSRS;
         oDstSRS.importFromEPSG( 4269 );
+        oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRCoordinateTransformation *poCT
             = reinterpret_cast<OGRCoordinateTransformation *>(
-                OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS ) );
+                OGRCreateCoordinateTransformation( poSrcSRS, &oDstSRS ) );
         if( poCT != nullptr )
         {
             dfLatitude =
@@ -1245,9 +1247,9 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     }
     // Set the linear units if the metadata item was not already set, and we
     // have an SRS.
-    if( bSetLinearUnits && !EQUAL( pszWkt, "" ) )
+    if( bSetLinearUnits && poSrcSRS )
     {
-        const char *pszUnit = oSrcSRS.GetAttrValue( "UNIT", 0 );
+        const char *pszUnit = poSrcSRS->GetAttrValue( "UNIT", 0 );
         if( pszUnit == nullptr )
         {
             if( bStrict )
@@ -1283,7 +1285,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
                 if( bStrict )
                 nLinearUnits = 0;
             }
-            pszUnit = oSrcSRS.GetAttrValue( "UNIT", 1 );
+            pszUnit = poSrcSRS->GetAttrValue( "UNIT", 1 );
             if( pszUnit != nullptr )
             {
                 const double dfScale = CPLAtof( pszUnit );
@@ -1655,7 +1657,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *LCPDataset::GetProjectionRef()
+const char *LCPDataset::_GetProjectionRef()
 
 {
     return pszProjection;

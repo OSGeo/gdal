@@ -279,8 +279,15 @@ public:
     GDALWMSDataset();
     virtual ~GDALWMSDataset();
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection(const char *proj) override;
+    virtual const char *_GetProjectionRef() override;
+    virtual CPLErr _SetProjection(const char *proj) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
+
     virtual CPLErr GetGeoTransform(double *gt) override;
     virtual CPLErr SetGeoTransform(double *gt) override;
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options) override;

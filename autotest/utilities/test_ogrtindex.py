@@ -91,7 +91,7 @@ def test_ogrtindex_1(srs=None):
     assert ds.GetLayer(0).GetFeatureCount() == 4, 'did not get expected feature count'
 
     if srs is not None:
-        assert ds.GetLayer(0).GetSpatialRef() is not None and ds.GetLayer(0).GetSpatialRef().IsSame(srs), \
+        assert ds.GetLayer(0).GetSpatialRef() is not None and ds.GetLayer(0).GetSpatialRef().IsSame(srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), \
             'did not get expected spatial ref'
     else:
         assert ds.GetLayer(0).GetSpatialRef() is None, 'did not get expected spatial ref'

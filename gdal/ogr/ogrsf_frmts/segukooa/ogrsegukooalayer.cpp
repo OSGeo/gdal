@@ -190,11 +190,13 @@ void OGRUKOOAP190Layer::ParseHeaders()
             if (STARTS_WITH(pszLine + 33 - 1, "WGS84") ||
                 STARTS_WITH(pszLine + 33 - 1, "WGS-84"))
             {
-                poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
+                poSRS = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             }
             else if (STARTS_WITH(pszLine + 33 - 1, "WGS72"))
             {
                 poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 poSRS->SetFromUserInput("WGS72");
             }
         }

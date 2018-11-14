@@ -83,8 +83,11 @@ class GDALEEDAIDataset: public GDALEEDABaseDataset
                 GDALEEDAIDataset();
                 virtual ~GDALEEDAIDataset();
 
-                virtual const char* GetProjectionRef() CPL_OVERRIDE;
-                virtual CPLErr GetGeoTransform( double* ) CPL_OVERRIDE;
+                virtual const char* _GetProjectionRef() override;
+                const OGRSpatialReference* GetSpatialRef() const override {
+                    return GetSpatialRefFromOldGetProjectionRef();
+                }
+                virtual CPLErr GetGeoTransform( double* ) override;
 
                 virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
@@ -93,7 +96,7 @@ class GDALEEDAIDataset: public GDALEEDABaseDataset
                                  int nBandCount, int *panBandMap,
                                  GSpacing nPixelSpace, GSpacing nLineSpace,
                                  GSpacing nBandSpace,
-                                 GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
+                                 GDALRasterIOExtraArg* psExtraArg ) override;
 
                 bool ComputeQueryStrategy();
 
@@ -1228,7 +1231,7 @@ bool GDALEEDAIDataset::ComputeQueryStrategy()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char* GDALEEDAIDataset::GetProjectionRef()
+const char* GDALEEDAIDataset::_GetProjectionRef()
 {
     return m_osWKT.c_str();
 }

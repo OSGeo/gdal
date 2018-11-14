@@ -41,12 +41,14 @@ CPL_CVSID("$Id$")
 
 OGRSUALayer::OGRSUALayer( VSILFILE* fp ) :
     poFeatureDefn(new OGRFeatureDefn( "layer" )),
-    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG)),
     fpSUA(fp),
     bEOF(false),
     bHasLastLine(false),
     nNextFID(0)
 {
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPolygon );

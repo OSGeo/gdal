@@ -103,37 +103,53 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
     if( STARTS_WITH_CI(pszDatum, "EPSG:") )
         return importFromEPSG( atoi(pszDatum+5) );
 
+
+    CPLString osGEOGCS = lookupInDict( "ecw_cs.wkt", pszDatum );
+    if( osGEOGCS.empty() )
+        return OGRERR_UNSUPPORTED_SRS;
+
 /* -------------------------------------------------------------------- */
 /*      Set projection if we have it.                                   */
 /* -------------------------------------------------------------------- */
     if( !EQUAL(pszProj, "GEODETIC") )
     {
-        const OGRErr eErr = importFromDict( "ecw_cs.wkt", pszProj );
-        if( eErr != OGRERR_NONE )
-            return eErr;
+        CPLString osProjWKT = lookupInDict( "ecw_cs.wkt", pszProj );
+        if( osProjWKT.empty() || osProjWKT.back() != ']' )
+            return OGRERR_UNSUPPORTED_SRS;
+
+        if( osProjWKT.find("LOCAL_CS[") == 0 )
+        {
+            return importFromWkt(osProjWKT);
+        }
+
+        // Remove trailing ]
+        osProjWKT.resize(osProjWKT.size() - 1);
+
+        // Remove any UNIT
+        auto nPos = osProjWKT.find(",UNIT");
+        if( nPos != std::string::npos )
+        {
+            osProjWKT.resize(nPos);
+        }
+
+        // Insert GEOGCS
+        nPos = osProjWKT.find(",PROJECTION");
+        if( nPos == std::string::npos )
+            return OGRERR_UNSUPPORTED_SRS;
+
+        osProjWKT = osProjWKT.substr(0, nPos) + ',' + osGEOGCS + osProjWKT.substr(nPos);
 
         if( EQUAL(pszUnits, "FEET") )
-            SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV));
+            osProjWKT += ",UNIT[\"Foot_US\",0.3048006096012192]]";
         else
-            SetLinearUnits( SRS_UL_METER, 1.0 );
+            osProjWKT += ",UNIT[\"Metre\",1.0]]";
+
+        return importFromWkt(osProjWKT);
     }
-
-/* -------------------------------------------------------------------- */
-/*      Set the geogcs.                                                 */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference oGeogCS;
-
-    const OGRErr eErr = oGeogCS.importFromDict( "ecw_cs.wkt", pszDatum );
-    if( eErr != OGRERR_NONE )
+    else
     {
-        Clear();
-        return eErr;
+        return importFromWkt(osGEOGCS);
     }
-
-    if( !IsLocal() )
-        CopyGeogCSFrom( &oGeogCS );
-
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -208,11 +224,10 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
 /*      Is our GEOGCS name already defined in ecw_cs.wkt?               */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRSWork;
     const char *pszWKTDatum = GetAttrValue( "DATUM" );
 
     if( pszWKTDatum != nullptr
-        && oSRSWork.importFromDict( "ecw_cs.wkt", pszWKTDatum ) == OGRERR_NONE)
+        && !lookupInDict( "ecw_cs.wkt", pszWKTDatum ).empty() )
     {
         strncpy( pszDatum, pszWKTDatum, BUFFER_SIZE );
         pszDatum[BUFFER_SIZE-1] = '\0';
@@ -313,8 +328,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
         const char *pszPROJCS = GetAttrValue( "PROJCS" );
 
         if( pszPROJCS != nullptr
-            && oSRSWork.importFromDict( "ecw_cs.wkt", pszPROJCS ) == OGRERR_NONE
-            && oSRSWork.IsProjected() )
+            && lookupInDict( "ecw_cs.wkt", pszPROJCS ).find("PROJCS") == 0 )
         {
             strncpy( pszProj, pszPROJCS, BUFFER_SIZE );
             pszProj[BUFFER_SIZE-1] = '\0';

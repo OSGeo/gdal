@@ -386,7 +386,10 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
     // reasonable bounds.
     if( poSRSIn != nullptr )
     {
-        poFile->SetSpatialRef(poSRSIn);
+        auto poSRSClone = poSRSIn->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poFile->SetSpatialRef(poSRSClone);
+        poSRSClone->Release();
         // SetSpatialRef() has cloned the passed geometry
         poFile->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(
             poFile->GetSpatialRef());

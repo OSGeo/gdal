@@ -42,10 +42,12 @@ const char *GNMNetwork::GetName() const
     return m_soName;
 }
 
-const char *GNMNetwork::GetProjectionRef()
+//! @cond Doxygen_Suppress
+const char *GNMNetwork::_GetProjectionRef()
 {
     return m_soSRS;
 }
+//! @endcond
 
 char **GNMNetwork::GetFileList()
 {

@@ -126,7 +126,10 @@ class FASTDataset final: public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr      GetGeoTransform( double * ) override;
-    const char  *GetProjectionRef() override;
+    const char  *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     VSILFILE    *FOpenChannel( const char *, int iBand, int iFASTBand );
     void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
 
@@ -227,7 +230,7 @@ CPLErr FASTDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *FASTDataset::GetProjectionRef()
+const char *FASTDataset::_GetProjectionRef()
 
 {
     if( pszProjection )

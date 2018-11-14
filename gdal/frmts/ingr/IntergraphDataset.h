@@ -70,5 +70,8 @@ public:
 
     virtual CPLErr GetGeoTransform( double *padfTransform ) override;
     virtual CPLErr SetGeoTransform( double *padfTransform ) override;
-    virtual CPLErr SetProjection( const char *pszProjString ) override;
+    virtual CPLErr _SetProjection( const char *pszProjString ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 };

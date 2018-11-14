@@ -424,7 +424,7 @@ def test_ogr_gmlas_geometryproperty():
         pytest.fail(f['pointPropertyRepeated_xml'])
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('geometryProperty')
     sr = lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetSpatialRef()
-    assert not (sr is None or sr.ExportToWkt().find('4326') < 0 or sr.ExportToWkt().find('AXIS') >= 0)
+    assert not (sr is None or sr.ExportToWkt().find('4326') < 0)
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     # Axis swapping
     if wkt != 'POINT (2 49)':
@@ -436,14 +436,14 @@ def test_ogr_gmlas_geometryproperty():
         pytest.fail()
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('pointProperty')
     sr = lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetSpatialRef()
-    assert not (sr is None or sr.ExportToWkt().find('4326') < 0 or sr.ExportToWkt().find('AXIS') >= 0)
+    assert not (sr is None or sr.ExportToWkt().find('4326') < 0)
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'POINT (3 50)':
         f.DumpReadable()
         pytest.fail()
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('lineStringProperty')
     sr = lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetSpatialRef()
-    assert not (sr is None or sr.ExportToWkt().find('4326') < 0 or sr.ExportToWkt().find('AXIS') >= 0)
+    assert not (sr is None or sr.ExportToWkt().find('4326') < 0)
     assert lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetType() == ogr.wkbLineString
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'LINESTRING (2 49)':

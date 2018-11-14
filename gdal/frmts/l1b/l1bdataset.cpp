@@ -324,7 +324,10 @@ class L1BDataset : public GDALPamDataset
     virtual ~L1BDataset();
 
     virtual int GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    virtual const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
 
     static int  Identify( GDALOpenInfo * );
@@ -643,7 +646,7 @@ int L1BDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *L1BDataset::GetGCPProjection()
+const char *L1BDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 )
@@ -1697,7 +1700,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         if( EQUAL(szEllipsoid, "WGS-84  ") )
         {
             CPLFree(pszGCPProjection);
-            pszGCPProjection = CPLStrdup(SRS_WKT_WGS84);
+            pszGCPProjection = CPLStrdup(SRS_WKT_WGS84_LAT_LONG);
         }
         else if( EQUAL(szEllipsoid, "  GRS 80") )
         {

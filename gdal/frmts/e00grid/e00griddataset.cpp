@@ -111,7 +111,10 @@ class E00GRIDDataset : public GDALPamDataset
     ~E00GRIDDataset() override;
 
     CPLErr GetGeoTransform( double * ) override;
-    const char* GetProjectionRef() override;
+    const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -717,7 +720,7 @@ const char* E00GRIDDataset::ReadLine()
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char* E00GRIDDataset::GetProjectionRef()
+const char* E00GRIDDataset::_GetProjectionRef()
 
 {
     ReadMetadata();

@@ -46,7 +46,7 @@ def test_gdalinfo_1():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif', encoding = 'UTF-8')
     assert (err is None or err == ''), 'got error/warning'
     assert ret.find('Driver: GTiff/GeoTIFF') != -1
 
@@ -131,13 +131,13 @@ def test_gdalinfo_7():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/gcps.vrt')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -wkt_format WKT1 ../gcore/data/gcps.vrt')
     assert ret.find('GCP Projection =') != -1
     assert ret.find('PROJCS["NAD27 / UTM zone 11N"') != -1
     assert ret.find('(100,100) -> (446720,3745320,0)') != -1
 
     # Same but with -nogcps
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -nogcp ../gcore/data/gcps.vrt')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -wkt_format WKT1 -nogcp ../gcore/data/gcps.vrt')
     assert ret.find('GCP Projection =') == -1
     assert ret.find('PROJCS["NAD27 / UTM zone 11N"') == -1
     assert ret.find('(100,100) -> (446720,3745320,0)') == -1
@@ -265,7 +265,7 @@ def test_gdalinfo_16():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    (ret, _) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak=False)
+    (ret, _) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak=False, encoding = 'UTF-8')
     assert ret.startswith('Driver: GTiff/GeoTIFF')
 
 ###############################################################################
@@ -423,7 +423,7 @@ def test_gdalinfo_28():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif', encoding = 'UTF-8')
     ret = json.loads(ret)
     assert (err is None or err == ''), 'got error/warning'
     assert ret['driverShortName'] == 'GTiff'
@@ -521,7 +521,7 @@ def test_gdalinfo_34():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/gcps.vrt')
     ret = json.loads(ret)
     assert 'wkt' in ret['gcps']['coordinateSystem']
-    assert ret['gcps']['coordinateSystem']['wkt'].find('PROJCS["NAD27 / UTM zone 11N"') != -1
+    assert ret['gcps']['coordinateSystem']['wkt'].find('PROJCRS["NAD27 / UTM zone 11N"') != -1
     assert ret['gcps']['gcpList'][0]['x'] == 440720.0
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -nogcp ../gcore/data/gcps.vrt')

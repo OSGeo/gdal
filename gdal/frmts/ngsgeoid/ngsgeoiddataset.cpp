@@ -64,7 +64,10 @@ class NGSGEOIDDataset : public GDALPamDataset
     virtual     ~NGSGEOIDDataset();
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char* GetProjectionRef() override;
+    virtual const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -387,7 +390,7 @@ CPLErr NGSGEOIDDataset::GetGeoTransform( double * padfTransform )
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char* NGSGEOIDDataset::GetProjectionRef()
+const char* NGSGEOIDDataset::_GetProjectionRef()
 {
     if( !osProjection.empty() )
     {
@@ -445,7 +448,7 @@ const char* NGSGEOIDDataset::GetProjectionRef()
         return osProjection.c_str();
     }
 
-    return SRS_WKT_WGS84;
+    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/

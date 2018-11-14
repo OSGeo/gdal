@@ -3246,7 +3246,7 @@ char** PostGISRasterDataset::GetMetadata(const char *pszDomain) {
  * be suitable for use with the OGRSpatialReference
  * class.
  *****************************************************/
-const char* PostGISRasterDataset::GetProjectionRef() {
+const char* PostGISRasterDataset::_GetProjectionRef() {
     CPLString osCommand;
 
     if (nSrid == -1)
@@ -3276,7 +3276,7 @@ const char* PostGISRasterDataset::GetProjectionRef() {
  * \brief Set projection definition. The input string must
  * be in OGC WKT or PROJ.4 format
  **********************************************************/
-CPLErr PostGISRasterDataset::SetProjection(const char * pszProjectionRef) {
+CPLErr PostGISRasterDataset::_SetProjection(const char * pszProjectionRef) {
     VALIDATE_POINTER1(pszProjectionRef, "SetProjection", CE_Failure);
 
     CPLString osCommand;

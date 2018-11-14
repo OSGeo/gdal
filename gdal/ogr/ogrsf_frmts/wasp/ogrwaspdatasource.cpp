@@ -101,6 +101,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
     CPLString sLine( pszLine );
     sLine = sLine.substr(0, sLine.find("|"));
     OGRSpatialReference * poSpatialRef = new OGRSpatialReference;
+    poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if ( poSpatialRef->importFromProj4( sLine.c_str() ) != OGRERR_NONE )
     {
         if (!bSilent) CPLError( CE_Warning, CPLE_FileIO, "cannot find spatial reference");
@@ -300,9 +301,15 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
         }
     }
 
+    auto poSRSClone = poSpatialRef;
+    if( poSRSClone )
+    {
+        poSRSClone = poSRSClone->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     oLayer.reset( new OGRWAsPLayer( CPLGetBasename(pszName),
                                     hFile,
-                                    poSpatialRef,
+                                    poSRSClone,
                                     sFirstField,
                                     sSecondField,
                                     sGeomField,
@@ -310,6 +317,8 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
                                     pdfTolerance.release(),
                                     pdfAdjacentPointTolerance.release(),
                                     pdfPointToCircleRadius.release() ) );
+    if( poSRSClone )
+        poSRSClone->Release();
 
     char * ppszWktSpatialRef = nullptr ;
     if ( poSpatialRef

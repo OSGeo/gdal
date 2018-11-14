@@ -69,12 +69,22 @@ OGRMemDataSource::~OGRMemDataSource()
 
 OGRLayer *
 OGRMemDataSource::ICreateLayer( const char *pszLayerName,
-                                OGRSpatialReference *poSRS,
+                                OGRSpatialReference *poSRSIn,
                                 OGRwkbGeometryType eType,
                                 char **papszOptions )
 {
     // Create the layer object.
+    OGRSpatialReference* poSRS = poSRSIn;
+    if( poSRS )
+    {
+        poSRS = poSRS->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     OGRMemLayer *poLayer = new OGRMemLayer(pszLayerName, poSRS, eType);
+    if( poSRS )
+    {
+        poSRS->Release();
+    }
 
     if( CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false) )
         poLayer->SetAdvertizeUTF8(true);

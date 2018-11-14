@@ -214,7 +214,10 @@ private:
 
     // Overridden GDALDataset methods
     CPLErr GetGeoTransform(double *padfTransform) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     /// Open is not a method in GDALDataset; it is the driver.
     static GDALDataset *Open(GDALOpenInfo *);
@@ -1091,7 +1094,7 @@ DODSDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 
 const char *
-DODSDataset::GetProjectionRef()
+DODSDataset::_GetProjectionRef()
 {
     return oWKT.c_str();
 }

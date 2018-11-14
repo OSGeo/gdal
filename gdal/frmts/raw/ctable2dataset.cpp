@@ -54,7 +54,10 @@ class CTable2Dataset final: public RawDataset
 
     CPLErr SetGeoTransform( double * padfTransform ) override;
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     void   FlushCache(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -325,10 +328,10 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *CTable2Dataset::GetProjectionRef()
+const char *CTable2Dataset::_GetProjectionRef()
 
 {
-    return SRS_WKT_WGS84;
+    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/

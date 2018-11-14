@@ -34,7 +34,6 @@ import os
 
 import pytest
 
-import gdaltest
 from osgeo import osr, gdal
 
 bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["bonne"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",60.0],UNIT["Meter",1.0]]'
@@ -62,7 +61,7 @@ transform_list = [
 
     # Simple straight forward reprojection.
     ('+proj=utm +zone=11 +datum=WGS84', (398285.45, 2654587.59, 0.0), 0.02,
-     'WGS84', (-118.0, 24.0, 0.0), 0.00001,
+     'WGS84', (24.0, -118.0, 0.0), 0.00001,
      'UTM_WGS84', None, None),
 
     # Ensure that prime meridian *and* axis orientation changes are applied.
@@ -72,13 +71,8 @@ transform_list = [
     #     'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
     #     'NGO_Oslo_zone1_NGO', None, '4.8.0' ),
 
-    # Verify that 26592 "pcs.override" is working well.
-    ('EPSG:26591', (1550000, 10000, 0.0), 0.02,
-     'EPSG:4265', (9.449316, 0.090469, 0.00), 0.00001,
-     'MMRome1_MMGreenwich', None, None),
-
     # Test Bonne projection.
-    ('WGS84', (1.0, 65.0, 0.0), 0.00001,
+    ('WGS84', (65.0, 1.0, 0.0), 0.00001,
      bonne, (47173.75, 557621.30, 0.0), 0.02,
      'Bonne_WGS84', None, None),
 
@@ -94,7 +88,7 @@ transform_list = [
 
     # Test Google Mercator (EPSG:3785)
     ('EPSG:3785', (1572570.342, 6728429.67, 0.0), 0.001,
-     'WGS84', (14.126639735716626, 51.601722482149995, 0.0), 0.0000001,
+     'WGS84', (51.601722482149995, 14.126639735716626, 0.0), 0.0000001,
      'GoogleMercator(#3136)', None, None),
 
     # Test Equirectangular with all parameters
@@ -140,11 +134,6 @@ transform_list = [
 )
 def test_proj(src_srs, src_xyz, src_error,
              dst_srs, dst_xyz, dst_error, unit_name, options, requirements):
-
-    import osr_ct
-    osr_ct.test_osr_ct_1()
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
 
     if requirements is not None and requirements[:5] == 'GRID:':
         proj_lib = os.getenv('PROJ_LIB')

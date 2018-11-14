@@ -1,3 +1,54 @@
+MIGRATION GUIDE FROM GDAL 2.4 to GDAL 2.5
+-----------------------------------------
+
+- OSRImportFromEPSG() takes into account official axis order.
+- removal of OPTGetProjectionMethods(), OPTGetParameterList() and OPTGetParameterInfo()
+  No equivalent.
+- removal of OSRFixup() and OSRFixupOrdering(): no longer needed since objects
+  constructed are always valid
+- removal of OSRStripCTParms(). Use OSRExportToWktEx() instead with the
+  FORMAT=SQSQL option
+- exportToWkt() outputs AXIS nodes
+- OSRIsSame(): now takes into account data axis to CRS axis mapping, unless
+  IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES is set as an option to OSRIsSameEx()
+- ogr_srs_api.h: SRS_WKT_WGS84 macro is no longer declared by default since
+  WKT without AXIS is too ambiguous. Prefered remediation: use SRS_WKT_WGS84_LAT_LONG.
+  Or #define USE_DEPRECATED_SRS_WKT_WGS84 before including ogr_srs_api.h
+
+Out-of-tree drivers:
+* GDALDataset::GetProjectionRef() made non-virtual.
+  Replaced by GetSpatialRef() virtual method.
+  Compatibility emulation possible by definining:
+    const char* _GetProjectionRef() override; // note leading underscore
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+
+* GDALDataset::SetProjection() made non-virtual.
+  Replaced by SetSpatialRef() virtual method.
+  Compatibility emulation possible by definining:
+    CPLErr SetProjection(const char*) override; // note leading underscore
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
+
+* GDALDataset::GetGCPProjection() made non-virtual.
+  Replaced by GetGCPSpatialRef() virtual method.
+  Compatibility emulation possible by definining:
+    const char* _GetGCPProjectionRef() override; // note leading underscore
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
+
+* GDALDataset::SetGCPs(..., const char* pszWKT) made non-virtual.
+  Replaced by SetGCPs(..., const OGRSpatialReference* poSRS) virtual mode.
+    CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection ) override; // note leading underscore
+    CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                    const OGRSpatialReference* poSRS ) override {
+        return OldSetGCPsFromNew(nGCPCountIn, pasGCPListIn, poSRS);
+    }
+
 MIGRATION GUIDE FROM GDAL 2.3 to GDAL 2.4
 -----------------------------------------
 

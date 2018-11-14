@@ -65,7 +65,10 @@ class HF2Dataset : public GDALPamDataset
     virtual     ~HF2Dataset();
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char* GetProjectionRef() override;
+    virtual const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -370,11 +373,11 @@ int HF2Dataset::LoadBlockMap()
 /*                     GetProjectionRef()                               */
 /************************************************************************/
 
-const char* HF2Dataset::GetProjectionRef()
+const char* HF2Dataset::_GetProjectionRef()
 {
     if (pszWKT)
         return pszWKT;
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/

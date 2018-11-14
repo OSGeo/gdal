@@ -138,7 +138,8 @@ OGRCSWLayer::OGRCSWLayer( OGRCSWDataSource* poDSIn ) :
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbPolygon);
-    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
+    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poFeatureDefn->GetGeomFieldDefn(0)->SetName("boundingbox");
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     {
