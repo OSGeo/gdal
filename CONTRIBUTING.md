@@ -83,7 +83,15 @@ git rebase origin/master
 
 # At end of your work, make sure history is reasonable by folding non
 # significant commits into a consistent set
-git rebase -i master (use fixup for example to merge several commits together)
+git rebase -i master (use 'fixup' for example to merge several commits together,
+and 'reword' to modify commit messages)
+
+# or alternatively, in case there is a big number of commits and marking
+# all them as 'fixup' is tedious
+git fetch origin
+git rebase origin/master
+git reset --soft origin/master
+git commit -a -m "Put here the synthetic commit message"
 
 # push your branch
 git push my_user_name my_new_feature_branch
