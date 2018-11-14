@@ -56,9 +56,14 @@ void CPLFinalizeTLS();
  * This function calls GDALDestroyDriverManager() and OGRCleanupAll() and
  * finalize Thread Local Storage variables.
  *
- * This function should *not* usually be explicitly called by application code
- * if GDAL is dynamically linked, since it is automatically called through
+ * Prior to GDAL 2.4.0, this function should normally be explicitly called by
+ * application code if GDAL is dynamically linked (but that does not hurt),
+ * since it was automatically called through
  * the unregistration mechanisms of dynamic library loading.
+ *
+ * Since GDAL 2.4.0, this function may be called by application code, since
+ * it is no longer called automatically, on non-MSVC builds, due to ordering
+ * problems with respect to automatic destruction of global C++ objects.
  *
  * Note: no GDAL/OGR code should be called after this call!
  *
@@ -100,7 +105,6 @@ void GDALDestroy(void)
 #ifdef __GNUC__
 
 static void GDALInitialize() __attribute__ ((constructor)) ;
-static void GDALDestructor() __attribute__ ((destructor)) ;
 
 /************************************************************************/
 /* Called when GDAL is loaded by loader or by dlopen(),                 */
@@ -116,20 +120,6 @@ static void GDALInitialize()
     if( pszLocale )
         CPLsetlocale( LC_ALL, pszLocale );
 #endif
-}
-
-/************************************************************************/
-/* Called when GDAL is unloaded by loader or by dlclose(),              */
-/* and before dlclose() returns.                                        */
-/************************************************************************/
-
-static void GDALDestructor()
-{
-    if( bGDALDestroyAlreadyCalled )
-        return;
-    if( !CPLTestBool(CPLGetConfigOption("GDAL_DESTROY", "YES")) )
-        return;
-    GDALDestroy();
 }
 
 #endif // __GNUC__
