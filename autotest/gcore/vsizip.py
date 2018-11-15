@@ -697,6 +697,32 @@ def vsizip_multi_thread():
     return 'success'
 
 ###############################################################################
+# Test multithreaded compression, below the threshold where it triggers
+
+
+def vsizip_multi_thread_below_threshold():
+
+    with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS'}):
+        fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_multi_thread.zip', 'wb')
+        f = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_multi_thread.zip/test', 'wb')
+        gdal.VSIFWriteL('hello', 1, 5, f)
+        gdal.VSIFCloseL(f)
+        gdal.VSIFCloseL(fmain)
+
+    f = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_multi_thread.zip/test', 'rb')
+    data = gdal.VSIFReadL(1, 5, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/vsizip_multi_thread.zip')
+
+    if data != 'hello':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test creating ZIP64 file: uncompressed larger than 4GB, but compressed
 # data stream < 4 GB
 
@@ -811,6 +837,7 @@ gdaltest_list = [vsizip_1,
                  vsizip_13,
                  vsizip_14,
                  vsizip_multi_thread,
+                 vsizip_multi_thread_below_threshold,
                  vsizip_create_zip64,
                  vsizip_create_zip64_stream_larger_than_4G,
                  vsizip_byte_zip64_local_header_zeroed,
