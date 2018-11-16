@@ -2060,7 +2060,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     if (oStatement.GetCommand()[strlen(oStatement.GetCommand()) - 1] != ']')
     {
         /* no fields were added */
-        if (nFID == OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid)
+
+        if (nFID == OGRNullFID && pszFIDColumn != nullptr && (bIsIdentityFid || poDS->AlwaysOutputFid() ))
             oStatement.Appendf(" OUTPUT INSERTED.[%s] DEFAULT VALUES;", GetFIDColumn());
         else
             oStatement.Appendf( "DEFAULT VALUES;" );
@@ -2068,7 +2069,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     else
     {
         /* prepend VALUES section */
-        if (nFID == OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid)
+        if (nFID == OGRNullFID && pszFIDColumn != nullptr && (bIsIdentityFid || poDS->AlwaysOutputFid() ))
             oStatement.Appendf(") OUTPUT INSERTED.[%s] VALUES (", GetFIDColumn());
         else
             oStatement.Appendf( ") VALUES (" );
