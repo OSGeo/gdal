@@ -51,6 +51,7 @@ class NGSGEOIDDataset : public GDALPamDataset
     VSILFILE   *fp;
     double      adfGeoTransform[6];
     int         bIsLittleEndian;
+    CPLString   osProjection{};
 
     static int   GetHeaderInfo( const GByte* pBuffer,
                                 double* padfGeoTransform,
@@ -388,6 +389,62 @@ CPLErr NGSGEOIDDataset::GetGeoTransform( double * padfTransform )
 
 const char* NGSGEOIDDataset::GetProjectionRef()
 {
+    if( !osProjection.empty() )
+    {
+        return osProjection.c_str();
+    }
+
+    CPLString osFilename(CPLGetBasename(GetDescription()));
+    osFilename.tolower();
+
+    // See https://www.ngs.noaa.gov/GEOID/GEOID12B/faq_2012B.shtml
+
+    // GEOID2012 files ?
+    if( STARTS_WITH(osFilename, "g2012") && osFilename.size() >= 7 )
+    {
+        OGRSpatialReference oSRS;
+        if( osFilename[6] == 'h' /* Hawai */ ||
+            osFilename[6] == 's' /* Samoa */ )
+        {
+            // NAD83 (PA11)
+            oSRS.importFromEPSG(6322);
+        }
+        else if( osFilename[6] == 'g' /* Guam */ )
+        {
+            // NAD83 (MA11)
+            oSRS.importFromEPSG(6325);
+        }
+        else
+        {
+            // NAD83 (2011)
+            oSRS.importFromEPSG(6318);
+        }
+
+        char* pszProjection = nullptr;
+        oSRS.exportToWkt(&pszProjection);
+        if( pszProjection )
+            osProjection = pszProjection;
+        CPLFree(pszProjection);
+        return osProjection.c_str();
+    }
+
+    // USGG2012 files ? We should return IGS08, but there is only a
+    // geocentric CRS in EPSG, so manually forge a geographic one from it
+    if(  STARTS_WITH(osFilename, "s2012") )
+    {
+        osProjection =
+"GEOGCS[\"IGS08\",\n"
+"    DATUM[\"IGS08\",\n"
+"        SPHEROID[\"GRS 1980\",6378137,298.257222101,\n"
+"            AUTHORITY[\"EPSG\",\"7019\"]],\n"
+"        AUTHORITY[\"EPSG\",\"1141\"]],\n"
+"    PRIMEM[\"Greenwich\",0,\n"
+"        AUTHORITY[\"EPSG\",\"8901\"]],\n"
+"    UNIT[\"degree\",0.0174532925199433,\n"
+"        AUTHORITY[\"EPSG\",\"9122\"]]]";
+        return osProjection.c_str();
+    }
+
     return SRS_WKT_WGS84;
 }
 
