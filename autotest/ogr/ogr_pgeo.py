@@ -37,11 +37,26 @@ import gdaltest
 import ogrtest
 import pytest
 
+
+@pytest.fixture(
+    params=['PGeo', 'MDB'],
+    autouse=True,
+)
+def drv(request):
+    """
+    Run all tests against both PGeo and MDB drivers
+    """
+    if request.param == 'PGeo':
+        switch_driver('PGeo', 'MDB')
+    else:
+        switch_driver('MDB', 'PGeo')
+
+
 ###############################################################################
 # Basic testing
 
 
-def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
+def switch_driver(tested_driver='PGeo', other_driver='MDB'):
 
     ogrtest.pgeo_ds = None
 
@@ -63,7 +78,7 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
     drv = ogr.GetDriverByName(tested_driver)
 
     if drv is None:
-        pytest.skip()
+        pytest.skip("Driver not available: %s" % tested_driver)
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip', 'PGeoTest.zip'):
         pytest.skip()
@@ -102,14 +117,11 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
     assert feat_count == 9418, 'did not get expected feature count'
 
 
-def ogr_pgeo_mdb_1():
-    return ogr_pgeo_1('MDB', 'PGeo')
-
 ###############################################################################
 # Test spatial filter
 
 
-def ogr_pgeo_2():
+def test_ogr_pgeo_2():
     if ogrtest.pgeo_ds is None:
         pytest.skip()
 
@@ -140,7 +152,7 @@ def ogr_pgeo_2():
 # Test attribute filter
 
 
-def ogr_pgeo_3():
+def test_ogr_pgeo_3():
     if ogrtest.pgeo_ds is None:
         pytest.skip()
 
@@ -166,7 +178,7 @@ def ogr_pgeo_3():
 # Test ExecuteSQL()
 
 
-def ogr_pgeo_4():
+def test_ogr_pgeo_4():
     if ogrtest.pgeo_ds is None:
         pytest.skip()
 
@@ -188,7 +200,7 @@ def ogr_pgeo_4():
 # Test GetFeature()
 
 
-def ogr_pgeo_5():
+def test_ogr_pgeo_5():
     if ogrtest.pgeo_ds is None:
         pytest.skip()
 
@@ -203,7 +215,7 @@ def ogr_pgeo_5():
 # Run test_ogrsf
 
 
-def ogr_pgeo_6():
+def test_ogr_pgeo_6():
     if ogrtest.pgeo_ds is None:
         pytest.skip()
 
@@ -219,7 +231,7 @@ def ogr_pgeo_6():
 # Run test_ogrsf with -sql
 
 
-def ogr_pgeo_7():
+def test_ogr_pgeo_7():
     if ogrtest.pgeo_ds is None:
         pytest.skip()
 
@@ -234,7 +246,7 @@ def ogr_pgeo_7():
 ###############################################################################
 
 
-def ogr_pgeo_cleanup():
+def test_ogr_pgeo_cleanup():
 
     if ogrtest.other_driver is not None:
         print('Reregistering %s driver' % ogrtest.other_driver.GetName())
@@ -244,30 +256,3 @@ def ogr_pgeo_cleanup():
         pytest.skip()
 
     ogrtest.pgeo_ds = None
-
-
-gdaltest_list_internal = [
-    ogr_pgeo_2,
-    ogr_pgeo_3,
-    ogr_pgeo_4,
-    ogr_pgeo_5,
-    ogr_pgeo_6,
-    ogr_pgeo_7,
-    ogr_pgeo_cleanup]
-
-###############################################################################
-#
-
-
-def test_ogr_pgeo_main():
-
-    # Run with the PGeo driver only (MDB disabled)
-    gdaltest.run_tests([ogr_pgeo_1])
-    gdaltest.run_tests(gdaltest_list_internal)
-
-    # Run with the MDB driver only (PGeo disabled)
-    gdaltest.run_tests([ogr_pgeo_mdb_1])
-    gdaltest.run_tests(gdaltest_list_internal)
-
-
-
