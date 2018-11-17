@@ -1207,6 +1207,11 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         break;
     }
 
+    if( oSRS.IsProjected() )
+    {
+        oSRS.SetLinearUnits("Metre", 1.0);
+    }
+
     const bool bHaveEarthModel =
         meta->gds.majEarth != 0.0 || meta->gds.minEarth != 0.0;
     // In meters.
