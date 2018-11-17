@@ -508,6 +508,7 @@ void IRISDataset::LoadProjection()
             "degree", 0.0174532925199433);
 
         oSRSOut.SetMercator(fProjRefLat, fProjRefLon, 1.0, 0.0, 0.0);
+        oSRSOut.SetLinearUnits("Metre", 1.0);
         oSRSOut.exportToWkt(&pszSRS_WKT);
 
         // The center coordinates are given in LatLon on the defined
