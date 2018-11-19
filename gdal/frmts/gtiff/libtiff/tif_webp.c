@@ -349,6 +349,12 @@ TWebPSetupEncode(TIFF* tif)
 
   sp->state |= LSTATE_INIT_ENCODE;
 
+  if (!WebPPictureInit(&sp->sPicture)) {
+    TIFFErrorExt(tif->tif_clientdata, module,
+        "Error initializing WebP picture.");
+    return 0;
+  }
+
   if (!WebPConfigInitInternal(&sp->sEncoderConfig, WEBP_PRESET_DEFAULT,
                               sp->quality_level,
                               WEBP_ENCODER_ABI_VERSION)) {
@@ -357,19 +363,17 @@ TWebPSetupEncode(TIFF* tif)
     return 0;
   }
 
-#if WEBP_ENCODER_ABI_VERSION >= 0x0100
-  sp->sEncoderConfig.lossless = sp->lossless;
-#endif
+  // WebPConfigInitInternal above sets lossless to false
+  #if WEBP_ENCODER_ABI_VERSION >= 0x0100
+    sp->sEncoderConfig.lossless = sp->lossless;
+    if (sp->lossless) {
+      sp->sPicture.use_argb = 1;
+    }
+  #endif
 
   if (!WebPValidateConfig(&sp->sEncoderConfig)) {
     TIFFErrorExt(tif->tif_clientdata, module,
       "Error with WebP encoder configuration.");
-    return 0;
-  }
-
-  if (!WebPPictureInit(&sp->sPicture)) {
-    TIFFErrorExt(tif->tif_clientdata, module,
-        "Error initializing WebP picture.");
     return 0;
   }
 
@@ -570,6 +574,9 @@ TWebPVSetField(TIFF* tif, uint32 tag, va_list ap)
   case TIFFTAG_WEBP_LOSSLESS:
     #if WEBP_ENCODER_ABI_VERSION >= 0x0100
     sp->lossless = va_arg(ap, int);
+    if (sp->lossless){
+      sp->quality_level = 100.0f;      
+    }
     return 1;
     #else
       TIFFErrorExt(tif->tif_clientdata, module,
