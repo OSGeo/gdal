@@ -40,14 +40,23 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class IGNFHeightASCIIGridDataset: public GDALPamDataset
+class IGNFHeightASCIIGridDataset final: public GDALPamDataset
 {
         double adfGeoTransform[6]{0,1,0,0,0,1};
         int m_nArrangementOrder = 0;
 
         size_t getSampleIndex( size_t nBufferCount );
 
-        static bool ParseHeader(GDALOpenInfo* poOpenInfo,
+        static bool CheckExtentAndComputeRasterSize( double dfLongMin,
+                                                     double dfLongMax,
+                                                     double dfLatMin,
+                                                     double dfLatMax,
+                                                     double dfStepLong,
+                                                     double dfStepLat,
+                                                     double& dfRasterXSize,
+                                                     double& dfRasterYSize );
+
+        static bool ParseHeaderMNT(GDALOpenInfo* poOpenInfo,
                                 double& dfLongMin,
                                 double& dfLongMax,
                                 double& dfLatMin,
@@ -61,12 +70,24 @@ class IGNFHeightASCIIGridDataset: public GDALPamDataset
                                 int& nPrecisionCode,
                                 CPLString& osDesc);
 
+        static bool ParseHeaderGRA(GDALOpenInfo* poOpenInfo,
+                                double& dfLongMin,
+                                double& dfLongMax,
+                                double& dfLatMin,
+                                double& dfLatMax,
+                                double& dfStepLong,
+                                double& dfStepLat,
+                                double& dfRasterXSize,
+                                double& dfRasterYSize);
+
     public:
         IGNFHeightASCIIGridDataset() = default;
 
         CPLErr GetGeoTransform(double* padfGeoTransform) override;
         const char* GetProjectionRef() override { return SRS_WKT_WGS84; }
 
+        static int IdentifyMNT(GDALOpenInfo* poOpenInfo);
+        static int IdentifyGRA(GDALOpenInfo* poOpenInfo);
         static int Identify(GDALOpenInfo* poOpenInfo);
         static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
 };
@@ -77,9 +98,13 @@ class IGNFHeightASCIIGridDataset: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class IGNFHeightASCIIGridRasterBand: public GDALPamRasterBand
+class IGNFHeightASCIIGridRasterBand final: public GDALPamRasterBand
 {
+        friend class IGNFHeightASCIIGridDataset;
+
         std::vector<double> adfBuffer;
+        double m_dfNoDataValue = 0.0;
+        bool m_bHasNoDataValue = false;
 
     public:
         explicit IGNFHeightASCIIGridRasterBand(GDALDataset* poDS,
@@ -87,6 +112,7 @@ class IGNFHeightASCIIGridRasterBand: public GDALPamRasterBand
         CPLErr IReadBlock(int, int, void*) override;
 
         const char* GetUnitType() override { return "m"; }
+        double GetNoDataValue(int* pbHasNoDataValue) override;
 };
 
 /************************************************************************/
@@ -117,6 +143,16 @@ CPLErr IGNFHeightASCIIGridRasterBand:: IReadBlock(int, int nBlockYOff,
     return CE_None;
 }
 
+/************************************************************************/
+/*                          GetNoDataValue()                            */
+/************************************************************************/
+
+double IGNFHeightASCIIGridRasterBand::GetNoDataValue(int* pbHasNoDataValue)
+{
+    if( pbHasNoDataValue )
+        *pbHasNoDataValue = m_bHasNoDataValue;
+    return m_dfNoDataValue;
+}
 
 /************************************************************************/
 /*                           GetGeoTransform()                          */
@@ -129,10 +165,10 @@ CPLErr IGNFHeightASCIIGridDataset::GetGeoTransform(double* padfGeoTransform)
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                            IdentifyMNT()                             */
 /************************************************************************/
 
-int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
+int IGNFHeightASCIIGridDataset::IdentifyMNT(GDALOpenInfo* poOpenInfo)
 {
     const GByte* pabyHeader = poOpenInfo->pabyHeader;
     int iPosFirstNewLine = -1;
@@ -201,17 +237,115 @@ int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
     int nCoordinatesAtNode = 0;
     int nPrecisionCode = 0;
     CPLString osDesc;
-    return ParseHeader(poOpenInfo, dfLongMin, dfLongMax, dfLatMin, dfLatMax,
+    return ParseHeaderMNT(poOpenInfo, dfLongMin, dfLongMax, dfLatMin, dfLatMax,
                        dfStepLong, dfStepLat, dfRasterXSize, dfRasterYSize,
                        nArrangementOrder, nCoordinatesAtNode, nPrecisionCode,
                        osDesc);
 }
 
 /************************************************************************/
-/*                           ParseHeader()                              */
+/*                            IdentifyGRA()                             */
 /************************************************************************/
 
-bool IGNFHeightASCIIGridDataset::ParseHeader(GDALOpenInfo* poOpenInfo,
+int IGNFHeightASCIIGridDataset::IdentifyGRA(GDALOpenInfo* poOpenInfo)
+{
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GRA") )
+        return FALSE;
+
+    const GByte* pabyHeader = poOpenInfo->pabyHeader;
+    int nCountFields = 0;
+    int nLine = 1;
+    for(int i = 0; i < poOpenInfo->nHeaderBytes; i++ )
+    {
+        const GByte ch = pabyHeader[i];
+        if( ch == ' ' || ch == '\r' )
+        {
+            continue;
+        }
+        if( ch == '\n' )
+        {
+            if( nCountFields != 2 )
+                return FALSE;
+            if( nLine == 3 )
+            {
+                double dfLongMin = 0.0;
+                double dfLongMax = 0.0;
+                double dfLatMin = 0.0;
+                double dfLatMax = 0.0;
+                double dfStepLong = 0.0;
+                double dfStepLat = 0.0;
+                double dfRasterXSize = 0.0;
+                double dfRasterYSize = 0.0;
+                return ParseHeaderGRA(poOpenInfo,
+                    dfLongMin, dfLongMax, dfLatMin, dfLatMax,
+                    dfStepLong, dfStepLat, dfRasterXSize, dfRasterYSize);
+            }
+            nCountFields = 0;
+            nLine ++;
+            continue;
+        }
+        if( i == 0 || pabyHeader[i-1] == ' ' || pabyHeader[i-1] == '\n' )
+        {
+            nCountFields ++;
+        }
+        if( !((ch >= '0' && ch <= '9') || ch == '-' || ch == '.') )
+        {
+            return FALSE;
+        }
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                             Identify()                               */
+/************************************************************************/
+
+int IGNFHeightASCIIGridDataset::Identify(GDALOpenInfo* poOpenInfo)
+{
+    return (IdentifyMNT(poOpenInfo) == TRUE) ||
+           (IdentifyGRA(poOpenInfo) == TRUE);
+}
+
+/************************************************************************/
+/*                    CheckExtentAndComputeRasterSize()                 */
+/************************************************************************/
+
+bool IGNFHeightASCIIGridDataset::CheckExtentAndComputeRasterSize(
+                                                        double dfLongMin,
+                                                        double dfLongMax,
+                                                        double dfLatMin,
+                                                        double dfLatMax,
+                                                        double dfStepLong,
+                                                        double dfStepLat,
+                                                        double& dfRasterXSize,
+                                                        double& dfRasterYSize)
+{
+    if( !(dfLongMin >= -180.0 && dfLongMax <= 180.0 && dfLongMin < dfLongMax &&
+          dfLatMin >= -90.0 && dfLatMax <= 90.0 && dfLatMin < dfLatMax) )
+    {
+        return false;
+    }
+    if( !(dfStepLong > 0 && dfStepLong < 360 &&
+          dfStepLat > 0 && dfStepLat < 180) )
+    {
+        return false;
+    }
+    dfRasterXSize = (dfLongMax - dfLongMin) / dfStepLong;
+    dfRasterYSize = (dfLatMax - dfLatMin) / dfStepLat;
+    if( dfRasterXSize > 10000 || dfRasterYSize > 10000 ||
+        dfRasterXSize * dfRasterYSize > 10e6 )
+    {
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                         ParseHeaderMNT()                             */
+/************************************************************************/
+
+bool IGNFHeightASCIIGridDataset::ParseHeaderMNT(GDALOpenInfo* poOpenInfo,
                                             double& dfLongMin,
                                             double& dfLongMax,
                                             double& dfLatMin,
@@ -237,25 +371,15 @@ bool IGNFHeightASCIIGridDataset::ParseHeader(GDALOpenInfo* poOpenInfo,
     dfLongMax = CPLAtof(aosTokens[1]);
     dfLatMin = CPLAtof(aosTokens[2]);
     dfLatMax = CPLAtof(aosTokens[3]);
-    if( !(dfLongMin >= -180.0 && dfLongMax <= 180.0 && dfLongMin < dfLongMax &&
-          dfLatMin >= -90.0 && dfLatMax <= 90.0 && dfLatMin < dfLatMax) )
-    {
-        return false;
-    }
     dfStepLong = CPLAtof(aosTokens[4]);
     dfStepLat = CPLAtof(aosTokens[5]);
-    if( !(dfStepLong > 0 && dfStepLong < 360 &&
-          dfStepLat > 0 && dfStepLat < 180) )
+    if( !CheckExtentAndComputeRasterSize(
+            dfLongMin, dfLongMax, dfLatMin, dfLatMax,
+            dfStepLong, dfStepLat, dfRasterXSize, dfRasterYSize) )
     {
         return false;
     }
-    dfRasterXSize = (dfLongMax - dfLongMin) / dfStepLong;
-    dfRasterYSize = (dfLatMax - dfLatMin) / dfStepLat;
-    if( dfRasterXSize > 10000 || dfRasterYSize > 10000 ||
-        dfRasterXSize * dfRasterYSize > 10e6 )
-    {
-        return false;
-    }
+
     nArrangementOrder = atoi(aosTokens[6]);
 #ifdef DEBUG_VERBOSE
     CPLDebug("IGNFHeightASCIIGrid", "nArrangementOrder = %d", nArrangementOrder);
@@ -309,6 +433,36 @@ bool IGNFHeightASCIIGridDataset::ParseHeader(GDALOpenInfo* poOpenInfo,
 }
 
 /************************************************************************/
+/*                         ParseHeaderGRA()                             */
+/************************************************************************/
+
+bool IGNFHeightASCIIGridDataset::ParseHeaderGRA(GDALOpenInfo* poOpenInfo,
+                                            double& dfLongMin,
+                                            double& dfLongMax,
+                                            double& dfLatMin,
+                                            double& dfLatMax,
+                                            double& dfStepLong,
+                                            double& dfStepLat,
+                                            double& dfRasterXSize,
+                                            double& dfRasterYSize)
+{
+    std::string osHeader;
+    osHeader.assign(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
+                    poOpenInfo->nHeaderBytes);
+    CPLStringList aosTokens(CSLTokenizeString2(osHeader.c_str(), " \r\n", 0));
+    CPLAssert( aosTokens.size() >= 6 ); // from Identify
+    dfLatMin = CPLAtof(aosTokens[0]);
+    dfLatMax = CPLAtof(aosTokens[1]);
+    dfLongMin = CPLAtof(aosTokens[2]);
+    dfLongMax = CPLAtof(aosTokens[3]);
+    dfStepLat = CPLAtof(aosTokens[4]);
+    dfStepLong = CPLAtof(aosTokens[5]);
+    return CheckExtentAndComputeRasterSize(
+            dfLongMin, dfLongMax, dfLatMin, dfLatMax,
+            dfStepLong, dfStepLat, dfRasterXSize, dfRasterYSize);
+}
+
+/************************************************************************/
 /*                          getSampleIndex()                            */
 /************************************************************************/
 
@@ -341,7 +495,7 @@ size_t IGNFHeightASCIIGridDataset::getSampleIndex( size_t nBufferCount )
 
 GDALDataset* IGNFHeightASCIIGridDataset::Open(GDALOpenInfo* poOpenInfo)
 {
-    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr ||
+    if( poOpenInfo->fpL == nullptr ||
         poOpenInfo->eAccess == GA_Update )
     {
         return nullptr;
@@ -359,10 +513,26 @@ GDALDataset* IGNFHeightASCIIGridDataset::Open(GDALOpenInfo* poOpenInfo)
     int nCoordinatesAtNode = 0;
     int nPrecisionCode = 0;
     CPLString osDesc;
-    ParseHeader(poOpenInfo, dfLongMin, dfLongMax, dfLatMin, dfLatMax,
+
+    bool isMNTFormat = false;
+    if( IdentifyMNT(poOpenInfo) )
+    {
+        isMNTFormat = true;
+        ParseHeaderMNT(poOpenInfo, dfLongMin, dfLongMax, dfLatMin, dfLatMax,
                        dfStepLong, dfStepLat, dfRasterXSize, dfRasterYSize,
                        nArrangementOrder, nCoordinatesAtNode, nPrecisionCode,
                        osDesc);
+    }
+    else if( IdentifyGRA(poOpenInfo) )
+    {
+        ParseHeaderGRA(poOpenInfo, dfLongMin, dfLongMax, dfLatMin, dfLatMax,
+                       dfStepLong, dfStepLat, dfRasterXSize, dfRasterYSize);
+        nArrangementOrder = 2;
+    }
+    else
+    {
+        return nullptr;
+    }
 
     // Check file size
     VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
@@ -389,13 +559,28 @@ GDALDataset* IGNFHeightASCIIGridDataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->adfGeoTransform[5] = -dfStepLat;
     poDS->nRasterXSize = static_cast<int>( dfRasterXSize + 0.5 + 1 );
     poDS->nRasterYSize = static_cast<int>( dfRasterYSize + 0.5 + 1 );
-    poDS->GDALDataset::SetMetadataItem("DESCRIPTION", osDesc);
+    if( !osDesc.empty() )
+    {
+        poDS->GDALDataset::SetMetadataItem("DESCRIPTION", osDesc);
+    }
 
     // Parse values
     std::vector<double> adfBuffer;
     adfBuffer.resize( poDS->nRasterXSize * poDS->nRasterYSize );
     size_t nBufferCount = 0;
-    const size_t nHeaderSize = osBuffer.find('\r');
+    size_t nHeaderSize;
+    if( isMNTFormat )
+    {
+        nHeaderSize = osBuffer.find('\r');
+    }
+    else
+    {
+        nHeaderSize = osBuffer.find('\n');
+        CPLAssert(nHeaderSize != std::string::npos);
+        nHeaderSize = osBuffer.find('\n', nHeaderSize + 1);
+        CPLAssert(nHeaderSize != std::string::npos);
+        nHeaderSize = osBuffer.find('\n', nHeaderSize + 1);
+    }
     CPLAssert(nHeaderSize != std::string::npos);
     size_t nLastPos = nHeaderSize + 1;
     int iValuePerNode = 0;
@@ -476,8 +661,14 @@ GDALDataset* IGNFHeightASCIIGridDataset::Open(GDALOpenInfo* poOpenInfo)
         return nullptr;
     }
 
-    poDS->SetBand(1, new IGNFHeightASCIIGridRasterBand(poDS,
-                                                       std::move(adfBuffer)));
+    auto poBand = new IGNFHeightASCIIGridRasterBand(poDS,
+                                                       std::move(adfBuffer));
+    if( !isMNTFormat )
+    {
+        poBand->m_bHasNoDataValue = true;
+        poBand->m_dfNoDataValue = 9999;
+    }
+    poDS->SetBand(1, poBand);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -511,7 +702,7 @@ void GDALRegister_IGNFHeightASCIIGrid()
                               "IGN France height correction ASCII Grid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "frmt_various.html#IGNFHeightASCIIGrid");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mnt");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "mnt txt gra");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

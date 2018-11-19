@@ -176,6 +176,42 @@ def ignfheightasciigrid_huge():
     return 'success'
 
 
+def ignfheightasciigrid_gra():
+
+    tst = gdaltest.GDALTest(
+        'IGNFHeightASCIIGrid', 'ignfheightasciigrid.gra', 1, 21)
+    gt = (-152.125, 0.25, 0.0, -16.375, 0.0, -0.25)
+    if tst.testOpen(check_gt=gt, check_prj='WGS84') != 'success':
+        return 'fail'
+
+    ds = gdal.OpenEx('data/ignfheightasciigrid.gra', gdal.OF_RASTER)
+    if ds.GetRasterBand(1).GetNoDataValue() != 9999:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+
+def ignfheightasciigrid_gra_invalid():
+
+    contents = ['49 50\r\n2\r\n',  # missing values
+                '49 50\r\n2 3\r\n',  # missing line
+                '49 50\r\n2 3\r\nx 1\r\n',  # non numeric value
+                '-200 50\r\n2 3\r\n1 1\r\n',  # invalid value
+                ]
+
+    filename = '/vsimem/ignfheightasciigrid_invalid.gra'
+    for content in contents:
+        gdal.FileFromMemBuffer(filename, content)
+        with gdaltest.error_handler():
+            if gdal.OpenEx(filename, gdal.OF_RASTER):
+                gdaltest.post_reason('fail')
+                print(content)
+                return 'fail'
+        gdal.Unlink(filename)
+    return 'success'
+
+
+
 gdaltest_list = [
     ignfheightasciigrid_1,
     ignfheightasciigrid_2,
@@ -187,6 +223,8 @@ gdaltest_list = [
     ignfheightasciigrid_description_multiword,
     ignfheightasciigrid_invalid,
     ignfheightasciigrid_huge,
+    ignfheightasciigrid_gra,
+    ignfheightasciigrid_gra_invalid,
 ]
 
 
