@@ -1072,6 +1072,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                             OGRFieldDefn oNewFieldDefn(
                                 poCurLayer->GetLayerDefn()->GetFieldDefn(
                                     static_cast<int>(i)));
+                            oNewFieldDefn.SetSubType(OFSTNone);
                             if( ( eFieldType == OFTDate ||
                                   eFieldType == OFTTime) &&
                                 eValType == OFTDateTime )
