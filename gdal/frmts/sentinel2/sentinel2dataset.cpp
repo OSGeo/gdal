@@ -188,7 +188,6 @@ class SENTINEL2Dataset : public VRTDataset
                 int nSaturatedVal,
                 int nNodataVal,
                 const CPLString& osProductURI);
-
     public:
                     SENTINEL2Dataset(int nXSize, int nYSize);
         virtual ~SENTINEL2Dataset();
