@@ -8044,8 +8044,7 @@ def tiff_write_webp():
         return 'skip'
 
     ut = gdaltest.GDALTest('GTiff', 'md_ge_rgb_0010000.tif', 0, None,
-                           options=['COMPRESS=WEBP',
-                                    'WEBP_LOSSLESS=true'])
+                           options=['COMPRESS=WEBP'])
     return ut.testCreateCopy()
 
 ###############################################################################
@@ -8058,6 +8057,9 @@ def tiff_write_tiled_webp():
     if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
         return 'skip'
 
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP_LOSSLESS') == -1:
+        return 'skip'
+
     filename = '/vsimem/tiff_write_tiled_webp.tif'
     src_ds = gdal.Open('data/md_ge_rgb_0010000.tif')
     gdaltest.tiff_drv.CreateCopy(filename, src_ds,
@@ -8065,19 +8067,11 @@ def tiff_write_tiled_webp():
                                           'WEBP_LOSSLESS=true',
                                           'TILED=true'])
     ds = gdal.Open(filename)
-    original_stats = [src_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
-    got_stats = [ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(3)]
-    ds = None
-    src_ds = None
-
-    for i in range(3):
-        for j in range(4):
-            if abs(original_stats[i][j] - got_stats[i][j]) > 1e-1 * abs(original_stats[i][j]):
-                gdaltest.post_reason('did not get expected statistics')
-                print(i, j)
-                print(original_stats)
-                print(got_stats)
-                return 'fail'
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != [21212, 21053, 21349]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
 
     gdaltest.tiff_drv.Delete(filename)
     gdal.Unlink('data/md_ge_rgb_0010000.tif.aux.xml')
