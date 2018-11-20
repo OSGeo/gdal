@@ -528,7 +528,10 @@ NODATA_value 5
     f.write('nv 5 5 5\n')
     f.close()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
+    gdaltest.runexternal(
+        test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.tif',
+        display_live_on_parent_stdout=True,
+    )
 
     ds = gdal.Open('tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
     val = ds.GetRasterBand(1).ReadRaster()
@@ -538,7 +541,10 @@ NODATA_value 5
     val = struct.unpack('B' * 6, val)
     assert val == (1, 1, 5, 10, 10, 25)
 
-    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.vrt -of VRT')
+    gdaltest.runexternal(
+        test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.vrt -of VRT',
+        display_live_on_parent_stdout=True,
+    )
 
     ds = gdal.Open('tmp/test_gdaldem_color_relief_repeated_entry_out.vrt')
     val = ds.GetRasterBand(1).ReadRaster()

@@ -394,7 +394,7 @@ def test_ogr2ogr_py_13():
 # Test -segmentize
 
 
-@pytest.mark.xfail
+@pytest.mark.skip()
 def test_ogr2ogr_py_14():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -503,7 +503,7 @@ def test_ogr2ogr_py_17():
 # Test -wrapdateline
 
 
-@pytest.mark.xfail
+@pytest.mark.skip()
 def test_ogr2ogr_py_18():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:

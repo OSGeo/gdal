@@ -44,22 +44,24 @@ import pytest
 def gdalbuildvrt_check():
 
     ds = gdal.Open('tmp/mosaic.vrt')
-    assert ds.GetProjectionRef().find('WGS 84') != -1, \
-        ('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
+    try:
+        assert ds.GetProjectionRef().find('WGS 84') != -1, \
+            ('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
 
-    gt = ds.GetGeoTransform()
-    expected_gt = [2, 0.1, 0, 49, 0, -0.1]
-    for i in range(6):
-        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
-            ('Expected : %s\nGot : %s' % (expected_gt, gt))
+        gt = ds.GetGeoTransform()
+        expected_gt = [2, 0.1, 0, 49, 0, -0.1]
+        for i in range(6):
+            assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+                ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    assert ds.RasterXSize == 20 and ds.RasterYSize == 20, \
-        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
+        assert ds.RasterXSize == 20 and ds.RasterYSize == 20, \
+            ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
-    assert ds.RasterCount == 1, ('Wrong raster count : %d ' % (ds.RasterCount))
+        assert ds.RasterCount == 1, ('Wrong raster count : %d ' % (ds.RasterCount))
 
-    assert ds.GetRasterBand(1).Checksum() == 3508, 'Wrong checksum'
-
+        assert ds.GetRasterBand(1).Checksum() == 3508, 'Wrong checksum'
+    finally:
+        del ds
 
 ###############################################################################
 # Simple test
@@ -174,7 +176,7 @@ def test_gdalbuildvrt_4():
 
 
 # NOTE: fails. commented out originally in 4ef886421c99a4451f8873cb6e094d45ecc86d3f, not sure why
-@pytest.mark.xfail
+@pytest.mark.skip()
 def test_gdalbuildvrt_5():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         pytest.skip()

@@ -152,7 +152,6 @@ def runexternal(cmd, strin=None, check_memleak=True, display_live_on_parent_stdo
                 sys.stdout.write(c)
         else:
             ret = p.stdout.read().decode(encoding)
-        p.stdout.close()
     else:
         ret = ''
 
