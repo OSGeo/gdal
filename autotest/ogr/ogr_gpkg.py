@@ -4760,6 +4760,97 @@ def ogr_gpkg_wal():
     return 'success'
 
 ###############################################################################
+# Test JSon subtype support
+
+
+def ogr_gpkg_json():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    filename = '/vsimem/ogr_gpkg_json.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('test')
+
+    fld_defn = ogr.FieldDefn('test_json', ogr.OFTString)
+    fld_defn.SetSubType(ogr.OFSTJSON)
+    lyr.CreateField(fld_defn)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTJSON:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1 FROM test')) # will crystalize
+
+    fld_defn = ogr.FieldDefn('test2_json', ogr.OFTString)
+    fld_defn.SetSubType(ogr.OFSTJSON)
+    lyr.CreateField(fld_defn)
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() != ogr.OFSTJSON:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    fld_defn = ogr.FieldDefn('test_string', ogr.OFTString)
+    lyr.CreateField(fld_defn)
+
+    ds = None
+
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTJSON:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() != ogr.OFSTJSON:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Demote field from JSON
+    new_defn = ogr.FieldDefn('test_was_json_now_string', ogr.OFTString)
+    if lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('test2_json'), new_defn, ogr.ALTER_ALL_FLAG) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Alter field to JSON
+    new_defn = ogr.FieldDefn('test_was_string_now_json', ogr.OFTString)
+    new_defn.SetSubType(ogr.OFSTJSON)
+    if lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('test_string'), new_defn, ogr.ALTER_ALL_FLAG) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Delete JSON field
+    if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('test_json')) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    if not validate(filename):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(
+        lyr.GetLayerDefn().GetFieldIndex('test_was_json_now_string')).GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(
+        lyr.GetLayerDefn().GetFieldIndex('test_was_string_now_json')).GetSubType() != ogr.OFSTJSON:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL("SELECT 1 FROM gpkg_data_columns WHERE table_name = 'test'")
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 1: # only test_was_string_now_json remaining
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 
@@ -4847,6 +4938,7 @@ gdaltest_list = [
     ogr_gpkg_59,
     ogr_gpkg_savepoint,
     ogr_gpkg_wal,
+    ogr_gpkg_json,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
