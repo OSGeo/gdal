@@ -5546,6 +5546,42 @@ def ogr_pg_87():
     return 'success'
 
 ###############################################################################
+# Test JSON subtype
+
+
+def ogr_pg_json():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_json')
+    fld_defn = ogr.FieldDefn('test_json', ogr.OFTString)
+    fld_defn.SetSubType(ogr.OFSTJSON)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['test_json'] = '{"a": "b"}'
+    lyr.CreateFeature(f)
+
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    lyr = gdaltest.pg_ds.GetLayer('ogr_pg_json')
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTJSON:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != '{"a": "b"}':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM ogr_pg_json')
+    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTJSON:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 #
 
 
@@ -5614,6 +5650,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_85_2')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_86')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_87')
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_json')
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:AutoTest-schema.tpoly')
@@ -5737,12 +5774,13 @@ gdaltest_list_internal = [
     ogr_pg_85,
     ogr_pg_86,
     ogr_pg_87,
+    ogr_pg_json,
     ogr_pg_cleanup
 ]
 
 disabled_gdaltest_list_internal = [
     ogr_pg_table_cleanup,
-    ogr_pg_86,
+    ogr_pg_json,
     ogr_pg_cleanup]
 
 ###############################################################################

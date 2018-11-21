@@ -2187,6 +2187,11 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 
             oField.SetType( OFTDateTime );
         }
+        else if ( nTypeOID == JSONOID || nTypeOID == JSONBOID )
+        {
+            oField.SetType( OFTString );
+            oField.SetSubType( OFSTJSON );
+        }
         else /* unknown type */
         {
             CPLDebug("PG", "Unhandled OID (%d) for column %s. Defaulting to String.",
