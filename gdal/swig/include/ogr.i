@@ -195,7 +195,11 @@ typedef enum
     /** Signed 16-bit integer. Only valid for OFTInteger and OFTIntegerList. */
                                                         OFSTInt16 = 2,
     /** Single precision (32 bit) floating point. Only valid for OFTReal and OFTRealList. */
-                                                        OFSTFloat32 = 3
+                                                        OFSTFloat32 = 3,
+    /** JSON content. Only valid for OFTString.
+     * @since GDAL 2.4
+     */
+                                                        OFSTJSON = 4,
 } OGRFieldSubType;
 
 
@@ -370,6 +374,7 @@ typedef void retGetPoints;
 %constant OFSTBoolean = 1;
 %constant OFSTInt16 = 2;
 %constant OFSTFloat32 = 3;
+%constant OFSTJSON = 4;
 
 %constant OJUndefined = 0;
 %constant OJLeft = 1;
@@ -2154,6 +2159,7 @@ public:
             case OFSTBoolean:
             case OFSTInt16:
             case OFSTFloat32:
+            case OFSTJSON:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field subtype value");
