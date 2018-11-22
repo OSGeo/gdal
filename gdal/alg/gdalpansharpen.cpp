@@ -254,7 +254,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid value panOutPansharpenedBands[%d] = %d",
-                     psOptionsIn->panOutPansharpenedBands[i], i);
+                     i, psOptionsIn->panOutPansharpenedBands[i]);
             return CE_Failure;
         }
     }
