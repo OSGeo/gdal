@@ -29,6 +29,7 @@
 ###############################################################################
 
 import json
+import math
 import os
 import sys
 
@@ -4252,6 +4253,81 @@ def ogr_geojson_clip_geometries_rfc7946():
     gdal.Unlink(tmpfilename)
     return 'success'
 
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/1109
+
+
+def ogr_geojson_non_finite():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "properties": { "inf_prop": infinity, "minus_inf_prop": -infinity, "nan_prop": nan }, "geometry": null }
+  ]
+}"""
+    with gdaltest.error_handler():
+        ds = ogr.Open(json_content)
+    if ds is None:
+        # Might fail with older libjson-c versions
+        return 'skip'
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in range(3):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTReal:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+
+    if f['inf_prop'] != float('inf'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f['minus_inf_prop'] != float('-inf'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if not math.isnan(f['nan_prop']):
+        gdaltest.post_reason('fail')
+        print(str(f['nan_prop']))
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    tmpfilename = '/vsimem/out.json'
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate(tmpfilename, json_content, options='-f GeoJSON')
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.VectorTranslate(tmpfilename, json_content, options='-f GeoJSON -lco WRITE_NON_FINITE_VALUES=YES')
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['inf_prop'] != float('inf'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f['minus_inf_prop'] != float('-inf'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if not math.isnan(f['nan_prop']):
+        gdaltest.post_reason('fail')
+        print(str(f['nan_prop']))
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+    return 'success'
 
 ###############################################################################
 
@@ -4368,6 +4444,7 @@ gdaltest_list = [
     ogr_esrijson_without_geometryType,
     ogr_geojson_read_fields_with_different_case,
     ogr_geojson_clip_geometries_rfc7946,
+    ogr_geojson_non_finite,
     ogr_geojson_cleanup]
 
 if __name__ == '__main__':
