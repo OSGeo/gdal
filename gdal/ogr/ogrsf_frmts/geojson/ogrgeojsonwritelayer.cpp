@@ -72,6 +72,8 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
         oWriteOptions_.SetRFC7946Settings();
     }
     oWriteOptions_.SetIDOptions(papszOptions);
+    oWriteOptions_.bAllowNonFiniteValues = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRITE_NON_FINITE_VALUES", "FALSE"));
 }
 
 /************************************************************************/

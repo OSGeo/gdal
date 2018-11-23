@@ -83,7 +83,6 @@
 #define json_false_str gdal_json_false_str
 #define json_null_str gdal_json_null_str
 #define json_true_str gdal_json_true_str
-#define json_tokener_errors gdal_json_tokener_errors
 #define json_object_iter_begin gdal_json_object_iter_begin
 #define json_object_iter_end gdal_json_object_iter_end
 #define json_object_iter_equal gdal_json_object_iter_equal

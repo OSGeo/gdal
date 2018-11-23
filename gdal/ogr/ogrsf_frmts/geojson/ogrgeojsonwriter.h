@@ -81,6 +81,7 @@ class OGRGeoJSONWriteOptions
         CPLString osIDField{};
         bool bForceIDFieldType = false;
         OGRFieldType eForcedIDFieldType = OFTString;
+        bool bAllowNonFiniteValues = false;
 
         void SetRFC7946Settings();
         void SetIDOptions(CSLConstList papszOptions);

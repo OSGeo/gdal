@@ -712,6 +712,21 @@ void OGRGeoJSONReaderStreamingParser::Number(const char* pszValue, size_t nLen)
         {
             AppendObject(json_object_new_double(CPLAtof(pszValue)));
         }
+        else if( nLen == strlen("Infinity") && EQUAL(pszValue, "Infinity") )
+        {
+            AppendObject(json_object_new_double(
+                std::numeric_limits<double>::infinity()));
+        }
+        else if( nLen == strlen("-Infinity") && EQUAL(pszValue, "-Infinity") )
+        {
+            AppendObject(json_object_new_double(
+                -std::numeric_limits<double>::infinity()));
+        }
+        else if( nLen == strlen("NaN") && EQUAL(pszValue, "NaN") )
+        {
+            AppendObject(json_object_new_double(
+                std::numeric_limits<double>::quiet_NaN()));
+        }
         else
         {
             AppendObject(json_object_new_int64(CPLAtoGIntBig(pszValue)));

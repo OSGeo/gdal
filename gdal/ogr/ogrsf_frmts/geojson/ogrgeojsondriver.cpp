@@ -662,6 +662,7 @@ void RegisterOGRGeoJSON()
 "    <Value>String</Value>"
 "    <Value>Integer</Value>"
 "  </Option>"
+"  <Option name='WRITE_NON_FINITE_VALUES' type='boolean' description='Whether to write NaN / Infinity values' default='NO'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

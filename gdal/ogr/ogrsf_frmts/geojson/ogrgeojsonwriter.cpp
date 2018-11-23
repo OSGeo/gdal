@@ -844,8 +844,23 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
         }
         else if( OFTReal == eType )
         {
+            const double val = poFeature->GetFieldAsDouble(nField);
+            if( !CPLIsFinite(val) )
+            {
+                if( !oOptions.bAllowNonFiniteValues )
+                {
+                    static bool bHasWarned = false;
+                    if( !bHasWarned )
+                    {
+                        bHasWarned = true;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "NaN of Infinity value found. Skipped");
+                    }
+                    continue;
+                }
+            }
             poObjProp = json_object_new_double_with_significant_figures(
-                poFeature->GetFieldAsDouble(nField),
+                val,
                 oOptions.nSignificantFigures );
         }
         else if( OFTString == eType )
