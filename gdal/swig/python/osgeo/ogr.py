@@ -364,6 +364,9 @@ OFSTInt16 = _ogr.OFSTInt16
 _ogr.OFSTFloat32_swigconstant(_ogr)
 OFSTFloat32 = _ogr.OFSTFloat32
 
+_ogr.OFSTJSON_swigconstant(_ogr)
+OFSTJSON = _ogr.OFSTJSON
+
 _ogr.OJUndefined_swigconstant(_ogr)
 OJUndefined = _ogr.OJUndefined
 

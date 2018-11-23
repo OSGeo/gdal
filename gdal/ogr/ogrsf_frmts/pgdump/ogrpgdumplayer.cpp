@@ -1179,7 +1179,7 @@ CPLString OGRPGCommonLayerGetType( OGRFieldDefn& oField,
                                    bool bPreservePrecision,
                                    bool bApproxOK )
 {
-    char szFieldType[256];
+    const char* pszFieldType = "";
 
 /* -------------------------------------------------------------------- */
 /*      Work out the PostgreSQL type.                                   */
@@ -1187,79 +1187,81 @@ CPLString OGRPGCommonLayerGetType( OGRFieldDefn& oField,
     if( oField.GetType() == OFTInteger )
     {
         if( oField.GetSubType() == OFSTBoolean )
-            strcpy( szFieldType, "BOOLEAN" );
+            pszFieldType = "BOOLEAN";
         else if( oField.GetSubType() == OFSTInt16 )
-            strcpy( szFieldType, "SMALLINT" );
+            pszFieldType = "SMALLINT";
         else if( oField.GetWidth() > 0 && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "NUMERIC(%d,0)", oField.GetWidth() );
+            pszFieldType = CPLSPrintf( "NUMERIC(%d,0)", oField.GetWidth() );
         else
-            strcpy( szFieldType, "INTEGER" );
+            pszFieldType = "INTEGER";
     }
     else if( oField.GetType() == OFTInteger64 )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "NUMERIC(%d,0)", oField.GetWidth() );
+            pszFieldType = CPLSPrintf( "NUMERIC(%d,0)", oField.GetWidth() );
         else
-            strcpy( szFieldType, "INT8" );
+            pszFieldType = "INT8";
     }
     else if( oField.GetType() == OFTReal )
     {
         if( oField.GetSubType() == OFSTFloat32 )
-            strcpy( szFieldType, "REAL" );
+            pszFieldType = "REAL";
         else if( oField.GetWidth() > 0 &&
                  oField.GetPrecision() > 0 &&
                  bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "NUMERIC(%d,%d)",
+            pszFieldType = CPLSPrintf( "NUMERIC(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
         else
-            strcpy( szFieldType, "FLOAT8" );
+            pszFieldType = "FLOAT8";
     }
     else if( oField.GetType() == OFTString )
     {
-        if (oField.GetWidth() > 0 &&  bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "VARCHAR(%d)",  oField.GetWidth() );
+        if (oField.GetSubType() == OFSTJSON )
+            pszFieldType = CPLGetConfigOption("OGR_PG_JSON_TYPE", "JSON");
+        else if (oField.GetWidth() > 0 &&  bPreservePrecision )
+            pszFieldType = CPLSPrintf( "VARCHAR(%d)",  oField.GetWidth() );
         else
-            strcpy( szFieldType, "VARCHAR");
+            pszFieldType = CPLGetConfigOption("OGR_PG_STRING_TYPE", "VARCHAR");
     }
     else if( oField.GetType() == OFTIntegerList )
     {
         if( oField.GetSubType() == OFSTBoolean )
-            strcpy( szFieldType, "BOOLEAN[]" );
+            pszFieldType = "BOOLEAN[]";
         else if( oField.GetSubType() == OFSTInt16 )
-            strcpy( szFieldType, "INT2[]" );
+            pszFieldType = "INT2[]";
         else
-            strcpy( szFieldType, "INTEGER[]" );
+            pszFieldType = "INTEGER[]";
     }
     else if( oField.GetType() == OFTInteger64List )
     {
-        strcpy( szFieldType, "INT8[]" );
+        pszFieldType = "INT8[]";
     }
     else if( oField.GetType() == OFTRealList )
     {
         if( oField.GetSubType() == OFSTFloat32 )
-            strcpy( szFieldType, "REAL[]" );
+            pszFieldType = "REAL[]";
         else
-            strcpy( szFieldType, "FLOAT8[]" );
+            pszFieldType = "FLOAT8[]";
     }
     else if( oField.GetType() == OFTStringList )
     {
-        strcpy( szFieldType, "varchar[]" );
+        pszFieldType = "varchar[]";
     }
     else if( oField.GetType() == OFTDate )
     {
-        strcpy( szFieldType, "date" );
+        pszFieldType = "date";
     }
     else if( oField.GetType() == OFTTime )
     {
-        strcpy( szFieldType, "time" );
+        pszFieldType = "time";
     }
     else if( oField.GetType() == OFTDateTime )
     {
-        strcpy( szFieldType, "timestamp with time zone" );
+        pszFieldType = "timestamp with time zone";
     }
     else if( oField.GetType() == OFTBinary )
     {
-        strcpy( szFieldType, "bytea" );
+        pszFieldType = "bytea";
     }
     else if( bApproxOK )
     {
@@ -1267,7 +1269,7 @@ CPLString OGRPGCommonLayerGetType( OGRFieldDefn& oField,
                   "Can't create field %s with type %s on PostgreSQL layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR" );
+        pszFieldType = "VARCHAR";
     }
     else
     {
@@ -1275,10 +1277,9 @@ CPLString OGRPGCommonLayerGetType( OGRFieldDefn& oField,
                   "Can't create field %s with type %s on PostgreSQL layers.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "");
     }
 
-    return szFieldType;
+    return pszFieldType;
 }
 
 /************************************************************************/
@@ -1442,6 +1443,11 @@ bool OGRPGCommonLayerSetType( OGRFieldDefn& oField,
     else if( EQUAL(pszType,"bytea") )
     {
         oField.SetType( OFTBinary );
+    }
+    else if( EQUAL(pszType,"json") || EQUAL(pszType, "jsonb") )
+    {
+        oField.SetType( OFTString );
+        oField.SetSubType( OFSTJSON );
     }
     else
     {

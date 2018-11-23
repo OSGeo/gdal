@@ -205,7 +205,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         bool                    m_bMapTableToExtensionsBuilt;
         std::map< CPLString, std::vector<GPKGExtensionDesc> > m_oMapTableToExtensions;
         const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
-                                        GetExtensions();
+                                        GetUnknownExtensionsTableSpecific();
 
         bool                    m_bMapTableToContentsBuilt;
         std::map< CPLString, GPKGContentsDesc > m_oMapTableToContents;
@@ -276,8 +276,10 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         OGRErr              CreateExtensionsTableIfNecessary();
         bool                HasExtensionsTable();
         OGRErr              CreateGDALAspatialExtension();
-        bool                HasDataColumnsTable();
         void                SetMetadataDirty() { m_bMetadataDirty = true; }
+
+        bool                    HasDataColumnsTable();
+        bool                    HasDataColumnConstraintsTable();
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
@@ -449,6 +451,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     OGRErr              ReadTableDefinition();
     void                InitView();
+
+    bool                DoSpecialProcessingForColumnCreation(OGRFieldDefn* poField);
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,

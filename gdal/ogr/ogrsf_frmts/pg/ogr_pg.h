@@ -56,6 +56,7 @@
 #define XIDOID                  28
 #define CIDOID                  29
 #define OIDVECTOROID            30
+#define JSONOID                 114
 #define FLOAT4OID               700
 #define FLOAT8OID               701
 #define BOOLARRAYOID            1000
@@ -75,6 +76,7 @@
 #define TIMESTAMPTZOID          1184
 #define NUMERICOID              1700
 #define NUMERICARRAYOID         1231
+#define JSONBOID                3802
 
 CPLString OGRPGEscapeString(void *hPGConn,
                             const char* pszStrValue, int nMaxLength = -1,
