@@ -3122,6 +3122,24 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         }
         else
         {
+            int nGoRightFromWest = 0;
+            int nWestIsLeft = 0;
+            
+            nGoRightFromWest = (pdfXCoord[0] < pdfXCoord[1] ? 1 : -1);
+            nWestIsLeft = (pdfXCoord[0] < pdfXCoord[xdim - 1] ? 1 : -1);
+            CPLDebug("GDAL_netCDF",
+                     "go right from west: %d west is left: %d",
+                     nGoRightFromWest, nWestIsLeft);
+
+            // fix longitudes if longitudes should increase from 
+            // west to east, but west > east
+            if (nGoRightFromWest > 0 && nWestIsLeft < 0) {
+                for( size_t i = 0; i < xdim; i++ ) {
+                    if (pdfXCoord[i] > pdfXCoord[xdim - 1])
+                        pdfXCoord[i] -= 360;
+                }
+            }
+
             nSpacingBegin = static_cast<int>(
                 poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 1000));
 
