@@ -476,6 +476,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
             }
 
             std::vector<double> adfControlPoints( 1, 0.0 );
+            std::vector<double> adfWeights( 1, 0.0 );
 
             if( nCode != 10 )
                 break;
@@ -485,25 +486,30 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
                 adfControlPoints.push_back( CPLAtof(szLineBuf) );
 
                 if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 20 )
+                {
                     adfControlPoints.push_back( CPLAtof(szLineBuf) );
+                }
                 else
                     break;
 
                 adfControlPoints.push_back( 0.0 ); // Z coordinate
-                nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+
+                // 42 (weights) are optional
+                if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 42 )
+                {
+                    adfWeights.push_back( CPLAtof(szLineBuf) );
+                    nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+                }
             }
 
-            std::vector<double> adfWeights( 1, 0.0 );
+            // Skip past the number of fit points
+            if( nCode != 97 )
+                break;
 
-            // 42 (weights) are optional
-            while( nCode == 42 )
-            {
-                adfWeights.push_back( CPLAtof(szLineBuf) );
-                nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
-            }
-
-            // Eat the rest of this section, if present
-            while( nCode > 0 && nCode != 72 )
+            // Eat the rest of this section, if present, until the next
+            // boundary segment (72) or the conclusion of the boundary data (97)
+            nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+            while( nCode > 0 && nCode != 72 && nCode != 97 )
                 nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
             if( nCode > 0 )
                 poDS->UnreadValue();
