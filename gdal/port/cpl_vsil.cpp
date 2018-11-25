@@ -311,6 +311,96 @@ char **CPLReadDir( const char *pszPath )
 }
 
 /************************************************************************/
+/*                             VSIOpenDir()                             */
+/************************************************************************/
+
+/**
+ * \brief Open a directory to read its entries.
+ *
+ * This function is close to the POSIX opendir() function.
+ *
+ * For /vsis3/, /vsigs/, /vsioss/ and /vsiaz/, this funtion has an efficient
+ * implementation, minimizing the number of network requests, when invoked with
+ * nRecurseDepth <= 0.
+ *
+ * Entries are read by calling VSIGetNextDirEntry() on the handled returned by
+ * that function, until it returns NULL. VSICloseDir() must be called once done
+ * with the returned directory handle.
+ *
+ * @param pszPath the relative, or absolute path of a directory to read.
+ * UTF-8 encoded.
+ * @param nRecurseDepth 0 means do not recurse in subdirectories, 1 means
+ * recurse only in the first level of subdirectories, etc. -1 means unlimited
+ * recursion level
+ * @param papszOptions NULL terminated list of options, or NULL.
+ *
+ * @return a handle, or NULL in case of error
+ * @since GDAL 2.4
+ *
+ */
+
+VSIDIR *VSIOpenDir( const char *pszPath,
+                    int nRecurseDepth,
+                    const char* const *papszOptions)
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->OpenDir( pszPath, nRecurseDepth, papszOptions );
+}
+
+/************************************************************************/
+/*                          VSIGetNextDirEntry()                        */
+/************************************************************************/
+
+/**
+ * \brief Return the next entry of the directory
+ *
+ * This function is close to the POSIX readdir() function. It actually returns
+ * more information (file size, last modification time), which on 'real' file
+ * systems involve one 'stat' call per file.
+ *
+ * For filesystems that can have both a regular file and a directory name of
+ * the same name (typically /vsis3/), when this situation of duplicate happens,
+ * the directory name will be suffixed by a slash character. Otherwise directory
+ * names are not suffixed by slash.
+ *
+ * The returned entry remains valid until the next call to VSINextDirEntry()
+ * or VSICloseDir() with the same handle.
+ *
+ * @param dir Directory handled returned by VSIOpenDir(). Must not be NULL.
+ *
+ * @return a entry, or NULL if there is no more entry in the directory. This
+ * return value must not be freed.
+ * @since GDAL 2.4
+ *
+ */
+
+const VSIDIREntry *VSIGetNextDirEntry(VSIDIR* dir)
+{
+    return dir->NextDirEntry();
+}
+
+/************************************************************************/
+/*                             VSICloseDir()                            */
+/************************************************************************/
+
+/**
+ * \brief Close a directory
+ *
+ * This function is close to the POSIX closedir() function.
+ *
+ * @param dir Directory handled returned by VSIOpenDir().
+ *
+ * @since GDAL 2.4
+ */
+
+void VSICloseDir(VSIDIR* dir)
+{
+    delete dir;
+}
+
+/************************************************************************/
 /*                              VSIMkdir()                              */
 /************************************************************************/
 
@@ -1100,6 +1190,192 @@ bool VSIFilesystemHandler::Sync( const char* pszSource, const char* pszTarget,
     }
     return ret;
 }
+
+/************************************************************************/
+/*                            VSIDIREntry()                             */
+/************************************************************************/
+
+VSIDIREntry::VSIDIREntry(): pszName(nullptr), nMode(0), nSize(0), nMTime(0),
+                   bModeKnown(false), bSizeKnown(false), bMTimeKnown(false),
+                   papszExtra(nullptr)
+{
+}
+
+/************************************************************************/
+/*                           ~VSIDIREntry()                             */
+/************************************************************************/
+
+VSIDIREntry::~VSIDIREntry()
+{
+    CPLFree(pszName);
+    CSLDestroy(papszExtra);
+}
+
+/************************************************************************/
+/*                              ~VSIDIR()                               */
+/************************************************************************/
+
+VSIDIR::~VSIDIR()
+{
+}
+
+/************************************************************************/
+/*                            VSIDIRGeneric                             */
+/************************************************************************/
+
+namespace {
+struct VSIDIRGeneric: public VSIDIR
+{
+    CPLString osRootPath{};
+    CPLString osBasePath{};
+    char** papszContent = nullptr;
+    int nRecurseDepth = 0;
+    int nPos = 0;
+    VSIDIREntry entry{};
+    std::vector<VSIDIRGeneric*> aoStackSubDir{};
+    VSIFilesystemHandler* poFS = nullptr;
+
+    explicit VSIDIRGeneric(VSIFilesystemHandler* poFSIn): poFS(poFSIn) {}
+    ~VSIDIRGeneric();
+
+    const VSIDIREntry* NextDirEntry() override;
+
+    VSIDIRGeneric(const VSIDIRGeneric&) = delete;
+    VSIDIRGeneric& operator=(const VSIDIRGeneric&) = delete;
+};
+
+/************************************************************************/
+/*                         ~VSIDIRGeneric()                             */
+/************************************************************************/
+
+VSIDIRGeneric::~VSIDIRGeneric()
+{
+    while( !aoStackSubDir.empty() )
+    {
+        delete aoStackSubDir.back();
+        aoStackSubDir.pop_back();
+    }
+    CSLDestroy(papszContent);
+}
+
+}
+
+/************************************************************************/
+/*                            OpenDir()                                 */
+/************************************************************************/
+
+VSIDIR* VSIFilesystemHandler::OpenDir( const char *pszPath,
+                                       int nRecurseDepth,
+                                       const char* const *)
+{
+    char** papszContent = VSIReadDir(pszPath);
+    VSIStatBufL sStatL;
+    if( papszContent == nullptr &&
+        (VSIStatL(pszPath, &sStatL) != 0 || !VSI_ISDIR(sStatL.st_mode)) )
+    {
+        return nullptr;
+    }
+    VSIDIRGeneric* dir = new VSIDIRGeneric(this);
+    dir->osRootPath = pszPath;
+    dir->nRecurseDepth = nRecurseDepth;
+    dir->papszContent = papszContent;
+    return dir;
+}
+
+/************************************************************************/
+/*                           NextDirEntry()                             */
+/************************************************************************/
+
+const VSIDIREntry* VSIDIRGeneric::NextDirEntry()
+{
+    if( VSI_ISDIR(entry.nMode) && nRecurseDepth != 0 )
+    {
+        CPLString osCurFile(osRootPath);
+        if( !osCurFile.empty() )
+            osCurFile += '/';
+        osCurFile += entry.pszName;
+        auto subdir = static_cast<VSIDIRGeneric*>(
+            poFS->VSIFilesystemHandler::OpenDir(osCurFile,
+                nRecurseDepth - 1, nullptr));
+        if( subdir )
+        {
+            subdir->osRootPath = osRootPath;
+            subdir->osBasePath = entry.pszName;
+            aoStackSubDir.push_back(subdir);
+        }
+        entry.nMode = 0;
+    }
+
+    while( !aoStackSubDir.empty() )
+    {
+        auto l_entry = aoStackSubDir.back()->NextDirEntry();
+        if( l_entry )
+        {
+            return l_entry;
+        }
+        delete aoStackSubDir.back();
+        aoStackSubDir.pop_back();
+    }
+
+    if( papszContent == nullptr )
+    {
+        return nullptr;
+    }
+
+    while( true )
+    {
+        if( !papszContent[nPos] )
+        {
+            return nullptr;
+        }
+        // Skip . and ..entries
+        if( papszContent[nPos][0] == '.' &&
+            (papszContent[nPos][1] == '\0' ||
+             (papszContent[nPos][1] == '.' &&
+              papszContent[nPos][2] == '\0')) )
+        {
+            nPos ++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    CPLFree(entry.pszName);
+    CPLString osName(osBasePath);
+    if( !osName.empty() )
+        osName += '/';
+    osName += papszContent[nPos];
+    entry.pszName = CPLStrdup(osName);
+    VSIStatBufL sStatL;
+    CPLString osCurFile(osRootPath);
+    if( !osCurFile.empty() )
+        osCurFile += '/';
+    osCurFile += entry.pszName;
+    if( VSIStatL(osCurFile, &sStatL) == 0 )
+    {
+        entry.nMode = sStatL.st_mode;
+        entry.nSize = sStatL.st_size;
+        entry.nMTime = sStatL.st_mtime;
+        entry.bModeKnown = true;
+        entry.bSizeKnown = true;
+        entry.bMTimeKnown = true;
+    }
+    else
+    {
+        entry.nMode = 0;
+        entry.nSize = 0;
+        entry.nMTime = 0;
+        entry.bModeKnown = false;
+        entry.bSizeKnown = false;
+        entry.bMTimeKnown = false;
+    }
+    nPos ++;
+
+    return &(entry);
+}
+
 
 #endif
 

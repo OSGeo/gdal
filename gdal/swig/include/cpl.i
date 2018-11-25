@@ -334,6 +334,104 @@ char **wrapper_VSIReadDirEx( const char * utf8_path, int nMaxFiles = 0 )
 char **VSIReadDirRecursive( const char * utf8_path );
 %clear char **;
 
+#ifdef SWIGPYTHON
+%rename (OpenDir) wrapper_VSIOpenDir;
+%inline {
+VSIDIR* wrapper_VSIOpenDir( const char * utf8_path,
+                            int nRecurseDepth = -1,
+                            char** options = NULL )
+{
+    return VSIOpenDir(utf8_path, nRecurseDepth, options);
+}
+}
+
+%{
+typedef struct
+{
+    char*        name;
+    int          mode;
+    GIntBig      size;
+    GIntBig      mtime;
+    bool         modeKnown;
+    bool         sizeKnown;
+    bool         mtimeKnown;
+    char**       extra;
+} DirEntry;
+%}
+
+struct DirEntry
+{
+%immutable;
+    char*        name;
+    int          mode;
+    GIntBig      size;
+    GIntBig      mtime;
+    bool         modeKnown;
+    bool         sizeKnown;
+    bool         mtimeKnown;
+
+%apply (char **dict) {char **};
+    char**       extra;
+%clear char **;
+%mutable;
+
+%extend {
+  DirEntry( const DirEntry *entryIn ) {
+    DirEntry *self = (DirEntry*) CPLMalloc( sizeof( DirEntry ) );
+    self->name = CPLStrdup(entryIn->name);
+    self->mode = entryIn->mode;
+    self->size = entryIn->size;
+    self->mtime = entryIn->mtime;
+    self->modeKnown = entryIn->modeKnown;
+    self->sizeKnown = entryIn->sizeKnown;
+    self->mtimeKnown = entryIn->mtimeKnown;
+    self->extra = CSLDuplicate(entryIn->extra);
+    return self;
+  }
+
+  ~DirEntry() {
+    CPLFree(self->name);
+    CSLDestroy(self->extra);
+    CPLFree(self);
+  }
+
+  bool IsDirectory()
+  {
+     return (self->mode & S_IFDIR) != 0;
+  }
+
+} /* extend */
+} /* DirEntry */ ;
+
+%rename (GetNextDirEntry) wrapper_VSIGetNextDirEntry;
+%newobject wrapper_VSIGetNextDirEntry;
+%apply Pointer NONNULL {VSIDIR* dir};
+%inline {
+DirEntry* wrapper_VSIGetNextDirEntry(VSIDIR* dir)
+{
+    const VSIDIREntry* vsiEntry = VSIGetNextDirEntry(dir);
+    if( vsiEntry == nullptr )
+    {
+        return nullptr;
+    }
+    DirEntry* entry = (DirEntry*) CPLMalloc( sizeof( DirEntry ) );
+    entry->name = CPLStrdup(vsiEntry->pszName);
+    entry->mode = vsiEntry->nMode;
+    entry->size = vsiEntry->nSize;
+    entry->mtime = vsiEntry->nMTime;
+    entry->modeKnown = vsiEntry->bModeKnown == TRUE;
+    entry->sizeKnown = vsiEntry->bSizeKnown == TRUE;
+    entry->mtimeKnown = vsiEntry->bMTimeKnown == TRUE;
+    entry->extra = CSLDuplicate(vsiEntry->papszExtra);
+    return entry;
+}
+}
+
+%rename (CloseDir) VSICloseDir;
+void VSICloseDir(VSIDIR* dir);
+
+#endif
+
 %apply Pointer NONNULL {const char * pszKey};
 void CPLSetConfigOption( const char * pszKey, const char * pszValue );
 

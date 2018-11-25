@@ -3014,52 +3014,54 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_CPLErrorHandler swig_types[0]
 #define SWIGTYPE_p_CPLVirtualMemShadow swig_types[1]
 #define SWIGTYPE_p_CPLXMLNode swig_types[2]
-#define SWIGTYPE_p_GByte swig_types[3]
-#define SWIGTYPE_p_GDALAsyncReaderShadow swig_types[4]
-#define SWIGTYPE_p_GDALBuildVRTOptions swig_types[5]
-#define SWIGTYPE_p_GDALColorEntry swig_types[6]
-#define SWIGTYPE_p_GDALColorTableShadow swig_types[7]
-#define SWIGTYPE_p_GDALDEMProcessingOptions swig_types[8]
-#define SWIGTYPE_p_GDALDatasetShadow swig_types[9]
-#define SWIGTYPE_p_GDALDriverShadow swig_types[10]
-#define SWIGTYPE_p_GDALGridOptions swig_types[11]
-#define SWIGTYPE_p_GDALInfoOptions swig_types[12]
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[13]
-#define SWIGTYPE_p_GDALNearblackOptions swig_types[14]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[15]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[16]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[17]
-#define SWIGTYPE_p_GDALRasterizeOptions swig_types[18]
-#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[19]
-#define SWIGTYPE_p_GDALTranslateOptions swig_types[20]
-#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[21]
-#define SWIGTYPE_p_GDALWarpAppOptions swig_types[22]
-#define SWIGTYPE_p_GDAL_GCP swig_types[23]
-#define SWIGTYPE_p_GIntBig swig_types[24]
-#define SWIGTYPE_p_GUIntBig swig_types[25]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[26]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[27]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[28]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[29]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[30]
-#define SWIGTYPE_p_StatBuf swig_types[31]
-#define SWIGTYPE_p_VSILFILE swig_types[32]
-#define SWIGTYPE_p_char swig_types[33]
-#define SWIGTYPE_p_double swig_types[34]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[35]
-#define SWIGTYPE_p_int swig_types[36]
-#define SWIGTYPE_p_p_GByte swig_types[37]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[38]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[39]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[40]
-#define SWIGTYPE_p_p_GUIntBig swig_types[41]
-#define SWIGTYPE_p_p_OGRLayerShadow swig_types[42]
-#define SWIGTYPE_p_p_char swig_types[43]
-#define SWIGTYPE_p_p_void swig_types[44]
-#define SWIGTYPE_p_size_t swig_types[45]
-#define SWIGTYPE_p_vsi_l_offset swig_types[46]
-static swig_type_info *swig_types[48];
-static swig_module_info swig_module = {swig_types, 47, 0, 0, 0, 0};
+#define SWIGTYPE_p_DirEntry swig_types[3]
+#define SWIGTYPE_p_GByte swig_types[4]
+#define SWIGTYPE_p_GDALAsyncReaderShadow swig_types[5]
+#define SWIGTYPE_p_GDALBuildVRTOptions swig_types[6]
+#define SWIGTYPE_p_GDALColorEntry swig_types[7]
+#define SWIGTYPE_p_GDALColorTableShadow swig_types[8]
+#define SWIGTYPE_p_GDALDEMProcessingOptions swig_types[9]
+#define SWIGTYPE_p_GDALDatasetShadow swig_types[10]
+#define SWIGTYPE_p_GDALDriverShadow swig_types[11]
+#define SWIGTYPE_p_GDALGridOptions swig_types[12]
+#define SWIGTYPE_p_GDALInfoOptions swig_types[13]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[14]
+#define SWIGTYPE_p_GDALNearblackOptions swig_types[15]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[16]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[17]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[18]
+#define SWIGTYPE_p_GDALRasterizeOptions swig_types[19]
+#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[20]
+#define SWIGTYPE_p_GDALTranslateOptions swig_types[21]
+#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[22]
+#define SWIGTYPE_p_GDALWarpAppOptions swig_types[23]
+#define SWIGTYPE_p_GDAL_GCP swig_types[24]
+#define SWIGTYPE_p_GIntBig swig_types[25]
+#define SWIGTYPE_p_GUIntBig swig_types[26]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[27]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[28]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[29]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[30]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[31]
+#define SWIGTYPE_p_StatBuf swig_types[32]
+#define SWIGTYPE_p_VSIDIR swig_types[33]
+#define SWIGTYPE_p_VSILFILE swig_types[34]
+#define SWIGTYPE_p_char swig_types[35]
+#define SWIGTYPE_p_double swig_types[36]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[37]
+#define SWIGTYPE_p_int swig_types[38]
+#define SWIGTYPE_p_p_GByte swig_types[39]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[40]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[41]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[42]
+#define SWIGTYPE_p_p_GUIntBig swig_types[43]
+#define SWIGTYPE_p_p_OGRLayerShadow swig_types[44]
+#define SWIGTYPE_p_p_char swig_types[45]
+#define SWIGTYPE_p_p_void swig_types[46]
+#define SWIGTYPE_p_size_t swig_types[47]
+#define SWIGTYPE_p_vsi_l_offset swig_types[48]
+static swig_type_info *swig_types[50];
+static swig_module_info swig_module = {swig_types, 49, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -4068,6 +4070,74 @@ char **wrapper_VSIReadDirEx( const char * utf8_path, int nMaxFiles = 0 )
 }
 
 
+VSIDIR* wrapper_VSIOpenDir( const char * utf8_path,
+                            int nRecurseDepth = -1,
+                            char** options = NULL )
+{
+    return VSIOpenDir(utf8_path, nRecurseDepth, options);
+}
+
+
+typedef struct
+{
+    char*        name;
+    int          mode;
+    GIntBig      size;
+    GIntBig      mtime;
+    bool         modeKnown;
+    bool         sizeKnown;
+    bool         mtimeKnown;
+    char**       extra;
+} DirEntry;
+
+
+SWIGINTERNINLINE PyObject*
+  SWIG_From_bool  (bool value)
+{
+  return PyBool_FromLong(value ? 1 : 0);
+}
+
+SWIGINTERN DirEntry *new_DirEntry(DirEntry const *entryIn){
+    DirEntry *self = (DirEntry*) CPLMalloc( sizeof( DirEntry ) );
+    self->name = CPLStrdup(entryIn->name);
+    self->mode = entryIn->mode;
+    self->size = entryIn->size;
+    self->mtime = entryIn->mtime;
+    self->modeKnown = entryIn->modeKnown;
+    self->sizeKnown = entryIn->sizeKnown;
+    self->mtimeKnown = entryIn->mtimeKnown;
+    self->extra = CSLDuplicate(entryIn->extra);
+    return self;
+  }
+SWIGINTERN void delete_DirEntry(DirEntry *self){
+    CPLFree(self->name);
+    CSLDestroy(self->extra);
+    CPLFree(self);
+  }
+SWIGINTERN bool DirEntry_IsDirectory(DirEntry *self){
+     return (self->mode & S_IFDIR) != 0;
+  }
+
+DirEntry* wrapper_VSIGetNextDirEntry(VSIDIR* dir)
+{
+    const VSIDIREntry* vsiEntry = VSIGetNextDirEntry(dir);
+    if( vsiEntry == nullptr )
+    {
+        return nullptr;
+    }
+    DirEntry* entry = (DirEntry*) CPLMalloc( sizeof( DirEntry ) );
+    entry->name = CPLStrdup(vsiEntry->pszName);
+    entry->mode = vsiEntry->nMode;
+    entry->size = vsiEntry->nSize;
+    entry->mtime = vsiEntry->nMTime;
+    entry->modeKnown = vsiEntry->bModeKnown == TRUE;
+    entry->sizeKnown = vsiEntry->bSizeKnown == TRUE;
+    entry->mtimeKnown = vsiEntry->bMTimeKnown == TRUE;
+    entry->extra = CSLDuplicate(vsiEntry->papszExtra);
+    return entry;
+}
+
+
 const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDefault = NULL )
 {
     return CPLGetConfigOption( pszKey, pszDefault );
@@ -4098,13 +4168,6 @@ bool wrapper_VSISync(const char* pszSource,
                      void* callback_data=NULL)
 {
     return VSISync( pszSource, pszTarget, options, callback, callback_data, nullptr );
-}
-
-
-SWIGINTERNINLINE PyObject*
-  SWIG_From_bool  (bool value)
-{
-  return PyBool_FromLong(value ? 1 : 0);
 }
 
 
@@ -8387,6 +8450,609 @@ fail:
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
   }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OpenDir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  int arg2 = (int) -1 ;
+  char **arg3 = (char **) NULL ;
+  int bToFree1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  VSIDIR *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|OO:OpenDir",&obj0,&obj1,&obj2)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "OpenDir" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+  }
+  if (obj2) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj2)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      Py_ssize_t size = PySequence_Size(obj2);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj2,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+          if( !pyUTF8Str )
+          {
+            Py_DECREF(pyObj);
+            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
+            SWIG_fail;
+          }
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg3 = CSLAddString( arg3, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (VSIDIR *)wrapper_VSIOpenDir((char const *)arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_VSIDIR, 0 |  0 );
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_name_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (char *) ((arg1)->name);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_mode_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_mode_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_mode_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (int) ((arg1)->mode);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_size_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  GIntBig result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_size_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_size_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result =  ((arg1)->size);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  {
+    char szTmp[32];
+    sprintf(szTmp, CPL_FRMT_GIB, result);
+#if PY_VERSION_HEX>=0x03000000
+    resultobj = PyLong_FromString(szTmp, NULL, 10);
+#else
+    resultobj = PyInt_FromString(szTmp, NULL, 10);
+#endif
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_mtime_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  GIntBig result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_mtime_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_mtime_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result =  ((arg1)->mtime);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  {
+    char szTmp[32];
+    sprintf(szTmp, CPL_FRMT_GIB, result);
+#if PY_VERSION_HEX>=0x03000000
+    resultobj = PyLong_FromString(szTmp, NULL, 10);
+#else
+    resultobj = PyInt_FromString(szTmp, NULL, 10);
+#endif
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_modeKnown_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_modeKnown_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_modeKnown_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (bool) ((arg1)->modeKnown);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_sizeKnown_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_sizeKnown_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_sizeKnown_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (bool) ((arg1)->sizeKnown);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_mtimeKnown_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_mtimeKnown_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_mtimeKnown_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (bool) ((arg1)->mtimeKnown);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_extra_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_extra_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_extra_get" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (char **) ((arg1)->extra);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  {
+    /* %typemap(out) char **dict */
+    char **stringarray = result;
+    resultobj = PyDict_New();
+    if ( stringarray != NULL ) {
+      while (*stringarray != NULL ) {
+        char const *valptr;
+        char *keyptr;
+        const char* pszSep = strchr( *stringarray, '=' );
+        if ( pszSep != NULL) {
+          keyptr = CPLStrdup(*stringarray);
+          keyptr[pszSep - *stringarray] = '\0';
+          valptr = pszSep + 1;
+          PyObject *nm = GDALPythonObjectFromCStr( keyptr );
+          PyObject *val = GDALPythonObjectFromCStr( valptr );
+          PyDict_SetItem(resultobj, nm, val );
+          Py_DECREF(nm);
+          Py_DECREF(val);
+          CPLFree( keyptr );
+        }
+        stringarray++;
+      }
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_DirEntry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  DirEntry *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:new_DirEntry",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_DirEntry" "', argument " "1"" of type '" "DirEntry const *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (DirEntry *)new_DirEntry((DirEntry const *)arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_DirEntry, SWIG_POINTER_NEW |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_DirEntry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_DirEntry",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_DirEntry" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_DirEntry(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DirEntry_IsDirectory(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  DirEntry *arg1 = (DirEntry *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DirEntry_IsDirectory",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_DirEntry, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DirEntry_IsDirectory" "', argument " "1"" of type '" "DirEntry *""'"); 
+  }
+  arg1 = reinterpret_cast< DirEntry * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)DirEntry_IsDirectory(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *DirEntry_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_DirEntry, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_GetNextDirEntry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  VSIDIR *arg1 = (VSIDIR *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  DirEntry *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:GetNextDirEntry",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSIDIR, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetNextDirEntry" "', argument " "1"" of type '" "VSIDIR *""'"); 
+  }
+  arg1 = reinterpret_cast< VSIDIR * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (DirEntry *)wrapper_VSIGetNextDirEntry(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_DirEntry, SWIG_POINTER_OWN |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CloseDir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  VSIDIR *arg1 = (VSIDIR *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CloseDir",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_VSIDIR, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CloseDir" "', argument " "1"" of type '" "VSIDIR *""'"); 
+  }
+  arg1 = reinterpret_cast< VSIDIR * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      VSICloseDir(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -34686,6 +35352,21 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"FindFile", _wrap_FindFile, METH_VARARGS, (char *)"FindFile(char const * pszClass, char const * utf8_path) -> char const *"},
 	 { (char *)"ReadDir", _wrap_ReadDir, METH_VARARGS, (char *)"ReadDir(char const * utf8_path, int nMaxFiles=0) -> char **"},
 	 { (char *)"ReadDirRecursive", _wrap_ReadDirRecursive, METH_VARARGS, (char *)"ReadDirRecursive(char const * utf8_path) -> char **"},
+	 { (char *)"OpenDir", _wrap_OpenDir, METH_VARARGS, (char *)"OpenDir(char const * utf8_path, int nRecurseDepth=-1, char ** options=None) -> VSIDIR *"},
+	 { (char *)"DirEntry_name_get", _wrap_DirEntry_name_get, METH_VARARGS, (char *)"DirEntry_name_get(DirEntry self) -> char *"},
+	 { (char *)"DirEntry_mode_get", _wrap_DirEntry_mode_get, METH_VARARGS, (char *)"DirEntry_mode_get(DirEntry self) -> int"},
+	 { (char *)"DirEntry_size_get", _wrap_DirEntry_size_get, METH_VARARGS, (char *)"DirEntry_size_get(DirEntry self) -> GIntBig"},
+	 { (char *)"DirEntry_mtime_get", _wrap_DirEntry_mtime_get, METH_VARARGS, (char *)"DirEntry_mtime_get(DirEntry self) -> GIntBig"},
+	 { (char *)"DirEntry_modeKnown_get", _wrap_DirEntry_modeKnown_get, METH_VARARGS, (char *)"DirEntry_modeKnown_get(DirEntry self) -> bool"},
+	 { (char *)"DirEntry_sizeKnown_get", _wrap_DirEntry_sizeKnown_get, METH_VARARGS, (char *)"DirEntry_sizeKnown_get(DirEntry self) -> bool"},
+	 { (char *)"DirEntry_mtimeKnown_get", _wrap_DirEntry_mtimeKnown_get, METH_VARARGS, (char *)"DirEntry_mtimeKnown_get(DirEntry self) -> bool"},
+	 { (char *)"DirEntry_extra_get", _wrap_DirEntry_extra_get, METH_VARARGS, (char *)"DirEntry_extra_get(DirEntry self) -> char **"},
+	 { (char *)"new_DirEntry", _wrap_new_DirEntry, METH_VARARGS, (char *)"new_DirEntry(DirEntry entryIn) -> DirEntry"},
+	 { (char *)"delete_DirEntry", _wrap_delete_DirEntry, METH_VARARGS, (char *)"delete_DirEntry(DirEntry self)"},
+	 { (char *)"DirEntry_IsDirectory", _wrap_DirEntry_IsDirectory, METH_VARARGS, (char *)"DirEntry_IsDirectory(DirEntry self) -> bool"},
+	 { (char *)"DirEntry_swigregister", DirEntry_swigregister, METH_VARARGS, NULL},
+	 { (char *)"GetNextDirEntry", _wrap_GetNextDirEntry, METH_VARARGS, (char *)"GetNextDirEntry(VSIDIR * dir) -> DirEntry"},
+	 { (char *)"CloseDir", _wrap_CloseDir, METH_VARARGS, (char *)"CloseDir(VSIDIR * dir)"},
 	 { (char *)"SetConfigOption", _wrap_SetConfigOption, METH_VARARGS, (char *)"SetConfigOption(char const * pszKey, char const * pszValue)"},
 	 { (char *)"GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, (char *)"GetConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"},
 	 { (char *)"CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_VARARGS, (char *)"CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"},
@@ -35062,6 +35743,7 @@ static void *_p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow(void *x, int *SWI
 static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErrorHandler *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CPLVirtualMemShadow = {"_p_CPLVirtualMemShadow", "CPLVirtualMemShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_DirEntry = {"_p_DirEntry", "DirEntry *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GByte = {"_p_GByte", "GByte *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALAsyncReaderShadow = {"_p_GDALAsyncReaderShadow", "GDALAsyncReaderShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALBuildVRTOptions = {"_p_GDALBuildVRTOptions", "GDALBuildVRTOptions *", 0, 0, (void*)0, 0};
@@ -35091,6 +35773,7 @@ static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayer
 static swig_type_info _swigt__p_OGRStyleTableShadow = {"_p_OGRStyleTableShadow", "OGRStyleTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_StatBuf = {"_p_StatBuf", "StatBuf *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_VSIDIR = {"_p_VSIDIR", "VSIDIR *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VSILFILE = {"_p_VSILFILE", "VSILFILE *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
@@ -35111,6 +35794,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
   &_swigt__p_CPLVirtualMemShadow,
   &_swigt__p_CPLXMLNode,
+  &_swigt__p_DirEntry,
   &_swigt__p_GByte,
   &_swigt__p_GDALAsyncReaderShadow,
   &_swigt__p_GDALBuildVRTOptions,
@@ -35140,6 +35824,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_OGRStyleTableShadow,
   &_swigt__p_OSRSpatialReferenceShadow,
   &_swigt__p_StatBuf,
+  &_swigt__p_VSIDIR,
   &_swigt__p_VSILFILE,
   &_swigt__p_char,
   &_swigt__p_double,
@@ -35160,6 +35845,7 @@ static swig_type_info *swig_type_initial[] = {
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CPLVirtualMemShadow[] = {  {&_swigt__p_CPLVirtualMemShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CPLXMLNode[] = {  {&_swigt__p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_DirEntry[] = {  {&_swigt__p_DirEntry, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GByte[] = {  {&_swigt__p_GByte, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALAsyncReaderShadow[] = {  {&_swigt__p_GDALAsyncReaderShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALBuildVRTOptions[] = {  {&_swigt__p_GDALBuildVRTOptions, 0, 0, 0},{0, 0, 0, 0}};
@@ -35189,6 +35875,7 @@ static swig_cast_info _swigc__p_OGRLayerShadow[] = {  {&_swigt__p_OGRLayerShadow
 static swig_cast_info _swigc__p_OGRStyleTableShadow[] = {  {&_swigt__p_OGRStyleTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_StatBuf[] = {  {&_swigt__p_StatBuf, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_VSIDIR[] = {  {&_swigt__p_VSIDIR, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VSILFILE[] = {  {&_swigt__p_VSILFILE, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_double[] = {  {&_swigt__p_double, 0, 0, 0},{0, 0, 0, 0}};
@@ -35209,6 +35896,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
   _swigc__p_CPLVirtualMemShadow,
   _swigc__p_CPLXMLNode,
+  _swigc__p_DirEntry,
   _swigc__p_GByte,
   _swigc__p_GDALAsyncReaderShadow,
   _swigc__p_GDALBuildVRTOptions,
@@ -35238,6 +35926,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_OGRStyleTableShadow,
   _swigc__p_OSRSpatialReferenceShadow,
   _swigc__p_StatBuf,
+  _swigc__p_VSIDIR,
   _swigc__p_VSILFILE,
   _swigc__p_char,
   _swigc__p_double,

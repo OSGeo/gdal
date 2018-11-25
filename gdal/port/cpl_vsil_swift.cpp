@@ -205,12 +205,6 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
         }
         osFileList.AddString( (aoProps[i].first + osSuffix).c_str() );
     }
-
-    if( osFileList.size() == 0 )
-    {
-        // To avoid an error to be reported
-        osFileList.AddString(".");
-    }
 }
 
 /************************************************************************/
@@ -248,6 +242,13 @@ public:
 
         int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                 int nFlags ) override;
+
+        VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
+                                const char* const *papszOptions) override
+        {
+            return VSICurlFilesystemHandler::OpenDir(pszPath, nRecurseDepth,
+                                                     papszOptions);
+        }
 
         const char* GetOptions() override;
 };

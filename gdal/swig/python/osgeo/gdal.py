@@ -156,6 +156,23 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
 
   return 0
 
+def listdir(path, recursionLevel = -1, options = []):
+  """ Iterate over a directory.
+
+      recursionLevel = -1 means unlimited level of recursion.
+  """
+  dir = OpenDir(path, recursionLevel, options)
+  if not dir:
+      raise OSError(path + ' does not exist')
+  try:
+      while True:
+          entry = GetNextDirEntry(dir)
+          if not entry:
+              break
+          yield entry
+  finally:
+      CloseDir(dir)
+
 
 def GetUseExceptions(*args):
     """GetUseExceptions() -> int"""
@@ -1376,6 +1393,68 @@ def ReadDir(*args):
 def ReadDirRecursive(*args):
     """ReadDirRecursive(char const * utf8_path) -> char **"""
     return _gdal.ReadDirRecursive(*args)
+
+def OpenDir(*args):
+    """OpenDir(char const * utf8_path, int nRecurseDepth=-1, char ** options=None) -> VSIDIR *"""
+    return _gdal.OpenDir(*args)
+class DirEntry(_object):
+    """Proxy of C++ DirEntry class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, DirEntry, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, DirEntry, name)
+    __repr__ = _swig_repr
+    __swig_getmethods__["name"] = _gdal.DirEntry_name_get
+    if _newclass:
+        name = _swig_property(_gdal.DirEntry_name_get)
+    __swig_getmethods__["mode"] = _gdal.DirEntry_mode_get
+    if _newclass:
+        mode = _swig_property(_gdal.DirEntry_mode_get)
+    __swig_getmethods__["size"] = _gdal.DirEntry_size_get
+    if _newclass:
+        size = _swig_property(_gdal.DirEntry_size_get)
+    __swig_getmethods__["mtime"] = _gdal.DirEntry_mtime_get
+    if _newclass:
+        mtime = _swig_property(_gdal.DirEntry_mtime_get)
+    __swig_getmethods__["modeKnown"] = _gdal.DirEntry_modeKnown_get
+    if _newclass:
+        modeKnown = _swig_property(_gdal.DirEntry_modeKnown_get)
+    __swig_getmethods__["sizeKnown"] = _gdal.DirEntry_sizeKnown_get
+    if _newclass:
+        sizeKnown = _swig_property(_gdal.DirEntry_sizeKnown_get)
+    __swig_getmethods__["mtimeKnown"] = _gdal.DirEntry_mtimeKnown_get
+    if _newclass:
+        mtimeKnown = _swig_property(_gdal.DirEntry_mtimeKnown_get)
+    __swig_getmethods__["extra"] = _gdal.DirEntry_extra_get
+    if _newclass:
+        extra = _swig_property(_gdal.DirEntry_extra_get)
+
+    def __init__(self, *args):
+        """__init__(DirEntry self, DirEntry entryIn) -> DirEntry"""
+        this = _gdal.new_DirEntry(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+    __swig_destroy__ = _gdal.delete_DirEntry
+    __del__ = lambda self: None
+
+    def IsDirectory(self, *args):
+        """IsDirectory(DirEntry self) -> bool"""
+        return _gdal.DirEntry_IsDirectory(self, *args)
+
+DirEntry_swigregister = _gdal.DirEntry_swigregister
+DirEntry_swigregister(DirEntry)
+
+
+def GetNextDirEntry(*args):
+    """GetNextDirEntry(VSIDIR * dir) -> DirEntry"""
+    return _gdal.GetNextDirEntry(*args)
+
+def CloseDir(*args):
+    """CloseDir(VSIDIR * dir)"""
+    return _gdal.CloseDir(*args)
 
 def SetConfigOption(*args):
     """SetConfigOption(char const * pszKey, char const * pszValue)"""
