@@ -3122,6 +3122,33 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         }
         else
         {
+            bool nWestIsLeft = (pdfXCoord[0] < pdfXCoord[xdim - 1]);
+
+            // fix longitudes if longitudes should increase from 
+            // west to east, but west > east
+            if (!nWestIsLeft)
+            {
+                size_t ndecreases = 0;
+
+                // there is lon wrap if longitudes increase 
+                // with one single decrease 
+                for( size_t i = 1; i < xdim; i++ )
+                {
+                    if (pdfXCoord[i] < pdfXCoord[i - 1])
+                        ndecreases++;
+                }
+
+                if (ndecreases == 1)
+                {
+                    CPLDebug("GDAL_netCDF", "longitude wrap detected");
+                    for( size_t i = 0; i < xdim; i++ )
+                    {
+                        if (pdfXCoord[i] > pdfXCoord[xdim - 1])
+                            pdfXCoord[i] -= 360;
+                    }
+                }
+            }
+
             nSpacingBegin = static_cast<int>(
                 poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 1000));
 
