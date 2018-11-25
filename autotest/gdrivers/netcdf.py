@@ -1448,6 +1448,35 @@ def netcdf_36():
 
     return 'success'
 
+
+###############################################################################
+# test for correct geotransform with longitude wrap
+
+
+def netcdf_36_lonwrap():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/nc_lonwrap.nc'
+
+    ds = gdal.Open(ifile)
+    if ds is None:
+        gdaltest.post_reason('open failed')
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    if gt is None:
+        gdaltest.post_reason('got no GeoTransform')
+        return 'fail'
+    gt_expected = (-2.25, 2.5, 0.0, 16.25, 0.0, -2.5)
+    if gt != gt_expected:
+        gdaltest.post_reason('got GeoTransform %s, expected %s' % (str(gt), str(gt_expected)))
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # test for reading gaussian grid (bugs #4513 and #5118)
 
@@ -3324,6 +3353,7 @@ gdaltest_list = [
     netcdf_34,
     netcdf_35,
     netcdf_36,
+    netcdf_36_lonwrap,
     netcdf_37,
     netcdf_38,
     netcdf_39,
