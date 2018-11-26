@@ -3891,6 +3891,27 @@ def ogr_dxf_insert_too_many_errors():
 
     return 'success'
 
+
+###############################################################################
+
+
+def ogr_dxf_write_geometry_collection_of_unsupported_type():
+
+
+    tmpfile = '/vsimem/ogr_dxf_write_geometry_collection_of_unsupported_type.dxf'
+    ds = ogr.GetDriverByName('DXF').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(TIN EMPTY)'))
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
+    if ret == 0:
+        return 'fail'
+    ds = None
+    gdal.Unlink(tmpfile)
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -3960,6 +3981,7 @@ gdaltest_list = [
     ogr_dxf_52,
     ogr_dxf_53,
     ogr_dxf_insert_too_many_errors,
+    ogr_dxf_write_geometry_collection_of_unsupported_type,
     ogr_dxf_cleanup]
 
 if __name__ == '__main__':
