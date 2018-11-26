@@ -1811,6 +1811,283 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
 #
 
 
+def wmts_check_no_overflow_zoom_level():
+
+    if gdaltest.wmts_drv is None:
+        return 'skip'
+
+    inputXml = '/vsimem/wmts_check_no_overflow_zoom_level.xml'
+    gdal.FileFromMemBuffer(inputXml, """<?xml version="1.0"?>
+<Capabilities xmlns="http://www.opengis.net/wmts/1.0"
+xmlns:ows="http://www.opengis.net/ows/1.1"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
+  <Contents>
+    <Layer>
+      <ows:Title>foo</ows:Title>
+      <ows:Abstract></ows:Abstract>
+      <ows:WGS84BoundingBox crs="urn:ogc:def:crs:OGC:2:84">
+        <ows:LowerCorner>-179.99999000000003 -85.00000000000003</ows:LowerCorner>
+        <ows:UpperCorner>179.99999000000003 85.0</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <ows:Identifier>foo</ows:Identifier>
+      <Style>
+        <ows:Identifier>default</ows:Identifier>
+      </Style>
+      <Format>image/png</Format>
+      <TileMatrixSetLink>
+        <TileMatrixSet>default</TileMatrixSet>
+      </TileMatrixSetLink>
+      <ResourceURL
+          format="image/png"
+          resourceType="tile"
+          template="https://example.com/{TileMatrixSet}/{TileMatrix}/{TileCol}/{TileRow}.png"
+      />
+    </Layer>
+    <TileMatrixSet>
+    <ows:Identifier>default</ows:Identifier>
+    <ows:SupportedCRS>urn:ogc:def:crs:EPSG::3857</ows:SupportedCRS>
+    <TileMatrix>
+    <ows:Identifier>0</ows:Identifier>
+    <ScaleDenominator>5.590822640285016E8</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>1</MatrixWidth>
+    <MatrixHeight>1</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>1</ows:Identifier>
+    <ScaleDenominator>2.7954113201425034E8</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>2</MatrixWidth>
+    <MatrixHeight>2</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>2</ows:Identifier>
+    <ScaleDenominator>1.3977056600712562E8</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>4</MatrixWidth>
+    <MatrixHeight>4</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>3</ows:Identifier>
+    <ScaleDenominator>6.988528300356235E7</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>8</MatrixWidth>
+    <MatrixHeight>8</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>4</ows:Identifier>
+    <ScaleDenominator>3.494264150178117E7</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>16</MatrixWidth>
+    <MatrixHeight>16</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>5</ows:Identifier>
+    <ScaleDenominator>1.7471320750890587E7</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>32</MatrixWidth>
+    <MatrixHeight>32</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>6</ows:Identifier>
+    <ScaleDenominator>8735660.375445293</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>64</MatrixWidth>
+    <MatrixHeight>64</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>7</ows:Identifier>
+    <ScaleDenominator>4367830.187722647</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>128</MatrixWidth>
+    <MatrixHeight>128</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>8</ows:Identifier>
+    <ScaleDenominator>2183915.0938617955</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>256</MatrixWidth>
+    <MatrixHeight>256</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>9</ows:Identifier>
+    <ScaleDenominator>1091957.5469304253</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>512</MatrixWidth>
+    <MatrixHeight>512</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>10</ows:Identifier>
+    <ScaleDenominator>545978.7734656851</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>1024</MatrixWidth>
+    <MatrixHeight>1023</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>11</ows:Identifier>
+    <ScaleDenominator>272989.38673237007</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>2048</MatrixWidth>
+    <MatrixHeight>2045</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>12</ows:Identifier>
+    <ScaleDenominator>136494.69336618503</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>4096</MatrixWidth>
+    <MatrixHeight>4090</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>13</ows:Identifier>
+    <ScaleDenominator>68247.34668309252</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>8192</MatrixWidth>
+    <MatrixHeight>8179</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>14</ows:Identifier>
+    <ScaleDenominator>34123.67334154626</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>16384</MatrixWidth>
+    <MatrixHeight>16358</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>15</ows:Identifier>
+    <ScaleDenominator>17061.836671245605</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>32768</MatrixWidth>
+    <MatrixHeight>32715</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>16</ows:Identifier>
+    <ScaleDenominator>8530.918335622802</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>65536</MatrixWidth>
+    <MatrixHeight>65429</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>17</ows:Identifier>
+    <ScaleDenominator>4265.459167338929</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>131072</MatrixWidth>
+    <MatrixHeight>130858</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>18</ows:Identifier>
+    <ScaleDenominator>2132.729584141936</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>262144</MatrixWidth>
+    <MatrixHeight>261715</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>19</ows:Identifier>
+    <ScaleDenominator>1066.3647915984968</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>524288</MatrixWidth>
+    <MatrixHeight>523430</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>20</ows:Identifier>
+    <ScaleDenominator>533.1823957992484</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>1048576</MatrixWidth>
+    <MatrixHeight>1046859</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>21</ows:Identifier>
+    <ScaleDenominator>266.5911978996242</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>2097152</MatrixWidth>
+    <MatrixHeight>2093718</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>22</ows:Identifier>
+    <ScaleDenominator>133.2955989498121</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>4194304</MatrixWidth>
+    <MatrixHeight>4187435</MatrixHeight>
+    </TileMatrix>
+    <TileMatrix>
+    <ows:Identifier>23</ows:Identifier>
+    <ScaleDenominator>66.64779947490605</ScaleDenominator>
+    <TopLeftCorner>-2.0037508342787E7 2.0037508342787E7</TopLeftCorner>
+    <TileWidth>256</TileWidth>
+    <TileHeight>256</TileHeight>
+    <MatrixWidth>8388608</MatrixWidth>
+    <MatrixHeight>8374869</MatrixHeight>
+    </TileMatrix>
+    </TileMatrixSet>
+  </Contents>
+</Capabilities>""")
+
+    ds = gdal.Open(inputXml)
+    if ds.RasterXSize != 1073741766 or ds.RasterYSize != 1070224430:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize, ds.RasterYSize)
+        return 'fail'
+    count_levels = 1 + ds.GetRasterBand(1).GetOverviewCount()
+    if count_levels != 23: # there are 24 in total, but we discard the one labelled 23
+        gdaltest.post_reason('fail')
+        print(count_levels)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(inputXml)
+
+    return 'success'
+
+
+
+###############################################################################
+#
+
+
 def wmts_CleanCache():
     hexstr = '012346789abcdef'
     for i in range(len(hexstr)):
@@ -1877,6 +2154,7 @@ gdaltest_list = [
     wmts_23_rgb,
     wmts_23_rgba,
     wmts_invalid_global_to_tm_reprojection,
+    wmts_check_no_overflow_zoom_level,
     wmts_cleanup]
 
 if __name__ == '__main__':
