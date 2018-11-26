@@ -35,6 +35,7 @@
 #include "../vrt/gdal_vrt.h"
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <set>
 #include <vector>
@@ -2065,17 +2066,17 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;
 
             nSrcXOff = 0;
-            nDstXOff = (int)(0.5 + (dfULX - poDS->adfGT[0]) / oTM.dfPixelSize);
+            nDstXOff = static_cast<int>(std::round((dfULX - poDS->adfGT[0]) / oTM.dfPixelSize));
 
             nSrcYOff = 0;
-            nDstYOff = (int)(0.5 + (poDS->adfGT[3] - dfULY) / oTM.dfPixelSize);
+            nDstYOff = static_cast<int>(std::round((poDS->adfGT[3] - dfULY) / oTM.dfPixelSize));
 
             if( bExtendBeyondDateLine )
             {
                 int nSrcXOff2, nDstXOff2;
 
                 nSrcXOff2 = 0;
-                nDstXOff2 = (int)(0.5 + (dfDateLineX - poDS->adfGT[0]) / oTM.dfPixelSize);
+                nDstXOff2 = static_cast<int>(std::round((dfDateLineX - poDS->adfGT[0]) / oTM.dfPixelSize));
 
                 osStr = CPLSPrintf( WMS_TMS_TEMPLATE,
                     WMTSEscapeXML(osURL).c_str(),
