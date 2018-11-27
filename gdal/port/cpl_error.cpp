@@ -208,9 +208,8 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
 }
 
 
-void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
-                        CPLErrorNum err_no, const char *pszMessage,
-                        bool is_cpldebug )
+static void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
+                        CPLErrorNum err_no, const char *pszMessage)
 {
     void **pActiveUserData;
     bool bProcessed = false;
@@ -220,7 +219,7 @@ void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
     if( psCtx->psHandlerStack != nullptr )
     {
         // iterate through the threadlocal handler stack
-        if( !is_cpldebug || psCtx->psHandlerStack->bCatchDebug )
+        if( (eErrClass != CE_Debug) || psCtx->psHandlerStack->bCatchDebug )
         {
             // call the error handler
             pActiveUserData = &(psCtx->psHandlerStack->pUserData);
@@ -238,7 +237,7 @@ void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
                 {
                     pActiveUserData = &(psNode->pUserData);
                     CPLSetTLS( CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false );
-                    psNode->pfnHandler( CE_Debug, CPLE_None, pszMessage );
+                    psNode->pfnHandler( eErrClass, err_no, pszMessage );
                     bProcessed = true;
                     break;
                 }
@@ -251,7 +250,7 @@ void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
     {
         // hit the global error handler
         CPLMutexHolderD( &hErrorMutex );
-        if( !is_cpldebug || gbCatchDebug )
+        if( (eErrClass != CE_Debug) || gbCatchDebug )
         {
             if( pfnErrorHandler != nullptr )
             {
@@ -260,7 +259,7 @@ void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
                 pfnErrorHandler(eErrClass, err_no, pszMessage);
             }
         }
-        else if( is_cpldebug )
+        else if( eErrClass == CE_Debug )
         {
             // for CPLDebug messages we propagate to the default error handler
             pActiveUserData = nullptr;
@@ -462,7 +461,7 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 /* -------------------------------------------------------------------- */
 /*      Invoke the current error handler.                               */
 /* -------------------------------------------------------------------- */
-    ApplyErrorHandler(psCtx, eErrClass, err_no, psCtx->szLastErrMsg, false);
+    ApplyErrorHandler(psCtx, eErrClass, err_no, psCtx->szLastErrMsg);
 
     if( eErrClass == CE_Fatal )
         abort();
@@ -500,7 +499,7 @@ void CPLEmergencyError( const char *pszMessage )
         CPLErrorContext *psCtx =
             static_cast<CPLErrorContext *>(CPLGetTLS( CTLS_ERRORCONTEXT ));
 
-        ApplyErrorHandler(psCtx, CE_Fatal, CPLE_AppDefined, pszMessage, false);
+        ApplyErrorHandler(psCtx, CE_Fatal, CPLE_AppDefined, pszMessage);
     }
 
     // Ultimate fallback.
@@ -711,7 +710,7 @@ void CPLDebug( const char * pszCategory,
 /* -------------------------------------------------------------------- */
 /*      Invoke the current error handler.                               */
 /* -------------------------------------------------------------------- */
-    ApplyErrorHandler(psCtx, CE_Debug, CPLE_None, pszMessage, true);
+    ApplyErrorHandler(psCtx, CE_Debug, CPLE_None, pszMessage);
 
     VSIFree( pszMessage );
 }
