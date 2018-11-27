@@ -174,21 +174,12 @@ protected:
 
     void RegisterEmptyDir( const CPLString& osDirname );
 
-    void AnalyseS3FileList( const CPLString& osBaseURL,
+    bool AnalyseS3FileList( const CPLString& osBaseURL,
                             const char* pszXML,
                             CPLStringList& osFileList,
                             int nMaxFiles,
                             bool bIgnoreGlacierStorageClass,
-                            bool& bIsTruncated,
-                            CPLString& osNextMarker );
-
-    void AnalyseAzureFileList( const CPLString& osBaseURL,
-                               bool bCacheResults,
-                            const char* pszXML,
-                            CPLStringList& osFileList,
-                            int nMaxFiles,
-                            bool& bIsTruncated,
-                            CPLString& osNextMarker );
+                            bool& bIsTruncated );
 
     void AnalyseSwiftFileList( const CPLString& osBaseURL,
                                const CPLString& osPrefix,
@@ -396,6 +387,9 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                 GDALProgressFunc pProgressFunc,
                 void *pProgressData,
                 char*** ppapszOutputs  ) override;
+
+    VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
+                             const char* const *papszOptions) override;
 };
 
 /************************************************************************/

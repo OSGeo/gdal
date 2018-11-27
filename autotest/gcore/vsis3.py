@@ -663,7 +663,7 @@ def vsis3_2():
 # Test ReadDir() with a fake AWS server
 
 
-def vsis3_3():
+def vsis3_readdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -937,14 +937,14 @@ def vsis3_3():
                 handler.add('GET', '/s3_non_cached/?delimiter=%2F', 200, {'Content-type': 'application/xml'},
                             """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
-                            <Prefix>/</Prefix>
+                            <Prefix></Prefix>
                             <Contents>
-                                <Key>/test.txt</Key>
+                                <Key>test.txt</Key>
                                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
                                 <Size>40</Size>
                             </Contents>
                             <Contents>
-                                <Key>/test2.txt</Key>
+                                <Key>test2.txt</Key>
                                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
                                 <Size>40</Size>
                             </Contents>
@@ -1061,9 +1061,9 @@ def vsis3_3():
 
     h = HandlerClass("""<?xml version="1.0" encoding="UTF-8"?>
                 <ListBucketResult>
-                    <Prefix>/</Prefix>
+                    <Prefix></Prefix>
                     <CommonPrefixes>
-                        <Prefix>/test</Prefix>
+                        <Prefix>test</Prefix>
                     </CommonPrefixes>
                 </ListBucketResult>
             """)
@@ -1082,9 +1082,9 @@ def vsis3_3():
 
     h = HandlerClass("""<?xml version="1.0" encoding="UTF-8"?>
             <ListBucketResult>
-                <Prefix>/test/</Prefix>
+                <Prefix>test/</Prefix>
                 <CommonPrefixes>
-                    <Prefix>/test/test2</Prefix>
+                    <Prefix>test/test2</Prefix>
                 </CommonPrefixes>
             </ListBucketResult>
         """)
@@ -1097,6 +1097,226 @@ def vsis3_3():
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test OpenDir() with a fake AWS server
+
+
+def vsis3_opendir():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    # Unlimited depth
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/vsis3_opendir/', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix/>
+                <Marker/>
+                <Contents>
+                    <Key>test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+                <Contents>
+                    <Key>subdir/</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>subdir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsis3/vsis3_opendir')
+    if d is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'test.txt':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.size != 40:
+        gdaltest.post_reason('fail')
+        print(entry.size)
+        return 'fail'
+    if entry.mode != 32768:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+    if entry.mtime != 1:
+        gdaltest.post_reason('fail')
+        print(entry.mtime)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.mode != 16384:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir/test.txt':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.CloseDir(d)
+
+    # Depth = 0
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/vsis3_opendir/?delimiter=%2F', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix/>
+                <Marker/>
+                <Contents>
+                    <Key>test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+                <CommonPrefixes>
+                    <Prefix>subdir/</Prefix>
+                </CommonPrefixes>
+            </ListBucketResult>
+        """)
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsis3/vsis3_opendir', 0)
+    if d is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'test.txt':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.size != 40:
+        gdaltest.post_reason('fail')
+        print(entry.size)
+        return 'fail'
+    if entry.mode != 32768:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+    if entry.mtime != 1:
+        gdaltest.post_reason('fail')
+        print(entry.mtime)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.mode != 16384:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.CloseDir(d)
+
+    # Depth = 1
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/vsis3_opendir/?delimiter=%2F', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix/>
+                <Marker/>
+                <Contents>
+                    <Key>test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+                <CommonPrefixes>
+                    <Prefix>subdir/</Prefix>
+                </CommonPrefixes>
+            </ListBucketResult>
+        """)
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsis3/vsis3_opendir', 1)
+        if d is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'test.txt':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.size != 40:
+        gdaltest.post_reason('fail')
+        print(entry.size)
+        return 'fail'
+    if entry.mode != 32768:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+    if entry.mtime != 1:
+        gdaltest.post_reason('fail')
+        print(entry.mtime)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.mode != 16384:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/vsis3_opendir/?delimiter=%2F&prefix=subdir%2F', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>subdir/</Prefix>
+                <Marker/>
+                <Contents>
+                    <Key>subdir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+    with webserver.install_http_handler(handler):
+        entry = gdal.GetNextDirEntry(d)
+        if entry.name != 'subdir/test.txt':
+            gdaltest.post_reason('fail')
+            print(entry.name)
+            return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.CloseDir(d)
+
+
 
     return 'success'
 
@@ -2745,7 +2965,8 @@ gdaltest_list = [vsis3_init,
                  vsis3_1,
                  vsis3_start_webserver,
                  vsis3_2,
-                 vsis3_3,
+                 vsis3_readdir,
+                 vsis3_opendir,
                  vsis3_4,
                  vsis3_5,
                  vsis3_6,
@@ -2763,7 +2984,7 @@ gdaltest_list = [vsis3_init,
                  vsis3_stop_webserver,
                  vsis3_cleanup]
 
-# gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_sync_etag, vsis3_stop_webserver, vsis3_cleanup ]
+# gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_opendir, vsis3_stop_webserver, vsis3_cleanup ]
 
 gdaltest_list_extra = [vsis3_extra_1]
 

@@ -3667,16 +3667,20 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
             bool bIsTruncated = true;
             const bool bIgnoreGlacier = CPLTestBool(
                 CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "YES"));
-            AnalyseS3FileList( osBaseURL,
+            bool ret = AnalyseS3FileList( osBaseURL,
                                sWriteFuncData.pBuffer,
                                osFileList,
                                nMaxFiles,
                                bIgnoreGlacier,
-                               bIsTruncated,
-                               osNextMarker );
+                               bIsTruncated );
             // If the list is truncated, then don't report it.
-            if( !bIsTruncated )
+            if( ret && !bIsTruncated )
             {
+                if( osFileList.empty() )
+                {
+                    // To avoid an error to be reported
+                    osFileList.AddString(".");
+                }
                 papszFileList = osFileList.StealList();
                 *pbGotFileList = true;
             }
@@ -3894,6 +3898,11 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
         cachedDirList.oFileList.Assign(
             GetFileList(osDirname, nMaxFiles,
                         &cachedDirList.bGotFileList), true);
+        if( cachedDirList.bGotFileList && cachedDirList.oFileList.empty() )
+        {
+            // To avoid an error to be reported
+            cachedDirList.oFileList.AddString(".");
+        }
         if( nMaxFiles <= 0 || cachedDirList.oFileList.size() < nMaxFiles )
         {
             // Only cache content if we didn't hit the limitation

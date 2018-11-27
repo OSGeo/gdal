@@ -1000,6 +1000,132 @@ def vsisync():
 
     return 'success'
 
+###############################################################################
+# Test gdal.OpenDir()
+
+def vsifile_opendir():
+
+    # Non existing dir
+    d = gdal.OpenDir('/vsimem/i_dont_exist')
+    if d:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Mkdir('/vsimem/vsifile_opendir', 0o755)
+
+    # Empty dir
+    d = gdal.OpenDir('/vsimem/vsifile_opendir')
+    if not d:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    entry = gdal.GetNextDirEntry(d)
+    if entry:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.CloseDir(d)
+
+    gdal.FileFromMemBuffer('/vsimem/vsifile_opendir/test', 'foo')
+    gdal.Mkdir('/vsimem/vsifile_opendir/subdir', 0o755)
+    gdal.Mkdir('/vsimem/vsifile_opendir/subdir/subdir2', 0o755)
+    gdal.FileFromMemBuffer('/vsimem/vsifile_opendir/subdir/subdir2/test2', 'bar')
+
+    # Unlimited depth
+    d = gdal.OpenDir('/vsimem/vsifile_opendir')
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.mode != 16384:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir/subdir2':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.mode != 16384:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir/subdir2/test2':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.mode != 32768:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'test':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    if entry.mode != 32768:
+        gdaltest.post_reason('fail')
+        print(entry.mode)
+        return 'fail'
+    if not entry.modeKnown:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if entry.size != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not entry.sizeKnown:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if entry.mtime == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not entry.mtimeKnown:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if entry.extra:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    entry = gdal.GetNextDirEntry(d)
+    if entry:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.CloseDir(d)
+
+    # Only top level
+    d = gdal.OpenDir('/vsimem/vsifile_opendir', 0)
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'subdir':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    entry = gdal.GetNextDirEntry(d)
+    if entry.name != 'test':
+        gdaltest.post_reason('fail')
+        print(entry.name)
+        return 'fail'
+    entry = gdal.GetNextDirEntry(d)
+    if entry:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.CloseDir(d)
+
+    # Depth 1
+    files = [l_entry.name for l_entry in gdal.listdir('/vsimem/vsifile_opendir', 1)]
+    if files != ['subdir', 'subdir/subdir2', 'test']:
+        gdaltest.post_reason('fail')
+        print(files)
+        return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/vsifile_opendir')
+
+    return 'success'
+
+
 gdaltest_list = [vsifile_1,
                  vsifile_2,
                  vsifile_3,
@@ -1024,6 +1150,7 @@ gdaltest_list = [vsifile_1,
                  vsifile_22,
                  vsitar_bug_675,
                  vsigzip_multi_thread,
+                 vsifile_opendir,
                  vsisync]
 
 if __name__ == '__main__':

@@ -127,6 +127,23 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
     src_ds = None
 
     return 0
+
+  def listdir(path, recursionLevel = -1, options = []):
+    """ Iterate over a directory.
+
+        recursionLevel = -1 means unlimited level of recursion.
+    """
+    dir = OpenDir(path, recursionLevel, options)
+    if not dir:
+        raise OSError(path + ' does not exist')
+    try:
+        while True:
+            entry = GetNextDirEntry(dir)
+            if not entry:
+                break
+            yield entry
+    finally:
+        CloseDir(dir)
 %}
 
 %{
