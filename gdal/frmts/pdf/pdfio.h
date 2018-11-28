@@ -58,6 +58,15 @@
 #define makeSubStream_object_type Object*
 #endif
 
+// Detect Poppler 0.71 that no longer defines GBool
+#ifdef POPPLER_0_69_OR_LATER
+#ifndef initObj
+#define POPPLER_0_71_OR_LATER
+#define GBool bool
+#define gFalse false
+#endif
+#endif
+
 class VSIPDFFileStream: public BaseStream
 {
     public:
