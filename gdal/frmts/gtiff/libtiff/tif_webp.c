@@ -419,6 +419,12 @@ TWebPPreEncode(TIFF* tif, uint16 s)
   /* set up buffer for raw data */
   /* given above check and that nSamples <= 4, buffer_size is <= 1 GB */
   sp->buffer_size = segment_width * segment_height * sp->nSamples;
+  
+  if (sp->pBuffer != NULL) {
+      _TIFFfree(sp->pBuffer);
+      sp->pBuffer = NULL;    
+  }
+  
   sp->pBuffer = _TIFFmalloc(sp->buffer_size);
   if( !sp->pBuffer) {
       TIFFErrorExt(tif->tif_clientdata, module, "Cannot allocate buffer");
@@ -464,7 +470,7 @@ TWebPPostEncode(TIFF* tif)
                     "WebPPictureImportRGB() failed");
       return 0;
   }
-
+  
   if (!WebPEncode(&sp->sEncoderConfig, &sp->sPicture)) {
 
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
@@ -544,10 +550,10 @@ TWebPCleanup(TIFF* tif)
   }
   
   if (sp->pBuffer != NULL) {
-    _TIFFfree(sp->pBuffer);
-    sp->pBuffer = NULL;
+      _TIFFfree(sp->pBuffer);
+      sp->pBuffer = NULL;    
   }
-
+  
   if (tif->tif_data) {
     _TIFFfree(tif->tif_data);
     tif->tif_data = NULL;
