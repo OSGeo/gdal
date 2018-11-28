@@ -64,7 +64,7 @@ if "%_vcver_%"=="15.0" (
 ) else (
     echo Wrong value for parameter 1. See usage:
 	goto :usage
-))))
+))
 
 ::  *********************
 ::  Get Platform
