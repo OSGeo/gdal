@@ -31,13 +31,20 @@
 ###############################################################################
 
 import os
+import subprocess
 import sys
 from osgeo import gdal
 from osgeo import ogr
 
-
-import gdaltest
 import pytest
+
+try:
+    import gdaltest
+except ImportError:
+    # running as a subprocess in the windows build (see __main__ block),
+    # so conftest.py hasn't run, so sys.path doesn't have pymod in it
+    sys.path.append('../pymod')
+    import gdaltest
 
 ###############################################################################
 # Verify we have the driver.
@@ -222,7 +229,7 @@ def test_http_6():
 
 ###############################################################################
 
-def test_http_test_ssl_verifystatus():
+def test_http_ssl_verifystatus():
 
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
@@ -244,22 +251,23 @@ def test_http_test_ssl_verifystatus():
 ###############################################################################
 
 
-def test_http_test_use_capi_store():
+def test_http_use_capi_store():
 
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
     if sys.platform != 'win32':
         with gdaltest.error_handler():
-            return test_http_test_use_capi_store_sub()
+            return test_http_use_capi_store_sub()
 
-    import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdalhttp', ' -use_capi_store', display_live_on_parent_stdout=True)
+    # Prints this to stderr in many cases (but doesn't error)
+    # Warning 6: GDAL_HTTP_USE_CAPI_STORE requested, but libcurl too old, non-Windows platform or OpenSSL missing.
+    subprocess.check_call(
+        [sys.executable, 'gdalhttp.py', '-use_capi_store'],
+    )
 
-    assert ret.find('Failed:    0') != -1
 
-
-def test_http_test_use_capi_store_sub():
+def test_http_use_capi_store_sub():
 
     with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
         gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
@@ -273,3 +281,8 @@ def test_http_cleanup():
     if gdaltest.dods_drv is not None:
         gdaltest.dods_drv.Register()
     gdaltest.dods_drv = None
+
+
+if __name__ == '__main__':
+    if len(sys.argv) == 2 and sys.argv[1] == '-use_capi_store':
+        test_http_use_capi_store_sub()
