@@ -2911,7 +2911,6 @@ OGRErr OGRSQLiteDataSource::CommitTransaction()
             {
                 OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
                 poLayer->RunDeferredCreationIfNecessary();
-                //poLayer->CreateSpatialIndexIfNecessary();
             }
         }
     }
@@ -2949,7 +2948,6 @@ OGRErr OGRSQLiteDataSource::RollbackTransaction()
             {
                 OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
                 poLayer->RunDeferredCreationIfNecessary();
-                poLayer->CreateSpatialIndexIfNecessary();
             }
         }
 
