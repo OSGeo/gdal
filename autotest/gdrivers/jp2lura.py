@@ -2006,10 +2006,3 @@ def test_jp2lura_54():
 def test_jp2lura_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-
-
-disabled_gdaltest_list = [
-    test_jp2lura_1,
-    test_jp2lura_53,
-    test_jp2lura_cleanup]

@@ -1773,8 +1773,3 @@ def test_vrtpansharpen_cleanup():
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/pan.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/ms.tif')
-
-
-
-# gdaltest_list= [ vrtpansharpen_1, vrtpansharpen_8 ]
-

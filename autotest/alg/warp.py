@@ -1679,8 +1679,3 @@ def test_warp_56():
         warped = pix_ds.GetRasterBand(1).ReadAsArray()[0, 0]
         assert abs(warped - exp) <= 0.6, \
             'offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped)
-
-    
-
-# gdaltest_list = [ warp_55 ]
-

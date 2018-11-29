@@ -2284,7 +2284,7 @@ def test_vsis3_stop_webserver():
 # Nominal cases (require valid credentials)
 
 
-def vsis3_extra_1():
+def test_vsis3_extra_1():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -2297,11 +2297,12 @@ def vsis3_extra_1():
 
     if not os.path.exists(credentials_filename):
         if gdal.GetConfigOption('AWS_SECRET_ACCESS_KEY') is None:
-            pytest.skip('Missing AWS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
+            pytest.skip('Missing AWS_SECRET_ACCESS_KEY')
         elif gdal.GetConfigOption('AWS_ACCESS_KEY_ID') is None:
-            pytest.skip('Missing AWS_ACCESS_KEY_ID for running gdaltest_list_extra')
-    elif s3_resource is None:
-        pytest.skip('Missing S3_RESOURCE for running gdaltest_list_extra')
+            pytest.skip('Missing AWS_ACCESS_KEY_ID')
+
+    if s3_resource is None:
+        pytest.skip('Missing S3_RESOURCE')
 
     if s3_resource.find('/') < 0:
         path = '/vsis3/' + s3_resource
@@ -2416,9 +2417,3 @@ def test_vsis3_cleanup():
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
     gdal.SetConfigOption('AWS_CONFIG_FILE', None)
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', None)
-
-
-
-# gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_opendir, vsis3_stop_webserver, vsis3_cleanup ]
-
-gdaltest_list_extra = [vsis3_extra_1]

@@ -597,14 +597,14 @@ def test_vsiswift_stop_webserver():
 # Nominal cases (require valid credentials)
 
 
-def vsiswift_extra_1():
+def test_vsiswift_extra_1():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
 
     swift_resource = gdal.GetConfigOption('SWIFT_RESOURCE')
     if swift_resource is None:
-        pytest.skip('Missing SWIFT_RESOURCE for running gdaltest_list_extra')
+        pytest.skip('Missing SWIFT_RESOURCE')
 
     if swift_resource.find('/') < 0:
         path = '/vsiswift/' + swift_resource
@@ -696,10 +696,3 @@ def test_vsiswift_cleanup():
 
     for var in gdaltest.swift_vars:
         gdal.SetConfigOption(var, gdaltest.swift_vars[var])
-
-    
-
-
-# gdaltest_list = [ vsiswift_init, vsiswift_start_webserver, vsiswift_fake_mkdir_rmdir, vsiswift_stop_webserver, vsiswift_cleanup ]
-
-gdaltest_list_extra = [vsiswift_extra_1]

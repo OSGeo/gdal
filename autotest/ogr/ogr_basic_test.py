@@ -684,8 +684,3 @@ def test_ogr_basic_dataset_slice():
 def test_ogr_basic_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
-
-
-
-# gdaltest_list = [ ogr_basic_13 ]
-

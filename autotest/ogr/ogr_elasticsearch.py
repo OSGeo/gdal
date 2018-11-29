@@ -2280,8 +2280,3 @@ def test_ogr_elasticsearch_cleanup():
     ogr_elasticsearch_delete_files()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-
-
-
-# gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]
-

@@ -3429,9 +3429,3 @@ def test_nitf_cleanup():
         gdal.GetDriverByName('NITF').Delete('tmp/nitf63.ntf')
     except RuntimeError:
         pass
-
-    
-
-
-# gdaltest_list = [ nitf_72 ]
-

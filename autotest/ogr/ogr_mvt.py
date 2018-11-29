@@ -1545,7 +1545,3 @@ def test_ogr_mvt_write_reuse_temp_db():
 
 ###############################################################################
 #
-
-
-# gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]
-

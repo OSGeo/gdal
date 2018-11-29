@@ -3909,8 +3909,3 @@ def test_ogr_gpkg_cleanup():
 
     
 ###############################################################################
-
-
-
-# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_47, ogr_gpkg_cleanup ]
-

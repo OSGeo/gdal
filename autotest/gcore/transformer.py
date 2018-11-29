@@ -711,9 +711,3 @@ def test_transformer_17():
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif'])
     assert tr is None
-
-
-
-disabled_gdaltest_list = [
-    test_transformer_11
-]

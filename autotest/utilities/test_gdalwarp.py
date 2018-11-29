@@ -1335,11 +1335,3 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/cutline_4326.prj')
     except OSError:
         pass
-
-    
-
-
-disabled_gdaltest_list = [
-    test_gdalwarp_cleanup,
-    test_gdalwarp_46,
-    test_gdalwarp_cleanup]

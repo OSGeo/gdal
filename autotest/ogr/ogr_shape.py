@@ -4545,9 +4545,3 @@ def test_ogr_shape_cleanup():
     shape_drv.DeleteDataSource('/vsimem/ogr_shape_90.shp')
     if os.path.exists('tmp/ogr_shape_100.shp'):
         shape_drv.DeleteDataSource('tmp/ogr_shape_100.shp')
-
-    
-
-
-# gdaltest_list = [ ogr_shape_107 ]
-

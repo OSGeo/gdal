@@ -3227,7 +3227,3 @@ def test_ogr_geom_force_polygonzm_to_linestring():
 
 def test_ogr_geom_cleanup():
     pass
-
-
-# gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]
-

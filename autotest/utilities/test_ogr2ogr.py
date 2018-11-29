@@ -2436,8 +2436,3 @@ def test_ogr2ogr_67():
     # both as latitutude/longitude in degrees.
     ret = check_identity_transformation(x, y, 4326)
     return ret
-
-
-
-# gdaltest_list = [ test_ogr2ogr_51 ]
-

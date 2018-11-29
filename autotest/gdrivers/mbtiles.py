@@ -597,9 +597,3 @@ def test_mbtiles_cleanup():
 
     if gdaltest.mbtiles_drv is None:
         pytest.skip()
-
-    
-
-
-# gdaltest_list = [ mbtiles_1, mbtiles_create ]
-

@@ -1050,8 +1050,3 @@ def test_jpeg_28():
 def test_jpeg_cleanup():
     gdal.Unlink('tmp/albania.jpg')
     gdal.Unlink('tmp/albania.jpg.ovr')
-
-
-
-# gdaltest_list = [ jpeg_28 ]
-

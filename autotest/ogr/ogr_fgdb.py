@@ -2177,12 +2177,3 @@ def test_ogr_fgdb_cleanup():
         # Force OpenFileGDB first
         ogrtest.openfilegdb_drv.Register()
         ogrtest.fgdb_drv.Register()
-
-    
-
-
-disabled_gdaltest_list = [
-    test_ogr_fgdb_init,
-    test_ogr_fgdb_20,
-    test_ogr_fgdb_cleanup
-]

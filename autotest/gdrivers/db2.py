@@ -197,6 +197,3 @@ def test_gpkg_1():
     assert got_cs == expected_cs
 
 ###############################################################################
-
-
-# gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]

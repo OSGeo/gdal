@@ -64,7 +64,7 @@ def ogr_pg_check_layer_in_list(ds, layer_name):
 #
 
 ###############################################################################
-# Run gdaltest_list_internal with PostGIS enabled and then with PostGIS disabled
+# Run tests with PostGIS enabled and then with PostGIS disabled
 
 
 @pytest.fixture(

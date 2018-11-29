@@ -930,7 +930,3 @@ nodata_value 0
     assert data_ar == expected_ar
 
     gdal.Unlink('/vsimem/in.asc')
-
-
-# gdaltest_list = [ rasterio_16 ]
-

@@ -6897,9 +6897,3 @@ def tiff_write_api_proxy():
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
-
-
-
-
-# gdaltest_list = [ tiff_write_1, tiff_write_176_lerc_max_z_error ]
-

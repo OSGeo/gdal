@@ -3093,10 +3093,3 @@ def test_jp2openjpeg_external_overviews_multiple_band():
 def test_jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-
-
-disabled_gdaltest_list = [
-    test_jp2openjpeg_1,
-    test_jp2openjpeg_45,
-    test_jp2openjpeg_cleanup]

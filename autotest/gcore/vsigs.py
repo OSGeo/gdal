@@ -1062,21 +1062,21 @@ def test_vsigs_stop_webserver():
 # Nominal cases (require valid credentials)
 
 
-def vsigs_extra_1():
+def test_vsigs_extra_1():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
 
     # if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
-    #    print('Missing GS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
-    #    return 'skip'
+    #    print('Missing GS_SECRET_ACCESS_KEY')
+    #    pytest.skip()
     # elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
-    #    print('Missing GS_ACCESS_KEY_ID for running gdaltest_list_extra')
-    #    return 'skip'
+    #    print('Missing GS_ACCESS_KEY_ID')
+    #    pytest.skip()
 
     gs_resource = gdal.GetConfigOption('GS_RESOURCE')
     if gs_resource is None:
-        pytest.skip('Missing GS_RESOURCE for running gdaltest_list_extra')
+        pytest.skip('Missing GS_RESOURCE')
 
     if gs_resource.find('/') < 0:
         path = '/vsigs/' + gs_resource
@@ -1187,10 +1187,3 @@ def test_vsigs_cleanup():
 
     for var in gdaltest.gs_vars:
         gdal.SetConfigOption(var, gdaltest.gs_vars[var])
-
-    
-
-
-# gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_write, vsigs_stop_webserver, vsigs_cleanup ]
-
-gdaltest_list_extra = [vsigs_extra_1]

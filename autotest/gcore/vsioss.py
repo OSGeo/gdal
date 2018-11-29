@@ -990,7 +990,7 @@ def test_visoss_stop_webserver():
 # Nominal cases (require valid credentials)
 
 
-def visoss_extra_1():
+def test_visoss_extra_1():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -999,11 +999,11 @@ def visoss_extra_1():
     OSS_RESOURCE = gdal.GetConfigOption('OSS_RESOURCE')
 
     if gdal.GetConfigOption('OSS_SECRET_ACCESS_KEY') is None:
-        pytest.skip('Missing OSS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
+        pytest.skip('Missing OSS_SECRET_ACCESS_KEY')
     elif gdal.GetConfigOption('OSS_ACCESS_KEY_ID') is None:
-        pytest.skip('Missing OSS_ACCESS_KEY_ID for running gdaltest_list_extra')
+        pytest.skip('Missing OSS_ACCESS_KEY_ID')
     elif OSS_RESOURCE is None:
-        pytest.skip('Missing OSS_RESOURCE for running gdaltest_list_extra')
+        pytest.skip('Missing OSS_RESOURCE')
 
     if OSS_RESOURCE.find('/') < 0:
         path = '/vsioss/' + OSS_RESOURCE
@@ -1114,10 +1114,3 @@ def test_visoss_cleanup():
 
     for var in gdaltest.oss_vars:
         gdal.SetConfigOption(var, gdaltest.oss_vars[var])
-
-    
-
-
-# gdaltest_list = [ visoss_init, visoss_start_webserver, visoss_8, visoss_stop_webserver, visoss_cleanup ]
-
-gdaltest_list_extra = [visoss_extra_1]

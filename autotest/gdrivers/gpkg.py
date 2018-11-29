@@ -3203,6 +3203,3 @@ def test_gpkg_cleanup():
     gdal.SetConfigOption('GPKG_DEBUG', None)
 
 ###############################################################################
-
-
-# gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]

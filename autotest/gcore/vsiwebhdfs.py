@@ -471,14 +471,14 @@ def test_vsiwebhdfs_stop_webserver():
 # Nominal cases (require valid credentials)
 
 
-def vsiwebhdfs_extra_1():
+def test_vsiwebhdfs_extra_1():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
 
     webhdfs_url = gdal.GetConfigOption('WEBHDFS_URL')
     if webhdfs_url is None:
-        pytest.skip('Missing WEBHDFS_URL for running gdaltest_list_extra')
+        pytest.skip('Missing WEBHDFS_URL')
 
     if webhdfs_url.endswith('/webhdfs/v1') or webhdfs_url.endswith('/webhdfs/v1/'):
         path = '/vsiwebhdfs/' + webhdfs_url
@@ -560,8 +560,3 @@ def test_vsiwebhdfs_cleanup():
 
     for var in gdaltest.webhdfs_vars:
         gdal.SetConfigOption(var, gdaltest.webhdfs_vars[var])
-
-    
-
-
-gdaltest_list_extra = [vsiwebhdfs_extra_1]

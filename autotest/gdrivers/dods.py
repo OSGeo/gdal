@@ -38,7 +38,8 @@ import pytest
 ###############################################################################
 # Open DODS datasource.
 
-def dods_1():
+@pytest.mark.skip()
+def test_dods_1():
     gdaltest.dods_ds = None
     gdaltest.dods_dr = None
 
@@ -52,12 +53,13 @@ def dods_1():
         gdaltest.dods_dr = None
         pytest.fail()
 
-    
+
 ###############################################################################
 # Simple read test on a single variable.
 
 
-def dods_2():
+@pytest.mark.skip()
+def test_dods_2():
     if gdaltest.dods_dr is None:
         pytest.skip()
     tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11', 1, 3391, filename_absolute=1)
@@ -67,7 +69,8 @@ def dods_2():
 # Access all grids at once.
 
 
-def dods_3():
+@pytest.mark.skip()
+def test_dods_3():
     if gdaltest.dods_dr is None:
         pytest.skip()
     tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z', 12, 43208, filename_absolute=1)
@@ -77,7 +80,8 @@ def dods_3():
 # Test explicit transpose.
 
 
-def dods_4():
+@pytest.mark.skip()
+def test_dods_4():
     if gdaltest.dods_dr is None:
         pytest.skip()
     tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]', 1, 3391, filename_absolute=1)
@@ -87,7 +91,8 @@ def dods_4():
 # Test explicit flipping.
 
 
-def dods_5():
+@pytest.mark.skip()
+def test_dods_5():
     if gdaltest.dods_dr is None:
         pytest.skip()
 
@@ -98,7 +103,8 @@ def dods_5():
 # Check nodata value.
 
 
-def dods_6():
+@pytest.mark.skip()
+def test_dods_6():
     if gdaltest.dods_dr is None:
         pytest.skip()
 
@@ -115,20 +121,10 @@ def dods_6():
 # Cleanup
 
 
-def dods_cleanup():
+@pytest.mark.skip()
+def test_dods_cleanup():
     if gdaltest.dods_dr is None:
         pytest.skip()
 
     gdaltest.dods_dr = None
     gdaltest.dods_grid_ds = None
-
-
-
-manual_gdaltest_list = [
-    dods_1,
-    dods_2,
-    dods_3,
-    dods_4,
-    dods_5,
-    dods_6,
-    dods_cleanup]

@@ -764,14 +764,14 @@ def test_vsiaz_stop_webserver():
 # Nominal cases (require valid credentials)
 
 
-def vsiaz_extra_1():
+def test_vsiaz_extra_1():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
 
     az_resource = gdal.GetConfigOption('AZ_RESOURCE')
     if az_resource is None:
-        pytest.skip('Missing AZ_RESOURCE for running gdaltest_list_extra')
+        pytest.skip('Missing AZ_RESOURCE')
 
     if az_resource.find('/') < 0:
         path = '/vsiaz/' + az_resource
@@ -882,10 +882,3 @@ def test_vsiaz_cleanup():
 
     for var in gdaltest.az_vars:
         gdal.SetConfigOption(var, gdaltest.az_vars[var])
-
-    
-
-
-# gdaltest_list = [ vsiaz_init, vsiaz_start_webserver, vsiaz_fake_mkdir_rmdir, vsiaz_stop_webserver, vsiaz_cleanup ]
-
-gdaltest_list_extra = [vsiaz_extra_1]

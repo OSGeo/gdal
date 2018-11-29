@@ -740,9 +740,3 @@ def test_misc_cleanup():
         shutil.rmtree('tmp/tmp')
     except OSError:
         pass
-
-    
-
-
-# gdaltest_list = [ misc_6 ]
-

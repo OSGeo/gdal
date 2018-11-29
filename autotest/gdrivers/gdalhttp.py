@@ -273,8 +273,3 @@ def test_http_cleanup():
     if gdaltest.dods_drv is not None:
         gdaltest.dods_drv.Register()
     gdaltest.dods_drv = None
-
-
-
-# gdaltest_list = [ http_test_use_capi_store ]
-

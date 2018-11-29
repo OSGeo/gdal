@@ -3662,11 +3662,3 @@ def test_ogr_gml_clean_files():
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
             os.unlink('data/' + filename)
     gdal.Unlink('data/test_xsi_nil_gfs.gfs')
-
-
-
-disabled_gdaltest_list = [
-    test_ogr_gml_clean_files,
-    test_ogr_gml_1,
-    test_ogr_gml_82,
-    test_ogr_gml_cleanup]
