@@ -449,6 +449,7 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
     int                 nGeometryFormat;
 
     int                 bUseGeometryColumns;
+    bool                bAlwaysOutputFid;
 
     int                 bListAllTables;
 
@@ -487,6 +488,7 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
 
     int                 GetGeometryFormat() { return nGeometryFormat; }
     int                 UseGeometryColumns() { return bUseGeometryColumns; }
+    bool                AlwaysOutputFid() { return bAlwaysOutputFid; }
 
     virtual OGRErr       DeleteLayer( int iLayer ) override;
     virtual OGRLayer    *ICreateLayer( const char *,
