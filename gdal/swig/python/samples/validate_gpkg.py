@@ -56,7 +56,7 @@ def _is_valid_data_type(typ):
     return typ in ('BOOLEAN', 'TINYINT', 'SMALLINT', 'MEDIUMINT',
                    'INT', 'INTEGER', 'FLOAT', 'DOUBLE', 'REAL',
                    'TEXT', 'BLOB', 'DATE', 'DATETIME') or \
-        type.startswith('TEXT(') or type.startswith('BLOB(')
+        typ.startswith('TEXT(') or typ.startswith('BLOB(')
 
 
 class GPKGCheckException(Exception):
