@@ -71,3 +71,13 @@ make generate
 make
 make vagrant_safe_test
 cd ../..
+
+# Install pytest.
+# First install pip 9, which is the last version which can upgrade the system's `six`
+# 10+ throws an error :/
+curl https://bootstrap.pypa.io/get-pip.py 'pip<10' | sudo -H python
+
+sudo -H pip install -Ur /vagrant/autotest/requirements.txt
+
+# Add python symbols so gdb is friendlier
+sudo apt-get install -y python2.7-dbg
