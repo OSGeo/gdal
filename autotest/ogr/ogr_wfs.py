@@ -35,8 +35,8 @@ except ImportError:
     from http.server import BaseHTTPRequestHandler
 
 import os
-import sys
 
+import pytest
 
 import gdaltest
 import ogrtest
@@ -44,19 +44,19 @@ from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
 import webserver
+from osr import osr_ct
 
 ###############################################################################
 # Test underlying OGR drivers
 #
 
 
+pytestmark = pytest.mark.require_driver('WFS')
+
+
+@pytest.fixture(autouse=True, scope='module')
 def ogr_wfs_init():
-
-    gdaltest.wfs_drv = None
-
     gdaltest.wfs_drv = ogr.GetDriverByName('WFS')
-    if gdaltest.wfs_drv is None:
-        return 'skip'
 
     gdaltest.geoserver_wfs = None
     gdaltest.deegree_wfs = None
@@ -66,17 +66,22 @@ def ogr_wfs_init():
     if gml_ds is None:
         gdaltest.wfs_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
-            return 'skip'
-        gdaltest.post_reason('failed to open test file.')
-        return 'skip'
+            pytest.skip()
+        pytest.skip('failed to open test file.')
 
-    return 'success'
+
+@pytest.fixture(params=['NO', None], scope='module')
+def with_and_without_streaming(request):
+    with gdaltest.config_option('OGR_WFS_USE_STREAMING', request.param):
+        yield
+
 
 ###############################################################################
 # Test reading a MapServer WFS server
 
 
-def ogr_wfs_mapserver():
+@pytest.mark.skip()
+def test_ogr_wfs_mapserver():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -128,7 +133,8 @@ def ogr_wfs_mapserver():
 ###############################################################################
 # Test reading a GeoServer WFS server
 
-def ogr_wfs_geoserver():
+@pytest.mark.skip('FIXME: re-enable after adapting test')
+def test_ogr_wfs_geoserver():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -251,7 +257,8 @@ def ogr_wfs_geoserver():
 # Test reading a GeoServer WFS server with OUTPUTFORMAT=json
 
 
-def ogr_wfs_geoserver_json():
+@pytest.mark.skip('FIXME: re-enable after adapting test')
+def test_ogr_wfs_geoserver_json():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -298,7 +305,8 @@ def ogr_wfs_geoserver_json():
 ###############################################################################
 # Test reading a GeoServer WFS server with OUTPUTFORMAT=SHAPE-ZIP
 
-def ogr_wfs_geoserver_shapezip():
+@pytest.mark.skip('FIXME: re-enable after adapting test')
+def test_ogr_wfs_geoserver_shapezip():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -345,7 +353,8 @@ def ogr_wfs_geoserver_shapezip():
 # Test WFS paging
 
 
-def ogr_wfs_geoserver_paging():
+@pytest.mark.skip('FIXME: re-enable after adapting test')
+def test_ogr_wfs_geoserver_paging():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -416,7 +425,8 @@ def ogr_wfs_geoserver_paging():
 # Test reading a Deegree WFS server
 
 
-def ogr_wfs_deegree():
+@pytest.mark.skip()
+def test_ogr_wfs_deegree():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -481,7 +491,8 @@ def ogr_wfs_deegree():
 # Run test_ogrsf
 
 
-def ogr_wfs_test_ogrsf():
+@pytest.mark.skip()
+def test_ogr_wfs_test_ogrsf():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -561,7 +572,7 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
 # Test reading a local fake WFS server
 
 
-def ogr_wfs_fake_wfs_server():
+def test_ogr_wfs_fake_wfs_server():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -610,7 +621,8 @@ def ogr_wfs_fake_wfs_server():
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() (WFS-T)
 
 
-def ogr_wfs_geoserver_wfst():
+@pytest.mark.skip('FIXME: re-enable after adapting test')
+def test_ogr_wfs_geoserver_wfst():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
@@ -703,10 +715,8 @@ def ogr_wfs_geoserver_wfst():
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() with expected
 # failure due to server not allowing insert & delete
 
-def ogr_wfs_deegree_wfst():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+@pytest.mark.skip()
+def test_ogr_wfs_deegree_wfst():
 
     if gdaltest.gdalurlopen('http://testing.deegree.org/deegree-wfs/services') is None:
         print('cannot open URL')
@@ -746,10 +756,8 @@ def ogr_wfs_deegree_wfst():
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() on a WFS 1.0.0 server
 
 
-def ogr_wfs_ionic_wfst():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+@pytest.mark.skip()
+def test_ogr_wfs_ionic_wfst():
 
     if gdaltest.gdalurlopen('http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA') is None:
         print('cannot open URL')
@@ -791,10 +799,8 @@ def ogr_wfs_ionic_wfst():
 # Test ExecuteSQL() where SQL should be turned into PROPERTYNAME and FILTER parameters
 
 
-def ogr_wfs_ionic_sql():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+@pytest.mark.skip()
+def test_ogr_wfs_ionic_sql():
 
     if not gdaltest.ionic_wfs:
         return 'skip'
@@ -818,10 +824,7 @@ def ogr_wfs_ionic_sql():
 # The following test should issue 0 WFS http request
 
 
-def ogr_wfs_xmldescriptionfile():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_xmldescriptionfile():
 
     ds = ogr.Open('data/testwfs.xml')
     lyr = ds.GetLayer(0)
@@ -862,10 +865,8 @@ def ogr_wfs_xmldescriptionfile():
 # Test opening a datasource from a XML description file that has just the URL
 
 
-def ogr_wfs_xmldescriptionfile_to_be_updated():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+@pytest.mark.skip('FIXME: re-enable after adapting test')
+def test_ogr_wfs_xmldescriptionfile_to_be_updated():
 
     if not gdaltest.geoserver_wfs:
         return 'skip'
@@ -918,10 +919,7 @@ def ogr_wfs_xmldescriptionfile_to_be_updated():
 # The following test should issue 0 WFS http request
 
 
-def ogr_wfs_getcapabilitiesfile():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_getcapabilitiesfile():
 
     ds = ogr.Open('data/getcapabilities_wfs.xml')
 
@@ -939,10 +937,8 @@ def ogr_wfs_getcapabilitiesfile():
 # Test opening a datastore which only support GML 3.2.1 output
 
 
-def ogr_wfs_deegree_gml321():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+@pytest.mark.skip()
+def test_ogr_wfs_deegree_gml321():
 
     ds = ogr.Open('WFS:http://demo.deegree.org:80/inspire-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10')
     if ds is None:
@@ -965,10 +961,8 @@ def ogr_wfs_deegree_gml321():
 # Test WFS 2.0.0 support
 
 
-def ogr_wfs_deegree_wfs200():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+@pytest.mark.skip()
+def test_ogr_wfs_deegree_wfs200():
 
     ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=2.0.0')
     if ds is None:
@@ -1024,10 +1018,8 @@ def ogr_wfs_deegree_wfs200():
 # Test WFS SORTBY support
 
 
-def ogr_wfs_deegree_sortby():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+@pytest.mark.skip()
+def test_ogr_wfs_deegree_sortby():
 
     ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
@@ -1057,9 +1049,6 @@ def ogr_wfs_deegree_sortby():
 
 def ogr_wfs_get_multiple_layer_defn(url):
 
-    if gdaltest.wfs_drv is None:
-        return 'skip'
-
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -1081,71 +1070,57 @@ def ogr_wfs_get_multiple_layer_defn(url):
 # Test a ESRI server
 
 
-def ogr_wfs_esri():
+@pytest.mark.skip()
+def test_ogr_wfs_esri():
     return ogr_wfs_get_multiple_layer_defn('http://map.ngdc.noaa.gov/wfsconnector/com.esri.wfs.Esrimap/dart_atlantic_f')
 
 ###############################################################################
 # Test a ESRI server
 
 
-def ogr_wfs_esri_2():
+def test_ogr_wfs_esri_2():
     return ogr_wfs_get_multiple_layer_defn('http://sentinel.ga.gov.au/wfsconnector/com.esri.wfs.Esrimap')
 
 ###############################################################################
 # Test a CubeWerx server
 
 
-def ogr_wfs_cubewerx():
+def test_ogr_wfs_cubewerx():
     return ogr_wfs_get_multiple_layer_defn('http://portal.cubewerx.com/cubewerx/cubeserv/cubeserv.cgi?CONFIG=haiti_vgi&DATASTORE=vgi')
 
 ###############################################################################
 # Test a TinyOWS server
 
 
-def ogr_wfs_tinyows():
+def test_ogr_wfs_tinyows():
     return ogr_wfs_get_multiple_layer_defn('http://www.tinyows.org/cgi-bin/tinyows')
 
 ###############################################################################
 # Test a ERDAS Apollo server
 
 
-def ogr_wfs_erdas_apollo():
+def test_ogr_wfs_erdas_apollo():
     return ogr_wfs_get_multiple_layer_defn('http://apollo.erdas.com/erdas-apollo/vector/Cherokee')
 
 ###############################################################################
 # Test a Integraph server
 
 
-def ogr_wfs_intergraph():
+def test_ogr_wfs_intergraph():
     return ogr_wfs_get_multiple_layer_defn('http://ideg.xunta.es/WFS_POL/request.aspx')
 
 ###############################################################################
 # Test a MapInfo server
 
 
-def ogr_wfs_mapinfo():
+def test_ogr_wfs_mapinfo():
     return ogr_wfs_get_multiple_layer_defn('http://www.mapinfo.com/miwfs')
 
-###############################################################################
-# Test with OGR_WFS_USE_STREAMING=NO
-
-
-def ogr_wfs_turn_streaming_off():
-    gdal.SetConfigOption('OGR_WFS_USE_STREAMING', 'NO')
-    return 'success'
-
-
-def ogr_wfs_turn_streaming_on():
-    gdal.SetConfigOption('OGR_WFS_USE_STREAMING', None)
-    return 'success'
 
 ###############################################################################
 
 
-def ogr_wfs_vsimem_fail_because_not_enabled():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_fail_because_not_enabled(with_and_without_streaming):
 
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
@@ -1157,10 +1132,7 @@ def ogr_wfs_vsimem_fail_because_not_enabled():
 
 
 ###############################################################################
-def ogr_wfs_vsimem_fail_because_no_get_capabilities():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_fail_because_no_get_capabilities(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1175,10 +1147,7 @@ def ogr_wfs_vsimem_fail_because_no_get_capabilities():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_fail_because_empty_response():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_fail_because_empty_response(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1200,10 +1169,7 @@ def ogr_wfs_vsimem_fail_because_empty_response():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_fail_because_no_WFS_Capabilities():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_fail_because_no_WFS_Capabilities(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1225,10 +1191,7 @@ def ogr_wfs_vsimem_fail_because_no_WFS_Capabilities():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_fail_because_exception():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_fail_because_exception(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1250,10 +1213,7 @@ def ogr_wfs_vsimem_fail_because_exception():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_fail_because_invalid_xml_capabilities():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_fail_because_invalid_xml_capabilities(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1275,10 +1235,7 @@ def ogr_wfs_vsimem_fail_because_invalid_xml_capabilities():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_fail_because_missing_featuretypelist():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_fail_because_missing_featuretypelist(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1302,10 +1259,7 @@ def ogr_wfs_vsimem_fail_because_missing_featuretypelist():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_open_getcapabilities_file():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
                            """<WFS_Capabilities
@@ -1391,10 +1345,7 @@ def ogr_wfs_vsimem_wfs110_open_getcapabilities_file():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_minimal_instance():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_minimal_instance(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1439,10 +1390,7 @@ def ogr_wfs_vsimem_wfs110_minimal_instance():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1488,10 +1436,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1518,10 +1463,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1548,10 +1490,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1627,10 +1566,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
 
 
 ###############################################################################
-def ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1751,10 +1687,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1778,10 +1711,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1828,10 +1758,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1858,10 +1785,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCollection():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCollection(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1888,10 +1812,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCol
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1918,10 +1839,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExceptionReport():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExceptionReport(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1947,10 +1865,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExceptionRe
 
 
 ###############################################################################
-def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -1977,10 +1892,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFe
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2013,10 +1925,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2039,10 +1948,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2069,10 +1975,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2100,10 +2003,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getfeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getfeature(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2177,10 +2077,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getextent():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getextent(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2196,10 +2093,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2226,10 +2120,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2307,9 +2198,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
         print(lyr.GetExtent())
         return 'fail'
 
-    sys.path.append('../osr')
-    import osr_ct
-    osr_ct.osr_ct_1()
+    osr_ct.test_osr_ct_1()
     if gdaltest.have_proj4 == 1:
 
         gdal.SetConfigOption('OGR_WFS_TRUST_CAPABILITIES_BOUNDS', 'YES')
@@ -2330,10 +2219,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2431,10 +2317,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2475,10 +2358,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2529,10 +2409,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_filter():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_filter(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2583,10 +2460,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_filter_spatial_ops():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_filter_spatial_ops(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2797,10 +2671,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_spatial_filter():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_spatial_filter(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2868,10 +2739,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -2923,10 +2791,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_insertfeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
 
     wfs_insert_url = None
 
@@ -3428,10 +3293,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_updatefeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
 
     wfs_update_url = None
 
@@ -3620,10 +3482,7 @@ def ogr_wfs_vsimem_wfs110_updatefeature():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_deletefeature():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_deletefeature(with_and_without_streaming):
 
     wfs_delete_url = None
 
@@ -3803,10 +3662,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_schema_not_understood():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_schema_not_understood(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -3911,10 +3767,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_multiple_layers():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="1.1.0">
@@ -4076,10 +3929,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers_different_ns?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="1.1.0">
@@ -4182,10 +4032,7 @@ xsi:schemaLocation="http://ns1 /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs200_paging():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="2.0.0">
@@ -4393,10 +4240,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
 
 ###############################################################################
-def ogr_wfs_vsimem_wfs200_json():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_json?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="2.0.0">
@@ -4534,10 +4378,7 @@ def ogr_wfs_vsimem_wfs200_json():
 
 
 ###############################################################################
-def ogr_wfs_vsimem_wfs200_multipart():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs200_multipart(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="2.0.0">
@@ -4671,10 +4512,7 @@ str,"POINT(2 49)"
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs200_join():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="2.0.0">
@@ -5167,10 +5005,7 @@ xsi:schemaLocation="http://foo blabla
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="2.0.0">
@@ -5287,10 +5122,7 @@ def ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_wfs200_join_distinct():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_wfs200_join_distinct(with_and_without_streaming):
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&REQUEST=GetCapabilities',
                            """<WFS_Capabilities version="2.0.0">
@@ -5454,10 +5286,7 @@ def ogr_wfs_vsimem_wfs200_join_distinct():
 ###############################################################################
 
 
-def ogr_wfs_vsimem_cleanup():
-
-    if gdaltest.wfs_drv is None:
-        return 'skip'
+def test_ogr_wfs_vsimem_cleanup(with_and_without_streaming):
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
 
@@ -5467,95 +5296,66 @@ def ogr_wfs_vsimem_cleanup():
     return 'success'
 
 
-gdaltest_live_list = [
-    # ogr_wfs_mapserver,
-    # ogr_wfs_geoserver, #FIXME: re-enable after adapting test
-    # ogr_wfs_geoserver_json, #FIXME: re-enable after adapting test
-    # ogr_wfs_geoserver_shapezip, #FIXME: re-enable after adapting test
-    # ogr_wfs_geoserver_paging, #FIXME: re-enable after adapting test
-    # ogr_wfs_deegree,
-    # ogr_wfs_test_ogrsf,
-    ogr_wfs_fake_wfs_server,
-    # ogr_wfs_geoserver_wfst, #FIXME: re-enable after adapting test
-    # ogr_wfs_deegree_wfst,
-    # ogr_wfs_ionic_wfst,
-    # ogr_wfs_ionic_sql,
-    ogr_wfs_xmldescriptionfile,
-    # ogr_wfs_xmldescriptionfile_to_be_updated, #FIXME: re-enable after adapting test
-    ogr_wfs_getcapabilitiesfile,
-    # ogr_wfs_deegree_gml321,
-    # ogr_wfs_deegree_wfs200,
-    # ogr_wfs_deegree_sortby,
-    # ogr_wfs_esri,
-    ogr_wfs_esri_2,
-    ogr_wfs_cubewerx,
-    ogr_wfs_tinyows,
-    ogr_wfs_erdas_apollo,
-    ogr_wfs_intergraph,
-    ogr_wfs_mapinfo,
-    ogr_wfs_turn_streaming_off,
-    # ogr_wfs_deegree,
-    # ogr_wfs_test_ogrsf,
+gdaltest_list = [
+    test_ogr_wfs_vsimem_fail_because_not_enabled,
+    test_ogr_wfs_vsimem_fail_because_no_get_capabilities,
+    test_ogr_wfs_vsimem_fail_because_empty_response,
+    test_ogr_wfs_vsimem_fail_because_no_WFS_Capabilities,
+    test_ogr_wfs_vsimem_fail_because_exception,
+    test_ogr_wfs_vsimem_fail_because_invalid_xml_capabilities,
+    test_ogr_wfs_vsimem_fail_because_missing_featuretypelist,
+    test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file,
+    test_ogr_wfs_vsimem_wfs110_minimal_instance,
+    test_ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype,
+    test_ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype,
+    test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema,
+    test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype,
+    test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated,
+    test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits,
+    test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits,
+    test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCollection,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExceptionReport,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits,
+    test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature,
+    test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature,
+    test_ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getfeature,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getextent,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized,
+    test_ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature,
+    test_ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed,
+    test_ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success,
+    test_ogr_wfs_vsimem_wfs110_one_layer_filter,
+    test_ogr_wfs_vsimem_wfs110_one_layer_filter_spatial_ops,
+    test_ogr_wfs_vsimem_wfs110_one_layer_spatial_filter,
+    test_ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter,
+    test_ogr_wfs_vsimem_wfs110_insertfeature,
+    test_ogr_wfs_vsimem_wfs110_updatefeature,
+    test_ogr_wfs_vsimem_wfs110_deletefeature,
+    test_ogr_wfs_vsimem_wfs110_schema_not_understood,
+    test_ogr_wfs_vsimem_wfs110_multiple_layers,
+    test_ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns,
+    test_ogr_wfs_vsimem_wfs200_paging,
+    test_ogr_wfs_vsimem_wfs200_json,
+    test_ogr_wfs_vsimem_wfs200_multipart,
+    test_ogr_wfs_vsimem_wfs200_join,
+    test_ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix,
+    test_ogr_wfs_vsimem_wfs200_join_distinct,
+    test_ogr_wfs_vsimem_cleanup,
+    test_ogr_wfs_fake_wfs_server,
+    test_ogr_wfs_xmldescriptionfile,
+    test_ogr_wfs_getcapabilitiesfile,
+    test_ogr_wfs_esri_2,
+    test_ogr_wfs_cubewerx,
+    test_ogr_wfs_tinyows,
+    test_ogr_wfs_erdas_apollo,
+    test_ogr_wfs_intergraph,
+    test_ogr_wfs_mapinfo,
 ]
-
-gdaltest_vsimem_list = [
-    ogr_wfs_vsimem_fail_because_not_enabled,
-    ogr_wfs_vsimem_fail_because_no_get_capabilities,
-    ogr_wfs_vsimem_fail_because_empty_response,
-    ogr_wfs_vsimem_fail_because_no_WFS_Capabilities,
-    ogr_wfs_vsimem_fail_because_exception,
-    ogr_wfs_vsimem_fail_because_invalid_xml_capabilities,
-    ogr_wfs_vsimem_fail_because_missing_featuretypelist,
-    ogr_wfs_vsimem_wfs110_open_getcapabilities_file,
-    ogr_wfs_vsimem_wfs110_minimal_instance,
-    ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype,
-    ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype,
-    ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema,
-    ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype,
-    ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated,
-    ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits,
-    ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits,
-    ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits,
-    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCollection,
-    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml,
-    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExceptionReport,
-    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures,
-    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits,
-    ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature,
-    ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature,
-    ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature,
-    ogr_wfs_vsimem_wfs110_one_layer_getfeature,
-    ogr_wfs_vsimem_wfs110_one_layer_getextent,
-    ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature,
-    ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized,
-    ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature,
-    ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed,
-    ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success,
-    ogr_wfs_vsimem_wfs110_one_layer_filter,
-    ogr_wfs_vsimem_wfs110_one_layer_filter_spatial_ops,
-    ogr_wfs_vsimem_wfs110_one_layer_spatial_filter,
-    ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter,
-    ogr_wfs_vsimem_wfs110_insertfeature,
-    ogr_wfs_vsimem_wfs110_updatefeature,
-    ogr_wfs_vsimem_wfs110_deletefeature,
-    ogr_wfs_vsimem_wfs110_schema_not_understood,
-    ogr_wfs_vsimem_wfs110_multiple_layers,
-    ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns,
-    ogr_wfs_vsimem_wfs200_paging,
-    ogr_wfs_vsimem_wfs200_json,
-    ogr_wfs_vsimem_wfs200_multipart,
-    ogr_wfs_vsimem_wfs200_join,
-    ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix,
-    ogr_wfs_vsimem_wfs200_join_distinct,
-    ogr_wfs_vsimem_cleanup,
-]
-
-gdaltest_list = [ogr_wfs_init]
-gdaltest_list += gdaltest_vsimem_list
-gdaltest_list += [ogr_wfs_turn_streaming_off]
-gdaltest_list += gdaltest_vsimem_list
-gdaltest_list += [ogr_wfs_turn_streaming_on]
-gdaltest_list += gdaltest_live_list
 
 if __name__ == '__main__':
 
