@@ -38,7 +38,8 @@ import pytest
 # Open DODS datasource.
 
 
-def ogr_dods_1():
+@pytest.mark.skip()
+def test_ogr_dods_1():
     gdaltest.dods_ds = None
     ogrtest.dods_drv = ogr.GetDriverByName('DODS')
 
@@ -73,7 +74,8 @@ def ogr_dods_1():
 #
 
 
-def ogr_dods_2():
+@pytest.mark.skip()
+def test_ogr_dods_2():
 
     if gdaltest.dods_ds is None:
         pytest.skip()
@@ -100,7 +102,8 @@ def ogr_dods_2():
 #
 
 
-def ogr_dods_3():
+@pytest.mark.skip()
+def test_ogr_dods_3():
 
     if gdaltest.dods_ds is None:
         pytest.skip()
@@ -137,7 +140,8 @@ def ogr_dods_3():
 #
 
 
-def ogr_dods_4():
+@pytest.mark.skip()
+def test_ogr_dods_4():
 
     if gdaltest.dods_ds is None:
         pytest.skip()
@@ -167,7 +171,8 @@ def ogr_dods_4():
 # Simple 1D Grid.
 #
 
-def ogr_dods_5():
+@pytest.mark.skip()
+def test_ogr_dods_5():
 
     if ogrtest.dods_drv is None:
         pytest.skip()
@@ -189,7 +194,8 @@ def ogr_dods_5():
 #
 
 
-def ogr_dods_cleanup():
+@pytest.mark.skip()
+def test_ogr_dods_cleanup():
 
     if gdaltest.dods_ds is None:
         pytest.skip()
@@ -199,13 +205,3 @@ def ogr_dods_cleanup():
     gdaltest.dods_normalized = None
     gdaltest.dods_ds.Destroy()
     gdaltest.dods_ds = None
-
-
-
-manual_gdaltest_list = [
-    ogr_dods_1,
-    ogr_dods_2,
-    ogr_dods_3,
-    ogr_dods_4,
-    ogr_dods_5,
-    ogr_dods_cleanup]

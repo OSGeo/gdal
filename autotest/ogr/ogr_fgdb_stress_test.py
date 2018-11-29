@@ -44,7 +44,8 @@ import pytest
 # Test if driver is available
 
 
-def ogr_fgdb_stress_test_init():
+@pytest.mark.skip()
+def test_ogr_fgdb_stress_init():
 
     ogrtest.fgdb_drv = None
     ogrtest.openfilegdb_drv = None
@@ -72,7 +73,8 @@ def ogr_fgdb_stress_test_init():
 # Generate databases from random operations
 
 
-def ogr_fgdb_stress_test_1():
+@pytest.mark.skip()
+def test_ogr_fgdb_stress_1():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
 
@@ -162,7 +164,8 @@ def ogr_fgdb_stress_test_1():
 # Compare databases
 
 
-def ogr_fgdb_stress_test_2():
+@pytest.mark.skip()
+def test_ogr_fgdb_stress_2():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
 
@@ -197,7 +200,8 @@ def ogr_fgdb_stress_test_2():
 ###############################################################################
 # Cleanup
 
-def ogr_fgdb_stress_test_cleanup():
+@pytest.mark.skip()
+def test_ogr_fgdb_stress_cleanup():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
 
@@ -207,11 +211,3 @@ def ogr_fgdb_stress_test_cleanup():
         pass
 
     gdal.Unlink("tmp/test." + ogrtest.reference_ext)
-
-
-# Do nothing in whole run of the suite
-
-explicit_gdaltest_list = [ogr_fgdb_stress_test_init,
-                          ogr_fgdb_stress_test_1,
-                          ogr_fgdb_stress_test_2,
-                          ogr_fgdb_stress_test_cleanup]

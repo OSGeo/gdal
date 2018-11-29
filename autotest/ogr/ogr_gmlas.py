@@ -2694,7 +2694,8 @@ def test_ogr_gmlas_geometry_as_substitutiongroup():
 ###############################################################################
 
 
-def ogr_gmlas_extra_piezometre():
+@pytest.mark.skip()
+def test_ogr_gmlas_extra_piezometre():
 
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
@@ -2706,7 +2707,8 @@ def ogr_gmlas_extra_piezometre():
 ###############################################################################
 
 
-def ogr_gmlas_extra_eureg():
+@pytest.mark.skip()
+def test_ogr_gmlas_extra_eureg():
 
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
@@ -2886,13 +2888,3 @@ def test_ogr_gmlas_cleanup():
 
     gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', None)
     gdal.SetConfigOption('GDAL_XML_VALIDATION', ogrtest.old_val_GDAL_XML_VALIDATION)
-
-
-
-# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_aux_schema_without_namespace_prefix, ogr_gmlas_cleanup ]
-
-# Test only work if using "python ogr_gmlas.py"
-gdaltest_extra_list = [
-    ogr_gmlas_extra_piezometre,
-    ogr_gmlas_extra_eureg
-]
