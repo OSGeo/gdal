@@ -2111,6 +2111,515 @@ def sentinel2_l2a_3():
     return 'success'
 
 ###############################################################################
+# Test opening a L2A MSIL2A product
+
+
+def sentinel2_l2a_4():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open(filename_xml)
+    if ds is None or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    expected_md = {
+                    'AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BOA_QUANTIFICATION_VALUE': '10000',
+                    'BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'CLOUD_COVERAGE_ASSESSMENT': '54.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '1.5',
+                    'DARK_FEATURES_PERCENTAGE': '1.5',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2018-08-18T09:40:31.024Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20180818T094031_016478_N02.08',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FOOTPRINT': 'POLYGON((22.6 57.7, 24.5 57.6, 24.4 56.7, 22.6 56.7, 22.6 57.7))',
+                    'FORMAT_CORRECTNESS': 'PASSED',
+                    'GENERAL_QUALITY': 'PASSED',
+                    'GENERATION_TIME': '2018-08-18T12:03:45.000000Z',
+                    'GEOMETRIC_QUALITY': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '15.3',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '24.1',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'NOT_VEGETATED_PERCENTAGE': '3.5',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.08',
+                    'PROCESSING_LEVEL': 'Level-2A',
+                    'PRODUCT_START_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_STOP_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_TYPE': 'S2MSI2A',
+                    'PRODUCT_URI': 'S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURACY': '0.0',
+                    'RADIOMETRIC_QUALITY': 'PASSED',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.4',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '14.9',
+                    'UNCLASSIFIED_PERCENTAGE': '5.7',
+                    'VEGETATION_PERCENTAGE': '14.0',
+                    'WATER_PERCENTAGE': '18.7',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0',
+                    'WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'WVP_QUANTIFICATION_VALUE_UNIT': 'cm'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    expected_md = {
+                    'SUBDATASET_1_DESC':
+                    'Bands B2, B3, B4, B8 with 10m resolution, UTM 34N',
+                    'SUBDATASET_1_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634',
+                    'SUBDATASET_2_DESC':
+                    'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 34N',
+                    'SUBDATASET_2_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634',
+                    'SUBDATASET_3_DESC':
+                    'Bands B1, B9 with 60m resolution, UTM 34N',
+                    'SUBDATASET_3_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:60m:EPSG_32634',
+                    'SUBDATASET_4_DESC':
+                    'True color image, UTM 34N',
+                    'SUBDATASET_4_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:TCI:EPSG_32634'}
+    got_md = ds.GetMetadata('SUBDATASETS')
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    # Try opening the 4 subdatasets
+    for i in range(2):
+        gdal.ErrorReset()
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
+        if ds is None or gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
+            return 'fail'
+
+    # Try various invalid subdataset names
+    for name in ['SENTINEL2_L2A:',
+                 'SENTINEL2_L2A:foo.xml:10m:EPSG_32632',
+                 'SENTINEL2_L2A:%s' % filename_xml,
+                 'SENTINEL2_L2A:%s:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_' % filename_xml,
+                 'SENTINEL2_L2A:%s:50m:EPSG_32632' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
+        with gdaltest.error_handler():
+            ds = gdal.Open(name)
+        if ds is not None:
+            gdaltest.post_reason('fail')
+            print(name)
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test opening a L2A MSIL2A subdataset on the 60m bands
+
+
+def sentinel2_l2a_5():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32634' % filename_xml)
+    if ds is None or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    expected_md = {
+                    'AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BOA_QUANTIFICATION_VALUE': '10000',
+                    'BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'CLOUD_COVERAGE_ASSESSMENT': '54.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '1.5',
+                    'DARK_FEATURES_PERCENTAGE': '1.5',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2018-08-18T09:40:31.024Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20180818T094031_016478_N02.08',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FORMAT_CORRECTNESS': 'PASSED',
+                    'GENERAL_QUALITY': 'PASSED',
+                    'GENERATION_TIME': '2018-08-18T12:03:45.000000Z',
+                    'GEOMETRIC_QUALITY': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '15.3',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '24.1',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'NOT_VEGETATED_PERCENTAGE': '3.5',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.08',
+                    'PROCESSING_LEVEL': 'Level-2A',
+                    'PRODUCT_START_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_STOP_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_TYPE': 'S2MSI2A',
+                    'PRODUCT_URI': 'S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURACY': '0.0',
+                    'RADIOMETRIC_QUALITY': 'PASSED',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.4',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '14.9',
+                    'UNCLASSIFIED_PERCENTAGE': '5.7',
+                    'VEGETATION_PERCENTAGE': '14.0',
+                    'WATER_PERCENTAGE': '18.7',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0',
+                    'WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'WVP_QUANTIFICATION_VALUE_UNIT': 'cm'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    if ds.RasterXSize != 1830 or ds.RasterYSize != 1830:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+
+    if ds.GetProjectionRef().find('32634') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    got_gt = ds.GetGeoTransform()
+    if got_gt != (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0):
+        gdaltest.post_reason('fail')
+        print(got_gt)
+        return 'fail'
+
+    if ds.RasterCount != 2:
+        gdaltest.post_reason('fail')
+        print(ds.RasterCount)
+        return 'fail'
+
+    vrt = ds.GetMetadata('xml:VRT')[0]
+    placement_vrt = """<SimpleSource>
+      <SourceFilename relativeToVRT="0">data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/GRANULE/L2A_T34VFJ_A016478_20180818T094030/IMG_DATA/R60m/T34VFJ_20180818T094031_B01_60m.jp2</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1830" RasterYSize="1830" DataType="UInt16" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+      <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+    </SimpleSource>"""
+    if vrt.find(placement_vrt) < 0:
+        gdaltest.post_reason('fail')
+        print(vrt)
+        return 'fail'
+
+    if ds.GetMetadata('xml:SENTINEL2') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    band = ds.GetRasterBand(1)
+    got_md = band.GetMetadata()
+    expected_md = {'BANDNAME': 'B1',
+                   'BANDWIDTH': '20',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1884.69',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '443',
+                   'WAVELENGTH_UNIT': 'nm'}
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    if band.DataType != gdal.GDT_UInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test opening a L2A MSIL2Ap product
+
+
+def sentinel2_l2a_6():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open(filename_xml)
+    if ds is None or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    expected_md = {
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BARE_SOILS_PERCENTAGE': '0.4',
+                    'CLOUD_COVERAGE_ASSESSMENT': '86.3',
+                    'CLOUD_COVERAGE_PERCENTAGE': '84.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '4.1',
+                    'DARK_FEATURES_PERCENTAGE': '1.0',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2017-08-23T09:40:31.026Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20170823T094031_011330_N02.05',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FOOTPRINT': 'POLYGON((22.6 57.7, 24.5 57.6, 24.4 56.7, 22.6 56.7, 22.6 57.7))',
+                    'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                    'GENERAL_QUALITY_FLAG': 'PASSED',
+                    'GENERATION_TIME': '2017-08-25T08:50:10Z',
+                    'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '36.1',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '28.9',
+                    'L1C_TOA_QUANTIFICATION_VALUE': '10000',
+                    'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_BOA_QUANTIFICATION_VALUE': '10000',
+                    'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
+                    'LOW_PROBA_CLOUDS_PERCENTAGE': '1.6',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.05',
+                    'PROCESSING_LEVEL': 'Level-2Ap',
+                    'PRODUCT_START_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_STOP_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_TYPE': 'S2MSI2Ap',
+                    'PRODUCT_URI_1C': 'S2A_MSIL1C_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'PRODUCT_URI_2A': 'S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURAY': '0.0',
+                    'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'REFERENCE_BAND': 'B1',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY_FLAG': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.2',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '19.3',
+                    'VEGETATION_PERCENTAGE': '5.0',
+                    'WATER_PERCENTAGE': '2.9',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    expected_md = {
+                    'SUBDATASET_1_DESC':
+                    'Bands B2, B3, B4, B8 with 10m resolution, UTM 34N',
+                    'SUBDATASET_1_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634',
+                    'SUBDATASET_2_DESC':
+                    'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 34N',
+                    'SUBDATASET_2_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634',
+                    'SUBDATASET_3_DESC':
+                    'Bands B1, B9 with 60m resolution, UTM 34N',
+                    'SUBDATASET_3_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:60m:EPSG_32634',
+                    'SUBDATASET_4_DESC':
+                    'True color image, UTM 34N',
+                    'SUBDATASET_4_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:TCI:EPSG_32634'}
+    got_md = ds.GetMetadata('SUBDATASETS')
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    # Try opening the 4 subdatasets
+    for i in range(2):
+        gdal.ErrorReset()
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
+        if ds is None or gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
+            return 'fail'
+
+    # Try various invalid subdataset names
+    for name in ['SENTINEL2_L2A:',
+                 'SENTINEL2_L2A:foo.xml:10m:EPSG_32632',
+                 'SENTINEL2_L2A:%s' % filename_xml,
+                 'SENTINEL2_L2A:%s:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_' % filename_xml,
+                 'SENTINEL2_L2A:%s:50m:EPSG_32632' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
+        with gdaltest.error_handler():
+            ds = gdal.Open(name)
+        if ds is not None:
+            gdaltest.post_reason('fail')
+            print(name)
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test opening a L2A MSIL2Ap subdataset on the 60m bands
+
+
+def sentinel2_l2a_7():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32634' % filename_xml)
+    if ds is None or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    expected_md = {
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BARE_SOILS_PERCENTAGE': '0.4',
+                    'CLOUD_COVERAGE_ASSESSMENT': '86.3',
+                    'CLOUD_COVERAGE_PERCENTAGE': '84.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '4.1',
+                    'DARK_FEATURES_PERCENTAGE': '1.0',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2017-08-23T09:40:31.026Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20170823T094031_011330_N02.05',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                    'GENERAL_QUALITY_FLAG': 'PASSED',
+                    'GENERATION_TIME': '2017-08-25T08:50:10Z',
+                    'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '36.1',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '28.9',
+                    'L1C_TOA_QUANTIFICATION_VALUE': '10000',
+                    'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_BOA_QUANTIFICATION_VALUE': '10000',
+                    'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
+                    'LOW_PROBA_CLOUDS_PERCENTAGE': '1.6',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.05',
+                    'PROCESSING_LEVEL': 'Level-2Ap',
+                    'PRODUCT_START_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_STOP_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_TYPE': 'S2MSI2Ap',
+                    'PRODUCT_URI_1C': 'S2A_MSIL1C_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'PRODUCT_URI_2A': 'S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURAY': '0.0',
+                    'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'REFERENCE_BAND': 'B1',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY_FLAG': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.2',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '19.3',
+                    'VEGETATION_PERCENTAGE': '5.0',
+                    'WATER_PERCENTAGE': '2.9',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    if ds.RasterXSize != 1830 or ds.RasterYSize != 1830:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+
+    if ds.GetProjectionRef().find('32634') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    got_gt = ds.GetGeoTransform()
+    if got_gt != (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0):
+        gdaltest.post_reason('fail')
+        print(got_gt)
+        return 'fail'
+
+    if ds.RasterCount != 2:
+        gdaltest.post_reason('fail')
+        print(ds.RasterCount)
+        return 'fail'
+
+    vrt = ds.GetMetadata('xml:VRT')[0]
+    placement_vrt = """<SimpleSource>
+      <SourceFilename relativeToVRT="0">data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/GRANULE/L2A_T34VFJ_A011330_20170823T094252/IMG_DATA/R60m/L2A_T34VFJ_20170823T094031_B01_60m.jp2</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1830" RasterYSize="1830" DataType="UInt16" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+      <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+    </SimpleSource>"""
+    if vrt.find(placement_vrt) < 0:
+        gdaltest.post_reason('fail')
+        print(vrt)
+        return 'fail'
+
+    if ds.GetMetadata('xml:SENTINEL2') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    band = ds.GetRasterBand(1)
+    got_md = band.GetMetadata()
+    expected_md = {'BANDNAME': 'B1',
+                   'BANDWIDTH': '20',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1913.57',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '443',
+                   'WAVELENGTH_UNIT': 'nm'}
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        import pprint
+        pprint.pprint(got_md)
+        return 'fail'
+
+    if band.DataType != gdal.GDT_UInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Test opening a L1C Safe Compact product
 
 
@@ -2403,6 +2912,10 @@ gdaltest_list = [
     sentinel2_l2a_1,
     sentinel2_l2a_2,
     sentinel2_l2a_3,
+    sentinel2_l2a_4,
+    sentinel2_l2a_5,
+    sentinel2_l2a_6,
+    sentinel2_l2a_7,
     sentinel2_l1c_safe_compact_1,
     sentinel2_l1c_safe_compact_2,
     sentinel2_l1c_safe_compact_3
