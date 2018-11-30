@@ -72,7 +72,7 @@ def eedai_2():
     if gdaltest.eedai_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets/image', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'properties':
         {
@@ -320,7 +320,7 @@ def eedai_2():
     npy_serialized += ''.encode('ascii').join(val for i in range(38 * 39))
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "NPY", "bandIds": [ "B1", "B9" ], "grid": { "affineTransform": { "translateX": 607500.0, "translateY": 4092480.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 38, "height": 39 } } }', npy_serialized)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "NPY", "bandIds": [ "B1", "B9" ], "grid": { "affineTransform": { "translateX": 607500.0, "translateY": 4092480.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 38, "height": 39 } } }', npy_serialized)
     got_data = ds.GetRasterBand(1).ReadRaster(1800, 1810, 1, 1)
     got_data = struct.unpack('h', got_data)[0]
     if got_data != 12345:
@@ -552,7 +552,7 @@ def eedai_4():
     if gdaltest.eedai_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets/image', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'bands':
         [
@@ -641,7 +641,7 @@ def eedai_4():
     gdal.Unlink('/vsimem/out.png')
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('B', got_data)[0]
     if got_data != 127:
@@ -668,7 +668,7 @@ def eedai_4():
 
     # Sub-sampled query
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 120.0, "scaleY": -120.06557377049181, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 120.0, "scaleY": -120.06557377049181, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
     got_data = ds.GetRasterBand(1).ReadRaster(
         0, 0, 2, 2, buf_xsize=1, buf_ysize=1)
     got_data = struct.unpack('B', got_data)[0]
@@ -701,7 +701,7 @@ def eedai_geotiff():
     if gdaltest.eedai_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets/image', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'bands':
         [
@@ -744,7 +744,7 @@ def eedai_geotiff():
     gdal.Unlink('/vsimem/out.tif')
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "GEO_TIFF", "bandIds": [ "B1" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "GEO_TIFF", "bandIds": [ "B1" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('H', got_data)[0]
     if got_data != 12345:
@@ -782,7 +782,7 @@ def eedai_real_service():
         gdaltest.post_reason('fail')
         return 'fail'
     res = gdal.Info(ds, format='json')
-    expected = {'files': [], 'cornerCoordinates': {'upperRight': [415016.0, 4435536.0], 'lowerLeft': [408970.0, 4427936.0], 'lowerRight': [415016.0, 4427936.0], 'upperLeft': [408970.0, 4435536.0], 'center': [411993.0, 4431736.0]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[[-100.067433, 40.0651671], [-100.0663662, 39.9967049], [-99.9955511, 39.9973349], [-99.9965471, 40.0657986], [-100.067433, 40.0651671]]]}, 'description': 'EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'R', 'band': 1, 'colorInterpretation': 'Red', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'G', 'band': 2, 'colorInterpretation': 'Green', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'B', 'band': 3, 'colorInterpretation': 'Blue', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 14N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-99],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26914"]]'}, 'geoTransform': [408970.0, 2.0, 0.0, 4435536.0, 0.0, -2.0], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}}, 'size': [3023, 3800]}
+    expected = {'files': [], 'cornerCoordinates': {'upperRight': [415016.0, 4435536.0], 'lowerLeft': [408970.0, 4427936.0], 'lowerRight': [415016.0, 4427936.0], 'upperLeft': [408970.0, 4435536.0], 'center': [411993.0, 4431736.0]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[]]}, 'description': 'EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'R', 'band': 1, 'colorInterpretation': 'Red', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'G', 'band': 2, 'colorInterpretation': 'Green', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'B', 'band': 3, 'colorInterpretation': 'Blue', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 14N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-99],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26914"]]'}, 'geoTransform': [408970.0, 2.0, 0.0, 4435536.0, 0.0, -2.0], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}}, 'size': [3023, 3800]}
     if expected != res:
         gdaltest.post_reason('fail')
         print(res)
@@ -825,7 +825,7 @@ def eedai_cleanup():
     gdal.SetConfigOption('GOA2_NOW', None)
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', gdaltest.GOOGLE_APPLICATION_CREDENTIALS)
 
-    gdal.Unlink('/vsimem/ee/assets/image')
+    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/image')
     gdal.RmdirRecursive('/vsimem/ee/')
 
     return 'success'

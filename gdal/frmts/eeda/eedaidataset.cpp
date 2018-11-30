@@ -62,6 +62,7 @@ class GDALEEDAIDataset: public GDALEEDABaseDataset
 
             int         m_nBlockSize;
             CPLString   m_osAsset{};
+            CPLString   m_osAssetName{};
             GDALEEDAIDataset* m_poParentDS;
 #ifdef DEBUG_VERBOSE
             int         m_iOvrLevel;
@@ -185,6 +186,7 @@ GDALEEDAIDataset::GDALEEDAIDataset(GDALEEDAIDataset* poParentDS,
                                    int iOvrLevel ) :
     m_nBlockSize(poParentDS->m_nBlockSize),
     m_osAsset(poParentDS->m_osAsset),
+    m_osAssetName(poParentDS->m_osAssetName),
     m_poParentDS(poParentDS),
 #ifdef DEBUG_VERBOSE
     m_iOvrLevel(iOvrLevel),
@@ -573,8 +575,6 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 
     // Build request content
     json_object* poReq = json_object_new_object();
-    json_object_object_add(poReq, "path",
-                           json_object_new_string(poGDS->m_osAsset));
     json_object_object_add(poReq, "fileFormat",
                            json_object_new_string(poGDS->m_osPixelEncoding));
     json_object* poBands = json_object_new_array();
@@ -648,7 +648,7 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders);
     papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS", osPostContent);
     CPLHTTPResult* psResult = EEDAHTTPFetch(
-        (poGDS->m_osBaseURL + "assets:getPixels").c_str(),
+        (poGDS->m_osBaseURL + poGDS->m_osAssetName + ":getPixels").c_str(),
         papszOptions);
     CSLDestroy(papszOptions);
     if( psResult == nullptr )
@@ -1276,6 +1276,8 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
         m_osAsset = papszTokens[1];
         CSLDestroy(papszTokens);
     }
+    m_osAssetName = ConvertPathToName(m_osAsset);
+
     m_osPixelEncoding =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                              "PIXEL_ENCODING", "AUTO");
@@ -1301,7 +1303,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
     if( papszOptions == nullptr )
         return false;
     CPLHTTPResult* psResult = EEDAHTTPFetch(
-                (m_osBaseURL + "assets/" + m_osAsset).c_str(), papszOptions);
+                (m_osBaseURL + m_osAssetName).c_str(), papszOptions);
     CSLDestroy(papszOptions);
     if( psResult == nullptr )
         return false;
@@ -1506,11 +1508,11 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
                 osSubDSSuffix += aoBandDesc[oIter->second[i]].osName;
             }
             aoSubDSList.AddNameValue(
-                CPLSPrintf("SUBDATASET_%d_NAME", aoSubDSList.size() / 2 + 1), 
+                CPLSPrintf("SUBDATASET_%d_NAME", aoSubDSList.size() / 2 + 1),
                 CPLSPrintf("EEDAI:%s:%s",
                            m_osAsset.c_str(), osSubDSSuffix.c_str()) );
             aoSubDSList.AddNameValue(
-                CPLSPrintf("SUBDATASET_%d_DESC", aoSubDSList.size() / 2 + 1), 
+                CPLSPrintf("SUBDATASET_%d_DESC", aoSubDSList.size() / 2 + 1),
                 CPLSPrintf("Band%s %s of %s",
                            oIter->second.size() > 1 ? "s" : "",
                            osSubDSSuffix.c_str(), m_osAsset.c_str()) );
@@ -1644,7 +1646,7 @@ void GDALRegister_EEDAI()
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "EEDAI:" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"  <Option name='ASSET' type='string' description='Asset path'/>"
+"  <Option name='ASSET' type='string' description='Asset name'/>"
 "  <Option name='BANDS' type='string' "
                         "description='Comma separated list of band names'/>"
 "  <Option name='PIXEL_ENCODING' type='string-select' "
