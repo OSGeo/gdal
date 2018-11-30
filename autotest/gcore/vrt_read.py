@@ -31,7 +31,6 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 import struct
 
@@ -1028,11 +1027,10 @@ def test_vrt_read_28():
 def test_vrt_read_29():
 
     f = open('data/byte.tif')
-    lst_before = gdaltest.get_opened_files()
+    lst_before = sorted(gdaltest.get_opened_files())
     if not lst_before:
         pytest.skip()
     f.close()
-    lst_before = gdaltest.get_opened_files()
 
     gdal.Translate('tmp/vrt_read_29.tif', 'data/byte.tif')
 
@@ -1057,17 +1055,18 @@ def test_vrt_read_29():
     </VRTRasterBand>
     </VRTDataset>"""
 
+    lst_before = sorted(gdaltest.get_opened_files())
     ds = gdal.Open(vrt_text)
     # Just after opening, we shouldn't have read the source
-    lst = gdaltest.get_opened_files()
-    assert lst.sort() == lst_before.sort()
+    lst = sorted(gdaltest.get_opened_files())
+    assert lst == lst_before
 
     # Check that the 2 bands share the same source handle
     ds.GetRasterBand(1).Checksum()
-    lst = gdaltest.get_opened_files()
+    lst = sorted(gdaltest.get_opened_files())
     assert len(lst) == len(lst_before) + 1
     ds.GetRasterBand(2).Checksum()
-    lst = gdaltest.get_opened_files()
+    lst = sorted(gdaltest.get_opened_files())
     assert len(lst) == len(lst_before) + 1
 
     # Open a second VRT dataset handle
@@ -1075,7 +1074,7 @@ def test_vrt_read_29():
 
     # Check that it consumes an extra handle
     ds2.GetRasterBand(1).Checksum()
-    lst = gdaltest.get_opened_files()
+    lst = sorted(gdaltest.get_opened_files())
     assert len(lst) == len(lst_before) + 2
 
     gdal.Unlink('tmp/vrt_read_29.tif')
