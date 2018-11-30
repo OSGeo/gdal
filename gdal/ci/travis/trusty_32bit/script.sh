@@ -4,7 +4,7 @@ set -e
 
 export chroot="$PWD"/buildroot.i386
 export LC_ALL=en_US.utf8
-export PYTEST="pytest -v -p no:sugar --color=no"
+export PYTEST="pytest -vv -p no:sugar --color=no"
 
 i386 chroot "$chroot" sh -c "cd $PWD/autotest/cpp && make quick_test"
 # Compile and test vsipreload

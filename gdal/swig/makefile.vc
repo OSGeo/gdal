@@ -88,7 +88,7 @@ java_install: java
 
 test: gdalvars
 	cd $(GDAL_HOME)\..\gdalautotest
-	$(PYDIR)/python.exe -m pytest -v
+	$(PYDIR)/python.exe -m pytest -vv
 
 clean:
         -del setup.ini

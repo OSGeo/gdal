@@ -6,7 +6,7 @@ export PATH=$PWD/install-gcc-5.2.0/bin:$PATH
 export LD_LIBRARY_PATH=$PWD/install-gcc-5.2.0/lib64
 export PRELOAD=$PWD/install-gcc-5.2.0/lib64/libasan.so.2.0.0:$PWD/install-gcc-5.2.0/lib64/libubsan.so.0.0.0
 #export PRELOAD=$PWD/install-gcc-5.2.0/lib64/libubsan.so.0.0.0
-export PYTEST="pytest -v -p no:sugar --color=no"
+export PYTEST="pytest -vv -p no:sugar --color=no"
 
 cd gdal
 

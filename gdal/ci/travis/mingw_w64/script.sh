@@ -23,7 +23,7 @@ rm get-pip.py
 # https://forum.winehq.org/viewtopic.php?f=2&t=22522
 wine64 "$PYTHON_DIR/python.exe" -m pip install -U -r ./requirements.txt
 # same issue with running pytest.exe
-export PYTEST="wine64 $PYTHON_DIR/python.exe -m pytest -v -p no:sugar --color=no"
+export PYTEST="wine64 $PYTHON_DIR/python.exe -m pytest -vv -p no:sugar --color=no"
 
 
 # Run all the Python autotests
