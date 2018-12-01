@@ -1911,7 +1911,9 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     }
     else if( dstDataType == GDT_Int32 )
     {
+        // cppcheck-suppress unreadVariable
         fDstMin = static_cast<float>(std::numeric_limits<GInt32>::min());
+        // cppcheck-suppress unreadVariable
         fDstMax = static_cast<float>(std::numeric_limits<GInt32>::max());
     }
 
