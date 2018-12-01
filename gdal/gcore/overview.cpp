@@ -1879,32 +1879,70 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
 {
     if( !bHasNoData )
         fNoDataValue = 0.0f;
+    const auto dstDataType = papoDstBands[0]->GetRasterDataType();
     const float fReplacementVal = GetReplacementValueIfNoData(
-        papoDstBands[0]->GetRasterDataType(), bHasNoData, fNoDataValue);
+        dstDataType, bHasNoData, fNoDataValue);
     // cppcheck-suppress unreadVariable
-    const int isIntegerDT = GDALDataTypeIsInteger(papoDstBands[0]->GetRasterDataType());
+    const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
     const auto nNodataValueInt64 = static_cast<GInt64>(fNoDataValue);
 
-    auto replaceValIfNodata =
-        [bHasNoData, isIntegerDT, nNodataValueInt64, fNoDataValue, fReplacementVal](float fVal)
+    // TODO: we should have some generic function to do this.
+    float fDstMin = -std::numeric_limits<float>::max();
+    float fDstMax = std::numeric_limits<float>::max();
+    if( dstDataType == GDT_Byte )
     {
-        if( bHasNoData )
+        fDstMin = std::numeric_limits<GByte>::min();
+        fDstMax = std::numeric_limits<GByte>::max();
+    }
+    else if( dstDataType == GDT_UInt16 )
+    {
+        fDstMin = std::numeric_limits<GUInt16>::min();
+        fDstMax = std::numeric_limits<GUInt16>::max();
+    }
+    else if( dstDataType == GDT_Int16 )
+    {
+        fDstMin = std::numeric_limits<GInt16>::min();
+        fDstMax = std::numeric_limits<GInt16>::max();
+    }
+    else if( dstDataType == GDT_UInt32 )
+    {
+        fDstMin = static_cast<float>(std::numeric_limits<GUInt32>::min());
+        fDstMax = static_cast<float>(std::numeric_limits<GUInt32>::max());
+    }
+    else if( dstDataType == GDT_Int32 )
+    {
+        fDstMin = static_cast<float>(std::numeric_limits<GInt32>::min());
+        fDstMax = static_cast<float>(std::numeric_limits<GInt32>::max());
+    }
+
+    auto replaceValIfNodata =
+        [bHasNoData, isIntegerDT, fDstMin, fDstMax, nNodataValueInt64,
+         fNoDataValue, fReplacementVal](float fVal)
+    {
+        if( !bHasNoData )
+            return fVal;
+
+        // Clamp value before comparing to nodata: this is only needed for
+        // kernels with negative weights (Lanczos)
+        float fClamped = fVal;
+        if( fClamped < fDstMin )
+            fClamped = fDstMin;
+        else if( fClamped > fDstMax )
+            fClamped = fDstMax;
+        if( isIntegerDT )
         {
-            if( isIntegerDT )
-            {
-                if( nNodataValueInt64 == static_cast<GInt64>(fVal) )
-                {
-                    // Do not use the nodata value
-                    return fReplacementVal;
-                }
-            }
-            else if( fNoDataValue == fVal )
+            if( nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)) )
             {
                 // Do not use the nodata value
                 return fReplacementVal;
             }
         }
-        return fVal;
+        else if( fNoDataValue == fClamped )
+        {
+            // Do not use the nodata value
+            return fReplacementVal;
+        }
+        return fClamped;
     };
 
 /* -------------------------------------------------------------------- */

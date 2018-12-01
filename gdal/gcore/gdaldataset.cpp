@@ -1588,6 +1588,8 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
         int nFirstMaskFlags = 0;
         GDALRasterBand *poFirstMaskBand = nullptr;
         int nOKBands = 0;
+
+        // Check if bands share the same mask band
         for( int i = 0; i < nBandCount; ++i )
         {
             GDALRasterBand *poBand = GetRasterBand(panBandMap[i]);
@@ -1610,6 +1612,12 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 eFirstBandDT = eDT;
                 nFirstMaskFlags = poBand->GetMaskFlags();
+                if( nFirstMaskFlags == GMF_NODATA)
+                {
+                    // The dataset-level resampling code is not ready for nodata
+                    // Fallback to band-level resampling
+                    break;
+                }
                 poFirstMaskBand = poBand->GetMaskBand();
             }
             else
@@ -1619,6 +1627,12 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                     break;
                 }
                 int nMaskFlags = poBand->GetMaskFlags();
+                if( nMaskFlags == GMF_NODATA)
+                {
+                    // The dataset-level resampling code is not ready for nodata
+                    // Fallback to band-level resampling
+                    break;
+                }
                 GDALRasterBand *poMaskBand = poBand->GetMaskBand();
                 if( nFirstMaskFlags == GMF_ALL_VALID &&
                     nMaskFlags == GMF_ALL_VALID )
