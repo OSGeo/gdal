@@ -1538,7 +1538,8 @@ const char *TABFontPoint::GetStyleString() const
             outlineColor = "";
 
         m_pszStyleString =
-            CPLStrdup(CPLSPrintf("%s%s)", pszSymbolStyleString, outlineColor));
+            CPLStrdup(CPLSPrintf("%s%s,f:%s)", pszSymbolStyleString,
+            outlineColor, GetFontNameRef()));
         CPLFree(pszSymbolStyleString);
     }
 
