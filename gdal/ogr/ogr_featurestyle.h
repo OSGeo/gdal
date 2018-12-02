@@ -399,6 +399,10 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     void SetPerp(double dfPerp){SetParamDbl(OGRSTSymbolPerp,dfPerp  );}
     int  Priority(GBool &bDefault){return GetParamNum(OGRSTSymbolPriority,bDefault);}
     void SetPriority(int nPriority){SetParamNum(OGRSTSymbolPriority,nPriority);}
+    const char *FontName(GBool &bDefault)
+        {return GetParamStr(OGRSTSymbolFontName,bDefault);}
+    void SetFontName(const char *pszFontName)
+        {SetParamStr(OGRSTSymbolFontName,pszFontName);}
     const char *OColor(GBool &bDefault){return GetParamStr(OGRSTSymbolOColor,bDefault);}
     void SetOColor(const char *pszColor){SetParamStr(OGRSTSymbolOColor,pszColor);}
 
