@@ -10,12 +10,14 @@
 GDAL - Feature Style Specification</H1></CENTER>
 
 <CENTER>
-  <H2>Version 0.015 - 2018-01-08</H2>
+  <H2>Version 0.016 - 2018-12-03</H2>
 </CENTER>
 
 <HR WIDTH=50%>
 <H2>REVISION HISTORY</H2>
 <UL>
+<LI><B>Version 0.016 - 2018-12-03 - Andrew Sudorgin</B><BR>
+    Restored and documented font property for point symbols
 <LI><B>Version 0.015 - 2018-01-08 - Alan Thomas</B><BR>
     Update outdated material; minor changes to BRUSH 'id' and LABEL 't', 'bo', 'it', 'un', 'st'; clarify BRUSH 'fc', 'bc', SYMBOL 'o' and LABEL 's', 'w', 'p'
 <LI><B>Version 0.014 - 2011-07-24 - Even Rouault</B><BR>
@@ -686,6 +688,18 @@ parts should be drawn. Lower priority style parts are drawn first, and
 higher priority ones are drawn on top.
 <BR>If priority level is unspecified, the default is 1.</TD>
 </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>f</TD>
+    <TD><B>Font Name</B> -
+      Comma-delimited list of fonts names.  Works like the CSS font-family
+property: the list of font names is scanned until a known font name is encountered.
+<BR>
+      Example: SYMBOL(c:#00FF00,s:12pt,id:"mapinfo-sym-75",f:"MapInfo_Cartographic")
+
+    </TD>
+  </TR>
+
 </TABLE>
 
 <H3>
