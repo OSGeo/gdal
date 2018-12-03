@@ -1664,7 +1664,12 @@ void OGRGeoPackageTableLayer::CheckGeometryType( OGRFeature *poFeature )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "A geometry of type %s is inserted into layer %s "
-                         "of geometry type %s, which is not allowed. "
+                         "of geometry type %s, which is not normally allowed "
+                         "by the GeoPackage specification, but the driver will "
+                         "however do it. "
+                         "To create a conformant GeoPackage, if using ogr2ogr, "
+                         "the -nlt option can be used to override the layer "
+                         "geometry type. "
                          "This warning will no longer be emitted for this "
                          "combination of layer and feature geometry type.",
                          OGRToOGCGeomType(eGeomType),
