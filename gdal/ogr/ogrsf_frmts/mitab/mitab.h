@@ -956,6 +956,7 @@ class ITABFeatureSymbol
 
     virtual const char *GetSymbolStyleString(double dfAngle = 0.0) const;
     void        SetSymbolFromStyleString(const char *pszStyleString);
+    virtual void SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle);
 
     void        DumpSymbolDef(FILE *fpOut = nullptr);
 };
@@ -1157,6 +1158,7 @@ class TABFontPoint final : public TABPoint,
 
     virtual const char *GetSymbolStyleString(double dfAngle = 0.0) const override;
     virtual const char *GetStyleString() const override;
+    virtual void SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle) override;
 
     GBool       QueryFontStyle(TABFontStyle eStyleToQuery);
     void        ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStatus);

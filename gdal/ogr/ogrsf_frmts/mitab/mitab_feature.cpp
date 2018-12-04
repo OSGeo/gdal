@@ -1558,6 +1558,27 @@ const char *TABFontPoint::GetStyleString() const
     return m_pszStyleString;
 }
 
+void TABFontPoint::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
+{
+    ITABFeatureSymbol::SetSymbolFromStyle(poSymbolStyle);
+
+    GBool bIsNull = 0;
+
+    // Try to set font glyph number
+    const char* pszSymbolId = poSymbolStyle->Id(bIsNull);
+    if((!bIsNull) && pszSymbolId && strstr(pszSymbolId, "font-sym-"))
+    {
+        const int nSymbolId = atoi(pszSymbolId+9);
+        SetSymbolNo(static_cast<GInt16>(nSymbolId));
+    }
+
+    const char* pszFontName = poSymbolStyle->FontName(bIsNull);
+    if((!bIsNull) && pszFontName)
+    {
+        SetFontName(pszFontName);
+    }
+}
+
 /*=====================================================================
  *                      class TABCustomPoint
  *====================================================================*/
@@ -8871,55 +8892,11 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle) const
 /**********************************************************************
  *                   ITABFeatureSymbol::SetSymbolFromStyleString()
  *
- *  Set all Symbol var from a StyleString. Use StyleMgr to do so.
+ *  Set all Symbol var from a OGRStyleSymbol.
  **********************************************************************/
-void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
+void ITABFeatureSymbol::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
 {
     GBool bIsNull = 0;
-
-    // Use the Style Manager to retrieve all the information we need.
-    OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
-    OGRStyleTool *poStylePart = nullptr;
-
-    // Init the StyleMgr with the StyleString.
-    poStyleMgr->InitStyleString(pszStyleString);
-
-    // Retrieve the Symbol info.
-    const int numParts = poStyleMgr->GetPartCount();
-    for( int i = 0; i < numParts; i++ )
-    {
-        poStylePart = poStyleMgr->GetPart(i);
-        if( poStylePart == nullptr )
-            continue;
-
-        if(poStylePart->GetType() == OGRSTCSymbol)
-        {
-            break;
-        }
-        else
-        {
-            delete poStylePart;
-            poStylePart = nullptr;
-        }
-    }
-
-    // If the no Symbol found, do nothing.
-    if(poStylePart == nullptr)
-    {
-        delete poStyleMgr;
-        return;
-    }
-
-    OGRStyleSymbol *poSymbolStyle = cpl::down_cast<OGRStyleSymbol*>(poStylePart);
-
-    // With Symbol, we always want to output points
-    //
-    // It's very important to set the output unit of the feature.
-    // The default value is meter. If we don't do it all numerical values
-    // will be assumed to be converted from the input unit to meter when we
-    // will get them via GetParam...() functions.
-    // See OGRStyleTool::Parse() for more details.
-    poSymbolStyle->SetUnit(OGRSTUPoints, (72.0 * 39.37));
 
     // Set the Symbol Id (SymbolNo)
     const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
@@ -8995,6 +8972,60 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
         int nSymbolColor = static_cast<int>(strtol(pszSymbolColor, nullptr, 16));
         SetSymbolColor(static_cast<GInt32>(nSymbolColor));
     }
+}
+
+/**********************************************************************
+ *                   ITABFeatureSymbol::SetSymbolFromStyleString()
+ *
+ *  Set all Symbol var from a StyleString. Use StyleMgr to do so.
+ **********************************************************************/
+void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
+{
+    // Use the Style Manager to retrieve all the information we need.
+    OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
+    OGRStyleTool *poStylePart = nullptr;
+
+    // Init the StyleMgr with the StyleString.
+    poStyleMgr->InitStyleString(pszStyleString);
+
+    // Retrieve the Symbol info.
+    const int numParts = poStyleMgr->GetPartCount();
+    for( int i = 0; i < numParts; i++ )
+    {
+        poStylePart = poStyleMgr->GetPart(i);
+        if( poStylePart == nullptr )
+            continue;
+
+        if(poStylePart->GetType() == OGRSTCSymbol)
+        {
+            break;
+        }
+        else
+        {
+            delete poStylePart;
+            poStylePart = nullptr;
+        }
+    }
+
+    // If the no Symbol found, do nothing.
+    if(poStylePart == nullptr)
+    {
+        delete poStyleMgr;
+        return;
+    }
+
+    OGRStyleSymbol *poSymbolStyle = cpl::down_cast<OGRStyleSymbol*>(poStylePart);
+
+    // With Symbol, we always want to output points
+    //
+    // It's very important to set the output unit of the feature.
+    // The default value is meter. If we don't do it all numerical values
+    // will be assumed to be converted from the input unit to meter when we
+    // will get them via GetParam...() functions.
+    // See OGRStyleTool::Parse() for more details.
+    poSymbolStyle->SetUnit(OGRSTUPoints, (72.0 * 39.37));
+
+    SetSymbolFromStyle(poSymbolStyle);
 
     delete poStyleMgr;
     delete poStylePart;
