@@ -145,6 +145,8 @@ static void CPLOpenSSLCleanup()
         }
         CPLFree(pahSSLMutex);
         pahSSLMutex = nullptr;
+        CRYPTO_set_id_callback(nullptr);
+        CRYPTO_set_locking_callback(nullptr);
     }
 }
 
