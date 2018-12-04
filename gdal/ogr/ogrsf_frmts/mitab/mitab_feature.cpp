@@ -1512,6 +1512,36 @@ void TABFontPoint::SetSymbolAngle(double dAngle)
 }
 
 /**********************************************************************
+ *                   TABFontPoint::GetSymbolStyleString()
+ *
+ *  Return a Symbol() string. All representations info for the Symbol are here.
+ **********************************************************************/
+const char* TABFontPoint::GetSymbolStyleString(double dfAngle) const
+{
+    /* Get the SymbolStyleString, and add the outline Color
+       (halo/border in MapInfo Symbol terminology) */
+    const char *outlineColor = nullptr;
+    if (m_nFontStyle & 16)
+        outlineColor = ",o:#000000";
+    else if (m_nFontStyle & 512)
+        outlineColor = ",o:#ffffff";
+    else
+        outlineColor = "";
+
+    int         nAngle = static_cast<int>(dfAngle);
+    const char* pszStyle;
+
+    pszStyle=CPLSPrintf("SYMBOL(a:%d,c:#%6.6x,s:%dpt,id:\"font-sym-%d,ogr-sym-9\"%s,f:\"%s\")",
+                        nAngle,
+                        m_sSymbolDef.rgbColor,
+                        m_sSymbolDef.nPointSize,
+                        m_sSymbolDef.nSymbolNo,
+                        outlineColor,
+                        GetFontNameRef());
+    return pszStyle;
+}
+
+/**********************************************************************
  *                   TABFontPoint::GetStyleString() const
  *
  * Return style string for this feature.
@@ -1522,25 +1552,7 @@ const char *TABFontPoint::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
-        /* Get the SymbolStyleString, and add the outline Color
-           (halo/border in MapInfo Symbol terminology) */
-        char *pszSymbolStyleString =
-            CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
-        int nStyleStringlen = static_cast<int>(strlen(pszSymbolStyleString));
-        pszSymbolStyleString[nStyleStringlen - 1] = '\0';
-
-        const char *outlineColor = nullptr;
-        if (m_nFontStyle & 16)
-            outlineColor = ",o:#000000";
-        else if (m_nFontStyle & 512)
-            outlineColor = ",o:#ffffff";
-        else
-            outlineColor = "";
-
-        m_pszStyleString =
-            CPLStrdup(CPLSPrintf("%s%s,f:\"%s\")", pszSymbolStyleString,
-            outlineColor, GetFontNameRef()));
-        CPLFree(pszSymbolStyleString);
+        m_pszStyleString = CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
     }
 
     return m_pszStyleString;

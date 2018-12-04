@@ -954,7 +954,7 @@ class ITABFeatureSymbol
     void        SetSymbolSize(GInt16 val)   { m_sSymbolDef.nPointSize = val;}
     void        SetSymbolColor(GInt32 clr)  { m_sSymbolDef.rgbColor = clr;}
 
-    const char *GetSymbolStyleString(double dfAngle = 0.0) const;
+    virtual const char *GetSymbolStyleString(double dfAngle = 0.0) const;
     void        SetSymbolFromStyleString(const char *pszStyleString);
 
     void        DumpSymbolDef(FILE *fpOut = nullptr);
@@ -1155,6 +1155,7 @@ class TABFontPoint final : public TABPoint,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
+    virtual const char *GetSymbolStyleString(double dfAngle = 0.0) const override;
     virtual const char *GetStyleString() const override;
 
     GBool       QueryFontStyle(TABFontStyle eStyleToQuery);
