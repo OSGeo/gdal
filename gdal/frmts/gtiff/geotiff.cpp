@@ -4043,10 +4043,10 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
     const double dfSrcXInc = dfXSize / static_cast<double>( nBufXSize );
     const double dfSrcYInc = dfYSize / static_cast<double>( nBufYSize );
     const double EPS = 1e-10;
-    const int nBlockX1 = static_cast<int>((0+0.5) * dfSrcXInc + dfXOff + EPS) / nBlockXSize;
-    const int nBlockY1 = static_cast<int>((0+0.5) * dfSrcYInc + dfYOff + EPS) / nBlockYSize;
-    const int nBlockX2 = static_cast<int>((nBufXSize-1+0.5) * dfSrcXInc + dfXOff + EPS) / nBlockXSize;
-    const int nBlockY2 = static_cast<int>((nBufYSize-1+0.5) * dfSrcYInc + dfYOff + EPS) / nBlockYSize;
+    const int nBlockX1 = static_cast<int>(std::max(0.0, (0+0.5) * dfSrcXInc + dfXOff + EPS)) / nBlockXSize;
+    const int nBlockY1 = static_cast<int>(std::max(0.0, (0+0.5) * dfSrcYInc + dfYOff + EPS)) / nBlockYSize;
+    const int nBlockX2 = static_cast<int>(std::min(static_cast<double>(nRasterXSize), (nBufXSize-1+0.5) * dfSrcXInc + dfXOff + EPS)) / nBlockXSize;
+    const int nBlockY2 = static_cast<int>(std::min(static_cast<double>(nRasterYSize), (nBufYSize-1+0.5) * dfSrcYInc + dfYOff + EPS)) / nBlockYSize;
 
     thandle_t th = TIFFClientdata( poGDS->hTIFF );
     if( poGDS->SetDirectory() && !VSI_TIFFHasCachedRanges(th) )
