@@ -586,6 +586,8 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.</li>
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)</li>
  * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...</li>
+ * <li>COOKIEFILE=val, where val is file name to read cookies from (GDAL >= 2.4)</li>
+ * <li>COOKIEJAR=val, where val is file name to store cookies to (GDAL >= 2.4)</li>
  * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 429, 502, 503 or
  *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)</li>
  * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
