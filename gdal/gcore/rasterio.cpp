@@ -470,10 +470,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
 /* -------------------------------------------------------------------- */
@@ -657,7 +653,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             // Add small epsilon to avoid some numeric precision issues.
             dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff + EPS;
             dfSrcX = 0.5 * dfSrcXInc + dfXOff + EPS;
-            iSrcY = static_cast<int>(dfSrcY);
+            iSrcY = static_cast<int>(std::min(std::max(0.0, dfSrcY),
+                                              static_cast<double>(nRasterYSize)));
 
             GPtrDiff_t iBufOffset =
                 static_cast<GPtrDiff_t>(iBufYOff)
@@ -690,7 +687,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                  iBufXOff < nBufXSize;
                  iBufXOff++, dfSrcX += dfSrcXInc )
             {
-                iSrcX = static_cast<int>( dfSrcX );
+                // TODO?: try to avoid the clamping for most iterations
+                iSrcX = static_cast<int>(std::min(std::max(0.0, dfSrcX),
+                                            static_cast<double>(nRasterXSize)));
 
     /* -------------------------------------------------------------------- */
     /*      Ensure we have the appropriate block loaded.                    */
@@ -842,10 +841,6 @@ CPLErr GDALRasterBand::RasterIOResampled(
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
     const double dfXRatioDstToSrc = dfXSize / nBufXSize;
@@ -1338,10 +1333,6 @@ CPLErr GDALDataset::RasterIOResampled(
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
     const double dfXRatioDstToSrc = dfXSize / nBufXSize;

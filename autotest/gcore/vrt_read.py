@@ -1425,6 +1425,19 @@ def vrt_float32_with_nodata_slightly_below_float_min():
     return 'success'
 
 
+###############################################################################
+# Fix issue raised in https://lists.osgeo.org/pipermail/gdal-dev/2018-December/049415.html
+
+def vrt_subpixel_offset():
+
+    ds = gdal.Open('data/vrt_subpixel_offset.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4849:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
 
 for item in init_list:
     ut = gdaltest.GDALTest('VRT', item[0], item[1], item[2])
@@ -1465,6 +1478,7 @@ gdaltest_list.append(vrt_read_29)
 gdaltest_list.append(vrt_read_30)
 gdaltest_list.append(vrt_read_31)
 gdaltest_list.append(vrt_float32_with_nodata_slightly_below_float_min)
+gdaltest_list.append(vrt_subpixel_offset)
 
 if __name__ == '__main__':
 
