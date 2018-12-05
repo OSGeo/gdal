@@ -1776,6 +1776,19 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         pszCookie = CPLGetConfigOption("GDAL_HTTP_COOKIE", nullptr);
     if( pszCookie != nullptr )
         curl_easy_setopt(http_handle, CURLOPT_COOKIE, pszCookie);
+        
+    const char* pszCookieFile = CSLFetchNameValue(papszOptions, "COOKIEFILE");
+    if( pszCookieFile == nullptr )
+        pszCookieFile = CPLGetConfigOption("GDAL_HTTP_COOKIEFILE", nullptr);
+    if( pszCookieFile != nullptr )
+        curl_easy_setopt(http_handle, CURLOPT_COOKIEFILE, pszCookieFile);
+
+    const char* pszCookieJar = CSLFetchNameValue(papszOptions, "COOKIEJAR");
+    if( pszCookieJar == nullptr )
+        pszCookieJar = CPLGetConfigOption("GDAL_HTTP_COOKIEJAR", nullptr);
+    if( pszCookieJar != nullptr )
+        curl_easy_setopt(http_handle, CURLOPT_COOKIEJAR, pszCookieJar);
+
 
     struct curl_slist* headers = nullptr;
     const char *pszHeaderFile = CSLFetchNameValue( papszOptions, "HEADER_FILE" );
