@@ -873,7 +873,7 @@ typedef enum ogr_style_tool_param_symbol_id
     OGRSTSymbolPerp     = 7, /**< Perpendicular */
     OGRSTSymbolOffset   = 8, /**< Offset */
     OGRSTSymbolPriority = 9, /**< Priority */
-    OGRSTSymbolFontName = 10, /**< OBSOLETE; do not use */
+    OGRSTSymbolFontName = 10, /**< Font name */
     OGRSTSymbolOColor   = 11, /**< Outline color */
 #ifndef DOXYGEN_SKIP
     OGRSTSymbolLast     = 12

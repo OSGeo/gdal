@@ -89,7 +89,7 @@ static const OGRStyleParamId asStyleSymbol[] =
     {OGRSTSymbolPerp, "dp", TRUE, OGRSTypeDouble},
     {OGRSTSymbolOffset, "di", TRUE, OGRSTypeDouble},
     {OGRSTSymbolPriority, "l", FALSE, OGRSTypeInteger},
-    {-1, nullptr, FALSE, OGRSTypeUnused}, // was OGRSTSymbolFontName
+    {OGRSTSymbolFontName, "f", FALSE, OGRSTypeString},
     {OGRSTSymbolOColor, "o", FALSE, OGRSTypeString}
 };
 
