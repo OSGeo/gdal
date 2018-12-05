@@ -63,7 +63,7 @@ def eeda_2():
     if ogrtest.eeda_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets:listImages?parentPath=collection&pageSize=1', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageSize=1', json.dumps({
         'assets': [
             {
                 'properties':
@@ -95,7 +95,7 @@ def eeda_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if lyr.GetLayerDefn().GetFieldCount() != 6 + 7 + 4:
+    if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
         gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
@@ -110,10 +110,12 @@ def eeda_2():
         print(lyr.GetFeatureCount())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets:listImages?parentPath=collection', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages', json.dumps({
         'assets': [
             {
-                'path': 'first_feature',
+                'name': 'projects/earthengine-public/assets/collection/first_feature',
+                'id': 'collection/first_feature',
+                'path': 'collection/first_feature',
                 'time': '2017-01-02T12:34:56.789Z',
                 'updateTime': '2017-01-03T12:34:56.789Z',
                 'sizeBytes': 1,
@@ -152,15 +154,17 @@ def eeda_2():
                 ]
             },
             {
-                'path': 'second_feature'
+                'name': 'projects/earthengine-public/assets/collection/second_feature'
             }
         ],
         'nextPageToken': 'myToken'
     }))
 
     f = lyr.GetNextFeature()
-    if f.GetField('path') != 'first_feature' or \
-       f.GetField('gdal_dataset') != 'EEDAI:first_feature' or \
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/first_feature' or \
+       f.GetField('id') != 'collection/first_feature' or \
+       f.GetField('path') != 'collection/first_feature' or \
+       f.GetField('gdal_dataset') != 'EEDAI:projects/earthengine-public/assets/collection/first_feature' or \
        f.GetField('time') != '2017/01/02 12:34:56.789+00' or \
        f.GetField('updateTime') != '2017/01/03 12:34:56.789+00' or \
        f.GetField('sizeBytes') != 1 or \
@@ -182,21 +186,21 @@ def eeda_2():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetField('path') != 'second_feature':
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/second_feature':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets:listImages?parentPath=collection&pageToken=myToken', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageToken=myToken', json.dumps({
         'assets': [
             {
-                'path': 'third_feature'
+                'name': 'projects/earthengine-public/assets/collection/third_feature'
             }
         ]
     }))
 
     f = lyr.GetNextFeature()
-    if f.GetField('path') != 'third_feature':
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/third_feature':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -209,23 +213,23 @@ def eeda_2():
     lyr.ResetReading()
 
     f = lyr.GetNextFeature()
-    if f.GetField('path') != 'first_feature':
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/first_feature':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr.SetAttributeFilter('EEDA:raw_filter')
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets:listImages?parentPath=collection&filter=raw%5Ffilter', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?filter=raw%5Ffilter', json.dumps({
         'assets': [
             {
-                'path': 'raw_filter'
+                'name': 'projects/earthengine-public/assets/collection/raw_filter'
             }
         ]
     }))
 
     f = lyr.GetNextFeature()
-    if f.GetField('path') != 'raw_filter':
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/raw_filter':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -241,11 +245,11 @@ def eeda_2():
                            "string_field IN ('bar', 'baz') AND " +
                            "NOT( int_field IN (0) OR double_field IN (3.5) )")
 
-    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/assets:listImages?parentPath=collection&region=%7B%20%22type%22%3A%20%22Polygon%22%2C%20%22coordinates%22%3A%20%5B%20%5B%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%20%5D%20%5D%20%7D&filter=%28%28%28%28%28%28%28string%5Ffield%20%3D%20%22bar%22%20AND%20int%5Ffield%20%3E%200%29%20AND%20int%5Ffield%20%3C%202%29%20AND%20int64%5Ffield%20%3E%3D%200%29%20AND%20int64%5Ffield%20%3C%3D%209999999999999%29%20AND%20double%5Ffield%20%21%3D%203%2E5%29%20AND%20string%5Ffield%20%3D%20%22bar%22%20OR%20string%5Ffield%20%3D%20%22baz%22%29%20AND%20%28NOT%20%28int%5Ffield%20%3D%200%20OR%20double%5Ffield%20%3D%203%2E5%29%29%29&startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=2100%2D01%2D01T00%3A00%3A00Z'
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?region=%7B%20%22type%22%3A%20%22Polygon%22%2C%20%22coordinates%22%3A%20%5B%20%5B%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%20%5D%20%5D%20%7D&filter=%28%28%28%28%28%28%28string%5Ffield%20%3D%20%22bar%22%20AND%20int%5Ffield%20%3E%200%29%20AND%20int%5Ffield%20%3C%202%29%20AND%20int64%5Ffield%20%3E%3D%200%29%20AND%20int64%5Ffield%20%3C%3D%209999999999999%29%20AND%20double%5Ffield%20%21%3D%203%2E5%29%20AND%20string%5Ffield%20%3D%20%22bar%22%20OR%20string%5Ffield%20%3D%20%22baz%22%29%20AND%20%28NOT%20%28int%5Ffield%20%3D%200%20OR%20double%5Ffield%20%3D%203%2E5%29%29%29&startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=2100%2D01%2D01T00%3A00%3A00Z'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
         'assets': [
             {
-                'path': 'filtered_feature',
+                'name': 'projects/earthengine-public/assets/collection/filtered_feature',
                 'time': '2017-01-02T12:34:56.789Z',
                 'updateTime': '2017-01-03T12:34:56.789Z',
                 'sizeBytes': 1,
@@ -260,7 +264,7 @@ def eeda_2():
                 }
             },
             {
-                'path': 'second_feature'
+                'name': 'projects/earthengine-public/assets/collection/second_feature'
             }
         ]
     }))
@@ -270,7 +274,7 @@ def eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('path') != 'filtered_feature':
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -279,15 +283,15 @@ def eeda_2():
     # Test time equality with second granularity
     lyr.SetAttributeFilter("time = '1980-01-01T00:00:00Z'")
 
-    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/assets:listImages?parentPath=collection&startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T00%3A00%3A01Z'
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T00%3A00%3A01Z'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
         'assets': [
             {
-                'path': 'filtered_feature',
-                'time': '1980-01-01T00:00:00Z',
+                'name': 'projects/earthengine-public/assets/collection/filtered_feature',
+                'time': '1980-01-01T00:00:00Z'
             },
             {
-                'path': 'second_feature'
+                'name': 'projects/earthengine-public/assets/collection/second_feature'
             }
         ]
     }))
@@ -295,22 +299,22 @@ def eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('path') != 'filtered_feature':
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Test time equality with day granularity
     lyr.SetAttributeFilter("time = '1980-01-01'")
 
-    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/assets:listImages?parentPath=collection&startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T23%3A59%3A59Z'
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T23%3A59%3A59Z'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
         'assets': [
             {
-                'path': 'filtered_feature',
+                'name': 'projects/earthengine-public/assets/collection/filtered_feature',
                 'time': '1980-01-01T12:00:00Z',
             },
             {
-                'path': 'second_feature'
+                'name': 'projects/earthengine-public/assets/collection/second_feature'
             }
         ]
     }))
@@ -318,7 +322,7 @@ def eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('path') != 'filtered_feature':
+    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -344,13 +348,108 @@ def eeda_3():
 
     lyr = ds.GetLayer(0)
 
-    if lyr.GetLayerDefn().GetFieldCount() != 6 + 7 + 4:
+    if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
         gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
+
+    return 'success'
+
+###############################################################################
+# Test that name and id variants are handled correctly.
+
+
+def eeda_4():
+
+    if ogrtest.eeda_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('EEDA_BEARER', 'mybearer')
+    gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
+
+    # User asset ID ("users/**").
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-legacy/assets/users/foo:listImages?pageSize=1'
+    gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
+        'assets': [
+            {
+                'name': 'projects/earthengine-legacy/assets/users/foo/bar'
+            }
+        ]
+    }))
+    if not ogr.Open('EEDA:users/foo').GetLayer(0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink(ogrtest.eeda_drv_tmpfile)
+
+    # Project asset ID ("projects/**").
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-legacy/assets/projects/foo:listImages?pageSize=1'
+    gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
+        'assets': [
+            {
+                'name': 'projects/earthengine-legacy/assets/projects/foo/bar'
+            }
+        ]
+    }))
+    ds = ogr.Open('EEDA:projects/foo')
+    if not ds.GetLayer(0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink(ogrtest.eeda_drv_tmpfile)
+    ds = None
+
+    # Multi-folder project asset ID ("projects/foo/bar/baz").
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-legacy/assets/projects/foo/bar/baz:listImages?pageSize=1'
+    gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
+        'assets': [
+            {
+                'name': 'projects/earthengine-legacy/assets/projects/foo/bar/baz/qux'
+            }
+        ]
+    }))
+    ds = ogr.Open('EEDA:projects/foo/bar/baz')
+    if not ds.GetLayer(0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink(ogrtest.eeda_drv_tmpfile)
+    ds = None
+
+    # Public-catalog asset ID (e.g. "LANDSAT").
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/foo:listImages?pageSize=1'
+    gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
+        'assets': [
+            {
+                'name': 'projects/earthengine-public/assets/foo/bar'
+            }
+        ]
+    }))
+    ds = ogr.Open('EEDA:foo')
+    if not ds.GetLayer(0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink(ogrtest.eeda_drv_tmpfile)
+    ds = None
+
+    # Asset name ("projects/*/assets/**").
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/foo/assets/bar:listImages?pageSize=1'
+    gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
+        'assets': [
+            {
+                'name': 'projects/foo/assets/bar/baz'
+            }
+        ]
+    }))
+    ds = ogr.Open('EEDA:projects/foo/assets/bar')
+    if not ds.GetLayer(0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink(ogrtest.eeda_drv_tmpfile)
+    ds = None
+
+    gdal.SetConfigOption('EEDA_BEARER', None)
+    gdal.SetConfigOption('EEDA_URL', None)
 
     return 'success'
 
@@ -372,9 +471,9 @@ def eeda_cleanup():
     gdal.SetConfigOption('GOA2_NOW', None)
 
     gdal.Unlink('/vsimem/ee/')
-    gdal.Unlink('/vsimem/ee/assets:listImages?parentPath=collection&pageSize=1')
-    gdal.Unlink('/vsimem/ee/assets:listImages?parentPath=collection&pageToken=myToken')
-    gdal.Unlink('/vsimem/ee/assets:listImages?parentPath=collection&filter=raw%5Ffilter')
+    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageSize=1')
+    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageToken=myToken')
+    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?filter=raw%5Ffilter')
 
     return 'success'
 
@@ -383,6 +482,7 @@ gdaltest_list = [
     eeda_1,
     eeda_2,
     eeda_3,
+    eeda_4,
     eeda_cleanup]
 
 if __name__ == '__main__':

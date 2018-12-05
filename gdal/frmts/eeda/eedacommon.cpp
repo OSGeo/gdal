@@ -277,6 +277,47 @@ GDALEEDABaseDataset::~GDALEEDABaseDataset()
 }
 
 /************************************************************************/
+/*                          ConvertPathToName()                        */
+/************************************************************************/
+
+CPLString GDALEEDABaseDataset::ConvertPathToName(const CPLString& path) {
+    size_t end = path.find('/');
+    CPLString folder = path.substr(0, end);
+
+    if ( folder == "users" )
+    {
+        return "projects/earthengine-legacy/assets/" + path;
+    }
+    else if ( folder != "projects" )
+    {
+        return "projects/earthengine-public/assets/" + path;
+    }
+
+    // Find the start and end positions of the third segment, if it exists.
+    int segment = 1;
+    size_t start = 0;
+    while ( end != std::string::npos && segment < 3 )
+    {
+        segment++;
+        start = end + 1;
+        end = path.find('/', start);
+    }
+
+    end = (end == std::string::npos) ? path.size() : end;
+    // segment is 3 if path has at least 3 segments.
+    if ( folder == "projects" && segment == 3 )
+    {
+        // If the first segment is "projects" and the third segment is "assets",
+        // path is a name, so return as-is.
+        if ( path.substr(start, end - start) == "assets" )
+        {
+            return path;
+        }
+    }
+    return "projects/earthengine-legacy/assets/" + path;
+}
+
+/************************************************************************/
 /*                          GetBaseHTTPOptions()                        */
 /************************************************************************/
 
@@ -470,7 +511,7 @@ CPLHTTPResult* EEDAHTTPFetch(const char* pszURL, char** papszOptions)
                  (nHTTPStatus >= 502 && nHTTPStatus <= 504)) &&
                  i < RETRY_COUNT )
             {
-                CPLError( CE_Warning, CPLE_FileIO, 
+                CPLError( CE_Warning, CPLE_FileIO,
                           "GET error when downloading %s, HTTP status=%d, retrying in %.2fs : %s",
                           pszURL, nHTTPStatus, dfRetryDelay, pszErrorText);
                 CPLHTTPDestroyResult(psResult);

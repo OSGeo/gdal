@@ -110,6 +110,7 @@ class GDALEEDALayer: public OGRLayer
 
                 GDALEEDADataset* m_poDS;
                 CPLString        m_osCollection{};
+                CPLString        m_osCollectionName{};
                 OGRFeatureDefn*  m_poFeatureDefn;
                 json_object*     m_poCurPageObj;
                 json_object*     m_poCurPageAssets;
@@ -129,6 +130,7 @@ class GDALEEDALayer: public OGRLayer
     public:
         GDALEEDALayer(GDALEEDADataset* poDS,
                       const CPLString& osCollection,
+                      const CPLString& osCollectionName,
                       json_object* poAsset,
                       json_object* poLayerConf);
         virtual ~GDALEEDALayer();
@@ -159,10 +161,12 @@ class GDALEEDALayer: public OGRLayer
 
 GDALEEDALayer::GDALEEDALayer(GDALEEDADataset* poDS,
                              const CPLString& osCollection,
+                             const CPLString& osCollectionName,
                              json_object* poAsset,
                              json_object* poLayerConf) :
     m_poDS(poDS),
     m_osCollection(osCollection),
+    m_osCollectionName(osCollectionName),
     m_poFeatureDefn(nullptr),
     m_poCurPageObj(nullptr),
     m_poCurPageAssets(nullptr),
@@ -187,6 +191,14 @@ GDALEEDALayer::GDALEEDALayer(GDALEEDADataset* poDS,
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
 
+    {
+        OGRFieldDefn oFieldDefn("name", OFTString);
+        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+    }
+    {
+        OGRFieldDefn oFieldDefn("id", OFTString);
+        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+    }
     {
         OGRFieldDefn oFieldDefn("path", OFTString);
         m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
@@ -385,41 +397,45 @@ OGRFeature* GDALEEDALayer::GetNextRawFeature()
 
     if( m_poCurPageObj == nullptr )
     {
-        CPLString osURL(m_poDS->GetBaseURL() + "assets:listImages?parentPath=" +
-                       CPLEscapeURLQueryParameter(m_osCollection));
+        CPLString osURL(m_poDS->GetBaseURL() + m_osCollectionName +
+                    ":listImages");
+        CPLString query = "";
         if( !osNextPageToken.empty() )
         {
-            osURL += "&pageToken=" +
+            query += "&pageToken=" +
                         CPLEscapeURLQueryParameter(osNextPageToken);
         }
         const char *pszPageSize = CPLGetConfigOption("EEDA_PAGE_SIZE", nullptr);
         if( pszPageSize )
         {
-            osURL += "&pageSize=";
-            osURL += pszPageSize;
+            query += "&pageSize=";
+            query += pszPageSize;
         }
         if( m_poFilterGeom != nullptr )
         {
             char* pszGeoJSON = OGR_G_ExportToJson(
                 reinterpret_cast<OGRGeometryH>(m_poFilterGeom) );
-            osURL += "&region=";
-            osURL += CPLEscapeURLQueryParameter(pszGeoJSON);
+            query += "&region=";
+            query += CPLEscapeURLQueryParameter(pszGeoJSON);
             CPLFree(pszGeoJSON);
         }
         if( !m_osAttributeFilter.empty() )
         {
-            osURL += "&filter=";
-            osURL += CPLEscapeURLQueryParameter(m_osAttributeFilter);
+            query += "&filter=";
+            query += CPLEscapeURLQueryParameter(m_osAttributeFilter);
         }
         if( !m_osStartTime.empty() )
         {
-            osURL += "&startTime=";
-            osURL += CPLEscapeURLQueryParameter(m_osStartTime);
+            query += "&startTime=";
+            query += CPLEscapeURLQueryParameter(m_osStartTime);
         }
         if( !m_osEndTime.empty() )
         {
-            osURL += "&endTime=";
-            osURL += CPLEscapeURLQueryParameter(m_osEndTime);
+            query += "&endTime=";
+            query += CPLEscapeURLQueryParameter(m_osEndTime);
+        }
+        if (query.size() > 0) {
+          osURL = osURL + "?" + query.substr(1);
         }
         m_poCurPageObj = m_poDS->RunRequest(osURL);
         if( m_poCurPageObj == nullptr )
@@ -471,13 +487,27 @@ OGRFeature* GDALEEDALayer::GetNextRawFeature()
         }
     }
 
+    const char* pszName =
+        json_object_get_string(CPL_json_object_object_get(poAsset, "name"));
+    if( pszName )
+    {
+        poFeature->SetField("name", pszName);
+        poFeature->SetField("gdal_dataset",
+                    ("EEDAI:" + CPLString(pszName)).c_str());
+    }
+
+    const char* pszId =
+        json_object_get_string(CPL_json_object_object_get(poAsset, "id"));
+    if ( pszId )
+    {
+        poFeature->SetField("id", pszId);
+    }
+
     const char* pszPath =
         json_object_get_string(CPL_json_object_object_get(poAsset, "path"));
-    if( pszPath )
+    if ( pszPath )
     {
-        poFeature->SetField("path", pszPath);
-        poFeature->SetField("gdal_dataset",
-                    ("EEDAI:" + CPLString(pszPath)).c_str());
+        poFeature->SetField("path", pszId);
     }
 
     const char* const apszBaseProps[] =
@@ -1109,6 +1139,7 @@ bool GDALEEDADataset::Open(GDALOpenInfo* poOpenInfo)
         osCollection = papszTokens[1];
         CSLDestroy(papszTokens);
     }
+    CPLString osCollectionName = ConvertPathToName(osCollection);
 
     json_object* poRootConf = GDALEEDADatasetGetConf();
     if( poRootConf )
@@ -1118,7 +1149,7 @@ bool GDALEEDADataset::Open(GDALOpenInfo* poOpenInfo)
         if( poLayerConf != nullptr &&
             json_object_get_type(poLayerConf) == json_type_object )
         {
-            m_poLayer = new GDALEEDALayer(this, osCollection,
+            m_poLayer = new GDALEEDALayer(this, osCollection, osCollectionName,
                                           nullptr, poLayerConf);
             json_object_put(poRootConf);
             return true;
@@ -1127,9 +1158,8 @@ bool GDALEEDADataset::Open(GDALOpenInfo* poOpenInfo)
     }
 
     // Issue request to get layer schema
-    json_object* poRootAsset = RunRequest(m_osBaseURL + "assets:listImages?parentPath=" +
-                CPLEscapeURLQueryParameter(osCollection) +
-                "&pageSize=1");
+    json_object* poRootAsset = RunRequest(m_osBaseURL + osCollectionName +
+                ":listImages?pageSize=1");
     if( poRootAsset == nullptr )
         return false;
 
@@ -1150,7 +1180,8 @@ bool GDALEEDADataset::Open(GDALOpenInfo* poOpenInfo)
         return false;
     }
 
-    m_poLayer = new GDALEEDALayer(this, osCollection, poAsset, nullptr);
+    m_poLayer = new GDALEEDALayer(this, osCollection, osCollectionName, poAsset,
+                                  nullptr);
     json_object_put(poRootAsset);
 
     return true;
@@ -1204,7 +1235,7 @@ void GDALRegister_EEDA()
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "EEDA:" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"  <Option name='COLLECTION' type='string' description='Collection path'/>"
+"  <Option name='COLLECTION' type='string' description='Collection name'/>"
 "</OpenOptionList>");
 
     poDriver->pfnOpen = GDALEEDAOpen;
