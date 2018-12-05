@@ -1566,7 +1566,7 @@ void TABFontPoint::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
 
     // Try to set font glyph number
     const char* pszSymbolId = poSymbolStyle->Id(bIsNull);
-    if((!bIsNull) && pszSymbolId && strstr(pszSymbolId, "font-sym-"))
+    if((!bIsNull) && pszSymbolId && STARTS_WITH(pszSymbolId, "font-sym-"))
     {
         const int nSymbolId = atoi(pszSymbolId+9);
         SetSymbolNo(static_cast<GInt16>(nSymbolId));
@@ -8902,16 +8902,14 @@ void ITABFeatureSymbol::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
     const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
     if(bIsNull) pszSymbolId = nullptr;
 
-    if(pszSymbolId &&
-       (strstr(pszSymbolId, "mapinfo-sym-") ||
-        strstr(pszSymbolId, "ogr-sym-")) )
+    if(pszSymbolId)
     {
-        if(strstr(pszSymbolId, "mapinfo-sym-"))
+        if(STARTS_WITH(pszSymbolId, "mapinfo-sym-"))
         {
             const int nSymbolId = atoi(pszSymbolId+12);
             SetSymbolNo(static_cast<GByte>(nSymbolId));
         }
-        else if(strstr(pszSymbolId, "ogr-sym-"))
+        else if(STARTS_WITH(pszSymbolId, "ogr-sym-"))
         {
             const int nSymbolId = atoi(pszSymbolId+8);
 
