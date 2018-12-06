@@ -93,6 +93,7 @@ class CPL_DLL OGRFieldDefn
 {
   private:
     char                *pszName;
+    char                *pszAliasName;
     OGRFieldType        eType;
     OGRJustification    eJustify;
     int                 nWidth;  // Zero is variable.
@@ -105,20 +106,27 @@ class CPL_DLL OGRFieldDefn
     int                 bNullable;
 
   public:
-                        OGRFieldDefn( const char *, OGRFieldType );
-               explicit OGRFieldDefn( const OGRFieldDefn * );
+                        OGRFieldDefn( const char *pszName,
+                                      OGRFieldType eType);
+                        OGRFieldDefn( const char *pszName,
+                                      const char *pszAliasName,
+                                      OGRFieldType eType);
+               explicit OGRFieldDefn( const OGRFieldDefn *poFieldDefn );
                         ~OGRFieldDefn();
 
-    void                SetName( const char * );
+    void                SetName( const char *pszNameIn );
     const char         *GetNameRef() const { return pszName; }
+
+    void                SetAliasName( const char *pszAliasNameIn );
+    const char         *GetAliasNameRef() const ;
 
     OGRFieldType        GetType() const { return eType; }
     void                SetType( OGRFieldType eTypeIn );
-    static const char  *GetFieldTypeName( OGRFieldType );
+    static const char  *GetFieldTypeName( OGRFieldType eType );
 
     OGRFieldSubType     GetSubType() const { return eSubType; }
     void                SetSubType( OGRFieldSubType eSubTypeIn );
-    static const char  *GetFieldSubTypeName( OGRFieldSubType );
+    static const char  *GetFieldSubTypeName( OGRFieldSubType eSubType );
 
     OGRJustification    GetJustify() const { return eJustify; }
     void                SetJustify( OGRJustification eJustifyIn )
@@ -129,12 +137,13 @@ class CPL_DLL OGRFieldDefn
 
     int                 GetPrecision() const { return nPrecision; }
     void                SetPrecision( int nPrecisionIn )
-                                                { nPrecision = nPrecisionIn; }
+                            { nPrecision = nPrecisionIn; }
 
-    void                Set( const char *, OGRFieldType, int = 0, int = 0,
-                             OGRJustification = OJUndefined );
+    void                Set( const char *pszNameIn, OGRFieldType eTypeIn,
+                             int nWidthIn = 0, int nPrecisionIn = 0,
+                             OGRJustification eJustifyIn = OJUndefined );
 
-    void                SetDefault( const char* );
+    void                SetDefault( const char *pszDefaultIn );
     const char         *GetDefault() const;
     int                 IsDefaultDriverSpecific() const;
 
@@ -144,7 +153,7 @@ class CPL_DLL OGRFieldDefn
     int                 IsNullable() const { return bNullable; }
     void                SetNullable( int bNullableIn ) { bNullable = bNullableIn; }
 
-    int                 IsSame( const OGRFieldDefn * ) const;
+    int                 IsSame( const OGRFieldDefn *poFieldDefn ) const;
 
     /** Convert a OGRFieldDefn* to a OGRFieldDefnH.
     * @since GDAL 2.3

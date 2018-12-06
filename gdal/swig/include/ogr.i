@@ -2200,6 +2200,14 @@ public:
     OGR_Fld_SetName(self, name);
   }
 
+  const char * GetAliasName() {
+    return (const char *) OGR_Fld_GetAliasNameRef(self);
+  }
+
+  void SetAliasName( const char* name) {
+    OGR_Fld_SetAliasName(self, name);
+  }
+
   OGRFieldType GetType() {
     return OGR_Fld_GetType(self);
   }

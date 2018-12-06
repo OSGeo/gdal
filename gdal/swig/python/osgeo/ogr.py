@@ -5455,6 +5455,16 @@ class FieldDefn(_object):
         return _ogr.FieldDefn_SetName(self, *args)
 
 
+    def GetAliasName(self, *args):
+        """GetAliasName(FieldDefn self) -> char const *"""
+        return _ogr.FieldDefn_GetAliasName(self, *args)
+
+
+    def SetAliasName(self, *args):
+        """SetAliasName(FieldDefn self, char const * name)"""
+        return _ogr.FieldDefn_SetAliasName(self, *args)
+
+
     def GetType(self, *args):
         """
         GetType(FieldDefn self) -> OGRFieldType

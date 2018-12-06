@@ -58,6 +58,31 @@ CPL_CVSID("$Id$")
 
 OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     pszName(CPLStrdup(pszNameIn)),
+    pszAliasName(nullptr),
+    eType(eTypeIn),
+    eJustify(OJUndefined),
+    // Should nWidth & nPrecision be defined in some particular way for numbers?
+    nWidth(0),
+    nPrecision(0),
+    pszDefault(nullptr),
+    bIgnore(FALSE),
+    eSubType(OFSTNone),
+    bNullable(TRUE)
+{}
+
+/**
+ * \brief Constructor.
+ *
+ * @param pszNameIn the name of the new field.
+ * @param pszAliasNameIn the alias name of the new field.
+ * @param eTypeIn the type of the new field.
+ */
+
+OGRFieldDefn::OGRFieldDefn( const char * pszNameIn,
+                            const char * pszAliasNameIn,
+                            OGRFieldType eTypeIn) :
+    pszName(CPLStrdup(pszNameIn)),
+    pszAliasName(CPLStrdup(pszAliasNameIn)),
     eType(eTypeIn),
     eJustify(OJUndefined),
     // Should nWidth & nPrecision be defined in some particular way for numbers?
@@ -83,6 +108,7 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
 
 OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszName(CPLStrdup(poPrototype->GetNameRef())),
+    pszAliasName(CPLStrdup(poPrototype->GetAliasNameRef())),
     eType(poPrototype->GetType()),
     eJustify(poPrototype->GetJustify()),
     nWidth(poPrototype->GetWidth()),
@@ -124,6 +150,7 @@ OGRFieldDefn::~OGRFieldDefn()
 
 {
     CPLFree(pszName);
+    CPLFree(pszAliasName);
     CPLFree(pszDefault);
 }
 
@@ -220,6 +247,89 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 #endif
 
     return OGRFieldDefn::FromHandle(hDefn)->GetNameRef();
+}
+
+/************************************************************************/
+/*                              SetAliasName()                          */
+/************************************************************************/
+
+/**
+ * \brief Reset the alias name of this field.
+ *
+ * This method is the same as the C function OGR_Fld_SetAliasName().
+ *
+ * @param pszAliasNameIn the new alias name to apply.
+ */
+
+void OGRFieldDefn::SetAliasName( const char * pszAliasNameIn )
+
+{
+    if( pszAliasName != pszAliasNameIn )
+    {
+        CPLFree( pszAliasName );
+        pszAliasName = CPLStrdup( pszAliasNameIn );
+    }
+}
+
+/************************************************************************/
+/*                          OGR_Fld_SetAliasName()                      */
+/************************************************************************/
+/**
+ * \brief Reset the alias name of this field.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::SetAliasName().
+ *
+ * @param hDefn handle to the field definition to apply the new alias name to.
+ * @param pszAliasNameIn the new alias name to apply.
+ */
+
+void OGR_Fld_SetAliasName( OGRFieldDefnH hDefn, const char *pszAliasNameIn )
+
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetAliasName( pszAliasNameIn );
+}
+
+/************************************************************************/
+/*                             GetAliasNameRef()                        */
+/************************************************************************/
+
+/**
+ * \fn const char *OGRFieldDefn::GetAliasNameRef();
+ *
+ * \brief Fetch alias name of this field.
+ *
+ * This method is the same as the C function OGR_Fld_GetAliasNameRef().
+ *
+ * @return pointer to an internal alias name string that should not be
+ *         freed or modified. If no alias name is defined, return the name
+ *         of the field definition.
+ */
+const char *OGRFieldDefn::GetAliasNameRef() const
+{
+    if (pszAliasName && strlen(pszAliasName))
+        return pszAliasName;
+    else
+        return pszName;
+}
+
+/************************************************************************/
+/*                         OGR_Fld_GetAliasNameRef()                    */
+/************************************************************************/
+/**
+ * \brief Fetch alias name of this field.
+ *
+ * This function is the same as the CPP method
+ * OGRFieldDefn::GetAliasNameRef().
+ *
+ * @param hDefn handle to the field definition.
+ * @return the alias name of the field definition.
+ * 
+ */
+
+const char *OGR_Fld_GetAliasNameRef( OGRFieldDefnH hDefn )
+
+{
+    return OGRFieldDefn::FromHandle(hDefn)->GetAliasNameRef();
 }
 
 /************************************************************************/
@@ -411,12 +521,12 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  * from the layer is recommended.
  *
  * The accepted values are NULL, a numeric value, a literal value enclosed
- * between single quote characters (and inner single quote characters escaped by
- * repetition of the single quote character),
- * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
- * a driver specific expression (that might be ignored by other drivers).
- * For a datetime literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
- * (considered as UTC time).
+ * between single quote characters (and inner single quote characters escaped
+ * by repetition of the single quote character),
+ * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or a driver specific
+ * expression (that might be ignored by other drivers). For a datetime literal
+ * value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]' (considered as UTC
+ * time).
  *
  * Drivers that support writing DEFAULT clauses will advertize the
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
@@ -479,12 +589,12 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
  * from the layer is recommended.
  *
  * The accepted values are NULL, a numeric value, a literal value enclosed
- * between single quote characters (and inner single quote characters escaped by
- * repetition of the single quote character),
- * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
- * a driver specific expression (that might be ignored by other drivers).
- * For a datetime literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
- * (considered as UTC time).
+ * between single quote characters (and inner single quote characters escaped
+ * by repetition of the single quote character),
+ * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or a driver specific
+ * expression (that might be ignored by other drivers). For a datetime literal
+ * value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]' (considered as UTC
+ * time).
  *
  * Drivers that support writing DEFAULT clauses will advertize the
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
@@ -762,7 +872,8 @@ const char *OGR_GetFieldSubTypeName( OGRFieldSubType eSubType )
  * @since GDAL 2.0
  */
 
-int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
+int OGR_AreTypeSubTypeCompatible( OGRFieldType eType,
+                                  OGRFieldSubType eSubType )
 {
     if( eSubType == OFSTNone )
         return TRUE;
@@ -1025,12 +1136,12 @@ void OGRFieldDefn::Set( const char *pszNameIn,
  * @param hDefn handle to the field definition to set to.
  * @param pszNameIn the new name to assign.
  * @param eTypeIn the new type (one of the OFT values like OFTInteger).
- * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
- * undefined.
+ * @param nWidthIn the preferred formatting width.  Defaults to zero
+ * indicating undefined.
  * @param nPrecisionIn number of decimals places for formatting, defaults to
  * zero indicating undefined.
- * @param eJustifyIn the formatting justification (OJLeft or OJRight), defaults
- * to OJUndefined.
+ * @param eJustifyIn the formatting justification (OJLeft or OJRight),
+ * defaults to OJUndefined.
  */
 
 void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
@@ -1248,7 +1359,8 @@ void OGRUpdateFieldType( OGRFieldDefn* poFDefn,
     if( eType == OFTInteger )
     {
         if( eNewType == OFTInteger &&
-            poFDefn->GetSubType() == OFSTBoolean && eNewSubType != OFSTBoolean )
+            poFDefn->GetSubType() == OFSTBoolean &&
+            eNewSubType != OFSTBoolean )
         {
             poFDefn->SetSubType(OFSTNone);
         }
@@ -1316,7 +1428,8 @@ void OGRUpdateFieldType( OGRFieldDefn* poFDefn,
     else if( eType == OFTIntegerList )
     {
         if( eNewType == OFTIntegerList &&
-            poFDefn->GetSubType() == OFSTBoolean && eNewSubType != OFSTBoolean )
+            poFDefn->GetSubType() == OFSTBoolean &&
+            eNewSubType != OFSTBoolean )
         {
             poFDefn->SetSubType(OFSTNone);
         }

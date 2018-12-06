@@ -313,6 +313,8 @@ void   CPL_DLL OGR_Fld_Destroy( OGRFieldDefnH );
 
 void   CPL_DLL OGR_Fld_SetName( OGRFieldDefnH, const char * );
 const char CPL_DLL *OGR_Fld_GetNameRef( OGRFieldDefnH );
+void   CPL_DLL OGR_Fld_SetAliasName( OGRFieldDefnH, const char * );
+const char CPL_DLL *OGR_Fld_GetAliasNameRef( OGRFieldDefnH );
 OGRFieldType CPL_DLL OGR_Fld_GetType( OGRFieldDefnH );
 void   CPL_DLL OGR_Fld_SetType( OGRFieldDefnH, OGRFieldType );
 OGRFieldSubType CPL_DLL OGR_Fld_GetSubType( OGRFieldDefnH );

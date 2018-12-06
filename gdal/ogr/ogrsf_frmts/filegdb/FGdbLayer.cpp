@@ -1571,6 +1571,7 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
                                  std::string& gdbFieldType)
 {
     std::string fieldname = oField.GetNameRef();
+    const char* aliasname = oField.GetAliasNameRef();
     //std::string fidname = std::string(GetFIDColumn());
     std::string nullable = (oField.IsNullable()) ? "true" : "false";
 
@@ -1661,6 +1662,13 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
 
             fieldname_clean = temp_fieldname;
             oField.SetName(fieldname_clean.c_str());
+
+            /*  Attempt to preserve the original fieldname */
+            if(!strlen(aliasname))
+            {
+                oField.SetAliasName(fieldname.c_str());
+                aliasname = oField.GetAliasNameRef();
+            }
         }
     }
 
@@ -1694,10 +1702,10 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
     /* We know nothing about Scale, so zero it out */
     CPLCreateXMLElementAndValue(defn_xml,"Scale", "0");
 
-    /*  Attempt to preserve the original fieldname */
-    if (fieldname != fieldname_clean)
+    /* Only set the AliasName if client requested it */
+    if (strlen(aliasname))
     {
-        CPLCreateXMLElementAndValue(defn_xml, "AliasName", fieldname.c_str());
+        CPLCreateXMLElementAndValue(defn_xml, "AliasName", aliasname);
     }
 
     if( oField.GetDefault() != nullptr )
@@ -2860,6 +2868,8 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
 
             CPLXMLNode* psFieldItemNode;
             std::string fieldName;
+            bool haveAliasName = false;
+            std::string aliasName;
             std::string fieldType;
             int nLength = 0;
             //int nPrecision = 0;
@@ -2881,6 +2891,14 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                             psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
                         fieldName = pszUnescaped;
                         CPLFree(pszUnescaped);
+                    }
+                    if(EQUAL(psFieldItemNode->pszValue, "AliasName"))
+                    {
+                        char* pszUnescaped = CPLUnescapeString(
+                          psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
+                        aliasName = pszUnescaped;
+                        CPLFree(pszUnescaped);
+                        haveAliasName = true;
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"Type") )
                     {
@@ -2944,6 +2962,10 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             //TODO: Optimization - modify m_wstrSubFields so it only fetches fields that are mapped
 
             OGRFieldDefn fieldTemplate( fieldName.c_str(), ogrType);
+            if(haveAliasName)
+            {
+              fieldTemplate.SetAliasName(aliasName.c_str());
+            }
             fieldTemplate.SetSubType(eSubType);
             /* On creation (GDBFieldTypeToWidthPrecision) if string width is 0, we pick up */
             /* 65535 by default to mean unlimited string length, but we don't want */
