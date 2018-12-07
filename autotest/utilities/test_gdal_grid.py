@@ -920,6 +920,41 @@ def test_gdal_grid_12():
     return 'success'
 
 ###############################################################################
+# Test -clipsrc
+
+
+def test_gdal_grid_clipsrc():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    outfiles.append('tmp/grid_clipsrc.tif')
+    try:
+        os.remove(outfiles[-1])
+    except OSError:
+        pass
+
+    open('tmp/clip.csv', 'wt').write(
+        'id,WKT\n1,"POLYGON((440750 3751340,440750 3750100,441900 3750100,441900 3751340,440750 3751340))"\n')
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Grid nodes are located exactly in raster nodes.
+    gdaltest.runexternal_out_and_err(gdal_grid + ' -clipsrc tmp/clip.csv -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Byte -l grid -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    os.unlink('tmp/clip.csv')
+
+    # We should get the same values as in "gcore/data/byte.tif"
+    ds = gdal.Open(outfiles[-1])
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs == 0 or cs == 4672:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 
@@ -946,6 +981,7 @@ gdaltest_list = [
     test_gdal_grid_10,
     test_gdal_grid_11,
     test_gdal_grid_12,
+    test_gdal_grid_clipsrc,
     test_gdal_grid_cleanup
 ]
 

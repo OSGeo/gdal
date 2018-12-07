@@ -625,7 +625,8 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                                             const char* pszLyr,
                                             const char* pszWhere )
 {
-    GDALDataset *poDS = static_cast<GDALDataset*>(GDALOpen(pszDS, GA_ReadOnly));
+    GDALDataset *poDS = static_cast<GDALDataset*>(
+        GDALOpenEx(pszDS, GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
     if ( poDS == nullptr )
         return nullptr;
 
