@@ -40,6 +40,7 @@ from osgeo import gdal
 from osgeo import ogr
 
 import gdaltest
+import ogrtest
 import test_cli_utilities
 
 # List of output TIFF files that will be created by tests and later deleted
@@ -925,6 +926,9 @@ def test_gdal_grid_12():
 
 def test_gdal_grid_clipsrc():
     if gdal_grid is None:
+        return 'skip'
+
+    if not ogrtest.have_geos():
         return 'skip'
 
     #################
