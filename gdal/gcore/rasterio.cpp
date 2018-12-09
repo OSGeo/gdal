@@ -654,7 +654,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff + EPS;
             dfSrcX = 0.5 * dfSrcXInc + dfXOff + EPS;
             iSrcY = static_cast<int>(std::min(std::max(0.0, dfSrcY),
-                                              static_cast<double>(nRasterYSize)));
+                                        static_cast<double>(nRasterYSize - 1)));
 
             GPtrDiff_t iBufOffset =
                 static_cast<GPtrDiff_t>(iBufYOff)
@@ -689,7 +689,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 // TODO?: try to avoid the clamping for most iterations
                 iSrcX = static_cast<int>(std::min(std::max(0.0, dfSrcX),
-                                            static_cast<double>(nRasterXSize)));
+                                        static_cast<double>(nRasterXSize - 1)));
 
     /* -------------------------------------------------------------------- */
     /*      Ensure we have the appropriate block loaded.                    */
