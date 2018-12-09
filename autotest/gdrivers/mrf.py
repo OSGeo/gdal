@@ -38,7 +38,7 @@ from osgeo import gdal
 import gdaltest
 
 
-@pytest.mark.parametrize('src_filename,chksum,chksum_after_reopening,options', [
+mrf_list = [
     ('byte.tif', 4672, [4672], []),
     ('byte.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('byte.tif', 4672, [4672], ['COMPRESS=NONE']),
@@ -73,7 +73,14 @@ import gdaltest
     ('rgbsmall.tif', 21212, [21261, 21209, 21254, 21215], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
     ('rgbsmall.tif', 21212, [21283, 21127, 21278, 21124], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
     ('12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
-])
+]
+
+
+@pytest.mark.parametrize(
+    'src_filename,chksum,chksum_after_reopening,options',
+    mrf_list,
+    ids=['{0}-{3}'.format(*r) for r in mrf_list],
+)
 def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     if src_filename == '12bit_rose_extract.jpg':
         import jpeg

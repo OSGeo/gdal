@@ -41,14 +41,14 @@ from osgeo import gdal
 
 
 @pytest.mark.parametrize(
-    'unit',
+    'filename',
     [
-        f[:-4] for f in os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
+        f for f in os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
         if f[-4:] == '.wkt'
     ]
 )
-def test_gml_geom(unit):
-    raw_wkt = open('data/wkb_wkt/' + unit + '.wkt').read()
+def test_gml_geom(filename):
+    raw_wkt = open('data/wkb_wkt/' + filename).read()
 
     ######################################################################
     # Convert WKT to GML.

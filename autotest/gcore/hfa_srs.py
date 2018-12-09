@@ -35,11 +35,9 @@ from osgeo import gdal
 from osgeo import osr
 
 
-
 ###############################################################################
 # Write a HFA/Imagine and read it back to check its SRS
-
-@pytest.mark.parametrize('epsg_code,epsg_broken', [
+epsg_list = [
     [2758, False],  # tmerc
     [2036, True],  # sterea   # failure caused by revert done in r22803
     [2046, False],  # tmerc
@@ -59,7 +57,14 @@ from osgeo import osr
     [2056, False],  # somerc
     [2027, False],  # utm
     [4326, False],  # longlat
-])
+]
+
+
+@pytest.mark.parametrize(
+    'epsg_code,epsg_broken',
+    epsg_list,
+    ids=[str(r[0]) for r in epsg_list],
+)
 def test_hfa_srs(epsg_code, epsg_broken):
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(epsg_code)

@@ -35,8 +35,6 @@ from osgeo import gdal
 from osgeo import osr
 
 
-
-
 ###############################################################################
 # Test fix for #4677:
 
@@ -397,8 +395,7 @@ def _test_tiff_srs(sr, expect_fail):
 ###############################################################################
 # Write a geotiff and read it back to check its SRS
 
-@pytest.mark.parametrize('use_epsg_code', [0, 1])
-@pytest.mark.parametrize('epsg_code,epsg_proj4_broken', [
+epsg_list = [
     [2758, False],  # tmerc
     [2036, False],  # sterea
     [2046, False],  # tmerc
@@ -434,7 +431,15 @@ def _test_tiff_srs(sr, expect_fail):
     [31491, False],  # Germany Zone projection
     [3857, True],  # Web Mercator
     [102113, True],  # ESRI WGS_1984_Web_Mercator
-])
+]
+
+
+@pytest.mark.parametrize('use_epsg_code', [0, 1])
+@pytest.mark.parametrize(
+    'epsg_code,epsg_proj4_broken',
+    epsg_list,
+    ids=[str(r[0]) for r in epsg_list],
+)
 def test_tiff_srs(use_epsg_code, epsg_code, epsg_proj4_broken):
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(epsg_code)

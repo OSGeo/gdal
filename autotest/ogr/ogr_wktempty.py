@@ -31,8 +31,7 @@ import pytest
 
 from osgeo import ogr
 
-
-@pytest.mark.parametrize("test_input,expected", [
+wkt_list = [
     ('GEOMETRYCOLLECTION(EMPTY)', 'GEOMETRYCOLLECTION EMPTY'),
     ('MULTIPOLYGON( EMPTY )', 'MULTIPOLYGON EMPTY'),
     ('MULTILINESTRING(EMPTY)', 'MULTILINESTRING EMPTY'),
@@ -48,7 +47,14 @@ from osgeo import ogr
     ('POINT EMPTY', 'POINT EMPTY'),
     ('LINESTRING EMPTY', 'LINESTRING EMPTY'),
     ('POLYGON EMPTY', 'POLYGON EMPTY')
-])
+]
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    wkt_list,
+    ids=[r[0] for r in wkt_list]
+)
 def test_empty_wkt(test_input, expected):
     geom = ogr.CreateGeometryFromWkt(test_input)
     wkt = geom.ExportToWkt()

@@ -1520,7 +1520,8 @@ def test_ogr_spatialite_4(require_spatialite):
 
 @pytest.mark.parametrize(
     'bUseComprGeom',
-    [False, True]
+    [False, True],
+    ids=['dont-compress-geometries', 'compress-geometries']
 )
 def test_ogr_spatialite_5(require_spatialite, bUseComprGeom):
     if bUseComprGeom and require_spatialite == '2.3.1':

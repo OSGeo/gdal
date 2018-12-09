@@ -70,7 +70,11 @@ def ogr_wfs_init():
         pytest.skip('failed to open test file.')
 
 
-@pytest.fixture(params=['NO', None], scope='module')
+@pytest.fixture(
+    params=['NO', None],
+    scope='module',
+    ids=['without-streaming', 'with-streaming']
+)
 def with_and_without_streaming(request):
     with gdaltest.config_option('OGR_WFS_USE_STREAMING', request.param):
         yield

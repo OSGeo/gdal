@@ -39,15 +39,15 @@ from osgeo import gdal
 
 
 @pytest.mark.parametrize(
-    'unit',
+    'filename',
     [
-        f[:-4] for f in os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
+        f for f in os.listdir(os.path.join(os.path.dirname(__file__), 'data/wkb_wkt'))
         if f[-4:] == '.wkb'
     ]
 )
-def test_wkbwkt_geom(unit):
-    raw_wkb = open('data/wkb_wkt/' + unit + '.wkb', 'rb').read()
-    raw_wkt = open('data/wkb_wkt/' + unit + '.wkt').read()
+def test_wkbwkt_geom(filename):
+    raw_wkb = open('data/wkb_wkt/' + filename, 'rb').read()
+    raw_wkt = open('data/wkb_wkt/' + os.path.splitext(filename)[0] + '.wkt').read()
 
     ######################################################################
     # Compare the WKT derived from the WKB file to the WKT provided
