@@ -39,7 +39,7 @@ import gdaltest
 # Test if WEBP driver is present
 
 
-def webp_1():
+def test_webp_1():
 
     gdaltest.webp_drv = gdal.GetDriverByName('WEBP')
     if gdaltest.webp_drv is None:
@@ -51,7 +51,7 @@ def webp_1():
 # Open() test
 
 
-def webp_2():
+def test_webp_2():
 
     if gdaltest.webp_drv is None:
         return 'skip'
@@ -69,7 +69,7 @@ def webp_2():
 # CreateCopy() test
 
 
-def webp_3():
+def test_webp_3():
 
     if gdaltest.webp_drv is None:
         return 'skip'
@@ -94,7 +94,7 @@ def webp_3():
 # CreateCopy() on RGBA
 
 
-def webp_4():
+def test_webp_4():
 
     if gdaltest.webp_drv is None:
         return 'skip'
@@ -128,7 +128,7 @@ def webp_4():
 # CreateCopy() on RGBA with lossless compression
 
 
-def webp_5():
+def test_webp_5():
 
     if gdaltest.webp_drv is None:
         return 'skip'
@@ -159,11 +159,11 @@ def webp_5():
 
 
 gdaltest_list = [
-    webp_1,
-    webp_2,
-    webp_3,
-    webp_4,
-    webp_5]
+    test_webp_1,
+    test_webp_2,
+    test_webp_3,
+    test_webp_4,
+    test_webp_5]
 
 if __name__ == '__main__':
 

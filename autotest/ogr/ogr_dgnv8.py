@@ -41,7 +41,7 @@ from osgeo import gdal, ogr
 # Verify we can open the test file.
 
 
-def ogr_dgnv8_1():
+def test_ogr_dgnv8_1():
 
     gdaltest.dgnv8_drv = ogr.GetDriverByName('DGNv8')
     if gdaltest.dgnv8_drv is None:
@@ -58,7 +58,7 @@ def ogr_dgnv8_1():
 # Compare with a reference CSV dump
 
 
-def ogr_dgnv8_2():
+def test_ogr_dgnv8_2():
 
     if gdaltest.dgnv8_drv is None:
         return 'skip'
@@ -80,7 +80,7 @@ def ogr_dgnv8_2():
 # Run test_ogrsf
 
 
-def ogr_dgnv8_3():
+def test_ogr_dgnv8_3():
 
     if gdaltest.dgnv8_drv is None:
         return 'skip'
@@ -111,7 +111,7 @@ def ogr_dgnv8_3():
 # Test creation code
 
 
-def ogr_dgnv8_4():
+def test_ogr_dgnv8_4():
 
     if gdaltest.dgnv8_drv is None:
         return 'skip'
@@ -138,7 +138,7 @@ def ogr_dgnv8_4():
 # Test creation options
 
 
-def ogr_dgnv8_5():
+def test_ogr_dgnv8_5():
 
     if gdaltest.dgnv8_drv is None:
         return 'skip'
@@ -220,18 +220,18 @@ def ogr_dgnv8_5():
 ###############################################################################
 #  Cleanup
 
-def ogr_dgnv8_cleanup():
+def test_ogr_dgnv8_cleanup():
 
     return 'success'
 
 
 gdaltest_list = [
-    ogr_dgnv8_1,
-    ogr_dgnv8_2,
-    ogr_dgnv8_3,
-    ogr_dgnv8_4,
-    ogr_dgnv8_5,
-    ogr_dgnv8_cleanup]
+    test_ogr_dgnv8_1,
+    test_ogr_dgnv8_2,
+    test_ogr_dgnv8_3,
+    test_ogr_dgnv8_4,
+    test_ogr_dgnv8_5,
+    test_ogr_dgnv8_cleanup]
 
 if __name__ == '__main__':
 

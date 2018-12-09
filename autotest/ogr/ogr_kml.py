@@ -45,7 +45,7 @@ from osgeo import gdal
 #
 
 
-def ogr_kml_datastore():
+def test_ogr_kml_datastore():
 
     ogrtest.kml_ds = None
     ogrtest.have_read_kml = 0
@@ -81,7 +81,7 @@ def ogr_kml_datastore():
 #
 
 
-def ogr_kml_attributes_1():
+def test_ogr_kml_attributes_1():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -137,7 +137,7 @@ def ogr_kml_attributes_1():
 #
 
 
-def ogr_kml_attributes_2():
+def test_ogr_kml_attributes_2():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -169,7 +169,7 @@ def ogr_kml_attributes_2():
 #
 
 
-def ogr_kml_attributes_3():
+def test_ogr_kml_attributes_3():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -214,7 +214,7 @@ def ogr_kml_attributes_3():
 #
 
 
-def ogr_kml_attributes_4():
+def test_ogr_kml_attributes_4():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -248,7 +248,7 @@ def ogr_kml_attributes_4():
 #
 
 
-def ogr_kml_point_read():
+def test_ogr_kml_point_read():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -293,7 +293,7 @@ def ogr_kml_point_read():
 #
 
 
-def ogr_kml_linestring_read():
+def test_ogr_kml_linestring_read():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -335,7 +335,7 @@ def ogr_kml_linestring_read():
 #
 
 
-def ogr_kml_polygon_read():
+def test_ogr_kml_polygon_read():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -385,7 +385,7 @@ def ogr_kml_polygon_read():
 # Write test
 
 
-def ogr_kml_write_1():
+def test_ogr_kml_write_1():
 
     if ogrtest.kml_drv is None:
         return 'skip'
@@ -465,7 +465,7 @@ def ogr_kml_write_1():
 ###############################################################################
 # Check previous test
 
-def ogr_kml_check_write_1():
+def test_ogr_kml_check_write_1():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -543,7 +543,7 @@ def ogr_kml_check_write_1():
 ###############################################################################
 # Test reading attributes with XML content in them
 #
-def ogr_kml_xml_attributes():
+def test_ogr_kml_xml_attributes():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -564,7 +564,7 @@ def ogr_kml_xml_attributes():
 # Test reading all geometry types (#3558)
 
 
-def ogr_kml_read_geometries():
+def test_ogr_kml_read_geometries():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -582,7 +582,7 @@ def ogr_kml_read_geometries():
 # Run test_ogrsf
 
 
-def ogr_kml_test_ogrsf():
+def test_ogr_kml_test_ogrsf():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -603,7 +603,7 @@ def ogr_kml_test_ogrsf():
 # Test fix for #2772
 
 
-def ogr_kml_interleaved_writing():
+def test_ogr_kml_interleaved_writing():
 
     ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_interleaved_writing.kml')
     lyr1 = ds.CreateLayer("lyr1")
@@ -625,7 +625,7 @@ def ogr_kml_interleaved_writing():
 # Test reading KML with only Placemark
 
 
-def ogr_kml_read_placemark():
+def test_ogr_kml_read_placemark():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -642,7 +642,7 @@ def ogr_kml_read_placemark():
 # Test reading KML without any layer
 
 
-def ogr_kml_read_empty():
+def test_ogr_kml_read_empty():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -659,7 +659,7 @@ def ogr_kml_read_empty():
 # Test reading KML with empty layers
 
 
-def ogr_kml_read_emptylayers():
+def test_ogr_kml_read_emptylayers():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -705,7 +705,7 @@ def compare_output(content, expected_content):
 # Test that we can write a schema
 
 
-def ogr_kml_write_schema():
+def test_ogr_kml_write_schema():
 
     ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_write_schema.kml')
     lyr = ds.CreateLayer("lyr")
@@ -750,7 +750,7 @@ def ogr_kml_write_schema():
 #
 
 
-def ogr_kml_empty_layer():
+def test_ogr_kml_empty_layer():
 
     ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_empty_layer.kml')
     ds.CreateLayer("empty")
@@ -775,7 +775,7 @@ def ogr_kml_empty_layer():
 # Empty layer followed by regular layer
 
 
-def ogr_kml_two_layers():
+def test_ogr_kml_two_layers():
 
     ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_two_layers.kml')
     ds.CreateLayer("empty")
@@ -816,7 +816,7 @@ def ogr_kml_two_layers():
 #  Cleanup
 
 
-def ogr_kml_cleanup():
+def test_ogr_kml_cleanup():
 
     os.remove('tmp/kml.kml')
 
@@ -837,7 +837,7 @@ def ogr_kml_cleanup():
 # Test reading KML with folder with empty subfolder and placemark
 
 
-def ogr_kml_read_folder_with_subfolder_placemark():
+def test_ogr_kml_read_folder_with_subfolder_placemark():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -859,7 +859,7 @@ def ogr_kml_read_folder_with_subfolder_placemark():
 # Test reading invalid KML (#6878)
 
 
-def ogr_kml_read_truncated():
+def test_ogr_kml_read_truncated():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -875,7 +875,7 @@ def ogr_kml_read_truncated():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1591
 
 
-def ogr_kml_read_weird_empty_folders():
+def test_ogr_kml_read_weird_empty_folders():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -897,7 +897,7 @@ def ogr_kml_read_weird_empty_folders():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1683
 
 
-def ogr_kml_read_junk_content_after_valid_doc():
+def test_ogr_kml_read_junk_content_after_valid_doc():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -913,7 +913,7 @@ def ogr_kml_read_junk_content_after_valid_doc():
 # Test reading KML with kml: prefix
 
 
-def ogr_kml_read_placemark_with_kml_prefix():
+def test_ogr_kml_read_placemark_with_kml_prefix():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -930,7 +930,7 @@ def ogr_kml_read_placemark_with_kml_prefix():
 # Test reading KML with duplicated folder name
 
 
-def ogr_kml_read_duplicate_folder_name():
+def test_ogr_kml_read_duplicate_folder_name():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -953,7 +953,7 @@ def ogr_kml_read_duplicate_folder_name():
 # Test reading KML with a placemark in root document, and a subfolder (#7221)
 
 
-def ogr_kml_read_placemark_in_root_and_subfolder():
+def test_ogr_kml_read_placemark_in_root_and_subfolder():
 
     if not ogrtest.have_read_kml:
         return 'skip'
@@ -982,34 +982,34 @@ def ogr_kml_read_placemark_in_root_and_subfolder():
 
 
 gdaltest_list = [
-    ogr_kml_datastore,
-    ogr_kml_attributes_1,
-    ogr_kml_attributes_2,
-    ogr_kml_attributes_3,
-    ogr_kml_attributes_4,
-    ogr_kml_point_read,
-    ogr_kml_linestring_read,
-    ogr_kml_polygon_read,
-    ogr_kml_write_1,
-    ogr_kml_check_write_1,
-    ogr_kml_xml_attributes,
-    ogr_kml_read_geometries,
-    ogr_kml_test_ogrsf,
-    ogr_kml_interleaved_writing,
-    ogr_kml_read_placemark,
-    ogr_kml_read_empty,
-    ogr_kml_read_emptylayers,
-    ogr_kml_write_schema,
-    ogr_kml_empty_layer,
-    ogr_kml_two_layers,
-    ogr_kml_read_folder_with_subfolder_placemark,
-    ogr_kml_read_truncated,
-    ogr_kml_read_weird_empty_folders,
-    ogr_kml_read_junk_content_after_valid_doc,
-    ogr_kml_read_placemark_with_kml_prefix,
-    ogr_kml_read_duplicate_folder_name,
-    ogr_kml_read_placemark_in_root_and_subfolder,
-    ogr_kml_cleanup]
+    test_ogr_kml_datastore,
+    test_ogr_kml_attributes_1,
+    test_ogr_kml_attributes_2,
+    test_ogr_kml_attributes_3,
+    test_ogr_kml_attributes_4,
+    test_ogr_kml_point_read,
+    test_ogr_kml_linestring_read,
+    test_ogr_kml_polygon_read,
+    test_ogr_kml_write_1,
+    test_ogr_kml_check_write_1,
+    test_ogr_kml_xml_attributes,
+    test_ogr_kml_read_geometries,
+    test_ogr_kml_test_ogrsf,
+    test_ogr_kml_interleaved_writing,
+    test_ogr_kml_read_placemark,
+    test_ogr_kml_read_empty,
+    test_ogr_kml_read_emptylayers,
+    test_ogr_kml_write_schema,
+    test_ogr_kml_empty_layer,
+    test_ogr_kml_two_layers,
+    test_ogr_kml_read_folder_with_subfolder_placemark,
+    test_ogr_kml_read_truncated,
+    test_ogr_kml_read_weird_empty_folders,
+    test_ogr_kml_read_junk_content_after_valid_doc,
+    test_ogr_kml_read_placemark_with_kml_prefix,
+    test_ogr_kml_read_duplicate_folder_name,
+    test_ogr_kml_read_placemark_in_root_and_subfolder,
+    test_ogr_kml_cleanup]
 
 if __name__ == '__main__':
 

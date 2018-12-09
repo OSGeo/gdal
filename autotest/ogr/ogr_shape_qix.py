@@ -87,7 +87,7 @@ def build_rectangle_from_point(x, y, radius=0.1):
 # Test geoms on a 10x10 grid
 
 
-def ogr_shape_qix_1():
+def test_ogr_shape_qix_1():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -116,7 +116,7 @@ def ogr_shape_qix_1():
 # Test geoms on a 100x100 grid
 
 
-def ogr_shape_qix_2():
+def test_ogr_shape_qix_2():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -145,7 +145,7 @@ def ogr_shape_qix_2():
 # Test 2 separated regions of 10x10 geoms
 
 
-def ogr_shape_qix_3():
+def test_ogr_shape_qix_3():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -234,7 +234,7 @@ def build_rectangle(x1, y1, x2, y2):
 # Test random geometries
 
 
-def ogr_shape_qix_4():
+def test_ogr_shape_qix_4():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -273,10 +273,10 @@ def ogr_shape_qix_4():
 
 
 gdaltest_list = [
-    ogr_shape_qix_1,
-    ogr_shape_qix_2,
-    ogr_shape_qix_3,
-    ogr_shape_qix_4,
+    test_ogr_shape_qix_1,
+    test_ogr_shape_qix_2,
+    test_ogr_shape_qix_3,
+    test_ogr_shape_qix_4,
 ]
 
 if __name__ == '__main__':

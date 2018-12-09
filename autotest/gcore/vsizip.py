@@ -40,7 +40,7 @@ from osgeo import gdal
 # Test writing a ZIP with multiple files and directories
 
 
-def vsizip_1():
+def test_vsizip_1():
 
     # We can keep the handle open during all the ZIP writing
     hZIP = gdal.VSIFOpenL("/vsizip/vsimem/test.zip", "wb")
@@ -222,7 +222,7 @@ def vsizip_1():
 # Test writing 2 files in the ZIP by closing it completely between the 2
 
 
-def vsizip_2():
+def test_vsizip_2():
 
     zip_name = '/vsimem/test2.zip'
 
@@ -297,7 +297,7 @@ def vsizip_2():
 ###############################################################################
 # Test opening in write mode a file inside a zip archive whose content has been listed before (testcase for fix of r22625)
 
-def vsizip_3():
+def test_vsizip_3():
 
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip", "wb")
 
@@ -330,7 +330,7 @@ def vsizip_3():
 # Test ReadRecursive on valid zip
 
 
-def vsizip_4():
+def test_vsizip_4():
 
     # read recursive and validate content
     res = gdal.ReadDirRecursive("/vsizip/data/testzip.zip")
@@ -350,7 +350,7 @@ def vsizip_4():
 # Test ReadRecursive on deep zip
 
 
-def vsizip_5():
+def test_vsizip_5():
 
     # make file in memory
     fmain = gdal.VSIFOpenL('/vsizip/vsimem/bigdepthzip.zip', 'wb')
@@ -386,7 +386,7 @@ def vsizip_5():
 # Test writing 2 files with same name in a ZIP (#4785)
 
 
-def vsizip_6():
+def test_vsizip_6():
 
     # Maintain ZIP file opened
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip", "wb")
@@ -435,7 +435,7 @@ def vsizip_6():
 # Test that we use the extended field for UTF-8 filenames (#5361).
 
 
-def vsizip_7():
+def test_vsizip_7():
 
     content = gdal.ReadDir("/vsizip/data/cp866_plus_utf8.zip")
     ok = 0
@@ -458,7 +458,7 @@ def vsizip_7():
 # Basic test for ZIP64 support (5 GB file that compresses in less than 4 GB)
 
 
-def vsizip_8():
+def test_vsizip_8():
 
     if gdal.VSIStatL('/vsizip/vsizip/data/zero.bin.zip.zip/zero.bin.zip').size != 5000 * 1000 * 1000 + 1:
         return 'fail'
@@ -469,7 +469,7 @@ def vsizip_8():
 # Basic test for ZIP64 support (5 GB file that is stored)
 
 
-def vsizip_9():
+def test_vsizip_9():
 
     if gdal.VSIStatL('/vsizip//vsisparse/data/zero_stored.bin.xml.zip/zero.bin').size != 5000 * 1000 * 1000 + 1:
         gdaltest.post_reason('fail')
@@ -501,7 +501,7 @@ def vsizip_9():
 # Test that we recode filenames in ZIP (#5361)
 
 
-def vsizip_10():
+def test_vsizip_10():
 
     gdal.SetConfigOption('CPL_ZIP_ENCODING', 'CP866')
     content = gdal.ReadDir("/vsizip/data/cp866.zip")
@@ -529,7 +529,7 @@ def vsizip_10():
 # Test that we don't do anything with ZIP with filenames in UTF-8 already (#5361)
 
 
-def vsizip_11():
+def test_vsizip_11():
 
     content = gdal.ReadDir("/vsizip/data/utf8.zip")
     ok = 0
@@ -552,7 +552,7 @@ def vsizip_11():
 # Test changing the content of a zip file (#6005)
 
 
-def vsizip_12():
+def test_vsizip_12():
 
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src1.zip", "wb")
     f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src1.zip/foo.bar", "wb")
@@ -605,7 +605,7 @@ def vsizip_12():
 # Test ReadDir() truncation
 
 
-def vsizip_13():
+def test_vsizip_13():
 
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_13.zip", "wb")
     for i in range(10):
@@ -631,7 +631,7 @@ def vsizip_13():
 # Test that we can recode filenames in ZIP when writing (#6631)
 
 
-def vsizip_14():
+def test_vsizip_14():
 
     fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip', 'wb')
     try:
@@ -666,7 +666,7 @@ def vsizip_14():
 # Test multithreaded compression
 
 
-def vsizip_multi_thread():
+def test_vsizip_multi_thread():
 
     with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS',
                                   'CPL_VSIL_DEFLATE_CHUNK_SIZE': '32K'}):
@@ -699,7 +699,7 @@ def vsizip_multi_thread():
 # Test multithreaded compression, below the threshold where it triggers
 
 
-def vsizip_multi_thread_below_threshold():
+def test_vsizip_multi_thread_below_threshold():
 
     with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS'}):
         fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_multi_thread.zip', 'wb')
@@ -726,7 +726,7 @@ def vsizip_multi_thread_below_threshold():
 # data stream < 4 GB
 
 
-def vsizip_create_zip64():
+def test_vsizip_create_zip64():
 
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -769,7 +769,7 @@ def vsizip_create_zip64():
 # Test creating ZIP64 file: compressed data stream > 4 GB
 
 
-def vsizip_create_zip64_stream_larger_than_4G():
+def test_vsizip_create_zip64_stream_larger_than_4G():
 
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -811,7 +811,7 @@ def vsizip_create_zip64_stream_larger_than_4G():
 
 
 ###############################################################################
-def vsizip_byte_zip64_local_header_zeroed():
+def test_vsizip_byte_zip64_local_header_zeroed():
 
     size = gdal.VSIStatL('/vsizip/data/byte_zip64_local_header_zeroed.zip/byte.tif').size
     if size != 736:
@@ -821,25 +821,25 @@ def vsizip_byte_zip64_local_header_zeroed():
 
     return 'success'
 
-gdaltest_list = [vsizip_1,
-                 vsizip_2,
-                 vsizip_3,
-                 vsizip_4,
-                 vsizip_5,
-                 vsizip_6,
-                 vsizip_7,
-                 vsizip_8,
-                 vsizip_9,
-                 vsizip_10,
-                 vsizip_11,
-                 vsizip_12,
-                 vsizip_13,
-                 vsizip_14,
-                 vsizip_multi_thread,
-                 vsizip_multi_thread_below_threshold,
-                 vsizip_create_zip64,
-                 vsizip_create_zip64_stream_larger_than_4G,
-                 vsizip_byte_zip64_local_header_zeroed,
+gdaltest_list = [test_vsizip_1,
+                 test_vsizip_2,
+                 test_vsizip_3,
+                 test_vsizip_4,
+                 test_vsizip_5,
+                 test_vsizip_6,
+                 test_vsizip_7,
+                 test_vsizip_8,
+                 test_vsizip_9,
+                 test_vsizip_10,
+                 test_vsizip_11,
+                 test_vsizip_12,
+                 test_vsizip_13,
+                 test_vsizip_14,
+                 test_vsizip_multi_thread,
+                 test_vsizip_multi_thread_below_threshold,
+                 test_vsizip_create_zip64,
+                 test_vsizip_create_zip64_stream_larger_than_4G,
+                 test_vsizip_byte_zip64_local_header_zeroed,
                  ]
 
 

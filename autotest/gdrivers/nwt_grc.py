@@ -37,14 +37,14 @@ import gdaltest
 # Test a GRC dataset
 
 
-def nwt_grc_1():
+def test_nwt_grc_1():
 
     tst = gdaltest.GDALTest('NWT_GRC', 'nwt_grc.grc', 1, 46760)
     return tst.testOpen()
 
 
 gdaltest_list = [
-    nwt_grc_1]
+    test_nwt_grc_1]
 
 if __name__ == '__main__':
 

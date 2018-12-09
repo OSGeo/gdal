@@ -40,7 +40,7 @@ import gdaltest
 # Use common test for /vsicrypt
 
 
-def vsicrypt_1():
+def test_vsicrypt_1():
 
     gdaltest.has_vsicrypt = False
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'wb+')
@@ -57,7 +57,7 @@ def vsicrypt_1():
 # Test various error cases
 
 
-def vsicrypt_2():
+def test_vsicrypt_2():
 
     if not gdaltest.has_vsicrypt:
         return 'skip'
@@ -293,7 +293,7 @@ def vsicrypt_2():
 # Test various options
 
 
-def vsicrypt_3():
+def test_vsicrypt_3():
 
     if not gdaltest.has_vsicrypt:
         return 'skip'
@@ -414,7 +414,7 @@ def vsicrypt_3():
 # Test "random" operations against reference filesystem
 
 
-def vsicrypt_4():
+def test_vsicrypt_4():
 
     if not gdaltest.has_vsicrypt:
         return 'skip'
@@ -483,7 +483,7 @@ def vsicrypt_4():
 # Test random filling of last sector
 
 
-def vsicrypt_5():
+def test_vsicrypt_5():
 
     if not gdaltest.has_vsicrypt:
         return 'skip'
@@ -548,7 +548,7 @@ def vsicrypt_5():
 # Test VSISetCryptKey
 
 
-def vsicrypt_6():
+def test_vsicrypt_6():
 
     try:
         import ctypes
@@ -627,12 +627,12 @@ def vsicrypt_6():
     return 'success'
 
 
-gdaltest_list = [vsicrypt_1,
-                 vsicrypt_2,
-                 vsicrypt_3,
-                 vsicrypt_4,
-                 vsicrypt_5,
-                 vsicrypt_6]
+gdaltest_list = [test_vsicrypt_1,
+                 test_vsicrypt_2,
+                 test_vsicrypt_3,
+                 test_vsicrypt_4,
+                 test_vsicrypt_5,
+                 test_vsicrypt_6]
 
 if __name__ == '__main__':
 

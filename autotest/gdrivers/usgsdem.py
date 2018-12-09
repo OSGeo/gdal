@@ -40,7 +40,7 @@ import gdaltest
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/022gdeme
 
 
-def usgsdem_1():
+def test_usgsdem_1():
 
     tst = gdaltest.GDALTest('USGSDEM', '022gdeme_truncated', 1, 1583)
     srs = osr.SpatialReference()
@@ -52,7 +52,7 @@ def usgsdem_1():
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/114p01_0100_deme.dem
 
 
-def usgsdem_2():
+def test_usgsdem_2():
 
     tst = gdaltest.GDALTest('USGSDEM', '114p01_0100_deme_truncated.dem', 1, 53864)
     srs = osr.SpatialReference()
@@ -64,7 +64,7 @@ def usgsdem_2():
 # Test truncated version of file that triggered bug #2348
 
 
-def usgsdem_3():
+def test_usgsdem_3():
 
     tst = gdaltest.GDALTest('USGSDEM', '39079G6_truncated.dem', 1, 61424)
     srs = osr.SpatialReference()
@@ -77,7 +77,7 @@ def usgsdem_3():
 # Test CreateCopy()
 
 
-def usgsdem_4():
+def test_usgsdem_4():
 
     tst = gdaltest.GDALTest('USGSDEM', '39079G6_truncated.dem', 1, 61424,
                             options=['RESAMPLE=Nearest'])
@@ -87,7 +87,7 @@ def usgsdem_4():
 ###############################################################################
 # Test CreateCopy() without any creation options
 
-def usgsdem_5():
+def test_usgsdem_5():
 
     ds = gdal.Open('data/n43.dt0')
     ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/n43.dem', ds,
@@ -126,7 +126,7 @@ def usgsdem_5():
 # creation option and check that both files are binary identical.
 
 
-def usgsdem_6():
+def test_usgsdem_6():
 
     ds = gdal.Open('data/n43.dt0')
     ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_1.dem', ds,
@@ -161,7 +161,7 @@ def usgsdem_6():
 # Test CreateCopy() with CDED50K profile
 
 
-def usgsdem_7():
+def test_usgsdem_7():
 
     ds = gdal.Open('data/n43.dt0')
 
@@ -202,7 +202,7 @@ def usgsdem_7():
 # Undocumented format
 
 
-def usgsdem_8():
+def test_usgsdem_8():
 
     tst = gdaltest.GDALTest('USGSDEM', '39109h1_truncated.dem', 1, 39443)
     srs = osr.SpatialReference()
@@ -216,7 +216,7 @@ def usgsdem_8():
 # Old format
 
 
-def usgsdem_9():
+def test_usgsdem_9():
 
     tst = gdaltest.GDALTest('USGSDEM', '4619old_truncated.dem', 1, 10659)
     srs = osr.SpatialReference()
@@ -228,7 +228,7 @@ def usgsdem_9():
 # https://github.com/OSGeo/gdal/issues/583
 
 
-def usgsdem_with_extra_values_at_end_of_profile():
+def test_usgsdem_with_extra_values_at_end_of_profile():
 
     tst = gdaltest.GDALTest('USGSDEM', 'usgsdem_with_extra_values_at_end_of_profile.dem', 1, 56679)
     return tst.testOpen()
@@ -237,7 +237,7 @@ def usgsdem_with_extra_values_at_end_of_profile():
 # Like Novato.dem of https://trac.osgeo.org/gdal/ticket/4901
 
 
-def usgsdem_with_spaces_after_byte_864():
+def test_usgsdem_with_spaces_after_byte_864():
 
     tst = gdaltest.GDALTest('USGSDEM', 'usgsdem_with_spaces_after_byte_864.dem', 1, 61078)
     return tst.testOpen()
@@ -246,7 +246,7 @@ def usgsdem_with_spaces_after_byte_864():
 # Cleanup
 
 
-def usgsdem_cleanup():
+def test_usgsdem_cleanup():
 
     try:
         os.remove('tmp/n43.dem')
@@ -266,18 +266,18 @@ def usgsdem_cleanup():
 
 
 gdaltest_list = [
-    usgsdem_1,
-    usgsdem_2,
-    usgsdem_3,
-    usgsdem_4,
-    usgsdem_5,
-    usgsdem_6,
-    usgsdem_7,
-    usgsdem_8,
-    usgsdem_9,
-    usgsdem_with_extra_values_at_end_of_profile,
-    usgsdem_with_spaces_after_byte_864,
-    usgsdem_cleanup]
+    test_usgsdem_1,
+    test_usgsdem_2,
+    test_usgsdem_3,
+    test_usgsdem_4,
+    test_usgsdem_5,
+    test_usgsdem_6,
+    test_usgsdem_7,
+    test_usgsdem_8,
+    test_usgsdem_9,
+    test_usgsdem_with_extra_values_at_end_of_profile,
+    test_usgsdem_with_spaces_after_byte_864,
+    test_usgsdem_cleanup]
 
 if __name__ == '__main__':
 

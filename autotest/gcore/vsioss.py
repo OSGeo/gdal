@@ -46,7 +46,7 @@ def open_for_read(uri):
 ###############################################################################
 
 
-def visoss_init():
+def test_visoss_init():
 
     gdaltest.oss_vars = {}
     for var in ('OSS_SECRET_ACCESS_KEY', 'OSS_ACCESS_KEY_ID', 'OSS_TIMESTAMP', 'OSS_HTTPS', 'OSS_VIRTUAL_HOSTING', 'OSS_ENDPOINT'):
@@ -64,7 +64,7 @@ def visoss_init():
 # Error cases
 
 
-def visoss_1():
+def test_visoss_1():
 
     if not gdaltest.built_against_curl():
         return 'skip'
@@ -102,7 +102,7 @@ def visoss_1():
     return 'success'
 
 
-def visoss_real_test():
+def test_visoss_real_test():
 
     if not gdaltest.built_against_curl():
         return 'skip'
@@ -136,7 +136,7 @@ def visoss_real_test():
 ###############################################################################
 
 
-def visoss_start_webserver():
+def test_visoss_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -184,7 +184,7 @@ def get_oss_fake_bucket_resource_method(request):
 # Test with a fake OSS server
 
 
-def visoss_2():
+def test_visoss_2():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -414,7 +414,7 @@ def visoss_2():
 # Test ReadDir() with a fake OSS server
 
 
-def visoss_3():
+def test_visoss_3():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -658,7 +658,7 @@ def visoss_3():
 # Test simple PUT support with a fake OSS server
 
 
-def visoss_4():
+def test_visoss_4():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -817,7 +817,7 @@ def visoss_4():
 # Test simple DELETE support with a fake OSS server
 
 
-def visoss_5():
+def test_visoss_5():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -873,7 +873,7 @@ def visoss_5():
 # Test multipart upload with a fake OSS server
 
 
-def visoss_6():
+def test_visoss_6():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1097,7 +1097,7 @@ def visoss_6():
 # Test Mkdir() / Rmdir()
 
 
-def visoss_7():
+def test_visoss_7():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1166,7 +1166,7 @@ def visoss_7():
 # Test handling of file and directory with same name
 
 
-def visoss_8():
+def test_visoss_8():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1212,7 +1212,7 @@ def visoss_8():
 ###############################################################################
 
 
-def visoss_stop_webserver():
+def test_visoss_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1418,7 +1418,7 @@ def visoss_extra_1():
 ###############################################################################
 
 
-def visoss_cleanup():
+def test_visoss_cleanup():
 
     for var in gdaltest.oss_vars:
         gdal.SetConfigOption(var, gdaltest.oss_vars[var])
@@ -1426,19 +1426,19 @@ def visoss_cleanup():
     return 'success'
 
 
-gdaltest_list = [visoss_init,
-                 visoss_1,
-                 visoss_real_test,
-                 visoss_start_webserver,
-                 visoss_2,
-                 visoss_3,
-                 visoss_4,
-                 visoss_5,
-                 visoss_6,
-                 visoss_7,
-                 visoss_8,
-                 visoss_stop_webserver,
-                 visoss_cleanup]
+gdaltest_list = [test_visoss_init,
+                 test_visoss_1,
+                 test_visoss_real_test,
+                 test_visoss_start_webserver,
+                 test_visoss_2,
+                 test_visoss_3,
+                 test_visoss_4,
+                 test_visoss_5,
+                 test_visoss_6,
+                 test_visoss_7,
+                 test_visoss_8,
+                 test_visoss_stop_webserver,
+                 test_visoss_cleanup]
 
 # gdaltest_list = [ visoss_init, visoss_start_webserver, visoss_8, visoss_stop_webserver, visoss_cleanup ]
 
@@ -1451,6 +1451,6 @@ if __name__ == '__main__':
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
         gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [visoss_cleanup])
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_visoss_cleanup])
 
     sys.exit(gdaltest.summarize())

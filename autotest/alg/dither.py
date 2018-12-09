@@ -40,7 +40,7 @@ from osgeo import gdal
 # Test
 
 
-def dither_1():
+def test_dither_1():
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -100,7 +100,7 @@ def dither_1():
 
 
 gdaltest_list = [
-    dither_1
+    test_dither_1
 ]
 
 

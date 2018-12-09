@@ -38,7 +38,7 @@ from osgeo import ogr
 from osgeo import gdal
 
 
-def ogr_gpx_init():
+def test_ogr_gpx_init():
     gdaltest.gpx_ds = None
 
     gdaltest.gpx_ds = ogr.Open('data/test.gpx')
@@ -60,7 +60,7 @@ def ogr_gpx_init():
 # Test waypoints gpx layer.
 
 
-def ogr_gpx_1():
+def test_ogr_gpx_1():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -157,7 +157,7 @@ def ogr_gpx_1():
 # Test routes gpx layer.
 
 
-def ogr_gpx_2():
+def test_ogr_gpx_2():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -181,7 +181,7 @@ def ogr_gpx_2():
 ###############################################################################
 # Test route_points gpx layer.
 
-def ogr_gpx_3():
+def test_ogr_gpx_3():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -207,7 +207,7 @@ def ogr_gpx_3():
 # Test tracks gpx layer.
 
 
-def ogr_gpx_4():
+def test_ogr_gpx_4():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -236,7 +236,7 @@ def ogr_gpx_4():
 # Test route_points gpx layer.
 
 
-def ogr_gpx_5():
+def test_ogr_gpx_5():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -262,7 +262,7 @@ def ogr_gpx_5():
 # Copy our small gpx file to a new gpx file.
 
 
-def ogr_gpx_6():
+def test_ogr_gpx_6():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -349,7 +349,7 @@ def ogr_gpx_6():
 # Output extra fields as <extensions>.
 
 
-def ogr_gpx_7():
+def test_ogr_gpx_7():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -423,7 +423,7 @@ def ogr_gpx_7():
 # Output extra fields as <extensions>.
 
 
-def ogr_gpx_8():
+def test_ogr_gpx_8():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -518,7 +518,7 @@ def ogr_gpx_8():
 # Parse file with a <time> extension at track level (#6237)
 
 
-def ogr_gpx_9():
+def test_ogr_gpx_9():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -536,7 +536,7 @@ def ogr_gpx_9():
 #
 
 
-def ogr_gpx_cleanup():
+def test_ogr_gpx_cleanup():
 
     gdaltest.gpx_ds = None
     try:
@@ -547,21 +547,21 @@ def ogr_gpx_cleanup():
 
 
 gdaltest_list = [
-    ogr_gpx_init,
-    ogr_gpx_1,
-    ogr_gpx_2,
-    ogr_gpx_3,
-    ogr_gpx_4,
-    ogr_gpx_5,
-    ogr_gpx_6,
+    test_ogr_gpx_init,
+    test_ogr_gpx_1,
+    test_ogr_gpx_2,
+    test_ogr_gpx_3,
+    test_ogr_gpx_4,
+    test_ogr_gpx_5,
+    test_ogr_gpx_6,
     # Rerun test 1, 2 and 4 with generated tmp/tmp.gpx
-    ogr_gpx_1,
-    ogr_gpx_2,
-    ogr_gpx_4,
-    ogr_gpx_7,
-    ogr_gpx_8,
-    ogr_gpx_9,
-    ogr_gpx_cleanup]
+    test_ogr_gpx_1,
+    test_ogr_gpx_2,
+    test_ogr_gpx_4,
+    test_ogr_gpx_7,
+    test_ogr_gpx_8,
+    test_ogr_gpx_9,
+    test_ogr_gpx_cleanup]
 
 if __name__ == '__main__':
 

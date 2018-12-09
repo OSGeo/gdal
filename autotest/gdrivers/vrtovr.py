@@ -38,7 +38,7 @@ import gdaltest
 # Simple test
 
 
-def vrtovr_1():
+def test_vrtovr_1():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -83,7 +83,7 @@ def vrtovr_1():
 # Test serialization
 
 
-def vrtovr_2():
+def test_vrtovr_2():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -132,7 +132,7 @@ def vrtovr_2():
 #
 
 
-def vrtovr_none():
+def test_vrtovr_none():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -163,7 +163,7 @@ def vrtovr_none():
 #
 
 
-def vrtovr_errors():
+def test_vrtovr_errors():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -207,16 +207,16 @@ def vrtovr_errors():
 ###############################################################################
 # Cleanup.
 
-def vrtovr_cleanup():
+def test_vrtovr_cleanup():
     return 'success'
 
 
 gdaltest_list = [
-    vrtovr_1,
-    vrtovr_2,
-    vrtovr_none,
-    vrtovr_errors,
-    vrtovr_cleanup]
+    test_vrtovr_1,
+    test_vrtovr_2,
+    test_vrtovr_none,
+    test_vrtovr_errors,
+    test_vrtovr_cleanup]
 
 if __name__ == '__main__':
 

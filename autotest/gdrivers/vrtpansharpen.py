@@ -39,7 +39,7 @@ import gdaltest
 # Error cases
 
 
-def vrtpansharpen_1():
+def test_vrtpansharpen_1():
 
     src_ds = gdal.Open('data/small_world.tif')
     src_data = src_ds.GetRasterBand(1).ReadRaster()
@@ -879,7 +879,7 @@ def vrtpansharpen_1():
 # Nominal cases
 
 
-def vrtpansharpen_2():
+def test_vrtpansharpen_2():
 
     shutil.copy('data/small_world.tif', 'tmp/small_world.tif')
 
@@ -1111,7 +1111,7 @@ def vrtpansharpen_2():
 # Test with overviews
 
 
-def vrtpansharpen_3():
+def test_vrtpansharpen_3():
 
     ds = gdal.Open('tmp/small_world_pan.tif')
     ds.BuildOverviews('CUBIC', [2])
@@ -1199,7 +1199,7 @@ def vrtpansharpen_3():
 # Test RasterIO() with various buffer datatypes
 
 
-def vrtpansharpen_4():
+def test_vrtpansharpen_4():
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
@@ -1244,7 +1244,7 @@ def vrtpansharpen_4():
 # Test RasterIO() with various band datatypes
 
 
-def vrtpansharpen_5():
+def test_vrtpansharpen_5():
 
     for dt in [gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat64]:
 
@@ -1328,7 +1328,7 @@ def vrtpansharpen_5():
 # Test BitDepth limitations
 
 
-def vrtpansharpen_6():
+def test_vrtpansharpen_6():
 
     try:
         from osgeo import gdalnumeric
@@ -1417,7 +1417,7 @@ def vrtpansharpen_6():
 # Test bands with different extents
 
 
-def vrtpansharpen_7():
+def test_vrtpansharpen_7():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtpansharpen_7_pan.tif', 20, 40)
     ds.SetGeoTransform([120, 1, 0, 80, 0, -1])
@@ -1595,7 +1595,7 @@ def vrtpansharpen_7():
 # Test SerializeToXML()
 
 
-def vrtpansharpen_8():
+def test_vrtpansharpen_8():
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -1652,7 +1652,7 @@ def vrtpansharpen_8():
 # Test NoData support
 
 
-def vrtpansharpen_9():
+def test_vrtpansharpen_9():
 
     # Explicit nodata
     vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
@@ -1736,7 +1736,7 @@ def vrtpansharpen_9():
 # Test UInt16 optimizations
 
 
-def vrtpansharpen_10():
+def test_vrtpansharpen_10():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif', 1023, 1023, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(1000)
@@ -1877,7 +1877,7 @@ def vrtpansharpen_10():
 # Test gdal.CreatePansharpenedVRT()
 
 
-def vrtpansharpen_11():
+def test_vrtpansharpen_11():
 
     pan_ds = gdal.Open('tmp/small_world_pan.tif')
     ms_ds = gdal.Open('data/small_world.tif')
@@ -1999,7 +1999,7 @@ def vrtpansharpen_11():
 # Cleanup
 
 
-def vrtpansharpen_cleanup():
+def test_vrtpansharpen_cleanup():
 
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world_pan.tif')
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world.tif')
@@ -2010,18 +2010,18 @@ def vrtpansharpen_cleanup():
 
 
 gdaltest_list = [
-    vrtpansharpen_1,
-    vrtpansharpen_2,
-    vrtpansharpen_3,
-    vrtpansharpen_4,
-    vrtpansharpen_5,
-    vrtpansharpen_6,
-    vrtpansharpen_7,
-    vrtpansharpen_8,
-    vrtpansharpen_9,
-    vrtpansharpen_10,
-    vrtpansharpen_11,
-    vrtpansharpen_cleanup,
+    test_vrtpansharpen_1,
+    test_vrtpansharpen_2,
+    test_vrtpansharpen_3,
+    test_vrtpansharpen_4,
+    test_vrtpansharpen_5,
+    test_vrtpansharpen_6,
+    test_vrtpansharpen_7,
+    test_vrtpansharpen_8,
+    test_vrtpansharpen_9,
+    test_vrtpansharpen_10,
+    test_vrtpansharpen_11,
+    test_vrtpansharpen_cleanup,
 ]
 
 # gdaltest_list= [ vrtpansharpen_1, vrtpansharpen_8 ]

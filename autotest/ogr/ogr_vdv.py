@@ -42,7 +42,7 @@ from osgeo import ogr
 # Basic test of .idf file
 
 
-def ogr_idf_1():
+def test_ogr_idf_1():
 
     ds = ogr.Open('data/test.idf')
     lyr = ds.GetLayer(0)
@@ -79,17 +79,17 @@ def ogr_idf_1():
 #
 
 
-def ogr_idf_1_with_temp_sqlite_db():
+def test_ogr_idf_1_with_temp_sqlite_db():
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
     with gdaltest.config_option('OGR_IDF_TEMP_DB_THRESHOLD', '0'):
-        return ogr_idf_1()
+        return test_ogr_idf_1()
 
 ###############################################################################
 # Basic test of .idf file
 
 
-def ogr_idf_3d():
+def test_ogr_idf_3d():
 
     ds = ogr.Open('data/test_3d.idf')
     lyr = ds.GetLayer(0)
@@ -126,7 +126,7 @@ def ogr_idf_3d():
 # Run test_ogrsf on .idf
 
 
-def ogr_idf_2():
+def test_ogr_idf_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -144,7 +144,7 @@ def ogr_idf_2():
 # Create a VDV file
 
 
-def ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
+def test_ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
 
     dsco = [] if dsco is None else dsco
     lco = [] if lco is None else lco
@@ -200,7 +200,7 @@ def ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
 # Read it
 
 
-def ogr_vdv_2(src_filename='tmp/test.x10'):
+def test_ogr_vdv_2(src_filename='tmp/test.x10'):
 
     out_filename = '/vsimem/vdv/ogr_vdv_2.x10'
     gdal.Unlink(out_filename)
@@ -272,7 +272,7 @@ eof; 4
 # Run test_ogrsf on it
 
 
-def ogr_vdv_3():
+def test_ogr_vdv_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -290,21 +290,21 @@ def ogr_vdv_3():
 # Create a VDV directory
 
 
-def ogr_vdv_4():
-    return ogr_vdv_1(filename='tmp/test_x10', dsco=['SINGLE_FILE=NO'], lco=['EXTENSION=txt'])
+def test_ogr_vdv_4():
+    return test_ogr_vdv_1(filename='tmp/test_x10', dsco=['SINGLE_FILE=NO'], lco=['EXTENSION=txt'])
 
 ###############################################################################
 # Read it
 
 
-def ogr_vdv_5():
-    return ogr_vdv_2(src_filename='tmp/test_x10')
+def test_ogr_vdv_5():
+    return test_ogr_vdv_2(src_filename='tmp/test_x10')
 
 ###############################################################################
 # Run test_ogrsf on it
 
 
-def ogr_vdv_6():
+def test_ogr_vdv_6():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -322,7 +322,7 @@ def ogr_vdv_6():
 # Run VDV452
 
 
-def ogr_vdv_7():
+def test_ogr_vdv_7():
 
     tests = [('VDV-452', 'STOP', 'POINT_LONGITUDE', 'POINT_LATITUDE'),
              ('VDV-452-ENGLISH', 'STOP', 'POINT_LONGITUDE', 'POINT_LATITUDE'),
@@ -403,7 +403,7 @@ def ogr_vdv_7():
 # Test a few error cases
 
 
-def ogr_vdv_8():
+def test_ogr_vdv_8():
 
     gdal.PushErrorHandler()
     ds = ogr.GetDriverByName('VDV').CreateDataSource('/does/not_exist')
@@ -586,7 +586,7 @@ eof; 2
 # Cleanup
 
 
-def ogr_vdv_cleanup():
+def test_ogr_vdv_cleanup():
 
     gdal.Unlink('tmp/test.x10')
     gdal.Unlink('/vsimem/vdv/ogr_vdv_2.x10')
@@ -602,19 +602,19 @@ def ogr_vdv_cleanup():
 
 
 gdaltest_list = [
-    ogr_idf_1,
-    ogr_idf_1_with_temp_sqlite_db,
-    ogr_idf_3d,
-    ogr_idf_2,
-    ogr_vdv_1,
-    ogr_vdv_2,
-    ogr_vdv_3,
-    ogr_vdv_4,
-    ogr_vdv_5,
-    ogr_vdv_6,
-    ogr_vdv_7,
-    ogr_vdv_8,
-    ogr_vdv_cleanup]
+    test_ogr_idf_1,
+    test_ogr_idf_1_with_temp_sqlite_db,
+    test_ogr_idf_3d,
+    test_ogr_idf_2,
+    test_ogr_vdv_1,
+    test_ogr_vdv_2,
+    test_ogr_vdv_3,
+    test_ogr_vdv_4,
+    test_ogr_vdv_5,
+    test_ogr_vdv_6,
+    test_ogr_vdv_7,
+    test_ogr_vdv_8,
+    test_ogr_vdv_cleanup]
 
 
 if __name__ == '__main__':

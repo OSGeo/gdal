@@ -45,7 +45,7 @@ import gdaltest
 # Verify we have the driver.
 
 
-def jp2openjpeg_1():
+def test_jp2openjpeg_1():
 
     gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
     if gdaltest.jp2openjpeg_drv is None:
@@ -59,7 +59,7 @@ def jp2openjpeg_1():
 # Open byte.jp2
 
 
-def jp2openjpeg_2():
+def test_jp2openjpeg_2():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -92,7 +92,7 @@ def jp2openjpeg_2():
 # Open int16.jp2
 
 
-def jp2openjpeg_3():
+def test_jp2openjpeg_3():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -123,7 +123,7 @@ def jp2openjpeg_3():
 # Test copying byte.jp2
 
 
-def jp2openjpeg_4(out_filename='tmp/jp2openjpeg_4.jp2'):
+def test_jp2openjpeg_4(out_filename='tmp/jp2openjpeg_4.jp2'):
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -193,14 +193,14 @@ def jp2openjpeg_4(out_filename='tmp/jp2openjpeg_4.jp2'):
     return 'success'
 
 
-def jp2openjpeg_4_vsimem():
-    return jp2openjpeg_4('/vsimem/jp2openjpeg_4.jp2')
+def test_jp2openjpeg_4_vsimem():
+    return test_jp2openjpeg_4('/vsimem/jp2openjpeg_4.jp2')
 
 ###############################################################################
 # Test copying int16.jp2
 
 
-def jp2openjpeg_5():
+def test_jp2openjpeg_5():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -212,7 +212,7 @@ def jp2openjpeg_5():
 # Test reading ll.jp2
 
 
-def jp2openjpeg_6():
+def test_jp2openjpeg_6():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -232,7 +232,7 @@ def jp2openjpeg_6():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def jp2openjpeg_7():
+def test_jp2openjpeg_7():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -244,7 +244,7 @@ def jp2openjpeg_7():
 # Test a JP2OpenJPEG with the 3 bands having 13bit depth and the 4th one 1 bit
 
 
-def jp2openjpeg_8():
+def test_jp2openjpeg_8():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -268,7 +268,7 @@ def jp2openjpeg_8():
 # Check that we can use .j2w world files (#4651)
 
 
-def jp2openjpeg_9():
+def test_jp2openjpeg_9():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -294,7 +294,7 @@ def jp2openjpeg_9():
 # Test YCBCR420 creation option
 
 
-def jp2openjpeg_10():
+def test_jp2openjpeg_10():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -326,7 +326,7 @@ def jp2openjpeg_10():
 # Test auto-promotion of 1bit alpha band to 8bit
 
 
-def jp2openjpeg_11():
+def test_jp2openjpeg_11():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -378,7 +378,7 @@ def jp2openjpeg_11():
 # Check that PAM overrides internal georeferencing (#5279)
 
 
-def jp2openjpeg_12():
+def test_jp2openjpeg_12():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -427,7 +427,7 @@ def jp2openjpeg_12():
 # Check that PAM overrides internal GCPs (#5279)
 
 
-def jp2openjpeg_13():
+def test_jp2openjpeg_13():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -491,7 +491,7 @@ def jp2openjpeg_13():
 # Check that we get GCPs even there's no projection info
 
 
-def jp2openjpeg_14():
+def test_jp2openjpeg_14():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -507,7 +507,7 @@ def jp2openjpeg_14():
 # Test multi-threading reading
 
 
-def jp2openjpeg_15():
+def test_jp2openjpeg_15():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -529,7 +529,7 @@ def jp2openjpeg_15():
 # Test reading PixelIsPoint file (#5437)
 
 
-def jp2openjpeg_16():
+def test_jp2openjpeg_16():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -569,7 +569,7 @@ def jp2openjpeg_16():
 # Test writing PixelIsPoint file (#5437)
 
 
-def jp2openjpeg_17():
+def test_jp2openjpeg_17():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -606,7 +606,7 @@ def jp2openjpeg_17():
 # multiple of 1024 (#5480)
 
 
-def jp2openjpeg_18():
+def test_jp2openjpeg_18():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -631,7 +631,7 @@ def jp2openjpeg_18():
 # Test reading file where GMLJP2 has nul character instead of \n (#5760)
 
 
-def jp2openjpeg_19():
+def test_jp2openjpeg_19():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -648,7 +648,7 @@ def jp2openjpeg_19():
 # Validate GMLJP2 content against schema
 
 
-def jp2openjpeg_20():
+def test_jp2openjpeg_20():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -720,7 +720,7 @@ def jp2openjpeg_20():
 # Test YCC=NO creation option
 
 
-def jp2openjpeg_21():
+def test_jp2openjpeg_21():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -743,7 +743,7 @@ def jp2openjpeg_21():
 # Test RGBA support
 
 
-def jp2openjpeg_22():
+def test_jp2openjpeg_22():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -907,7 +907,7 @@ def jp2openjpeg_22():
 # Test NBITS support
 
 
-def jp2openjpeg_23():
+def test_jp2openjpeg_23():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -945,7 +945,7 @@ def jp2openjpeg_23():
 # Test Grey+alpha support
 
 
-def jp2openjpeg_24():
+def test_jp2openjpeg_24():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1010,7 +1010,7 @@ def jp2openjpeg_24():
 # Test multiband support
 
 
-def jp2openjpeg_25():
+def test_jp2openjpeg_25():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1080,7 +1080,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
 # Test INSPIRE_TG support
 
 
-def jp2openjpeg_26():
+def test_jp2openjpeg_26():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1290,7 +1290,7 @@ def jp2openjpeg_26():
 # Test CreateCopy() from a JPEG2000 with a 2048x2048 tiling
 
 
-def jp2openjpeg_27():
+def test_jp2openjpeg_27():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1376,7 +1376,7 @@ def jp2openjpeg_test_codeblock(filename, codeblock_width, codeblock_height):
     return True
 
 
-def jp2openjpeg_28():
+def test_jp2openjpeg_28():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1415,7 +1415,7 @@ def jp2openjpeg_28():
 # Test TILEPARTS option
 
 
-def jp2openjpeg_29():
+def test_jp2openjpeg_29():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1453,7 +1453,7 @@ def jp2openjpeg_29():
 # Test color table support
 
 
-def jp2openjpeg_30():
+def test_jp2openjpeg_30():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1555,7 +1555,7 @@ def jp2openjpeg_30():
 # Test unusual band color interpretation order
 
 
-def jp2openjpeg_31():
+def test_jp2openjpeg_31():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1617,7 +1617,7 @@ def jp2openjpeg_31():
 # Test creation of "XLBoxes" for JP2C
 
 
-def jp2openjpeg_32():
+def test_jp2openjpeg_32():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1638,7 +1638,7 @@ def jp2openjpeg_32():
 # Test crazy tile size
 
 
-def jp2openjpeg_33():
+def test_jp2openjpeg_33():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1664,7 +1664,7 @@ def jp2openjpeg_33():
 # Test opening a file whose dimensions are > 2^31-1
 
 
-def jp2openjpeg_34():
+def test_jp2openjpeg_34():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1682,7 +1682,7 @@ def jp2openjpeg_34():
 ###############################################################################
 # Test opening a truncated file
 
-def jp2openjpeg_35():
+def test_jp2openjpeg_35():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1700,7 +1700,7 @@ def jp2openjpeg_35():
 # Test we cannot create files with more than 16384 bands
 
 
-def jp2openjpeg_36():
+def test_jp2openjpeg_36():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1719,7 +1719,7 @@ def jp2openjpeg_36():
 # Test metadata reading & writing
 
 
-def jp2openjpeg_37():
+def test_jp2openjpeg_37():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1850,7 +1850,7 @@ def jp2openjpeg_37():
 # Test non-EPSG SRS (so written with a GML dictionary)
 
 
-def jp2openjpeg_38():
+def test_jp2openjpeg_38():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1893,7 +1893,7 @@ def jp2openjpeg_38():
 # Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
 
 
-def jp2openjpeg_39():
+def test_jp2openjpeg_39():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -1967,7 +1967,7 @@ def jp2openjpeg_39():
 # Test we can parse GMLJP2 v2.0
 
 
-def jp2openjpeg_40():
+def test_jp2openjpeg_40():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -2051,7 +2051,7 @@ def jp2openjpeg_40():
 # Test USE_SRC_CODESTREAM=YES
 
 
-def jp2openjpeg_41():
+def test_jp2openjpeg_41():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -2101,7 +2101,7 @@ def jp2openjpeg_41():
 # Test update of existing file
 
 
-def jp2openjpeg_42():
+def test_jp2openjpeg_42():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -2314,7 +2314,7 @@ def jp2openjpeg_42():
 # Get structure of a JPEG2000 file
 
 
-def jp2openjpeg_43():
+def test_jp2openjpeg_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
     if ret is None:
@@ -2326,7 +2326,7 @@ def jp2openjpeg_43():
 # Check a file against a OrthoimageryCoverage document
 
 
-def jp2openjpeg_44():
+def test_jp2openjpeg_44():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -2344,7 +2344,7 @@ def jp2openjpeg_44():
 # Test GMLJP2v2
 
 
-def jp2openjpeg_45():
+def test_jp2openjpeg_45():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3137,7 +3137,7 @@ def jp2openjpeg_45():
 # Test GMLJP2v2 metadata generator / XPath
 
 
-def jp2openjpeg_46():
+def test_jp2openjpeg_46():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3307,7 +3307,7 @@ yeah: """) < 0:
 # Test writing & reading RPC in GeoJP2 box
 
 
-def jp2openjpeg_47():
+def test_jp2openjpeg_47():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3333,7 +3333,7 @@ def jp2openjpeg_47():
 # Test reading a dataset whose tile dimensions are larger than dataset ones
 
 
-def jp2openjpeg_48():
+def test_jp2openjpeg_48():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3354,7 +3354,7 @@ def jp2openjpeg_48():
 ###############################################################################
 
 
-def jp2openjpeg_online_1():
+def test_jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3377,7 +3377,7 @@ def jp2openjpeg_online_1():
 ###############################################################################
 
 
-def jp2openjpeg_online_2():
+def test_jp2openjpeg_online_2():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3409,7 +3409,7 @@ def jp2openjpeg_online_2():
 ###############################################################################
 
 
-def jp2openjpeg_online_3():
+def test_jp2openjpeg_online_3():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3443,7 +3443,7 @@ def jp2openjpeg_online_3():
 ###############################################################################
 
 
-def jp2openjpeg_online_4():
+def test_jp2openjpeg_online_4():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3478,7 +3478,7 @@ def jp2openjpeg_online_4():
 # Try reading JP2OpenJPEG with color table
 
 
-def jp2openjpeg_online_5():
+def test_jp2openjpeg_online_5():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3503,7 +3503,7 @@ def jp2openjpeg_online_5():
 # Try reading YCbCr JP2OpenJPEG as RGB
 
 
-def jp2openjpeg_online_6():
+def test_jp2openjpeg_online_6():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3528,7 +3528,7 @@ def jp2openjpeg_online_6():
 # Test GDAL_GEOREF_SOURCES
 
 
-def jp2openjpeg_49():
+def test_jp2openjpeg_49():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3659,7 +3659,7 @@ def jp2openjpeg_49():
 # Test opening an image of small dimension with very small tiles (#7012)
 
 
-def jp2openjpeg_50():
+def test_jp2openjpeg_50():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3682,7 +3682,7 @@ def jp2openjpeg_50():
 # Test CODEBLOCK_STYLE
 
 
-def jp2openjpeg_codeblock_style():
+def test_jp2openjpeg_codeblock_style():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3729,7 +3729,7 @@ def jp2openjpeg_codeblock_style():
 # Test external overviews
 
 
-def jp2openjpeg_external_overviews_single_band():
+def test_jp2openjpeg_external_overviews_single_band():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3758,7 +3758,7 @@ def jp2openjpeg_external_overviews_single_band():
 # Test external overviews
 
 
-def jp2openjpeg_external_overviews_multiple_band():
+def test_jp2openjpeg_external_overviews_multiple_band():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -3786,7 +3786,7 @@ def jp2openjpeg_external_overviews_multiple_band():
 ###############################################################################
 
 
-def jp2openjpeg_cleanup():
+def test_jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -3794,72 +3794,72 @@ def jp2openjpeg_cleanup():
 
 
 gdaltest_list = [
-    jp2openjpeg_1,
-    jp2openjpeg_2,
-    jp2openjpeg_3,
-    jp2openjpeg_4,
-    jp2openjpeg_4_vsimem,
-    jp2openjpeg_5,
-    jp2openjpeg_6,
-    jp2openjpeg_7,
-    jp2openjpeg_8,
-    jp2openjpeg_9,
-    jp2openjpeg_10,
-    jp2openjpeg_11,
-    jp2openjpeg_12,
-    jp2openjpeg_13,
-    jp2openjpeg_14,
-    jp2openjpeg_15,
-    jp2openjpeg_16,
-    jp2openjpeg_17,
-    jp2openjpeg_18,
-    jp2openjpeg_19,
-    jp2openjpeg_20,
-    jp2openjpeg_21,
-    jp2openjpeg_22,
-    jp2openjpeg_23,
-    jp2openjpeg_24,
-    jp2openjpeg_25,
-    jp2openjpeg_26,
-    jp2openjpeg_27,
-    jp2openjpeg_28,
-    jp2openjpeg_29,
-    jp2openjpeg_30,
-    jp2openjpeg_31,
-    jp2openjpeg_32,
-    jp2openjpeg_33,
-    jp2openjpeg_34,
-    jp2openjpeg_35,
-    jp2openjpeg_36,
-    jp2openjpeg_37,
-    jp2openjpeg_38,
-    jp2openjpeg_39,
-    jp2openjpeg_40,
-    jp2openjpeg_41,
-    jp2openjpeg_42,
-    jp2openjpeg_43,
-    jp2openjpeg_44,
-    jp2openjpeg_45,
-    jp2openjpeg_46,
-    jp2openjpeg_47,
-    jp2openjpeg_48,
-    jp2openjpeg_49,
-    jp2openjpeg_50,
-    jp2openjpeg_codeblock_style,
-    jp2openjpeg_external_overviews_single_band,
-    jp2openjpeg_external_overviews_multiple_band,
-    jp2openjpeg_online_1,
-    jp2openjpeg_online_2,
-    jp2openjpeg_online_3,
-    jp2openjpeg_online_4,
-    jp2openjpeg_online_5,
-    jp2openjpeg_online_6,
-    jp2openjpeg_cleanup]
+    test_jp2openjpeg_1,
+    test_jp2openjpeg_2,
+    test_jp2openjpeg_3,
+    test_jp2openjpeg_4,
+    test_jp2openjpeg_4_vsimem,
+    test_jp2openjpeg_5,
+    test_jp2openjpeg_6,
+    test_jp2openjpeg_7,
+    test_jp2openjpeg_8,
+    test_jp2openjpeg_9,
+    test_jp2openjpeg_10,
+    test_jp2openjpeg_11,
+    test_jp2openjpeg_12,
+    test_jp2openjpeg_13,
+    test_jp2openjpeg_14,
+    test_jp2openjpeg_15,
+    test_jp2openjpeg_16,
+    test_jp2openjpeg_17,
+    test_jp2openjpeg_18,
+    test_jp2openjpeg_19,
+    test_jp2openjpeg_20,
+    test_jp2openjpeg_21,
+    test_jp2openjpeg_22,
+    test_jp2openjpeg_23,
+    test_jp2openjpeg_24,
+    test_jp2openjpeg_25,
+    test_jp2openjpeg_26,
+    test_jp2openjpeg_27,
+    test_jp2openjpeg_28,
+    test_jp2openjpeg_29,
+    test_jp2openjpeg_30,
+    test_jp2openjpeg_31,
+    test_jp2openjpeg_32,
+    test_jp2openjpeg_33,
+    test_jp2openjpeg_34,
+    test_jp2openjpeg_35,
+    test_jp2openjpeg_36,
+    test_jp2openjpeg_37,
+    test_jp2openjpeg_38,
+    test_jp2openjpeg_39,
+    test_jp2openjpeg_40,
+    test_jp2openjpeg_41,
+    test_jp2openjpeg_42,
+    test_jp2openjpeg_43,
+    test_jp2openjpeg_44,
+    test_jp2openjpeg_45,
+    test_jp2openjpeg_46,
+    test_jp2openjpeg_47,
+    test_jp2openjpeg_48,
+    test_jp2openjpeg_49,
+    test_jp2openjpeg_50,
+    test_jp2openjpeg_codeblock_style,
+    test_jp2openjpeg_external_overviews_single_band,
+    test_jp2openjpeg_external_overviews_multiple_band,
+    test_jp2openjpeg_online_1,
+    test_jp2openjpeg_online_2,
+    test_jp2openjpeg_online_3,
+    test_jp2openjpeg_online_4,
+    test_jp2openjpeg_online_5,
+    test_jp2openjpeg_online_6,
+    test_jp2openjpeg_cleanup]
 
 disabled_gdaltest_list = [
-    jp2openjpeg_1,
-    jp2openjpeg_45,
-    jp2openjpeg_cleanup]
+    test_jp2openjpeg_1,
+    test_jp2openjpeg_45,
+    test_jp2openjpeg_cleanup]
 
 if __name__ == '__main__':
 

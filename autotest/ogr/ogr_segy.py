@@ -39,7 +39,7 @@ from osgeo import ogr
 # Read SEG-Y
 
 
-def ogr_segy_1():
+def test_ogr_segy_1():
 
     ds = ogr.Open('data/segy/testsegy.segy')
     if ds is None:
@@ -118,7 +118,7 @@ def ogr_segy_1():
 # Read ASCII header SEG-Y
 
 
-def ogr_segy_2():
+def test_ogr_segy_2():
     ds = ogr.Open('data/segy/ascii-header-with-nuls.sgy')
     if ds is None:
         gdaltest.post_reason('cannot open dataset')
@@ -139,8 +139,8 @@ def ogr_segy_2():
 
 
 gdaltest_list = [
-    ogr_segy_1,
-    ogr_segy_2,
+    test_ogr_segy_1,
+    test_ogr_segy_2,
 ]
 
 

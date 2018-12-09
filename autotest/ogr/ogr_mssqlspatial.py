@@ -42,7 +42,7 @@ from osgeo import osr
 # Open Database.
 
 
-def ogr_mssqlspatial_1():
+def test_ogr_mssqlspatial_1():
 
     gdaltest.mssqlspatial_ds = None
 
@@ -81,7 +81,7 @@ def ogr_mssqlspatial_1():
 # Create table from data/poly.shp
 
 
-def ogr_mssqlspatial_2():
+def test_ogr_mssqlspatial_2():
 
     if gdaltest.mssqlspatial_ds is None:
         return 'skip'
@@ -139,7 +139,7 @@ def ogr_mssqlspatial_2():
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_mssqlspatial_3():
+def test_ogr_mssqlspatial_3():
     if gdaltest.mssqlspatial_ds is None:
         return 'skip'
 
@@ -195,7 +195,7 @@ def ogr_mssqlspatial_3():
 # geometries are still OK.
 
 
-def ogr_mssqlspatial_4():
+def test_ogr_mssqlspatial_4():
     if gdaltest.mssqlspatial_ds is None:
         return 'skip'
 
@@ -256,7 +256,7 @@ def ogr_mssqlspatial_4():
 # Run test_ogrsf
 
 
-def ogr_mssqlspatial_test_ogrsf():
+def test_ogr_mssqlspatial_test_ogrsf():
 
     if gdaltest.mssqlspatial_ds is None:
         return 'skip'
@@ -278,7 +278,7 @@ def ogr_mssqlspatial_test_ogrsf():
 # column but is not registered in the "geometry_columns" table.
 
 
-def ogr_mssqlspatial_create_feature_in_unregistered_table():
+def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
     if gdaltest.mssqlspatial_ds is None:
         return 'skip'
 
@@ -358,7 +358,7 @@ def ogr_mssqlspatial_create_feature_in_unregistered_table():
 #
 
 
-def ogr_mssqlspatial_cleanup():
+def test_ogr_mssqlspatial_cleanup():
 
     if gdaltest.mssqlspatial_ds is None:
         return 'skip'
@@ -375,13 +375,13 @@ def ogr_mssqlspatial_cleanup():
 
 
 gdaltest_list = [
-    ogr_mssqlspatial_1,
-    ogr_mssqlspatial_2,
-    ogr_mssqlspatial_3,
-    ogr_mssqlspatial_4,
-    ogr_mssqlspatial_test_ogrsf,
-    ogr_mssqlspatial_create_feature_in_unregistered_table,
-    ogr_mssqlspatial_cleanup
+    test_ogr_mssqlspatial_1,
+    test_ogr_mssqlspatial_2,
+    test_ogr_mssqlspatial_3,
+    test_ogr_mssqlspatial_4,
+    test_ogr_mssqlspatial_test_ogrsf,
+    test_ogr_mssqlspatial_create_feature_in_unregistered_table,
+    test_ogr_mssqlspatial_cleanup
 ]
 
 if __name__ == '__main__':

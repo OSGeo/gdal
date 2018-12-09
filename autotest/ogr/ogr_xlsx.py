@@ -125,7 +125,7 @@ def ogr_xlsx_check(ds):
 # Basic tests
 
 
-def ogr_xlsx_1():
+def test_ogr_xlsx_1():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -146,7 +146,7 @@ def ogr_xlsx_1():
 # Test OGR_XLSX_HEADERS = DISABLE
 
 
-def ogr_xlsx_2():
+def test_ogr_xlsx_2():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -170,7 +170,7 @@ def ogr_xlsx_2():
 # Test OGR_XLSX_FIELD_TYPES = STRING
 
 
-def ogr_xlsx_3():
+def test_ogr_xlsx_3():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -193,7 +193,7 @@ def ogr_xlsx_3():
 # Run test_ogrsf
 
 
-def ogr_xlsx_4():
+def test_ogr_xlsx_4():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -215,7 +215,7 @@ def ogr_xlsx_4():
 # Test write support
 
 
-def ogr_xlsx_5():
+def test_ogr_xlsx_5():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -239,7 +239,7 @@ def ogr_xlsx_5():
 # Test reading a file using inlineStr representation.
 
 
-def ogr_xlsx_6():
+def test_ogr_xlsx_6():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -274,7 +274,7 @@ def ogr_xlsx_6():
 # Test update support
 
 
-def ogr_xlsx_7():
+def test_ogr_xlsx_7():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -317,7 +317,7 @@ def ogr_xlsx_7():
 # Test number of columns > 26 (#5774)
 
 
-def ogr_xlsx_8():
+def test_ogr_xlsx_8():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -350,7 +350,7 @@ def ogr_xlsx_8():
 # Test Integer64
 
 
-def ogr_xlsx_9():
+def test_ogr_xlsx_9():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -391,7 +391,7 @@ def ogr_xlsx_9():
 # Test DateTime with milliseconds
 
 
-def ogr_xlsx_10():
+def test_ogr_xlsx_10():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -439,7 +439,7 @@ def ogr_xlsx_10():
 # Test reading sheet with more than 26 columns with holes (#6363)"
 
 
-def ogr_xlsx_11():
+def test_ogr_xlsx_11():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -461,7 +461,7 @@ def ogr_xlsx_11():
 # workbook.xml.rels (#6733)
 
 
-def ogr_xlsx_12():
+def test_ogr_xlsx_12():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -480,7 +480,7 @@ def ogr_xlsx_12():
 # Test that data types are correctly picked up even if first row is missing data
 
 
-def ogr_xlsx_13():
+def test_ogr_xlsx_13():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -532,7 +532,7 @@ def ogr_xlsx_13():
 # Test that field names are picked up even if last field has no data
 
 
-def ogr_xlsx_14():
+def test_ogr_xlsx_14():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -584,7 +584,7 @@ def ogr_xlsx_14():
 # Test appending a layer to an existing document
 
 
-def ogr_xlsx_15():
+def test_ogr_xlsx_15():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -610,7 +610,7 @@ def ogr_xlsx_15():
 # Test Boolean
 
 
-def ogr_xlsx_boolean():
+def test_ogr_xlsx_boolean():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
@@ -648,22 +648,22 @@ def ogr_xlsx_boolean():
 
 
 gdaltest_list = [
-    ogr_xlsx_1,
-    ogr_xlsx_2,
-    ogr_xlsx_3,
-    ogr_xlsx_4,
-    ogr_xlsx_5,
-    ogr_xlsx_6,
-    ogr_xlsx_7,
-    ogr_xlsx_8,
-    ogr_xlsx_9,
-    ogr_xlsx_10,
-    ogr_xlsx_11,
-    ogr_xlsx_12,
-    ogr_xlsx_13,
-    ogr_xlsx_14,
-    ogr_xlsx_15,
-    ogr_xlsx_boolean,
+    test_ogr_xlsx_1,
+    test_ogr_xlsx_2,
+    test_ogr_xlsx_3,
+    test_ogr_xlsx_4,
+    test_ogr_xlsx_5,
+    test_ogr_xlsx_6,
+    test_ogr_xlsx_7,
+    test_ogr_xlsx_8,
+    test_ogr_xlsx_9,
+    test_ogr_xlsx_10,
+    test_ogr_xlsx_11,
+    test_ogr_xlsx_12,
+    test_ogr_xlsx_13,
+    test_ogr_xlsx_14,
+    test_ogr_xlsx_15,
+    test_ogr_xlsx_boolean,
 ]
 
 if __name__ == '__main__':

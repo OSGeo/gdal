@@ -2179,7 +2179,7 @@ gdaltest_list_for_short_backend = [
 ]
 
 
-def pdf_run_all():
+def test_pdf_run_all():
     gdaltest.run_tests([pdf_init])
 
     if gdaltest.pdf_drv is not None:
@@ -2213,7 +2213,7 @@ def pdf_run_all():
     return 'success'
 
 
-gdaltest_list = [pdf_run_all]
+gdaltest_list = [test_pdf_run_all]
 # gdaltest_list = [ pdf_init, pdf_metadata ]
 
 if __name__ == '__main__':

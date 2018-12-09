@@ -39,7 +39,7 @@ from osgeo import gdal
 # Establish whether we have GEOS support integrated, testing simple Union.
 
 
-def ogr_geos_union():
+def test_ogr_geos_union():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -58,7 +58,7 @@ def ogr_geos_union():
 # Test polygon intersection.
 
 
-def ogr_geos_intersection():
+def test_ogr_geos_intersection():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -78,7 +78,7 @@ def ogr_geos_intersection():
 # Test polygon difference.
 
 
-def ogr_geos_difference():
+def test_ogr_geos_difference():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -99,7 +99,7 @@ def ogr_geos_difference():
 # Test polygon symmetric difference.
 
 
-def ogr_geos_symmetric_difference():
+def test_ogr_geos_symmetric_difference():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -120,7 +120,7 @@ def ogr_geos_symmetric_difference():
 # Test polygon symmetric difference.
 
 
-def ogr_geos_sym_difference():
+def test_ogr_geos_sym_difference():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -141,7 +141,7 @@ def ogr_geos_sym_difference():
 # Test Intersect().
 
 
-def ogr_geos_intersect():
+def test_ogr_geos_intersect():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -170,7 +170,7 @@ def ogr_geos_intersect():
 # Test disjoint().
 
 
-def ogr_geos_disjoint():
+def test_ogr_geos_disjoint():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -199,7 +199,7 @@ def ogr_geos_disjoint():
 # Test touches.
 
 
-def ogr_geos_touches():
+def test_ogr_geos_touches():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -228,7 +228,7 @@ def ogr_geos_touches():
 # Test crosses.
 
 
-def ogr_geos_crosses():
+def test_ogr_geos_crosses():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -256,7 +256,7 @@ def ogr_geos_crosses():
 ###############################################################################
 
 
-def ogr_geos_within():
+def test_ogr_geos_within():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -281,7 +281,7 @@ def ogr_geos_within():
 ###############################################################################
 
 
-def ogr_geos_contains():
+def test_ogr_geos_contains():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -306,7 +306,7 @@ def ogr_geos_contains():
 ###############################################################################
 
 
-def ogr_geos_overlaps():
+def test_ogr_geos_overlaps():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -335,7 +335,7 @@ def ogr_geos_overlaps():
 ###############################################################################
 
 
-def ogr_geos_buffer():
+def test_ogr_geos_buffer():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -354,7 +354,7 @@ def ogr_geos_buffer():
 ###############################################################################
 
 
-def ogr_geos_centroid():
+def test_ogr_geos_centroid():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -382,7 +382,7 @@ def ogr_geos_centroid():
 ###############################################################################
 
 
-def ogr_geos_centroid_multipolygon():
+def test_ogr_geos_centroid_multipolygon():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -401,7 +401,7 @@ def ogr_geos_centroid_multipolygon():
 ###############################################################################
 
 
-def ogr_geos_centroid_point_empty():
+def test_ogr_geos_centroid_point_empty():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -419,7 +419,7 @@ def ogr_geos_centroid_point_empty():
 ###############################################################################
 
 
-def ogr_geos_simplify_linestring():
+def test_ogr_geos_simplify_linestring():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -438,7 +438,7 @@ def ogr_geos_simplify_linestring():
 ###############################################################################
 
 
-def ogr_geos_simplifypreservetopology_linestring():
+def test_ogr_geos_simplifypreservetopology_linestring():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -457,7 +457,7 @@ def ogr_geos_simplifypreservetopology_linestring():
 ###############################################################################
 
 
-def ogr_geos_unioncascaded():
+def test_ogr_geos_unioncascaded():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -476,7 +476,7 @@ def ogr_geos_unioncascaded():
 ###############################################################################
 
 
-def ogr_geos_convexhull():
+def test_ogr_geos_convexhull():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -494,7 +494,7 @@ def ogr_geos_convexhull():
 ###############################################################################
 
 
-def ogr_geos_distance():
+def test_ogr_geos_distance():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -513,7 +513,7 @@ def ogr_geos_distance():
 ###############################################################################
 
 
-def ogr_geos_isring():
+def test_ogr_geos_isring():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -530,7 +530,7 @@ def ogr_geos_isring():
 ###############################################################################
 
 
-def ogr_geos_issimple_true():
+def test_ogr_geos_issimple_true():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -547,7 +547,7 @@ def ogr_geos_issimple_true():
 ###############################################################################
 
 
-def ogr_geos_issimple_false():
+def test_ogr_geos_issimple_false():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -564,7 +564,7 @@ def ogr_geos_issimple_false():
 ###############################################################################
 
 
-def ogr_geos_isvalid_true():
+def test_ogr_geos_isvalid_true():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -581,7 +581,7 @@ def ogr_geos_isvalid_true():
 ###############################################################################
 
 
-def ogr_geos_isvalid_true_linestringM():
+def test_ogr_geos_isvalid_true_linestringM():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -598,7 +598,7 @@ def ogr_geos_isvalid_true_linestringM():
 ###############################################################################
 
 
-def ogr_geos_isvalid_true_circularStringM():
+def test_ogr_geos_isvalid_true_circularStringM():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -615,7 +615,7 @@ def ogr_geos_isvalid_true_circularStringM():
 ###############################################################################
 
 
-def ogr_geos_isvalid_true_triangle():
+def test_ogr_geos_isvalid_true_triangle():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -632,7 +632,7 @@ def ogr_geos_isvalid_true_triangle():
 ###############################################################################
 
 
-def ogr_geos_isvalid_false():
+def test_ogr_geos_isvalid_false():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -650,7 +650,7 @@ def ogr_geos_isvalid_false():
 ###############################################################################
 
 
-def ogr_geos_pointonsurface():
+def test_ogr_geos_pointonsurface():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -667,7 +667,7 @@ def ogr_geos_pointonsurface():
 ###############################################################################
 
 
-def ogr_geos_DelaunayTriangulation():
+def test_ogr_geos_DelaunayTriangulation():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -690,7 +690,7 @@ def ogr_geos_DelaunayTriangulation():
 ###############################################################################
 
 
-def ogr_geos_polygonize():
+def test_ogr_geos_polygonize():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -717,38 +717,38 @@ def ogr_geos_polygonize():
 
 
 gdaltest_list = [
-    ogr_geos_union,
-    ogr_geos_intersection,
-    ogr_geos_difference,
-    ogr_geos_symmetric_difference,
-    ogr_geos_sym_difference,
-    ogr_geos_intersect,
-    ogr_geos_disjoint,
-    ogr_geos_touches,
-    ogr_geos_crosses,
-    ogr_geos_within,
-    ogr_geos_contains,
-    ogr_geos_overlaps,
-    ogr_geos_buffer,
-    ogr_geos_centroid,
-    ogr_geos_centroid_multipolygon,
-    ogr_geos_centroid_point_empty,
-    ogr_geos_simplify_linestring,
-    ogr_geos_simplifypreservetopology_linestring,
-    ogr_geos_unioncascaded,
-    ogr_geos_convexhull,
-    ogr_geos_distance,
-    ogr_geos_isring,
-    ogr_geos_issimple_true,
-    ogr_geos_issimple_false,
-    ogr_geos_isvalid_true,
-    ogr_geos_isvalid_true_linestringM,
-    ogr_geos_isvalid_true_circularStringM,
-    ogr_geos_isvalid_true_triangle,
-    ogr_geos_isvalid_false,
-    ogr_geos_pointonsurface,
-    ogr_geos_DelaunayTriangulation,
-    ogr_geos_polygonize,
+    test_ogr_geos_union,
+    test_ogr_geos_intersection,
+    test_ogr_geos_difference,
+    test_ogr_geos_symmetric_difference,
+    test_ogr_geos_sym_difference,
+    test_ogr_geos_intersect,
+    test_ogr_geos_disjoint,
+    test_ogr_geos_touches,
+    test_ogr_geos_crosses,
+    test_ogr_geos_within,
+    test_ogr_geos_contains,
+    test_ogr_geos_overlaps,
+    test_ogr_geos_buffer,
+    test_ogr_geos_centroid,
+    test_ogr_geos_centroid_multipolygon,
+    test_ogr_geos_centroid_point_empty,
+    test_ogr_geos_simplify_linestring,
+    test_ogr_geos_simplifypreservetopology_linestring,
+    test_ogr_geos_unioncascaded,
+    test_ogr_geos_convexhull,
+    test_ogr_geos_distance,
+    test_ogr_geos_isring,
+    test_ogr_geos_issimple_true,
+    test_ogr_geos_issimple_false,
+    test_ogr_geos_isvalid_true,
+    test_ogr_geos_isvalid_true_linestringM,
+    test_ogr_geos_isvalid_true_circularStringM,
+    test_ogr_geos_isvalid_true_triangle,
+    test_ogr_geos_isvalid_false,
+    test_ogr_geos_pointonsurface,
+    test_ogr_geos_DelaunayTriangulation,
+    test_ogr_geos_polygonize,
 ]
 
 if __name__ == '__main__':

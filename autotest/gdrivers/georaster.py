@@ -53,7 +53,7 @@ def get_connection_str():
 #
 
 
-def georaster_init():
+def test_georaster_init():
 
     gdaltest.oci_ds = None
 
@@ -92,7 +92,7 @@ def georaster_init():
 #
 
 
-def georaster_byte():
+def test_georaster_byte():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -119,7 +119,7 @@ def georaster_byte():
 #
 
 
-def georaster_int16():
+def test_georaster_int16():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -148,7 +148,7 @@ def georaster_int16():
 #
 
 
-def georaster_int32():
+def test_georaster_int32():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -177,7 +177,7 @@ def georaster_int32():
 #
 
 
-def georaster_rgb_b1():
+def test_georaster_rgb_b1():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -205,7 +205,7 @@ def georaster_rgb_b1():
 #
 
 
-def georaster_rgb_b2():
+def test_georaster_rgb_b2():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -233,7 +233,7 @@ def georaster_rgb_b2():
 #
 
 
-def georaster_rgb_b3_bsq():
+def test_georaster_rgb_b3_bsq():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -261,7 +261,7 @@ def georaster_rgb_b3_bsq():
 #
 
 
-def georaster_rgb_b3_bip():
+def test_georaster_rgb_b3_bip():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -289,7 +289,7 @@ def georaster_rgb_b3_bip():
 #
 
 
-def georaster_rgb_b3_bil():
+def test_georaster_rgb_b3_bil():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -317,7 +317,7 @@ def georaster_rgb_b3_bil():
 #
 
 
-def georaster_byte_deflate():
+def test_georaster_byte_deflate():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -345,7 +345,7 @@ def georaster_byte_deflate():
 #
 
 
-def georaster_rgb_deflate_b3():
+def test_georaster_rgb_deflate_b3():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -373,7 +373,7 @@ def georaster_rgb_deflate_b3():
 #
 
 
-def georaster_1bit():
+def test_georaster_1bit():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -401,7 +401,7 @@ def georaster_1bit():
 #
 
 
-def georaster_2bit():
+def test_georaster_2bit():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -429,7 +429,7 @@ def georaster_2bit():
 #
 
 
-def georaster_4bit():
+def test_georaster_4bit():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -457,7 +457,7 @@ def georaster_4bit():
 #
 
 
-def georaster_cleanup():
+def test_georaster_cleanup():
 
     if gdaltest.georasterDriver is None:
         return 'skip'
@@ -478,21 +478,21 @@ def georaster_cleanup():
 
 
 gdaltest_list = [
-    georaster_init,
-    georaster_byte,
-    georaster_int16,
-    georaster_int32,
-    georaster_rgb_b1,
-    georaster_rgb_b2,
-    georaster_rgb_b3_bsq,
-    georaster_rgb_b3_bip,
-    georaster_rgb_b3_bil,
-    georaster_byte_deflate,
-    georaster_rgb_deflate_b3,
-    georaster_1bit,
-    georaster_2bit,
-    georaster_4bit,
-    georaster_cleanup
+    test_georaster_init,
+    test_georaster_byte,
+    test_georaster_int16,
+    test_georaster_int32,
+    test_georaster_rgb_b1,
+    test_georaster_rgb_b2,
+    test_georaster_rgb_b3_bsq,
+    test_georaster_rgb_b3_bip,
+    test_georaster_rgb_b3_bil,
+    test_georaster_byte_deflate,
+    test_georaster_rgb_deflate_b3,
+    test_georaster_1bit,
+    test_georaster_2bit,
+    test_georaster_4bit,
+    test_georaster_cleanup
 ]
 
 if __name__ == '__main__':

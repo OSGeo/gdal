@@ -47,7 +47,7 @@ def save_as_csv(geom, filename):
 # 30 degree rotated ellipse, just one quarter.
 
 
-def ogr_factory_1():
+def test_ogr_factory_1():
 
     geom = ogr.ApproximateArcAngles(20, 30, 40, 7, 3.5, 30.0, 270.0, 360.0, 6.0)
 
@@ -61,7 +61,7 @@ def ogr_factory_1():
 # Test forceToPolygon()
 
 
-def ogr_factory_2():
+def test_ogr_factory_2():
 
     src_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
     exp_wkt = 'POLYGON((0 0,100 0,100 100,0 0))'
@@ -109,7 +109,7 @@ def ogr_factory_2():
 # Test forceToMultiPolygon()
 
 
-def ogr_factory_3():
+def test_ogr_factory_3():
 
     src_wkt = 'POLYGON((0 0,100 0,100 100,0 0))'
     exp_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
@@ -157,7 +157,7 @@ def ogr_factory_3():
 # Test forceToMultiPoint()
 
 
-def ogr_factory_4():
+def test_ogr_factory_4():
 
     src_wkt = 'POINT(2 5 3)'
     exp_wkt = 'MULTIPOINT(2 5 3)'
@@ -185,7 +185,7 @@ def ogr_factory_4():
 # Test forceToMultiLineString()
 
 
-def ogr_factory_5():
+def test_ogr_factory_5():
 
     src_wkt = 'LINESTRING(2 5,10 20)'
     exp_wkt = 'MULTILINESTRING((2 5,10 20))'
@@ -232,7 +232,7 @@ def ogr_factory_5():
 ###############################################################################
 # Test robustness of forceToXXX() primitives with various inputs (#3504)
 
-def ogr_factory_6():
+def test_ogr_factory_6():
 
     src_wkt_list = [None,
                     'POINT EMPTY',
@@ -299,7 +299,7 @@ def ogr_factory_6():
 # Test forceToLineString()
 
 
-def ogr_factory_7():
+def test_ogr_factory_7():
 
     src_wkt = 'LINESTRING(2 5,10 20)'
     exp_wkt = 'LINESTRING(2 5,10 20)'
@@ -427,7 +427,7 @@ def ogr_factory_7():
 # Test forceTo()
 
 
-def ogr_factory_8():
+def test_ogr_factory_8():
 
     tests = [('POINT(2 5)', 'MULTIPOINT (2 5)', ogr.wkbMultiPoint),
 
@@ -601,14 +601,14 @@ def ogr_factory_8():
 
 
 gdaltest_list = [
-    ogr_factory_1,
-    ogr_factory_2,
-    ogr_factory_3,
-    ogr_factory_4,
-    ogr_factory_5,
-    ogr_factory_6,
-    ogr_factory_7,
-    ogr_factory_8,
+    test_ogr_factory_1,
+    test_ogr_factory_2,
+    test_ogr_factory_3,
+    test_ogr_factory_4,
+    test_ogr_factory_5,
+    test_ogr_factory_6,
+    test_ogr_factory_7,
+    test_ogr_factory_8,
 ]
 
 if __name__ == '__main__':

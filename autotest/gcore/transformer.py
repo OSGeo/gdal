@@ -41,7 +41,7 @@ from osgeo import osr
 # Test simple Geotransform based transformer.
 
 
-def transformer_1():
+def test_transformer_1():
 
     ds = gdal.Open('data/byte.tif')
     tr = gdal.Transformer(ds, None, [])
@@ -72,7 +72,7 @@ def transformer_1():
 # Test GCP based transformer with polynomials.
 
 
-def transformer_2():
+def test_transformer_2():
 
     ds = gdal.Open('data/gcps.vrt')
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_POLYNOMIAL'])
@@ -103,7 +103,7 @@ def transformer_2():
 # Test GCP based transformer with thin plate splines.
 
 
-def transformer_3():
+def test_transformer_3():
 
     ds = gdal.Open('data/gcps.vrt')
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
@@ -134,7 +134,7 @@ def transformer_3():
 # Test geolocation based transformer.
 
 
-def transformer_4():
+def test_transformer_4():
 
     ds = gdal.Open('data/sstgeo.vrt')
     tr = gdal.Transformer(ds, None, ['METHOD=GEOLOC_ARRAY'])
@@ -165,7 +165,7 @@ def transformer_4():
 # Test RPC based transformer.
 
 
-def transformer_5():
+def test_transformer_5():
 
     ds = gdal.Open('data/rpc.vrt')
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_PIXEL_ERROR_THRESHOLD=0.05'])
@@ -363,7 +363,7 @@ def transformer_5():
 ###############################################################################
 # Test RPC convergence bug (bug # 5395)
 
-def transformer_6():
+def test_transformer_6():
 
     ds = gdal.Open('data/rpc_5395.vrt')
     tr = gdal.Transformer(ds, None, ['METHOD=RPC'])
@@ -384,7 +384,7 @@ def transformer_6():
 # Test Transformer.TransformPoints
 
 
-def transformer_7():
+def test_transformer_7():
 
     ds = gdal.Open('data/byte.tif')
     tr = gdal.Transformer(ds, None, [])
@@ -405,7 +405,7 @@ def transformer_7():
 # Test handling of nodata in RPC DEM (#5680)
 
 
-def transformer_8():
+def test_transformer_8():
 
     ds = gdal.Open('data/rpc.vrt')
 
@@ -444,7 +444,7 @@ def transformer_8():
 # Test RPC DEM line optimization
 
 
-def transformer_9():
+def test_transformer_9():
 
     ds = gdal.Open('data/rpc.vrt')
 
@@ -492,7 +492,7 @@ def transformer_9():
 # Test RPC DEM transform from geoid height to ellipsoidal height
 
 
-def transformer_10():
+def test_transformer_10():
 
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName('GTX').Create('tmp/fake.gtx', 10, 10, 1, gdal.GDT_Float32)
@@ -580,7 +580,7 @@ def transformer_10():
 # Test failed inverse RPC transform (#6162)
 
 
-def transformer_11():
+def test_transformer_11():
 
     ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
     rpc = [
@@ -620,7 +620,7 @@ def transformer_11():
 # Test degenerate cases of TPS transformer
 
 
-def transformer_12():
+def test_transformer_12():
 
     ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
@@ -698,7 +698,7 @@ def transformer_12():
 # Test inverse RPC transform at DEM edge (#6377)
 
 
-def transformer_13():
+def test_transformer_13():
 
     ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
     rpc = [
@@ -731,7 +731,7 @@ def transformer_13():
 # Test inverse RPC transform when iterations do oscillations (#6377)
 
 
-def transformer_14():
+def test_transformer_14():
     ds = gdal.GetDriverByName('MEM').Create('', 4032, 2688)
     rpc = ["MIN_LAT=0",
            "MAX_LAT=0",
@@ -796,7 +796,7 @@ def transformer_14():
 # beyond
 
 
-def transformer_15():
+def test_transformer_15():
 
     ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
     rpc = [
@@ -893,7 +893,7 @@ def transformer_15():
 # (we mostly test that the parameters are well recognized and serialized)
 
 
-def transformer_16():
+def test_transformer_16():
 
     gdal.Translate('/vsimem/transformer_16.tif', 'data/byte.tif', options="-gcp 0 0 440720.000 3751320.000 -gcp 0 20 440720.000 3750120.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 -a_srs EPSG:26711")
     gdal.Warp('/vsimem/transformer_16.vrt', '/vsimem/transformer_16.tif', options='-of VRT -t_srs EPSG:4326 -et 0 -to SRC_APPROX_ERROR_IN_SRS_UNIT=6.05 -to SRC_APPROX_ERROR_IN_PIXEL=0.1 -to REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT=6.1 -to REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT=0.0001')
@@ -923,7 +923,7 @@ def transformer_16():
 ###############################################################################
 # Test RPC DEM with unexisting RPC DEM file
 
-def transformer_17():
+def test_transformer_17():
 
     ds = gdal.Open('data/rpc.vrt')
     with gdaltest.error_handler():
@@ -934,27 +934,27 @@ def transformer_17():
 
 
 gdaltest_list = [
-    transformer_1,
-    transformer_2,
-    transformer_3,
-    transformer_4,
-    transformer_5,
-    transformer_6,
-    transformer_7,
-    transformer_8,
-    transformer_9,
-    transformer_10,
-    transformer_11,
-    transformer_12,
-    transformer_13,
-    transformer_14,
-    transformer_15,
-    transformer_16,
-    transformer_17
+    test_transformer_1,
+    test_transformer_2,
+    test_transformer_3,
+    test_transformer_4,
+    test_transformer_5,
+    test_transformer_6,
+    test_transformer_7,
+    test_transformer_8,
+    test_transformer_9,
+    test_transformer_10,
+    test_transformer_11,
+    test_transformer_12,
+    test_transformer_13,
+    test_transformer_14,
+    test_transformer_15,
+    test_transformer_16,
+    test_transformer_17
 ]
 
 disabled_gdaltest_list = [
-    transformer_11
+    test_transformer_11
 ]
 
 

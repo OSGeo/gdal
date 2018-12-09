@@ -45,7 +45,7 @@ import gdaltest
 # Verify real part extraction from a complex dataset.
 
 
-def pixfun_real_c():
+def test_pixfun_real_c():
 
     if not numpy_available:
         return 'skip'
@@ -73,7 +73,7 @@ def pixfun_real_c():
 ###############################################################################
 # Verify real part extraction from a complex dataset.
 
-def pixfun_real_r():
+def test_pixfun_real_r():
 
     if not numpy_available:
         return 'skip'
@@ -101,7 +101,7 @@ def pixfun_real_r():
 ###############################################################################
 # Verify imaginary part extraction from a complex dataset.
 
-def pixfun_imag_c():
+def test_pixfun_imag_c():
 
     if not numpy_available:
         return 'skip'
@@ -139,7 +139,7 @@ def pixfun_imag_c():
 ###############################################################################
 # Verify imaginary part extraction from a real dataset.
 
-def pixfun_imag_r():
+def test_pixfun_imag_r():
 
     if not numpy_available:
         return 'skip'
@@ -160,7 +160,7 @@ def pixfun_imag_r():
 ###############################################################################
 # Verify imaginary part extraction from a real dataset.
 
-def pixfun_complex():
+def test_pixfun_complex():
 
     if not numpy_available:
         return 'skip'
@@ -188,7 +188,7 @@ def pixfun_complex():
 ###############################################################################
 # Verify modulus extraction from a complex (float) dataset.
 
-def pixfun_mod_c():
+def test_pixfun_mod_c():
 
     if not numpy_available:
         return 'skip'
@@ -216,7 +216,7 @@ def pixfun_mod_c():
 ###############################################################################
 # Verify modulus extraction from a real (integer type) dataset.
 
-def pixfun_mod_r():
+def test_pixfun_mod_r():
 
     if not numpy_available:
         return 'skip'
@@ -244,7 +244,7 @@ def pixfun_mod_r():
 ###############################################################################
 # Verify phase extraction from a complex dataset.
 
-def pixfun_phase_c():
+def test_pixfun_phase_c():
 
     if not numpy_available:
         return 'skip'
@@ -274,7 +274,7 @@ def pixfun_phase_c():
 ###############################################################################
 # Verify phase extraction from a real dataset.
 
-def pixfun_phase_r():
+def test_pixfun_phase_r():
 
     if not numpy_available:
         return 'skip'
@@ -302,7 +302,7 @@ def pixfun_phase_r():
 ###############################################################################
 # Verify cmplex conjugare computation on a complex dataset.
 
-def pixfun_conj_c():
+def test_pixfun_conj_c():
 
     if not numpy_available:
         return 'skip'
@@ -330,7 +330,7 @@ def pixfun_conj_c():
 ###############################################################################
 # Verify cmplex conjugare computation on a real dataset.
 
-def pixfun_conj_r():
+def test_pixfun_conj_r():
 
     if not numpy_available:
         return 'skip'
@@ -358,7 +358,7 @@ def pixfun_conj_r():
 ###############################################################################
 # Verify the sum of 3 (real) datasets.
 
-def pixfun_sum_r():
+def test_pixfun_sum_r():
 
     if not numpy_available:
         return 'skip'
@@ -389,7 +389,7 @@ def pixfun_sum_r():
 ###############################################################################
 # Verify the sum of 3 (two complex and one real) datasets.
 
-def pixfun_sum_c():
+def test_pixfun_sum_c():
 
     if not numpy_available:
         return 'skip'
@@ -420,7 +420,7 @@ def pixfun_sum_c():
 ###############################################################################
 # Verify the difference of 2 (real) datasets.
 
-def pixfun_diff_r():
+def test_pixfun_diff_r():
 
     if not numpy_available:
         return 'skip'
@@ -455,7 +455,7 @@ def pixfun_diff_r():
 ###############################################################################
 # Verify the difference of 2 (complex) datasets.
 
-def pixfun_diff_c():
+def test_pixfun_diff_c():
 
     if not numpy_available:
         return 'skip'
@@ -490,7 +490,7 @@ def pixfun_diff_c():
 ###############################################################################
 # Verify the product of 3 (real) datasets.
 
-def pixfun_mul_r():
+def test_pixfun_mul_r():
 
     if not numpy_available:
         return 'skip'
@@ -521,7 +521,7 @@ def pixfun_mul_r():
 ###############################################################################
 # Verify the product of 2 (complex) datasets.
 
-def pixfun_mul_c():
+def test_pixfun_mul_c():
 
     if not numpy_available:
         return 'skip'
@@ -549,7 +549,7 @@ def pixfun_mul_c():
 ###############################################################################
 # Verify the product with complex conjugate of a complex datasets.
 
-def pixfun_cmul_c():
+def test_pixfun_cmul_c():
 
     if not numpy_available:
         return 'skip'
@@ -577,7 +577,7 @@ def pixfun_cmul_c():
 ###############################################################################
 # Verify the product with complex conjugate of two real datasets.
 
-def pixfun_cmul_r():
+def test_pixfun_cmul_r():
 
     if not numpy_available:
         return 'skip'
@@ -614,7 +614,7 @@ def pixfun_cmul_r():
 ###############################################################################
 # Verify computation of the inverse of a real datasets.
 
-def pixfun_inv_r():
+def test_pixfun_inv_r():
 
     if not numpy_available:
         return 'skip'
@@ -643,7 +643,7 @@ def pixfun_inv_r():
 ###############################################################################
 # Verify computation of the inverse of a complex datasets.
 
-def pixfun_inv_c():
+def test_pixfun_inv_c():
 
     if not numpy_available:
         return 'skip'
@@ -675,7 +675,7 @@ def pixfun_inv_c():
 ###############################################################################
 # Verify intensity computation of a complex dataset.
 
-def pixfun_intensity_c():
+def test_pixfun_intensity_c():
 
     if not numpy_available:
         return 'skip'
@@ -703,7 +703,7 @@ def pixfun_intensity_c():
 ###############################################################################
 # Verify intensity computation of real dataset.
 
-def pixfun_intensity_r():
+def test_pixfun_intensity_r():
 
     if not numpy_available:
         return 'skip'
@@ -731,7 +731,7 @@ def pixfun_intensity_r():
 ###############################################################################
 # Verify square root computation.
 
-def pixfun_sqrt():
+def test_pixfun_sqrt():
 
     if not numpy_available:
         return 'skip'
@@ -759,7 +759,7 @@ def pixfun_sqrt():
 ###############################################################################
 # Verify logarithm computation of real dataset.
 
-def pixfun_log10_r():
+def test_pixfun_log10_r():
 
     if not numpy_available:
         return 'skip'
@@ -787,7 +787,7 @@ def pixfun_log10_r():
 ###############################################################################
 # Verify logarithm computation of imag dataset.
 
-def pixfun_log10_c():
+def test_pixfun_log10_c():
 
     if not numpy_available:
         return 'skip'
@@ -814,7 +814,7 @@ def pixfun_log10_c():
 ###############################################################################
 # Verify dB computation of real dataset.
 
-def pixfun_dB_r():
+def test_pixfun_dB_r():
 
     if not numpy_available:
         return 'skip'
@@ -842,7 +842,7 @@ def pixfun_dB_r():
 ###############################################################################
 # Verify dB computation of imag dataset.
 
-def pixfun_dB_c():
+def test_pixfun_dB_c():
 
     if not numpy_available:
         return 'skip'
@@ -869,7 +869,7 @@ def pixfun_dB_c():
 ###############################################################################
 # Verify conversion from dB to amplitude.
 
-def pixfun_dB2amp():
+def test_pixfun_dB2amp():
 
     if not numpy_available:
         return 'skip'
@@ -898,7 +898,7 @@ def pixfun_dB2amp():
 ###############################################################################
 # Verify conversion from dB to power.
 
-def pixfun_dB2pow():
+def test_pixfun_dB2pow():
 
     if not numpy_available:
         return 'skip'
@@ -927,36 +927,36 @@ def pixfun_dB2pow():
 ###############################################################################
 
 gdaltest_list = [
-    pixfun_real_c,
-    pixfun_real_r,
-    pixfun_imag_c,
-    pixfun_imag_r,
-    pixfun_complex,
-    pixfun_mod_c,
-    pixfun_mod_r,
-    pixfun_phase_c,
-    pixfun_phase_r,
-    pixfun_conj_c,
-    pixfun_conj_r,
-    pixfun_sum_r,
-    pixfun_sum_c,
-    pixfun_diff_r,
-    pixfun_diff_c,
-    pixfun_mul_r,
-    pixfun_mul_c,
-    pixfun_cmul_c,
-    pixfun_cmul_r,
-    pixfun_inv_r,
-    pixfun_inv_c,
-    pixfun_intensity_c,
-    pixfun_intensity_r,
-    pixfun_sqrt,
-    pixfun_log10_r,
-    pixfun_log10_c,
-    pixfun_dB_r,
-    pixfun_dB_c,
-    pixfun_dB2amp,
-    pixfun_dB2pow,
+    test_pixfun_real_c,
+    test_pixfun_real_r,
+    test_pixfun_imag_c,
+    test_pixfun_imag_r,
+    test_pixfun_complex,
+    test_pixfun_mod_c,
+    test_pixfun_mod_r,
+    test_pixfun_phase_c,
+    test_pixfun_phase_r,
+    test_pixfun_conj_c,
+    test_pixfun_conj_r,
+    test_pixfun_sum_r,
+    test_pixfun_sum_c,
+    test_pixfun_diff_r,
+    test_pixfun_diff_c,
+    test_pixfun_mul_r,
+    test_pixfun_mul_c,
+    test_pixfun_cmul_c,
+    test_pixfun_cmul_r,
+    test_pixfun_inv_r,
+    test_pixfun_inv_c,
+    test_pixfun_intensity_c,
+    test_pixfun_intensity_r,
+    test_pixfun_sqrt,
+    test_pixfun_log10_r,
+    test_pixfun_log10_c,
+    test_pixfun_dB_r,
+    test_pixfun_dB_c,
+    test_pixfun_dB2amp,
+    test_pixfun_dB2pow,
 ]
 
 

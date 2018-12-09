@@ -41,7 +41,7 @@ import webserver
 #
 
 
-def ogr_wfs3_init():
+def test_ogr_wfs3_init():
 
     gdaltest.wfs3_drv = ogr.GetDriverByName('WFS3')
     if gdaltest.wfs3_drv is None:
@@ -57,7 +57,7 @@ def ogr_wfs3_init():
 ###############################################################################
 
 
-def ogr_wfs3_errors():
+def test_ogr_wfs3_errors():
     if gdaltest.wfs3_drv is None:
         return 'skip'
 
@@ -152,7 +152,7 @@ def ogr_wfs3_errors():
 ###############################################################################
 
 
-def ogr_wfs3_empty_layer():
+def test_ogr_wfs3_empty_layer():
     if gdaltest.wfs3_drv is None:
         return 'skip'
 
@@ -190,7 +190,7 @@ def ogr_wfs3_empty_layer():
 ###############################################################################
 
 
-def ogr_wfs3_fc_links_next_geojson():
+def test_ogr_wfs3_fc_links_next_geojson():
     if gdaltest.wfs3_drv is None:
         return 'skip'
 
@@ -266,7 +266,7 @@ def ogr_wfs3_fc_links_next_geojson():
 ###############################################################################
 
 
-def ogr_wfs3_fc_links_next_headers():
+def test_ogr_wfs3_fc_links_next_headers():
     if gdaltest.wfs3_drv is None:
         return 'skip'
 
@@ -341,7 +341,7 @@ def ogr_wfs3_fc_links_next_headers():
 ###############################################################################
 
 
-def ogr_wfs3_spatial_filter():
+def test_ogr_wfs3_spatial_filter():
     if gdaltest.wfs3_drv is None:
         return 'skip'
 
@@ -425,7 +425,7 @@ def ogr_wfs3_spatial_filter():
 ###############################################################################
 
 
-def ogr_wfs3_get_feature_count():
+def test_ogr_wfs3_get_feature_count():
     if gdaltest.wfs3_drv is None:
         return 'skip'
 
@@ -495,7 +495,7 @@ def ogr_wfs3_get_feature_count():
 ###############################################################################
 
 
-def ogr_wfs3_attribute_filter():
+def test_ogr_wfs3_attribute_filter():
     if gdaltest.wfs3_drv is None:
         return 'skip'
 
@@ -620,7 +620,7 @@ def ogr_wfs3_attribute_filter():
 ###############################################################################
 
 
-def ogr_wfs3_cleanup():
+def test_ogr_wfs3_cleanup():
 
     if gdaltest.wfs3_drv is None:
         return 'skip'
@@ -632,15 +632,15 @@ def ogr_wfs3_cleanup():
 
 
 gdaltest_list = [
-    ogr_wfs3_init,
-    ogr_wfs3_errors,
-    ogr_wfs3_empty_layer,
-    ogr_wfs3_fc_links_next_geojson,
-    ogr_wfs3_fc_links_next_headers,
-    ogr_wfs3_spatial_filter,
-    ogr_wfs3_get_feature_count,
-    ogr_wfs3_attribute_filter,
-    ogr_wfs3_cleanup,
+    test_ogr_wfs3_init,
+    test_ogr_wfs3_errors,
+    test_ogr_wfs3_empty_layer,
+    test_ogr_wfs3_fc_links_next_geojson,
+    test_ogr_wfs3_fc_links_next_headers,
+    test_ogr_wfs3_spatial_filter,
+    test_ogr_wfs3_get_feature_count,
+    test_ogr_wfs3_attribute_filter,
+    test_ogr_wfs3_cleanup,
 ]
 
 if __name__ == '__main__':

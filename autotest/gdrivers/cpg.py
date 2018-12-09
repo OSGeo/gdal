@@ -37,14 +37,14 @@ import gdaltest
 # Test a fake CPG dataset
 
 
-def cpg_1():
+def test_cpg_1():
 
     tst = gdaltest.GDALTest('CPG', 'fakecpgSIRC.hdr', 1, 0)
     return tst.testOpen()
 
 
 gdaltest_list = [
-    cpg_1]
+    test_cpg_1]
 
 if __name__ == '__main__':
 

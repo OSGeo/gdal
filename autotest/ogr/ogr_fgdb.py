@@ -44,7 +44,7 @@ from osgeo import osr
 # Test if driver is available
 
 
-def ogr_fgdb_init():
+def test_ogr_fgdb_init():
 
     ogrtest.fgdb_drv = None
 
@@ -96,7 +96,7 @@ def ogr_fgdb_is_sdk_1_4_or_later():
 ###############################################################################
 # Write and read back various geometry types
 
-def ogr_fgdb_1():
+def test_ogr_fgdb_1():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -255,7 +255,7 @@ def ogr_fgdb_1():
 # Test DeleteField()
 
 
-def ogr_fgdb_DeleteField():
+def test_ogr_fgdb_DeleteField():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -331,7 +331,7 @@ def ogr_fgdb_DeleteField():
 # Run test_ogrsf
 
 
-def ogr_fgdb_2():
+def test_ogr_fgdb_2():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -351,7 +351,7 @@ def ogr_fgdb_2():
 # Run ogr2ogr
 
 
-def ogr_fgdb_3():
+def test_ogr_fgdb_3():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -388,7 +388,7 @@ def ogr_fgdb_3():
 # Test SQL support
 
 
-def ogr_fgdb_sql():
+def test_ogr_fgdb_sql():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -417,7 +417,7 @@ def ogr_fgdb_sql():
 # Test delete layer
 
 
-def ogr_fgdb_4():
+def test_ogr_fgdb_4():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -459,7 +459,7 @@ def ogr_fgdb_4():
 # Test DeleteDataSource()
 
 
-def ogr_fgdb_5():
+def test_ogr_fgdb_5():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -480,7 +480,7 @@ def ogr_fgdb_5():
 # Test adding a layer to an existing feature dataset
 
 
-def ogr_fgdb_6():
+def test_ogr_fgdb_6():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -503,7 +503,7 @@ def ogr_fgdb_6():
 # Test bulk loading (#4420)
 
 
-def ogr_fgdb_7():
+def test_ogr_fgdb_7():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -541,7 +541,7 @@ def ogr_fgdb_7():
 # Test field name laundering (#4458)
 
 
-def ogr_fgdb_8():
+def test_ogr_fgdb_8():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -580,7 +580,7 @@ def ogr_fgdb_8():
 # Test layer name laundering (#4466)
 
 
-def ogr_fgdb_9():
+def test_ogr_fgdb_9():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -628,7 +628,7 @@ def ogr_fgdb_9():
 # Test SRS support
 
 
-def ogr_fgdb_10():
+def test_ogr_fgdb_10():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -731,7 +731,7 @@ def ogr_fgdb_10():
 # Test all data types
 
 
-def ogr_fgdb_11():
+def test_ogr_fgdb_11():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -804,7 +804,7 @@ def ogr_fgdb_11():
 # Test failed Open()
 
 
-def ogr_fgdb_12():
+def test_ogr_fgdb_12():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -846,7 +846,7 @@ def ogr_fgdb_12():
 # Test failed CreateDataSource() and DeleteDataSource()
 
 
-def ogr_fgdb_13():
+def test_ogr_fgdb_13():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -896,7 +896,7 @@ def ogr_fgdb_13():
 # Test interleaved opening and closing of databases (#4270)
 
 
-def ogr_fgdb_14():
+def test_ogr_fgdb_14():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -918,7 +918,7 @@ def ogr_fgdb_14():
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
 
 
-def ogr_fgdb_15():
+def test_ogr_fgdb_15():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -946,7 +946,7 @@ def ogr_fgdb_15():
 # Test fix for #5674
 
 
-def ogr_fgdb_16():
+def test_ogr_fgdb_16():
     if ogrtest.fgdb_drv is None or ogrtest.openfilegdb_drv is None:
         return 'skip'
 
@@ -982,7 +982,7 @@ def ogr_fgdb_16():
 # Test not nullable fields
 
 
-def ogr_fgdb_17():
+def test_ogr_fgdb_17():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -1058,7 +1058,7 @@ def ogr_fgdb_17():
 # Test default values
 
 
-def ogr_fgdb_18():
+def test_ogr_fgdb_18():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -1173,7 +1173,7 @@ def ogr_fgdb_19_open_update(filename):
     return (bPerLayerCopyingForTransaction, ds)
 
 
-def ogr_fgdb_19():
+def test_ogr_fgdb_19():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -1846,7 +1846,7 @@ def ogr_fgdb_19():
 # this was what was tested in previous step)
 
 
-def ogr_fgdb_19bis():
+def test_ogr_fgdb_19bis():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -1860,7 +1860,7 @@ def ogr_fgdb_19bis():
         return 'skip'
 
     gdal.SetConfigOption('FGDB_PER_LAYER_COPYING_TRANSACTION', 'FALSE')
-    ret = ogr_fgdb_19()
+    ret = test_ogr_fgdb_19()
     gdal.SetConfigOption('FGDB_PER_LAYER_COPYING_TRANSACTION', None)
     return ret
 
@@ -1868,7 +1868,7 @@ def ogr_fgdb_19bis():
 # Test CreateFeature() with user defined FID
 
 
-def ogr_fgdb_20():
+def test_ogr_fgdb_20():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -2384,7 +2384,7 @@ def ogr_fgdb_20():
 # Test M support
 
 
-def ogr_fgdb_21():
+def test_ogr_fgdb_21():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -2473,7 +2473,7 @@ def ogr_fgdb_21():
 # Read curves
 
 
-def ogr_fgdb_22():
+def test_ogr_fgdb_22():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -2519,7 +2519,7 @@ def ogr_fgdb_22():
 # Test opening '.'
 
 
-def ogr_fgdb_23():
+def test_ogr_fgdb_23():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -2537,7 +2537,7 @@ def ogr_fgdb_23():
 # one of the starting point (#7017)
 
 
-def ogr_fgdb_24():
+def test_ogr_fgdb_24():
 
     ds = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb')
     lyr = ds.GetLayer(0)
@@ -2569,7 +2569,7 @@ def ogr_fgdb_24():
 # Test selecting FID column with OGRSQL
 
 
-def ogr_fgdb_25():
+def test_ogr_fgdb_25():
 
     ds = ogr.Open('data/curves.gdb')
     sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
@@ -2601,7 +2601,7 @@ def ogr_fgdb_25():
 # Cleanup
 
 
-def ogr_fgdb_cleanup():
+def test_ogr_fgdb_cleanup():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
@@ -2633,42 +2633,42 @@ def ogr_fgdb_cleanup():
 
 
 gdaltest_list = [
-    ogr_fgdb_init,
-    ogr_fgdb_1,
-    ogr_fgdb_DeleteField,
-    ogr_fgdb_2,
-    ogr_fgdb_3,
-    ogr_fgdb_sql,
-    ogr_fgdb_4,
-    ogr_fgdb_5,
-    ogr_fgdb_6,
-    ogr_fgdb_7,
-    ogr_fgdb_8,
-    ogr_fgdb_9,
-    ogr_fgdb_10,
-    ogr_fgdb_11,
-    ogr_fgdb_12,
-    ogr_fgdb_13,
-    ogr_fgdb_14,
-    ogr_fgdb_15,
-    ogr_fgdb_16,
-    ogr_fgdb_17,
-    ogr_fgdb_18,
-    ogr_fgdb_19,
-    ogr_fgdb_19bis,
-    ogr_fgdb_20,
-    ogr_fgdb_21,
-    ogr_fgdb_22,
-    ogr_fgdb_23,
-    ogr_fgdb_24,
-    ogr_fgdb_25,
-    ogr_fgdb_cleanup,
+    test_ogr_fgdb_init,
+    test_ogr_fgdb_1,
+    test_ogr_fgdb_DeleteField,
+    test_ogr_fgdb_2,
+    test_ogr_fgdb_3,
+    test_ogr_fgdb_sql,
+    test_ogr_fgdb_4,
+    test_ogr_fgdb_5,
+    test_ogr_fgdb_6,
+    test_ogr_fgdb_7,
+    test_ogr_fgdb_8,
+    test_ogr_fgdb_9,
+    test_ogr_fgdb_10,
+    test_ogr_fgdb_11,
+    test_ogr_fgdb_12,
+    test_ogr_fgdb_13,
+    test_ogr_fgdb_14,
+    test_ogr_fgdb_15,
+    test_ogr_fgdb_16,
+    test_ogr_fgdb_17,
+    test_ogr_fgdb_18,
+    test_ogr_fgdb_19,
+    test_ogr_fgdb_19bis,
+    test_ogr_fgdb_20,
+    test_ogr_fgdb_21,
+    test_ogr_fgdb_22,
+    test_ogr_fgdb_23,
+    test_ogr_fgdb_24,
+    test_ogr_fgdb_25,
+    test_ogr_fgdb_cleanup,
 ]
 
 disabled_gdaltest_list = [
-    ogr_fgdb_init,
-    ogr_fgdb_20,
-    ogr_fgdb_cleanup
+    test_ogr_fgdb_init,
+    test_ogr_fgdb_20,
+    test_ogr_fgdb_cleanup
 ]
 
 if __name__ == '__main__':

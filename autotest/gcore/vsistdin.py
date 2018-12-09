@@ -40,7 +40,7 @@ import test_cli_utilities
 # Test on a small file
 
 
-def vsistdin_1():
+def test_vsistdin_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
@@ -71,7 +71,7 @@ def vsistdin_1():
 # Test on a bigger file (> 1 MB)
 
 
-def vsistdin_2():
+def test_vsistdin_2():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
@@ -96,7 +96,7 @@ def vsistdin_2():
 # Test opening /vsistdin/ in write mode (failure expected)
 
 
-def vsistdin_3():
+def test_vsistdin_3():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     f = gdal.VSIFOpenL('/vsistdin/', 'wb')
@@ -110,7 +110,7 @@ def vsistdin_3():
 # Test fix for #6061
 
 
-def vsistdin_4():
+def test_vsistdin_4():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
@@ -144,7 +144,7 @@ def vsistdin_4():
     return 'success'
 
 
-gdaltest_list = [vsistdin_1, vsistdin_2, vsistdin_3, vsistdin_4]
+gdaltest_list = [test_vsistdin_1, test_vsistdin_2, test_vsistdin_3, test_vsistdin_4]
 
 
 if __name__ == '__main__':

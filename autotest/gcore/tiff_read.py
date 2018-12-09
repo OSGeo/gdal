@@ -83,7 +83,7 @@ def test_tiff_open(filename, band, checksum):
 # Test absolute/offset && index directory access
 
 
-def tiff_read_off():
+def test_tiff_read_off():
 
     # Test absolute/offset directory access.
     ds = gdal.Open('GTIFF_DIR:off:408:data/byte.tif')
@@ -158,7 +158,7 @@ def tiff_read_off():
 # Confirm we interpret bands as alpha when we should, and not when we
 # should not.
 
-def tiff_check_alpha():
+def test_tiff_check_alpha():
 
     # Grey + alpha
 
@@ -236,7 +236,7 @@ def tiff_check_alpha():
 ###############################################################################
 # Test reading a CMYK tiff as RGBA image
 
-def tiff_read_cmyk_rgba():
+def test_tiff_read_cmyk_rgba():
 
     ds = gdal.Open('data/rgbsmall_cmyk.tif')
 
@@ -265,7 +265,7 @@ def tiff_read_cmyk_rgba():
 # Test reading a CMYK tiff as a raw image
 
 
-def tiff_read_cmyk_raw():
+def test_tiff_read_cmyk_raw():
 
     ds = gdal.Open('GTIFF_RAW:data/rgbsmall_cmyk.tif')
 
@@ -284,7 +284,7 @@ def tiff_read_cmyk_raw():
 # Test reading a OJPEG image
 
 
-def tiff_read_ojpeg():
+def test_tiff_read_ojpeg():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
@@ -321,7 +321,7 @@ def tiff_read_ojpeg():
 # Read a .tif.gz file
 
 
-def tiff_read_gzip():
+def test_tiff_read_gzip():
 
     try:
         os.remove('data/byte.tif.gz.properties')
@@ -345,7 +345,7 @@ def tiff_read_gzip():
 # Read a .tif.zip file (with explicit filename)
 
 
-def tiff_read_zip_1():
+def test_tiff_read_zip_1():
 
     ds = gdal.Open('/vsizip/./data/byte.tif.zip/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -359,7 +359,7 @@ def tiff_read_zip_1():
 # Read a .tif.zip file (with implicit filename)
 
 
-def tiff_read_zip_2():
+def test_tiff_read_zip_2():
 
     ds = gdal.Open('/vsizip/./data/byte.tif.zip')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -373,7 +373,7 @@ def tiff_read_zip_2():
 # Read a .tif.zip file with a single file in a subdirectory (with explicit filename)
 
 
-def tiff_read_zip_3():
+def test_tiff_read_zip_3():
 
     ds = gdal.Open('/vsizip/./data/onefileinsubdir.zip/onefileinsubdir/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -387,7 +387,7 @@ def tiff_read_zip_3():
 # Read a .tif.zip file with a single file in a subdirectory(with implicit filename)
 
 
-def tiff_read_zip_4():
+def test_tiff_read_zip_4():
 
     ds = gdal.Open('/vsizip/./data/onefileinsubdir.zip')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -401,7 +401,7 @@ def tiff_read_zip_4():
 # Read a .tif.zip file with 2 files in a subdirectory
 
 
-def tiff_read_zip_5():
+def test_tiff_read_zip_5():
 
     ds = gdal.Open('/vsizip/./data/twofileinsubdir.zip/twofileinsubdir/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -415,7 +415,7 @@ def tiff_read_zip_5():
 # Read a .tar file (with explicit filename)
 
 
-def tiff_read_tar_1():
+def test_tiff_read_tar_1():
 
     ds = gdal.Open('/vsitar/./data/byte.tar/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -429,7 +429,7 @@ def tiff_read_tar_1():
 # Read a .tar file (with implicit filename)
 
 
-def tiff_read_tar_2():
+def test_tiff_read_tar_2():
 
     ds = gdal.Open('/vsitar/./data/byte.tar')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -443,7 +443,7 @@ def tiff_read_tar_2():
 # Read a .tgz file (with explicit filename)
 
 
-def tiff_read_tgz_1():
+def test_tiff_read_tgz_1():
 
     ds = gdal.Open('/vsitar/./data/byte.tgz/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -459,7 +459,7 @@ def tiff_read_tgz_1():
 # Read a .tgz file (with implicit filename)
 
 
-def tiff_read_tgz_2():
+def test_tiff_read_tgz_2():
 
     ds = gdal.Open('/vsitar/./data/byte.tgz')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -475,7 +475,7 @@ def tiff_read_tgz_2():
 # Check handling of non-degree angular units (#601)
 
 
-def tiff_grads():
+def test_tiff_grads():
 
     ds = gdal.Open('data/test_gf.tif')
     srs = ds.GetProjectionRef()
@@ -491,7 +491,7 @@ def tiff_grads():
 # Check Erdas Citation Parsing for coordinate system.
 
 
-def tiff_citation():
+def test_tiff_citation():
 
     build_info = gdal.VersionInfo('BUILD_INFO')
     if build_info.find('ESRI_BUILD=YES') == -1:
@@ -513,7 +513,7 @@ def tiff_citation():
 # Check that we can read linear projection parameters properly (#3901)
 
 
-def tiff_linearparmunits():
+def test_tiff_linearparmunits():
 
     # Test the file with the correct formulation.
 
@@ -560,7 +560,7 @@ def tiff_linearparmunits():
 # Check that the GTIFF_LINEAR_UNITS handling works properly (#3901)
 
 
-def tiff_linearparmunits2():
+def test_tiff_linearparmunits2():
 
     gdal.SetConfigOption('GTIFF_LINEAR_UNITS', 'BROKEN')
 
@@ -611,7 +611,7 @@ def tiff_linearparmunits2():
 # Test GTiffSplitBitmapBand to treat one row 1bit files as scanline blocks (#2622)
 
 
-def tiff_g4_split():
+def test_tiff_g4_split():
 
     if 'GetBlockSize' not in dir(gdal.Band):
         return 'skip'
@@ -636,7 +636,7 @@ def tiff_g4_split():
 # Test reading a tiff with multiple images in it
 
 
-def tiff_multi_images():
+def test_tiff_multi_images():
 
     # Implicitly get the content of the first image (backward compatibility).
     ds = gdal.Open('data/twoimages.tif')
@@ -673,7 +673,7 @@ def tiff_multi_images():
 # Test reading a tiff from a memory buffer (#2931)
 
 
-def tiff_vsimem():
+def test_tiff_vsimem():
 
     try:
         gdal.FileFromMemBuffer
@@ -714,7 +714,7 @@ def tiff_vsimem():
 # Test reading a tiff from inside a zip in a memory buffer !
 
 
-def tiff_vsizip_and_mem():
+def test_tiff_vsizip_and_mem():
 
     try:
         gdal.FileFromMemBuffer
@@ -740,7 +740,7 @@ def tiff_vsizip_and_mem():
 # Test reading a GeoTIFF with only ProjectedCSTypeGeoKey defined (ticket #3019)
 
 
-def tiff_ProjectedCSTypeGeoKey_only():
+def test_tiff_ProjectedCSTypeGeoKey_only():
 
     ds = gdal.Open('data/ticket3019.tif')
     if ds.GetProjectionRef().find('WGS 84 / UTM zone 31N') == -1:
@@ -754,7 +754,7 @@ def tiff_ProjectedCSTypeGeoKey_only():
 # Test reading a GeoTIFF with only GTModelTypeGeoKey defined
 
 
-def tiff_GTModelTypeGeoKey_only():
+def test_tiff_GTModelTypeGeoKey_only():
 
     ds = gdal.Open('data/GTModelTypeGeoKey_only.tif')
     if ds.GetProjectionRef().find('LOCAL_CS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["unretrievable - using WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT[,0.0174532925199433]],UNIT["unknown",1]]') != 0:
@@ -768,7 +768,7 @@ def tiff_GTModelTypeGeoKey_only():
 # Test reading a 12bit jpeg compressed geotiff.
 
 
-def tiff_12bitjpeg():
+def test_tiff_12bitjpeg():
 
     old_accum = gdal.GetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
@@ -813,7 +813,7 @@ def tiff_12bitjpeg():
 # Test that statistics for TIFF files are stored and correctly read from .aux.xml
 
 
-def tiff_read_stats_from_pam():
+def test_tiff_read_stats_from_pam():
 
     try:
         os.remove('data/byte.tif.aux.xml')
@@ -858,7 +858,7 @@ def tiff_read_stats_from_pam():
 # Test extracting georeferencing from a .TAB file
 
 
-def tiff_read_from_tab():
+def test_tiff_read_from_tab():
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_read_from_tab.tif', 1, 1)
     ds = None
@@ -910,7 +910,7 @@ Definition Table
 # Test reading PixelIsPoint file.
 
 
-def tiff_read_pixelispoint():
+def test_tiff_read_pixelispoint():
 
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'FALSE')
 
@@ -946,7 +946,7 @@ def tiff_read_pixelispoint():
 # Test reading a GeoTIFF file with a geomatrix in PixelIsPoint format.
 
 
-def tiff_read_geomatrix():
+def test_tiff_read_geomatrix():
 
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'FALSE')
 
@@ -982,7 +982,7 @@ def tiff_read_geomatrix():
 # Test that we don't crash when reading a TIFF with corrupted GeoTIFF tags
 
 
-def tiff_read_corrupted_gtiff():
+def test_tiff_read_corrupted_gtiff():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/corrupted_gtiff_tags.tif')
@@ -1002,7 +1002,7 @@ def tiff_read_corrupted_gtiff():
 # Test that we don't crash when reading a TIFF with corrupted GeoTIFF tags
 
 
-def tiff_read_tag_without_null_byte():
+def test_tiff_read_tag_without_null_byte():
 
     gdal.ErrorReset()
     oldval = gdal.GetConfigOption('CPL_DEBUG')
@@ -1020,7 +1020,7 @@ def tiff_read_tag_without_null_byte():
 ###############################################################################
 # Test the effect of the GTIFF_IGNORE_READ_ERRORS configuration option (#3994)
 
-def tiff_read_buggy_packbits():
+def test_tiff_read_buggy_packbits():
 
     old_val = gdal.GetConfigOption('GTIFF_IGNORE_READ_ERRORS')
     gdal.SetConfigOption('GTIFF_IGNORE_READ_ERRORS', None)
@@ -1051,7 +1051,7 @@ def tiff_read_buggy_packbits():
 ###############################################################################
 # Test reading a GeoEye _rpc.txt (#3639)
 
-def tiff_read_rpc_txt():
+def test_tiff_read_rpc_txt():
 
     shutil.copy('data/byte.tif', 'tmp/test.tif')
     shutil.copy('data/test_rpc.txt', 'tmp/test_rpc.txt')
@@ -1078,7 +1078,7 @@ def tiff_read_rpc_txt():
 #  http://geotiff.maptools.org/rpc_prop.html
 
 
-def tiff_read_rpc_tif():
+def test_tiff_read_rpc_tif():
 
     ds = gdal.Open('data/byte_rpc.tif')
     rpc_md = ds.GetMetadata('RPC')
@@ -1105,7 +1105,7 @@ def tiff_read_rpc_tif():
 # StripByteCounts (279) LONG (4) 1<1>
 
 
-def tiff_small():
+def test_tiff_small():
 
     content = '\x49\x49\x2A\x00\x08\x00\x00\x00\x04\x00\x00\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x11\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00\x00\x00\x01\x00\x00\x00'
 
@@ -1126,7 +1126,7 @@ def tiff_small():
 # Test that we can workaround a DoS with
 
 
-def tiff_dos_strip_chop():
+def test_tiff_dos_strip_chop():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/tiff_dos_strip_chop.tif')
@@ -1139,7 +1139,7 @@ def tiff_dos_strip_chop():
 # Test reading EXIF and GPS metadata
 
 
-def tiff_read_exif_and_gps():
+def test_tiff_read_exif_and_gps():
 
     ds = gdal.Open('data/exif_and_gps.tif')
     exif_md = ds.GetMetadata('EXIF')
@@ -1172,7 +1172,7 @@ def tiff_read_exif_and_gps():
 # Test reading a pixel interleaved RGBA JPEG-compressed TIFF
 
 
-def tiff_jpeg_rgba_pixel_interleaved():
+def test_tiff_jpeg_rgba_pixel_interleaved():
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
@@ -1202,7 +1202,7 @@ def tiff_jpeg_rgba_pixel_interleaved():
 # Test reading a band interleaved RGBA JPEG-compressed TIFF
 
 
-def tiff_jpeg_rgba_band_interleaved():
+def test_tiff_jpeg_rgba_band_interleaved():
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
@@ -1232,7 +1232,7 @@ def tiff_jpeg_rgba_band_interleaved():
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
 
-def tiff_read_online_1():
+def test_tiff_read_online_1():
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
@@ -1259,7 +1259,7 @@ def tiff_read_online_1():
 # support
 
 
-def tiff_read_online_2():
+def test_tiff_read_online_2():
 
     if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
@@ -1301,7 +1301,7 @@ def tiff_read_online_2():
 # Test reading a TIFF made of a single-strip that is more than 2GB (#5403)
 
 
-def tiff_read_huge4GB():
+def test_tiff_read_huge4GB():
 
     # Need libtiff 4.X anyway
     md = gdal.GetDriverByName('GTiff').GetMetadata()
@@ -1331,7 +1331,7 @@ def tiff_read_huge4GB():
 # Test reading a (small) BigTIFF. Tests GTiffCacheOffsetOrCount8()
 
 
-def tiff_read_bigtiff():
+def test_tiff_read_bigtiff():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
@@ -1350,7 +1350,7 @@ def tiff_read_bigtiff():
 # Test reading in TIFF metadata domain
 
 
-def tiff_read_tiff_metadata():
+def test_tiff_read_tiff_metadata():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
@@ -1393,7 +1393,7 @@ def tiff_read_tiff_metadata():
 # Test reading a JPEG-in-TIFF with tiles of irregular size (corrupted image)
 
 
-def tiff_read_irregular_tile_size_jpeg_in_tiff():
+def test_tiff_read_irregular_tile_size_jpeg_in_tiff():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
@@ -1423,7 +1423,7 @@ def tiff_read_irregular_tile_size_jpeg_in_tiff():
 # Test GTIFF_DIRECT_IO and GTIFF_VIRTUAL_MEM_IO optimizations
 
 
-def tiff_direct_and_virtual_mem_io():
+def test_tiff_direct_and_virtual_mem_io():
 
     # Test with pixel-interleaved and band-interleaved datasets
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_CInt16]:
@@ -1857,7 +1857,7 @@ def tiff_direct_and_virtual_mem_io():
 # Check read Digital Globe metadata IMD & RPB format
 
 
-def tiff_read_md1():
+def test_tiff_read_md1():
 
     try:
         os.remove('data/md_dg.tif.aux.xml')
@@ -1907,7 +1907,7 @@ def tiff_read_md1():
 # Check read Digital Globe metadata XML format
 
 
-def tiff_read_md2():
+def test_tiff_read_md2():
 
     try:
         os.remove('data/md_dg_2.tif.aux.xml')
@@ -1957,7 +1957,7 @@ def tiff_read_md2():
 # Check read GeoEye metadata format
 
 
-def tiff_read_md3():
+def test_tiff_read_md3():
 
     try:
         os.remove('data/md_ge_rgb_0010000.tif.aux.xml')
@@ -2007,7 +2007,7 @@ def tiff_read_md3():
 # Check read OrbView metadata format
 
 
-def tiff_read_md4():
+def test_tiff_read_md4():
 
     try:
         os.remove('data/md_ov.tif.aux.xml')
@@ -2057,7 +2057,7 @@ def tiff_read_md4():
 # Check read Resurs-DK1 metadata format
 
 
-def tiff_read_md5():
+def test_tiff_read_md5():
 
     try:
         os.remove('data/md_rdk1.tif.aux.xml')
@@ -2107,7 +2107,7 @@ def tiff_read_md5():
 # Check read Landsat metadata format
 
 
-def tiff_read_md6():
+def test_tiff_read_md6():
 
     try:
         os.remove('data/md_ls_b1.tif.aux.xml')
@@ -2157,7 +2157,7 @@ def tiff_read_md6():
 # Check read Spot metadata format
 
 
-def tiff_read_md7():
+def test_tiff_read_md7():
 
     try:
         os.remove('data/spot/md_spot.tif.aux.xml')
@@ -2207,7 +2207,7 @@ def tiff_read_md7():
 # Check read RapidEye metadata format
 
 
-def tiff_read_md8():
+def test_tiff_read_md8():
 
     try:
         os.remove('data/md_re.tif.aux.xml')
@@ -2257,7 +2257,7 @@ def tiff_read_md8():
 # Check read Alos metadata format
 
 
-def tiff_read_md9():
+def test_tiff_read_md9():
 
     try:
         os.remove('data/alos/IMG-md_alos.tif.aux.xml')
@@ -2304,7 +2304,7 @@ def tiff_read_md9():
 # Check read Eros metadata format
 
 
-def tiff_read_md10():
+def test_tiff_read_md10():
 
     try:
         os.remove('data/md_eros.tif.aux.xml')
@@ -2354,7 +2354,7 @@ def tiff_read_md10():
 # Check read Kompsat metadata format
 
 
-def tiff_read_md11():
+def test_tiff_read_md11():
 
     try:
         os.remove('data/md_kompsat.tif.aux.xml')
@@ -2404,7 +2404,7 @@ def tiff_read_md11():
 # Check read Dimap metadata format
 
 
-def tiff_read_md12():
+def test_tiff_read_md12():
 
     ds = gdal.Open('../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', gdal.GA_ReadOnly)
     filelist = ds.GetFileList()
@@ -2471,7 +2471,7 @@ def tiff_read_md12():
 # Test reading a TIFFTAG_GDAL_NODATA with empty text
 
 
-def tiff_read_empty_nodata_tag():
+def test_tiff_read_empty_nodata_tag():
 
     ds = gdal.Open('data/empty_nodata.tif')
     if ds.GetRasterBand(1).GetNoDataValue() is not None:
@@ -2486,7 +2486,7 @@ def tiff_read_empty_nodata_tag():
 # imagery and getting IMAGE_STRUCTURE metadata
 
 
-def tiff_read_strace_check():
+def test_tiff_read_strace_check():
 
     if not sys.platform.startswith('linux'):
         return 'skip'
@@ -2521,7 +2521,7 @@ def tiff_read_strace_check():
 # Test GDAL_READDIR_LIMIT_ON_OPEN
 
 
-def tiff_read_readdir_limit_on_open():
+def test_tiff_read_readdir_limit_on_open():
 
     gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', '1')
 
@@ -2540,7 +2540,7 @@ def tiff_read_readdir_limit_on_open():
 #
 
 
-def tiff_read_minisblack_as_rgba():
+def test_tiff_read_minisblack_as_rgba():
 
     if not gdaltest.supports_force_rgba:
         return 'skip'
@@ -2561,7 +2561,7 @@ def tiff_read_minisblack_as_rgba():
 #
 
 
-def tiff_read_colortable_as_rgba():
+def test_tiff_read_colortable_as_rgba():
 
     if not gdaltest.supports_force_rgba:
         return 'skip'
@@ -2582,7 +2582,7 @@ def tiff_read_colortable_as_rgba():
 #
 
 
-def tiff_read_logl_as_rgba():
+def test_tiff_read_logl_as_rgba():
 
     if not gdaltest.supports_force_rgba:
         return 'skip'
@@ -2604,7 +2604,7 @@ def tiff_read_logl_as_rgba():
 #
 
 
-def tiff_read_strip_separate_as_rgba():
+def test_tiff_read_strip_separate_as_rgba():
 
     if not gdaltest.supports_force_rgba:
         return 'skip'
@@ -2648,7 +2648,7 @@ def tiff_read_strip_separate_as_rgba():
 #
 
 
-def tiff_read_tiled_separate_as_rgba():
+def test_tiff_read_tiled_separate_as_rgba():
 
     if not gdaltest.supports_force_rgba:
         return 'skip'
@@ -2691,7 +2691,7 @@ def tiff_read_tiled_separate_as_rgba():
 #
 
 
-def tiff_read_scanline_more_than_2GB():
+def test_tiff_read_scanline_more_than_2GB():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/scanline_more_than_2GB.tif')
@@ -2704,7 +2704,7 @@ def tiff_read_scanline_more_than_2GB():
 # about it
 
 
-def tiff_read_wrong_number_extrasamples():
+def test_tiff_read_wrong_number_extrasamples():
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -2724,7 +2724,7 @@ def tiff_read_wrong_number_extrasamples():
 # Test that we can read a one-trip TIFF without StripByteCounts tag
 
 
-def tiff_read_one_strip_no_bytecount():
+def test_tiff_read_one_strip_no_bytecount():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/one_strip_nobytecount.tif')
@@ -2740,7 +2740,7 @@ def tiff_read_one_strip_no_bytecount():
 # Test GDAL_GEOREF_SOURCES
 
 
-def tiff_read_nogeoref():
+def test_tiff_read_nogeoref():
 
     tests = [(None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
@@ -2809,7 +2809,7 @@ def tiff_read_nogeoref():
 # Test GDAL_GEOREF_SOURCES
 
 
-def tiff_read_inconsistent_georef():
+def test_tiff_read_inconsistent_georef():
 
     tests = [(None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              (None, False, True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
@@ -2870,7 +2870,7 @@ def tiff_read_inconsistent_georef():
 # Test GDAL_GEOREF_SOURCES
 
 
-def tiff_read_gcp_internal_and_auxxml():
+def test_tiff_read_gcp_internal_and_auxxml():
 
     tests = [(None, True, 'LOCAL_CS["PAM"]', 1),
              (None, False, '4326', 2),
@@ -2931,7 +2931,7 @@ class myHandlerClass(object):
             self.msg = msg
 
 
-def tiff_read_aux():
+def test_tiff_read_aux():
 
     gdal.ErrorReset()
     ds = gdal.Open('data/f2r23.tif')
@@ -2946,7 +2946,7 @@ def tiff_read_aux():
     return 'success'
 
 
-def tiff_read_one_band_from_two_bands():
+def test_tiff_read_one_band_from_two_bands():
 
     gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands.tif', 'data/byte.tif', options='-b 1 -b 1')
     gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands_dst.tif', '/vsimem/tiff_read_one_band_from_two_bands.tif', options='-b 1')
@@ -2963,7 +2963,7 @@ def tiff_read_one_band_from_two_bands():
     return 'success'
 
 
-def tiff_read_jpeg_cloud_optimized():
+def test_tiff_read_jpeg_cloud_optimized():
 
     for i in range(4):
         ds = gdal.Open('data/byte_ovr_jpeg_tablesmode%d.tif' % i)
@@ -2985,7 +2985,7 @@ def tiff_read_jpeg_cloud_optimized():
 # error while jpeg-8 works fine
 
 
-def tiff_read_corrupted_jpeg_cloud_optimized():
+def test_tiff_read_corrupted_jpeg_cloud_optimized():
 
     ds = gdal.Open('data/byte_ovr_jpeg_tablesmode_not_correctly_set_on_ovr.tif')
     cs0 = ds.GetRasterBand(1).Checksum()
@@ -3009,7 +3009,7 @@ def tiff_read_corrupted_jpeg_cloud_optimized():
 # Test reading YCbCr images with LZW compression
 
 
-def tiff_read_ycbcr_lzw():
+def test_tiff_read_ycbcr_lzw():
 
     tests = [('ycbcr_11_lzw.tif', 13459, 12939, 12414),
              ('ycbcr_12_lzw.tif', 13565, 13105, 12660),
@@ -3043,7 +3043,7 @@ def tiff_read_ycbcr_lzw():
 # Test reading YCbCr images with nbits > 8
 
 
-def tiff_read_ycbcr_int12():
+def test_tiff_read_ycbcr_int12():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/int12_ycbcr_contig.tif')
@@ -3061,7 +3061,7 @@ def tiff_read_ycbcr_int12():
 # Test reading band unit from VERT_CS unit (#6675)
 
 
-def tiff_read_unit_from_srs():
+def test_tiff_read_unit_from_srs():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_read_unit_from_srs.tif', 1, 1)
     sr = osr.SpatialReference()
@@ -3085,7 +3085,7 @@ def tiff_read_unit_from_srs():
 # Test reading ArcGIS 9.3 .aux.xml
 
 
-def tiff_read_arcgis93_geodataxform_gcp():
+def test_tiff_read_arcgis93_geodataxform_gcp():
 
     ds = gdal.Open('data/arcgis93_geodataxform_gcp.tif')
     if ds.GetGCPProjection().find('26712') < 0:
@@ -3108,7 +3108,7 @@ def tiff_read_arcgis93_geodataxform_gcp():
 # Test reading file with block size > signed int 32 bit
 
 
-def tiff_read_block_width_above_32bit():
+def test_tiff_read_block_width_above_32bit():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/block_width_above_32bit.tif')
@@ -3121,7 +3121,7 @@ def tiff_read_block_width_above_32bit():
 # Test reading file with image size > signed int 32 bit
 
 
-def tiff_read_image_width_above_32bit():
+def test_tiff_read_image_width_above_32bit():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/image_width_above_32bit.tif')
@@ -3134,7 +3134,7 @@ def tiff_read_image_width_above_32bit():
 # Test reading file with image size > signed int 32 bit
 
 
-def tiff_read_second_image_width_above_32bit():
+def test_tiff_read_second_image_width_above_32bit():
 
     ds = gdal.Open('data/second_image_width_above_32bit.tif')
     with gdaltest.error_handler():
@@ -3154,7 +3154,7 @@ def tiff_read_second_image_width_above_32bit():
 # Test reading file with minimal number of warnings without warning
 
 
-def tiff_read_minimum_tiff_tags_no_warning():
+def test_tiff_read_minimum_tiff_tags_no_warning():
 
     gdal.ErrorReset()
     ds = gdal.Open('data/minimum_tiff_tags_no_warning.tif')
@@ -3172,7 +3172,7 @@ def tiff_read_minimum_tiff_tags_no_warning():
 # Test reading file with minimal number of warnings but warning
 
 
-def tiff_read_minimum_tiff_tags_with_warning():
+def test_tiff_read_minimum_tiff_tags_with_warning():
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -3217,7 +3217,7 @@ def check_libtiff_internal_or_at_least(expected_maj, expected_min, expected_micr
 ###############################################################################
 
 
-def tiff_read_unknown_compression():
+def test_tiff_read_unknown_compression():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/unknown_compression.tif')
@@ -3229,7 +3229,7 @@ def tiff_read_unknown_compression():
 ###############################################################################
 
 
-def tiff_read_leak_ZIPSetupDecode():
+def test_tiff_read_leak_ZIPSetupDecode():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3244,7 +3244,7 @@ def tiff_read_leak_ZIPSetupDecode():
 ###############################################################################
 
 
-def tiff_read_excessive_memory_TIFFFillStrip():
+def test_tiff_read_excessive_memory_TIFFFillStrip():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3259,7 +3259,7 @@ def tiff_read_excessive_memory_TIFFFillStrip():
 ###############################################################################
 
 
-def tiff_read_excessive_memory_TIFFFillStrip2():
+def test_tiff_read_excessive_memory_TIFFFillStrip2():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3273,7 +3273,7 @@ def tiff_read_excessive_memory_TIFFFillStrip2():
 ###############################################################################
 
 
-def tiff_read_excessive_memory_TIFFFillTile():
+def test_tiff_read_excessive_memory_TIFFFillTile():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3287,7 +3287,7 @@ def tiff_read_excessive_memory_TIFFFillTile():
 ###############################################################################
 
 
-def tiff_read_big_strip():
+def test_tiff_read_big_strip():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3307,7 +3307,7 @@ def tiff_read_big_strip():
 # (Potentially) test libtiff CHUNKY_STRIP_READ_SUPPORT
 
 
-def tiff_read_big_strip_chunky_way():
+def test_tiff_read_big_strip_chunky_way():
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 1000 2001  -co blockysize=2001 -r bilinear')
     ds = gdal.Open('/vsimem/test.tif')
@@ -3323,7 +3323,7 @@ def tiff_read_big_strip_chunky_way():
 ###############################################################################
 
 
-def tiff_read_big_tile():
+def test_tiff_read_big_tile():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3342,7 +3342,7 @@ def tiff_read_big_tile():
 ###############################################################################
 
 
-def tiff_read_huge_tile():
+def test_tiff_read_huge_tile():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/hugeblocksize.tif')
@@ -3354,7 +3354,7 @@ def tiff_read_huge_tile():
 ###############################################################################
 
 
-def tiff_read_huge_number_strips():
+def test_tiff_read_huge_number_strips():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':
@@ -3369,7 +3369,7 @@ def tiff_read_huge_number_strips():
 ###############################################################################
 
 
-def tiff_read_huge_implied_number_strips():
+def test_tiff_read_huge_implied_number_strips():
 
     if not check_libtiff_internal_or_at_least(4, 0, 10):
         return 'skip'
@@ -3382,7 +3382,7 @@ def tiff_read_huge_implied_number_strips():
 ###############################################################################
 
 
-def tiff_read_many_blocks():
+def test_tiff_read_many_blocks():
 
     # Runs super slow on some Windows configs
     if sys.platform == 'win32':
@@ -3405,7 +3405,7 @@ def tiff_read_many_blocks():
 ###############################################################################
 
 
-def tiff_read_many_blocks_truncated():
+def test_tiff_read_many_blocks_truncated():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':
@@ -3424,7 +3424,7 @@ def tiff_read_many_blocks_truncated():
 # Test reading  images with nbits > 32
 
 
-def tiff_read_uint33():
+def test_tiff_read_uint33():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/uint33.tif')
@@ -3442,7 +3442,7 @@ def tiff_read_uint33():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1545
 
 
-def tiff_read_corrupted_deflate_singlestrip():
+def test_tiff_read_corrupted_deflate_singlestrip():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3457,7 +3457,7 @@ def tiff_read_corrupted_deflate_singlestrip():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1563
 
 
-def tiff_read_packbits_not_enough_data():
+def test_tiff_read_packbits_not_enough_data():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3472,7 +3472,7 @@ def tiff_read_packbits_not_enough_data():
 # Test reading images with more than 2billion blocks for a single band
 
 
-def tiff_read_toomanyblocks():
+def test_tiff_read_toomanyblocks():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/toomanyblocks.tif')
@@ -3486,7 +3486,7 @@ def tiff_read_toomanyblocks():
 ###############################################################################
 # Test reading images with more than 2billion blocks for all bands
 
-def tiff_read_toomanyblocks_separate():
+def test_tiff_read_toomanyblocks_separate():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/toomanyblocks_separate.tif')
@@ -3501,7 +3501,7 @@ def tiff_read_toomanyblocks_separate():
 # tag is lesser than the number of strips
 
 
-def tiff_read_size_of_stripbytecount_lower_than_stripcount():
+def test_tiff_read_size_of_stripbytecount_lower_than_stripcount():
 
     ds = gdal.Open('data/size_of_stripbytecount_lower_than_stripcount.tif')
     # There are 3 strips but StripByteCounts has just two elements;
@@ -3530,7 +3530,7 @@ def tiff_read_size_of_stripbytecount_lower_than_stripcount():
 ###############################################################################
 # Test different datatypes for StripOffsets tag with little/big, classic/bigtiff
 
-def tiff_read_stripoffset_types():
+def test_tiff_read_stripoffset_types():
 
     tests = [
         ('data/classictiff_one_block_byte.tif', []),  # unsupported
@@ -3583,7 +3583,7 @@ def tiff_read_stripoffset_types():
 # http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
 
-def tiff_read_progressive_jpeg_denial_of_service():
+def test_tiff_read_progressive_jpeg_denial_of_service():
 
     if not check_libtiff_internal_or_at_least(4, 0, 9):
         return 'skip'
@@ -3617,7 +3617,7 @@ def tiff_read_progressive_jpeg_denial_of_service():
 ###############################################################################
 # Test reading old-style LZW
 
-def tiff_read_old_style_lzw():
+def test_tiff_read_old_style_lzw():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         return 'skip'
@@ -3637,7 +3637,7 @@ def tiff_read_old_style_lzw():
 # mmap emulation)
 
 
-def tiff_read_mmap_interface():
+def test_tiff_read_mmap_interface():
 
     src_ds = gdal.Open('data/byte.tif')
     tmpfile = '/vsimem/tiff_read_mmap_interface.tif'
@@ -3682,7 +3682,7 @@ def tiff_read_mmap_interface():
 # strip height, instead of just the number of lines needed to reach the
 # image height.
 
-def tiff_read_jpeg_too_big_last_stripe():
+def test_tiff_read_jpeg_too_big_last_stripe():
 
     if not check_libtiff_internal_or_at_least(4, 0, 9):
         return 'skip'
@@ -3709,7 +3709,7 @@ def tiff_read_jpeg_too_big_last_stripe():
 ###############################################################################
 # Test reading GeoTIFF file with negative ScaleY in GeoPixelScale tag
 
-def tiff_read_negative_scaley():
+def test_tiff_read_negative_scaley():
 
     ds = gdal.Open('data/negative_scaley.tif')
     with gdaltest.error_handler():
@@ -3735,7 +3735,7 @@ def tiff_read_negative_scaley():
 # Test ZSTD compression
 
 
-def tiff_read_zstd():
+def test_tiff_read_zstd():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
@@ -3748,7 +3748,7 @@ def tiff_read_zstd():
 # Test ZSTD compression
 
 
-def tiff_read_zstd_corrupted():
+def test_tiff_read_zstd_corrupted():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
@@ -3762,7 +3762,7 @@ def tiff_read_zstd_corrupted():
 # Test ZSTD compression
 
 
-def tiff_read_zstd_corrupted2():
+def test_tiff_read_zstd_corrupted2():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
@@ -3777,7 +3777,7 @@ def tiff_read_zstd_corrupted2():
 # Test WEBP compression
 
 
-def tiff_read_webp():
+def test_tiff_read_webp():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
@@ -3792,7 +3792,7 @@ def tiff_read_webp():
 # Test WEBP compression
 
 
-def tiff_read_webp_huge_single_strip():
+def test_tiff_read_webp_huge_single_strip():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
@@ -3806,7 +3806,7 @@ def tiff_read_webp_huge_single_strip():
 ###############################################################################
 
 
-def tiff_read_1bit_2bands():
+def test_tiff_read_1bit_2bands():
     ds = gdal.Open('data/1bit_2bands.tif')
     cs = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     if cs != (200, 824):
@@ -3818,7 +3818,7 @@ def tiff_read_1bit_2bands():
 # Test LERC compression
 
 
-def tiff_read_lerc():
+def test_tiff_read_lerc():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
@@ -3830,7 +3830,7 @@ def tiff_read_lerc():
 ###############################################################################
 
 
-def tiff_read_overview_of_external_mask():
+def test_tiff_read_overview_of_external_mask():
 
     filename = '/vsimem/tiff_read_overview_of_external_mask.tif'
     gdal.Translate(filename, 'data/byte.tif', options='-b 1 -mask 1')
@@ -3864,134 +3864,134 @@ def tiff_read_overview_of_external_mask():
 
 
 gdaltest_list = [
-    tiff_read_off,
-    tiff_check_alpha,
-    tiff_read_cmyk_rgba,
-    tiff_read_cmyk_raw,
-    tiff_read_ojpeg,
-    tiff_read_gzip,
-    tiff_read_zip_1,
-    tiff_read_zip_2,
-    tiff_read_zip_3,
-    tiff_read_zip_4,
-    tiff_read_zip_5,
-    tiff_read_tar_1,
-    tiff_read_tar_2,
-    tiff_read_tgz_1,
-    tiff_read_tgz_2,
-    tiff_grads,
-    tiff_citation,
-    tiff_linearparmunits,
-    tiff_linearparmunits2,
-    tiff_g4_split,
-    tiff_multi_images,
-    tiff_vsimem,
-    tiff_vsizip_and_mem,
-    tiff_ProjectedCSTypeGeoKey_only,
-    tiff_GTModelTypeGeoKey_only,
-    tiff_12bitjpeg,
-    tiff_read_stats_from_pam,
-    tiff_read_from_tab,
-    tiff_read_pixelispoint,
-    tiff_read_geomatrix,
-    tiff_read_corrupted_gtiff,
-    tiff_read_tag_without_null_byte,
-    tiff_read_buggy_packbits,
-    tiff_read_rpc_txt,
-    tiff_read_rpc_tif,
-    tiff_small,
-    tiff_dos_strip_chop,
-    tiff_read_exif_and_gps,
-    tiff_jpeg_rgba_pixel_interleaved,
-    tiff_jpeg_rgba_band_interleaved,
-    tiff_read_huge4GB,
-    tiff_read_bigtiff,
-    tiff_read_tiff_metadata,
-    tiff_read_irregular_tile_size_jpeg_in_tiff,
-    tiff_direct_and_virtual_mem_io,
-    tiff_read_empty_nodata_tag,
-    tiff_read_strace_check,
-    tiff_read_readdir_limit_on_open,
-    tiff_read_minisblack_as_rgba,
-    tiff_read_colortable_as_rgba,
-    tiff_read_logl_as_rgba,
-    tiff_read_strip_separate_as_rgba,
-    tiff_read_tiled_separate_as_rgba,
-    tiff_read_scanline_more_than_2GB,
-    tiff_read_wrong_number_extrasamples,
-    tiff_read_one_strip_no_bytecount,
+    test_tiff_read_off,
+    test_tiff_check_alpha,
+    test_tiff_read_cmyk_rgba,
+    test_tiff_read_cmyk_raw,
+    test_tiff_read_ojpeg,
+    test_tiff_read_gzip,
+    test_tiff_read_zip_1,
+    test_tiff_read_zip_2,
+    test_tiff_read_zip_3,
+    test_tiff_read_zip_4,
+    test_tiff_read_zip_5,
+    test_tiff_read_tar_1,
+    test_tiff_read_tar_2,
+    test_tiff_read_tgz_1,
+    test_tiff_read_tgz_2,
+    test_tiff_grads,
+    test_tiff_citation,
+    test_tiff_linearparmunits,
+    test_tiff_linearparmunits2,
+    test_tiff_g4_split,
+    test_tiff_multi_images,
+    test_tiff_vsimem,
+    test_tiff_vsizip_and_mem,
+    test_tiff_ProjectedCSTypeGeoKey_only,
+    test_tiff_GTModelTypeGeoKey_only,
+    test_tiff_12bitjpeg,
+    test_tiff_read_stats_from_pam,
+    test_tiff_read_from_tab,
+    test_tiff_read_pixelispoint,
+    test_tiff_read_geomatrix,
+    test_tiff_read_corrupted_gtiff,
+    test_tiff_read_tag_without_null_byte,
+    test_tiff_read_buggy_packbits,
+    test_tiff_read_rpc_txt,
+    test_tiff_read_rpc_tif,
+    test_tiff_small,
+    test_tiff_dos_strip_chop,
+    test_tiff_read_exif_and_gps,
+    test_tiff_jpeg_rgba_pixel_interleaved,
+    test_tiff_jpeg_rgba_band_interleaved,
+    test_tiff_read_huge4GB,
+    test_tiff_read_bigtiff,
+    test_tiff_read_tiff_metadata,
+    test_tiff_read_irregular_tile_size_jpeg_in_tiff,
+    test_tiff_direct_and_virtual_mem_io,
+    test_tiff_read_empty_nodata_tag,
+    test_tiff_read_strace_check,
+    test_tiff_read_readdir_limit_on_open,
+    test_tiff_read_minisblack_as_rgba,
+    test_tiff_read_colortable_as_rgba,
+    test_tiff_read_logl_as_rgba,
+    test_tiff_read_strip_separate_as_rgba,
+    test_tiff_read_tiled_separate_as_rgba,
+    test_tiff_read_scanline_more_than_2GB,
+    test_tiff_read_wrong_number_extrasamples,
+    test_tiff_read_one_strip_no_bytecount,
 
-    tiff_read_md1,
-    tiff_read_md2,
-    tiff_read_md3,
-    tiff_read_md4,
-    tiff_read_md5,
-    tiff_read_md6,
-    tiff_read_md7,
-    tiff_read_md8,
-    tiff_read_md9,
-    tiff_read_md10,
-    tiff_read_md11,
-    tiff_read_md12,
+    test_tiff_read_md1,
+    test_tiff_read_md2,
+    test_tiff_read_md3,
+    test_tiff_read_md4,
+    test_tiff_read_md5,
+    test_tiff_read_md6,
+    test_tiff_read_md7,
+    test_tiff_read_md8,
+    test_tiff_read_md9,
+    test_tiff_read_md10,
+    test_tiff_read_md11,
+    test_tiff_read_md12,
 
-    tiff_read_nogeoref,
-    tiff_read_inconsistent_georef,
-    tiff_read_gcp_internal_and_auxxml,
+    test_tiff_read_nogeoref,
+    test_tiff_read_inconsistent_georef,
+    test_tiff_read_gcp_internal_and_auxxml,
 
-    tiff_read_aux,
+    test_tiff_read_aux,
 
-    tiff_read_one_band_from_two_bands,
+    test_tiff_read_one_band_from_two_bands,
 
-    tiff_read_jpeg_cloud_optimized,
-    tiff_read_corrupted_jpeg_cloud_optimized,
+    test_tiff_read_jpeg_cloud_optimized,
+    test_tiff_read_corrupted_jpeg_cloud_optimized,
 
-    tiff_read_ycbcr_lzw,
-    tiff_read_ycbcr_int12,
+    test_tiff_read_ycbcr_lzw,
+    test_tiff_read_ycbcr_int12,
 
-    tiff_read_unit_from_srs,
-    tiff_read_arcgis93_geodataxform_gcp,
-    tiff_read_block_width_above_32bit,
-    tiff_read_image_width_above_32bit,
-    tiff_read_second_image_width_above_32bit,
-    tiff_read_minimum_tiff_tags_no_warning,
-    tiff_read_minimum_tiff_tags_with_warning,
-    tiff_read_unknown_compression,
-    tiff_read_leak_ZIPSetupDecode,
-    tiff_read_excessive_memory_TIFFFillStrip,
-    tiff_read_excessive_memory_TIFFFillStrip2,
-    tiff_read_excessive_memory_TIFFFillTile,
-    tiff_read_big_strip,
-    tiff_read_big_strip_chunky_way,
-    tiff_read_big_tile,
-    tiff_read_huge_tile,
-    tiff_read_huge_number_strips,
-    tiff_read_huge_implied_number_strips,
-    tiff_read_many_blocks,
-    tiff_read_many_blocks_truncated,
-    tiff_read_uint33,
-    tiff_read_corrupted_deflate_singlestrip,
-    tiff_read_packbits_not_enough_data,
-    tiff_read_toomanyblocks,
-    tiff_read_toomanyblocks_separate,
-    tiff_read_size_of_stripbytecount_lower_than_stripcount,
-    tiff_read_stripoffset_types,
-    tiff_read_progressive_jpeg_denial_of_service,
-    tiff_read_old_style_lzw,
-    tiff_read_mmap_interface,
-    tiff_read_jpeg_too_big_last_stripe,
-    tiff_read_negative_scaley,
-    tiff_read_zstd,
-    tiff_read_zstd_corrupted,
-    tiff_read_zstd_corrupted2,
-    tiff_read_1bit_2bands,
-    tiff_read_lerc,
-    tiff_read_overview_of_external_mask,
+    test_tiff_read_unit_from_srs,
+    test_tiff_read_arcgis93_geodataxform_gcp,
+    test_tiff_read_block_width_above_32bit,
+    test_tiff_read_image_width_above_32bit,
+    test_tiff_read_second_image_width_above_32bit,
+    test_tiff_read_minimum_tiff_tags_no_warning,
+    test_tiff_read_minimum_tiff_tags_with_warning,
+    test_tiff_read_unknown_compression,
+    test_tiff_read_leak_ZIPSetupDecode,
+    test_tiff_read_excessive_memory_TIFFFillStrip,
+    test_tiff_read_excessive_memory_TIFFFillStrip2,
+    test_tiff_read_excessive_memory_TIFFFillTile,
+    test_tiff_read_big_strip,
+    test_tiff_read_big_strip_chunky_way,
+    test_tiff_read_big_tile,
+    test_tiff_read_huge_tile,
+    test_tiff_read_huge_number_strips,
+    test_tiff_read_huge_implied_number_strips,
+    test_tiff_read_many_blocks,
+    test_tiff_read_many_blocks_truncated,
+    test_tiff_read_uint33,
+    test_tiff_read_corrupted_deflate_singlestrip,
+    test_tiff_read_packbits_not_enough_data,
+    test_tiff_read_toomanyblocks,
+    test_tiff_read_toomanyblocks_separate,
+    test_tiff_read_size_of_stripbytecount_lower_than_stripcount,
+    test_tiff_read_stripoffset_types,
+    test_tiff_read_progressive_jpeg_denial_of_service,
+    test_tiff_read_old_style_lzw,
+    test_tiff_read_mmap_interface,
+    test_tiff_read_jpeg_too_big_last_stripe,
+    test_tiff_read_negative_scaley,
+    test_tiff_read_zstd,
+    test_tiff_read_zstd_corrupted,
+    test_tiff_read_zstd_corrupted2,
+    test_tiff_read_1bit_2bands,
+    test_tiff_read_lerc,
+    test_tiff_read_overview_of_external_mask,
 
-    tiff_read_online_1,
-    tiff_read_online_2,
+    test_tiff_read_online_1,
+    test_tiff_read_online_2,
 
-    tiff_read_webp,
-    tiff_read_webp_huge_single_strip,
+    test_tiff_read_webp,
+    test_tiff_read_webp_huge_single_strip,
 ]
 
 

@@ -39,7 +39,7 @@ import gdaltest
 # Get the rl2 driver
 
 
-def rl2_1():
+def test_rl2_1():
 
     gdaltest.rl2_drv = gdal.GetDriverByName('SQLite')
     if gdaltest.rl2_drv is None:
@@ -54,7 +54,7 @@ def rl2_1():
 # Test opening a rl2 DB gray level
 
 
-def rl2_2():
+def test_rl2_2():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -126,7 +126,7 @@ def rl2_2():
 # Test opening a rl2 DB gray level
 
 
-def rl2_3():
+def test_rl2_3():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -192,7 +192,7 @@ def rl2_3():
 # Test opening a rl2 DB paletted
 
 
-def rl2_4():
+def test_rl2_4():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -235,7 +235,7 @@ def rl2_4():
 # Test opening a rl2 DB with various data types
 
 
-def rl2_5():
+def test_rl2_5():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -281,7 +281,7 @@ def rl2_5():
 # Test CreateCopy() on a grayscale uint8
 
 
-def rl2_6():
+def test_rl2_6():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -293,7 +293,7 @@ def rl2_6():
 # Test CreateCopy() on a RGB
 
 
-def rl2_7():
+def test_rl2_7():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -305,7 +305,7 @@ def rl2_7():
 # Test CreateCopy() on a paletted dataset
 
 
-def rl2_8():
+def test_rl2_8():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -317,7 +317,7 @@ def rl2_8():
 # Test CreateCopy() on a DATAGRID uint16
 
 
-def rl2_9():
+def test_rl2_9():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -329,7 +329,7 @@ def rl2_9():
 # Test CreateCopy() on a DATAGRID int16
 
 
-def rl2_10():
+def test_rl2_10():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -341,7 +341,7 @@ def rl2_10():
 # Test CreateCopy() on a DATAGRID uint32
 
 
-def rl2_11():
+def test_rl2_11():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -353,7 +353,7 @@ def rl2_11():
 # Test CreateCopy() on a DATAGRID int32
 
 
-def rl2_12():
+def test_rl2_12():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -365,7 +365,7 @@ def rl2_12():
 # Test CreateCopy() on a DATAGRID float
 
 
-def rl2_13():
+def test_rl2_13():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -377,7 +377,7 @@ def rl2_13():
 # Test CreateCopy() on a DATAGRID double
 
 
-def rl2_14():
+def test_rl2_14():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -389,7 +389,7 @@ def rl2_14():
 # Test CreateCopy() on a 1 bit paletted
 
 
-def rl2_15():
+def test_rl2_15():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -401,7 +401,7 @@ def rl2_15():
 # Test CreateCopy() on a forced 1 bit
 
 
-def rl2_16():
+def test_rl2_16():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -413,7 +413,7 @@ def rl2_16():
 # Test CreateCopy() on a forced 2 bit
 
 
-def rl2_17():
+def test_rl2_17():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -425,7 +425,7 @@ def rl2_17():
 # Test CreateCopy() on a forced 4 bit
 
 
-def rl2_18():
+def test_rl2_18():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -437,7 +437,7 @@ def rl2_18():
 # Test CreateCopy() with forced monochrome
 
 
-def rl2_19():
+def test_rl2_19():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -450,7 +450,7 @@ def rl2_19():
 # Se https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=reference_table
 
 
-def rl2_20():
+def test_rl2_20():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -500,7 +500,7 @@ def rl2_20():
 # Test compression methods
 
 
-def rl2_21():
+def test_rl2_21():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -545,7 +545,7 @@ def rl2_21():
 # Test APPEND_SUBDATASET
 
 
-def rl2_22():
+def test_rl2_22():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -595,7 +595,7 @@ def rl2_22():
 # Test BuildOverviews
 
 
-def rl2_23():
+def test_rl2_23():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -635,7 +635,7 @@ def rl2_23():
 # Test opening a .rl2.sql file
 
 
-def rl2_24():
+def test_rl2_24():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -653,7 +653,7 @@ def rl2_24():
 # Test Create()
 
 
-def rl2_error_create():
+def test_rl2_error_create():
 
     if gdaltest.rl2_drv is None:
         return 'skip'
@@ -665,31 +665,31 @@ def rl2_error_create():
 
 
 gdaltest_list = [
-    rl2_1,
-    rl2_2,
-    rl2_3,
-    rl2_4,
-    rl2_5,
-    rl2_6,
-    rl2_7,
-    rl2_8,
-    rl2_9,
-    rl2_10,
-    rl2_11,
-    rl2_12,
-    rl2_13,
-    rl2_14,
-    rl2_15,
-    rl2_16,
-    rl2_17,
-    rl2_18,
-    rl2_19,
-    rl2_20,
-    rl2_21,
-    rl2_22,
-    rl2_23,
-    rl2_24,
-    rl2_error_create,
+    test_rl2_1,
+    test_rl2_2,
+    test_rl2_3,
+    test_rl2_4,
+    test_rl2_5,
+    test_rl2_6,
+    test_rl2_7,
+    test_rl2_8,
+    test_rl2_9,
+    test_rl2_10,
+    test_rl2_11,
+    test_rl2_12,
+    test_rl2_13,
+    test_rl2_14,
+    test_rl2_15,
+    test_rl2_16,
+    test_rl2_17,
+    test_rl2_18,
+    test_rl2_19,
+    test_rl2_20,
+    test_rl2_21,
+    test_rl2_22,
+    test_rl2_23,
+    test_rl2_24,
+    test_rl2_error_create,
 ]
 
 if __name__ == '__main__':

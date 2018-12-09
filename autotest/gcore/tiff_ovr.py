@@ -94,7 +94,7 @@ def tiff_ovr_check(src_ds):
 # later.  Build overviews on it.
 
 
-def tiff_ovr_1(both_endian):
+def test_tiff_ovr_1(both_endian):
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
 
@@ -130,7 +130,7 @@ def tiff_ovr_1(both_endian):
 ###############################################################################
 # Open file and verify some characteristics of the overviews.
 
-def tiff_ovr_2(both_endian):
+def test_tiff_ovr_2(both_endian):
 
     src_ds = gdal.Open('tmp/mfloat32.tif')
 
@@ -148,7 +148,7 @@ def tiff_ovr_2(both_endian):
 # Open target file in update mode, and create internal overviews.
 
 
-def tiff_ovr_3(both_endian):
+def test_tiff_ovr_3(both_endian):
 
     os.unlink('tmp/mfloat32.tif.ovr')
 
@@ -173,14 +173,14 @@ def tiff_ovr_3(both_endian):
 # Re-open target file and check overviews
 
 
-def tiff_ovr_3bis(both_endian):
-    return tiff_ovr_2(both_endian)
+def test_tiff_ovr_3bis(both_endian):
+    return test_tiff_ovr_2(both_endian)
 
 ###############################################################################
 # Test generation
 
 
-def tiff_ovr_4(both_endian):
+def test_tiff_ovr_4(both_endian):
 
     shutil.copyfile('data/oddsize_1bit2b.tif', 'tmp/ovr4.tif')
 
@@ -256,7 +256,7 @@ def tiff_ovr_4(both_endian):
 ###############################################################################
 # Test average overview generation with nodata.
 
-def tiff_ovr_5(both_endian):
+def test_tiff_ovr_5(both_endian):
 
     shutil.copyfile('data/nodata_byte.tif', 'tmp/ovr5.tif')
 
@@ -282,7 +282,7 @@ def tiff_ovr_5(both_endian):
 # Same as tiff_ovr_5 but with USE_RDD=YES to force external overview
 
 
-def tiff_ovr_6(both_endian):
+def test_tiff_ovr_6(both_endian):
 
     shutil.copyfile('data/nodata_byte.tif', 'tmp/ovr6.tif')
 
@@ -319,7 +319,7 @@ def tiff_ovr_6(both_endian):
 ###############################################################################
 # Check nearest resampling on a dataset with a raster band that has a color table
 
-def tiff_ovr_7(both_endian):
+def test_tiff_ovr_7(both_endian):
 
     shutil.copyfile('data/test_average_palette.tif', 'tmp/test_average_palette.tif')
 
@@ -349,7 +349,7 @@ def tiff_ovr_7(both_endian):
 # Check average resampling on a dataset with a raster band that has a color table
 
 
-def tiff_ovr_8(both_endian):
+def test_tiff_ovr_8(both_endian):
 
     shutil.copyfile('data/test_average_palette.tif', 'tmp/test_average_palette.tif')
 
@@ -381,7 +381,7 @@ def tiff_ovr_8(both_endian):
 # Will also check that pixel interleaving is automatically selected (#3064)
 
 
-def tiff_ovr_9(both_endian):
+def test_tiff_ovr_9(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -433,7 +433,7 @@ def tiff_ovr_9(both_endian):
 # Similar to tiff_ovr_9 but with internal overviews.
 
 
-def tiff_ovr_10(both_endian):
+def test_tiff_ovr_10(both_endian):
 
     src_ds = gdal.Open('data/rgbsmall.tif', gdal.GA_ReadOnly)
 
@@ -473,7 +473,7 @@ def tiff_ovr_10(both_endian):
 # Overview on a dataset with NODATA_VALUES
 
 
-def tiff_ovr_11(both_endian):
+def test_tiff_ovr_11(both_endian):
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
 
@@ -520,7 +520,7 @@ def tiff_ovr_11(both_endian):
 # code
 
 
-def tiff_ovr_12(both_endian):
+def test_tiff_ovr_12(both_endian):
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
 
@@ -566,7 +566,7 @@ def tiff_ovr_12(both_endian):
 ###############################################################################
 # Test gaussian resampling
 
-def tiff_ovr_13(both_endian):
+def test_tiff_ovr_13(both_endian):
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
 
@@ -604,7 +604,7 @@ def tiff_ovr_13(both_endian):
 # Check gauss resampling on a dataset with a raster band that has a color table
 
 
-def tiff_ovr_14(both_endian):
+def test_tiff_ovr_14(both_endian):
 
     shutil.copyfile('data/test_average_palette.tif', 'tmp/test_gauss_palette.tif')
 
@@ -633,7 +633,7 @@ def tiff_ovr_14(both_endian):
 # code
 
 
-def tiff_ovr_15(both_endian):
+def test_tiff_ovr_15(both_endian):
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
 
@@ -679,7 +679,7 @@ def tiff_ovr_15(both_endian):
 ###############################################################################
 # Test mode resampling on non-byte dataset
 
-def tiff_ovr_16(both_endian):
+def test_tiff_ovr_16(both_endian):
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
 
@@ -720,7 +720,7 @@ def tiff_ovr_16(both_endian):
 ###############################################################################
 # Test mode resampling on a byte dataset
 
-def tiff_ovr_17(both_endian):
+def test_tiff_ovr_17(both_endian):
 
     shutil.copyfile('data/byte.tif', 'tmp/ovr17.tif')
 
@@ -751,7 +751,7 @@ def tiff_ovr_17(both_endian):
 # Check mode resampling on a dataset with a raster band that has a color table
 
 
-def tiff_ovr_18(both_endian):
+def test_tiff_ovr_18(both_endian):
 
     shutil.copyfile('data/test_average_palette.tif', 'tmp/ovr18.tif')
 
@@ -781,7 +781,7 @@ def tiff_ovr_18(both_endian):
 # if BigTIFF is not supported (this is a sign of an older libtiff...)
 
 
-def tiff_ovr_19(both_endian):
+def test_tiff_ovr_19(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -819,7 +819,7 @@ def tiff_ovr_19(both_endian):
 ###############################################################################
 # Test BIGTIFF_OVERVIEW=YES option
 
-def tiff_ovr_20(both_endian):
+def test_tiff_ovr_20(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -857,7 +857,7 @@ def tiff_ovr_20(both_endian):
 ###############################################################################
 # Test BIGTIFF_OVERVIEW=IF_NEEDED option
 
-def tiff_ovr_21(both_endian):
+def test_tiff_ovr_21(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -895,7 +895,7 @@ def tiff_ovr_21(both_endian):
 # Test BIGTIFF_OVERVIEW=NO option when BigTIFF is really needed
 
 
-def tiff_ovr_22(both_endian):
+def test_tiff_ovr_22(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -930,7 +930,7 @@ def tiff_ovr_22(both_endian):
 # method for the overviews.
 
 
-def tiff_ovr_23(both_endian):
+def test_tiff_ovr_23(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -970,7 +970,7 @@ def tiff_ovr_23(both_endian):
 # Test BIGTIFF_OVERVIEW=IF_SAFER option
 
 
-def tiff_ovr_24(both_endian):
+def test_tiff_ovr_24(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -1011,7 +1011,7 @@ def tiff_ovr_24(both_endian):
 # band and actually flushed
 
 
-def tiff_ovr_25(both_endian):
+def test_tiff_ovr_25(both_endian):
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr25.tif', 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
@@ -1038,7 +1038,7 @@ def tiff_ovr_25(both_endian):
 # Test gdal.RegenerateOverview()
 
 
-def tiff_ovr_26(both_endian):
+def test_tiff_ovr_26(both_endian):
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr26.tif', 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
@@ -1061,7 +1061,7 @@ def tiff_ovr_26(both_endian):
 # Test gdal.RegenerateOverviews()
 
 
-def tiff_ovr_27(both_endian):
+def test_tiff_ovr_27(both_endian):
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr27.tif', 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
@@ -1090,7 +1090,7 @@ def tiff_ovr_27(both_endian):
 # Test cleaning overviews.
 
 
-def tiff_ovr_28(both_endian):
+def test_tiff_ovr_28(both_endian):
 
     ds = gdal.Open('tmp/ovr25.tif', gdal.GA_Update)
     if ds.BuildOverviews(overviewlist=[]) != 0:
@@ -1114,7 +1114,7 @@ def tiff_ovr_28(both_endian):
 # Test cleaning external overviews (ovr) on a non-TIFF format.
 
 
-def tiff_ovr_29(both_endian):
+def test_tiff_ovr_29(both_endian):
 
     src_ds = gdal.Open('data/byte.tif')
     png_ds = gdal.GetDriverByName('PNG').CreateCopy('tmp/ovr29.png', src_ds)
@@ -1162,7 +1162,7 @@ def tiff_ovr_29(both_endian):
 # Test fix for #2988.
 
 
-def tiff_ovr_30(both_endian):
+def test_tiff_ovr_30(both_endian):
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr30.tif', 20, 20, 1)
     ds.BuildOverviews(overviewlist=[2])
@@ -1192,7 +1192,7 @@ def tiff_ovr_30(both_endian):
 # Test fix for #3033
 
 
-def tiff_ovr_31(both_endian):
+def test_tiff_ovr_31(both_endian):
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr31.tif', 100, 100, 4)
     ds.GetRasterBand(1).Fill(255)
@@ -1213,7 +1213,7 @@ def tiff_ovr_31(both_endian):
 # Test Cubic sampling.
 
 
-def tiff_ovr_32(both_endian):
+def test_tiff_ovr_32(both_endian):
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -1372,7 +1372,7 @@ def tiff_ovr_32(both_endian):
 ###############################################################################
 # Test creation of overviews on a 1x1 dataset (fix for #3069)
 
-def tiff_ovr_33(both_endian):
+def test_tiff_ovr_33(both_endian):
 
     try:
         os.remove('tmp/ovr33.tif.ovr')
@@ -1393,7 +1393,7 @@ def tiff_ovr_33(both_endian):
 ###############################################################################
 # Confirm that overviews are used on a Band.RasterIO().
 
-def tiff_ovr_34(both_endian):
+def test_tiff_ovr_34(both_endian):
 
     ds_in = gdal.Open('data/byte.tif')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr34.tif', ds_in)
@@ -1419,7 +1419,7 @@ def tiff_ovr_34(both_endian):
 # Confirm that overviews are used on a Band.RasterIO().
 
 
-def tiff_ovr_35(both_endian):
+def test_tiff_ovr_35(both_endian):
 
     ds_in = gdal.Open('data/byte.tif')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr35.tif', ds_in)
@@ -1445,12 +1445,12 @@ def tiff_ovr_35(both_endian):
 # Confirm that overviews are used on a Band.RasterIO() when using BlockBasedRasterIO() (#3124)
 
 
-def tiff_ovr_36(both_endian):
+def test_tiff_ovr_36(both_endian):
 
     oldval = gdal.GetConfigOption('GDAL_FORCE_CACHING', 'NO')
     gdal.SetConfigOption('GDAL_FORCE_CACHING', 'YES')
 
-    ret = tiff_ovr_35(both_endian)
+    ret = test_tiff_ovr_35(both_endian)
 
     gdal.SetConfigOption('GDAL_FORCE_CACHING', oldval)
 
@@ -1460,7 +1460,7 @@ def tiff_ovr_36(both_endian):
 # Test PREDICTOR_OVERVIEW=2 option. (#3414)
 
 
-def tiff_ovr_37(both_endian):
+def test_tiff_ovr_37(both_endian):
 
     shutil.copy('../gdrivers/data/n43.dt0', 'tmp/ovr37.dt0')
 
@@ -1500,7 +1500,7 @@ def tiff_ovr_37(both_endian):
 # Test that the predictor flag gets well propagated to internal overviews
 
 
-def tiff_ovr_38(both_endian):
+def test_tiff_ovr_38(both_endian):
 
     # Skip with old libtiff (crash with 3.8.2)
     md = gdaltest.tiff_drv.GetMetadata()
@@ -1525,7 +1525,7 @@ def tiff_ovr_38(both_endian):
 # Test external overviews on all datatypes
 
 
-def tiff_ovr_39(both_endian):
+def test_tiff_ovr_39(both_endian):
 
     for datatype in [gdal.GDT_Byte,
                      gdal.GDT_Int16,
@@ -1577,7 +1577,7 @@ def tiff_ovr_39(both_endian):
 # Test external overviews on 1 bit datasets with AVERAGE_BIT2GRAYSCALE (similar to tiff_ovr_4)
 
 
-def tiff_ovr_40(both_endian):
+def test_tiff_ovr_40(both_endian):
 
     shutil.copyfile('data/oddsize_1bit2b.tif', 'tmp/ovr40.tif')
 
@@ -1653,7 +1653,7 @@ def tiff_ovr_40(both_endian):
 # Test external overviews on 1 bit datasets with NEAREST
 
 
-def tiff_ovr_41(both_endian):
+def test_tiff_ovr_41(both_endian):
 
     shutil.copyfile('data/oddsize_1bit2b.tif', 'tmp/ovr41.tif')
 
@@ -1681,7 +1681,7 @@ def tiff_ovr_41(both_endian):
 # Test external overviews on dataset with color table
 
 
-def tiff_ovr_42(both_endian):
+def test_tiff_ovr_42(both_endian):
 
     ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
 
@@ -1717,7 +1717,7 @@ def tiff_ovr_42(both_endian):
 # jpeg-in-tiff (#3539)
 
 
-def tiff_ovr_43(both_endian):
+def test_tiff_ovr_43(both_endian):
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
@@ -1781,7 +1781,7 @@ def tiff_ovr_43(both_endian):
 # option
 
 
-def tiff_ovr_44(both_endian):
+def test_tiff_ovr_44(both_endian):
 
     shutil.copyfile('data/byte.tif', 'tmp/ovr44.tif')
     gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
@@ -1813,7 +1813,7 @@ def tiff_ovr_44(both_endian):
 # Same as tiff_ovr_44, but with external overviews
 
 
-def tiff_ovr_45(both_endian):
+def test_tiff_ovr_45(both_endian):
 
     shutil.copyfile('data/byte.tif', 'tmp/ovr45.tif')
     gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
@@ -1845,7 +1845,7 @@ def tiff_ovr_45(both_endian):
 # Test overview on a dataset where width * height > 2 billion
 
 
-def tiff_ovr_46():
+def test_tiff_ovr_46():
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
@@ -1942,7 +1942,7 @@ def tiff_ovr_46():
 # Test workaround with libtiff 3.X when creating interleaved overviews
 
 
-def tiff_ovr_47(both_endian):
+def test_tiff_ovr_47(both_endian):
     mem_drv = gdal.GetDriverByName('MEM')
     mem_ds = mem_drv.Create('', 852, 549, 3)
 
@@ -1973,7 +1973,7 @@ def tiff_ovr_47(both_endian):
 # Test that we don't average 0's in alpha band
 
 
-def tiff_ovr_48(both_endian):
+def test_tiff_ovr_48(both_endian):
 
     shutil.copy('data/rgba_with_alpha_0_and_255.tif', 'tmp')
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif')
@@ -2009,7 +2009,7 @@ def tiff_ovr_48(both_endian):
 # Test possible stride computation issue in GDALRegenerateOverviewsMultiBand (#5653)
 
 
-def tiff_ovr_49(both_endian):
+def test_tiff_ovr_49(both_endian):
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_ovr_49.tif', 1023, 1023, 1)
     ds.GetRasterBand(1).Fill(0)
@@ -2036,7 +2036,7 @@ def tiff_ovr_49(both_endian):
 # Test overviews when X dimension is smaller than Y (#5794)
 
 
-def tiff_ovr_50(both_endian):
+def test_tiff_ovr_50(both_endian):
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_ovr_50.tif', 6, 8192, 3,
                                               options=['COMPRESS=DEFLATE'])
@@ -2053,7 +2053,7 @@ def tiff_ovr_50(both_endian):
 # Test average overview on a color palette with nodata values (#6371)
 
 
-def tiff_ovr_51():
+def test_tiff_ovr_51():
 
     src_ds = gdal.Open('data/stefan_full_rgba_pct32.png')
     if src_ds is None:
@@ -2078,7 +2078,7 @@ def tiff_ovr_51():
 # Test unsorted external overview building (#6617)
 
 
-def tiff_ovr_52():
+def test_tiff_ovr_52():
 
     src_ds = gdal.Open('data/byte.tif')
     if src_ds is None:
@@ -2141,7 +2141,7 @@ def tiff_ovr_52():
 # Test external overviews building in several steps
 
 
-def tiff_ovr_53():
+def test_tiff_ovr_53():
 
     src_ds = gdal.Open('data/byte.tif')
     if src_ds is None:
@@ -2208,7 +2208,7 @@ def tiff_ovr_53():
 # Test external overviews building in several steps with jpeg compression
 
 
-def tiff_ovr_54():
+def test_tiff_ovr_54():
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -2248,7 +2248,7 @@ def tiff_ovr_54():
 ###############################################################################
 
 
-def tiff_ovr_too_many_levels_contig():
+def test_tiff_ovr_too_many_levels_contig():
 
     src_ds = gdal.Open('data/byte.tif')
     tmpfilename = '/vsimem/tiff_ovr_too_many_levels_contig.tif'
@@ -2270,7 +2270,7 @@ def tiff_ovr_too_many_levels_contig():
 ###############################################################################
 
 
-def tiff_ovr_too_many_levels_separate():
+def test_tiff_ovr_too_many_levels_separate():
 
     src_ds = gdal.Open('data/separate_tiled.tif')
     tmpfilename = '/vsimem/tiff_ovr_too_many_levels_separate.tif'
@@ -2292,7 +2292,7 @@ def tiff_ovr_too_many_levels_separate():
 ###############################################################################
 
 
-def tiff_ovr_too_many_levels_external():
+def test_tiff_ovr_too_many_levels_external():
 
     src_ds = gdal.Open('data/byte.tif')
     tmpfilename = '/vsimem/tiff_ovr_too_many_levels_contig.tif'
@@ -2314,7 +2314,7 @@ def tiff_ovr_too_many_levels_external():
 ###############################################################################
 
 
-def tiff_ovr_average_multiband_vs_singleband():
+def test_tiff_ovr_average_multiband_vs_singleband():
 
     gdal.Translate('/vsimem/tiff_ovr_average_multiband_band.tif', 'data/reproduce_average_issue.tif', creationOptions=['INTERLEAVE=BAND'])
     gdal.Translate('/vsimem/tiff_ovr_average_multiband_pixel.tif', 'data/reproduce_average_issue.tif', creationOptions=['INTERLEAVE=PIXEL'])
@@ -2341,65 +2341,65 @@ def tiff_ovr_average_multiband_vs_singleband():
 
 
 gdaltest_list = [
-    tiff_ovr_1,
-    tiff_ovr_2,
-    tiff_ovr_3,
-    tiff_ovr_3bis,
-    tiff_ovr_4,
-    tiff_ovr_5,
-    tiff_ovr_6,
-    tiff_ovr_7,
-    tiff_ovr_8,
-    tiff_ovr_9,
-    tiff_ovr_10,
-    tiff_ovr_11,
-    tiff_ovr_12,
-    tiff_ovr_13,
-    tiff_ovr_14,
-    tiff_ovr_15,
-    tiff_ovr_16,
-    tiff_ovr_17,
-    tiff_ovr_18,
-    tiff_ovr_19,
-    tiff_ovr_20,
-    tiff_ovr_21,
-    tiff_ovr_22,
-    tiff_ovr_23,
-    tiff_ovr_24,
-    tiff_ovr_25,
-    tiff_ovr_26,
-    tiff_ovr_27,
-    tiff_ovr_28,
-    tiff_ovr_29,
-    tiff_ovr_30,
-    tiff_ovr_31,
-    tiff_ovr_32,
-    tiff_ovr_33,
-    tiff_ovr_34,
-    tiff_ovr_35,
-    tiff_ovr_36,
-    tiff_ovr_37,
-    tiff_ovr_38,
-    tiff_ovr_39,
-    tiff_ovr_40,
-    tiff_ovr_41,
-    tiff_ovr_42,
-    tiff_ovr_43,
-    tiff_ovr_44,
-    tiff_ovr_45,
-    tiff_ovr_46,
-    tiff_ovr_47,
-    tiff_ovr_48,
-    tiff_ovr_49,
-    tiff_ovr_50,
-    tiff_ovr_51,
-    tiff_ovr_52,
-    tiff_ovr_53,
-    tiff_ovr_54,
-    tiff_ovr_too_many_levels_contig,
-    tiff_ovr_too_many_levels_separate,
-    tiff_ovr_too_many_levels_external,
-    tiff_ovr_average_multiband_vs_singleband
+    test_tiff_ovr_1,
+    test_tiff_ovr_2,
+    test_tiff_ovr_3,
+    test_tiff_ovr_3bis,
+    test_tiff_ovr_4,
+    test_tiff_ovr_5,
+    test_tiff_ovr_6,
+    test_tiff_ovr_7,
+    test_tiff_ovr_8,
+    test_tiff_ovr_9,
+    test_tiff_ovr_10,
+    test_tiff_ovr_11,
+    test_tiff_ovr_12,
+    test_tiff_ovr_13,
+    test_tiff_ovr_14,
+    test_tiff_ovr_15,
+    test_tiff_ovr_16,
+    test_tiff_ovr_17,
+    test_tiff_ovr_18,
+    test_tiff_ovr_19,
+    test_tiff_ovr_20,
+    test_tiff_ovr_21,
+    test_tiff_ovr_22,
+    test_tiff_ovr_23,
+    test_tiff_ovr_24,
+    test_tiff_ovr_25,
+    test_tiff_ovr_26,
+    test_tiff_ovr_27,
+    test_tiff_ovr_28,
+    test_tiff_ovr_29,
+    test_tiff_ovr_30,
+    test_tiff_ovr_31,
+    test_tiff_ovr_32,
+    test_tiff_ovr_33,
+    test_tiff_ovr_34,
+    test_tiff_ovr_35,
+    test_tiff_ovr_36,
+    test_tiff_ovr_37,
+    test_tiff_ovr_38,
+    test_tiff_ovr_39,
+    test_tiff_ovr_40,
+    test_tiff_ovr_41,
+    test_tiff_ovr_42,
+    test_tiff_ovr_43,
+    test_tiff_ovr_44,
+    test_tiff_ovr_45,
+    test_tiff_ovr_46,
+    test_tiff_ovr_47,
+    test_tiff_ovr_48,
+    test_tiff_ovr_49,
+    test_tiff_ovr_50,
+    test_tiff_ovr_51,
+    test_tiff_ovr_52,
+    test_tiff_ovr_53,
+    test_tiff_ovr_54,
+    test_tiff_ovr_too_many_levels_contig,
+    test_tiff_ovr_too_many_levels_separate,
+    test_tiff_ovr_too_many_levels_external,
+    test_tiff_ovr_average_multiband_vs_singleband
 ]
 
 if __name__ == '__main__':

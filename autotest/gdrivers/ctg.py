@@ -38,7 +38,7 @@ import gdaltest
 # Test a fake CTG dataset
 
 
-def ctg_1():
+def test_ctg_1():
 
     tst = gdaltest.GDALTest('CTG', 'fake_grid_cell', 1, 21)
     expected_gt = [421000.0, 200.0, 0.0, 5094400.0, 0.0, -200.0]
@@ -84,7 +84,7 @@ def ctg_1():
 
 
 gdaltest_list = [
-    ctg_1]
+    test_ctg_1]
 
 if __name__ == '__main__':
 

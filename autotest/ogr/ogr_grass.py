@@ -38,7 +38,7 @@ import gdaltest
 ###############################################################################
 # Test if GRASS driver is present
 
-def ogr_grass_1():
+def test_ogr_grass_1():
 
     gdaltest.ogr_grass_drv = ogr.GetDriverByName('GRASS')
     if gdaltest.ogr_grass_drv is None:
@@ -50,7 +50,7 @@ def ogr_grass_1():
 # Read 'point' datasource
 
 
-def ogr_grass_2():
+def test_ogr_grass_2():
 
     if gdaltest.ogr_grass_drv is None:
         return 'skip'
@@ -80,8 +80,8 @@ def ogr_grass_2():
 
 
 gdaltest_list = [
-    ogr_grass_1,
-    ogr_grass_2
+    test_ogr_grass_1,
+    test_ogr_grass_2
 ]
 
 

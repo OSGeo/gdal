@@ -43,7 +43,7 @@ from osgeo import gdal
 #
 
 
-def ogr_libkml_datastore():
+def test_ogr_libkml_datastore():
 
     ogrtest.kml_ds = None
     ogrtest.have_read_libkml = 0
@@ -80,7 +80,7 @@ def ogr_libkml_datastore():
 #
 
 
-def ogr_libkml_attributes_1():
+def test_ogr_libkml_attributes_1():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -136,7 +136,7 @@ def ogr_libkml_attributes_1():
 #
 
 
-def ogr_libkml_attributes_2():
+def test_ogr_libkml_attributes_2():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -169,7 +169,7 @@ def ogr_libkml_attributes_2():
 #
 
 
-def ogr_libkml_attributes_3():
+def test_ogr_libkml_attributes_3():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -214,7 +214,7 @@ def ogr_libkml_attributes_3():
 #
 
 
-def ogr_libkml_attributes_4():
+def test_ogr_libkml_attributes_4():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -248,7 +248,7 @@ def ogr_libkml_attributes_4():
 #
 
 
-def ogr_libkml_point_read():
+def test_ogr_libkml_point_read():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -293,7 +293,7 @@ def ogr_libkml_point_read():
 #
 
 
-def ogr_libkml_linestring_read():
+def test_ogr_libkml_linestring_read():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -335,7 +335,7 @@ def ogr_libkml_linestring_read():
 #
 
 
-def ogr_libkml_polygon_read():
+def test_ogr_libkml_polygon_read():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -556,38 +556,38 @@ def ogr_libkml_check_write(filename):
 ###############################################################################
 
 
-def ogr_libkml_write_kml():
+def test_ogr_libkml_write_kml():
     return ogr_libkml_write('/vsimem/libkml.kml')
 
 
-def ogr_libkml_check_write_kml():
+def test_ogr_libkml_check_write_kml():
     return ogr_libkml_check_write('/vsimem/libkml.kml')
 
 
-def ogr_libkml_write_kmz():
+def test_ogr_libkml_write_kmz():
     return ogr_libkml_write('/vsimem/libkml.kmz')
 
 
-def ogr_libkml_check_write_kmz():
+def test_ogr_libkml_check_write_kmz():
     return ogr_libkml_check_write('/vsimem/libkml.kmz')
 
 
-def ogr_libkml_write_kmz_use_doc_off():
+def test_ogr_libkml_write_kmz_use_doc_off():
     gdal.SetConfigOption("LIBKML_USE_DOC.KML", "NO")
     ret = ogr_libkml_write('/vsimem/libkml_use_doc_off.kmz')
     gdal.SetConfigOption("LIBKML_USE_DOC.KML", None)
     return ret
 
 
-def ogr_libkml_check_write_kmz_use_doc_off():
+def test_ogr_libkml_check_write_kmz_use_doc_off():
     return ogr_libkml_check_write('/vsimem/libkml_use_doc_off.kmz')
 
 
-def ogr_libkml_write_dir():
+def test_ogr_libkml_write_dir():
     return ogr_libkml_write('/vsimem/libkmldir')
 
 
-def ogr_libkml_check_write_dir():
+def test_ogr_libkml_check_write_dir():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
@@ -603,7 +603,7 @@ def ogr_libkml_check_write_dir():
 #
 
 
-def ogr_libkml_xml_attributes():
+def test_ogr_libkml_xml_attributes():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -627,7 +627,7 @@ def ogr_libkml_xml_attributes():
 #
 
 
-def ogr_libkml_read_geometries():
+def test_ogr_libkml_read_geometries():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -647,7 +647,7 @@ def ogr_libkml_read_geometries():
 # Run test_ogrsf
 
 
-def ogr_libkml_test_ogrsf():
+def test_ogr_libkml_test_ogrsf():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -668,7 +668,7 @@ def ogr_libkml_test_ogrsf():
 # Test reading KML with only Placemark
 
 
-def ogr_libkml_read_placemark():
+def test_ogr_libkml_read_placemark():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -687,7 +687,7 @@ def ogr_libkml_read_placemark():
 # Test reading KML without any layer
 
 
-def ogr_libkml_read_empty():
+def test_ogr_libkml_read_empty():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -706,7 +706,7 @@ def ogr_libkml_read_empty():
 # Test reading KML with empty layers
 
 
-def ogr_libkml_read_emptylayers():
+def test_ogr_libkml_read_emptylayers():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -739,7 +739,7 @@ def ogr_libkml_read_emptylayers():
 # Test reading KML with empty layers without folder
 
 
-def ogr_libkml_read_emptylayers_without_folder():
+def test_ogr_libkml_read_emptylayers_without_folder():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -764,7 +764,7 @@ def ogr_libkml_read_emptylayers_without_folder():
 # Test reading KML with empty layers without_folder
 
 
-def ogr_libkml_read_schema():
+def test_ogr_libkml_read_schema():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -808,7 +808,7 @@ def ogr_libkml_read_schema():
 # <ExtendedData> doesn't use a <SchemaData> (test changeset r22127)
 
 
-def ogr_libkml_extended_data_without_schema_data():
+def test_ogr_libkml_extended_data_without_schema_data():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -843,7 +843,7 @@ def ogr_libkml_extended_data_without_schema_data():
 # Test reading KML with <gx:Track> element (#5095)
 
 
-def ogr_libkml_gxtrack():
+def test_ogr_libkml_gxtrack():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -866,7 +866,7 @@ def ogr_libkml_gxtrack():
 # Test reading KML with <gx:MultiTrack> element
 
 
-def ogr_libkml_gxmultitrack():
+def test_ogr_libkml_gxmultitrack():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -889,7 +889,7 @@ def ogr_libkml_gxmultitrack():
 # Test generating and reading KML with <Camera> element
 
 
-def ogr_libkml_camera():
+def test_ogr_libkml_camera():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -961,7 +961,7 @@ def ogr_libkml_camera():
 # Test generating a LookAt element at Document level
 
 
-def ogr_libkml_write_layer_lookat():
+def test_ogr_libkml_write_layer_lookat():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1005,7 +1005,7 @@ def ogr_libkml_write_layer_lookat():
 ###############################################################################
 # Test generating a Camera element at Document level
 
-def ogr_libkml_write_layer_camera():
+def test_ogr_libkml_write_layer_camera():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1039,7 +1039,7 @@ def ogr_libkml_write_layer_camera():
 # Test writing MultiGeometry
 
 
-def ogr_libkml_write_multigeometry():
+def test_ogr_libkml_write_multigeometry():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1077,7 +1077,7 @@ def ogr_libkml_write_multigeometry():
 # Test writing <snippet>
 
 
-def ogr_libkml_write_snippet():
+def test_ogr_libkml_write_snippet():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1119,7 +1119,7 @@ def ogr_libkml_write_snippet():
 # Test writing <atom:author>
 
 
-def ogr_libkml_write_atom_author():
+def test_ogr_libkml_write_atom_author():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1151,7 +1151,7 @@ def ogr_libkml_write_atom_author():
 # Test writing <atom:link>
 
 
-def ogr_libkml_write_atom_link():
+def test_ogr_libkml_write_atom_link():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1181,7 +1181,7 @@ def ogr_libkml_write_atom_link():
 # Test writing <phoneNumber>
 
 
-def ogr_libkml_write_phonenumber():
+def test_ogr_libkml_write_phonenumber():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1210,7 +1210,7 @@ def ogr_libkml_write_phonenumber():
 # Test writing Region
 
 
-def ogr_libkml_write_region():
+def test_ogr_libkml_write_region():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1259,7 +1259,7 @@ def ogr_libkml_write_region():
 # Test writing ScreenOverlay
 
 
-def ogr_libkml_write_screenoverlay():
+def test_ogr_libkml_write_screenoverlay():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1309,7 +1309,7 @@ def ogr_libkml_write_screenoverlay():
 # Test writing Model
 
 
-def ogr_libkml_write_model():
+def test_ogr_libkml_write_model():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1384,7 +1384,7 @@ def ogr_libkml_write_model():
 # Test read / write of style
 
 
-def ogr_libkml_read_write_style():
+def test_ogr_libkml_read_write_style():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1638,7 +1638,7 @@ def ogr_libkml_read_write_style():
 # Test writing Update
 
 
-def ogr_libkml_write_update():
+def test_ogr_libkml_write_update():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1699,7 +1699,7 @@ def ogr_libkml_write_update():
 # Test writing NetworkLinkControl
 
 
-def ogr_libkml_write_networklinkcontrol():
+def test_ogr_libkml_write_networklinkcontrol():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1759,7 +1759,7 @@ def ogr_libkml_write_networklinkcontrol():
 # Test writing ListStyle
 
 
-def ogr_libkml_write_liststyle():
+def test_ogr_libkml_write_liststyle():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1800,7 +1800,7 @@ def ogr_libkml_write_liststyle():
 # Test writing NetworkLink
 
 
-def ogr_libkml_write_networklink():
+def test_ogr_libkml_write_networklink():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1871,7 +1871,7 @@ def ogr_libkml_write_networklink():
 # Test writing PhotoOverlay
 
 
-def ogr_libkml_write_photooverlay():
+def test_ogr_libkml_write_photooverlay():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -1960,7 +1960,7 @@ def ogr_libkml_write_photooverlay():
 # Test writing and reading Data element
 
 
-def ogr_libkml_read_write_data():
+def test_ogr_libkml_read_write_data():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2000,7 +2000,7 @@ def ogr_libkml_read_write_data():
 # Test writing layer as Folder
 
 
-def ogr_libkml_write_folder():
+def test_ogr_libkml_write_folder():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2030,7 +2030,7 @@ def ogr_libkml_write_folder():
 # Test writing datasource and layer container propreties
 
 
-def ogr_libkml_write_container_properties():
+def test_ogr_libkml_write_container_properties():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2065,7 +2065,7 @@ def ogr_libkml_write_container_properties():
 # Test reading gx:TimeStamp and gx:TimeSpan
 
 
-def ogr_libkml_read_gx_timestamp():
+def test_ogr_libkml_read_gx_timestamp():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2089,7 +2089,7 @@ def ogr_libkml_read_gx_timestamp():
 # Test reading KML with kml: prefix
 
 
-def ogr_libkml_read_placemark_with_kml_prefix():
+def test_ogr_libkml_read_placemark_with_kml_prefix():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2106,7 +2106,7 @@ def ogr_libkml_read_placemark_with_kml_prefix():
 # Test reading KML with duplicated folder name
 
 
-def ogr_libkml_read_duplicate_folder_name():
+def test_ogr_libkml_read_duplicate_folder_name():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2129,7 +2129,7 @@ def ogr_libkml_read_duplicate_folder_name():
 # Test reading KML with a placemark in root document, and a subfolder (#7221)
 
 
-def ogr_libkml_read_placemark_in_root_and_subfolder():
+def test_ogr_libkml_read_placemark_in_root_and_subfolder():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2157,7 +2157,7 @@ def ogr_libkml_read_placemark_in_root_and_subfolder():
 # Test reading KML with coordinate tuples separated by tabulations (#7231)
 
 
-def ogr_libkml_read_tab_separated_coord_triplet():
+def test_ogr_libkml_read_tab_separated_coord_triplet():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2177,7 +2177,7 @@ def ogr_libkml_read_tab_separated_coord_triplet():
 # Test reading KML with coordinate with space only content (#7232)
 
 
-def ogr_libkml_read_kml_with_space_content_in_coordinates():
+def test_ogr_libkml_read_kml_with_space_content_in_coordinates():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2197,7 +2197,7 @@ def ogr_libkml_read_kml_with_space_content_in_coordinates():
 # Test reading a layer referring several schema (github #826)
 
 
-def ogr_libkml_read_several_schema():
+def test_ogr_libkml_read_several_schema():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2235,7 +2235,7 @@ def ogr_libkml_read_several_schema():
 ###############################################################################
 
 
-def ogr_libkml_update_existing_kml():
+def test_ogr_libkml_update_existing_kml():
 
     if not ogrtest.have_read_libkml:
         return 'skip'
@@ -2262,7 +2262,7 @@ def ogr_libkml_update_existing_kml():
 #  Cleanup
 
 
-def ogr_libkml_cleanup():
+def test_ogr_libkml_cleanup():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
@@ -2312,62 +2312,62 @@ def ogr_libkml_cleanup():
 
 
 gdaltest_list = [
-    ogr_libkml_datastore,
-    ogr_libkml_attributes_1,
-    ogr_libkml_attributes_2,
-    ogr_libkml_attributes_3,
-    ogr_libkml_attributes_4,
-    ogr_libkml_point_read,
-    ogr_libkml_linestring_read,
-    ogr_libkml_polygon_read,
-    ogr_libkml_write_kml,
-    ogr_libkml_check_write_kml,
-    ogr_libkml_write_kmz,
-    ogr_libkml_check_write_kmz,
-    ogr_libkml_write_kmz_use_doc_off,
-    ogr_libkml_check_write_kmz_use_doc_off,
-    ogr_libkml_write_dir,
-    ogr_libkml_check_write_dir,
-    ogr_libkml_xml_attributes,
-    ogr_libkml_read_geometries,
-    ogr_libkml_test_ogrsf,
-    ogr_libkml_read_placemark,
-    ogr_libkml_read_empty,
-    ogr_libkml_read_emptylayers,
-    ogr_libkml_read_emptylayers_without_folder,
-    ogr_libkml_read_schema,
-    ogr_libkml_extended_data_without_schema_data,
-    ogr_libkml_gxtrack,
-    ogr_libkml_gxmultitrack,
-    ogr_libkml_camera,
-    ogr_libkml_write_layer_lookat,
-    ogr_libkml_write_layer_camera,
-    ogr_libkml_write_multigeometry,
-    ogr_libkml_write_snippet,
-    ogr_libkml_write_atom_author,
-    ogr_libkml_write_atom_link,
-    ogr_libkml_write_phonenumber,
-    ogr_libkml_write_region,
-    ogr_libkml_write_screenoverlay,
-    ogr_libkml_write_model,
-    ogr_libkml_read_write_style,
-    ogr_libkml_write_update,
-    ogr_libkml_write_networklinkcontrol,
-    ogr_libkml_write_liststyle,
-    ogr_libkml_write_networklink,
-    ogr_libkml_write_photooverlay,
-    ogr_libkml_read_write_data,
-    ogr_libkml_write_folder,
-    ogr_libkml_write_container_properties,
-    ogr_libkml_read_gx_timestamp,
-    ogr_libkml_read_placemark_with_kml_prefix,
-    ogr_libkml_read_duplicate_folder_name,
-    ogr_libkml_read_placemark_in_root_and_subfolder,
-    ogr_libkml_read_tab_separated_coord_triplet,
-    ogr_libkml_read_kml_with_space_content_in_coordinates,
-    ogr_libkml_read_several_schema,
-    ogr_libkml_update_existing_kml,
-    ogr_libkml_cleanup]
+    test_ogr_libkml_datastore,
+    test_ogr_libkml_attributes_1,
+    test_ogr_libkml_attributes_2,
+    test_ogr_libkml_attributes_3,
+    test_ogr_libkml_attributes_4,
+    test_ogr_libkml_point_read,
+    test_ogr_libkml_linestring_read,
+    test_ogr_libkml_polygon_read,
+    test_ogr_libkml_write_kml,
+    test_ogr_libkml_check_write_kml,
+    test_ogr_libkml_write_kmz,
+    test_ogr_libkml_check_write_kmz,
+    test_ogr_libkml_write_kmz_use_doc_off,
+    test_ogr_libkml_check_write_kmz_use_doc_off,
+    test_ogr_libkml_write_dir,
+    test_ogr_libkml_check_write_dir,
+    test_ogr_libkml_xml_attributes,
+    test_ogr_libkml_read_geometries,
+    test_ogr_libkml_test_ogrsf,
+    test_ogr_libkml_read_placemark,
+    test_ogr_libkml_read_empty,
+    test_ogr_libkml_read_emptylayers,
+    test_ogr_libkml_read_emptylayers_without_folder,
+    test_ogr_libkml_read_schema,
+    test_ogr_libkml_extended_data_without_schema_data,
+    test_ogr_libkml_gxtrack,
+    test_ogr_libkml_gxmultitrack,
+    test_ogr_libkml_camera,
+    test_ogr_libkml_write_layer_lookat,
+    test_ogr_libkml_write_layer_camera,
+    test_ogr_libkml_write_multigeometry,
+    test_ogr_libkml_write_snippet,
+    test_ogr_libkml_write_atom_author,
+    test_ogr_libkml_write_atom_link,
+    test_ogr_libkml_write_phonenumber,
+    test_ogr_libkml_write_region,
+    test_ogr_libkml_write_screenoverlay,
+    test_ogr_libkml_write_model,
+    test_ogr_libkml_read_write_style,
+    test_ogr_libkml_write_update,
+    test_ogr_libkml_write_networklinkcontrol,
+    test_ogr_libkml_write_liststyle,
+    test_ogr_libkml_write_networklink,
+    test_ogr_libkml_write_photooverlay,
+    test_ogr_libkml_read_write_data,
+    test_ogr_libkml_write_folder,
+    test_ogr_libkml_write_container_properties,
+    test_ogr_libkml_read_gx_timestamp,
+    test_ogr_libkml_read_placemark_with_kml_prefix,
+    test_ogr_libkml_read_duplicate_folder_name,
+    test_ogr_libkml_read_placemark_in_root_and_subfolder,
+    test_ogr_libkml_read_tab_separated_coord_triplet,
+    test_ogr_libkml_read_kml_with_space_content_in_coordinates,
+    test_ogr_libkml_read_several_schema,
+    test_ogr_libkml_update_existing_kml,
+    test_ogr_libkml_cleanup]
 
 if __name__ == '__main__':
 

@@ -37,14 +37,14 @@ import gdaltest
 # Test a fake - and certainly incorrect - FUJIBAS dataset
 
 
-def fujibas_1():
+def test_fujibas_1():
 
     tst = gdaltest.GDALTest('FujiBAS', 'fakefujibas.pcb', 1, 1)
     return tst.testOpen()
 
 
 gdaltest_list = [
-    fujibas_1]
+    test_fujibas_1]
 
 if __name__ == '__main__':
 

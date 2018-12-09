@@ -37,7 +37,7 @@ import gdaltest
 ###############################################################################
 
 
-def ogr_rec_1():
+def test_ogr_rec_1():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -53,7 +53,7 @@ def ogr_rec_1():
 
 
 gdaltest_list = [
-    ogr_rec_1
+    test_ogr_rec_1
 ]
 
 if __name__ == '__main__':

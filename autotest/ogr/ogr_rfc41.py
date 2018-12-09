@@ -41,7 +41,7 @@ from osgeo import gdal
 # Test OGRGeomFieldDefn class
 
 
-def ogr_rfc41_1():
+def test_ogr_rfc41_1():
 
     gfld_defn = ogr.GeomFieldDefn()
 
@@ -109,7 +109,7 @@ def ogr_rfc41_1():
 ###############################################################################
 # Test OGRFeatureDefn methods related to OGRGeomFieldDefn class
 
-def ogr_rfc41_2():
+def test_ogr_rfc41_2():
 
     # Check implicit geometry field creation
     feature_defn = ogr.FeatureDefn()
@@ -274,7 +274,7 @@ def ogr_rfc41_2():
 # Test OGRFeature methods
 
 
-def ogr_rfc41_3():
+def test_ogr_rfc41_3():
 
     # Test with just one geometry field
     feature_defn = ogr.FeatureDefn()
@@ -420,7 +420,7 @@ def ogr_rfc41_3():
 # Test OGRLayer methods
 
 
-def ogr_rfc41_4():
+def test_ogr_rfc41_4():
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
     if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
@@ -524,7 +524,7 @@ def ogr_rfc41_4():
 # Test Python field accessors facilities
 
 
-def ogr_rfc41_5():
+def test_ogr_rfc41_5():
 
     feature_defn = ogr.FeatureDefn()
     field_defn = ogr.FieldDefn('strfield', ogr.OFTString)
@@ -614,7 +614,7 @@ def ogr_rfc41_5():
 # Test OGRSQL with geometries
 
 
-def ogr_rfc41_6():
+def test_ogr_rfc41_6():
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
     sr = osr.SpatialReference()
@@ -1014,7 +1014,7 @@ def ogr_rfc41_6():
 # Test crazy OGRSQL
 
 
-def ogr_rfc41_7():
+def test_ogr_rfc41_7():
 
     ds = ogr.Open('data')
     sql = "select eas_id, \"_ogr_geometry_\" as geom1, cast(null as geometry) as geom2, " + \
@@ -1048,7 +1048,7 @@ def ogr_rfc41_7():
 # Test SQLite dialect
 
 
-def ogr_rfc41_8():
+def test_ogr_rfc41_8():
 
     import ogr_sql_sqlite
     if not ogr_sql_sqlite.ogr_sql_sqlite_available():
@@ -1129,14 +1129,14 @@ def ogr_rfc41_8():
 
 
 gdaltest_list = [
-    ogr_rfc41_1,
-    ogr_rfc41_2,
-    ogr_rfc41_3,
-    ogr_rfc41_4,
-    ogr_rfc41_5,
-    ogr_rfc41_6,
-    ogr_rfc41_7,
-    ogr_rfc41_8,
+    test_ogr_rfc41_1,
+    test_ogr_rfc41_2,
+    test_ogr_rfc41_3,
+    test_ogr_rfc41_4,
+    test_ogr_rfc41_5,
+    test_ogr_rfc41_6,
+    test_ogr_rfc41_7,
+    test_ogr_rfc41_8,
 ]
 
 if __name__ == '__main__':

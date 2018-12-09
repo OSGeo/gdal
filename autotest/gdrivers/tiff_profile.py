@@ -42,7 +42,7 @@ from osgeo import gdal
 ###############################################################################
 # Test writing and reading of ICC profile in Create() options
 
-def tiff_write_icc():
+def test_tiff_write_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -110,7 +110,7 @@ def tiff_write_icc():
 # Test writing and reading of ICC profile in CreateCopy()
 
 
-def tiff_copy_icc():
+def test_tiff_copy_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -152,7 +152,7 @@ def tiff_copy_icc():
 # Test writing and reading of ICC profile in CreateCopy() options
 
 
-def tiff_copy_options_icc():
+def test_tiff_copy_options_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -198,7 +198,7 @@ def cvtTuple2String(t):
 # Test writing and reading of ICC colorimetric data from options
 
 
-def tiff_copy_options_colorimetric_data():
+def test_tiff_copy_options_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -290,7 +290,7 @@ def tiff_copy_options_colorimetric_data():
 # Test writing and reading of ICC colorimetric data in the file
 
 
-def tiff_copy_colorimetric_data():
+def test_tiff_copy_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -385,7 +385,7 @@ def tiff_copy_colorimetric_data():
 # Test updating ICC profile
 
 
-def tiff_update_icc():
+def test_tiff_update_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -426,7 +426,7 @@ def tiff_update_icc():
 # Test updating colorimetric options
 
 
-def tiff_update_colorimetric():
+def test_tiff_update_colorimetric():
     source_primaries = [(0.234, 0.555, 1.0), (0.2, 0, 1), (2, 3.5, 1)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
     tifftag_transferfunction = (list(range(1, 256 * 4, 4)), list(range(2, 256 * 4 + 1, 4)), list(range(3, 256 * 4 + 2, 4)))
@@ -515,13 +515,13 @@ def tiff_update_colorimetric():
 
 
 gdaltest_list = [
-    tiff_write_icc,
-    tiff_copy_icc,
-    tiff_copy_options_icc,
-    tiff_copy_options_colorimetric_data,
-    tiff_copy_colorimetric_data,
-    tiff_update_icc,
-    tiff_update_colorimetric,
+    test_tiff_write_icc,
+    test_tiff_copy_icc,
+    test_tiff_copy_options_icc,
+    test_tiff_copy_options_colorimetric_data,
+    test_tiff_copy_colorimetric_data,
+    test_tiff_update_icc,
+    test_tiff_update_colorimetric,
 ]
 
 if __name__ == '__main__':

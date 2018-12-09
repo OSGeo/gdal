@@ -38,7 +38,7 @@ import gdaltest
 # Test driver availability
 
 
-def bsb_0():
+def test_bsb_0():
     gdaltest.bsb_dr = gdal.GetDriverByName('BSB')
     if gdaltest.bsb_dr is None:
         return 'skip'
@@ -49,7 +49,7 @@ def bsb_0():
 # Test Read
 
 
-def bsb_1():
+def test_bsb_1():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
@@ -61,7 +61,7 @@ def bsb_1():
 # Test CreateCopy
 
 
-def bsb_2():
+def test_bsb_2():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
@@ -80,7 +80,7 @@ def bsb_2():
 # --> This is probably not a valid BSB file, but it proves that we can read the index table
 
 
-def bsb_3():
+def test_bsb_3():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
@@ -94,7 +94,7 @@ def bsb_3():
 # adding a 0 character in the middle of line data
 
 
-def bsb_4():
+def test_bsb_4():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
@@ -106,7 +106,7 @@ def bsb_4():
 # Read a truncated BSB (at the level of the written scanline number starting a new row)
 
 
-def bsb_5():
+def test_bsb_5():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
@@ -122,7 +122,7 @@ def bsb_5():
 # Read another truncated BSB (in the middle of row data)
 
 
-def bsb_6():
+def test_bsb_6():
     if gdaltest.bsb_dr is None:
         return 'skip'
 
@@ -136,13 +136,13 @@ def bsb_6():
 
 
 gdaltest_list = [
-    bsb_0,
-    bsb_1,
-    bsb_2,
-    bsb_3,
-    bsb_4,
-    bsb_5,
-    bsb_6
+    test_bsb_0,
+    test_bsb_1,
+    test_bsb_2,
+    test_bsb_3,
+    test_bsb_4,
+    test_bsb_5,
+    test_bsb_6
 ]
 
 

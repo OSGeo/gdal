@@ -40,27 +40,27 @@ from osgeo import osr
 # Perform simple read tests.
 
 
-def rmf_1():
+def test_rmf_1():
 
     tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672)
     return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
-def rmf_2():
+def test_rmf_2():
 
     tst = gdaltest.GDALTest('rmf', 'byte-lzw.rsw', 1, 40503)
     with gdaltest.error_handler():
         return tst.testOpen()
 
 
-def rmf_3():
+def test_rmf_3():
 
     tst = gdaltest.GDALTest('rmf', 'float64.mtw', 1, 4672)
     with gdaltest.error_handler():
         return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
-def rmf_4():
+def test_rmf_4():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 1, 21212)
     ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
@@ -79,7 +79,7 @@ def rmf_4():
                                   -22.932584, 0, -0.003432))
 
 
-def rmf_5():
+def test_rmf_5():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 1, 40503)
     with gdaltest.error_handler():
@@ -100,7 +100,7 @@ def rmf_5():
         return tst.testOpen()
 
 
-def rmf_6():
+def test_rmf_6():
 
     tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 1, 7782)
     with gdaltest.error_handler():
@@ -122,14 +122,14 @@ def rmf_6():
 # Create simple copy and check.
 
 
-def rmf_7():
+def test_rmf_7():
 
     tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672)
 
     return tst.testCreateCopy(check_srs=1, check_gt=1, vsimem=1)
 
 
-def rmf_8():
+def test_rmf_8():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 2, 21053)
 
@@ -139,7 +139,7 @@ def rmf_8():
 # Create RMFHUGE=YES
 
 
-def rmf_9():
+def test_rmf_9():
 
     tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672, options=['RMFHUGE=YES'])
 
@@ -149,7 +149,7 @@ def rmf_9():
 # Compressed DEM
 
 
-def rmf_10():
+def test_rmf_10():
 
     tst = gdaltest.GDALTest('rmf', 't100.mtw', 1, 6388)
 
@@ -160,7 +160,7 @@ def rmf_10():
 # Overviews
 
 
-def rmf_11():
+def test_rmf_11():
 
     test_fn = '/vsigzip/data/overviews.rsw.gz'
     src_ds = gdal.Open(test_fn)
@@ -199,7 +199,7 @@ def rmf_11():
 # Check file open with cucled header offsets .
 
 
-def rmf_12a():
+def test_rmf_12a():
 
     tst = gdaltest.GDALTest('rmf', 'cucled-1.rsw', 1, 4672)
     with gdaltest.error_handler():
@@ -209,7 +209,7 @@ def rmf_12a():
 # Check file open with cucled header offsets .
 
 
-def rmf_12b():
+def test_rmf_12b():
 
     tst = gdaltest.GDALTest('rmf', 'cucled-2.rsw', 1, 4672)
     with gdaltest.error_handler():
@@ -219,7 +219,7 @@ def rmf_12b():
 # Check file open with invalid subheader marker.
 
 
-def rmf_12c():
+def test_rmf_12c():
 
     tst = gdaltest.GDALTest('rmf', 'invalid-subheader.rsw', 1, 4672)
     with gdaltest.error_handler():
@@ -229,7 +229,7 @@ def rmf_12c():
 # Check file open with corrupted subheader.
 
 
-def rmf_12d():
+def test_rmf_12d():
 
     tst = gdaltest.GDALTest('rmf', 'corrupted-subheader.rsw', 1, 4672)
     return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
@@ -306,7 +306,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
 # Build overviews on newly created RSW file
 
 
-def rmf_13():
+def test_rmf_13():
     return rmf_build_ov(source='byte.rsw',
                         testid='13',
                         options=['RMFHUGE=NO'],
@@ -318,7 +318,7 @@ def rmf_13():
 # Build overviews on newly created huge RSW file
 
 
-def rmf_14():
+def test_rmf_14():
     return rmf_build_ov(source='byte.rsw',
                         testid='14',
                         options=['RMFHUGE=YES'],
@@ -330,7 +330,7 @@ def rmf_14():
 # Build overviews on closed and reopened RSW file
 
 
-def rmf_15():
+def test_rmf_15():
     return rmf_build_ov(source='byte.rsw',
                         testid='15',
                         options=['RMFHUGE=NO'],
@@ -342,7 +342,7 @@ def rmf_15():
 # Build overviews on closed and reopened huge RSW file
 
 
-def rmf_16():
+def test_rmf_16():
     return rmf_build_ov(source='byte.rsw',
                         testid='16',
                         options=['RMFHUGE=YES'],
@@ -354,7 +354,7 @@ def rmf_16():
 # Build overviews on newly created MTW file
 
 
-def rmf_17():
+def test_rmf_17():
     return rmf_build_ov(source='float64.mtw',
                         testid='17',
                         options=['RMFHUGE=NO', 'MTW=YES'],
@@ -366,7 +366,7 @@ def rmf_17():
 # Build overviews on newly created MTW file
 
 
-def rmf_18():
+def test_rmf_18():
     return rmf_build_ov(source='float64.mtw',
                         testid='18',
                         options=['RMFHUGE=YES', 'MTW=YES'],
@@ -378,7 +378,7 @@ def rmf_18():
 # Build overviews on closed and reopened MTW file
 
 
-def rmf_19():
+def test_rmf_19():
     return rmf_build_ov(source='float64.mtw',
                         testid='19',
                         options=['RMFHUGE=NO', 'MTW=YES'],
@@ -390,7 +390,7 @@ def rmf_19():
 # Build overviews on closed and reopened huge MTW file
 
 
-def rmf_20():
+def test_rmf_20():
     return rmf_build_ov(source='float64.mtw',
                         testid='20',
                         options=['RMFHUGE=YES', 'MTW=YES'],
@@ -402,7 +402,7 @@ def rmf_20():
 # Recreate overviews on newly created MTW file
 
 
-def rmf_21():
+def test_rmf_21():
     return rmf_build_ov(source='float64.mtw',
                         testid='21',
                         options=['RMFHUGE=NO', 'MTW=YES'],
@@ -415,7 +415,7 @@ def rmf_21():
 # Recreate overviews on newly created huge MTW file
 
 
-def rmf_22():
+def test_rmf_22():
     return rmf_build_ov(source='float64.mtw',
                         testid='22',
                         options=['RMFHUGE=YES', 'MTW=YES'],
@@ -428,7 +428,7 @@ def rmf_22():
 ###############################################################################
 # Recreate overviews on closed and reopened MTW file
 
-def rmf_23():
+def test_rmf_23():
     return rmf_build_ov(source='float64.mtw',
                         testid='23',
                         options=['RMFHUGE=NO', 'MTW=YES'],
@@ -441,7 +441,7 @@ def rmf_23():
 # Recreate overviews on closed and reopened huge MTW file
 
 
-def rmf_24():
+def test_rmf_24():
     return rmf_build_ov(source='float64.mtw',
                         testid='24',
                         options=['RMFHUGE=YES', 'MTW=YES'],
@@ -454,7 +454,7 @@ def rmf_24():
 # Nodata write test
 
 
-def rmf_25():
+def test_rmf_25():
     rmf_drv = gdal.GetDriverByName('RMF')
     if rmf_drv is None:
         gdaltest.post_reason('RMF driver not found.')
@@ -507,7 +507,7 @@ def rmf_25():
 # Unit write test
 
 
-def rmf_26():
+def test_rmf_26():
     rmf_drv = gdal.GetDriverByName('RMF')
     if rmf_drv is None:
         gdaltest.post_reason('RMF driver not found.')
@@ -567,7 +567,7 @@ def rmf_26():
 # Test read JPEG compressed RMF dataset
 
 
-def rmf_27():
+def test_rmf_27():
 
     if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
@@ -603,7 +603,7 @@ def rmf_27():
 # Check compression metadata
 
 
-def rmf_28a():
+def test_rmf_28a():
 
     ds = gdal.Open('data/byte-lzw.rsw', gdal.GA_ReadOnly)
     if ds is None:
@@ -619,7 +619,7 @@ def rmf_28a():
     return 'success'
 
 
-def rmf_28b():
+def test_rmf_28b():
 
     ds = gdal.Open('data/t100.mtw', gdal.GA_ReadOnly)
     if ds is None:
@@ -638,7 +638,7 @@ def rmf_28b():
 ###############################################################################
 # Check EPSG code
 
-def rmf_29():
+def test_rmf_29():
 
     rmf_drv = gdal.GetDriverByName('RMF')
     if rmf_drv is None:
@@ -681,7 +681,7 @@ def rmf_29():
 ###############################################################################
 # Check interleaved access
 
-def rmf_30():
+def test_rmf_30():
 
     ds_name = 'tmp/interleaved.tif'
     gdal.Translate(ds_name, 'data/rgbsmall-lzw.rsw',
@@ -706,7 +706,7 @@ def rmf_30():
 # Check compressed write
 
 
-def rmf_31a():
+def test_rmf_31a():
 
     tst = gdaltest.GDALTest('rmf', 'small_world.tif', 1,
                             30111, options=['COMPRESS=NONE'])
@@ -714,7 +714,7 @@ def rmf_31a():
     return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
 
 
-def rmf_31b():
+def test_rmf_31b():
 
     tst = gdaltest.GDALTest('rmf', 'small_world.tif', 1,
                             30111, options=['COMPRESS=LZW'])
@@ -722,7 +722,7 @@ def rmf_31b():
     return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
 
 
-def rmf_31c():
+def test_rmf_31c():
 
     ds_name = 'tmp/rmf_31c.rsw'
     gdal.Translate(ds_name, 'data/small_world.tif',
@@ -745,7 +745,7 @@ def rmf_31c():
     return 'success'
 
 
-def rmf_31d():
+def test_rmf_31d():
 
     tst = gdaltest.GDALTest('rmf', 't100.mtw', 1,
                             6388, options=['MTW=YES', 'COMPRESS=RMF_DEM'])
@@ -753,7 +753,7 @@ def rmf_31d():
     return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
 
 
-def rmf_31e():
+def test_rmf_31e():
     try:
         import numpy
     except ImportError:
@@ -818,7 +818,7 @@ def rmf_31e():
 ###############################################################################
 # Check parallel compression
 
-def rmf_32a():
+def test_rmf_32a():
 
     ds_name = 'tmp/rmf_32a.rsw'
     gdal.Translate(ds_name, 'data/small_world.tif', format='RMF',
@@ -831,7 +831,7 @@ def rmf_32a():
     return res
 
 
-def rmf_32b():
+def test_rmf_32b():
 
     ds_name = 'tmp/rmf_32b.rsw'
     gdal.Translate(ds_name, 'data/small_world.tif', format='RMF',
@@ -848,7 +848,7 @@ def rmf_32b():
 # Parallel build overviews on newly created RSW file
 
 
-def rmf_32c():
+def test_rmf_32c():
     ds_name = 'tmp/rmf_32c.rsw'
     gdal.Translate(ds_name, 'data/small_world.tif', format='RMF',
                    options='-outsize 400% 400% -co COMPRESS=LZW -co NUM_THREADS=4')
@@ -868,19 +868,19 @@ def rmf_32c():
 # Read 1-bit & 4-bit files
 
 
-def rmf_33a():
+def test_rmf_33a():
 
     tst = gdaltest.GDALTest('rmf', '1bit.rsw', 1, 34325)
     return tst.testOpen()
 
 
-def rmf_33b():
+def test_rmf_33b():
 
     tst = gdaltest.GDALTest('rmf', '4bit.rsw', 1, 55221)
     return tst.testOpen()
 
 
-def rmf_33c():
+def test_rmf_33c():
 
     tst = gdaltest.GDALTest('rmf', '4bit-lzw.rsw', 1, 55221)
     return tst.testOpen()
@@ -890,51 +890,51 @@ def rmf_33c():
 
 
 gdaltest_list = [
-    rmf_1,
-    rmf_2,
-    rmf_3,
-    rmf_4,
-    rmf_5,
-    rmf_6,
-    rmf_7,
-    rmf_8,
-    rmf_9,
-    rmf_10,
-    rmf_11,
-    rmf_12a,
-    rmf_12b,
-    rmf_12c,
-    rmf_12d,
-    rmf_13,
-    rmf_14,
-    rmf_15,
-    rmf_16,
-    rmf_17,
-    rmf_18,
-    rmf_19,
-    rmf_20,
-    rmf_21,
-    rmf_22,
-    rmf_23,
-    rmf_24,
-    rmf_25,
-    rmf_26,
-    rmf_27,
-    rmf_28a,
-    rmf_28b,
-    rmf_29,
-    rmf_30,
-    rmf_31a,
-    rmf_31b,
-    rmf_31c,
-    rmf_31d,
-    rmf_31e,
-    rmf_32a,
-    rmf_32b,
-    rmf_32c,
-    rmf_33a,
-    rmf_33b,
-    rmf_33c,
+    test_rmf_1,
+    test_rmf_2,
+    test_rmf_3,
+    test_rmf_4,
+    test_rmf_5,
+    test_rmf_6,
+    test_rmf_7,
+    test_rmf_8,
+    test_rmf_9,
+    test_rmf_10,
+    test_rmf_11,
+    test_rmf_12a,
+    test_rmf_12b,
+    test_rmf_12c,
+    test_rmf_12d,
+    test_rmf_13,
+    test_rmf_14,
+    test_rmf_15,
+    test_rmf_16,
+    test_rmf_17,
+    test_rmf_18,
+    test_rmf_19,
+    test_rmf_20,
+    test_rmf_21,
+    test_rmf_22,
+    test_rmf_23,
+    test_rmf_24,
+    test_rmf_25,
+    test_rmf_26,
+    test_rmf_27,
+    test_rmf_28a,
+    test_rmf_28b,
+    test_rmf_29,
+    test_rmf_30,
+    test_rmf_31a,
+    test_rmf_31b,
+    test_rmf_31c,
+    test_rmf_31d,
+    test_rmf_31e,
+    test_rmf_32a,
+    test_rmf_32b,
+    test_rmf_32c,
+    test_rmf_33a,
+    test_rmf_33b,
+    test_rmf_33c,
 ]
 
 if __name__ == '__main__':

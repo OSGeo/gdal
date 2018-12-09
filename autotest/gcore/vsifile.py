@@ -150,14 +150,14 @@ def vsifile_generic(filename):
 # Test /vsimem
 
 
-def vsifile_1():
+def test_vsifile_1():
     return vsifile_generic('/vsimem/vsifile_1.bin')
 
 ###############################################################################
 # Test regular file system
 
 
-def vsifile_2():
+def test_vsifile_2():
 
     ret = vsifile_generic('tmp/vsifile_2.bin')
     if ret != 'success' and gdaltest.skip_on_travis():
@@ -171,7 +171,7 @@ def vsifile_2():
 # Test ftruncate >= 32 bit
 
 
-def vsifile_3():
+def test_vsifile_3():
 
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
@@ -214,7 +214,7 @@ def vsifile_3():
 # Test fix for #4583 (short reads)
 
 
-def vsifile_4():
+def test_vsifile_4():
 
     fp = gdal.VSIFOpenL('vsifile.py', 'rb')
     data = gdal.VSIFReadL(1000000, 1, fp)
@@ -231,7 +231,7 @@ def vsifile_4():
 # Test vsicache
 
 
-def vsifile_5():
+def test_vsifile_5():
 
     fp = gdal.VSIFOpenL('tmp/vsifile_5.bin', 'wb')
     ref_data = ''.join(['%08X' % i for i in range(5 * 32768)])
@@ -307,7 +307,7 @@ def vsifile_5():
 # Test vsicache above 2 GB
 
 
-def vsifile_6():
+def test_vsifile_6():
 
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
@@ -350,7 +350,7 @@ def vsifile_6():
 # Test limit cases on /vsimem
 
 
-def vsifile_7():
+def test_vsifile_7():
 
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
@@ -401,7 +401,7 @@ def vsifile_7():
 # Test renaming directory in /vsimem
 
 
-def vsifile_8():
+def test_vsifile_8():
 
     # octal 0666 = decimal 438
     gdal.Mkdir('/vsimem/mydir', 438)
@@ -423,7 +423,7 @@ def vsifile_8():
 # Test ReadDir()
 
 
-def vsifile_9():
+def test_vsifile_9():
 
     lst = gdal.ReadDir('.')
     if len(lst) < 4:
@@ -460,7 +460,7 @@ def vsifile_9():
 # Test fuzzer friendly archive
 
 
-def vsifile_10():
+def test_vsifile_10():
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
                            """FUZZER_FRIENDLY_ARCHIVE
@@ -565,7 +565,7 @@ abc***NEWFILE***:""")
 # Test generic Truncate implementation for file extension
 
 
-def vsifile_11():
+def test_vsifile_11():
     f = gdal.VSIFOpenL('/vsimem/vsifile_11', 'wb')
     gdal.VSIFCloseL(f)
 
@@ -600,7 +600,7 @@ def vsifile_11():
 # Test regular file system sparse file support
 
 
-def vsifile_12():
+def test_vsifile_12():
 
     target_dir = 'tmp'
 
@@ -638,7 +638,7 @@ def vsifile_12():
 # Test reading filename with prefixes without terminating slash
 
 
-def vsifile_13():
+def test_vsifile_13():
 
     gdal.VSIFOpenL('/vsigzip', 'rb')
     gdal.VSIFOpenL('/vsizip', 'rb')
@@ -675,7 +675,7 @@ def vsifile_13():
 # Check performance issue (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1673)
 
 
-def vsifile_14():
+def test_vsifile_14():
 
     with gdaltest.error_handler():
         gdal.VSIFOpenL('/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz', 'rb')
@@ -685,7 +685,7 @@ def vsifile_14():
 # Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
 
 
-def vsifile_15():
+def test_vsifile_15():
 
     fp = gdal.VSIFOpenL('/vsigzip/data/corrupted_z_buf_error.gz', 'rb')
     if fp is None:
@@ -727,7 +727,7 @@ def vsifile_15():
 # Test failed gdal.Rename() with exceptions enabled
 
 
-def vsifile_16():
+def test_vsifile_16():
 
     old_val = gdal.GetUseExceptions()
     gdal.UseExceptions()
@@ -744,7 +744,7 @@ def vsifile_16():
 # Test gdal.GetActualURL() on a non-network based filesystem
 
 
-def vsifile_17():
+def test_vsifile_17():
 
     if gdal.GetActualURL('foo') is not None:
         gdaltest.post_reason('fail')
@@ -760,7 +760,7 @@ def vsifile_17():
 # Test gdal.GetFileSystemsPrefixes()
 
 
-def vsifile_18():
+def test_vsifile_18():
 
     prefixes = gdal.GetFileSystemsPrefixes()
     if '/vsimem/' not in prefixes:
@@ -773,7 +773,7 @@ def vsifile_18():
 # Test gdal.GetFileSystemOptions()
 
 
-def vsifile_19():
+def test_vsifile_19():
 
     for prefix in gdal.GetFileSystemsPrefixes():
         options = gdal.GetFileSystemOptions(prefix)
@@ -791,7 +791,7 @@ def vsifile_19():
 # Test gdal.VSIFReadL with None fp
 
 
-def vsifile_20():
+def test_vsifile_20():
 
     try:
         gdal.VSIFReadL(1, 1, None)
@@ -804,7 +804,7 @@ def vsifile_20():
 # Test gdal.VSIGetMemFileBuffer_unsafe() and gdal.VSIFWriteL() reading buffers
 
 
-def vsifile_21():
+def test_vsifile_21():
 
     filename = '/vsimem/read.tif'
     filename_write = '/vsimem/write.tif'
@@ -838,7 +838,7 @@ def vsifile_21():
     return 'success'
 
 
-def vsifile_22():
+def test_vsifile_22():
     # VSIOpenL doesn't set errorno
     gdal.VSIErrorReset()
     if gdal.VSIGetLastErrorNo() != 0:
@@ -876,7 +876,7 @@ def vsifile_22():
 # Test bugfix for https://github.com/OSGeo/gdal/issues/675
 
 
-def vsitar_bug_675():
+def test_vsitar_bug_675():
 
     content = gdal.ReadDir('/vsitar/data/tar_with_star_base256_fields.tar')
     if len(content) != 1:
@@ -888,7 +888,7 @@ def vsitar_bug_675():
 # Test multithreaded compression
 
 
-def vsigzip_multi_thread():
+def test_vsigzip_multi_thread():
 
     with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS',
                                   'CPL_VSIL_DEFLATE_CHUNK_SIZE': '32K'}):
@@ -919,7 +919,7 @@ def vsigzip_multi_thread():
 # Test vsisync()
 
 
-def vsisync():
+def test_vsisync():
 
     with gdaltest.error_handler():
         if gdal.Sync('/i_do/not/exist', '/vsimem/'):
@@ -1002,7 +1002,7 @@ def vsisync():
 ###############################################################################
 # Test gdal.OpenDir()
 
-def vsifile_opendir():
+def test_vsifile_opendir():
 
     # Non existing dir
     d = gdal.OpenDir('/vsimem/i_dont_exist')
@@ -1125,32 +1125,32 @@ def vsifile_opendir():
     return 'success'
 
 
-gdaltest_list = [vsifile_1,
-                 vsifile_2,
-                 vsifile_3,
-                 vsifile_4,
-                 vsifile_5,
-                 vsifile_6,
-                 vsifile_7,
-                 vsifile_8,
-                 vsifile_9,
-                 vsifile_10,
-                 vsifile_11,
-                 vsifile_12,
-                 vsifile_13,
-                 vsifile_14,
-                 vsifile_15,
-                 vsifile_16,
-                 vsifile_17,
-                 vsifile_18,
-                 vsifile_19,
-                 vsifile_20,
-                 vsifile_21,
-                 vsifile_22,
-                 vsitar_bug_675,
-                 vsigzip_multi_thread,
-                 vsifile_opendir,
-                 vsisync]
+gdaltest_list = [test_vsifile_1,
+                 test_vsifile_2,
+                 test_vsifile_3,
+                 test_vsifile_4,
+                 test_vsifile_5,
+                 test_vsifile_6,
+                 test_vsifile_7,
+                 test_vsifile_8,
+                 test_vsifile_9,
+                 test_vsifile_10,
+                 test_vsifile_11,
+                 test_vsifile_12,
+                 test_vsifile_13,
+                 test_vsifile_14,
+                 test_vsifile_15,
+                 test_vsifile_16,
+                 test_vsifile_17,
+                 test_vsifile_18,
+                 test_vsifile_19,
+                 test_vsifile_20,
+                 test_vsifile_21,
+                 test_vsifile_22,
+                 test_vsitar_bug_675,
+                 test_vsigzip_multi_thread,
+                 test_vsifile_opendir,
+                 test_vsisync]
 
 if __name__ == '__main__':
 

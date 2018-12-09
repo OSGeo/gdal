@@ -39,7 +39,7 @@ from osgeo import ogr
 # Read SEGP1
 
 
-def ogr_segp1_points():
+def test_ogr_segp1_points():
 
     ds = ogr.Open('data/test.segp1')
     if ds is None:
@@ -86,7 +86,7 @@ def ogr_segp1_points():
 # Read SEGP1 lines
 
 
-def ogr_segp1_lines():
+def test_ogr_segp1_lines():
 
     ds = ogr.Open('data/test.segp1')
     if ds is None:
@@ -134,7 +134,7 @@ def ogr_segp1_lines():
 # Read UKOOA
 
 
-def ogr_ukooa_points():
+def test_ogr_ukooa_points():
 
     ds = ogr.Open('data/test.ukooa')
     if ds is None:
@@ -180,7 +180,7 @@ def ogr_ukooa_points():
 # Read UKOOA lines
 
 
-def ogr_ukooa_lines():
+def test_ogr_ukooa_lines():
 
     ds = ogr.Open('data/test.ukooa')
     if ds is None:
@@ -226,10 +226,10 @@ def ogr_ukooa_lines():
 
 
 gdaltest_list = [
-    ogr_segp1_points,
-    ogr_segp1_lines,
-    ogr_ukooa_points,
-    ogr_ukooa_lines,
+    test_ogr_segp1_points,
+    test_ogr_segp1_lines,
+    test_ogr_ukooa_points,
+    test_ogr_ukooa_lines,
 ]
 
 

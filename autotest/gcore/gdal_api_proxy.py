@@ -41,7 +41,7 @@ import gdaltest
 # Test forked gdalserver
 
 
-def gdal_api_proxy_1():
+def test_gdal_api_proxy_1():
 
     import test_py_scripts
     import test_cli_utilities
@@ -60,7 +60,7 @@ def gdal_api_proxy_1():
 # Test connection to TCP server
 
 
-def gdal_api_proxy_2():
+def test_gdal_api_proxy_2():
 
     if sys.version_info < (2, 6, 0):
         return 'skip'
@@ -77,7 +77,7 @@ def gdal_api_proxy_2():
 # Test connection to Unix socket server
 
 
-def gdal_api_proxy_3():
+def test_gdal_api_proxy_3():
 
     if sys.version_info < (2, 6, 0):
         return 'skip'
@@ -101,7 +101,7 @@ def gdal_api_proxy_3():
 # Test -nofork mode
 
 
-def gdal_api_proxy_4():
+def test_gdal_api_proxy_4():
 
     if sys.version_info < (2, 6, 0):
         return 'skip'
@@ -125,7 +125,7 @@ def gdal_api_proxy_4():
 #
 
 
-def gdal_api_proxy_sub():
+def test_gdal_api_proxy_sub():
 
     src_ds = gdal.Open('data/byte.tif')
     src_cs = src_ds.GetRasterBand(1).Checksum()
@@ -601,7 +601,7 @@ def gdal_api_proxy_sub():
 #
 
 
-def gdal_api_proxy_sub_clean():
+def test_gdal_api_proxy_sub_clean():
     if gdaltest.api_proxy_server_p is not None:
         try:
             gdaltest.api_proxy_server_p.terminate()
@@ -613,10 +613,10 @@ def gdal_api_proxy_sub_clean():
     return 'success'
 
 
-gdaltest_list = [gdal_api_proxy_1,
-                 gdal_api_proxy_2,
-                 gdal_api_proxy_3,
-                 gdal_api_proxy_4]
+gdaltest_list = [test_gdal_api_proxy_1,
+                 test_gdal_api_proxy_2,
+                 test_gdal_api_proxy_3,
+                 test_gdal_api_proxy_4]
 
 if __name__ == '__main__':
 
@@ -628,7 +628,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
 
         gdaltest.api_proxy_server_p = None
-        gdaltest_list = [gdal_api_proxy_sub]
+        gdaltest_list = [test_gdal_api_proxy_sub]
 
     elif len(sys.argv) >= 3 and sys.argv[2] == '-2':
 
@@ -652,7 +652,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'localhost:%d' % port)
             print('port = %d' % port)
             gdaltest.api_proxy_server_p = p
-            gdaltest_list = [gdal_api_proxy_sub, gdal_api_proxy_sub_clean]
+            gdaltest_list = [test_gdal_api_proxy_sub, test_gdal_api_proxy_sub_clean]
         else:
             gdaltest_list = []
 
@@ -666,7 +666,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
             gdaltest.api_proxy_server_p = p
-            gdaltest_list = [gdal_api_proxy_sub, gdal_api_proxy_sub_clean]
+            gdaltest_list = [test_gdal_api_proxy_sub, test_gdal_api_proxy_sub_clean]
         else:
             try:
                 p.terminate()
@@ -685,7 +685,7 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
             gdaltest.api_proxy_server_p = p
-            gdaltest_list = [gdal_api_proxy_sub, gdal_api_proxy_sub_clean]
+            gdaltest_list = [test_gdal_api_proxy_sub, test_gdal_api_proxy_sub_clean]
         else:
             try:
                 p.terminate()

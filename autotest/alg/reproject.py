@@ -41,7 +41,7 @@ from osgeo import osr
 # Test a trivial case.
 
 
-def reproject_1():
+def test_reproject_1():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -69,7 +69,7 @@ def reproject_1():
 # Test a real reprojection case.
 
 
-def reproject_2():
+def test_reproject_2():
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32611)
@@ -102,7 +102,7 @@ def reproject_2():
 # Test nodata values
 
 
-def reproject_3():
+def test_reproject_3():
 
     data = '\x02\x7f\x7f\x02\x02\x7f\x7f\x02\x02\x7f\x7f\x02'
     src_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
@@ -130,7 +130,7 @@ def reproject_3():
 # Test warp options
 
 
-def reproject_4():
+def test_reproject_4():
 
     data = '\x02\x7f\x7f\x02\x02\x7f\x7f\x02\x02\x7f\x7f\x02'
     src_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
@@ -155,10 +155,10 @@ def reproject_4():
 
 
 gdaltest_list = [
-    reproject_1,
-    reproject_2,
-    reproject_3,
-    reproject_4
+    test_reproject_1,
+    test_reproject_2,
+    test_reproject_3,
+    test_reproject_4
 ]
 
 if __name__ == '__main__':

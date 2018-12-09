@@ -43,7 +43,7 @@ import gdaltest
 # 16bit image.
 
 
-def ehdr_1():
+def test_ehdr_1():
 
     tst = gdaltest.GDALTest('EHDR', 'rgba16.png', 2, 2042)
 
@@ -53,7 +53,7 @@ def ehdr_1():
 # 8bit with geotransform and projection check.
 
 
-def ehdr_2():
+def test_ehdr_2():
 
     tst = gdaltest.GDALTest('EHDR', 'byte.tif', 1, 4672)
 
@@ -63,7 +63,7 @@ def ehdr_2():
 # 32bit floating point (read, and createcopy).
 
 
-def ehdr_3():
+def test_ehdr_3():
 
     tst = gdaltest.GDALTest('EHDR', 'float32.bil', 1, 27)
 
@@ -73,7 +73,7 @@ def ehdr_3():
 # create dataset with a nodata value and a color table.
 
 
-def ehdr_4():
+def test_ehdr_4():
 
     drv = gdal.GetDriverByName('EHdr')
     ds = drv.Create('tmp/test_4.bil', 200, 100, 1, gdal.GDT_Byte)
@@ -106,7 +106,7 @@ def ehdr_4():
 # verify last dataset's colortable and nodata value.
 
 
-def ehdr_5():
+def test_ehdr_5():
     ds = gdal.Open('tmp/test_4.bil')
     band = ds.GetRasterBand(1)
 
@@ -136,7 +136,7 @@ def ehdr_5():
 # Test creating an in memory copy.
 
 
-def ehdr_6():
+def test_ehdr_6():
 
     tst = gdaltest.GDALTest('EHDR', 'float32.bil', 1, 27)
 
@@ -146,7 +146,7 @@ def ehdr_6():
 # 32bit integer (read, and createcopy).
 
 
-def ehdr_7():
+def test_ehdr_7():
 
     tst = gdaltest.GDALTest('EHDR', 'int32.tif', 1, 4672)
 
@@ -156,7 +156,7 @@ def ehdr_7():
 # Test signed 8bit integer support. (#2717)
 
 
-def ehdr_8():
+def test_ehdr_8():
 
     drv = gdal.GetDriverByName('EHDR')
     src_ds = gdal.Open('data/8s.vrt')
@@ -188,7 +188,7 @@ def ehdr_8():
 # value.
 
 
-def ehdr_9():
+def test_ehdr_9():
 
     ds = gdal.Open('data/wc_10m_CCCMA_A2a_2020_tmin_9.bil')
 
@@ -216,7 +216,7 @@ def ehdr_9():
 # Test detecting floating point file based on image file size (#3933)
 
 
-def ehdr_10():
+def test_ehdr_10():
     tst = gdaltest.GDALTest('EHDR', 'ehdr10.bil', 1, 8202)
     return tst.testOpen()
 
@@ -224,7 +224,7 @@ def ehdr_10():
 # Test detecting floating point file based on .flt extension (#3933)
 
 
-def ehdr_11():
+def test_ehdr_11():
     tst = gdaltest.GDALTest('EHDR', 'ehdr11.flt', 1, 8202)
     return tst.testOpen()
 
@@ -232,7 +232,7 @@ def ehdr_11():
 # Test CreateCopy with 1bit data
 
 
-def ehdr_12():
+def test_ehdr_12():
 
     src_ds = gdal.Open('../gcore/data/1bit.bmp')
     ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/1bit.bil', src_ds,
@@ -254,7 +254,7 @@ def ehdr_12():
 # Test statistics
 
 
-def ehdr_13():
+def test_ehdr_13():
 
     gdal.Unlink('data/byte.tif.aux.xml')
 
@@ -307,7 +307,7 @@ def ehdr_13():
 # Test optimized RasterIO() (#5438)
 
 
-def ehdr_14():
+def test_ehdr_14():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/byte.bil', src_ds)
@@ -366,7 +366,7 @@ def ehdr_14():
 # Test support for RAT (#3253)
 
 
-def ehdr_rat():
+def test_ehdr_rat():
 
     tmpfile = '/vsimem/rat.bil'
     gdal.Translate(tmpfile, 'data/int16_rat.bil', format='EHdr')
@@ -423,7 +423,7 @@ def ehdr_rat():
 # Test STATISTICS_APPROXIMATE
 
 
-def ehdr_approx_stats_flag():
+def test_ehdr_approx_stats_flag():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
     src_ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack('B' * 1, 20))
@@ -481,22 +481,22 @@ def ehdr_approx_stats_flag():
 
 
 gdaltest_list = [
-    ehdr_1,
-    ehdr_2,
-    ehdr_3,
-    ehdr_4,
-    ehdr_5,
-    ehdr_6,
-    ehdr_7,
-    ehdr_8,
-    ehdr_9,
-    ehdr_10,
-    ehdr_11,
-    ehdr_12,
-    ehdr_13,
-    ehdr_14,
-    ehdr_rat,
-    ehdr_approx_stats_flag]
+    test_ehdr_1,
+    test_ehdr_2,
+    test_ehdr_3,
+    test_ehdr_4,
+    test_ehdr_5,
+    test_ehdr_6,
+    test_ehdr_7,
+    test_ehdr_8,
+    test_ehdr_9,
+    test_ehdr_10,
+    test_ehdr_11,
+    test_ehdr_12,
+    test_ehdr_13,
+    test_ehdr_14,
+    test_ehdr_rat,
+    test_ehdr_approx_stats_flag]
 
 if __name__ == '__main__':
 

@@ -55,7 +55,7 @@ init_list = [
 # Verify we have the driver.
 
 
-def gta_1():
+def test_gta_1():
 
     gdaltest.gta_drv = gdal.GetDriverByName('GTA')
     if gdaltest.gta_drv is None:
@@ -67,7 +67,7 @@ def gta_1():
 # Test updating existing dataset, check srs, check gt
 
 
-def gta_2():
+def test_gta_2():
 
     if gdaltest.gta_drv is None:
         return 'skip'
@@ -119,7 +119,7 @@ def gta_2():
 # Test writing and readings GCPs
 
 
-def gta_3():
+def test_gta_3():
 
     if gdaltest.gta_drv is None:
         return 'skip'
@@ -159,7 +159,7 @@ def gta_3():
 # Test band metadata
 
 
-def gta_4():
+def test_gta_4():
 
     if gdaltest.gta_drv is None:
         return 'skip'
@@ -233,7 +233,7 @@ def gta_4():
 # Test compression algorithms
 
 
-def gta_5():
+def test_gta_5():
 
     if gdaltest.gta_drv is None:
         return 'skip'
@@ -277,11 +277,11 @@ def test_gta_create(filename, checksum):
 
 
 gdaltest_list = [
-    gta_1,
-    gta_2,
-    gta_3,
-    gta_4,
-    gta_5,
+    test_gta_1,
+    test_gta_2,
+    test_gta_3,
+    test_gta_4,
+    test_gta_5,
 ]
 
 if __name__ == '__main__':

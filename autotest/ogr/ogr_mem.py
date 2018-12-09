@@ -41,7 +41,7 @@ from osgeo import gdal
 # Open Memory datasource.
 
 
-def ogr_mem_1():
+def test_ogr_mem_1():
 
     mem_drv = ogr.GetDriverByName('Memory')
     gdaltest.mem_ds = mem_drv.CreateDataSource('wrk_in_memory')
@@ -55,7 +55,7 @@ def ogr_mem_1():
 # Create table from data/poly.shp
 
 
-def ogr_mem_2():
+def test_ogr_mem_2():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -106,7 +106,7 @@ def ogr_mem_2():
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_mem_3():
+def test_ogr_mem_3():
     if gdaltest.mem_ds is None:
         return 'skip'
 
@@ -140,7 +140,7 @@ def ogr_mem_3():
 # geometries are still OK.
 
 
-def ogr_mem_4():
+def test_ogr_mem_4():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -175,7 +175,7 @@ def ogr_mem_4():
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_mem_5():
+def test_ogr_mem_5():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -194,7 +194,7 @@ def ogr_mem_5():
 # Test ExecuteSQL() results layers with geometry.
 
 
-def ogr_mem_6():
+def test_ogr_mem_6():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -217,7 +217,7 @@ def ogr_mem_6():
 # Test spatial filtering.
 
 
-def ogr_mem_7():
+def test_ogr_mem_7():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -244,7 +244,7 @@ def ogr_mem_7():
 # Test adding a new field.
 
 
-def ogr_mem_8():
+def test_ogr_mem_8():
 
     ####################################################################
     # Add new string field.
@@ -285,7 +285,7 @@ def ogr_mem_8():
 # Test deleting a feature.
 
 
-def ogr_mem_9():
+def test_ogr_mem_9():
 
     if not gdaltest.mem_lyr.TestCapability(ogr.OLCDeleteFeature):
         gdaltest.post_reason('OLCDeleteFeature capability test failed.')
@@ -341,7 +341,7 @@ def ogr_mem_9():
 # Mostly we are verifying that this doesn't still cause a crash.
 
 
-def ogr_mem_10():
+def test_ogr_mem_10():
 
     d = ogr.GetDriverByName('Memory')
     ds = d.CreateDataSource('xxxxxx')
@@ -357,7 +357,7 @@ def ogr_mem_10():
 # Verify that we can delete layers properly
 
 
-def ogr_mem_11():
+def test_ogr_mem_11():
 
     if gdaltest.mem_ds.TestCapability('DeleteLayer') == 0:
         gdaltest.post_reason('Deletelayer TestCapability failed.')
@@ -401,7 +401,7 @@ def ogr_mem_11():
 # Test some date handling
 
 
-def ogr_mem_12():
+def test_ogr_mem_12():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -430,7 +430,7 @@ def ogr_mem_12():
 # Test Get/Set on StringList, IntegerList, RealList
 
 
-def ogr_mem_13():
+def test_ogr_mem_13():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -471,7 +471,7 @@ def ogr_mem_13():
 # Test SetNextByIndex
 
 
-def ogr_mem_14():
+def test_ogr_mem_14():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -529,7 +529,7 @@ def ogr_mem_14():
 # Test non-linear geometries
 
 
-def ogr_mem_15():
+def test_ogr_mem_15():
 
     lyr = gdaltest.mem_ds.CreateLayer('wkbCircularString', geom_type=ogr.wkbCircularString)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -585,7 +585,7 @@ def ogr_mem_15():
 # Test map implementation
 
 
-def ogr_mem_16():
+def test_ogr_mem_16():
 
     lyr = gdaltest.mem_ds.CreateLayer('ogr_mem_16')
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -714,7 +714,7 @@ def ogr_mem_16():
 # Test Dataset.GetNextFeature() implementation
 
 
-def ogr_mem_17():
+def test_ogr_mem_17():
 
     ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds.CreateLayer('ogr_mem_1')
@@ -837,7 +837,7 @@ def ogr_mem_17():
     return 'success'
 
 
-def ogr_mem_cleanup():
+def test_ogr_mem_cleanup():
 
     if gdaltest.mem_ds is None:
         return 'skip'
@@ -849,24 +849,24 @@ def ogr_mem_cleanup():
 
 
 gdaltest_list = [
-    ogr_mem_1,
-    ogr_mem_2,
-    ogr_mem_3,
-    ogr_mem_4,
-    ogr_mem_5,
-    ogr_mem_6,
-    ogr_mem_7,
-    ogr_mem_8,
-    ogr_mem_9,
-    ogr_mem_10,
-    ogr_mem_11,
-    ogr_mem_12,
-    ogr_mem_13,
-    ogr_mem_14,
-    ogr_mem_15,
-    ogr_mem_16,
-    ogr_mem_17,
-    ogr_mem_cleanup]
+    test_ogr_mem_1,
+    test_ogr_mem_2,
+    test_ogr_mem_3,
+    test_ogr_mem_4,
+    test_ogr_mem_5,
+    test_ogr_mem_6,
+    test_ogr_mem_7,
+    test_ogr_mem_8,
+    test_ogr_mem_9,
+    test_ogr_mem_10,
+    test_ogr_mem_11,
+    test_ogr_mem_12,
+    test_ogr_mem_13,
+    test_ogr_mem_14,
+    test_ogr_mem_15,
+    test_ogr_mem_16,
+    test_ogr_mem_17,
+    test_ogr_mem_cleanup]
 
 if __name__ == '__main__':
 

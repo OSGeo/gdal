@@ -41,7 +41,7 @@ from osgeo import gdal
 # Open CSV datasource.
 
 
-def ogr_csv_1():
+def test_ogr_csv_1():
 
     gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open('data/prime_meridian.csv')
@@ -84,7 +84,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
 #
 
 
-def ogr_csv_2():
+def test_ogr_csv_2():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -151,7 +151,7 @@ def ogr_csv_copy_layer(layer_name, options):
 # Copy prime_meridian.csv to a new subtree under the tmp directory.
 
 
-def ogr_csv_3():
+def test_ogr_csv_3():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -196,7 +196,7 @@ def ogr_csv_3():
 # NOTE: one weird thing is that in this pass the prime_meridian_code field
 # is typed as integer instead of string since it is created literally.
 
-def ogr_csv_4():
+def test_ogr_csv_4():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -206,7 +206,7 @@ def ogr_csv_4():
 # Copy prime_meridian.csv again, in CRLF mode.
 
 
-def ogr_csv_5():
+def test_ogr_csv_5():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -221,7 +221,7 @@ def ogr_csv_5():
 #
 
 
-def ogr_csv_6():
+def test_ogr_csv_6():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -232,7 +232,7 @@ def ogr_csv_6():
 #
 
 
-def ogr_csv_7():
+def test_ogr_csv_7():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -270,7 +270,7 @@ def ogr_csv_7():
 #
 
 
-def ogr_csv_8():
+def test_ogr_csv_8():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -294,7 +294,7 @@ def ogr_csv_8():
 #
 
 
-def ogr_csv_9():
+def test_ogr_csv_9():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -328,7 +328,7 @@ def ogr_csv_9():
 #
 
 
-def ogr_csv_10():
+def test_ogr_csv_10():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -479,7 +479,7 @@ def ogr_csv_check_testcsvt(lyr):
 # Verify handling of csvt with width and precision specified
 # Test NULL handling of non string columns too (#2756)
 
-def ogr_csv_11():
+def test_ogr_csv_11():
 
     if gdaltest.csv_ds is None:
         return 'skip'
@@ -498,7 +498,7 @@ def ogr_csv_11():
 # Verify CREATE_CSVT=YES option
 
 
-def ogr_csv_12():
+def test_ogr_csv_12():
 
     if gdaltest.csv_ds is None:
         return 'skip'
@@ -559,7 +559,7 @@ def ogr_csv_12():
 # Verify GEOMETRY=AS_WKT,AS_XY,AS_XYZ,AS_YX options
 
 
-def ogr_csv_13():
+def test_ogr_csv_13():
 
     if gdaltest.csv_ds is None:
         return 'skip'
@@ -729,7 +729,7 @@ def ogr_csv_13():
 # Copy prime_meridian.csv again, with SEMICOLON as separator
 
 
-def ogr_csv_14():
+def test_ogr_csv_14():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -748,7 +748,7 @@ def ogr_csv_14():
 #
 
 
-def ogr_csv_15():
+def test_ogr_csv_15():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -759,7 +759,7 @@ def ogr_csv_15():
 #
 
 
-def ogr_csv_16():
+def test_ogr_csv_16():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -774,7 +774,7 @@ def ogr_csv_16():
 #
 
 
-def ogr_csv_17():
+def test_ogr_csv_17():
     if gdaltest.csv_ds is None:
         return 'skip'
 
@@ -805,7 +805,7 @@ def ogr_csv_17():
 ###############################################################################
 # Write to /vsistdout/
 
-def ogr_csv_18():
+def test_ogr_csv_18():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsistdout/')
     lyr = ds.CreateLayer('foo', options=['GEOMETRY=AS_WKT'])
@@ -824,7 +824,7 @@ def ogr_csv_18():
 # Verify handling of non-numeric values in numeric columns
 
 
-def ogr_csv_19():
+def test_ogr_csv_19():
 
     if gdaltest.csv_ds is None:
         return 'skip'
@@ -860,7 +860,7 @@ def ogr_csv_19():
 ###############################################################################
 # Verify handling of column names with numbers
 
-def ogr_csv_20():
+def test_ogr_csv_20():
 
     if gdaltest.csv_ds is None:
         return 'skip'
@@ -913,7 +913,7 @@ def ogr_csv_20():
 # Verify handling of numeric column names with quotes (bug #4361)
 
 
-def ogr_csv_21():
+def test_ogr_csv_21():
 
     if gdaltest.csv_ds is None:
         return 'skip'
@@ -960,7 +960,7 @@ def ogr_csv_21():
 ###############################################################################
 # Test handling of UTF8 BOM (bug #4623)
 
-def ogr_csv_22():
+def test_ogr_csv_22():
 
     ds = ogr.Open('data/csv_with_utf8_bom.csv')
     lyr = ds.GetLayer(0)
@@ -974,7 +974,7 @@ def ogr_csv_22():
     return 'success'
 
 
-def ogr_csv_23():
+def test_ogr_csv_23():
     # create a CSV file with UTF8 BOM
     ds = ogr.Open('tmp/csvwrk', update=1)
     lyr = ds.CreateLayer('utf8', options=['WRITE_BOM=YES', 'GEOMETRY=AS_WKT'])
@@ -1028,7 +1028,7 @@ def ogr_csv_23():
 # Test single column CSV files
 
 
-def ogr_csv_24():
+def test_ogr_csv_24():
 
     # Create an invalid CSV file
     f = gdal.VSIFOpenL('/vsimem/invalid.csv', 'wb')
@@ -1071,7 +1071,7 @@ def ogr_csv_24():
 ###############################################################################
 # Test newline handling (#4452)
 
-def ogr_csv_25():
+def test_ogr_csv_25():
     ds = ogr.Open('tmp/csvwrk', update=1)
     lyr = ds.CreateLayer('newlines', options=['LINEFORMAT=LF'])  # just in case tests are run on windows...
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
@@ -1096,7 +1096,7 @@ def ogr_csv_25():
 ###############################################################################
 # Test number padding behaviour (#4469)
 
-def ogr_csv_26():
+def test_ogr_csv_26():
     ds = ogr.Open('tmp/csvwrk', update=1)
     lyr = ds.CreateLayer('num_padding', options=['LINEFORMAT=LF'])  # just in case tests are run on windows...
 
@@ -1129,7 +1129,7 @@ def ogr_csv_26():
 # Test Eurostat .TSV files
 
 
-def ogr_csv_27():
+def test_ogr_csv_27():
 
     ds = ogr.Open('data/test_eurostat.tsv')
     lyr = ds.GetLayer(0)
@@ -1180,7 +1180,7 @@ def ogr_csv_27():
 # Check that we don't rewrite erroneously a file that has no header (#5161).
 
 
-def ogr_csv_28():
+def test_ogr_csv_28():
 
     f = open('tmp/ogr_csv_28.csv', 'wb')
     f.write('1,2\n'.encode('ascii'))
@@ -1206,7 +1206,7 @@ def ogr_csv_28():
 # Check multi geometry field support
 
 
-def ogr_csv_29():
+def test_ogr_csv_29():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('tmp/ogr_csv_29', options=['GEOMETRY=AS_WKT'])
     if ds.TestCapability(ogr.ODsCCurveGeometries) != 1:
@@ -1265,7 +1265,7 @@ def ogr_csv_29():
 # Run test_ogrsf
 
 
-def ogr_csv_30():
+def test_ogr_csv_30():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -1283,7 +1283,7 @@ def ogr_csv_30():
 # Read geonames.org allCountries.txt
 
 
-def ogr_csv_31():
+def test_ogr_csv_31():
 
     ds = ogr.Open('data/allCountries.txt')
     lyr = ds.GetLayer(0)
@@ -1312,7 +1312,7 @@ def ogr_csv_31():
 # Test AUTODETECT_TYPE=YES
 
 
-def ogr_csv_32():
+def test_ogr_csv_32():
 
     # Without limit, everything will be detected as string
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1525,7 +1525,7 @@ def ogr_csv_32():
 # Test Boolean, Int16 and Float32 support
 
 
-def ogr_csv_33():
+def test_ogr_csv_33():
 
     ds = gdal.OpenEx('data/testtypeautodetectboolean.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
@@ -1595,7 +1595,7 @@ def ogr_csv_33():
 # Test Integer64 support
 
 
-def ogr_csv_34():
+def test_ogr_csv_34():
 
     ds = gdal.OpenEx('data/testtypeautodetectinteger64.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
@@ -1646,7 +1646,7 @@ def ogr_csv_34():
 # Test comma separator
 
 
-def ogr_csv_35():
+def test_ogr_csv_35():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_35.csv',
                            """FIELD_1  "FIELD 2" FIELD_3
@@ -1692,7 +1692,7 @@ VAL1   "VAL 2"   "VAL 3"
 # Test GEOM_POSSIBLE_NAMES open option
 
 
-def ogr_csv_36():
+def test_ogr_csv_36():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_36.csv',
                            """id,mygeometry,format
@@ -1797,7 +1797,7 @@ def ogr_csv_36():
 # Test X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES and Z_POSSIBLE_NAMES open options
 
 
-def ogr_csv_37():
+def test_ogr_csv_37():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_37.csv',
                            """id,y,other,x,z
@@ -1869,7 +1869,7 @@ def ogr_csv_37():
 # Test GeoCSV WKT type
 
 
-def ogr_csv_38():
+def test_ogr_csv_38():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_38.csv')
     srs = osr.SpatialReference()
@@ -1907,7 +1907,7 @@ def ogr_csv_38():
 # Test GeoCSV CoordX and CoordY types
 
 
-def ogr_csv_39():
+def test_ogr_csv_39():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_39.csv')
     lyr = ds.CreateLayer('ogr_csv_38', options=['GEOMETRY=AS_XY', 'CREATE_CSVT=YES'])
@@ -1936,7 +1936,7 @@ def ogr_csv_39():
 # Test X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES, GEOM_POSSIBLE_NAMES and KEEP_GEOM_COLUMNS=NO together (#6137)
 
 
-def ogr_csv_40():
+def test_ogr_csv_40():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_40.csv',
                            """latitude,longitude,the_geom,id
@@ -1980,7 +1980,7 @@ def ogr_csv_40():
 # Test GEOM_POSSIBLE_NAMES and KEEP_GEOM_COLUMNS=NO together with empty content in geom column (#6152)
 
 
-def ogr_csv_41():
+def test_ogr_csv_41():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_41.csv',
                            """id,the_geom,foo
@@ -2005,7 +2005,7 @@ def ogr_csv_41():
 # Test writing field with empty content
 
 
-def ogr_csv_42():
+def test_ogr_csv_42():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_42.csv')
     lyr = ds.CreateLayer('ogr_csv_42')
@@ -2025,7 +2025,7 @@ def ogr_csv_42():
 # Test editing capabilities
 
 
-def ogr_csv_43():
+def test_ogr_csv_43():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_43.csv')
     lyr = ds.CreateLayer('ogr_csv_43', options=['GEOMETRY=AS_WKT', 'CREATE_CSVT=YES'])
@@ -2324,7 +2324,7 @@ def ogr_csv_43():
 # Test seeking back while creating
 
 
-def ogr_csv_44():
+def test_ogr_csv_44():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_44.csv')
     lyr = ds.CreateLayer('ogr_csv_44', options=['GEOMETRY=AS_WKT'])
@@ -2361,7 +2361,7 @@ def ogr_csv_44():
 # CreateField() on the main dataset and assuming that file is already serialized.
 
 
-def ogr_csv_45():
+def test_ogr_csv_45():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_45.csv')
     lyr = ds.CreateLayer('ogr_csv_45', options=['GEOMETRY=AS_WKT'])
@@ -2387,7 +2387,7 @@ def ogr_csv_45():
 # Test edition of CSV files with X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES open options
 
 
-def ogr_csv_46():
+def test_ogr_csv_46():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_46.csv')
     lyr = ds.CreateLayer('ogr_csv_46')
@@ -2472,7 +2472,7 @@ def ogr_csv_46():
 # Test writing XYZM
 
 
-def ogr_csv_47():
+def test_ogr_csv_47():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_47.csv')
     if ds.TestCapability(ogr.ODsCMeasuredGeometries) != 1:
@@ -2507,7 +2507,7 @@ def ogr_csv_47():
 # Test reading/writing StringList, etc..
 
 
-def ogr_csv_48():
+def test_ogr_csv_48():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_48.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList\n')
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_48.csv',
@@ -2546,7 +2546,7 @@ def ogr_csv_48():
 # Test EMPTY_STRING_AS_NULL=ES
 
 
-def ogr_csv_49():
+def test_ogr_csv_49():
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_49.csv',
                            """id,str
 1,
@@ -2568,7 +2568,7 @@ def ogr_csv_49():
 ###############################################################################
 
 
-def ogr_csv_more_than_100_geom_fields():
+def test_ogr_csv_more_than_100_geom_fields():
 
     with gdaltest.error_handler():
         ds = ogr.Open('data/more_than_100_geom_fields.csv')
@@ -2580,7 +2580,7 @@ def ogr_csv_more_than_100_geom_fields():
 ###############################################################################
 
 
-def ogr_csv_string_quoting_always():
+def test_ogr_csv_string_quoting_always():
 
     gdal.VectorTranslate('/vsimem/ogr_csv_string_quoting_always.csv',
                          'data/poly.shp', format='CSV',
@@ -2620,7 +2620,7 @@ def ogr_csv_string_quoting_always():
 ###############################################################################
 
 
-def ogr_csv_string_quoting_if_ambiguous():
+def test_ogr_csv_string_quoting_if_ambiguous():
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('layer')
@@ -2652,7 +2652,7 @@ def ogr_csv_string_quoting_if_ambiguous():
 ###############################################################################
 
 
-def ogr_csv_string_quoting_if_needed():
+def test_ogr_csv_string_quoting_if_needed():
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('layer')
@@ -2685,7 +2685,7 @@ def ogr_csv_string_quoting_if_needed():
 ###############################################################################
 
 
-def ogr_csv_iter_and_set_feature():
+def test_ogr_csv_iter_and_set_feature():
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_iter_and_set_feature.csv',
                            """id,str
 1,
@@ -2713,7 +2713,7 @@ def ogr_csv_iter_and_set_feature():
 #
 
 
-def ogr_csv_cleanup():
+def test_ogr_csv_cleanup():
 
     if gdaltest.csv_ds is None:
         return 'skip'
@@ -2742,62 +2742,62 @@ def ogr_csv_cleanup():
 
 
 gdaltest_list = [
-    ogr_csv_1,
-    ogr_csv_2,
-    ogr_csv_3,
-    ogr_csv_4,
-    ogr_csv_5,
-    ogr_csv_6,
-    ogr_csv_6,
-    ogr_csv_7,
-    ogr_csv_8,
-    ogr_csv_9,
-    ogr_csv_10,
-    ogr_csv_11,
-    ogr_csv_12,
-    ogr_csv_13,
-    ogr_csv_14,
-    ogr_csv_15,
-    ogr_csv_16,
-    ogr_csv_17,
-    ogr_csv_18,
-    ogr_csv_19,
-    ogr_csv_20,
-    ogr_csv_21,
-    ogr_csv_22,
-    ogr_csv_23,
-    ogr_csv_24,
-    ogr_csv_25,
-    ogr_csv_26,
-    ogr_csv_27,
-    ogr_csv_28,
-    ogr_csv_29,
-    ogr_csv_30,
-    ogr_csv_31,
-    ogr_csv_32,
-    ogr_csv_33,
-    ogr_csv_34,
-    ogr_csv_35,
-    ogr_csv_36,
-    ogr_csv_37,
-    ogr_csv_38,
-    ogr_csv_39,
-    ogr_csv_40,
-    ogr_csv_41,
-    ogr_csv_42,
-    ogr_csv_43,
-    ogr_csv_44,
-    ogr_csv_45,
-    ogr_csv_46,
-    ogr_csv_47,
-    ogr_csv_48,
-    ogr_csv_49,
-    ogr_csv_more_than_100_geom_fields,
-    ogr_csv_string_quoting_always,
-    ogr_csv_string_quoting_if_ambiguous,
-    ogr_csv_string_quoting_if_needed,
-    ogr_csv_iter_and_set_feature,
-    ogr_csv_cleanup]
+    test_ogr_csv_1,
+    test_ogr_csv_2,
+    test_ogr_csv_3,
+    test_ogr_csv_4,
+    test_ogr_csv_5,
+    test_ogr_csv_6,
+    test_ogr_csv_6,
+    test_ogr_csv_7,
+    test_ogr_csv_8,
+    test_ogr_csv_9,
+    test_ogr_csv_10,
+    test_ogr_csv_11,
+    test_ogr_csv_12,
+    test_ogr_csv_13,
+    test_ogr_csv_14,
+    test_ogr_csv_15,
+    test_ogr_csv_16,
+    test_ogr_csv_17,
+    test_ogr_csv_18,
+    test_ogr_csv_19,
+    test_ogr_csv_20,
+    test_ogr_csv_21,
+    test_ogr_csv_22,
+    test_ogr_csv_23,
+    test_ogr_csv_24,
+    test_ogr_csv_25,
+    test_ogr_csv_26,
+    test_ogr_csv_27,
+    test_ogr_csv_28,
+    test_ogr_csv_29,
+    test_ogr_csv_30,
+    test_ogr_csv_31,
+    test_ogr_csv_32,
+    test_ogr_csv_33,
+    test_ogr_csv_34,
+    test_ogr_csv_35,
+    test_ogr_csv_36,
+    test_ogr_csv_37,
+    test_ogr_csv_38,
+    test_ogr_csv_39,
+    test_ogr_csv_40,
+    test_ogr_csv_41,
+    test_ogr_csv_42,
+    test_ogr_csv_43,
+    test_ogr_csv_44,
+    test_ogr_csv_45,
+    test_ogr_csv_46,
+    test_ogr_csv_47,
+    test_ogr_csv_48,
+    test_ogr_csv_49,
+    test_ogr_csv_more_than_100_geom_fields,
+    test_ogr_csv_string_quoting_always,
+    test_ogr_csv_string_quoting_if_ambiguous,
+    test_ogr_csv_string_quoting_if_needed,
+    test_ogr_csv_iter_and_set_feature,
+    test_ogr_csv_cleanup]
 
 if __name__ == '__main__':
 

@@ -80,7 +80,7 @@ def validate_xml(filename):
 # Perform simple read test on PDS4 dataset.
 
 
-def pds4_1():
+def test_pds4_1():
     srs = """PROJCS["Transverse Mercator Earth",
     GEOGCS["GCS_Earth",
         DATUM["D_North_American_Datum_1927",
@@ -121,7 +121,7 @@ def hide_substitution_warnings_error_handler():
 # Test CreateCopy() with defaults
 
 
-def pds4_2():
+def test_pds4_2():
 
     tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053)
     with hide_substitution_warnings_error_handler():
@@ -132,7 +132,7 @@ def pds4_2():
 # Test CreateCopy() with explicit INTERLEAVE=BSQ
 
 
-def pds4_3():
+def test_pds4_3():
 
     tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options=['INTERLEAVE=BSQ'])
     with hide_substitution_warnings_error_handler():
@@ -143,7 +143,7 @@ def pds4_3():
 # Test CreateCopy() with explicit INTERLEAVE=BIP
 
 
-def pds4_4():
+def test_pds4_4():
 
     tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options=['INTERLEAVE=BIP'])
     with hide_substitution_warnings_error_handler():
@@ -154,7 +154,7 @@ def pds4_4():
 # Test CreateCopy() with explicit INTERLEAVE=BIL
 
 
-def pds4_5():
+def test_pds4_5():
 
     tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options=['INTERLEAVE=BIL'])
     with hide_substitution_warnings_error_handler():
@@ -165,7 +165,7 @@ def pds4_5():
 # Test CreateCopy() with explicit INTERLEAVE=BSQ and IMAGE_FORMAT=GEOTIFF
 
 
-def pds4_6():
+def test_pds4_6():
 
     tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options=['INTERLEAVE=BSQ', 'IMAGE_FORMAT=GEOTIFF'])
     with hide_substitution_warnings_error_handler():
@@ -176,7 +176,7 @@ def pds4_6():
 # Test CreateCopy() with explicit INTERLEAVE=BIP and IMAGE_FORMAT=GEOTIFF
 
 
-def pds4_7():
+def test_pds4_7():
 
     tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options=['INTERLEAVE=BIP', 'IMAGE_FORMAT=GEOTIFF'])
     with hide_substitution_warnings_error_handler():
@@ -187,7 +187,7 @@ def pds4_7():
 # Test SRS support
 
 
-def pds4_8():
+def test_pds4_8():
 
     filename = '/vsimem/out.xml'
     for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
@@ -262,7 +262,7 @@ def pds4_8():
 # Test nodata / mask
 
 
-def pds4_9():
+def test_pds4_9():
 
     ds = gdal.Open('data/byte_pds4.xml')
     ndv = ds.GetRasterBand(1).GetNoDataValue()
@@ -535,7 +535,7 @@ def pds4_9():
 # Test scale / offset
 
 
-def pds4_10():
+def test_pds4_10():
 
     filename = '/vsimem/out.xml'
     filename2 = '/vsimem/out2.xml'
@@ -570,7 +570,7 @@ def pds4_10():
 # Test various data types
 
 
-def pds4_11():
+def test_pds4_11():
 
     filename = '/vsimem/out.xml'
     for (dt, data) in [(gdal.GDT_Byte, struct.pack('B', 255)),
@@ -615,7 +615,7 @@ def pds4_11():
 # Test various creation options
 
 
-def pds4_12():
+def test_pds4_12():
 
     filename = '/vsimem/out.xml'
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
@@ -681,7 +681,7 @@ def pds4_12():
 # Test subdatasets
 
 
-def pds4_13():
+def test_pds4_13():
 
     ds = gdal.Open('data/byte_pds4_multi_sds.xml')
     subds = ds.GetSubDatasets()
@@ -760,7 +760,7 @@ def pds4_13():
 # Test error cases
 
 
-def pds4_14():
+def test_pds4_14():
 
     filename = '/vsimem/test.xml'
 
@@ -1090,7 +1090,7 @@ def pds4_14():
 # Test Create() without geospatial info but from a geospatial enabled template
 
 
-def pds4_15():
+def test_pds4_15():
 
     filename = '/vsimem/out.xml'
     with hide_substitution_warnings_error_handler():
@@ -1119,7 +1119,7 @@ def pds4_15():
 # Test Create() with geospatial info but from a template without Discipline_Area
 
 
-def pds4_16():
+def test_pds4_16():
 
     template = '/vsimem/template.xml'
     filename = '/vsimem/out.xml'
@@ -1207,7 +1207,7 @@ def pds4_16():
 # Test ARRAY_TYPE creation option
 
 
-def pds4_17():
+def test_pds4_17():
 
     filename = '/vsimem/out.xml'
 
@@ -1265,7 +1265,7 @@ def pds4_17():
 # Test RADII creation option
 
 
-def pds4_18():
+def test_pds4_18():
 
     filename = '/vsimem/out.xml'
 
@@ -1294,24 +1294,24 @@ def pds4_18():
 
 
 gdaltest_list = [
-    pds4_1,
-    pds4_2,
-    pds4_3,
-    pds4_4,
-    pds4_5,
-    pds4_6,
-    pds4_7,
-    pds4_8,
-    pds4_9,
-    pds4_10,
-    pds4_11,
-    pds4_12,
-    pds4_13,
-    pds4_14,
-    pds4_15,
-    pds4_16,
-    pds4_17,
-    pds4_18]
+    test_pds4_1,
+    test_pds4_2,
+    test_pds4_3,
+    test_pds4_4,
+    test_pds4_5,
+    test_pds4_6,
+    test_pds4_7,
+    test_pds4_8,
+    test_pds4_9,
+    test_pds4_10,
+    test_pds4_11,
+    test_pds4_12,
+    test_pds4_13,
+    test_pds4_14,
+    test_pds4_15,
+    test_pds4_16,
+    test_pds4_17,
+    test_pds4_18]
 
 if __name__ == '__main__':
 

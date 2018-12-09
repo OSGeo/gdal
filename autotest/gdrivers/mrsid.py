@@ -41,7 +41,7 @@ import gdaltest
 # Read a simple byte file, checking projections and geotransform.
 
 
-def mrsid_1():
+def test_mrsid_1():
 
     gdaltest.mrsid_drv = gdal.GetDriverByName('MrSID')
     if gdaltest.mrsid_drv is None:
@@ -139,7 +139,7 @@ def mrsid_1():
 # RasterIO implementation.
 
 
-def mrsid_2():
+def test_mrsid_2():
 
     if gdaltest.mrsid_drv is None:
         return 'skip'
@@ -176,7 +176,7 @@ def mrsid_2():
 # Test overview reading.
 
 
-def mrsid_3():
+def test_mrsid_3():
 
     if gdaltest.mrsid_drv is None:
         return 'skip'
@@ -207,7 +207,7 @@ def mrsid_3():
 # Check a new (V3) file which uses a different form for coordinate sys.
 
 
-def mrsid_4():
+def test_mrsid_4():
 
     if gdaltest.mrsid_drv is None:
         return 'skip'
@@ -253,7 +253,7 @@ def mrsid_4():
 # Test JP2MrSID driver
 
 
-def mrsid_5():
+def test_mrsid_5():
     gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -266,7 +266,7 @@ def mrsid_5():
 # Open byte.jp2
 
 
-def mrsid_6():
+def test_mrsid_6():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -299,7 +299,7 @@ def mrsid_6():
 ###############################################################################
 # Open int16.jp2
 
-def mrsid_7():
+def test_mrsid_7():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -327,7 +327,7 @@ def mrsid_7():
 # Test PAM override for nodata, coordsys, and geotransform.
 
 
-def mrsid_8():
+def test_mrsid_8():
 
     if gdaltest.mrsid_drv is None:
         return 'skip'
@@ -373,7 +373,7 @@ def mrsid_8():
 # Test VSI*L IO with .sid
 
 
-def mrsid_9():
+def test_mrsid_9():
 
     if gdaltest.mrsid_drv is None:
         return 'skip'
@@ -398,7 +398,7 @@ def mrsid_9():
 # Test VSI*L IO with .jp2
 
 
-def mrsid_10():
+def test_mrsid_10():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -423,7 +423,7 @@ def mrsid_10():
 # Check that we can use .j2w world files (#4651)
 
 
-def mrsid_11():
+def test_mrsid_11():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -448,7 +448,7 @@ def mrsid_11():
 ###############################################################################
 
 
-def mrsid_online_1():
+def test_mrsid_online_1():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -471,7 +471,7 @@ def mrsid_online_1():
 ###############################################################################
 
 
-def mrsid_online_2():
+def test_mrsid_online_2():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -504,7 +504,7 @@ def mrsid_online_2():
 ###############################################################################
 
 
-def mrsid_online_3():
+def test_mrsid_online_3():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -541,7 +541,7 @@ def mrsid_online_3():
 ###############################################################################
 
 
-def mrsid_online_4():
+def test_mrsid_online_4():
 
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
@@ -577,7 +577,7 @@ def mrsid_online_4():
 # Cleanup.
 
 
-def mrsid_cleanup():
+def test_mrsid_cleanup():
 
     try:
         os.remove('data/mercator.sid.aux.xml')
@@ -591,22 +591,22 @@ def mrsid_cleanup():
 
 
 gdaltest_list = [
-    mrsid_1,
-    mrsid_2,
-    mrsid_3,
-    mrsid_4,
-    mrsid_5,
-    mrsid_6,
-    mrsid_7,
-    mrsid_8,
-    mrsid_9,
-    mrsid_10,
-    mrsid_11,
-    mrsid_online_1,
-    mrsid_online_2,
-    mrsid_online_3,
-    mrsid_online_4,
-    mrsid_cleanup]
+    test_mrsid_1,
+    test_mrsid_2,
+    test_mrsid_3,
+    test_mrsid_4,
+    test_mrsid_5,
+    test_mrsid_6,
+    test_mrsid_7,
+    test_mrsid_8,
+    test_mrsid_9,
+    test_mrsid_10,
+    test_mrsid_11,
+    test_mrsid_online_1,
+    test_mrsid_online_2,
+    test_mrsid_online_3,
+    test_mrsid_online_4,
+    test_mrsid_cleanup]
 
 if __name__ == '__main__':
 

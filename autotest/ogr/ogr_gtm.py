@@ -38,7 +38,7 @@ import ogrtest
 from osgeo import ogr
 
 
-def ogr_gtm_init():
+def test_ogr_gtm_init():
     gdaltest.gtm_ds = None
 
     gdaltest.gtm_ds = ogr.Open('data/samplemap.gtm')
@@ -61,7 +61,7 @@ def ogr_gtm_init():
 # Test waypoints gtm layer.
 
 
-def ogr_gtm_read_1():
+def test_ogr_gtm_read_1():
     if not gdaltest.have_gtm:
         return 'skip'
 
@@ -152,7 +152,7 @@ def ogr_gtm_read_1():
 # Test tracks gtm layer.
 
 
-def ogr_gtm_read_2():
+def test_ogr_gtm_read_2():
     if not gdaltest.have_gtm:
         return 'skip'
 
@@ -257,7 +257,7 @@ def ogr_gtm_read_2():
 
 ###############################################################################
 # Waypoint write
-def ogr_gtm_write_1():
+def test_ogr_gtm_write_1():
 
     ds = ogr.GetDriverByName('GPSTrackMaker').CreateDataSource('tmp/gtm.gtm')
     lyr = ds.CreateLayer('gtm_waypoints', geom_type=ogr.wkbPoint)
@@ -319,7 +319,7 @@ def ogr_gtm_write_1():
 # Check previous test
 
 
-def ogr_gtm_check_write_1():
+def test_ogr_gtm_check_write_1():
     if not gdaltest.have_gtm:
         return 'skip'
 
@@ -471,7 +471,7 @@ def ogr_gtm_check_write_1():
 ###############################################################################
 #
 
-def ogr_gtm_cleanup():
+def test_ogr_gtm_cleanup():
 
     gdaltest.gtm_ds = None
     os.remove('tmp/gtm.gtm')
@@ -479,12 +479,12 @@ def ogr_gtm_cleanup():
 
 
 gdaltest_list = [
-    ogr_gtm_init,
-    ogr_gtm_read_1,
-    ogr_gtm_read_2,
-    ogr_gtm_write_1,
-    ogr_gtm_check_write_1,
-    ogr_gtm_cleanup]
+    test_ogr_gtm_init,
+    test_ogr_gtm_read_1,
+    test_ogr_gtm_read_2,
+    test_ogr_gtm_write_1,
+    test_ogr_gtm_check_write_1,
+    test_ogr_gtm_cleanup]
 
 if __name__ == '__main__':
 

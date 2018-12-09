@@ -39,7 +39,7 @@ from osgeo import ogr
 ###############################################################################
 
 
-def ogr_basic_1():
+def test_ogr_basic_1():
 
     gdaltest.ds = ogr.Open('data/poly.shp')
 
@@ -53,7 +53,7 @@ def ogr_basic_1():
 # Test Feature counting.
 
 
-def ogr_basic_2():
+def test_ogr_basic_2():
 
     gdaltest.lyr = gdaltest.ds.GetLayerByName('poly')
 
@@ -91,7 +91,7 @@ def ogr_basic_2():
 # Test Spatial Query.
 
 
-def ogr_basic_3():
+def test_ogr_basic_3():
 
     minx = 479405
     miny = 4762826
@@ -139,7 +139,7 @@ def ogr_basic_3():
 # Test GetDriver().
 
 
-def ogr_basic_4():
+def test_ogr_basic_4():
     driver = gdaltest.ds.GetDriver()
     if driver is None:
         gdaltest.post_reason('GetDriver() returns None')
@@ -155,7 +155,7 @@ def ogr_basic_4():
 # Test attribute query on special field fid - per bug 1468.
 
 
-def ogr_basic_5():
+def test_ogr_basic_5():
 
     gdaltest.lyr.SetAttributeFilter('FID = 3')
     gdaltest.lyr.ResetReading()
@@ -178,7 +178,7 @@ def ogr_basic_5():
 
 ###############################################################################
 # Test opening a dataset with an empty string and a non existing dataset
-def ogr_basic_6():
+def test_ogr_basic_6():
 
     # Put inside try/except for OG python bindings
     if ogr.Open('') is not None:
@@ -193,7 +193,7 @@ def ogr_basic_6():
 # Test ogr.Feature.Equal()
 
 
-def ogr_basic_7():
+def test_ogr_basic_7():
 
     feat_defn = ogr.FeatureDefn()
     feat = ogr.Feature(feat_defn)
@@ -386,7 +386,7 @@ def ogr_basic_7():
 # Issue several RegisterAll() to check that OGR drivers are good citizens
 
 
-def ogr_basic_8():
+def test_ogr_basic_8():
 
     ogr.RegisterAll()
     ogr.RegisterAll()
@@ -398,7 +398,7 @@ def ogr_basic_8():
 # Test ogr.GeometryTypeToName (#4871)
 
 
-def ogr_basic_9():
+def test_ogr_basic_9():
 
     geom_type_tuples = [[ogr.wkbUnknown, "Unknown (any)"],
                         [ogr.wkbPoint, "Point"],
@@ -432,7 +432,7 @@ def ogr_basic_9():
 # Run test_ogrsf -all_drivers
 
 
-def ogr_basic_10():
+def test_ogr_basic_10():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -450,7 +450,7 @@ def ogr_basic_10():
 # Test double call to UseExceptions() (#5704)
 
 
-def ogr_basic_11():
+def test_ogr_basic_11():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -470,7 +470,7 @@ def ogr_basic_11():
 # Test OFSTBoolean, OFSTInt16 and OFSTFloat32
 
 
-def ogr_basic_12():
+def test_ogr_basic_12():
 
     # boolean integer
     feat_def = ogr.FeatureDefn()
@@ -643,7 +643,7 @@ def ogr_basic_12():
 # Test OGRParseDate (#6452)
 
 
-def ogr_basic_13():
+def test_ogr_basic_13():
     feat_defn = ogr.FeatureDefn('test')
     field_defn = ogr.FieldDefn('date', ogr.OFTDateTime)
     feat_defn.AddFieldDefn(field_defn)
@@ -686,7 +686,7 @@ def ogr_basic_13():
 # Test ogr.Open(.) in an empty directory
 
 
-def ogr_basic_14():
+def test_ogr_basic_14():
 
     os.mkdir('tmp/ogr_basic_14')
     os.chdir('tmp/ogr_basic_14')
@@ -704,7 +704,7 @@ def ogr_basic_14():
 # Test exceptions with OGRErr return code
 
 
-def ogr_basic_15():
+def test_ogr_basic_15():
 
     ds = ogr.Open('data/poly.shp')
     lyr = ds.GetLayer(0)
@@ -742,7 +742,7 @@ def ogr_basic_16_gen_list(N):
         yield i
 
 
-def ogr_basic_16():
+def test_ogr_basic_16():
 
     if list(ogr_basic_16_gen_list(2)) != [0, 1]:
         return 'fail'
@@ -750,7 +750,7 @@ def ogr_basic_16():
     return 'success'
 
 
-def ogr_basic_invalid_unicode():
+def test_ogr_basic_invalid_unicode():
 
     if sys.version_info >= (3, 0, 0):
         val = '\udcfc'
@@ -774,7 +774,7 @@ def ogr_basic_invalid_unicode():
     return 'success'
 
 
-def ogr_basic_dataset_slice():
+def test_ogr_basic_dataset_slice():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     ds.CreateLayer('lyr1')
@@ -806,7 +806,7 @@ def ogr_basic_dataset_slice():
 # cleanup
 
 
-def ogr_basic_cleanup():
+def test_ogr_basic_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
 
@@ -814,25 +814,25 @@ def ogr_basic_cleanup():
 
 
 gdaltest_list = [
-    ogr_basic_1,
-    ogr_basic_2,
-    ogr_basic_3,
-    ogr_basic_4,
-    ogr_basic_5,
-    ogr_basic_6,
-    ogr_basic_7,
-    ogr_basic_8,
-    ogr_basic_9,
-    ogr_basic_10,
-    ogr_basic_11,
-    ogr_basic_12,
-    ogr_basic_13,
-    ogr_basic_14,
-    ogr_basic_15,
-    ogr_basic_16,
-    ogr_basic_invalid_unicode,
-    ogr_basic_dataset_slice,
-    ogr_basic_cleanup]
+    test_ogr_basic_1,
+    test_ogr_basic_2,
+    test_ogr_basic_3,
+    test_ogr_basic_4,
+    test_ogr_basic_5,
+    test_ogr_basic_6,
+    test_ogr_basic_7,
+    test_ogr_basic_8,
+    test_ogr_basic_9,
+    test_ogr_basic_10,
+    test_ogr_basic_11,
+    test_ogr_basic_12,
+    test_ogr_basic_13,
+    test_ogr_basic_14,
+    test_ogr_basic_15,
+    test_ogr_basic_16,
+    test_ogr_basic_invalid_unicode,
+    test_ogr_basic_dataset_slice,
+    test_ogr_basic_cleanup]
 
 # gdaltest_list = [ ogr_basic_13 ]
 

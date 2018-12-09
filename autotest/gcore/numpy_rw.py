@@ -39,7 +39,7 @@ from osgeo import gdal
 # verify that we can load Numeric python, and find the Numpy driver.
 
 
-def numpy_rw_1():
+def test_numpy_rw_1():
 
     gdaltest.numpy_drv = None
     try:
@@ -61,7 +61,7 @@ def numpy_rw_1():
 # Load a test file into a memory Numpy array, and verify the checksum.
 
 
-def numpy_rw_2():
+def test_numpy_rw_2():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -90,7 +90,7 @@ def numpy_rw_2():
 # Test loading complex data.
 
 
-def numpy_rw_3():
+def test_numpy_rw_3():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -109,7 +109,7 @@ def numpy_rw_3():
 # Test a band read with downsampling.
 
 
-def numpy_rw_4():
+def test_numpy_rw_4():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -128,7 +128,7 @@ def numpy_rw_4():
 # Test reading a multi-band file.
 
 
-def numpy_rw_5():
+def test_numpy_rw_5():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -177,7 +177,7 @@ def numpy_rw_5():
 # Check that Band.ReadAsArray() can accept an already allocated array (#2658, #3028)
 
 
-def numpy_rw_6():
+def test_numpy_rw_6():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -202,7 +202,7 @@ def numpy_rw_6():
 # Check that Dataset.ReadAsArray() can accept an already allocated array (#2658, #3028)
 
 
-def numpy_rw_7():
+def test_numpy_rw_7():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -250,7 +250,7 @@ def numpy_rw_7():
 # Check that Dataset.ReadAsArray() with multi-band data
 
 
-def numpy_rw_8():
+def test_numpy_rw_8():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -273,7 +273,7 @@ def numpy_rw_8():
 # Test Band.WriteArray()
 
 
-def numpy_rw_9():
+def test_numpy_rw_9():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -298,7 +298,7 @@ def numpy_rw_9():
 # Test signed byte handling
 
 
-def numpy_rw_10():
+def test_numpy_rw_10():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -336,7 +336,7 @@ def numpy_rw_10():
 # Test all datatypes
 
 
-def numpy_rw_11():
+def test_numpy_rw_11():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -411,7 +411,7 @@ def numpy_rw_11():
 # Test array with slices (#3542)
 
 
-def numpy_rw_12():
+def test_numpy_rw_12():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -444,7 +444,7 @@ def numpy_rw_12():
 # Test expected errors
 
 
-def numpy_rw_13():
+def test_numpy_rw_13():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -672,7 +672,7 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def numpy_rw_14():
+def test_numpy_rw_14():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -756,7 +756,7 @@ def numpy_rw_14():
 # Test NumPy GetGeoTransform/SetGeoTransform
 
 
-def numpy_rw_15():
+def test_numpy_rw_15():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -782,7 +782,7 @@ def numpy_rw_15():
 # Test errors of OpenArray()
 
 
-def numpy_rw_16():
+def test_numpy_rw_16():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -820,7 +820,7 @@ def numpy_rw_16():
 # Test old deprecated way with gdal_array.GetArrayFilename()
 
 
-def numpy_rw_17():
+def test_numpy_rw_17():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -856,7 +856,7 @@ def numpy_rw_17():
 # Test the pixel interleave options
 
 
-def numpy_rw_18():
+def test_numpy_rw_18():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
@@ -886,32 +886,32 @@ def numpy_rw_18():
     return 'success'
 
 
-def numpy_rw_cleanup():
+def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
     return 'success'
 
 
 gdaltest_list = [
-    numpy_rw_1,
-    numpy_rw_2,
-    numpy_rw_3,
-    numpy_rw_4,
-    numpy_rw_5,
-    numpy_rw_6,
-    numpy_rw_7,
-    numpy_rw_8,
-    numpy_rw_9,
-    numpy_rw_10,
-    numpy_rw_11,
-    numpy_rw_12,
-    numpy_rw_13,
-    numpy_rw_14,
-    numpy_rw_15,
-    numpy_rw_16,
-    numpy_rw_17,
-    numpy_rw_18,
-    numpy_rw_cleanup]
+    test_numpy_rw_1,
+    test_numpy_rw_2,
+    test_numpy_rw_3,
+    test_numpy_rw_4,
+    test_numpy_rw_5,
+    test_numpy_rw_6,
+    test_numpy_rw_7,
+    test_numpy_rw_8,
+    test_numpy_rw_9,
+    test_numpy_rw_10,
+    test_numpy_rw_11,
+    test_numpy_rw_12,
+    test_numpy_rw_13,
+    test_numpy_rw_14,
+    test_numpy_rw_15,
+    test_numpy_rw_16,
+    test_numpy_rw_17,
+    test_numpy_rw_18,
+    test_numpy_rw_cleanup]
 
 if __name__ == '__main__':
 

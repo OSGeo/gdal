@@ -51,7 +51,7 @@ def test_bmp_open(filename, checksum):
     ut.testOpen()
 
 
-def bmp_online_1():
+def test_bmp_online_1():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/8bit_pal_rle.bmp', '8bit_pal_rle.bmp'):
         return 'skip'
@@ -61,7 +61,7 @@ def bmp_online_1():
     return tst.testOpen()
 
 
-def bmp_online_2():
+def test_bmp_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/24bit.bmp', '24bit.bmp'):
         return 'skip'
@@ -73,7 +73,7 @@ def bmp_online_2():
     return tst.testOpen()
 
 
-gdaltest_list = [bmp_online_1, bmp_online_2]
+gdaltest_list = [test_bmp_online_1, test_bmp_online_2]
 
 if __name__ == '__main__':
 

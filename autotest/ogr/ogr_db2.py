@@ -50,7 +50,7 @@ from osgeo import ogr
 # Test if driver is available
 
 
-def ogr_db2_check_driver():
+def test_ogr_db2_check_driver():
 
     ogrtest.db2_drv = None
 
@@ -65,7 +65,7 @@ def ogr_db2_check_driver():
 # Test if environment variable for DB2 connection is set and we can connect
 
 
-def ogr_db2_init():
+def test_ogr_db2_init():
 
     if ogrtest.db2_drv is None:
         return 'skip'
@@ -82,7 +82,7 @@ def ogr_db2_init():
 # Test GetFeatureCount()
 
 
-def ogr_db2_GetFeatureCount():
+def test_ogr_db2_GetFeatureCount():
 
     if ogrtest.db2_drv is None:
         return 'skip'
@@ -108,7 +108,7 @@ def ogr_db2_GetFeatureCount():
 # Test GetSpatialRef()
 
 
-def ogr_db2_GetSpatialRef():
+def test_ogr_db2_GetSpatialRef():
 
     if ogrtest.db2_drv is None:
         return 'skip'
@@ -141,7 +141,7 @@ def ogr_db2_GetSpatialRef():
 
 ###############################################################################
 # Test GetExtent()
-def ogr_db2_GetExtent():
+def test_ogr_db2_GetExtent():
 
     if ogrtest.db2_drv is None:
         return 'skip'
@@ -172,7 +172,7 @@ def ogr_db2_GetExtent():
 # Test GetFeature()
 
 
-def ogr_db2_GetFeature():
+def test_ogr_db2_GetFeature():
 
     if ogrtest.db2_drv is None:
         return 'skip'
@@ -203,7 +203,7 @@ def ogr_db2_GetFeature():
 # Test SetSpatialFilter()
 
 
-def ogr_db2_SetSpatialFilter():
+def test_ogr_db2_SetSpatialFilter():
 
     if ogrtest.db2_drv is None:
         return 'skip'
@@ -268,7 +268,7 @@ def ogr_db2_SetSpatialFilter():
 #
 
 
-def ogr_db2_capabilities():
+def test_ogr_db2_capabilities():
 
     if ogrtest.db2_drv is None:
         return 'skip'
@@ -323,15 +323,15 @@ def ogr_db2_listdrivers():
 
 
 gdaltest_list = [
-    ogr_db2_check_driver,
-    ogr_db2_init,
+    test_ogr_db2_check_driver,
+    test_ogr_db2_init,
     # ogr_db2_listdrivers,
-    ogr_db2_GetSpatialRef,
-    ogr_db2_GetExtent,
-    ogr_db2_GetFeature,
-    ogr_db2_SetSpatialFilter,
-    ogr_db2_capabilities,
-    ogr_db2_GetFeatureCount
+    test_ogr_db2_GetSpatialRef,
+    test_ogr_db2_GetExtent,
+    test_ogr_db2_GetFeature,
+    test_ogr_db2_SetSpatialFilter,
+    test_ogr_db2_capabilities,
+    test_ogr_db2_GetFeatureCount
 ]
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ from osgeo import gdal
 # Parse a simple document into a tree of lists.
 
 
-def minixml_1():
+def test_minixml_1():
 
     tree = gdal.ParseXMLString('<TestDoc style="123"><sub1/><sub2>abc</sub2></TestDoc>')
 
@@ -114,7 +114,7 @@ def minixml_1():
 # Serialize an XML Tree
 
 
-def minixml_2():
+def test_minixml_2():
 
     tree = [0, 'TestDoc', [2, 'style', [1, '123']], [0, 'sub1'], [0, 'sub2', [1, 'abc']]]
     doc_target = '<TestDoc style="123">\n  <sub1 />\n  <sub2>abc</sub2>\n</TestDoc>\n'
@@ -129,7 +129,7 @@ def minixml_2():
 # Read XML document with complex DOCTYPE element.
 
 
-def minixml_3():
+def test_minixml_3():
 
     fp = open('data/doctype.xml', 'r')
     text = fp.read()
@@ -194,7 +194,7 @@ def minixml_3():
 # Parse and serialize an XML Tree with a <?xml> prolog
 
 
-def minixml_4():
+def test_minixml_4():
 
     xml = """<?xml encoding="utf-8"?>\n<foo />\n"""
     got_xml = gdal.SerializeXMLTree(gdal.ParseXMLString(xml))
@@ -209,7 +209,7 @@ def minixml_4():
 # Parse malformed XML.  Complains, but still makes a tree.
 
 
-def minixml_5():
+def test_minixml_5():
 
     test_pairs = (
         ('<a></A>', 'case'),
@@ -238,7 +238,7 @@ def minixml_5():
 # Parse malformed XML.
 
 
-def minixml_6():
+def test_minixml_6():
 
     test_pairs = (
         ('<', 'element token after open angle bracket'),
@@ -277,7 +277,7 @@ def minixml_6():
 # Parse malformed XML.  Pass without warning, but should not pass.
 
 
-def minixml_7():
+def test_minixml_7():
 
     test_strings = (
         '<1></1>',
@@ -305,7 +305,7 @@ def minixml_7():
 # Parse XML with too many nesting
 
 
-def minixml_8():
+def test_minixml_8():
 
     xml_str = '<a>' * 10001
     xml_str += '</a>' * 10001
@@ -326,20 +326,20 @@ def minixml_8():
 ###############################################################################
 # Cleanup
 
-def minixml_cleanup():
+def test_minixml_cleanup():
     return 'success'
 
 
 gdaltest_list = [
-    minixml_1,
-    minixml_2,
-    minixml_3,
-    minixml_4,
-    minixml_5,
-    minixml_6,
-    minixml_7,
-    minixml_8,
-    minixml_cleanup]
+    test_minixml_1,
+    test_minixml_2,
+    test_minixml_3,
+    test_minixml_4,
+    test_minixml_5,
+    test_minixml_6,
+    test_minixml_7,
+    test_minixml_8,
+    test_minixml_cleanup]
 
 if __name__ == '__main__':
 

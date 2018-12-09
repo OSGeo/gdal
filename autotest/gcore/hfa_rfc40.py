@@ -412,103 +412,103 @@ def CheckClone(fname):
 # basic tests
 
 
-def hfa_rfc40_1():
+def test_hfa_rfc40_1():
     return CreateAndWriteRAT("tmp/test.img")
 
 
-def hfa_rfc40_2():
+def test_hfa_rfc40_2():
     return ReadAndCheckValues("tmp/test.img", 10)
 
 # the older interface
 
 
-def hfa_rfc40_3():
+def test_hfa_rfc40_3():
     return CheckSetGetValues("tmp/test.img")
 
 # make sure original data not changed
 
 
-def hfa_rfc40_4():
+def test_hfa_rfc40_4():
     return ReadAndCheckValues("tmp/test.img", 10)
 
 # make it longer - data will be re-written
 
 
-def hfa_rfc40_5():
+def test_hfa_rfc40_5():
     return ExtendAndWrite("tmp/test.img")
 
 # make sure old data not changed
 
 
-def hfa_rfc40_6():
+def test_hfa_rfc40_6():
     return ReadAndCheckValues("tmp/test.img", 20)
 
 # new data at the end ok?
 
 
-def hfa_rfc40_7():
+def test_hfa_rfc40_7():
     return CheckExtension("tmp/test.img")
 
 # write some longer strings - string column will
 # have to be re-written
 
 
-def hfa_rfc40_8():
+def test_hfa_rfc40_8():
     return WriteLongStrings("tmp/test.img")
 
 # make sure old data not changed
 
 
-def hfa_rfc40_9():
+def test_hfa_rfc40_9():
     return ReadAndCheckValues("tmp/test.img", 20)
 
 # check new data ok
 
 
-def hfa_rfc40_10():
+def test_hfa_rfc40_10():
     return CheckLongStrings("tmp/test.img")
 
 # linear binning
 
 
-def hfa_rfc40_11():
+def test_hfa_rfc40_11():
     return SetLinearBinning("tmp/test.img")
 
 # linear binning
 
 
-def hfa_rfc40_12():
+def test_hfa_rfc40_12():
     return CheckLinearBinning("tmp/test.img")
 
 # clone
 
 
-def hfa_rfc40_13():
+def test_hfa_rfc40_13():
     return CheckClone("tmp/test.img")
 
 # serialize not available from Python...
 
 
-def hfa_rfc40_cleanup():
+def test_hfa_rfc40_cleanup():
     gdal.GetDriverByName('HFA').Delete("tmp/test.img")
     return 'success'
 
 
 gdaltest_list = [
-    hfa_rfc40_1,
-    hfa_rfc40_2,
-    hfa_rfc40_3,
-    hfa_rfc40_4,
-    hfa_rfc40_5,
-    hfa_rfc40_6,
-    hfa_rfc40_7,
-    hfa_rfc40_8,
-    hfa_rfc40_9,
-    hfa_rfc40_10,
-    hfa_rfc40_11,
-    hfa_rfc40_12,
-    hfa_rfc40_13,
-    hfa_rfc40_cleanup,
+    test_hfa_rfc40_1,
+    test_hfa_rfc40_2,
+    test_hfa_rfc40_3,
+    test_hfa_rfc40_4,
+    test_hfa_rfc40_5,
+    test_hfa_rfc40_6,
+    test_hfa_rfc40_7,
+    test_hfa_rfc40_8,
+    test_hfa_rfc40_9,
+    test_hfa_rfc40_10,
+    test_hfa_rfc40_11,
+    test_hfa_rfc40_12,
+    test_hfa_rfc40_13,
+    test_hfa_rfc40_cleanup,
 ]
 
 if __name__ == '__main__':

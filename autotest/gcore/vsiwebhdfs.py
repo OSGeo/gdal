@@ -46,7 +46,7 @@ def open_for_read(uri):
 ###############################################################################
 
 
-def vsiwebhdfs_init():
+def test_vsiwebhdfs_init():
 
     gdaltest.webhdfs_vars = {}
     for var in ('WEBHDFS_USERNAME', 'WEBHDFS_DELEGATION'):
@@ -59,7 +59,7 @@ def vsiwebhdfs_init():
 ###############################################################################
 
 
-def vsiwebhdfs_start_webserver():
+def test_vsiwebhdfs_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -83,7 +83,7 @@ def vsiwebhdfs_start_webserver():
 # Test VSIFOpenL()
 
 
-def vsiwebhdfs_open():
+def test_vsiwebhdfs_open():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -156,7 +156,7 @@ def vsiwebhdfs_open():
 # Test VSIStatL()
 
 
-def vsiwebhdfs_stat():
+def test_vsiwebhdfs_stat():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -199,7 +199,7 @@ def vsiwebhdfs_stat():
 # Test ReadDir()
 
 
-def vsiwebhdfs_readdir():
+def test_vsiwebhdfs_readdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -248,7 +248,7 @@ def vsiwebhdfs_readdir():
 # Test write
 
 
-def vsiwebhdfs_write():
+def test_vsiwebhdfs_write():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -399,7 +399,7 @@ def vsiwebhdfs_write():
 # Test Unlink()
 
 
-def vsiwebhdfs_unlink():
+def test_vsiwebhdfs_unlink():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -464,7 +464,7 @@ def vsiwebhdfs_unlink():
 # Test Mkdir() / Rmdir()
 
 
-def vsiwebhdfs_mkdir_rmdir():
+def test_vsiwebhdfs_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -547,7 +547,7 @@ def vsiwebhdfs_mkdir_rmdir():
 ###############################################################################
 
 
-def vsiwebhdfs_stop_webserver():
+def test_vsiwebhdfs_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -697,7 +697,7 @@ def vsiwebhdfs_extra_1():
 ###############################################################################
 
 
-def vsiwebhdfs_cleanup():
+def test_vsiwebhdfs_cleanup():
 
     for var in gdaltest.webhdfs_vars:
         gdal.SetConfigOption(var, gdaltest.webhdfs_vars[var])
@@ -705,16 +705,16 @@ def vsiwebhdfs_cleanup():
     return 'success'
 
 
-gdaltest_list = [vsiwebhdfs_init,
-                 vsiwebhdfs_start_webserver,
-                 vsiwebhdfs_open,
-                 vsiwebhdfs_stat,
-                 vsiwebhdfs_readdir,
-                 vsiwebhdfs_write,
-                 vsiwebhdfs_unlink,
-                 vsiwebhdfs_mkdir_rmdir,
-                 vsiwebhdfs_stop_webserver,
-                 vsiwebhdfs_cleanup]
+gdaltest_list = [test_vsiwebhdfs_init,
+                 test_vsiwebhdfs_start_webserver,
+                 test_vsiwebhdfs_open,
+                 test_vsiwebhdfs_stat,
+                 test_vsiwebhdfs_readdir,
+                 test_vsiwebhdfs_write,
+                 test_vsiwebhdfs_unlink,
+                 test_vsiwebhdfs_mkdir_rmdir,
+                 test_vsiwebhdfs_stop_webserver,
+                 test_vsiwebhdfs_cleanup]
 
 gdaltest_list_extra = [vsiwebhdfs_extra_1]
 
@@ -726,6 +726,6 @@ if __name__ == '__main__':
         gdaltest.run_tests(gdaltest_list_extra)
     else:
         gdaltest.run_tests(
-            gdaltest_list + gdaltest_list_extra + [vsiwebhdfs_cleanup])
+            gdaltest_list + gdaltest_list_extra + [test_vsiwebhdfs_cleanup])
 
     sys.exit(gdaltest.summarize())

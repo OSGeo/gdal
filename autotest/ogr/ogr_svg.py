@@ -36,7 +36,7 @@ import ogrtest
 from osgeo import ogr
 
 
-def ogr_svg_init():
+def test_ogr_svg_init():
     gdaltest.svg_ds = None
 
     gdaltest.svg_ds = ogr.Open('data/test.svg')
@@ -59,7 +59,7 @@ def ogr_svg_init():
 # Test
 
 
-def ogr_svg_1():
+def test_ogr_svg_1():
     if not gdaltest.have_svg:
         return 'skip'
 
@@ -112,16 +112,16 @@ def ogr_svg_1():
 #
 
 
-def ogr_svg_cleanup():
+def test_ogr_svg_cleanup():
 
     gdaltest.svg_ds = None
     return 'success'
 
 
 gdaltest_list = [
-    ogr_svg_init,
-    ogr_svg_1,
-    ogr_svg_cleanup]
+    test_ogr_svg_init,
+    test_ogr_svg_1,
+    test_ogr_svg_cleanup]
 
 if __name__ == '__main__':
 

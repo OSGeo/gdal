@@ -54,7 +54,7 @@ except:
     pass
 
 
-def ogr_sde_1():
+def test_ogr_sde_1():
     "Test basic opening of a database"
 
     if gdaltest.sde_dr is None:
@@ -74,7 +74,7 @@ def ogr_sde_1():
     return 'success'
 
 
-def ogr_sde_2():
+def test_ogr_sde_2():
     "Test creation of a layer"
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -115,7 +115,7 @@ def ogr_sde_2():
     return 'success'
 
 
-def ogr_sde_3():
+def test_ogr_sde_3():
     "Test basic version locking"
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -133,7 +133,7 @@ def ogr_sde_3():
     return 'success'
 
 
-def ogr_sde_4():
+def test_ogr_sde_4():
     "Test basic version creation"
 
     if gdaltest.sde_dr is None:
@@ -154,7 +154,7 @@ def ogr_sde_4():
     return 'success'
 
 
-def ogr_sde_5():
+def test_ogr_sde_5():
     "Test versioned editing"
 
     if gdaltest.sde_dr is None:
@@ -218,7 +218,7 @@ def ogr_sde_5():
     return 'success'
 
 
-def ogr_sde_6():
+def test_ogr_sde_6():
     "Extent fetching"
 
     if gdaltest.sde_dr is None:
@@ -239,7 +239,7 @@ def ogr_sde_6():
     return 'success'
 
 
-def ogr_sde_7():
+def test_ogr_sde_7():
     "Bad layer test"
 
     if gdaltest.sde_dr is None:
@@ -282,7 +282,7 @@ def ogr_sde_7():
     return 'success'
 
 
-def ogr_sde_8():
+def test_ogr_sde_8():
     "Test spatial references"
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -326,7 +326,7 @@ def ogr_sde_8():
     return 'success'
 
 
-def ogr_sde_cleanup():
+def test_ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
@@ -338,16 +338,16 @@ def ogr_sde_cleanup():
 
 
 gdaltest_list = [
-    ogr_sde_1,
-    ogr_sde_2,
-    ogr_sde_3,
-    ogr_sde_4,
-    ogr_sde_5,
-    ogr_sde_6,
-    ogr_sde_7,
-    ogr_sde_8,
+    test_ogr_sde_1,
+    test_ogr_sde_2,
+    test_ogr_sde_3,
+    test_ogr_sde_4,
+    test_ogr_sde_5,
+    test_ogr_sde_6,
+    test_ogr_sde_7,
+    test_ogr_sde_8,
 
-    ogr_sde_cleanup
+    test_ogr_sde_cleanup
 ]
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ import gdaltest
 # Verify we have the driver.
 
 
-def http_1():
+def test_http_1():
 
     gdaltest.dods_drv = None
 
@@ -70,7 +70,7 @@ def http_1():
 # Verify /vsicurl (subversion file listing)
 
 
-def http_2():
+def test_http_2():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
@@ -92,7 +92,7 @@ def http_2():
 # Verify /vsicurl (apache file listing)
 
 
-def http_3():
+def test_http_3():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
@@ -148,7 +148,7 @@ def http_4_old():
 # Verify /vsicurl (ftp)
 
 
-def http_4():
+def test_http_4():
 
     # Too unreliable
     if gdaltest.skip_on_travis():
@@ -188,7 +188,7 @@ def http_4():
 # Test HTTP driver with non VSIL driver
 
 
-def http_5():
+def test_http_5():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
@@ -224,7 +224,7 @@ def http_5():
 # Test HTTP driver with OGR driver
 
 
-def http_6():
+def test_http_6():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
@@ -251,7 +251,7 @@ def http_6():
 
 ###############################################################################
 
-def http_test_ssl_verifystatus():
+def test_http_test_ssl_verifystatus():
 
     if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
@@ -275,14 +275,14 @@ def http_test_ssl_verifystatus():
 ###############################################################################
 
 
-def http_test_use_capi_store():
+def test_http_test_use_capi_store():
 
     if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
     if sys.platform != 'win32':
         with gdaltest.error_handler():
-            return http_test_use_capi_store_sub()
+            return test_http_test_use_capi_store_sub()
 
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdalhttp', ' -use_capi_store', display_live_on_parent_stdout=True)
@@ -293,7 +293,7 @@ def http_test_use_capi_store():
     return 'success'
 
 
-def http_test_use_capi_store_sub():
+def test_http_test_use_capi_store_sub():
 
     with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
         gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
@@ -304,7 +304,7 @@ def http_test_use_capi_store_sub():
 #
 
 
-def http_cleanup():
+def test_http_cleanup():
     if gdaltest.dods_drv is not None:
         gdaltest.dods_drv.Register()
     gdaltest.dods_drv = None
@@ -312,16 +312,16 @@ def http_cleanup():
     return 'success'
 
 
-gdaltest_list = [http_1,
-                 http_2,
-                 http_3,
+gdaltest_list = [test_http_1,
+                 test_http_2,
+                 test_http_3,
                  # http_4_old,
-                 http_4,
-                 http_5,
-                 http_6,
-                 http_test_ssl_verifystatus,
-                 http_test_use_capi_store,
-                 http_cleanup]
+                 test_http_4,
+                 test_http_5,
+                 test_http_6,
+                 test_http_test_ssl_verifystatus,
+                 test_http_test_use_capi_store,
+                 test_http_cleanup]
 
 # gdaltest_list = [ http_test_use_capi_store ]
 
@@ -330,7 +330,7 @@ if __name__ == '__main__':
     gdaltest.setup_run('http')
 
     if len(sys.argv) == 2 and sys.argv[1] == '-use_capi_store':
-        gdaltest_list = [http_test_use_capi_store_sub]
+        gdaltest_list = [test_http_test_use_capi_store_sub]
 
     gdaltest.run_tests(gdaltest_list)
 

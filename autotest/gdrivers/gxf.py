@@ -42,7 +42,7 @@ import gdaltest
 # Test a small GXF sample
 
 
-def gxf_1():
+def test_gxf_1():
 
     tst = gdaltest.GDALTest('GXF', 'small.gxf', 1, 90)
 
@@ -52,7 +52,7 @@ def gxf_1():
 # Test an other GXF sample (with continuous line)
 
 
-def gxf_2():
+def test_gxf_2():
 
     tst = gdaltest.GDALTest('GXF', 'small2.gxf', 1, 65042)
     wkt = """PROJCS["NAD27 / Ohio North",
@@ -96,7 +96,7 @@ def test_gxf(downloadURL, fileName, checksum, download_size):
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
 
-gdaltest_list = [gxf_1, gxf_2]
+gdaltest_list = [test_gxf_1, test_gxf_2]
 
 
 if __name__ == '__main__':

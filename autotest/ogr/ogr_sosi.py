@@ -38,7 +38,7 @@ import gdaltest
 ###############################################################################
 
 
-def ogr_sosi_1():
+def test_ogr_sosi_1():
 
     if ogr.GetDriverByName('SOSI') is None:
         return 'skip'
@@ -60,7 +60,7 @@ def ogr_sosi_1():
 
 
 gdaltest_list = [
-    ogr_sosi_1]
+    test_ogr_sosi_1]
 
 if __name__ == '__main__':
 

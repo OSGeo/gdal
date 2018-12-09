@@ -56,7 +56,7 @@ def encode(fmt, nodata, values):
 #
 
 
-def arg_init():
+def test_arg_init():
     gdaltest.argDriver = gdal.GetDriverByName('ARG')
     if gdaltest.argDriver is None:
         return 'skip'
@@ -124,7 +124,7 @@ def arg_init():
     return 'success'
 
 
-def arg_unsupported():
+def test_arg_unsupported():
     if gdaltest.argDriver is None:
         return 'skip'
 
@@ -144,7 +144,7 @@ def arg_unsupported():
     return 'success'
 
 
-def arg_getrastercount():
+def test_arg_getrastercount():
     if gdaltest.argDriver is None:
         return 'skip'
 
@@ -161,7 +161,7 @@ def arg_getrastercount():
     return 'success'
 
 
-def arg_getgeotransform():
+def test_arg_getgeotransform():
     if gdaltest.argDriver is None:
         return 'skip'
 
@@ -185,7 +185,7 @@ def arg_getgeotransform():
     return 'success'
 
 
-def arg_blocksize():
+def test_arg_blocksize():
     if gdaltest.argDriver is None:
         return 'skip'
 
@@ -218,7 +218,7 @@ def arg_blocksize():
     return 'success'
 
 
-def arg_layername():
+def test_arg_layername():
     """
     The layer name of the ARG in the .json file need not be the name of
     the .arg file. The original driver enforced this constraint, but that
@@ -261,7 +261,7 @@ def arg_layername():
     return 'success'
 
 
-def arg_nodata():
+def test_arg_nodata():
     """
     Check that the NoData value for int8 images is 128, as per the
     ARG spec. See ticket #4610
@@ -277,7 +277,7 @@ def arg_nodata():
     return 'success'
 
 
-def arg_byteorder():
+def test_arg_byteorder():
     """
     Check that a roundtrip from ARG -> GTiff -> ARG has the same
     binary values. See ticket #4779
@@ -331,7 +331,7 @@ def arg_byteorder():
     return 'success'
 
 
-def arg_destroy():
+def test_arg_destroy():
     if gdaltest.argDriver is None:
         return 'skip'
 
@@ -344,15 +344,15 @@ def arg_destroy():
 
 
 gdaltest_list = [
-    arg_init,
-    arg_unsupported,
-    arg_getrastercount,
-    arg_getgeotransform,
-    arg_blocksize,
-    arg_layername,
-    arg_nodata,
-    arg_byteorder,
-    arg_destroy]
+    test_arg_init,
+    test_arg_unsupported,
+    test_arg_getrastercount,
+    test_arg_getgeotransform,
+    test_arg_blocksize,
+    test_arg_layername,
+    test_arg_nodata,
+    test_arg_byteorder,
+    test_arg_destroy]
 
 if __name__ == '__main__':
 

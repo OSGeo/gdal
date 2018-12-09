@@ -41,7 +41,7 @@ import ogrtest
 ###############################################################################
 
 
-def ogr_tiger_1():
+def test_ogr_tiger_1():
 
     ogrtest.tiger_ds = None
 
@@ -104,7 +104,7 @@ def ogr_tiger_1():
 # Run test_ogrsf
 
 
-def ogr_tiger_2():
+def test_ogr_tiger_2():
 
     if ogrtest.tiger_ds is None:
         return 'skip'
@@ -125,7 +125,7 @@ def ogr_tiger_2():
 # Test TIGER writing
 
 
-def ogr_tiger_3():
+def test_ogr_tiger_3():
 
     if ogrtest.tiger_ds is None:
         return 'skip'
@@ -175,7 +175,7 @@ def ogr_tiger_3():
 # Load into a /vsimem instance to test virtualization.
 
 
-def ogr_tiger_4():
+def test_ogr_tiger_4():
 
     if ogrtest.tiger_ds is None:
         return 'skip'
@@ -240,7 +240,7 @@ def ogr_tiger_4():
 ###############################################################################
 
 
-def ogr_tiger_cleanup():
+def test_ogr_tiger_cleanup():
 
     if ogrtest.tiger_ds is None:
         return 'skip'
@@ -250,11 +250,11 @@ def ogr_tiger_cleanup():
 
 
 gdaltest_list = [
-    ogr_tiger_1,
-    ogr_tiger_2,
-    ogr_tiger_3,
-    ogr_tiger_4,
-    ogr_tiger_cleanup]
+    test_ogr_tiger_1,
+    test_ogr_tiger_2,
+    test_ogr_tiger_3,
+    test_ogr_tiger_4,
+    test_ogr_tiger_cleanup]
 
 if __name__ == '__main__':
 

@@ -44,7 +44,7 @@ from osgeo import gdalconst
 # Perform simple read test.
 
 
-def jpeg_1():
+def test_jpeg_1():
 
     ds = gdal.Open('data/albania.jpg')
     cs = ds.GetRasterBand(2).Checksum()
@@ -68,7 +68,7 @@ def jpeg_1():
 # Verify EXIF metadata, color interpretation and image_structure
 
 
-def jpeg_2():
+def test_jpeg_2():
 
     ds = gdal.Open('data/albania.jpg')
 
@@ -114,7 +114,7 @@ def jpeg_2():
 # Create simple copy and check (greyscale) using progressive option.
 
 
-def jpeg_3():
+def test_jpeg_3():
 
     ds = gdal.Open('data/byte.tif')
 
@@ -184,7 +184,7 @@ def jpeg_3():
 # Verify masked jpeg.
 
 
-def jpeg_4():
+def test_jpeg_4():
 
     try:
         gdalconst.GMF_ALL_VALID
@@ -211,7 +211,7 @@ def jpeg_4():
 # Verify CreateCopy() of masked jpeg.
 
 
-def jpeg_5():
+def test_jpeg_5():
 
     try:
         gdalconst.GMF_ALL_VALID
@@ -246,7 +246,7 @@ def jpeg_5():
 # not affect opening the file which just reads the header.
 
 
-def jpeg_6():
+def test_jpeg_6():
 
     ds = gdal.Open('data/vophead.jpg')
 
@@ -280,7 +280,7 @@ def jpeg_6():
 ###############################################################################
 # Test creating an in memory copy.
 
-def jpeg_7():
+def test_jpeg_7():
 
     ds = gdal.Open('data/byte.tif')
 
@@ -306,7 +306,7 @@ def jpeg_7():
 # Read a CMYK image as a RGB image
 
 
-def jpeg_8():
+def test_jpeg_8():
 
     ds = gdal.Open('data/rgb_ntf_cmyk.jpg')
 
@@ -358,7 +358,7 @@ def jpeg_8():
 # Read a CMYK image as a CMYK image
 
 
-def jpeg_9():
+def test_jpeg_9():
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     ds = gdal.Open('data/rgb_ntf_cmyk.jpg')
@@ -418,7 +418,7 @@ def jpeg_9():
 # Check reading a 12-bit JPEG
 
 
-def jpeg_10():
+def test_jpeg_10():
 
     if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
@@ -455,7 +455,7 @@ def jpeg_10():
 # Check creating a 12-bit JPEG
 
 
-def jpeg_11():
+def test_jpeg_11():
 
     if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
@@ -488,7 +488,7 @@ def jpeg_11():
 # Test reading a stored JPEG in ZIP (#3908)
 
 
-def jpeg_12():
+def test_jpeg_12():
 
     ds = gdal.Open('/vsizip/data/byte_jpg.zip')
     if ds is None:
@@ -512,7 +512,7 @@ def jpeg_12():
 # Test writing to /vsistdout/
 
 
-def jpeg_13():
+def test_jpeg_13():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
@@ -535,7 +535,7 @@ def jpeg_13():
 # Test writing to /vsistdout/
 
 
-def jpeg_14():
+def test_jpeg_14():
 
     if gdaltest.jpeg_version == '9b':  # Fails for some reason
         return 'skip'
@@ -566,7 +566,7 @@ def jpeg_14():
 # Test CreateCopy() interruption
 
 
-def jpeg_15():
+def test_jpeg_15():
 
     tst = gdaltest.GDALTest('JPEG', 'albania.jpg', 2, 17016)
 
@@ -576,7 +576,7 @@ def jpeg_15():
 # Test overview support
 
 
-def jpeg_16():
+def test_jpeg_16():
 
     shutil.copy('data/albania.jpg', 'tmp/albania.jpg')
     gdal.Unlink('tmp/albania.jpg.ovr')
@@ -647,7 +647,7 @@ def jpeg_16():
 # Test bogus files
 
 
-def jpeg_17():
+def test_jpeg_17():
     gdal.ErrorReset()
     with gdaltest.error_handler('CPLQuietErrorHandler'):
         ds = gdal.Open('data/bogus.jpg')
@@ -701,7 +701,7 @@ def jpeg_17():
 # Test situation where we cause a restart and need to reset scale
 
 
-def jpeg_18():
+def test_jpeg_18():
     height = 1024
     width = 1024
     src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_18.tif',
@@ -771,7 +771,7 @@ def jpeg_18():
 # Test MSB ordering of bits in mask (#5102)
 
 
-def jpeg_19():
+def test_jpeg_19():
 
     for width, height, iX in [(32, 32, 12), (25, 25, 8), (24, 25, 8)]:
         src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_19.tif',
@@ -846,7 +846,7 @@ def jpeg_19():
 # Test correct GCP reading with PAM (#5352)
 
 
-def jpeg_20():
+def test_jpeg_20():
 
     src_ds = gdal.Open('data/rgb_gcp.vrt')
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_20.jpg', src_ds)
@@ -873,7 +873,7 @@ def jpeg_20():
 # Test implicit and EXIF overviews
 
 
-def jpeg_21():
+def test_jpeg_21():
 
     ds = gdal.Open('data/black_with_white_exif_ovr.jpg')
     if ds.GetRasterBand(1).GetOverviewCount() != 3:
@@ -902,7 +902,7 @@ def jpeg_21():
 # Test generation of EXIF overviews
 
 
-def jpeg_22():
+def test_jpeg_22():
 
     src_ds = gdal.GetDriverByName('Mem').Create('', 4096, 2048)
     src_ds.GetRasterBand(1).Fill(255)
@@ -993,7 +993,7 @@ def jpeg_22():
 # Test optimized JPEG IRasterIO
 
 
-def jpeg_23():
+def test_jpeg_23():
     ds = gdal.Open('data/albania.jpg')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
 
@@ -1038,7 +1038,7 @@ def jpeg_23():
 # in CreateCopy())
 
 
-def jpeg_24():
+def test_jpeg_24():
 
     has_arithmetic = bool(gdal.GetDriverByName('JPEG').GetMetadataItem(
         'DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0)
@@ -1072,7 +1072,7 @@ def jpeg_24():
 # Test COMMENT
 
 
-def jpeg_25():
+def test_jpeg_25():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
@@ -1093,7 +1093,7 @@ def jpeg_25():
 # Test creation error
 
 
-def jpeg_26():
+def test_jpeg_26():
 
     src_ds = gdal.GetDriverByName('Mem').Create('', 70000, 1)
     with gdaltest.error_handler():
@@ -1111,7 +1111,7 @@ def jpeg_26():
 # http://www.libjpeg-jpeg_26.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
 
-def jpeg_27():
+def test_jpeg_27():
 
     # Should error out with 'Reading this strip would require
     # libjpeg to allocate at least...'
@@ -1142,7 +1142,7 @@ def jpeg_27():
 # Test writing of EXIF and GPS tags
 
 
-def jpeg_28():
+def test_jpeg_28():
 
     tmpfilename = '/vsimem/jpeg_28.jpg'
 
@@ -1320,42 +1320,42 @@ def jpeg_28():
 # Cleanup
 
 
-def jpeg_cleanup():
+def test_jpeg_cleanup():
     gdal.Unlink('tmp/albania.jpg')
     gdal.Unlink('tmp/albania.jpg.ovr')
     return 'success'
 
 
 gdaltest_list = [
-    jpeg_1,
-    jpeg_2,
-    jpeg_3,
-    jpeg_4,
-    jpeg_5,
-    jpeg_6,
-    jpeg_7,
-    jpeg_8,
-    jpeg_9,
-    jpeg_10,
-    jpeg_11,
-    jpeg_12,
-    jpeg_13,
-    jpeg_14,
-    jpeg_15,
-    jpeg_16,
-    jpeg_17,
-    jpeg_18,
-    jpeg_19,
-    jpeg_20,
-    jpeg_21,
-    jpeg_22,
-    jpeg_23,
-    jpeg_24,
-    jpeg_25,
-    jpeg_26,
-    jpeg_27,
-    jpeg_28,
-    jpeg_cleanup]
+    test_jpeg_1,
+    test_jpeg_2,
+    test_jpeg_3,
+    test_jpeg_4,
+    test_jpeg_5,
+    test_jpeg_6,
+    test_jpeg_7,
+    test_jpeg_8,
+    test_jpeg_9,
+    test_jpeg_10,
+    test_jpeg_11,
+    test_jpeg_12,
+    test_jpeg_13,
+    test_jpeg_14,
+    test_jpeg_15,
+    test_jpeg_16,
+    test_jpeg_17,
+    test_jpeg_18,
+    test_jpeg_19,
+    test_jpeg_20,
+    test_jpeg_21,
+    test_jpeg_22,
+    test_jpeg_23,
+    test_jpeg_24,
+    test_jpeg_25,
+    test_jpeg_26,
+    test_jpeg_27,
+    test_jpeg_28,
+    test_jpeg_cleanup]
 
 # gdaltest_list = [ jpeg_28 ]
 

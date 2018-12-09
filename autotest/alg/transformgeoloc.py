@@ -41,7 +41,7 @@ from osgeo import osr
 # Test a fairly default case.
 
 
-def transformgeoloc_1():
+def test_transformgeoloc_1():
 
     try:
         import numpy
@@ -85,7 +85,7 @@ def transformgeoloc_1():
 
 
 gdaltest_list = [
-    transformgeoloc_1,
+    test_transformgeoloc_1,
 ]
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ from osgeo import ogr
 # Test points bna layer.
 
 
-def ogr_bna_1():
+def test_ogr_bna_1():
 
     gdaltest.bna_ds = ogr.Open('data/test.bna')
 
@@ -70,7 +70,7 @@ def ogr_bna_1():
 # Test lines bna layer.
 
 
-def ogr_bna_2():
+def test_ogr_bna_2():
 
     gdaltest.bna_ds = ogr.Open('data/test.bna')
 
@@ -93,7 +93,7 @@ def ogr_bna_2():
 # Test polygons bna layer.
 
 
-def ogr_bna_3():
+def test_ogr_bna_3():
 
     gdaltest.bna_ds = ogr.Open('data/test.bna')
 
@@ -129,7 +129,7 @@ def ogr_bna_3():
 # Test ellipses bna layer.
 
 
-def ogr_bna_4():
+def test_ogr_bna_4():
 
     gdaltest.bna_ds = ogr.Open('data/test.bna')
 
@@ -211,12 +211,12 @@ def ogr_bna_write(creation_options):
     return 'success'
 
 
-def ogr_bna_5():
+def test_ogr_bna_5():
 
     return ogr_bna_write(['ELLIPSES_AS_ELLIPSES=YES'])
 
 
-def ogr_bna_6():
+def test_ogr_bna_6():
 
     try:
         os.remove('tmp/out.bna')
@@ -249,7 +249,7 @@ def ogr_bna_6():
 #
 
 
-def ogr_bna_cleanup():
+def test_ogr_bna_cleanup():
 
     gdaltest.bna_ds = None
 
@@ -262,13 +262,13 @@ def ogr_bna_cleanup():
 
 
 gdaltest_list = [
-    ogr_bna_1,
-    ogr_bna_2,
-    ogr_bna_3,
-    ogr_bna_4,
-    ogr_bna_5,
-    ogr_bna_6,
-    ogr_bna_cleanup]
+    test_ogr_bna_1,
+    test_ogr_bna_2,
+    test_ogr_bna_3,
+    test_ogr_bna_4,
+    test_ogr_bna_5,
+    test_ogr_bna_6,
+    test_ogr_bna_cleanup]
 
 if __name__ == '__main__':
 

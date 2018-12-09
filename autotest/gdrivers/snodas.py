@@ -38,7 +38,7 @@ import gdaltest
 # Test a fake SNODAS dataset
 
 
-def snodas_1():
+def test_snodas_1():
 
     tst = gdaltest.GDALTest('SNODAS', 'fake_snodas.hdr', 1, 0)
     expected_gt = [-124.733749999995, 0.0083333333333330643, 0.0, 52.874583333331302, 0.0, -0.0083333333333330054]
@@ -72,7 +72,7 @@ def snodas_1():
 
 
 gdaltest_list = [
-    snodas_1]
+    test_snodas_1]
 
 if __name__ == '__main__':
 

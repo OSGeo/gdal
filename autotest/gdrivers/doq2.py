@@ -39,7 +39,7 @@ import gdaltest
 # downloaded from http://edcftp.cr.usgs.gov/pub/data/samples/doq-clr-native.tar.gz
 
 
-def doq2_1():
+def test_doq2_1():
 
     ds = gdal.Open('data/C3607614_truncated.NWS')
 
@@ -76,7 +76,7 @@ def doq2_1():
 
 
 gdaltest_list = [
-    doq2_1]
+    test_doq2_1]
 
 if __name__ == '__main__':
 

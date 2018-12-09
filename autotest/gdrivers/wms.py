@@ -44,7 +44,7 @@ import gdaltest
 # Verify we have the driver.
 
 
-def wms_1():
+def test_wms_1():
 
     gdaltest.wms_drv = gdal.GetDriverByName('WMS')
     if gdaltest.wms_drv is None:
@@ -158,7 +158,7 @@ def wms_4():
 # Open the WMS service using XML as filename.
 
 
-def wms_5():
+def test_wms_5():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -188,7 +188,7 @@ def wms_5():
 # Test TileService
 
 
-def wms_6():
+def test_wms_6():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -218,7 +218,7 @@ def wms_6():
 # Test TMS
 
 
-def wms_7():
+def test_wms_7():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -280,7 +280,7 @@ def wms_7():
 ###############################################################################
 # Test TMS with cache
 
-def wms_8():
+def test_wms_8():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -582,7 +582,7 @@ def wms_10():
 # Test getting subdatasets from GetTileService
 
 
-def wms_11():
+def test_wms_11():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -622,7 +622,7 @@ def wms_11():
 # Test getting subdatasets from a TMS server
 
 
-def wms_12():
+def test_wms_12():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -664,7 +664,7 @@ def wms_12():
 # Test reading WMS through VRT (test effect of r21866)
 
 
-def wms_13():
+def test_wms_13():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -683,7 +683,7 @@ def wms_13():
 ###############################################################################
 # Test reading Virtual Earth layer
 
-def wms_14():
+def test_wms_14():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -734,7 +734,7 @@ def wms_14():
 # Test reading ArcGIS MapServer JSon definition and CreateCopy()
 
 
-def wms_15():
+def test_wms_15():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -792,7 +792,7 @@ def wms_15():
 # Test getting subdatasets from WMS-C Capabilities
 
 
-def wms_16():
+def test_wms_16():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -916,7 +916,7 @@ def wms_17():
 # Test a ArcGIS Server
 
 
-def wms_18():
+def test_wms_18():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -959,7 +959,7 @@ def wms_18():
 # Test a IIP server
 
 
-def wms_19():
+def test_wms_19():
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -991,7 +991,7 @@ def wms_19():
 ###############################################################################
 
 
-def wms_cleanup():
+def test_wms_cleanup():
 
     gdaltest.wms_ds = None
     gdaltest.clean_tmp()
@@ -1005,26 +1005,26 @@ def wms_cleanup():
 
 
 gdaltest_list = [
-    wms_1,
+    test_wms_1,
     # wms_2,
     # wms_3,
     # wms_4,
-    wms_5,
-    wms_6,
-    wms_7,
-    wms_8,
+    test_wms_5,
+    test_wms_6,
+    test_wms_7,
+    test_wms_8,
     # wms_9,
     # wms_10,
-    wms_11,
-    wms_12,
-    wms_13,
-    wms_14,
-    wms_15,
-    wms_16,
+    test_wms_11,
+    test_wms_12,
+    test_wms_13,
+    test_wms_14,
+    test_wms_15,
+    test_wms_16,
     # wms_17,
-    wms_18,
-    wms_19,
-    wms_cleanup]
+    test_wms_18,
+    test_wms_19,
+    test_wms_cleanup]
 
 
 if __name__ == '__main__':

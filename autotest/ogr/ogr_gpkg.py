@@ -87,7 +87,7 @@ def validate(filename, quiet=False):
 # Create a fresh database.
 
 
-def ogr_gpkg_1():
+def test_ogr_gpkg_1():
 
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_dr = None
@@ -123,7 +123,7 @@ def ogr_gpkg_1():
 # Re-open database to test validity
 
 
-def ogr_gpkg_2():
+def test_ogr_gpkg_2():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -160,7 +160,7 @@ def ogr_gpkg_2():
 ###############################################################################
 # Create a layer
 
-def ogr_gpkg_3():
+def test_ogr_gpkg_3():
 
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
         return 'skip'
@@ -189,7 +189,7 @@ def ogr_gpkg_3():
 # Close and re-open to test the layer registration
 
 
-def ogr_gpkg_4():
+def test_ogr_gpkg_4():
 
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
         return 'skip'
@@ -260,7 +260,7 @@ def ogr_gpkg_4():
 ###############################################################################
 # Delete a layer
 
-def ogr_gpkg_5():
+def test_ogr_gpkg_5():
 
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
         return 'skip'
@@ -299,7 +299,7 @@ def ogr_gpkg_5():
 ###############################################################################
 # Add fields
 
-def ogr_gpkg_6():
+def test_ogr_gpkg_6():
 
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
         return 'skip'
@@ -352,7 +352,7 @@ def ogr_gpkg_6():
 ###############################################################################
 # Add a feature / read a feature / delete a feature
 
-def ogr_gpkg_7():
+def test_ogr_gpkg_7():
 
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
         return 'skip'
@@ -446,7 +446,7 @@ def ogr_gpkg_7():
 ###############################################################################
 # Test a variety of geometry feature types and attribute types
 
-def ogr_gpkg_8():
+def test_ogr_gpkg_8():
 
     # try:
     #     os.remove( 'tmp/gpkg_test.gpkg' )
@@ -590,7 +590,7 @@ def ogr_gpkg_8():
 # Test support for extents and counts
 
 
-def ogr_gpkg_9():
+def test_ogr_gpkg_9():
 
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
         return 'skip'
@@ -614,7 +614,7 @@ def ogr_gpkg_9():
 # Test non-SELECT SQL commands
 
 
-def ogr_gpkg_11():
+def test_ogr_gpkg_11():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -640,7 +640,7 @@ def ogr_gpkg_11():
 # Test SELECT SQL commands
 
 
-def ogr_gpkg_12():
+def test_ogr_gpkg_12():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -780,7 +780,7 @@ def ogr_gpkg_12():
 # Test non-spatial tables
 
 
-def ogr_gpkg_13():
+def test_ogr_gpkg_13():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -843,7 +843,7 @@ def ogr_gpkg_13():
 # Add various geometries to test spatial filtering
 
 
-def ogr_gpkg_14():
+def test_ogr_gpkg_14():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -943,7 +943,7 @@ def ogr_gpkg_14():
 # Test SQL functions
 
 
-def ogr_gpkg_15():
+def test_ogr_gpkg_15():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1350,7 +1350,7 @@ def ogr_gpkg_15():
 # Test unknown extensions
 
 
-def ogr_gpkg_16():
+def test_ogr_gpkg_16():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1475,7 +1475,7 @@ def ogr_gpkg_16():
 # Run INDIRECT_SQLITE dialect
 
 
-def ogr_gpkg_17():
+def test_ogr_gpkg_17():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1495,7 +1495,7 @@ def ogr_gpkg_17():
 # Test geometry type extension
 
 
-def ogr_gpkg_18():
+def test_ogr_gpkg_18():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1616,7 +1616,7 @@ def ogr_gpkg_18():
 # Test metadata
 
 
-def ogr_gpkg_19():
+def test_ogr_gpkg_19():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1747,7 +1747,7 @@ def ogr_gpkg_19():
 # Test spatial reference system
 
 
-def ogr_gpkg_20():
+def test_ogr_gpkg_20():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1859,7 +1859,7 @@ def ogr_gpkg_20():
 # Test maximum width of text fields
 
 
-def ogr_gpkg_21():
+def test_ogr_gpkg_21():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1954,7 +1954,7 @@ def ogr_gpkg_21():
 # Test FID64 support
 
 
-def ogr_gpkg_22():
+def test_ogr_gpkg_22():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1990,7 +1990,7 @@ def ogr_gpkg_22():
 # Test not nullable fields
 
 
-def ogr_gpkg_23():
+def test_ogr_gpkg_23():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2184,7 +2184,7 @@ def ogr_gpkg_23():
 # Test default values
 
 
-def ogr_gpkg_24():
+def test_ogr_gpkg_24():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2317,7 +2317,7 @@ def ogr_gpkg_24():
 # Test creating a field with the fid name
 
 
-def ogr_gpkg_25():
+def test_ogr_gpkg_25():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2420,7 +2420,7 @@ def ogr_gpkg_25():
 # Test dataset transactions
 
 
-def ogr_gpkg_26():
+def test_ogr_gpkg_26():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2581,7 +2581,7 @@ def ogr_gpkg_26():
 # Test interface with Spatialite
 
 
-def ogr_gpkg_27():
+def test_ogr_gpkg_27():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2618,7 +2618,7 @@ def ogr_gpkg_27():
 # but inc/dec its ref count, which can exhibit issues in GDALVectorTanslate())
 
 
-def ogr_gpkg_28():
+def test_ogr_gpkg_28():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2637,7 +2637,7 @@ def ogr_gpkg_28():
 # Test XYM / XYZM support
 
 
-def ogr_gpkg_29():
+def test_ogr_gpkg_29():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2725,7 +2725,7 @@ def ogr_gpkg_29():
 # Test non standard file extension (#6396)
 
 
-def ogr_gpkg_30():
+def test_ogr_gpkg_30():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2759,7 +2759,7 @@ def ogr_gpkg_30():
 # Test CURVE and SURFACE types
 
 
-def ogr_gpkg_31():
+def test_ogr_gpkg_31():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2805,7 +2805,7 @@ def ogr_gpkg_31():
 # read it back
 
 
-def ogr_gpkg_32():
+def test_ogr_gpkg_32():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2847,7 +2847,7 @@ def ogr_gpkg_32():
 # Test OGR_CURRENT_DATE
 
 
-def ogr_gpkg_33():
+def test_ogr_gpkg_33():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2874,7 +2874,7 @@ def ogr_gpkg_33():
 # Run test_ogrsf
 
 
-def ogr_gpkg_test_ogrsf():
+def test_ogr_gpkg_test_ogrsf():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2913,7 +2913,7 @@ def ogr_gpkg_test_ogrsf():
 ###############################################################################
 # Test rename and delete a layer registered in extensions, metadata, spatial index etc
 
-def ogr_gpkg_34():
+def test_ogr_gpkg_34():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3047,7 +3047,7 @@ def ogr_gpkg_34():
 # Test DeleteField()
 
 
-def ogr_gpkg_35():
+def test_ogr_gpkg_35():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3166,7 +3166,7 @@ def ogr_gpkg_35():
 # Test AlterFieldDefn()
 
 
-def ogr_gpkg_36():
+def test_ogr_gpkg_36():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3320,7 +3320,7 @@ def ogr_gpkg_36():
 # Test ReorderFields()
 
 
-def ogr_gpkg_37():
+def test_ogr_gpkg_37():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3405,7 +3405,7 @@ def ogr_gpkg_37():
 # Test GetExtent() and RECOMPUTE EXTENT ON
 
 
-def ogr_gpkg_38(options=['SPATIAL_INDEX=YES']):
+def test_ogr_gpkg_38(options=['SPATIAL_INDEX=YES']):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3506,15 +3506,15 @@ def ogr_gpkg_38(options=['SPATIAL_INDEX=YES']):
     return 'success'
 
 
-def ogr_gpkg_38_nospi():
-    return ogr_gpkg_38(options=['SPATIAL_INDEX=NO'])
+def test_ogr_gpkg_38_nospi():
+    return test_ogr_gpkg_38(options=['SPATIAL_INDEX=NO'])
 
 
 ###############################################################################
 # Test checking of IDENTIFIER unicity
 
 
-def ogr_gpkg_39():
+def test_ogr_gpkg_39():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3564,7 +3564,7 @@ def ogr_gpkg_39():
 # read it back
 
 
-def ogr_gpkg_40():
+def test_ogr_gpkg_40():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3606,7 +3606,7 @@ def ogr_gpkg_40():
 # Test tables without integer primary key (#6799), and unrecognized column type
 
 
-def ogr_gpkg_41():
+def test_ogr_gpkg_41():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3664,7 +3664,7 @@ def get_feature_count_from_gpkg_contents(ds):
     return val
 
 
-def ogr_gpkg_42():
+def test_ogr_gpkg_42():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3854,7 +3854,7 @@ def ogr_gpkg_42():
 ###############################################################################
 # Test limitations on number of tables
 
-def ogr_gpkg_43():
+def test_ogr_gpkg_43():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3898,7 +3898,7 @@ def ogr_gpkg_43():
 ###############################################################################
 # Test GeoPackage without metadata table
 
-def ogr_gpkg_44():
+def test_ogr_gpkg_44():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3952,7 +3952,7 @@ def ogr_gpkg_44():
 ###############################################################################
 # Test non conformant GeoPackage: table with non INTEGER PRIMARY KEY
 
-def ogr_gpkg_45():
+def test_ogr_gpkg_45():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3979,7 +3979,7 @@ def ogr_gpkg_45():
 # Test spatial view and spatial index
 
 
-def ogr_gpkg_46():
+def test_ogr_gpkg_46():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4099,7 +4099,7 @@ def ogr_gpkg_46():
 # Test corner case of Identify()
 
 
-def ogr_gpkg_47():
+def test_ogr_gpkg_47():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4248,7 +4248,7 @@ def ogr_gpkg_47():
 # Test insertion of features with unset fields
 
 
-def ogr_gpkg_48():
+def test_ogr_gpkg_48():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4313,7 +4313,7 @@ def ogr_gpkg_48():
 # Test CreateGeomField() on a attributes layer
 
 
-def ogr_gpkg_49():
+def test_ogr_gpkg_49():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4341,7 +4341,7 @@ def ogr_gpkg_49():
 # Test minimalistic support of definition_12_063
 
 
-def ogr_gpkg_50():
+def test_ogr_gpkg_50():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4393,7 +4393,7 @@ def ogr_gpkg_50():
 # Test opening a .gpkg.sql file
 
 
-def ogr_gpkg_51():
+def test_ogr_gpkg_51():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4413,7 +4413,7 @@ def ogr_gpkg_51():
 # Test opening a .gpkg file
 
 
-def ogr_gpkg_52():
+def test_ogr_gpkg_52():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4431,7 +4431,7 @@ def ogr_gpkg_52():
 # Test opening a .gpkg file with inconsistency regarding table case (#6916)
 
 
-def ogr_gpkg_53():
+def test_ogr_gpkg_53():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4463,7 +4463,7 @@ def ogr_gpkg_53():
 # Test editing of a database with 2 layers (https://issues.qgis.org/issues/17034)
 
 
-def ogr_gpkg_54():
+def test_ogr_gpkg_54():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4532,7 +4532,7 @@ def ogr_gpkg_54():
 # Test inserting geometries incompatible with declared layer geometry type
 
 
-def ogr_gpkg_55():
+def test_ogr_gpkg_55():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4567,7 +4567,7 @@ def ogr_gpkg_55():
 # Test FID identification on SQL result layer
 
 
-def ogr_gpkg_56():
+def test_ogr_gpkg_56():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4589,7 +4589,7 @@ def ogr_gpkg_56():
 # Test opening a corrupted gpkg with duplicated layer names
 
 
-def ogr_gpkg_57():
+def test_ogr_gpkg_57():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4628,7 +4628,7 @@ CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
 # Test overwriting a layer
 
 
-def ogr_gpkg_58():
+def test_ogr_gpkg_58():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4654,7 +4654,7 @@ def ogr_gpkg_58():
 # Test CreateSpatialIndex()
 
 
-def ogr_gpkg_59():
+def test_ogr_gpkg_59():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4679,7 +4679,7 @@ def ogr_gpkg_59():
 # Test savepoints
 
 
-def ogr_gpkg_savepoint():
+def test_ogr_gpkg_savepoint():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4720,7 +4720,7 @@ def ogr_gpkg_savepoint():
 # Test that we don't open file handles behind the back of sqlite3
 
 
-def ogr_gpkg_wal():
+def test_ogr_gpkg_wal():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4764,7 +4764,7 @@ def ogr_gpkg_wal():
 # Test JSon subtype support
 
 
-def ogr_gpkg_json():
+def test_ogr_gpkg_json():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4855,7 +4855,7 @@ def ogr_gpkg_json():
 # Remove the test db from the tmp directory
 
 
-def ogr_gpkg_cleanup():
+def test_ogr_gpkg_cleanup():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4878,70 +4878,70 @@ def ogr_gpkg_cleanup():
 
 
 gdaltest_list = [
-    ogr_gpkg_1,
-    ogr_gpkg_2,
-    ogr_gpkg_3,
-    ogr_gpkg_4,
-    ogr_gpkg_5,
-    ogr_gpkg_6,
-    ogr_gpkg_7,
-    ogr_gpkg_8,
-    ogr_gpkg_9,
-    ogr_gpkg_11,
-    ogr_gpkg_12,
-    ogr_gpkg_13,
-    ogr_gpkg_14,
-    ogr_gpkg_15,
-    ogr_gpkg_16,
-    ogr_gpkg_17,
-    ogr_gpkg_18,
-    ogr_gpkg_19,
-    ogr_gpkg_20,
-    ogr_gpkg_21,
-    ogr_gpkg_22,
-    ogr_gpkg_23,
-    ogr_gpkg_24,
-    ogr_gpkg_25,
-    ogr_gpkg_26,
-    ogr_gpkg_27,
-    ogr_gpkg_28,
-    ogr_gpkg_29,
-    ogr_gpkg_30,
-    ogr_gpkg_31,
-    ogr_gpkg_32,
-    ogr_gpkg_33,
-    ogr_gpkg_34,
-    ogr_gpkg_35,
-    ogr_gpkg_36,
-    ogr_gpkg_37,
-    ogr_gpkg_38,
-    ogr_gpkg_38_nospi,
-    ogr_gpkg_39,
-    ogr_gpkg_40,
-    ogr_gpkg_41,
-    ogr_gpkg_42,
-    ogr_gpkg_43,
-    ogr_gpkg_44,
-    ogr_gpkg_45,
-    ogr_gpkg_46,
-    ogr_gpkg_47,
-    ogr_gpkg_48,
-    ogr_gpkg_49,
-    ogr_gpkg_50,
-    ogr_gpkg_51,
-    ogr_gpkg_52,
-    ogr_gpkg_53,
-    ogr_gpkg_54,
-    ogr_gpkg_55,
-    ogr_gpkg_56,
-    ogr_gpkg_57,
-    ogr_gpkg_58,
-    ogr_gpkg_59,
-    ogr_gpkg_savepoint,
-    ogr_gpkg_wal,
-    ogr_gpkg_json,
-    ogr_gpkg_test_ogrsf,
-    ogr_gpkg_cleanup,
+    test_ogr_gpkg_1,
+    test_ogr_gpkg_2,
+    test_ogr_gpkg_3,
+    test_ogr_gpkg_4,
+    test_ogr_gpkg_5,
+    test_ogr_gpkg_6,
+    test_ogr_gpkg_7,
+    test_ogr_gpkg_8,
+    test_ogr_gpkg_9,
+    test_ogr_gpkg_11,
+    test_ogr_gpkg_12,
+    test_ogr_gpkg_13,
+    test_ogr_gpkg_14,
+    test_ogr_gpkg_15,
+    test_ogr_gpkg_16,
+    test_ogr_gpkg_17,
+    test_ogr_gpkg_18,
+    test_ogr_gpkg_19,
+    test_ogr_gpkg_20,
+    test_ogr_gpkg_21,
+    test_ogr_gpkg_22,
+    test_ogr_gpkg_23,
+    test_ogr_gpkg_24,
+    test_ogr_gpkg_25,
+    test_ogr_gpkg_26,
+    test_ogr_gpkg_27,
+    test_ogr_gpkg_28,
+    test_ogr_gpkg_29,
+    test_ogr_gpkg_30,
+    test_ogr_gpkg_31,
+    test_ogr_gpkg_32,
+    test_ogr_gpkg_33,
+    test_ogr_gpkg_34,
+    test_ogr_gpkg_35,
+    test_ogr_gpkg_36,
+    test_ogr_gpkg_37,
+    test_ogr_gpkg_38,
+    test_ogr_gpkg_38_nospi,
+    test_ogr_gpkg_39,
+    test_ogr_gpkg_40,
+    test_ogr_gpkg_41,
+    test_ogr_gpkg_42,
+    test_ogr_gpkg_43,
+    test_ogr_gpkg_44,
+    test_ogr_gpkg_45,
+    test_ogr_gpkg_46,
+    test_ogr_gpkg_47,
+    test_ogr_gpkg_48,
+    test_ogr_gpkg_49,
+    test_ogr_gpkg_50,
+    test_ogr_gpkg_51,
+    test_ogr_gpkg_52,
+    test_ogr_gpkg_53,
+    test_ogr_gpkg_54,
+    test_ogr_gpkg_55,
+    test_ogr_gpkg_56,
+    test_ogr_gpkg_57,
+    test_ogr_gpkg_58,
+    test_ogr_gpkg_59,
+    test_ogr_gpkg_savepoint,
+    test_ogr_gpkg_wal,
+    test_ogr_gpkg_json,
+    test_ogr_gpkg_test_ogrsf,
+    test_ogr_gpkg_cleanup,
 ]
 
 # gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_47, ogr_gpkg_cleanup ]

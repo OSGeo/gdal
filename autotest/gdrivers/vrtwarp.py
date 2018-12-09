@@ -40,7 +40,7 @@ import gdaltest
 # Verify reading from simple existing warp definition.
 
 
-def vrtwarp_1():
+def test_vrtwarp_1():
 
     tst = gdaltest.GDALTest('VRT', 'rgb_warp.vrt', 2, 21504)
     return tst.testOpen(check_filelist=False)
@@ -49,7 +49,7 @@ def vrtwarp_1():
 # Create a new VRT warp in the temp directory.
 
 
-def vrtwarp_2():
+def test_vrtwarp_2():
 
     try:
         os.remove('tmp/warp.vrt')
@@ -76,7 +76,7 @@ def vrtwarp_2():
 # verify checksum.
 
 
-def vrtwarp_3():
+def test_vrtwarp_3():
 
     gdaltest.vrtwarp_ds.SetDescription('tmp/warp.vrt')
     gdaltest.vrtwarp_ds = None
@@ -100,7 +100,7 @@ def vrtwarp_3():
 # Test implicit overviews with default source overview level strategy (AUTO)
 
 
-def vrtwarp_4():
+def test_vrtwarp_4():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_4.tif', src_ds)
@@ -176,7 +176,7 @@ def vrtwarp_4():
 # Test implicit overviews with selection of the upper source overview level
 
 
-def vrtwarp_5():
+def test_vrtwarp_5():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_5.tif', src_ds)
@@ -223,7 +223,7 @@ def vrtwarp_5():
 # Test implicit overviews with GCP
 
 
-def vrtwarp_6():
+def test_vrtwarp_6():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_6.tif', src_ds)
@@ -279,7 +279,7 @@ def vrtwarp_6():
 # Test implicit overviews with GCP (TPS)
 
 
-def vrtwarp_7():
+def test_vrtwarp_7():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_7.tif', src_ds)
@@ -331,7 +331,7 @@ def vrtwarp_7():
 # Test implicit overviews with RPC
 
 
-def vrtwarp_8():
+def test_vrtwarp_8():
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/vrtwarp_8.tif')
     shutil.copy('../gcore/data/test_rpc.txt', 'tmp/vrtwarp_8_rpc.txt')
@@ -368,7 +368,7 @@ def vrtwarp_8():
 # Test implicit overviews with GEOLOCATION
 
 
-def vrtwarp_9():
+def test_vrtwarp_9():
 
     shutil.copy('../gcore/data/sstgeo.tif', 'tmp/sstgeo.tif')
 
@@ -432,7 +432,7 @@ def vrtwarp_9():
 # Test implicit overviews with selection of the full resolution level
 
 
-def vrtwarp_10():
+def test_vrtwarp_10():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_10.tif', src_ds)
@@ -478,7 +478,7 @@ def vrtwarp_10():
 # Test implicit overviews with dest alpha band (#6081)
 
 
-def vrtwarp_11():
+def test_vrtwarp_11():
 
     ds = gdal.Open('data/bug6581.vrt')
     cs1 = ds.GetRasterBand(1).Checksum()
@@ -499,7 +499,7 @@ def vrtwarp_11():
 # Test reading a regular VRT whose source is a warped VRT inlined
 
 
-def vrtwarp_read_vrt_of_warped_vrt():
+def test_vrtwarp_read_vrt_of_warped_vrt():
 
     ds = gdal.Open('data/vrt_of_warped_vrt.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -514,18 +514,18 @@ def vrtwarp_read_vrt_of_warped_vrt():
 
 
 gdaltest_list = [
-    vrtwarp_1,
-    vrtwarp_2,
-    vrtwarp_3,
-    vrtwarp_4,
-    vrtwarp_5,
-    vrtwarp_6,
-    vrtwarp_7,
-    vrtwarp_8,
-    vrtwarp_9,
-    vrtwarp_10,
-    vrtwarp_11,
-    vrtwarp_read_vrt_of_warped_vrt
+    test_vrtwarp_1,
+    test_vrtwarp_2,
+    test_vrtwarp_3,
+    test_vrtwarp_4,
+    test_vrtwarp_5,
+    test_vrtwarp_6,
+    test_vrtwarp_7,
+    test_vrtwarp_8,
+    test_vrtwarp_9,
+    test_vrtwarp_10,
+    test_vrtwarp_11,
+    test_vrtwarp_read_vrt_of_warped_vrt
 ]
 
 

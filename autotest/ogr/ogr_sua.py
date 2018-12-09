@@ -39,7 +39,7 @@ from osgeo import ogr
 # Basic test
 
 
-def ogr_sua_1():
+def test_ogr_sua_1():
 
     ds = ogr.Open('data/za.sua')
     if ds is None:
@@ -71,7 +71,7 @@ def ogr_sua_1():
 
 
 gdaltest_list = [
-    ogr_sua_1]
+    test_ogr_sua_1]
 
 
 if __name__ == '__main__':

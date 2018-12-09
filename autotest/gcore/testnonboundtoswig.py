@@ -56,7 +56,7 @@ def find_libgdal():
 # Init
 
 
-def testnonboundtoswig_init():
+def test_testnonboundtoswig_init():
 
     global gdal_handle_init, gdal_handle, gdal_handle_stdcall
 
@@ -114,7 +114,7 @@ def testnonboundtoswig_init():
 def GDALDestroyDriverManager():
 
     if gdal_handle is None:
-        testnonboundtoswig_init()
+        test_testnonboundtoswig_init()
 
     if gdal_handle is None:
         return 'skip'
@@ -133,7 +133,7 @@ def GDALDestroyDriverManager():
 def OGRCleanupAll():
 
     if gdal_handle is None:
-        testnonboundtoswig_init()
+        test_testnonboundtoswig_init()
 
     if gdal_handle is None:
         return 'skip'
@@ -152,7 +152,7 @@ def OGRCleanupAll():
 def OSRCleanup():
 
     if gdal_handle is None:
-        testnonboundtoswig_init()
+        test_testnonboundtoswig_init()
 
     if gdal_handle is None:
         return 'skip'
@@ -168,7 +168,7 @@ def OSRCleanup():
 # Test GDALSimpleImageWarp
 
 
-def testnonboundtoswig_GDALSimpleImageWarp():
+def test_testnonboundtoswig_GDALSimpleImageWarp():
 
     if gdal_handle is None:
         return 'skip'
@@ -307,7 +307,7 @@ def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eS
     return 0
 
 
-def testnonboundtoswig_VRTDerivedBands():
+def test_testnonboundtoswig_VRTDerivedBands():
 
     if gdal_handle is None:
         return 'skip'
@@ -376,9 +376,9 @@ def testnonboundtoswig_VRTDerivedBands():
     return 'success'
 
 
-gdaltest_list = [testnonboundtoswig_init,
-                 testnonboundtoswig_GDALSimpleImageWarp,
-                 testnonboundtoswig_VRTDerivedBands]
+gdaltest_list = [test_testnonboundtoswig_init,
+                 test_testnonboundtoswig_GDALSimpleImageWarp,
+                 test_testnonboundtoswig_VRTDerivedBands]
 
 if __name__ == '__main__':
 

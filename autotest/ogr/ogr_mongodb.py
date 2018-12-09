@@ -44,7 +44,7 @@ from osgeo import osr
 # Test if driver is available
 
 
-def ogr_mongodb_init():
+def test_ogr_mongodb_init():
 
     ogrtest.mongodb_drv = None
 
@@ -100,7 +100,7 @@ def ogr_mongodb_init():
 # Test various open methods
 
 
-def ogr_mongodb_1():
+def test_ogr_mongodb_1():
     if ogrtest.mongodb_drv is None:
         return 'skip'
 
@@ -272,7 +272,7 @@ def ogr_mongodb_1():
 # Basic tests
 
 
-def ogr_mongodb_2():
+def test_ogr_mongodb_2():
     if ogrtest.mongodb_drv is None:
         return 'skip'
 
@@ -919,7 +919,7 @@ def ogr_mongodb_2():
 # test_ogrsf
 
 
-def ogr_mongodb_3():
+def test_ogr_mongodb_3():
     if ogrtest.mongodb_drv is None:
         return 'skip'
 
@@ -938,7 +938,7 @@ def ogr_mongodb_3():
 # Cleanup
 
 
-def ogr_mongodb_cleanup():
+def test_ogr_mongodb_cleanup():
     if ogrtest.mongodb_drv is None:
         return 'skip'
 
@@ -964,11 +964,11 @@ def ogr_mongodb_cleanup():
 
 
 gdaltest_list = [
-    ogr_mongodb_init,
-    ogr_mongodb_1,
-    ogr_mongodb_2,
-    ogr_mongodb_3,
-    ogr_mongodb_cleanup,
+    test_ogr_mongodb_init,
+    test_ogr_mongodb_1,
+    test_ogr_mongodb_2,
+    test_ogr_mongodb_3,
+    test_ogr_mongodb_cleanup,
 ]
 
 if __name__ == '__main__':

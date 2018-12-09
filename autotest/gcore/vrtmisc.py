@@ -39,7 +39,7 @@ import gdaltest
 # Test linear scaling
 
 
-def vrtmisc_1():
+def test_vrtmisc_1():
 
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255')
     cs = ds.GetRasterBand(1).Checksum()
@@ -56,7 +56,7 @@ def vrtmisc_1():
 # Test power scaling
 
 
-def vrtmisc_2():
+def test_vrtmisc_2():
 
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255 -exponent 2.2')
     cs = ds.GetRasterBand(1).Checksum()
@@ -73,7 +73,7 @@ def vrtmisc_2():
 # Test power scaling (not <SrcMin> <SrcMax> in VRT file)
 
 
-def vrtmisc_3():
+def test_vrtmisc_3():
 
     ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -100,7 +100,7 @@ def vrtmisc_3():
 # Test multi-band linear scaling with a single -scale occurrence.
 
 
-def vrtmisc_4():
+def test_vrtmisc_4():
 
     # -scale specified once applies to all bands
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255 -b 1 -b 1')
@@ -123,7 +123,7 @@ def vrtmisc_4():
 # Test multi-band linear scaling with -scale_XX syntax
 
 
-def vrtmisc_5():
+def test_vrtmisc_5():
 
     # -scale_2 applies to band 2 only
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale_2 74 255 0 255 -b 1 -b 1')
@@ -146,7 +146,7 @@ def vrtmisc_5():
 # Test multi-band linear scaling with repeated -scale syntax
 
 
-def vrtmisc_6():
+def test_vrtmisc_6():
 
     # -scale repeated as many times as output band number
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 0 255 0 255 -scale 74 255 0 255 -b 1 -b 1')
@@ -169,7 +169,7 @@ def vrtmisc_6():
 # Test multi-band power scaling with a single -scale and -exponent occurrence.
 
 
-def vrtmisc_7():
+def test_vrtmisc_7():
 
     # -scale and -exponent, specified once, apply to all bands
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 74 255 0 255 -exponent 2.2 -b 1 -b 1')
@@ -192,7 +192,7 @@ def vrtmisc_7():
 # Test multi-band power scaling with -scale_XX and -exponent_XX syntax
 
 
-def vrtmisc_8():
+def test_vrtmisc_8():
 
     # -scale_2 and -exponent_2 apply to band 2 only
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale_2 74 255 0 255 -exponent_2 2.2 -b 1 -b 1')
@@ -215,7 +215,7 @@ def vrtmisc_8():
 # Test multi-band linear scaling with repeated -scale and -exponent syntax
 
 
-def vrtmisc_9():
+def test_vrtmisc_9():
 
     # -scale and -exponent repeated as many times as output band number
     ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -scale 0 255 0 255 -scale 74 255 0 255 -exponent 1 -exponent 2.2 -b 1 -b 1')
@@ -238,7 +238,7 @@ def vrtmisc_9():
 # Test metadata serialization (#5944)
 
 
-def vrtmisc_10():
+def test_vrtmisc_10():
 
     gdal.FileFromMemBuffer("/vsimem/vrtmisc_10.vrt",
                            """<VRTDataset rasterXSize="1" rasterYSize="1">
@@ -308,7 +308,7 @@ def vrtmisc_10():
 # Test relativeToVRT is preserved during re-serialization (#5985)
 
 
-def vrtmisc_11():
+def test_vrtmisc_11():
 
     f = open('tmp/vrtmisc_11.vrt', 'wt')
     f.write(
@@ -345,7 +345,7 @@ def vrtmisc_11():
 # Test set/delete nodata
 
 
-def vrtmisc_12():
+def test_vrtmisc_12():
 
     gdal.FileFromMemBuffer("/vsimem/vrtmisc_12.vrt",
                            """<VRTDataset rasterXSize="1" rasterYSize="1">
@@ -388,7 +388,7 @@ def vrtmisc_12():
 # Test CreateCopy() preserve NBITS
 
 
-def vrtmisc_13():
+def test_vrtmisc_13():
 
     ds = gdal.Open('data/oddsize1bit.tif')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
@@ -402,7 +402,7 @@ def vrtmisc_13():
 # Test SrcRect/DstRect are serialized as integers
 
 
-def vrtmisc_14():
+def test_vrtmisc_14():
 
     src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 123456789, 1, options=['SPARSE_OK=YES', 'TILED=YES'])
     gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
@@ -442,7 +442,7 @@ def vrtmisc_14():
 # Test CreateCopy() preserve SIGNEDBYTE
 
 
-def vrtmisc_15():
+def test_vrtmisc_15():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_15.tif', 1, 1, options=['PIXELTYPE=SIGNEDBYTE'])
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
@@ -458,7 +458,7 @@ def vrtmisc_15():
 # Test rounding to closest int for coordinates
 
 
-def vrtmisc_16():
+def test_vrtmisc_16():
 
     gdal.BuildVRT('/vsimem/vrtmisc_16.vrt', ['data/vrtmisc16_tile1.tif', 'data/vrtmisc16_tile2.tif'])
     fp = gdal.VSIFOpenL('/vsimem/vrtmisc_16.vrt', 'rb')
@@ -529,7 +529,7 @@ def vrtmisc_16():
 # Check that the serialized xml:VRT doesn't include itself (#6767)
 
 
-def vrtmisc_17():
+def test_vrtmisc_17():
 
     ds = gdal.Open('data/byte.tif')
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_17.vrt', ds)
@@ -547,7 +547,7 @@ def vrtmisc_17():
 # Check GetMetadata('xml:VRT') behaviour on a in-memory VRT copied from a VRT
 
 
-def vrtmisc_18():
+def test_vrtmisc_18():
 
     ds = gdal.Open('data/byte.vrt')
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
@@ -569,7 +569,7 @@ def vrtmisc_18():
 # Check RAT support
 
 
-def vrtmisc_rat():
+def test_vrtmisc_rat():
 
     ds = gdal.Translate('/vsimem/vrtmisc_rat.tif', 'data/byte.tif', format='MEM')
     rat = gdal.RasterAttributeTable()
@@ -626,7 +626,7 @@ def vrtmisc_rat():
 # Check ColorTable support
 
 
-def vrtmisc_colortable():
+def test_vrtmisc_colortable():
 
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ct = gdal.ColorTable()
@@ -646,7 +646,7 @@ def vrtmisc_colortable():
 # Check histogram support
 
 
-def vrtmisc_histogram():
+def test_vrtmisc_histogram():
 
     tmpfile = '/vsimem/vrtmisc_histogram.vrt'
     ds = gdal.Translate(tmpfile, 'data/byte.tif', format='VRT')
@@ -668,33 +668,33 @@ def vrtmisc_histogram():
 # Cleanup.
 
 
-def vrtmisc_cleanup():
+def test_vrtmisc_cleanup():
     return 'success'
 
 
 gdaltest_list = [
-    vrtmisc_1,
-    vrtmisc_2,
-    vrtmisc_3,
-    vrtmisc_4,
-    vrtmisc_5,
-    vrtmisc_6,
-    vrtmisc_7,
-    vrtmisc_8,
-    vrtmisc_9,
-    vrtmisc_10,
-    vrtmisc_11,
-    vrtmisc_12,
-    vrtmisc_13,
-    vrtmisc_14,
-    vrtmisc_15,
-    vrtmisc_16,
-    vrtmisc_17,
-    vrtmisc_18,
-    vrtmisc_rat,
-    vrtmisc_colortable,
-    vrtmisc_histogram,
-    vrtmisc_cleanup]
+    test_vrtmisc_1,
+    test_vrtmisc_2,
+    test_vrtmisc_3,
+    test_vrtmisc_4,
+    test_vrtmisc_5,
+    test_vrtmisc_6,
+    test_vrtmisc_7,
+    test_vrtmisc_8,
+    test_vrtmisc_9,
+    test_vrtmisc_10,
+    test_vrtmisc_11,
+    test_vrtmisc_12,
+    test_vrtmisc_13,
+    test_vrtmisc_14,
+    test_vrtmisc_15,
+    test_vrtmisc_16,
+    test_vrtmisc_17,
+    test_vrtmisc_18,
+    test_vrtmisc_rat,
+    test_vrtmisc_colortable,
+    test_vrtmisc_histogram,
+    test_vrtmisc_cleanup]
 
 if __name__ == '__main__':
 

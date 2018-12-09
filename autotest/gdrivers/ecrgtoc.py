@@ -39,7 +39,7 @@ import gdaltest
 ###############################################################################
 # Basic test
 
-def ecrgtoc_1():
+def test_ecrgtoc_1():
 
     toc_xml = """<Table_of_Contents>
   <file_header file_status="new">
@@ -130,7 +130,7 @@ def ecrgtoc_1():
 # Test overviews
 
 
-def ecrgtoc_2():
+def test_ecrgtoc_2():
 
     ds = gdal.Open('/vsimem/TOC.xml')
     ds.BuildOverviews('NEAR', [2])
@@ -152,7 +152,7 @@ def ecrgtoc_2():
 # Test opening subdataset
 
 
-def ecrgtoc_3():
+def test_ecrgtoc_3():
 
     # Try different errors
     for name in ['ECRG_TOC_ENTRY:',
@@ -199,7 +199,7 @@ def ecrgtoc_3():
 # Test dataset with 3 subdatasets
 
 
-def ecrgtoc_4():
+def test_ecrgtoc_4():
 
     toc_xml = """<Table_of_Contents>
   <file_header file_status="new">
@@ -320,7 +320,7 @@ def ecrgtoc_4():
 ###############################################################################
 
 
-def ecrgtoc_online_1():
+def test_ecrgtoc_online_1():
 
     if not gdaltest.download_file('http://www.falconview.org/trac/FalconView/downloads/17', 'ECRG_Sample.zip'):
         return 'skip'
@@ -357,11 +357,11 @@ def ecrgtoc_online_1():
 
 
 gdaltest_list = [
-    ecrgtoc_1,
-    ecrgtoc_2,
-    ecrgtoc_3,
-    ecrgtoc_4,
-    ecrgtoc_online_1]
+    test_ecrgtoc_1,
+    test_ecrgtoc_2,
+    test_ecrgtoc_3,
+    test_ecrgtoc_4,
+    test_ecrgtoc_online_1]
 
 if __name__ == '__main__':
 

@@ -44,7 +44,7 @@ import gdaltest
 # test that we can write a small file with a custom layer name.
 
 
-def hfa_write_desc():
+def test_hfa_write_desc():
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -75,7 +75,7 @@ def hfa_write_desc():
 # test writing 4 bit files.
 
 
-def hfa_write_4bit():
+def test_hfa_write_4bit():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
     ds = drv.CreateCopy('tmp/4bit.img', src_ds, options=['NBITS=1'])
@@ -100,7 +100,7 @@ def hfa_write_4bit():
 # test writing 4 bit files compressed.
 
 
-def hfa_write_4bit_compressed():
+def test_hfa_write_4bit_compressed():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
     ds = drv.CreateCopy('tmp/4bitc.img', src_ds,
@@ -127,7 +127,7 @@ def hfa_write_4bit_compressed():
 # blocks and verifying they are the nodata value.  (#2427)
 
 
-def hfa_write_nd_invalid():
+def test_hfa_write_nd_invalid():
 
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create('tmp/ndinvalid.img', 512, 512, 1, gdal.GDT_Byte, [])
@@ -152,7 +152,7 @@ def hfa_write_nd_invalid():
 # Test updating .rrd overviews in place (#2524).
 
 
-def hfa_update_overviews():
+def test_hfa_update_overviews():
 
     shutil.copyfile('data/small_ov.img', 'tmp/small.img')
     shutil.copyfile('data/small_ov.rrd', 'tmp/small.rrd')
@@ -172,7 +172,7 @@ def hfa_update_overviews():
 # Test cleaning external overviews.
 
 
-def hfa_clean_external_overviews():
+def test_hfa_clean_external_overviews():
 
     ds = gdal.Open('tmp/small.img', gdal.GA_Update)
     result = ds.BuildOverviews(overviewlist=[])
@@ -207,7 +207,7 @@ def hfa_clean_external_overviews():
 # Test writing high frequency data (#2525).
 
 
-def hfa_bug_2525():
+def test_hfa_bug_2525():
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options=['COMPRESSED=YES'])
     import struct
@@ -224,7 +224,7 @@ def hfa_bug_2525():
 # Test building external overviews with HFA_USE_RRD=YES
 
 
-def hfa_use_rrd():
+def test_hfa_use_rrd():
 
     shutil.copyfile('data/small_ov.img', 'tmp/small.img')
 
@@ -262,7 +262,7 @@ def hfa_use_rrd():
 ###############################################################################
 # Test fix for #4831
 
-def hfa_update_existing_aux_overviews():
+def test_hfa_update_existing_aux_overviews():
 
     gdal.SetConfigOption('USE_RRD', 'YES')
 
@@ -343,7 +343,7 @@ def hfa_update_existing_aux_overviews():
 # Test writing invalid WKT (#5258)
 
 
-def hfa_write_invalid_wkt():
+def test_hfa_write_invalid_wkt():
 
     # No GEOGCS
     ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1, 1)
@@ -476,16 +476,16 @@ def test_hfa_create_compress(filename, checksum, testfunction):
     getattr(ut, testfunction)()
 
 
-gdaltest_list = [hfa_write_desc,
-                 hfa_write_4bit,
-                 hfa_write_4bit_compressed,
-                 hfa_write_nd_invalid,
-                 hfa_update_overviews,
-                 hfa_clean_external_overviews,
-                 hfa_bug_2525,
-                 hfa_use_rrd,
-                 hfa_update_existing_aux_overviews,
-                 hfa_write_invalid_wkt]
+gdaltest_list = [test_hfa_write_desc,
+                 test_hfa_write_4bit,
+                 test_hfa_write_4bit_compressed,
+                 test_hfa_write_nd_invalid,
+                 test_hfa_update_overviews,
+                 test_hfa_clean_external_overviews,
+                 test_hfa_bug_2525,
+                 test_hfa_use_rrd,
+                 test_hfa_update_existing_aux_overviews,
+                 test_hfa_write_invalid_wkt]
 
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ import webserver
 ###############################################################################
 #
 
-def vsicurl_1():
+def test_vsicurl_1():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -93,7 +93,7 @@ def vsicurl_3():
 # This server doesn't support range downloading
 
 
-def vsicurl_4():
+def test_vsicurl_4():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -110,7 +110,7 @@ def vsicurl_4():
 # Test URL unescaping when reading HTTP file list
 
 
-def vsicurl_5():
+def test_vsicurl_5():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -144,7 +144,7 @@ def vsicurl_6_disabled():
 ###############################################################################
 # Test Microsoft-IIS/6.0 listing
 
-def vsicurl_7():
+def test_vsicurl_7():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -181,7 +181,7 @@ def vsicurl_8():
 # returns escaped sequences instead of the Chinese characters.
 
 
-def vsicurl_9():
+def test_vsicurl_9():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -204,7 +204,7 @@ def vsicurl_9():
 # Test reading a file with escaped Chinese characters.
 
 
-def vsicurl_10():
+def test_vsicurl_10():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -221,7 +221,7 @@ def vsicurl_10():
 # Test ReadDir() after reading a file on the same server
 
 
-def vsicurl_11():
+def test_vsicurl_11():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -244,7 +244,7 @@ def vsicurl_11():
 ###############################################################################
 
 
-def vsicurl_start_webserver():
+def test_vsicurl_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -261,7 +261,7 @@ def vsicurl_start_webserver():
 ###############################################################################
 
 
-def vsicurl_test_redirect():
+def test_vsicurl_test_redirect():
 
     if gdaltest.is_travis_branch('trusty'):
         print('Skipped on trusty branch, but should be investigated')
@@ -393,7 +393,7 @@ def vsicurl_test_redirect():
 # TODO: better testing
 
 
-def vsicurl_test_clear_cache():
+def test_vsicurl_test_clear_cache():
 
     gdal.VSICurlClearCache()
     gdal.VSICurlClearCache()
@@ -403,7 +403,7 @@ def vsicurl_test_clear_cache():
 ###############################################################################
 
 
-def vsicurl_test_retry():
+def test_vsicurl_test_retry():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -455,7 +455,7 @@ def vsicurl_test_retry():
 ###############################################################################
 
 
-def vsicurl_test_fallback_from_head_to_get():
+def test_vsicurl_test_fallback_from_head_to_get():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -477,7 +477,7 @@ def vsicurl_test_fallback_from_head_to_get():
 ###############################################################################
 
 
-def vsicurl_test_parse_html_filelist_apache():
+def test_vsicurl_test_parse_html_filelist_apache():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -520,7 +520,7 @@ def vsicurl_test_parse_html_filelist_apache():
 ###############################################################################
 
 
-def vsicurl_stop_webserver():
+def test_vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -534,24 +534,24 @@ def vsicurl_stop_webserver():
     return 'success'
 
 
-gdaltest_list = [vsicurl_1,
+gdaltest_list = [test_vsicurl_1,
                  # vsicurl_2,
                  # vsicurl_3,
-                 vsicurl_4,
-                 vsicurl_5,
+                 test_vsicurl_4,
+                 test_vsicurl_5,
                  #vsicurl_6_disabled,
-                 vsicurl_7,
+                 test_vsicurl_7,
                  # vsicurl_8,
-                 vsicurl_9,
-                 vsicurl_10,
-                 vsicurl_11,
-                 vsicurl_start_webserver,
-                 vsicurl_test_redirect,
-                 vsicurl_test_clear_cache,
-                 vsicurl_test_retry,
-                 vsicurl_test_fallback_from_head_to_get,
-                 vsicurl_test_parse_html_filelist_apache,
-                 vsicurl_stop_webserver]
+                 test_vsicurl_9,
+                 test_vsicurl_10,
+                 test_vsicurl_11,
+                 test_vsicurl_start_webserver,
+                 test_vsicurl_test_redirect,
+                 test_vsicurl_test_clear_cache,
+                 test_vsicurl_test_retry,
+                 test_vsicurl_test_fallback_from_head_to_get,
+                 test_vsicurl_test_parse_html_filelist_apache,
+                 test_vsicurl_stop_webserver]
 
 if __name__ == '__main__':
 

@@ -40,7 +40,7 @@ import gdaltest
 ###############################################################################
 # Test bugfix for #5249 (Irrelevant ERDAS GeoTIFF JP2Box read)
 
-def jp2metadata_1():
+def test_jp2metadata_1():
 
     ds = gdal.Open('data/erdas_foo.jp2')
     if ds is None:
@@ -62,7 +62,7 @@ def jp2metadata_1():
 # Test Pleiades imagery metadata
 
 
-def jp2metadata_2():
+def test_jp2metadata_2():
 
     # Pleiades product description http://www.cscrs.itu.edu.tr/assets/downloads/PleiadesUserGuide.pdf
     try:
@@ -114,7 +114,7 @@ def jp2metadata_2():
 # disabled.
 
 
-def jp2metadata_3():
+def test_jp2metadata_3():
 
     gdal.SetConfigOption('GDAL_IGNORE_AXIS_ORIENTATION', 'YES')
 
@@ -153,7 +153,7 @@ def jp2metadata_3():
 # axis order coordinate system (urn:...:EPSG::4326).
 
 
-def jp2metadata_4():
+def test_jp2metadata_4():
 
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
@@ -190,7 +190,7 @@ def jp2metadata_4():
 # but with explicit axisName being easting, northing (#5960)
 
 
-def jp2metadata_5():
+def test_jp2metadata_5():
 
     exp_wkt = 'PROJCS["ETRS89 / LAEA Europe",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6258"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4258"]],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",52],PARAMETER["longitude_of_center",10],PARAMETER["false_easting",4321000],PARAMETER["false_northing",3210000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","3035"]]'
 
@@ -223,11 +223,11 @@ def jp2metadata_5():
 
 
 gdaltest_list = [
-    jp2metadata_1,
-    jp2metadata_2,
-    jp2metadata_3,
-    jp2metadata_4,
-    jp2metadata_5
+    test_jp2metadata_1,
+    test_jp2metadata_2,
+    test_jp2metadata_3,
+    test_jp2metadata_4,
+    test_jp2metadata_5
 ]
 
 

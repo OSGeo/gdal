@@ -38,7 +38,7 @@ import gdaltest
 # Create simple copy and check.
 
 
-def sigdem_copy_check_prj():
+def test_sigdem_copy_check_prj():
 
     tst = gdaltest.GDALTest('SIGDEM', 'byte.tif', 1, 4672)
 
@@ -49,7 +49,7 @@ def sigdem_copy_check_prj():
 ###############################################################################
 # Verify writing files with non-square pixels.
 
-def sigdem_non_square():
+def test_sigdem_non_square():
 
     tst = gdaltest.GDALTest('SIGDEM', 'nonsquare_nad27_utm11.vrt', 1, 12481)
 
@@ -60,7 +60,7 @@ def sigdem_non_square():
 ###############################################################################
 # Test creating an in memory copy.
 
-def sigdem_in_memory():
+def test_sigdem_in_memory():
 
     tst = gdaltest.GDALTest('SIGDEM', 'byte.tif', 1, 4672)
 
@@ -71,9 +71,9 @@ def sigdem_in_memory():
 
 
 gdaltest_list = [
-    sigdem_copy_check_prj,
-    sigdem_non_square,
-    sigdem_in_memory
+    test_sigdem_copy_check_prj,
+    test_sigdem_non_square,
+    test_sigdem_in_memory
 ]
 
 if __name__ == '__main__':

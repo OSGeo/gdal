@@ -62,7 +62,7 @@ def CheckFileSize(src_filename):
 # Initiate the test file
 
 
-def ogr_rfc35_shape_1():
+def test_ogr_rfc35_shape_1():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/rfc35_test.dbf')
     lyr = ds.CreateLayer('rfc35_test')
@@ -177,7 +177,7 @@ def Check(lyr, expected_order):
     return 'success'
 
 
-def ogr_rfc35_shape_2():
+def test_ogr_rfc35_shape_2():
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
@@ -259,7 +259,7 @@ def ogr_rfc35_shape_2():
 # Test AlterFieldDefn() for change of name and width
 
 
-def ogr_rfc35_shape_3():
+def test_ogr_rfc35_shape_3():
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
@@ -316,7 +316,7 @@ def ogr_rfc35_shape_3():
 # Test AlterFieldDefn() for change of type
 
 
-def ogr_rfc35_shape_4():
+def test_ogr_rfc35_shape_4():
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
@@ -475,7 +475,7 @@ def ogr_rfc35_shape_4():
 # Test DeleteField()
 
 
-def ogr_rfc35_shape_5():
+def test_ogr_rfc35_shape_5():
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
@@ -554,7 +554,7 @@ def ogr_rfc35_shape_5():
 # Initiate the test file
 
 
-def ogr_rfc35_shape_cleanup():
+def test_ogr_rfc35_shape_cleanup():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/rfc35_test.dbf')
 
@@ -562,12 +562,12 @@ def ogr_rfc35_shape_cleanup():
 
 
 gdaltest_list = [
-    ogr_rfc35_shape_1,
-    ogr_rfc35_shape_2,
-    ogr_rfc35_shape_3,
-    ogr_rfc35_shape_4,
-    ogr_rfc35_shape_5,
-    ogr_rfc35_shape_cleanup]
+    test_ogr_rfc35_shape_1,
+    test_ogr_rfc35_shape_2,
+    test_ogr_rfc35_shape_3,
+    test_ogr_rfc35_shape_4,
+    test_ogr_rfc35_shape_5,
+    test_ogr_rfc35_shape_cleanup]
 
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ import gdaltest
 # Verify we have the driver.
 
 
-def fast_1():
+def test_fast_1():
 
     gdaltest.fast_drv = gdal.GetDriverByName('FAST')
     if gdaltest.fast_drv is None:
@@ -51,7 +51,7 @@ def fast_1():
 # Perform simple read test.
 
 
-def fast_2():
+def test_fast_2():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -67,7 +67,7 @@ def fast_2():
 # Verify metadata.
 
 
-def fast_3():
+def test_fast_3():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -114,7 +114,7 @@ def fast_3():
 # Test geotransform data.
 
 
-def fast_4():
+def test_fast_4():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -142,7 +142,7 @@ def fast_4():
 ###############################################################################
 # Test 2 bands dataset with checking projections and geotransform.
 
-def fast_5():
+def test_fast_5():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -182,7 +182,7 @@ def fast_5():
 ###############################################################################
 # Test Euromap LISS3 dataset
 
-def fast_6():
+def test_fast_6():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -203,7 +203,7 @@ def fast_6():
 ###############################################################################
 # Test Euromap PAN dataset
 
-def fast_7():
+def test_fast_7():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -235,7 +235,7 @@ def fast_7():
 # Test Euromap WIFS dataset
 
 
-def fast_8():
+def test_fast_8():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -269,7 +269,7 @@ def fast_8():
 # Check some metadata and opening for a RevB L7 file (#3306, #3307).
 
 
-def fast_9():
+def test_fast_9():
 
     if gdaltest.fast_drv is None:
         return 'skip'
@@ -290,15 +290,15 @@ def fast_9():
 
 
 gdaltest_list = [
-    fast_1,
-    fast_2,
-    fast_3,
-    fast_4,
-    fast_5,
-    fast_6,
-    fast_7,
-    fast_8,
-    fast_9]
+    test_fast_1,
+    test_fast_2,
+    test_fast_3,
+    test_fast_4,
+    test_fast_5,
+    test_fast_6,
+    test_fast_7,
+    test_fast_8,
+    test_fast_9]
 
 if __name__ == '__main__':
 

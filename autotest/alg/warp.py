@@ -49,7 +49,7 @@ import gdaltest
 # Upsampling
 
 
-def warp_1():
+def test_warp_1():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -68,7 +68,7 @@ def warp_1():
     return 'success'
 
 
-def warp_1_short():
+def test_warp_1_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -87,7 +87,7 @@ def warp_1_short():
     return 'success'
 
 
-def warp_1_ushort():
+def test_warp_1_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -106,7 +106,7 @@ def warp_1_ushort():
     return 'success'
 
 
-def warp_1_float():
+def test_warp_1_float():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -125,7 +125,7 @@ def warp_1_float():
     return 'success'
 
 
-def warp_2():
+def test_warp_2():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -144,7 +144,7 @@ def warp_2():
     return 'success'
 
 
-def warp_2_short():
+def test_warp_2_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -163,7 +163,7 @@ def warp_2_short():
     return 'success'
 
 
-def warp_2_ushort():
+def test_warp_2_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -182,7 +182,7 @@ def warp_2_ushort():
     return 'success'
 
 
-def warp_2_downsize():
+def test_warp_2_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -201,7 +201,7 @@ def warp_2_downsize():
     return 'success'
 
 
-def warp_3():
+def test_warp_3():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -220,7 +220,7 @@ def warp_3():
     return 'success'
 
 
-def warp_3_short():
+def test_warp_3_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -239,7 +239,7 @@ def warp_3_short():
     return 'success'
 
 
-def warp_3_ushort():
+def test_warp_3_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -258,7 +258,7 @@ def warp_3_ushort():
     return 'success'
 
 
-def warp_3_downsize():
+def test_warp_3_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -277,7 +277,7 @@ def warp_3_downsize():
     return 'success'
 
 
-def warp_3_float_downsize():
+def test_warp_3_float_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -296,7 +296,7 @@ def warp_3_float_downsize():
     return 'success'
 
 
-def warp_4():
+def test_warp_4():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -315,7 +315,7 @@ def warp_4():
     return 'success'
 
 
-def warp_4_short():
+def test_warp_4_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -334,7 +334,7 @@ def warp_4_short():
     return 'success'
 
 
-def warp_4_ushort():
+def test_warp_4_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -353,7 +353,7 @@ def warp_4_ushort():
     return 'success'
 
 
-def warp_4_downsize():
+def test_warp_4_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -372,7 +372,7 @@ def warp_4_downsize():
     return 'success'
 
 
-def warp_4_short_downsize():
+def test_warp_4_short_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -391,7 +391,7 @@ def warp_4_short_downsize():
     return 'success'
 
 
-def warp_4_float_downsize():
+def test_warp_4_float_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -410,7 +410,7 @@ def warp_4_float_downsize():
     return 'success'
 
 
-def warp_5():
+def test_warp_5():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -429,7 +429,7 @@ def warp_5():
     return 'success'
 
 
-def warp_5_downsize():
+def test_warp_5_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -450,7 +450,7 @@ def warp_5_downsize():
 # Downsampling
 
 
-def warp_6():
+def test_warp_6():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -461,7 +461,7 @@ def warp_6():
     return tst.testOpen()
 
 
-def warp_7():
+def test_warp_7():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -472,7 +472,7 @@ def warp_7():
     return tst.testOpen()
 
 
-def warp_8():
+def test_warp_8():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -483,7 +483,7 @@ def warp_8():
     return tst.testOpen()
 
 
-def warp_9():
+def test_warp_9():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -502,7 +502,7 @@ def warp_9():
     return 'success'
 
 
-def warp_10():
+def test_warp_10():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -521,7 +521,7 @@ def warp_10():
     return 'success'
 
 
-def warp_11():
+def test_warp_11():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -534,7 +534,7 @@ def warp_11():
 # Test warping an empty RGBA with bilinear resampling
 
 
-def warp_12():
+def test_warp_12():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -559,7 +559,7 @@ def warp_12():
 # Test warping an empty RGBA with cubic resampling
 
 
-def warp_13():
+def test_warp_13():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -584,7 +584,7 @@ def warp_13():
 # Test warping an empty RGBA with cubic spline resampling
 
 
-def warp_14():
+def test_warp_14():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -609,7 +609,7 @@ def warp_14():
 # Test GWKNearestFloat with transparent source alpha band
 
 
-def warp_15():
+def test_warp_15():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -634,7 +634,7 @@ def warp_15():
 # Test GWKNearestFloat with opaque source alpha band
 
 
-def warp_16():
+def test_warp_16():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -659,7 +659,7 @@ def warp_16():
 # Test GWKNearestShort with transparent source alpha band
 
 
-def warp_17():
+def test_warp_17():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -684,7 +684,7 @@ def warp_17():
 # Test GWKNearestShort with opaque source alpha band
 
 
-def warp_18():
+def test_warp_18():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -738,7 +738,7 @@ def warp_19_internal(size, datatype, resampling_string):
 
 # Test all data types and resampling methods for very small images
 # to test edge behaviour
-def warp_19():
+def test_warp_19():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -772,7 +772,7 @@ def warp_19():
 
 
 # Test fix for #2724 (initialization of destination area to nodata in warped VRT)
-def warp_20():
+def test_warp_20():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -786,7 +786,7 @@ def warp_20():
 # Test overviews on warped VRT files
 
 
-def warp_21():
+def test_warp_21():
 
     shutil.copy('data/utmsmall_near.vrt', 'tmp/warp_21.vrt')
 
@@ -811,7 +811,7 @@ def warp_21():
 # Would have detected issue of #3458
 
 
-def warp_22():
+def test_warp_22():
 
     # Generate source image with non uniform data
     w = 1001
@@ -865,7 +865,7 @@ def warp_22():
 # Test warping with datasets where some RasterIO() requests involve nBufXSize == 0 (#3582)
 
 
-def warp_23():
+def test_warp_23():
 
     gcp1 = gdal.GCP()
     gcp1.GCPPixel = 3213
@@ -942,7 +942,7 @@ def warp_23():
 # left pixel being not set in GWKBilinearResample() case)
 
 
-def warp_24():
+def test_warp_24():
 
     ds_ref = gdal.Open('data/test3658.tif')
     cs_ref = ds_ref.GetRasterBand(1).Checksum()
@@ -959,7 +959,7 @@ def warp_24():
 # Test -refine_gcps (#4143)
 
 
-def warp_25():
+def test_warp_25():
 
     ds = gdal.Open('data/refine_gcps.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -975,7 +975,7 @@ def warp_25():
 # Test serializing and deserializing TPS transformer
 
 
-def warp_26():
+def test_warp_26():
 
     gdal.Translate('tmp/warp_25_gcp.vrt', '../gcore/data/byte.tif',
                    options='-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 '
@@ -1006,7 +1006,7 @@ def warp_27_progress_callback(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def warp_27():
+def test_warp_27():
 
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1076,7 +1076,7 @@ def warp_27():
 # INIT_DEST setting
 
 
-def warp_28():
+def test_warp_28():
 
     ds = gdal.Open('data/utm_alpha_noinit.vrt')
     cs1 = ds.GetRasterBand(1).Checksum()
@@ -1094,7 +1094,7 @@ def warp_28():
 # Test multi-thread computations
 
 
-def warp_29():
+def test_warp_29():
 
     ds = gdal.Open('data/white_nodata.vrt')
     cs_monothread = ds.GetRasterBand(1).Checksum()
@@ -1167,7 +1167,7 @@ def warp_30_progress_callback(pct, message, user_data):
     return bool(pct <= 0.2)
 
 
-def warp_30():
+def test_warp_30():
 
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1244,7 +1244,7 @@ def warp_30():
 # Average (Byte)
 
 
-def warp_31():
+def test_warp_31():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1265,7 +1265,7 @@ def warp_31():
 # Average (Float)
 
 
-def warp_32():
+def test_warp_32():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1286,7 +1286,7 @@ def warp_32():
 # Mode (Byte)
 
 
-def warp_33():
+def test_warp_33():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1307,7 +1307,7 @@ def warp_33():
 # Mode (Int16)
 
 
-def warp_34():
+def test_warp_34():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1328,7 +1328,7 @@ def warp_34():
 # Mode (Int16 - signed with negative values)
 
 
-def warp_35():
+def test_warp_35():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1349,7 +1349,7 @@ def warp_35():
 # Mode (Int32) - this uses algorithm 2 (inefficient)
 
 
-def warp_36():
+def test_warp_36():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1371,7 +1371,7 @@ def warp_36():
 # Test a few error cases
 
 
-def warp_37():
+def test_warp_37():
 
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1409,7 +1409,7 @@ def warp_37():
 # Test a warp with GCPs on the *destination* image.
 
 
-def warp_38():
+def test_warp_38():
 
     # Create an output file with GCPs.
     out_file = 'tmp/warp_38.tif'
@@ -1445,7 +1445,7 @@ def warp_38():
 # Test a warp with GCPs for TPS on the *destination* image.
 
 
-def warp_39():
+def test_warp_39():
 
     # Create an output file with GCPs.
     out_file = 'tmp/warp_39.tif'
@@ -1481,7 +1481,7 @@ def warp_39():
 # test average (#5311)
 
 
-def warp_40():
+def test_warp_40():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1503,7 +1503,7 @@ def warp_40():
 # test GDALSuggestedWarpOutput (#5693)
 
 
-def warp_41():
+def test_warp_41():
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="67108864" rasterYSize="67108864">
   <GeoTransform> -2.0037508340000000e+07,  5.9716428339481353e-01,  0.0000000000000000e+00,  2.0037508340000000e+07,  0.0000000000000000e+00, -5.9716428339481353e-01</GeoTransform>
@@ -1539,7 +1539,7 @@ def warp_41():
 # Maximum
 
 
-def warp_42():
+def test_warp_42():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1560,7 +1560,7 @@ def warp_42():
 # Minimum
 
 
-def warp_43():
+def test_warp_43():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1581,7 +1581,7 @@ def warp_43():
 # Median
 
 
-def warp_44():
+def test_warp_44():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1602,7 +1602,7 @@ def warp_44():
 # Quartile 1
 
 
-def warp_45():
+def test_warp_45():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1623,7 +1623,7 @@ def warp_45():
 # Quartile 3
 
 
-def warp_46():
+def test_warp_46():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1644,7 +1644,7 @@ def warp_46():
 # Maximum (Int16 - signed with negative values)
 
 
-def warp_47():
+def test_warp_47():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1665,7 +1665,7 @@ def warp_47():
 # Minimum (Int16 - signed with negative values)
 
 
-def warp_48():
+def test_warp_48():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1686,7 +1686,7 @@ def warp_48():
 # Median (Int16 - signed with negative values)
 
 
-def warp_49():
+def test_warp_49():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1707,7 +1707,7 @@ def warp_49():
 # Quartile 1 (Int16 - signed with negative values)
 
 
-def warp_50():
+def test_warp_50():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1728,7 +1728,7 @@ def warp_50():
 # Quartile 3 (Int16 - signed with negative values)
 
 
-def warp_51():
+def test_warp_51():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
@@ -1750,7 +1750,7 @@ def warp_51():
 # Test fix for #6182
 
 
-def warp_52():
+def test_warp_52():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 4096, 4096, 3, gdal.GDT_UInt16)
     rpc = [
@@ -1802,7 +1802,7 @@ def warp_52():
 # Test Grey+Alpha
 
 
-def warp_53():
+def test_warp_53():
 
     for typestr in ('Byte', 'UInt16', 'Int16'):
         src_ds = gdal.Translate('', '../gcore/data/byte.tif',
@@ -1843,7 +1843,7 @@ def warp_53():
 # Test Alpha on UInt16/Int16
 
 
-def warp_54():
+def test_warp_54():
 
     # UInt16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
@@ -1899,7 +1899,7 @@ def warp_54():
 # and subsampling (#6972)
 
 
-def warp_55():
+def test_warp_55():
 
     ds = gdal.Open('data/warpedvrt_with_ovr.vrt')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1916,7 +1916,7 @@ def warp_55():
 # same size). This test crops a single pixel out of a 3-by-3 image.
 
 
-def warp_56():
+def test_warp_56():
 
     try:
         from osgeo import gdalnumeric
@@ -1948,79 +1948,79 @@ def warp_56():
 
 
 gdaltest_list = [
-    warp_1,
-    warp_1_short,
-    warp_1_ushort,
-    warp_1_float,
-    warp_2,
-    warp_2_short,
-    warp_2_ushort,
-    warp_2_downsize,
-    warp_3,
-    warp_3_short,
-    warp_3_ushort,
-    warp_3_downsize,
-    warp_3_float_downsize,
-    warp_4,
-    warp_4_short,
-    warp_4_ushort,
-    warp_4_downsize,
-    warp_4_short_downsize,
-    warp_4_float_downsize,
-    warp_5,
-    warp_5_downsize,
-    warp_6,
-    warp_7,
-    warp_8,
-    warp_9,
-    warp_10,
-    warp_11,
-    warp_12,
-    warp_13,
-    warp_14,
-    warp_15,
-    warp_16,
-    warp_17,
-    warp_18,
-    warp_19,
-    warp_20,
-    warp_21,
-    warp_22,
-    warp_23,
-    warp_24,
-    warp_25,
-    warp_26,
-    warp_27,
-    warp_28,
-    warp_29,
-    warp_30,
-    warp_31,
-    warp_32,
-    warp_33,
-    warp_34,
-    warp_35,
-    warp_36,
-    warp_37,
-    warp_38,
-    warp_39,
-    warp_39,
-    warp_40,
-    warp_41,
-    warp_42,
-    warp_43,
-    warp_44,
-    warp_45,
-    warp_46,
-    warp_47,
-    warp_48,
-    warp_49,
-    warp_50,
-    warp_51,
-    warp_52,
-    warp_53,
-    warp_54,
-    warp_55,
-    warp_56
+    test_warp_1,
+    test_warp_1_short,
+    test_warp_1_ushort,
+    test_warp_1_float,
+    test_warp_2,
+    test_warp_2_short,
+    test_warp_2_ushort,
+    test_warp_2_downsize,
+    test_warp_3,
+    test_warp_3_short,
+    test_warp_3_ushort,
+    test_warp_3_downsize,
+    test_warp_3_float_downsize,
+    test_warp_4,
+    test_warp_4_short,
+    test_warp_4_ushort,
+    test_warp_4_downsize,
+    test_warp_4_short_downsize,
+    test_warp_4_float_downsize,
+    test_warp_5,
+    test_warp_5_downsize,
+    test_warp_6,
+    test_warp_7,
+    test_warp_8,
+    test_warp_9,
+    test_warp_10,
+    test_warp_11,
+    test_warp_12,
+    test_warp_13,
+    test_warp_14,
+    test_warp_15,
+    test_warp_16,
+    test_warp_17,
+    test_warp_18,
+    test_warp_19,
+    test_warp_20,
+    test_warp_21,
+    test_warp_22,
+    test_warp_23,
+    test_warp_24,
+    test_warp_25,
+    test_warp_26,
+    test_warp_27,
+    test_warp_28,
+    test_warp_29,
+    test_warp_30,
+    test_warp_31,
+    test_warp_32,
+    test_warp_33,
+    test_warp_34,
+    test_warp_35,
+    test_warp_36,
+    test_warp_37,
+    test_warp_38,
+    test_warp_39,
+    test_warp_39,
+    test_warp_40,
+    test_warp_41,
+    test_warp_42,
+    test_warp_43,
+    test_warp_44,
+    test_warp_45,
+    test_warp_46,
+    test_warp_47,
+    test_warp_48,
+    test_warp_49,
+    test_warp_50,
+    test_warp_51,
+    test_warp_52,
+    test_warp_53,
+    test_warp_54,
+    test_warp_55,
+    test_warp_56
 ]
 # gdaltest_list = [ warp_55 ]
 

@@ -36,7 +36,7 @@ from osgeo import ogr
 # Open two datasets in shared mode.
 
 
-def ogr_refcount_1():
+def test_ogr_refcount_1():
     # if ogr.GetOpenDSCount() != 0:
     #    gdaltest.post_reason( 'Initial Open DS count is not zero!' )
     #    return 'failed'
@@ -58,7 +58,7 @@ def ogr_refcount_1():
 # Verify that reopening one of the datasets returns the existing shared handle.
 
 
-def ogr_refcount_2():
+def test_ogr_refcount_2():
 
     ds_3 = ogr.OpenShared('data/idlink.dbf')
 
@@ -86,7 +86,7 @@ def ogr_refcount_2():
 # Verify that releasing the datasources has the expected behaviour.
 
 
-def ogr_refcount_3():
+def test_ogr_refcount_3():
 
     gdaltest.ds_3.Release()
 
@@ -106,7 +106,7 @@ def ogr_refcount_3():
 # Verify that we can walk the open datasource list.
 
 
-def ogr_refcount_4():
+def test_ogr_refcount_4():
 
     with gdaltest.error_handler():
         ds = ogr.GetOpenDS(0)
@@ -122,7 +122,7 @@ def ogr_refcount_4():
 ###############################################################################
 
 
-def ogr_refcount_cleanup():
+def test_ogr_refcount_cleanup():
     gdaltest.ds_2.Release()
 
     # if ogr.GetOpenDSCount() != 0:
@@ -133,11 +133,11 @@ def ogr_refcount_cleanup():
 
 
 gdaltest_list = [
-    ogr_refcount_1,
-    ogr_refcount_2,
-    ogr_refcount_3,
-    ogr_refcount_4,
-    ogr_refcount_cleanup]
+    test_ogr_refcount_1,
+    test_ogr_refcount_2,
+    test_ogr_refcount_3,
+    test_ogr_refcount_4,
+    test_ogr_refcount_cleanup]
 
 if __name__ == '__main__':
 

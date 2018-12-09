@@ -80,7 +80,7 @@ def test_gml_geom(unit):
 # by ESRI WFS software.
 
 
-def gml_space_test():
+def test_gml_space_test():
     gml = '<gml:LineString xmlns:foo="http://bar"><gml:coordinates xmlns:foo="http://bar" decimal="." cs="," ts=" ">189999.99995605,624999.99998375 200000.00005735,624999.99998375 200000.00005735,612499.99997125 195791.3593843,612499.99997125 193327.3749823,612499.99997125 189999.99995605,612499.99997125 189999.99995605,619462.31247125 189999.99995605,624999.99998375 \n</gml:coordinates></gml:LineString>'
     geom = ogr.CreateGeometryFromGML(gml)
     if geom is None or geom.GetGeometryType() is not ogr.wkbLineString \
@@ -94,7 +94,7 @@ def gml_space_test():
 # Test GML 3.x "pos" element for a point.
 
 
-def gml_pos_point():
+def test_gml_pos_point():
 
     gml = '<gml:Point xmlns:foo="http://bar"><gml:pos>31 29 16</gml:pos></gml:Point>'
 
@@ -110,7 +110,7 @@ def gml_pos_point():
 # Test GML 3.1.1 "pos" element for a polygon. (ticket #3244)
 
 
-def gml_pos_polygon():
+def test_gml_pos_polygon():
 
     gml = '''<gml:Polygon xmlns:foo="http://bar">
                 <gml:exterior xmlns:foo="http://bar">
@@ -145,7 +145,7 @@ def gml_pos_polygon():
 # Test GML 3.x "posList" element for a linestring.
 
 
-def gml_posList_line():
+def test_gml_posList_line():
 
     gml = '<LineString xmlns:foo="http://bar"><posList xmlns:foo="http://bar">31 42 53 64 55 76</posList></LineString>'
 
@@ -161,7 +161,7 @@ def gml_posList_line():
 ###############################################################################
 # Test GML 3.x "posList" element for a 3D linestring.
 
-def gml_posList_line3d():
+def test_gml_posList_line3d():
 
     gml = '<LineString><posList xmlns:foo="http://bar" srsDimension="3">31 42 1 53 64 2 55 76 3</posList></LineString>'
 
@@ -178,7 +178,7 @@ def gml_posList_line3d():
 # set on LineString, not posList
 
 
-def gml_posList_line3d_2():
+def test_gml_posList_line3d_2():
 
     gml = '<LineString srsDimension="3"><posList>31 42 1 53 64 2 55 76 3</posList></LineString>'
 
@@ -194,7 +194,7 @@ def gml_posList_line3d_2():
 # Test GML 3.x "polygon" element for a point.
 
 
-def gml_polygon():
+def test_gml_polygon():
 
     gml = '<Polygon><exterior><LinearRing><posList>0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior><interior xmlns:foo="http://bar"><LinearRing><posList xmlns:foo="http://bar">1 1 2 1 2 2 1 2 1 1</posList></LinearRing></interior></Polygon>'
     geom = ogr.CreateGeometryFromGML(gml)
@@ -233,7 +233,7 @@ def _CreateGMLWithSRSFromWkt(wkt, epsg):
 # Test of Point geometry with SRS assigned
 
 
-def gml_out_point_srs():
+def test_gml_out_point_srs():
 
     wkt = 'POINT(21.675 53.763)'
 
@@ -253,7 +253,7 @@ def gml_out_point_srs():
 # Test of Point 3D geometry with SRS assigned
 
 
-def gml_out_point3d_srs():
+def test_gml_out_point3d_srs():
 
     wkt = 'POINT(21.675 53.763 100)'
 
@@ -273,7 +273,7 @@ def gml_out_point3d_srs():
 # Test of LineString geometry with SRS assigned
 
 
-def gml_out_linestring_srs():
+def test_gml_out_linestring_srs():
 
     wkt = open('data/wkb_wkt/5.wkt').read()
 
@@ -293,7 +293,7 @@ def gml_out_linestring_srs():
 # Test of Polygon geometry with SRS assigned
 
 
-def gml_out_polygon_srs():
+def test_gml_out_polygon_srs():
 
     wkt = open('data/wkb_wkt/6.wkt').read()
 
@@ -313,7 +313,7 @@ def gml_out_polygon_srs():
 # Test of MultiPoint geometry with SRS assigned
 
 
-def gml_out_multipoint_srs():
+def test_gml_out_multipoint_srs():
 
     wkt = open('data/wkb_wkt/11.wkt').read()
 
@@ -333,7 +333,7 @@ def gml_out_multipoint_srs():
 # Test of MultiLineString geometry with SRS assigned
 
 
-def gml_out_multilinestring_srs():
+def test_gml_out_multilinestring_srs():
 
     wkt = open('data/wkb_wkt/2.wkt').read()
 
@@ -353,7 +353,7 @@ def gml_out_multilinestring_srs():
 # Test of MultiPolygon geometry with SRS assigned
 
 
-def gml_out_multipolygon_srs():
+def test_gml_out_multipolygon_srs():
 
     wkt = open('data/wkb_wkt/4.wkt').read()
 
@@ -380,7 +380,7 @@ def gml_out_multipolygon_srs():
 # Test of GeometryCollection with SRS assigned
 
 
-def gml_out_geometrycollection_srs():
+def test_gml_out_geometrycollection_srs():
 
     wkt = open('data/wkb_wkt/3.wkt').read()
 
@@ -401,7 +401,7 @@ def gml_out_geometrycollection_srs():
 # Test GML Box
 
 
-def gml_Box():
+def test_gml_Box():
 
     gml = """<gml:Box xmlns:gml="http://www.opengis.net/gml" srsName="foo">
   <gml:coord>
@@ -427,7 +427,7 @@ def gml_Box():
 # Test GML Envelope
 
 
-def gml_Envelope():
+def test_gml_Envelope():
 
     gml = """<gml:Envelope xmlns:gml="http://www.opengis.net/gml" srsName="foo">
     <gml:lowerCorner>1 2</gml:lowerCorner>
@@ -447,7 +447,7 @@ def gml_Envelope():
 # Test GML Curve
 
 
-def gml_Curve():
+def test_gml_Curve():
 
     gml = """<gml:Curve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
     <gml:segments xmlns:foo="http://bar">
@@ -470,7 +470,7 @@ def gml_Curve():
 # Test GML Curve with pointProperty elements
 
 
-def gml_Curve_with_pointProperty():
+def test_gml_Curve_with_pointProperty():
 
     gml = """<gml:Curve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
     <gml:segments>
@@ -498,7 +498,7 @@ def gml_Curve_with_pointProperty():
 # Test GML MultiCurve
 
 
-def gml_MultiCurve():
+def test_gml_MultiCurve():
 
     gml = """<gml:MultiCurve xmlns:foo="http://bar" xmlns:gml="http://www.opengis.net/gml" srsName="foo">
     <gml:curveMember xmlns:foo="http://bar">
@@ -526,7 +526,7 @@ def gml_MultiCurve():
 # Test GML MultiSurface with PolygonPatch
 
 
-def gml_MultiSurface():
+def test_gml_MultiSurface():
 
     gml = """<gml:MultiSurface xmlns:gml="http://www.opengis.net/gml" srsName="foo">
     <gml:surfaceMember xmlns:foo="http://bar" xlink:role="main">
@@ -609,7 +609,7 @@ def gml_MultiSurface():
 ###############################################################################
 # Test GML MultiSurface with surfaceMembers
 
-def gml_MultiSurface_surfaceMembers():
+def test_gml_MultiSurface_surfaceMembers():
 
     gml = """<gml:MultiSurface xmlns:foo="http://bar">
           <gml:surfaceMembers xmlns:foo="http://bar">
@@ -663,7 +663,7 @@ def gml_MultiSurface_surfaceMembers():
 ###############################################################################
 # Test GML MultiCurve with curveMembers
 
-def gml_MultiCurve_curveMembers():
+def test_gml_MultiCurve_curveMembers():
 
     gml = """<gml:MultiCurve xmlns:foo="http://bar">
           <gml:curveMembers xmlns:foo="http://bar">
@@ -685,7 +685,7 @@ def gml_MultiCurve_curveMembers():
 ###############################################################################
 # Test GML MultiGeometry with geometryMembers
 
-def gml_MultiGeometry_geometryMembers():
+def test_gml_MultiGeometry_geometryMembers():
 
     gml = """<gml:MultiGeometry xmlns:foo="http://bar">
           <gml:geometryMembers xmlns:foo="http://bar">
@@ -708,7 +708,7 @@ def gml_MultiGeometry_geometryMembers():
 # Test GML CompositeCurve with curveMembers
 
 
-def gml_CompositeCurve_curveMembers():
+def test_gml_CompositeCurve_curveMembers():
 
     gml = """<gml:CompositeCurve xmlns:foo="http://bar">
           <gml:curveMembers xmlns:foo="http://bar">
@@ -734,7 +734,7 @@ def gml_CompositeCurve_curveMembers():
 # Test GML MultiPoint with pointMembers
 
 
-def gml_MultiCurve_pointMembers():
+def test_gml_MultiCurve_pointMembers():
 
     gml = """<gml:MultiPoint xmlns:foo="http://bar">
           <gml:pointMembers xmlns:foo="http://bar">
@@ -759,7 +759,7 @@ def gml_MultiCurve_pointMembers():
 # Test GML Solid
 
 
-def gml_Solid():
+def test_gml_Solid():
 
     gml = """<gml:Solid xmlns:foo="http://bar" gml:id="UUID_cc5a9513-2d85-4f1a-869a-620400182e1f">
           <gml:exterior xmlns:foo="http://bar">
@@ -790,7 +790,7 @@ def gml_Solid():
 # Test GML OrientableSurface
 
 
-def gml_OrientableSurface():
+def test_gml_OrientableSurface():
 
     gml = """<gml:OrientableSurface xmlns:foo="http://bar" orientation="+">
                                             <gml:baseSurface xmlns:foo="http://bar">
@@ -819,7 +819,7 @@ def gml_OrientableSurface():
 # Test GML Triangle
 
 
-def gml_Triangle():
+def test_gml_Triangle():
 
     gml = """<gml:Triangle xmlns:foo="http://bar">
                 <gml:exterior>
@@ -853,7 +853,7 @@ def gml_Triangle():
 # Test GML Rectangle
 
 
-def gml_Rectangle():
+def test_gml_Rectangle():
 
     gml = """<gml:Rectangle xmlns:foo="http://bar">
                 <gml:exterior>
@@ -876,7 +876,7 @@ def gml_Rectangle():
 # Test GML PolyhedralSurface
 
 
-def gml_PolyhedralSurface():
+def test_gml_PolyhedralSurface():
 
     # Conversion from GML -> OGR
 
@@ -1060,7 +1060,7 @@ def gml_PolyhedralSurface():
 ###############################################################################
 # Test GML Tin
 
-def gml_Tin():
+def test_gml_Tin():
 
     gml = """<gml:Tin xmlns:foo="http://bar">
                 <gml:patches xmlns:foo="http://bar">
@@ -1155,7 +1155,7 @@ def gml_Tin():
 # Test concatenated sections (#4451)
 
 
-def gml_ConcatenatedDeduplication():
+def test_gml_ConcatenatedDeduplication():
 
     gml = """<gml:Surface>
        <gml:patches>
@@ -1223,7 +1223,7 @@ def gml_out_precision():
 # Test various error cases of gml2ogrgeometry.cpp
 
 
-def gml_invalid_geoms():
+def test_gml_invalid_geoms():
 
     gml_expected_wkt_list = [
         ('<?xml version="1.0" encoding="UTF-8"?>', None),
@@ -1400,7 +1400,7 @@ def gml_invalid_geoms():
 # Test write support for GML3
 
 
-def gml_write_gml3_geometries():
+def test_gml_write_gml3_geometries():
 
     gml_list = ['<gml:Point><gml:pos>2 3</gml:pos></gml:Point>',
                 '<gml:Point><gml:pos>2 3 4</gml:pos></gml:Point>',
@@ -1432,7 +1432,7 @@ def gml_write_gml3_geometries():
 # Test write support for GML3 SRS
 
 
-def gml_write_gml3_srs():
+def test_gml_write_gml3_srs():
 
     sr32631 = osr.SpatialReference()
     sr32631.SetFromUserInput("EPSG:32631")
@@ -1511,7 +1511,7 @@ def gml_write_gml3_srs():
 # Test that importing too nested GML doesn't cause stack overflows
 
 
-def gml_nested():
+def test_gml_nested():
 
     gml = '<gml:MultiGeometry><gml:geometryMember>' * 31
     gml += '<gml:MultiPolygon></gml:MultiPolygon>'
@@ -1539,7 +1539,7 @@ def gml_nested():
 # Test GML 3.3 SimplePolygon
 
 
-def gml_SimplePolygon():
+def test_gml_SimplePolygon():
 
     gml = """<gmlce:SimplePolygon><gml:posList>0 0 1 0 1 1 0 1</gml:posList></gmlce:SimplePolygon>"""
 
@@ -1556,7 +1556,7 @@ def gml_SimplePolygon():
 # Test GML 3.3 SimpleRectangle
 
 
-def gml_SimpleRectangle():
+def test_gml_SimpleRectangle():
 
     gml = """<gmlce:SimpleRectangle><gml:posList>0 0 1 0 1 1 0 1</gml:posList></gmlce:SimpleRectangle>"""
 
@@ -1573,7 +1573,7 @@ def gml_SimpleRectangle():
 # Test GML 3.3 SimpleTriangle
 
 
-def gml_SimpleTriangle():
+def test_gml_SimpleTriangle():
 
     gml = """<gmlce:SimpleTriangle><gml:posList>0 0 1 0 1 1</gml:posList></gmlce:SimpleTriangle>"""
 
@@ -1590,7 +1590,7 @@ def gml_SimpleTriangle():
 # Test GML 3.3 SimpleMultiPoint
 
 
-def gml_SimpleMultiPoint():
+def test_gml_SimpleMultiPoint():
 
     gml = """<gmlce:SimpleMultiPoint><gml:posList>0 1 2 3</gml:posList></gmlce:SimpleMultiPoint>"""
 
@@ -1607,7 +1607,7 @@ def gml_SimpleMultiPoint():
 # Test  gml:CompositeCurve> in <gml:Ring>
 
 
-def gml_CompositeCurveInRing():
+def test_gml_CompositeCurveInRing():
 
     gml = """<gml:Surface>
     <gml:patches>
@@ -1666,7 +1666,7 @@ def gml_CompositeCurveInRing():
 # Test <gml:CompositeSurface> in <gml:surfaceMembers> (#5369)
 
 
-def gml_CompositeSurface_in_surfaceMembers():
+def test_gml_CompositeSurface_in_surfaceMembers():
 
     gml = """<gml:MultiSurface>
           <gml:surfaceMembers>
@@ -1705,7 +1705,7 @@ def gml_CompositeSurface_in_surfaceMembers():
 # Test <gml:PolygonPatch> with only Interior ring (#5421)
 
 
-def gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
+def test_gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
 
     gml = """<gml:MultiSurface>
                <gml:surfaceMember>
@@ -1761,7 +1761,7 @@ def gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
 # Test ts, cs and decimal attributes of gml:coordinates
 
 
-def gml_Coordinates_ts_cs_decimal():
+def test_gml_Coordinates_ts_cs_decimal():
 
     gml_expected_wkt_list = [
         ('<gml:Point><gml:coordinates>1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'),  # default values
@@ -1797,7 +1797,7 @@ def gml_Coordinates_ts_cs_decimal():
 # Test gml with XML header and comments
 
 
-def gml_with_xml_header_and_comments():
+def test_gml_with_xml_header_and_comments():
 
     gml_expected_wkt_list = [
         ('<?xml version="1.0" encoding="UTF-8"?><!-- comment --><gml:Point> <!-- comment --> <gml:coordinates>1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'),
@@ -1841,7 +1841,7 @@ def gml_with_xml_header_and_comments():
 # Test srsDimension attribute on top-level geometry and not on posList (#5606)
 
 
-def gml_srsDimension_topgeometry():
+def test_gml_srsDimension_topgeometry():
 
     gml = """<gml:Surface srsName="EPSG:25832" srsDimension="3">
     <gml:patches>
@@ -1870,7 +1870,7 @@ def gml_srsDimension_topgeometry():
 # Test GML Arc
 
 
-def gml_Arc():
+def test_gml_Arc():
 
     gml = "<gml:Arc><gml:posList>1 0 0 1 -1 0</gml:posList></gml:Arc>"
     geom = ogr.CreateGeometryFromGML(gml)
@@ -1899,7 +1899,7 @@ def gml_Arc():
 # Test GML ArcByBulge
 
 
-def gml_ArcByBulge():
+def test_gml_ArcByBulge():
 
     gml = "<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>"
     geom = ogr.CreateGeometryFromGML(gml)
@@ -1915,7 +1915,7 @@ def gml_ArcByBulge():
 # Test GML ArcByCenterPoint
 
 
-def gml_ArcByCenterPoint():
+def test_gml_ArcByCenterPoint():
 
     gml = "<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
     geom = ogr.CreateGeometryFromGML(gml)
@@ -1932,7 +1932,7 @@ def gml_ArcByCenterPoint():
 # Test compound curve of ArcByCenterPoint whose ends don't exactly match
 # with ends of neighbouring curves, as found in some AIXM files
 
-def gml_CompoundCurve_of_ArcByCenterPoint():
+def test_gml_CompoundCurve_of_ArcByCenterPoint():
 
     gml = """
 <Surface gml:id="Surface1" srsDimension="2" srsName="URN:OGC:DEF:CRS:OGC:1.3:CRS84">
@@ -1994,7 +1994,7 @@ def gml_CompoundCurve_of_ArcByCenterPoint():
 # Test GML CircleByCenterPoint
 
 
-def gml_CircleByCenterPoint():
+def test_gml_CircleByCenterPoint():
 
     gml = "<gml:CircleByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius></gml:CircleByCenterPoint>"
     geom = ogr.CreateGeometryFromGML(gml)
@@ -2010,7 +2010,7 @@ def gml_CircleByCenterPoint():
 # Test GML Circle
 
 
-def gml_Circle():
+def test_gml_Circle():
 
     gml = """<gml:Curve><gml:segments><gml:Circle>
              <gml:posList>-1 0 0 1 -0.707106781186547 -0.707106781186548</gml:posList>
@@ -2074,7 +2074,7 @@ def gml_Circle():
 # Test ArcString
 
 
-def gml_ArcString():
+def test_gml_ArcString():
 
     gml = """<gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0</gml:posList></gml:ArcString>"""
     geom = ogr.CreateGeometryFromGML(gml)
@@ -2107,7 +2107,7 @@ def gml_ArcString():
 # Test OGRCompoundCurve
 
 
-def gml_OGRCompoundCurve():
+def test_gml_OGRCompoundCurve():
 
     wkt = 'COMPOUNDCURVE ((0 0,1 1,2 0))'
     geom = ogr.CreateGeometryFromWkt(wkt)
@@ -2193,7 +2193,7 @@ def gml_OGRCompoundCurve():
 # Test OGRCurvePolygon
 
 
-def gml_OGRCurvePolygon():
+def test_gml_OGRCurvePolygon():
 
     # Test one CircularString
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"""
@@ -2244,7 +2244,7 @@ def gml_OGRCurvePolygon():
 # Test OGRMultiSurface
 
 
-def gml_OGRMultiSurface():
+def test_gml_OGRMultiSurface():
 
     # MultiSurface of CurvePolygon
     gml = """<gml:MultiSurface>
@@ -2329,7 +2329,7 @@ def gml_OGRMultiSurface():
 # Test OGRMultiCurve
 
 
-def gml_OGRMultiCurve():
+def test_gml_OGRMultiCurve():
 
     # MultiCurve of Arc
     gml = """<gml:MultiCurve><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList>0 0 1 1 1 -1</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:MultiCurve>"""
@@ -2410,7 +2410,7 @@ def gml_OGRMultiCurve():
 # Test write support for GML namespace declaration
 
 
-def gml_write_gml_ns():
+def test_gml_write_gml_ns():
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
     gml = geom.ExportToGML(options=['NAMESPACE_DECL=YES'])
@@ -2443,66 +2443,66 @@ def gml_write_gml_ns():
 
 
 gdaltest_list = [
-    gml_space_test,
-    gml_pos_point,
-    gml_pos_polygon,
-    gml_posList_line,
-    gml_posList_line3d,
-    gml_posList_line3d_2,
-    gml_polygon,
-    gml_out_point_srs,
-    gml_out_point3d_srs,
-    gml_out_linestring_srs,
-    gml_out_polygon_srs,
-    gml_out_multipoint_srs,
-    gml_out_multilinestring_srs,
-    gml_out_multipolygon_srs,
-    gml_out_geometrycollection_srs,
-    gml_Box,
-    gml_Envelope,
-    gml_Curve,
-    gml_Curve_with_pointProperty,
-    gml_MultiCurve,
-    gml_MultiSurface,
-    gml_MultiSurface_surfaceMembers,
-    gml_MultiCurve_curveMembers,
-    gml_MultiGeometry_geometryMembers,
-    gml_CompositeCurve_curveMembers,
-    gml_MultiCurve_pointMembers,
-    gml_Solid,
-    gml_OrientableSurface,
-    gml_Triangle,
-    gml_Rectangle,
-    gml_Tin,
-    gml_PolyhedralSurface,
-    gml_ConcatenatedDeduplication,
+    test_gml_space_test,
+    test_gml_pos_point,
+    test_gml_pos_polygon,
+    test_gml_posList_line,
+    test_gml_posList_line3d,
+    test_gml_posList_line3d_2,
+    test_gml_polygon,
+    test_gml_out_point_srs,
+    test_gml_out_point3d_srs,
+    test_gml_out_linestring_srs,
+    test_gml_out_polygon_srs,
+    test_gml_out_multipoint_srs,
+    test_gml_out_multilinestring_srs,
+    test_gml_out_multipolygon_srs,
+    test_gml_out_geometrycollection_srs,
+    test_gml_Box,
+    test_gml_Envelope,
+    test_gml_Curve,
+    test_gml_Curve_with_pointProperty,
+    test_gml_MultiCurve,
+    test_gml_MultiSurface,
+    test_gml_MultiSurface_surfaceMembers,
+    test_gml_MultiCurve_curveMembers,
+    test_gml_MultiGeometry_geometryMembers,
+    test_gml_CompositeCurve_curveMembers,
+    test_gml_MultiCurve_pointMembers,
+    test_gml_Solid,
+    test_gml_OrientableSurface,
+    test_gml_Triangle,
+    test_gml_Rectangle,
+    test_gml_Tin,
+    test_gml_PolyhedralSurface,
+    test_gml_ConcatenatedDeduplication,
     # gml_out_precision,
-    gml_invalid_geoms,
-    gml_write_gml3_geometries,
-    gml_write_gml3_srs,
-    gml_nested,
-    gml_SimplePolygon,
-    gml_SimpleRectangle,
-    gml_SimpleTriangle,
-    gml_SimpleMultiPoint,
-    gml_CompositeCurveInRing,
-    gml_CompositeSurface_in_surfaceMembers,
-    gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing,
-    gml_Coordinates_ts_cs_decimal,
-    gml_with_xml_header_and_comments,
-    gml_srsDimension_topgeometry,
-    gml_Arc,
-    gml_ArcByBulge,
-    gml_ArcByCenterPoint,
-    gml_CompoundCurve_of_ArcByCenterPoint,
-    gml_CircleByCenterPoint,
-    gml_Circle,
-    gml_ArcString,
-    gml_OGRCompoundCurve,
-    gml_OGRCurvePolygon,
-    gml_OGRMultiSurface,
-    gml_OGRMultiCurve,
-    gml_write_gml_ns,
+    test_gml_invalid_geoms,
+    test_gml_write_gml3_geometries,
+    test_gml_write_gml3_srs,
+    test_gml_nested,
+    test_gml_SimplePolygon,
+    test_gml_SimpleRectangle,
+    test_gml_SimpleTriangle,
+    test_gml_SimpleMultiPoint,
+    test_gml_CompositeCurveInRing,
+    test_gml_CompositeSurface_in_surfaceMembers,
+    test_gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing,
+    test_gml_Coordinates_ts_cs_decimal,
+    test_gml_with_xml_header_and_comments,
+    test_gml_srsDimension_topgeometry,
+    test_gml_Arc,
+    test_gml_ArcByBulge,
+    test_gml_ArcByCenterPoint,
+    test_gml_CompoundCurve_of_ArcByCenterPoint,
+    test_gml_CircleByCenterPoint,
+    test_gml_Circle,
+    test_gml_ArcString,
+    test_gml_OGRCompoundCurve,
+    test_gml_OGRCurvePolygon,
+    test_gml_OGRMultiSurface,
+    test_gml_OGRMultiCurve,
+    test_gml_write_gml_ns,
 ]
 
 

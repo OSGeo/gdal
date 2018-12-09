@@ -49,9 +49,9 @@ def has_write_support():
     if hasattr(gdaltest, 'b_ecw_has_write_support'):
         return gdaltest.b_ecw_has_write_support
     gdaltest.b_ecw_has_write_support = False
-    if ecw_1() != 'success':
+    if test_ecw_1() != 'success':
         return False
-    if ecw_3() == 'success':
+    if test_ecw_3() == 'success':
         gdaltest.b_ecw_has_write_support = True
     try:
         os.remove('tmp/jrc_out.ecw')
@@ -63,7 +63,7 @@ def has_write_support():
 #
 
 
-def ecw_init():
+def test_ecw_init():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
     return 'success'
@@ -72,7 +72,7 @@ def ecw_init():
 # Verify we have the driver.
 
 
-def ecw_1():
+def test_ecw_1():
 
     gdaltest.ecw_drv = gdal.GetDriverByName('ECW')
     gdaltest.jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
@@ -108,7 +108,7 @@ def ecw_1():
 # Verify various information about our test image.
 
 
-def ecw_2():
+def test_ecw_2():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -146,7 +146,7 @@ def ecw_2():
 # Verify that an write the imagery out to a new file.
 
 
-def ecw_3():
+def test_ecw_3():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -173,7 +173,7 @@ def ecw_3():
 # Verify various information about our generated image.
 
 
-def ecw_4():
+def test_ecw_4():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -219,7 +219,7 @@ def ecw_4():
 # Now try writing a JPEG2000 compressed version of the same with the ECW driver
 
 
-def ecw_5():
+def test_ecw_5():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -239,7 +239,7 @@ def ecw_5():
 # Verify various information about our generated image.
 
 
-def ecw_6():
+def test_ecw_6():
 
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -296,7 +296,7 @@ def ecw_6():
 # Write the same image to NITF.
 
 
-def ecw_7():
+def test_ecw_7():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -311,7 +311,7 @@ def ecw_7():
 # Verify various information about our generated image.
 
 
-def ecw_8():
+def test_ecw_8():
 
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -350,7 +350,7 @@ def ecw_8():
 # Try writing 16bit JP2 file directly using Create().
 
 
-def ecw_9():
+def test_ecw_9():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -377,7 +377,7 @@ def ecw_9():
 # Verify previous 16bit file.
 
 
-def ecw_10():
+def test_ecw_10():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -413,7 +413,7 @@ def ecw_10():
 # Test direct creation of an NITF/JPEG2000 file.
 
 
-def ecw_11():
+def test_ecw_11():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -442,7 +442,7 @@ def ecw_11():
 # Verify previous file
 
 
-def ecw_12():
+def test_ecw_12():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -482,7 +482,7 @@ def ecw_12():
 # type and select an altered band list.
 
 
-def ecw_13():
+def test_ecw_13():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
@@ -513,7 +513,7 @@ def ecw_13():
 # Write out image with GCPs.
 
 
-def ecw_14():
+def test_ecw_14():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -526,7 +526,7 @@ def ecw_14():
 # Verify various information about our generated image.
 
 
-def ecw_15():
+def test_ecw_15():
 
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -560,7 +560,7 @@ def ecw_15():
 # Open byte.jp2
 
 
-def ecw_16():
+def test_ecw_16():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -593,7 +593,7 @@ def ecw_16():
 # Open int16.jp2
 
 
-def ecw_17():
+def test_ecw_17():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -621,7 +621,7 @@ def ecw_17():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def ecw_18():
+def test_ecw_18():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -654,7 +654,7 @@ def ecw_18():
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
 
-def ecw_19():
+def test_ecw_19():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -679,7 +679,7 @@ def ecw_19():
 # are as expected.
 
 
-def ecw_20():
+def test_ecw_20():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -722,7 +722,7 @@ def ecw_20():
 # line by line.
 
 
-def ecw_21():
+def test_ecw_21():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -752,7 +752,7 @@ def ecw_21():
 # ECW file.
 
 
-def ecw_22():
+def test_ecw_22():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -774,7 +774,7 @@ def ecw_22():
 # preserving the ecw derived georeferencing.
 
 
-def ecw_23():
+def test_ecw_23():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -811,7 +811,7 @@ def ecw_23():
 # Test that we can alter geotransform on existing ECW
 
 
-def ecw_24():
+def test_ecw_24():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -861,7 +861,7 @@ def ecw_24():
 # Test that we can alter projection info on existing ECW (through SetProjection())
 
 
-def ecw_25():
+def test_ecw_25():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -932,7 +932,7 @@ def ecw_25():
 # Test that we can alter projection info on existing ECW (through SetMetadataItem())
 
 
-def ecw_26():
+def test_ecw_26():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1006,7 +1006,7 @@ def ecw_26():
 # Check that we can use .j2w world files (#4651)
 
 
-def ecw_27():
+def test_ecw_27():
 
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -1032,7 +1032,7 @@ def ecw_27():
 # Check picking use case
 
 
-def ecw_28():
+def test_ecw_28():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1062,7 +1062,7 @@ def ecw_28():
 # Test supersampling
 
 
-def ecw_29():
+def test_ecw_29():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1133,7 +1133,7 @@ def ecw_29():
 # Test IReadBlock()
 
 
-def ecw_30():
+def test_ecw_30():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1153,7 +1153,7 @@ def ecw_30():
 # Test async reader interface ( SDK >= 4.x )
 
 
-def ecw_31():
+def test_ecw_31():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1203,7 +1203,7 @@ def ecw_31():
 # It ignores the content of panBandMap. (#4234)
 
 
-def ecw_32():
+def test_ecw_32():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1247,7 +1247,7 @@ def ecw_32():
 # Test heuristics that detect successive band reading pattern
 
 
-def ecw_33():
+def test_ecw_33():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1305,7 +1305,7 @@ def ecw_33():
 # Check bugfix for #5262
 
 
-def ecw_33_bis():
+def test_ecw_33_bis():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1348,7 +1348,7 @@ def ecw_33_bis():
 # Verify that an write the imagery out to a new ecw file. Source file is 16 bit.
 
 
-def ecw_34():
+def test_ecw_34():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -1380,7 +1380,7 @@ def ecw_34():
 # Verify that an write the imagery out to a new JP2 file. Source file is 16 bit.
 
 
-def ecw_35():
+def test_ecw_35():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -1403,7 +1403,7 @@ def ecw_35():
 # Make sure that band descriptions are preserved for version 3 ECW files.
 
 
-def ecw_36():
+def test_ecw_36():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -1468,7 +1468,7 @@ def ecw_36():
 # color space set implicitly to sRGB.
 
 
-def ecw_37():
+def test_ecw_37():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -1511,7 +1511,7 @@ def ecw_37():
 # Check opening unicode files.
 
 
-def ecw_38():
+def test_ecw_38():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1548,7 +1548,7 @@ def ecw_38():
 ###############################################################################
 # Check writing histograms.
 
-def ecw_39():
+def test_ecw_39():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -1579,7 +1579,7 @@ def ecw_39():
 # Check reading a ECW v3 file
 
 
-def ecw_40():
+def test_ecw_40():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -1636,7 +1636,7 @@ def ecw_40():
 # Check generating statistics & histogram for a ECW v3 file
 
 
-def ecw_41():
+def test_ecw_41():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
         return 'skip'
@@ -1750,7 +1750,7 @@ def ecw_41():
 # Test setting/unsetting file metadata of a ECW v3 file
 
 
-def ecw_42():
+def test_ecw_42():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
         return 'skip'
@@ -1837,7 +1837,7 @@ def ecw_42():
 # Note: only works on reversible files like this one
 
 
-def ecw_43():
+def test_ecw_43():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1888,7 +1888,7 @@ def ecw_43():
 # Test metadata retrieval from JP2 file
 
 
-def ecw_44():
+def test_ecw_44():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1941,7 +1941,7 @@ def RemoveDriverMetadata(md):
     return md
 
 
-def ecw_45():
+def test_ecw_45():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
@@ -2043,7 +2043,7 @@ def ecw_45():
 # Test non nearest upsampling
 
 
-def ecw_46():
+def test_ecw_46():
 
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -2077,7 +2077,7 @@ def ecw_46():
 # /vsi reading with ECW (#6482)
 
 
-def ecw_47():
+def test_ecw_47():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -2114,7 +2114,7 @@ def ecw_47():
 # Test "Upward" orientation is forced by default
 
 
-def ecw_48():
+def test_ecw_48():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -2140,7 +2140,7 @@ def ecw_48():
 # Test "Upward" orientation can be overridden with ECW_ALWAYS_UPWARD=FALSE
 
 
-def ecw_49():
+def test_ecw_49():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -2163,7 +2163,7 @@ def ecw_49():
 ###############################################################################
 
 
-def ecw_online_1():
+def test_ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
@@ -2185,7 +2185,7 @@ def ecw_online_1():
 ###############################################################################
 
 
-def ecw_online_2():
+def test_ecw_online_2():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
 
@@ -2253,7 +2253,7 @@ def ecw_online_3():
 ###############################################################################
 
 
-def ecw_online_4():
+def test_ecw_online_4():
 
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2292,7 +2292,7 @@ def ecw_online_4():
 ###############################################################################
 
 
-def ecw_online_5():
+def test_ecw_online_5():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -2326,7 +2326,7 @@ def ecw_online_5():
 # and in particular the .ecw extension, to make the ECW driver happy
 
 
-def ecw_online_6():
+def test_ecw_online_6():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -2366,7 +2366,7 @@ def ecw_online_6():
 # ECWv2 file with alpha channel (#6028)
 
 
-def ecw_online_7():
+def test_ecw_online_7():
 
     if gdaltest.ecw_drv is None:
         return 'skip'
@@ -2388,7 +2388,7 @@ def ecw_online_7():
 ###############################################################################
 
 
-def ecw_cleanup():
+def test_ecw_cleanup():
 
     # gdaltest.clean_tmp()
 
@@ -2475,65 +2475,65 @@ def ecw_cleanup():
 
 
 gdaltest_list = [
-    ecw_init,
-    ecw_1,
-    ecw_2,
-    ecw_3,
-    ecw_4,
-    ecw_5,
-    ecw_6,
-    ecw_7,
-    ecw_8,
-    ecw_9,
-    ecw_10,
-    ecw_11,
-    ecw_12,
-    ecw_13,
-    ecw_14,
-    ecw_15,
-    ecw_16,
-    ecw_17,
-    ecw_18,
-    ecw_19,
-    ecw_20,
-    ecw_21,
-    ecw_22,
-    ecw_23,
-    ecw_24,
-    ecw_25,
-    ecw_26,
-    ecw_27,
-    ecw_28,
-    ecw_29,
-    ecw_30,
-    ecw_31,
-    ecw_32,
-    ecw_33,
-    ecw_33_bis,
-    ecw_34,
-    ecw_35,
-    ecw_36,
-    ecw_37,
-    ecw_38,
-    ecw_39,
-    ecw_40,
-    ecw_41,
-    ecw_42,
-    ecw_43,
-    ecw_44,
-    ecw_45,
-    ecw_46,
-    ecw_47,
-    ecw_48,
-    ecw_49,
-    ecw_online_1,
-    ecw_online_2,
+    test_ecw_init,
+    test_ecw_1,
+    test_ecw_2,
+    test_ecw_3,
+    test_ecw_4,
+    test_ecw_5,
+    test_ecw_6,
+    test_ecw_7,
+    test_ecw_8,
+    test_ecw_9,
+    test_ecw_10,
+    test_ecw_11,
+    test_ecw_12,
+    test_ecw_13,
+    test_ecw_14,
+    test_ecw_15,
+    test_ecw_16,
+    test_ecw_17,
+    test_ecw_18,
+    test_ecw_19,
+    test_ecw_20,
+    test_ecw_21,
+    test_ecw_22,
+    test_ecw_23,
+    test_ecw_24,
+    test_ecw_25,
+    test_ecw_26,
+    test_ecw_27,
+    test_ecw_28,
+    test_ecw_29,
+    test_ecw_30,
+    test_ecw_31,
+    test_ecw_32,
+    test_ecw_33,
+    test_ecw_33_bis,
+    test_ecw_34,
+    test_ecw_35,
+    test_ecw_36,
+    test_ecw_37,
+    test_ecw_38,
+    test_ecw_39,
+    test_ecw_40,
+    test_ecw_41,
+    test_ecw_42,
+    test_ecw_43,
+    test_ecw_44,
+    test_ecw_45,
+    test_ecw_46,
+    test_ecw_47,
+    test_ecw_48,
+    test_ecw_49,
+    test_ecw_online_1,
+    test_ecw_online_2,
     # JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3,
-    ecw_online_4,
-    ecw_online_5,
-    ecw_online_6,
-    ecw_online_7,
-    ecw_cleanup]
+    test_ecw_online_4,
+    test_ecw_online_5,
+    test_ecw_online_6,
+    test_ecw_online_7,
+    test_ecw_cleanup]
 
 if __name__ == '__main__':
 

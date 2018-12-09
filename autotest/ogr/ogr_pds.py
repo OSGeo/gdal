@@ -39,7 +39,7 @@ from osgeo import ogr
 # Basic test
 
 
-def ogr_pds_1():
+def test_ogr_pds_1():
 
     ds = ogr.Open('data/ap01578l.lbl')
     if ds is None:
@@ -79,7 +79,7 @@ def ogr_pds_1():
 # Read IEEE_FLOAT columns (see https://github.com/OSGeo/gdal/issues/570)
 
 
-def ogr_pds_2():
+def test_ogr_pds_2():
 
     ds = ogr.Open('data/virsvd_orb_11187_050618.lbl')
     lyr = ds.GetLayer(0)
@@ -92,8 +92,8 @@ def ogr_pds_2():
 
 
 gdaltest_list = [
-    ogr_pds_1,
-    ogr_pds_2,
+    test_ogr_pds_1,
+    test_ogr_pds_2,
 ]
 
 if __name__ == '__main__':

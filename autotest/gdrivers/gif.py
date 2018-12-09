@@ -39,7 +39,7 @@ import gdaltest
 # Get the GIF driver, and verify a few things about it.
 
 
-def gif_1():
+def test_gif_1():
 
     gdaltest.gif_drv = gdal.GetDriverByName('GIF')
     if gdaltest.gif_drv is None:
@@ -62,7 +62,7 @@ def gif_1():
 # Read test of simple byte reference data.
 
 
-def gif_2():
+def test_gif_2():
 
     tst = gdaltest.GDALTest('GIF', 'bug407.gif', 1, 57921)
     return tst.testOpen()
@@ -71,7 +71,7 @@ def gif_2():
 # Test lossless copying.
 
 
-def gif_3():
+def test_gif_3():
 
     tst = gdaltest.GDALTest('GIF', 'bug407.gif', 1, 57921,
                             options=['INTERLACING=NO'])
@@ -82,7 +82,7 @@ def gif_3():
 # Verify the colormap, and nodata setting for test file.
 
 
-def gif_4():
+def test_gif_4():
 
     ds = gdal.Open('data/bug407.gif')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
@@ -110,7 +110,7 @@ def gif_4():
 # Test creating an in memory copy.
 
 
-def gif_5():
+def test_gif_5():
 
     tst = gdaltest.GDALTest('GIF', 'byte.tif', 1, 4672)
 
@@ -120,7 +120,7 @@ def gif_5():
 # Verify nodata support
 
 
-def gif_6():
+def test_gif_6():
 
     src_ds = gdal.Open('../gcore/data/nodata_byte.tif')
 
@@ -162,7 +162,7 @@ def gif_6():
 ###############################################################################
 # Confirm reading with the BIGGIF driver.
 
-def gif_7():
+def test_gif_7():
 
     # Move the GIF driver after the BIGGIF driver.
     drv = gdal.GetDriverByName('GIF')
@@ -187,7 +187,7 @@ def gif_7():
 # Confirm that BIGGIF driver is selected for huge gifs
 
 
-def gif_8():
+def test_gif_8():
 
     # Move the BIGGIF driver after the GIF driver.
     drv = gdal.GetDriverByName('BIGGIF')
@@ -207,7 +207,7 @@ def gif_8():
 # Test writing to /vsistdout/
 
 
-def gif_9():
+def test_gif_9():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('GIF').CreateCopy(
@@ -231,7 +231,7 @@ def gif_9():
 # Test interlacing
 
 
-def gif_10():
+def test_gif_10():
 
     tst = gdaltest.GDALTest('GIF', 'byte.tif', 1, 4672,
                             options=['INTERLACING=YES'])
@@ -242,23 +242,23 @@ def gif_10():
 # Cleanup.
 
 
-def gif_cleanup():
+def test_gif_cleanup():
     gdaltest.clean_tmp()
     return 'success'
 
 
 gdaltest_list = [
-    gif_1,
-    gif_2,
-    gif_3,
-    gif_4,
-    gif_5,
-    gif_6,
-    gif_7,
-    gif_8,
-    gif_9,
-    gif_10,
-    gif_cleanup]
+    test_gif_1,
+    test_gif_2,
+    test_gif_3,
+    test_gif_4,
+    test_gif_5,
+    test_gif_6,
+    test_gif_7,
+    test_gif_8,
+    test_gif_9,
+    test_gif_10,
+    test_gif_cleanup]
 
 if __name__ == '__main__':
 

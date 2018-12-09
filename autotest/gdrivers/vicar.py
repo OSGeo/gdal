@@ -39,7 +39,7 @@ import gdaltest
 # Read truncated VICAR file
 
 
-def vicar_1():
+def test_vicar_1():
 
     tst = gdaltest.GDALTest('VICAR', 'test_vicar_truncated.bin', 1, 0)
     expected_prj = """PROJCS["SINUSOIDAL MARS",
@@ -97,7 +97,7 @@ def vicar_1():
 
 
 gdaltest_list = [
-    vicar_1]
+    test_vicar_1]
 
 if __name__ == '__main__':
 

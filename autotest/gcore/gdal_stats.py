@@ -40,7 +40,7 @@ from osgeo import gdal
 # Test handling NaN with GDT_Float32 data
 
 
-def stats_nan_1():
+def test_stats_nan_1():
 
     gdaltest.gtiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.gtiff_drv is None:
@@ -61,7 +61,7 @@ def stats_nan_1():
 # Test handling NaN with GDT_Float64 data
 
 
-def stats_nan_2():
+def test_stats_nan_2():
 
     if gdaltest.gtiff_drv is None:
         return 'skip'
@@ -81,7 +81,7 @@ def stats_nan_2():
 # Test stats on signed byte (#3151)
 
 
-def stats_signedbyte():
+def test_stats_signedbyte():
 
     if gdaltest.gtiff_drv is None:
         return 'skip'
@@ -102,7 +102,7 @@ def stats_signedbyte():
 # Test return of GetStatistics() when we don't have stats and don't
 # force their computation (#3572)
 
-def stats_dont_force():
+def test_stats_dont_force():
 
     gdal.Unlink('data/byte.tif.aux.xml')
     ds = gdal.Open('data/byte.tif')
@@ -119,7 +119,7 @@ def stats_dont_force():
 # Test statistics when stored nodata value doesn't accurately match the nodata
 # value used in the imagery (#3573)
 
-def stats_approx_nodata():
+def test_stats_approx_nodata():
 
     shutil.copyfile('data/minfloat.tif', 'tmp/minfloat.tif')
     try:
@@ -167,7 +167,7 @@ def stats_approx_nodata():
 ###############################################################################
 # Test read and copy of dataset with nan as nodata value (#3576)
 
-def stats_nan_3():
+def test_stats_nan_3():
 
     src_ds = gdal.Open('data/nan32_nodata.tif')
     nodata = src_ds.GetRasterBand(1).GetNoDataValue()
@@ -201,7 +201,7 @@ def stats_nan_3():
 # and complex source nodata (#3576)
 
 
-def stats_nan_4():
+def test_stats_nan_4():
 
     ds = gdal.Open('data/nan32_nodata.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -224,7 +224,7 @@ def stats_nan_4():
 # and complex source nodata (nan must be translated to 0 then) (#3576)
 
 
-def stats_nan_5():
+def test_stats_nan_5():
 
     ds = gdal.Open('data/nan32_nodata_nan_to_zero.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -246,7 +246,7 @@ def stats_nan_5():
 ###############################################################################
 # Test reading a warped VRT with nan as src nodata and dest nodata (#3576)
 
-def stats_nan_6():
+def test_stats_nan_6():
 
     ds = gdal.Open('data/nan32_nodata_warp.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -268,7 +268,7 @@ def stats_nan_6():
 # Test reading a warped VRT with nan as src nodata and 0 as dest nodata (#3576)
 
 
-def stats_nan_7():
+def test_stats_nan_7():
 
     ds = gdal.Open('data/nan32_nodata_warp_nan_to_zero.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -290,7 +290,7 @@ def stats_nan_7():
 ###############################################################################
 # Test reading a warped VRT with zero as src nodata and nan as dest nodata (#3576)
 
-def stats_nan_8():
+def test_stats_nan_8():
 
     ds = gdal.Open('data/nan32_nodata_warp_zero_to_nan.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -317,7 +317,7 @@ def stats_nodata_inf_progress_cbk(value, string, extra):
     extra[0] = value
 
 
-def stats_nodata_inf():
+def test_stats_nodata_inf():
 
     ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1, 1, gdal.GDT_Float32)
     ds.GetRasterBand(1).SetNoDataValue(gdaltest.neginf())
@@ -360,26 +360,26 @@ def stats_nodata_check(filename, expected_nodata):
     return 'success'
 
 
-def stats_nodata_neginf_linux():
+def test_stats_nodata_neginf_linux():
     return stats_nodata_check('data/stats_nodata_neginf.tif', gdaltest.neginf())
 
 
-def stats_nodata_neginf_msvc():
+def test_stats_nodata_neginf_msvc():
     return stats_nodata_check('data/stats_nodata_neginf_msvc.tif', gdaltest.neginf())
 
 
-def stats_nodata_posinf_linux():
+def test_stats_nodata_posinf_linux():
     return stats_nodata_check('data/stats_nodata_posinf.tif', gdaltest.posinf())
 
 
-def stats_nodata_posinf_msvc():
+def test_stats_nodata_posinf_msvc():
     return stats_nodata_check('data/stats_nodata_posinf_msvc.tif', gdaltest.posinf())
 
 ###############################################################################
 # Test standard deviation computation on huge values
 
 
-def stats_stddev_huge_values():
+def test_stats_stddev_huge_values():
 
     gdal.FileFromMemBuffer('/vsimem/stats_stddev_huge_values.asc',
                            """ncols        4
@@ -407,7 +407,7 @@ cellsize     1
 # of blocks is nodata only
 
 
-def stats_square_shape():
+def test_stats_square_shape():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_square_shape.tif', 32, 32, options=['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16'])
     ds.GetRasterBand(1).SetNoDataValue(0)
@@ -438,7 +438,7 @@ def stats_square_shape():
 # Test when nodata = FLT_MIN (#6578)
 
 
-def stats_flt_min():
+def test_stats_flt_min():
 
     shutil.copyfile('data/flt_min.tif', 'tmp/flt_min.tif')
     try:
@@ -481,7 +481,7 @@ def stats_flt_min():
 # Test when nodata = DBL_MIN (#6578)
 
 
-def stats_dbl_min():
+def test_stats_dbl_min():
 
     shutil.copyfile('data/dbl_min.tif', 'tmp/dbl_min.tif')
     try:
@@ -524,7 +524,7 @@ def stats_dbl_min():
 # Test stats on a tiled Byte with partial tiles
 
 
-def stats_byte_partial_tiles():
+def test_stats_byte_partial_tiles():
 
     ds = gdal.Translate('/vsimem/stats_byte_tiled.tif', '../gdrivers/data/small_world.tif',
                         creationOptions=['TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
@@ -649,7 +649,7 @@ def stats_byte_partial_tiles():
 # Test stats on uint16
 
 
-def stats_uint16():
+def test_stats_uint16():
 
     ds = gdal.Translate('/vsimem/stats_uint16_tiled.tif', '../gdrivers/data/small_world.tif',
                         outputType=gdal.GDT_UInt16,
@@ -776,7 +776,7 @@ def stats_uint16():
 # Test a case where the nodata value is almost the maximum value of float32
 
 
-def stats_nodata_almost_max_float32():
+def test_stats_nodata_almost_max_float32():
 
     gdal.FileFromMemBuffer('/vsimem/float32_almost_nodata_max_float32.tif',
                            open('data/float32_almost_nodata_max_float32.tif', 'rb').read())
@@ -808,7 +808,7 @@ def stats_nodata_almost_max_float32():
 # Test STATISTICS_APPROXIMATE
 
 
-def stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
+def test_stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
 
     ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000, 1, dt)
     ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack(struct_frmt * 1, 20))
@@ -850,11 +850,11 @@ def stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
     return 'success'
 
 
-def stats_approx_stats_flag_float():
-    return stats_approx_stats_flag(dt=gdal.GDT_Float32, struct_frmt='f')
+def test_stats_approx_stats_flag_float():
+    return test_stats_approx_stats_flag(dt=gdal.GDT_Float32, struct_frmt='f')
 
 
-def stats_all_nodata():
+def test_stats_all_nodata():
 
     ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
     ds.GetRasterBand(1).SetNoDataValue(0)
@@ -882,7 +882,7 @@ def stats_all_nodata():
     return 'success'
 
 
-def stats_float32_with_nodata_slightly_above_float_max():
+def test_stats_float32_with_nodata_slightly_above_float_max():
 
     ds = gdal.Open('data/float32_with_nodata_slightly_above_float_max.tif')
     my_min, my_max = ds.GetRasterBand(1).ComputeRasterMinMax()
@@ -899,33 +899,33 @@ def stats_float32_with_nodata_slightly_above_float_max():
 
 
 gdaltest_list = [
-    stats_nan_1,
-    stats_nan_2,
-    stats_signedbyte,
-    stats_dont_force,
-    stats_approx_nodata,
-    stats_nan_3,
-    stats_nan_4,
-    stats_nan_5,
-    stats_nan_6,
-    stats_nan_7,
-    stats_nan_8,
-    stats_nodata_inf,
-    stats_nodata_neginf_linux,
-    stats_nodata_neginf_msvc,
-    stats_nodata_posinf_linux,
-    stats_nodata_posinf_msvc,
-    stats_stddev_huge_values,
-    stats_square_shape,
-    stats_flt_min,
-    stats_dbl_min,
-    stats_byte_partial_tiles,
-    stats_uint16,
-    stats_nodata_almost_max_float32,
-    stats_approx_stats_flag,
-    stats_approx_stats_flag_float,
-    stats_all_nodata,
-    stats_float32_with_nodata_slightly_above_float_max,
+    test_stats_nan_1,
+    test_stats_nan_2,
+    test_stats_signedbyte,
+    test_stats_dont_force,
+    test_stats_approx_nodata,
+    test_stats_nan_3,
+    test_stats_nan_4,
+    test_stats_nan_5,
+    test_stats_nan_6,
+    test_stats_nan_7,
+    test_stats_nan_8,
+    test_stats_nodata_inf,
+    test_stats_nodata_neginf_linux,
+    test_stats_nodata_neginf_msvc,
+    test_stats_nodata_posinf_linux,
+    test_stats_nodata_posinf_msvc,
+    test_stats_stddev_huge_values,
+    test_stats_square_shape,
+    test_stats_flt_min,
+    test_stats_dbl_min,
+    test_stats_byte_partial_tiles,
+    test_stats_uint16,
+    test_stats_nodata_almost_max_float32,
+    test_stats_approx_stats_flag,
+    test_stats_approx_stats_flag_float,
+    test_stats_all_nodata,
+    test_stats_float32_with_nodata_slightly_above_float_max,
 ]
 
 if __name__ == '__main__':

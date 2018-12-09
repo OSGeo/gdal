@@ -38,7 +38,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def pcraster_1():
+def test_pcraster_1():
 
     gdaltest.pcraster_drv = gdal.GetDriverByName('PCRaster')
 
@@ -52,7 +52,7 @@ def pcraster_1():
 # Verify some auxiliary data.
 
 
-def pcraster_2():
+def test_pcraster_2():
 
     if gdaltest.pcraster_drv is None:
         return 'skip'
@@ -75,8 +75,8 @@ def pcraster_2():
 
 
 gdaltest_list = [
-    pcraster_1,
-    pcraster_2]
+    test_pcraster_1,
+    test_pcraster_2]
 
 
 if __name__ == '__main__':

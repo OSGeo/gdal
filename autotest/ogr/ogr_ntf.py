@@ -86,7 +86,7 @@ import gdaltest
 ###############################################################################
 
 
-def ogr_ntf_1():
+def test_ogr_ntf_1():
 
     if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/strategi/sampledata/stratntf.exe', 'stratntf.exe'):
         return 'skip'
@@ -136,7 +136,7 @@ def ogr_ntf_1():
 
 
 ###############################################################################
-def ogr_ntf_2():
+def test_ogr_ntf_2():
 
     if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/meridian2/sampledata/meridian2ntf.exe', 'meridian2ntf.exe'):
         return 'skip'
@@ -192,8 +192,8 @@ def ogr_ntf_2():
 
 
 gdaltest_list = [
-    ogr_ntf_1,
-    ogr_ntf_2]
+    test_ogr_ntf_1,
+    test_ogr_ntf_2]
 
 if __name__ == '__main__':
 

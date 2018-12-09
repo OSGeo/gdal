@@ -37,7 +37,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def genbin_1():
+def test_genbin_1():
 
     tst = gdaltest.GDALTest('GenBin', 'tm4628_96.bil', 1, 5738,
                             0, 0, 500, 1)
@@ -73,7 +73,7 @@ def genbin_1():
 
 
 gdaltest_list = [
-    genbin_1
+    test_genbin_1
 ]
 
 

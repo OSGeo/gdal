@@ -52,7 +52,7 @@ run_without_spatialite = True
 # Create a fresh database.
 
 
-def ogr_sqlite_1():
+def test_ogr_sqlite_1():
 
     gdaltest.sl_ds = None
     gdaltest.has_spatialite = False
@@ -81,7 +81,7 @@ def ogr_sqlite_1():
 # Create table from data/poly.shp
 
 
-def ogr_sqlite_2():
+def test_ogr_sqlite_2():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -198,7 +198,7 @@ def ogr_sqlite_2():
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_sqlite_3():
+def test_ogr_sqlite_3():
     if gdaltest.sl_ds is None:
         return 'skip'
 
@@ -249,7 +249,7 @@ def ogr_sqlite_3():
 # geometries are still OK.
 
 
-def ogr_sqlite_4():
+def test_ogr_sqlite_4():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -289,7 +289,7 @@ def ogr_sqlite_4():
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_sqlite_5():
+def test_ogr_sqlite_5():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -312,7 +312,7 @@ def ogr_sqlite_5():
 # Test ExecuteSQL() results layers with geometry.
 
 
-def ogr_sqlite_6():
+def test_ogr_sqlite_6():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -334,7 +334,7 @@ def ogr_sqlite_6():
 # Test spatial filtering.
 
 
-def ogr_sqlite_7():
+def test_ogr_sqlite_7():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -369,7 +369,7 @@ def ogr_sqlite_7():
 # Test transactions with rollback.
 
 
-def ogr_sqlite_8():
+def test_ogr_sqlite_8():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -427,7 +427,7 @@ def ogr_sqlite_8():
 # Test SetFeature()
 
 
-def ogr_sqlite_9():
+def test_ogr_sqlite_9():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -488,7 +488,7 @@ def ogr_sqlite_9():
 # Test GetFeature()
 
 
-def ogr_sqlite_10():
+def test_ogr_sqlite_10():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -525,7 +525,7 @@ def ogr_sqlite_10():
 # Test FORMAT=WKB creation option
 
 
-def ogr_sqlite_11():
+def test_ogr_sqlite_11():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -561,7 +561,7 @@ def ogr_sqlite_11():
 # Test FORMAT=WKT creation option
 
 
-def ogr_sqlite_12():
+def test_ogr_sqlite_12():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -612,7 +612,7 @@ def ogr_sqlite_12():
 # Test SRID support
 
 
-def ogr_sqlite_13():
+def test_ogr_sqlite_13():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -652,7 +652,7 @@ def ogr_sqlite_13():
 ###############################################################################
 # Test all column types
 
-def ogr_sqlite_14():
+def test_ogr_sqlite_14():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -704,7 +704,7 @@ def ogr_sqlite_14():
 # Test FORMAT=SPATIALITE layer creation option
 
 
-def ogr_sqlite_15():
+def test_ogr_sqlite_15():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -779,7 +779,7 @@ def ogr_sqlite_15():
 ###############################################################################
 # Test reading geometries in FGF (FDO Geometry Format) binary representation.
 
-def ogr_sqlite_16():
+def test_ogr_sqlite_16():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -867,7 +867,7 @@ def ogr_sqlite_16():
 # Test SPATIALITE dataset creation option
 
 
-def ogr_sqlite_17():
+def test_ogr_sqlite_17():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -923,7 +923,7 @@ def ogr_sqlite_17():
 # Create a layer with a non EPSG SRS into a SPATIALITE DB (#3506)
 
 
-def ogr_sqlite_18():
+def test_ogr_sqlite_18():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -964,7 +964,7 @@ def ogr_sqlite_18():
 # Create a SpatiaLite DB with INIT_WITH_EPSG=YES
 
 
-def ogr_sqlite_19():
+def test_ogr_sqlite_19():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1005,7 +1005,7 @@ def ogr_sqlite_19():
 # Create a SpatiaLite DB with INIT_WITH_EPSG=NO
 
 
-def ogr_sqlite_19_bis():
+def test_ogr_sqlite_19_bis():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1044,7 +1044,7 @@ def ogr_sqlite_19_bis():
 # Create a regular DB with INIT_WITH_EPSG=YES
 
 
-def ogr_sqlite_20():
+def test_ogr_sqlite_20():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1078,7 +1078,7 @@ def ogr_sqlite_20():
 # Test CopyLayer() from a table layer (#3617)
 
 
-def ogr_sqlite_21():
+def test_ogr_sqlite_21():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1100,7 +1100,7 @@ def ogr_sqlite_21():
 # Test CopyLayer() from a result layer (#3617)
 
 
-def ogr_sqlite_22():
+def test_ogr_sqlite_22():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1124,7 +1124,7 @@ def ogr_sqlite_22():
 # Test ignored fields works ok
 
 
-def ogr_sqlite_23():
+def test_ogr_sqlite_23():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1192,7 +1192,7 @@ def ogr_sqlite_23():
 # Test that ExecuteSQL() with OGRSQL dialect doesn't forward the where clause to sqlite (#4022)
 
 
-def ogr_sqlite_24():
+def test_ogr_sqlite_24():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1264,7 +1264,7 @@ def ogr_sqlite_24():
 # Test opening a /vsicurl/ DB
 
 
-def ogr_sqlite_25():
+def test_ogr_sqlite_25():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1314,7 +1314,7 @@ def ogr_sqlite_25():
 # Test creating a :memory: DB
 
 
-def ogr_sqlite_26():
+def test_ogr_sqlite_26():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1339,7 +1339,7 @@ def ogr_sqlite_26():
 # Run test_ogrsf
 
 
-def ogr_sqlite_27():
+def test_ogr_sqlite_27():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1390,7 +1390,7 @@ def ogr_sqlite_27():
 # Run test_ogrsf on a spatialite enabled DB
 
 
-def ogr_sqlite_28():
+def test_ogr_sqlite_28():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1440,7 +1440,7 @@ def ogr_sqlite_28():
 # Test CreateFeature() with empty feature
 
 
-def ogr_sqlite_29():
+def test_ogr_sqlite_29():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1464,7 +1464,7 @@ def ogr_sqlite_29():
 # Test ExecuteSQL() with empty result set (#4684)
 
 
-def ogr_sqlite_30():
+def test_ogr_sqlite_30():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1486,7 +1486,7 @@ def ogr_sqlite_30():
 # Test if SpatiaLite is available
 
 
-def ogr_spatialite_1():
+def test_ogr_spatialite_1():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -1510,7 +1510,7 @@ def ogr_spatialite_1():
 # Test spatial filter when SpatiaLite is available
 
 
-def ogr_spatialite_2():
+def test_ogr_spatialite_2():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -1719,7 +1719,7 @@ def ogr_spatialite_2():
 # Test VirtualShape feature of SpatiaLite
 
 
-def ogr_spatialite_3():
+def test_ogr_spatialite_3():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -1746,7 +1746,7 @@ def ogr_spatialite_3():
 # Test updating a spatialite DB (#3471 and #3474)
 
 
-def ogr_spatialite_4():
+def test_ogr_spatialite_4():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -1804,7 +1804,7 @@ def ogr_spatialite_4():
 # Test writing and reading back spatialite geometries (#4092)
 
 
-def ogr_spatialite_5(bUseComprGeom=False):
+def test_ogr_spatialite_5(bUseComprGeom=False):
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -1942,7 +1942,7 @@ def ogr_spatialite_5(bUseComprGeom=False):
 ###############################################################################
 # Test writing and reading back spatialite geometries in compressed form
 
-def ogr_spatialite_compressed_geom_5():
+def test_ogr_spatialite_compressed_geom_5():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -1950,13 +1950,13 @@ def ogr_spatialite_compressed_geom_5():
     if gdaltest.spatialite_version == '2.3.1':
         return 'skip'
 
-    return ogr_spatialite_5(bUseComprGeom=True)
+    return test_ogr_spatialite_5(bUseComprGeom=True)
 
 ###############################################################################
 # Test spatialite spatial views
 
 
-def ogr_spatialite_6():
+def test_ogr_spatialite_6():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -2103,7 +2103,7 @@ def ogr_spatialite_6():
 # Test VirtualShape:xxx.shp
 
 
-def ogr_spatialite_7():
+def test_ogr_spatialite_7():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -2133,7 +2133,7 @@ def ogr_spatialite_7():
 # Test tables with multiple geometry columns (#4768)
 
 
-def ogr_spatialite_8():
+def test_ogr_spatialite_8():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -2339,7 +2339,7 @@ def ogr_spatialite_8():
 # Test tables with multiple geometry columns (#4768)
 
 
-def ogr_sqlite_31():
+def test_ogr_sqlite_31():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -2421,7 +2421,7 @@ def ogr_sqlite_31():
 # Test datetime support
 
 
-def ogr_sqlite_32():
+def test_ogr_sqlite_32():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -2478,7 +2478,7 @@ def ogr_sqlite_32():
 # Test SRID layer creation option
 
 
-def ogr_sqlite_33():
+def test_ogr_sqlite_33():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -2554,7 +2554,7 @@ def ogr_sqlite_33():
 # Test REGEXP support (#4823)
 
 
-def ogr_sqlite_34():
+def test_ogr_sqlite_34():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -2631,7 +2631,7 @@ def ogr_sqlite_34():
 # Test SetAttributeFilter() on SQL result layer
 
 
-def ogr_sqlite_35():
+def test_ogr_sqlite_35():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -2728,7 +2728,7 @@ def ogr_sqlite_35():
 # Test FID64 support
 
 
-def ogr_sqlite_36():
+def test_ogr_sqlite_36():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -2767,7 +2767,7 @@ def ogr_sqlite_36():
 # Test not nullable fields
 
 
-def ogr_sqlite_37():
+def test_ogr_sqlite_37():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -2878,7 +2878,7 @@ def ogr_sqlite_37():
 # Test  default values
 
 
-def ogr_sqlite_38():
+def test_ogr_sqlite_38():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3020,7 +3020,7 @@ def ogr_sqlite_38():
 # Test spatial filters with point extent
 
 
-def ogr_spatialite_9():
+def test_ogr_spatialite_9():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -3044,7 +3044,7 @@ def ogr_spatialite_9():
 # Test not nullable fields
 
 
-def ogr_spatialite_10():
+def test_ogr_spatialite_10():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -3094,7 +3094,7 @@ def ogr_spatialite_10():
 ###############################################################################
 # Test creating a field with the fid name
 
-def ogr_sqlite_39():
+def test_ogr_sqlite_39():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3192,7 +3192,7 @@ def ogr_sqlite_39():
 # Test dataset transactions
 
 
-def ogr_sqlite_40():
+def test_ogr_sqlite_40():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3354,7 +3354,7 @@ def ogr_sqlite_40():
 # Test reading dates from Julian day floating point representation
 
 
-def ogr_sqlite_41():
+def test_ogr_sqlite_41():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3380,7 +3380,7 @@ def ogr_sqlite_41():
 # Test ExecuteSQL() heuristics (#6107)
 
 
-def ogr_sqlite_42():
+def test_ogr_sqlite_42():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3443,7 +3443,7 @@ def ogr_sqlite_42():
 # Test file:foo?mode=memory&cache=shared (#6150)
 
 
-def ogr_sqlite_43():
+def test_ogr_sqlite_43():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3463,7 +3463,7 @@ def ogr_sqlite_43():
 # Test reading/writing StringList, etc..
 
 
-def ogr_sqlite_44():
+def test_ogr_sqlite_44():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3510,7 +3510,7 @@ def ogr_sqlite_44():
 # Test WAL and opening in read-only (#6776)
 
 
-def ogr_sqlite_45():
+def test_ogr_sqlite_45():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3551,7 +3551,7 @@ def ogr_sqlite_45():
 ###############################################################################
 # Test creating unsupported geometry types
 
-def ogr_spatialite_11():
+def test_ogr_spatialite_11():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -3581,7 +3581,7 @@ def ogr_spatialite_11():
 # Test opening a .sql file
 
 
-def ogr_spatialite_12():
+def test_ogr_spatialite_12():
 
     if not gdaltest.has_spatialite:
         return 'skip'
@@ -3601,7 +3601,7 @@ def ogr_spatialite_12():
 
 ###############################################################################
 
-def ogr_sqlite_iterate_and_update():
+def test_ogr_sqlite_iterate_and_update():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3633,7 +3633,7 @@ def ogr_sqlite_iterate_and_update():
 #
 
 
-def ogr_sqlite_cleanup():
+def test_ogr_sqlite_cleanup():
 
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -3746,7 +3746,7 @@ def ogr_sqlite_cleanup():
 # Ask to run again tests in a new python process without libspatialite loaded
 
 
-def ogr_sqlite_without_spatialite():
+def test_ogr_sqlite_without_spatialite():
 
     if not gdaltest.has_spatialite or not run_without_spatialite:
         return 'skip'
@@ -3761,74 +3761,74 @@ def ogr_sqlite_without_spatialite():
 
 
 gdaltest_list = [
-    ogr_sqlite_1,
-    ogr_sqlite_2,
-    ogr_sqlite_3,
-    ogr_sqlite_4,
-    ogr_sqlite_5,
-    ogr_sqlite_6,
-    ogr_sqlite_7,
-    ogr_sqlite_8,
-    ogr_sqlite_9,
-    ogr_sqlite_10,
-    ogr_sqlite_11,
-    ogr_sqlite_12,
-    ogr_sqlite_13,
-    ogr_sqlite_14,
-    ogr_sqlite_15,
-    ogr_sqlite_16,
-    ogr_sqlite_20,
-    ogr_sqlite_21,
-    ogr_sqlite_22,
-    ogr_sqlite_23,
-    ogr_sqlite_24,
-    ogr_sqlite_25,
-    ogr_sqlite_26,
-    ogr_sqlite_27,
-    ogr_sqlite_28,
-    ogr_sqlite_29,
-    ogr_sqlite_30,
-    ogr_spatialite_1,
-    ogr_sqlite_17,
-    ogr_sqlite_18,
-    ogr_sqlite_19,
-    ogr_sqlite_19_bis,
-    ogr_spatialite_2,
-    ogr_spatialite_3,
-    ogr_spatialite_4,
-    ogr_spatialite_5,
-    ogr_spatialite_compressed_geom_5,
-    ogr_spatialite_6,
-    ogr_spatialite_7,
-    ogr_spatialite_8,
-    ogr_sqlite_31,
-    ogr_sqlite_32,
-    ogr_sqlite_33,
-    ogr_sqlite_34,
-    ogr_sqlite_35,
-    ogr_sqlite_36,
-    ogr_sqlite_37,
-    ogr_sqlite_38,
-    ogr_spatialite_9,
-    ogr_spatialite_10,
-    ogr_sqlite_39,
-    ogr_sqlite_40,
-    ogr_sqlite_41,
-    ogr_sqlite_42,
-    ogr_sqlite_43,
-    ogr_sqlite_44,
-    ogr_sqlite_45,
-    ogr_sqlite_iterate_and_update,
-    ogr_spatialite_11,
-    ogr_spatialite_12,
-    ogr_sqlite_cleanup,
-    ogr_sqlite_without_spatialite,
+    test_ogr_sqlite_1,
+    test_ogr_sqlite_2,
+    test_ogr_sqlite_3,
+    test_ogr_sqlite_4,
+    test_ogr_sqlite_5,
+    test_ogr_sqlite_6,
+    test_ogr_sqlite_7,
+    test_ogr_sqlite_8,
+    test_ogr_sqlite_9,
+    test_ogr_sqlite_10,
+    test_ogr_sqlite_11,
+    test_ogr_sqlite_12,
+    test_ogr_sqlite_13,
+    test_ogr_sqlite_14,
+    test_ogr_sqlite_15,
+    test_ogr_sqlite_16,
+    test_ogr_sqlite_20,
+    test_ogr_sqlite_21,
+    test_ogr_sqlite_22,
+    test_ogr_sqlite_23,
+    test_ogr_sqlite_24,
+    test_ogr_sqlite_25,
+    test_ogr_sqlite_26,
+    test_ogr_sqlite_27,
+    test_ogr_sqlite_28,
+    test_ogr_sqlite_29,
+    test_ogr_sqlite_30,
+    test_ogr_spatialite_1,
+    test_ogr_sqlite_17,
+    test_ogr_sqlite_18,
+    test_ogr_sqlite_19,
+    test_ogr_sqlite_19_bis,
+    test_ogr_spatialite_2,
+    test_ogr_spatialite_3,
+    test_ogr_spatialite_4,
+    test_ogr_spatialite_5,
+    test_ogr_spatialite_compressed_geom_5,
+    test_ogr_spatialite_6,
+    test_ogr_spatialite_7,
+    test_ogr_spatialite_8,
+    test_ogr_sqlite_31,
+    test_ogr_sqlite_32,
+    test_ogr_sqlite_33,
+    test_ogr_sqlite_34,
+    test_ogr_sqlite_35,
+    test_ogr_sqlite_36,
+    test_ogr_sqlite_37,
+    test_ogr_sqlite_38,
+    test_ogr_spatialite_9,
+    test_ogr_spatialite_10,
+    test_ogr_sqlite_39,
+    test_ogr_sqlite_40,
+    test_ogr_sqlite_41,
+    test_ogr_sqlite_42,
+    test_ogr_sqlite_43,
+    test_ogr_sqlite_44,
+    test_ogr_sqlite_45,
+    test_ogr_sqlite_iterate_and_update,
+    test_ogr_spatialite_11,
+    test_ogr_spatialite_12,
+    test_ogr_sqlite_cleanup,
+    test_ogr_sqlite_without_spatialite,
 ]
 
 disabled_gdaltest_list = [
-    ogr_sqlite_1,
-    ogr_sqlite_45,
-    ogr_sqlite_cleanup,
+    test_ogr_sqlite_1,
+    test_ogr_sqlite_45,
+    test_ogr_sqlite_cleanup,
 ]
 
 if __name__ == '__main__':

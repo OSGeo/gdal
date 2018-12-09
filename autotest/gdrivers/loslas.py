@@ -37,7 +37,7 @@ import gdaltest
 ###############################################################################
 
 
-def loslas_online_1():
+def test_loslas_online_1():
 
     if not gdaltest.download_file('http://www.ngs.noaa.gov/PC_PROD/NADCON/NADCON.zip', 'NADCON.zip'):
         return 'skip'
@@ -62,7 +62,7 @@ def loslas_online_1():
 
 
 gdaltest_list = [
-    loslas_online_1,
+    test_loslas_online_1,
 ]
 
 

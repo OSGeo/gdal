@@ -42,7 +42,7 @@ from osgeo import osr
 # Simple read test of known file.
 
 
-def ogr_gxt_1():
+def test_ogr_gxt_1():
 
     gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD.gxt')
 
@@ -99,7 +99,7 @@ def ogr_gxt_1():
 # Similar test than previous one with TAB separator.
 
 
-def ogr_gxt_2():
+def test_ogr_gxt_2():
 
     gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD_TAB.txt')
 
@@ -144,7 +144,7 @@ def ogr_gxt_2():
 # Read a GXT file containing 2 points, duplicate it, and check the newly written file
 
 
-def ogr_gxt_3():
+def test_ogr_gxt_3():
 
     gdaltest.gxt_ds = None
 
@@ -234,7 +234,7 @@ def ogr_gxt_3():
 #
 
 
-def ogr_gxt_multipolygon_singlepart_nohole():
+def test_ogr_gxt_multipolygon_singlepart_nohole():
 
     ds = ogr.Open('data/geoconcept_multipolygon_singlepart_nohole.txt')
     lyr = ds.GetLayer(0)
@@ -251,7 +251,7 @@ def ogr_gxt_multipolygon_singlepart_nohole():
 #
 
 
-def ogr_gxt_multipolygon_singlepart_hole():
+def test_ogr_gxt_multipolygon_singlepart_hole():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -271,7 +271,7 @@ def ogr_gxt_multipolygon_singlepart_hole():
 #
 
 
-def ogr_gxt_multipolygon_twoparts_second_with_hole():
+def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -291,7 +291,7 @@ def ogr_gxt_multipolygon_twoparts_second_with_hole():
 #
 
 
-def ogr_gxt_line():
+def test_ogr_gxt_line():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -311,7 +311,7 @@ def ogr_gxt_line():
 #
 
 
-def ogr_gxt_cleanup():
+def test_ogr_gxt_cleanup():
 
     gdaltest.gxt_ds = None
     try:
@@ -322,14 +322,14 @@ def ogr_gxt_cleanup():
 
 
 gdaltest_list = [
-    ogr_gxt_1,
-    ogr_gxt_2,
-    ogr_gxt_3,
-    ogr_gxt_multipolygon_singlepart_nohole,
-    ogr_gxt_multipolygon_singlepart_hole,
-    ogr_gxt_multipolygon_twoparts_second_with_hole,
-    ogr_gxt_line,
-    ogr_gxt_cleanup,
+    test_ogr_gxt_1,
+    test_ogr_gxt_2,
+    test_ogr_gxt_3,
+    test_ogr_gxt_multipolygon_singlepart_nohole,
+    test_ogr_gxt_multipolygon_singlepart_hole,
+    test_ogr_gxt_multipolygon_twoparts_second_with_hole,
+    test_ogr_gxt_line,
+    test_ogr_gxt_cleanup,
     None]
 
 if __name__ == '__main__':

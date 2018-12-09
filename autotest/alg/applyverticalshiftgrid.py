@@ -39,7 +39,7 @@ from osgeo import gdal, osr
 # Rather dummy test: grid = DEM
 
 
-def applyverticalshiftgrid_1():
+def test_applyverticalshiftgrid_1():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     src_ds = gdal.Translate('', src_ds, format='MEM',
@@ -108,7 +108,7 @@ def applyverticalshiftgrid_1():
 # Error cases
 
 
-def applyverticalshiftgrid_2():
+def test_applyverticalshiftgrid_2():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
@@ -209,7 +209,7 @@ def applyverticalshiftgrid_2():
 # Test with grid and src not in same projection
 
 
-def applyverticalshiftgrid_3():
+def test_applyverticalshiftgrid_3():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     grid_ds = gdal.Warp('', src_ds, format='MEM', dstSRS='EPSG:4326',
@@ -260,7 +260,7 @@ def applyverticalshiftgrid_3():
 # Test nodata
 
 
-def applyverticalshiftgrid_4():
+def test_applyverticalshiftgrid_4():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
@@ -346,7 +346,7 @@ def applyverticalshiftgrid_4():
 # Test scaling parameters
 
 
-def applyverticalshiftgrid_5():
+def test_applyverticalshiftgrid_5():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     grid_ds = gdal.Translate('', src_ds, format='MEM')
@@ -380,7 +380,7 @@ def applyverticalshiftgrid_5():
 # Simulate EGM grids
 
 
-def applyverticalshiftgrid_6():
+def test_applyverticalshiftgrid_6():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
         '/vsimem/applyverticalshiftgrid_6.gtx', 1440, 721, 1, gdal.GDT_Float32)
@@ -404,7 +404,7 @@ def applyverticalshiftgrid_6():
 # Simulate USA geoid grids with long origin > 180
 
 
-def applyverticalshiftgrid_7():
+def test_applyverticalshiftgrid_7():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
         '/vsimem/applyverticalshiftgrid_7.gtx', 700, 721, 1, gdal.GDT_Float32)
@@ -426,13 +426,13 @@ def applyverticalshiftgrid_7():
 
 
 gdaltest_list = [
-    applyverticalshiftgrid_1,
-    applyverticalshiftgrid_2,
-    applyverticalshiftgrid_3,
-    applyverticalshiftgrid_4,
-    applyverticalshiftgrid_5,
-    applyverticalshiftgrid_6,
-    applyverticalshiftgrid_7
+    test_applyverticalshiftgrid_1,
+    test_applyverticalshiftgrid_2,
+    test_applyverticalshiftgrid_3,
+    test_applyverticalshiftgrid_4,
+    test_applyverticalshiftgrid_5,
+    test_applyverticalshiftgrid_6,
+    test_applyverticalshiftgrid_7
 ]
 
 if __name__ == '__main__':

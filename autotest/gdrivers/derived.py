@@ -35,7 +35,7 @@ from osgeo import gdal
 import gdaltest
 
 
-def derived_test1():
+def test_derived_test1():
     filename = "../gcore/data/cfloat64.tif"
     gdal.ErrorReset()
     ds = gdal.Open(filename)
@@ -88,7 +88,7 @@ def derived_test1():
     return 'success'
 
 
-def derived_test2():
+def test_derived_test2():
     filename = "../gcore/data/cint_sar.tif"
     gdal.ErrorReset()
     ds = gdal.Open(filename)
@@ -144,7 +144,7 @@ def derived_test2():
 # Error cases
 
 
-def derived_test3():
+def test_derived_test3():
 
     with gdaltest.error_handler():
         # Missing filename
@@ -183,9 +183,9 @@ def derived_test3():
 
 
 gdaltest_list = [
-    derived_test1,
-    derived_test2,
-    derived_test3
+    test_derived_test1,
+    test_derived_test2,
+    test_derived_test3
 ]
 
 if __name__ == '__main__':

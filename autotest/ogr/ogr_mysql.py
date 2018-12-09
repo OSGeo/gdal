@@ -50,7 +50,7 @@ from osgeo import osr
 # Open Database.
 
 
-def ogr_mysql_1():
+def test_ogr_mysql_1():
 
     gdaltest.mysql_ds = None
 
@@ -81,7 +81,7 @@ def ogr_mysql_1():
 # Create table from data/poly.shp
 
 
-def ogr_mysql_2():
+def test_ogr_mysql_2():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -138,7 +138,7 @@ def ogr_mysql_2():
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_mysql_3():
+def test_ogr_mysql_3():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
@@ -191,7 +191,7 @@ def ogr_mysql_3():
 # geometries are still OK.
 
 
-def ogr_mysql_4():
+def test_ogr_mysql_4():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -253,7 +253,7 @@ def ogr_mysql_4():
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_mysql_5():
+def test_ogr_mysql_5():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -277,7 +277,7 @@ def ogr_mysql_5():
 # Test ExecuteSQL() results layers with geometry.
 
 
-def ogr_mysql_6():
+def test_ogr_mysql_6():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -314,7 +314,7 @@ def ogr_mysql_6():
 # Test spatial filtering.
 
 
-def ogr_mysql_7():
+def test_ogr_mysql_7():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -354,7 +354,7 @@ def ogr_mysql_7():
 # No geometry in this test.
 
 
-def ogr_mysql_8():
+def test_ogr_mysql_8():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -388,7 +388,7 @@ def ogr_mysql_8():
 # Verify inplace update of a feature with SetFeature().
 
 
-def ogr_mysql_9():
+def test_ogr_mysql_9():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -448,7 +448,7 @@ def ogr_mysql_9():
 # Verify that DeleteFeature() works properly.
 
 
-def ogr_mysql_10():
+def test_ogr_mysql_10():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -479,7 +479,7 @@ def ogr_mysql_10():
 ###############################################################################
 # Test very large query.
 
-def ogr_mysql_15():
+def test_ogr_mysql_15():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -502,7 +502,7 @@ def ogr_mysql_15():
 ###############################################################################
 # Test very large statement.
 
-def ogr_mysql_16():
+def test_ogr_mysql_16():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -528,7 +528,7 @@ def ogr_mysql_16():
 # Test requesting a non-existent table by name (bug 1480).
 
 
-def ogr_mysql_17():
+def test_ogr_mysql_17():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -570,7 +570,7 @@ def ogr_mysql_18():
 # Test reading a layer extent
 
 
-def ogr_mysql_19():
+def test_ogr_mysql_19():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -599,7 +599,7 @@ def ogr_mysql_19():
 # Test using reserved keywords as column names and table names
 
 
-def ogr_mysql_20():
+def test_ogr_mysql_20():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -628,7 +628,7 @@ def ogr_mysql_20():
 # Test inserting NULL geometries into a table with a spatial index -> must FAIL
 
 
-def ogr_mysql_21():
+def test_ogr_mysql_21():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -656,7 +656,7 @@ def ogr_mysql_21():
 # Test inserting NULL geometries into a table without a spatial index
 
 
-def ogr_mysql_22():
+def test_ogr_mysql_22():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -682,7 +682,7 @@ def ogr_mysql_22():
 # Check for right precision
 
 
-def ogr_mysql_23():
+def test_ogr_mysql_23():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -727,7 +727,7 @@ def ogr_mysql_23():
 # Run test_ogrsf
 
 
-def ogr_mysql_24():
+def test_ogr_mysql_24():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -748,7 +748,7 @@ def ogr_mysql_24():
 # Test 64 bit FID
 
 
-def ogr_mysql_72():
+def test_ogr_mysql_72():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -804,7 +804,7 @@ def ogr_mysql_72():
 # Test nullable
 
 
-def ogr_mysql_25():
+def test_ogr_mysql_25():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -865,7 +865,7 @@ def ogr_mysql_25():
 # Test default values
 
 
-def ogr_mysql_26():
+def test_ogr_mysql_26():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -961,7 +961,7 @@ def ogr_mysql_26():
 #
 
 
-def ogr_mysql_longlat():
+def test_ogr_mysql_longlat():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -1002,7 +1002,7 @@ def ogr_mysql_longlat():
 #
 
 
-def ogr_mysql_cleanup():
+def test_ogr_mysql_cleanup():
 
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -1027,34 +1027,34 @@ def ogr_mysql_cleanup():
 
 
 gdaltest_list = [
-    ogr_mysql_1,
+    test_ogr_mysql_1,
     #    ogr_mysql_cleanup,
-    ogr_mysql_2,
-    ogr_mysql_19,
-    ogr_mysql_3,
-    ogr_mysql_4,
-    ogr_mysql_5,
-    ogr_mysql_6,
-    ogr_mysql_7,
-    ogr_mysql_8,
-    ogr_mysql_9,
-    ogr_mysql_10,
+    test_ogr_mysql_2,
+    test_ogr_mysql_19,
+    test_ogr_mysql_3,
+    test_ogr_mysql_4,
+    test_ogr_mysql_5,
+    test_ogr_mysql_6,
+    test_ogr_mysql_7,
+    test_ogr_mysql_8,
+    test_ogr_mysql_9,
+    test_ogr_mysql_10,
     # ogr_mysql_11 to _14 are PG only features
-    ogr_mysql_15,
-    ogr_mysql_16,
-    ogr_mysql_17,
+    test_ogr_mysql_15,
+    test_ogr_mysql_16,
+    test_ogr_mysql_17,
     # Fails but it is probably OK
     #    ogr_mysql_18,
-    ogr_mysql_20,
-    ogr_mysql_21,
-    ogr_mysql_22,
-    ogr_mysql_23,
-    ogr_mysql_24,
-    ogr_mysql_72,
-    ogr_mysql_25,
-    ogr_mysql_26,
-    ogr_mysql_longlat,
-    ogr_mysql_cleanup
+    test_ogr_mysql_20,
+    test_ogr_mysql_21,
+    test_ogr_mysql_22,
+    test_ogr_mysql_23,
+    test_ogr_mysql_24,
+    test_ogr_mysql_72,
+    test_ogr_mysql_25,
+    test_ogr_mysql_26,
+    test_ogr_mysql_longlat,
+    test_ogr_mysql_cleanup
 ]
 
 if __name__ == '__main__':

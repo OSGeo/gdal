@@ -43,7 +43,7 @@ from osgeo import osr
 # Test if driver is available
 
 
-def ogr_carto_init():
+def test_ogr_carto_init():
 
     ogrtest.carto_drv = None
 
@@ -57,7 +57,7 @@ def ogr_carto_init():
 ###############################################################################
 #
 
-def ogr_carto_vsimem():
+def test_ogr_carto_vsimem():
     if ogrtest.carto_drv is None:
         return 'skip'
 
@@ -1046,7 +1046,7 @@ Error""")
 #
 
 
-def ogr_carto_vsimem_cleanup():
+def test_ogr_carto_vsimem_cleanup():
     if ogrtest.carto_drv is None:
         return 'skip'
 
@@ -1065,7 +1065,7 @@ def ogr_carto_vsimem_cleanup():
 #  Run test_ogrsf
 
 
-def ogr_carto_test_ogrsf():
+def test_ogr_carto_test_ogrsf():
     if ogrtest.carto_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
         return 'skip'
 
@@ -1299,10 +1299,10 @@ def ogr_carto_rw_1():
 
 
 gdaltest_list = [
-    ogr_carto_init,
-    ogr_carto_vsimem,
-    ogr_carto_vsimem_cleanup,
-    ogr_carto_test_ogrsf
+    test_ogr_carto_init,
+    test_ogr_carto_vsimem,
+    test_ogr_carto_vsimem_cleanup,
+    test_ogr_carto_test_ogrsf
 ]
 
 

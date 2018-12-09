@@ -38,7 +38,7 @@ import gdaltest
 # ftp://ftpflag.wr.usgs.gov/dist/pigpen/venus/venustopo_download/ovda_dtm.zip
 
 
-def isis2_1():
+def test_isis2_1():
 
     tst = gdaltest.GDALTest('ISIS2', 'arvidson_original_truncated.cub', 1, 382)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL VENUS",
@@ -61,7 +61,7 @@ def isis2_1():
 ###############################################################################
 # Test simple creation on disk.
 
-def isis2_2():
+def test_isis2_2():
 
     tst = gdaltest.GDALTest('ISIS2', 'byte.tif', 1, 4672)
 
@@ -71,7 +71,7 @@ def isis2_2():
 # Test a different data type with some options.
 
 
-def isis2_3():
+def test_isis2_3():
 
     tst = gdaltest.GDALTest('ISIS2', 'float32.tif', 1, 4672,
                             options=['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'])
@@ -80,9 +80,9 @@ def isis2_3():
 
 
 gdaltest_list = [
-    isis2_1,
-    isis2_2,
-    isis2_3]
+    test_isis2_1,
+    test_isis2_2,
+    test_isis2_3]
 
 if __name__ == '__main__':
 

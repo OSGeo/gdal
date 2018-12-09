@@ -40,7 +40,7 @@ from osgeo import gdal
 # Verify the checksum and flags for "all valid" case.
 
 
-def mask_1():
+def test_mask_1():
 
     ds = gdal.Open('data/byte.tif')
 
@@ -72,7 +72,7 @@ def mask_1():
 # Verify the checksum and flags for "nodata" case.
 
 
-def mask_2():
+def test_mask_2():
 
     ds = gdal.Open('data/byte.vrt')
 
@@ -98,7 +98,7 @@ def mask_2():
 # Verify the checksum and flags for "alpha" case.
 
 
-def mask_3():
+def test_mask_3():
 
     ds = gdal.Open('data/stefan_full_rgba.png')
 
@@ -151,7 +151,7 @@ def mask_3():
 # Copy a *real* masked dataset, and confirm masks copied properly.
 
 
-def mask_4():
+def test_mask_4():
 
     src_ds = gdal.Open('../gdrivers/data/masked.jpg')
 
@@ -190,7 +190,7 @@ def mask_4():
 # masks built for them.
 
 
-def mask_5():
+def test_mask_5():
 
     # This crashes with libtiff 3.8.2, so skip it
     md = gdal.GetDriverByName('GTiff').GetMetadata()
@@ -260,7 +260,7 @@ def mask_5():
 # Test a TIFF file with 1 band and an embedded mask of 1 bit
 
 
-def mask_6():
+def test_mask_6():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit.tif')
@@ -289,7 +289,7 @@ def mask_6():
 # Test a TIFF file with 3 bands and an embedded mask of 1 band of 1 bit
 
 
-def mask_7():
+def test_mask_7():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test3_with_1mask_1bit.tif')
@@ -320,7 +320,7 @@ def mask_7():
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
 
 
-def mask_8():
+def test_mask_8():
 
     ds = gdal.Open('data/test_with_mask_8bit.tif')
 
@@ -347,7 +347,7 @@ def mask_8():
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
 
 
-def mask_9():
+def test_mask_9():
 
     ds = gdal.Open('data/test3_with_mask_1bit.tif')
 
@@ -375,7 +375,7 @@ def mask_9():
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
 
 
-def mask_10():
+def test_mask_10():
 
     ds = gdal.Open('data/test3_with_mask_8bit.tif')
 
@@ -403,7 +403,7 @@ def mask_10():
 # mask for the overview
 
 
-def mask_11():
+def test_mask_11():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit_and_ovr.tif')
@@ -461,7 +461,7 @@ def mask_11():
 # Test a TIFF file with 3 bands, an overview, an embedded mask of 1 bit, and an embedded
 # mask for the overview
 
-def mask_12():
+def test_mask_12():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test3_with_mask_1bit_and_ovr.tif')
@@ -519,7 +519,7 @@ def mask_12():
 # Test creation of external TIFF mask band
 
 
-def mask_13():
+def test_mask_13():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
@@ -586,7 +586,7 @@ def mask_13():
 # Test creation of internal TIFF mask band
 
 
-def mask_14():
+def test_mask_14():
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -789,42 +789,42 @@ def mask_and_ovr(order, method):
     return 'success'
 
 
-def mask_15():
+def test_mask_15():
     return mask_and_ovr(1, 'NEAREST')
 
 
-def mask_16():
+def test_mask_16():
     return mask_and_ovr(2, 'NEAREST')
 
 
-def mask_17():
+def test_mask_17():
     return mask_and_ovr(3, 'NEAREST')
 
 
-def mask_18():
+def test_mask_18():
     return mask_and_ovr(4, 'NEAREST')
 
 
-def mask_15_avg():
+def test_mask_15_avg():
     return mask_and_ovr(1, 'AVERAGE')
 
 
-def mask_16_avg():
+def test_mask_16_avg():
     return mask_and_ovr(2, 'AVERAGE')
 
 
-def mask_17_avg():
+def test_mask_17_avg():
     return mask_and_ovr(3, 'AVERAGE')
 
 
-def mask_18_avg():
+def test_mask_18_avg():
     return mask_and_ovr(4, 'AVERAGE')
 
 ###############################################################################
 # Test NODATA_VALUES mask
 
 
-def mask_19():
+def test_mask_19():
 
     ds = gdal.Open('data/test_nodatavalues.tif')
 
@@ -855,7 +855,7 @@ def mask_19():
 # Extensive test of nodata mask for all data types
 
 
-def mask_20():
+def test_mask_20():
 
     types = [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
              gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
@@ -888,7 +888,7 @@ def mask_20():
 # Extensive test of NODATA_VALUES mask for all data types
 
 
-def mask_21():
+def test_mask_21():
 
     types = [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
              gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
@@ -925,7 +925,7 @@ def mask_21():
 # Test creation of external TIFF mask band just after Create()
 
 
-def mask_22():
+def test_mask_22():
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.Create('tmp/mask_22.tif', 20, 20)
@@ -983,7 +983,7 @@ def mask_22():
 # internal mask (#3800)
 
 
-def mask_23():
+def test_mask_23():
 
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
@@ -1018,7 +1018,7 @@ def mask_23():
 # Test on a GDT_UInt16 RGBA (#5692)
 
 
-def mask_24():
+def test_mask_24():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4,
                                               gdal.GDT_UInt16, options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
@@ -1064,7 +1064,7 @@ def mask_24():
 # Test various error conditions
 
 
-def mask_25():
+def test_mask_25():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1)
     if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
@@ -1140,7 +1140,7 @@ def mask_25():
 # Test on a GDT_UInt16 1band data
 
 
-def mask_26():
+def test_mask_26():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_26.tif', 100, 100, 2,
                                               gdal.GDT_UInt16, options=['ALPHA=YES'])
@@ -1173,7 +1173,7 @@ def mask_26():
 # Extensive test of nodata mask for all complex types using real part only
 
 
-def mask_27():
+def test_mask_27():
 
     types = [gdal.GDT_CFloat32, gdal.GDT_CFloat64]
 
@@ -1204,37 +1204,37 @@ def mask_27():
 # Extensive test of real NODATA_VALUES mask for all complex types
 
 gdaltest_list = [
-    mask_1,
-    mask_2,
-    mask_3,
-    mask_4,
-    mask_5,
-    mask_6,
-    mask_7,
-    mask_8,
-    mask_9,
-    mask_10,
-    mask_11,
-    mask_12,
-    mask_13,
-    mask_14,
-    mask_15,
-    mask_16,
-    mask_17,
-    mask_18,
-    mask_15_avg,
-    mask_16_avg,
-    mask_17_avg,
-    mask_18_avg,
-    mask_19,
-    mask_20,
-    mask_21,
-    mask_22,
-    mask_23,
-    mask_24,
-    mask_25,
-    mask_26,
-    mask_27]
+    test_mask_1,
+    test_mask_2,
+    test_mask_3,
+    test_mask_4,
+    test_mask_5,
+    test_mask_6,
+    test_mask_7,
+    test_mask_8,
+    test_mask_9,
+    test_mask_10,
+    test_mask_11,
+    test_mask_12,
+    test_mask_13,
+    test_mask_14,
+    test_mask_15,
+    test_mask_16,
+    test_mask_17,
+    test_mask_18,
+    test_mask_15_avg,
+    test_mask_16_avg,
+    test_mask_17_avg,
+    test_mask_18_avg,
+    test_mask_19,
+    test_mask_20,
+    test_mask_21,
+    test_mask_22,
+    test_mask_23,
+    test_mask_24,
+    test_mask_25,
+    test_mask_26,
+    test_mask_27]
 
 if __name__ == '__main__':
 

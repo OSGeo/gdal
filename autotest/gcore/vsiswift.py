@@ -46,7 +46,7 @@ def open_for_read(uri):
 ###############################################################################
 
 
-def vsiswift_init():
+def test_vsiswift_init():
 
     gdaltest.swift_vars = {}
     for var in ('SWIFT_STORAGE_URL', 'SWIFT_AUTH_TOKEN',
@@ -61,7 +61,7 @@ def vsiswift_init():
 # Error cases
 
 
-def vsiswift_real_server_errors():
+def test_vsiswift_real_server_errors():
 
     if not gdaltest.built_against_curl():
         return 'skip'
@@ -119,7 +119,7 @@ def vsiswift_real_server_errors():
 ###############################################################################
 
 
-def vsiswift_start_webserver():
+def test_vsiswift_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -137,7 +137,7 @@ def vsiswift_start_webserver():
 # Test authentication with SWIFT_AUTH_V1_URL + SWIFT_USER + SWIFT_KEY
 
 
-def vsiswift_fake_auth_v1_url():
+def test_vsiswift_fake_auth_v1_url():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -239,7 +239,7 @@ def vsiswift_fake_auth_v1_url():
 # Test authentication with SWIFT_STORAGE_URL + SWIFT_AUTH_TOKEN
 
 
-def vsiswift_fake_auth_storage_url_and_auth_token():
+def test_vsiswift_fake_auth_storage_url_and_auth_token():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -302,7 +302,7 @@ def vsiswift_fake_auth_storage_url_and_auth_token():
 # Test VSIStatL()
 
 
-def vsiswift_stat():
+def test_vsiswift_stat():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -351,7 +351,7 @@ def vsiswift_stat():
 # Test ReadDir()
 
 
-def vsiswift_fake_readdir():
+def test_vsiswift_fake_readdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -481,7 +481,7 @@ def vsiswift_fake_readdir():
 # Test write
 
 
-def vsiswift_fake_write():
+def test_vsiswift_fake_write():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -541,7 +541,7 @@ def vsiswift_fake_write():
 # Test Unlink()
 
 
-def vsiswift_fake_unlink():
+def test_vsiswift_fake_unlink():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -577,7 +577,7 @@ def vsiswift_fake_unlink():
 # Test Mkdir() / Rmdir()
 
 
-def vsiswift_fake_mkdir_rmdir():
+def test_vsiswift_fake_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -683,7 +683,7 @@ def vsiswift_fake_mkdir_rmdir():
 ###############################################################################
 
 
-def vsiswift_stop_webserver():
+def test_vsiswift_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -853,7 +853,7 @@ def vsiswift_extra_1():
 ###############################################################################
 
 
-def vsiswift_cleanup():
+def test_vsiswift_cleanup():
 
     for var in gdaltest.swift_vars:
         gdal.SetConfigOption(var, gdaltest.swift_vars[var])
@@ -861,18 +861,18 @@ def vsiswift_cleanup():
     return 'success'
 
 
-gdaltest_list = [vsiswift_init,
-                 vsiswift_real_server_errors,
-                 vsiswift_start_webserver,
-                 vsiswift_fake_auth_v1_url,
-                 vsiswift_fake_auth_storage_url_and_auth_token,
-                 vsiswift_stat,
-                 vsiswift_fake_readdir,
-                 vsiswift_fake_write,
-                 vsiswift_fake_unlink,
-                 vsiswift_fake_mkdir_rmdir,
-                 vsiswift_stop_webserver,
-                 vsiswift_cleanup]
+gdaltest_list = [test_vsiswift_init,
+                 test_vsiswift_real_server_errors,
+                 test_vsiswift_start_webserver,
+                 test_vsiswift_fake_auth_v1_url,
+                 test_vsiswift_fake_auth_storage_url_and_auth_token,
+                 test_vsiswift_stat,
+                 test_vsiswift_fake_readdir,
+                 test_vsiswift_fake_write,
+                 test_vsiswift_fake_unlink,
+                 test_vsiswift_fake_mkdir_rmdir,
+                 test_vsiswift_stop_webserver,
+                 test_vsiswift_cleanup]
 
 # gdaltest_list = [ vsiswift_init, vsiswift_start_webserver, vsiswift_fake_mkdir_rmdir, vsiswift_stop_webserver, vsiswift_cleanup ]
 
@@ -885,6 +885,6 @@ if __name__ == '__main__':
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
         gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsiswift_cleanup])
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsiswift_cleanup])
 
     sys.exit(gdaltest.summarize())

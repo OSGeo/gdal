@@ -40,7 +40,7 @@ import gdaltest
 # Open and verify a the GCPs and metadata.
 
 
-def dimap_1():
+def test_dimap_1():
 
     shutil.copy('data/dimap/METADATA.DIM', 'tmp')
     shutil.copy('data/dimap/IMAGERY.TIF', 'tmp')
@@ -99,7 +99,7 @@ def dimap_1():
 # Open DIMAP 2
 
 
-def dimap_2():
+def test_dimap_2():
 
     for name in ['data/dimap2', 'data/dimap2/VOL_PHR.XML', 'data/dimap2/DIM_foo.XML']:
         ds = gdal.Open(name)
@@ -135,8 +135,8 @@ def dimap_2():
 
 
 gdaltest_list = [
-    dimap_1,
-    dimap_2]
+    test_dimap_1,
+    test_dimap_2]
 
 if __name__ == '__main__':
 

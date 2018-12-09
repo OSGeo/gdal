@@ -36,7 +36,7 @@ from osgeo import gdal
 import gdaltest
 
 
-def ignfheightasciigrid_1():
+def test_ignfheightasciigrid_1():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar1.mnt', 1, 21)
@@ -44,7 +44,7 @@ def ignfheightasciigrid_1():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_2():
+def test_ignfheightasciigrid_2():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar2.mnt', 1, 21)
@@ -52,7 +52,7 @@ def ignfheightasciigrid_2():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_3():
+def test_ignfheightasciigrid_3():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar3.mnt', 1, 21)
@@ -60,7 +60,7 @@ def ignfheightasciigrid_3():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_4():
+def test_ignfheightasciigrid_4():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar4.mnt', 1, 21)
@@ -68,7 +68,7 @@ def ignfheightasciigrid_4():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_5():
+def test_ignfheightasciigrid_5():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar1_nocoords.mnt', 1, 21)
@@ -76,7 +76,7 @@ def ignfheightasciigrid_5():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_6():
+def test_ignfheightasciigrid_6():
 
     tst = gdaltest.GDALTest(
         'IGNFHeightASCIIGrid', 'ignfheightasciigrid_ar1_nocoords_noprec.mnt', 1, 21)
@@ -84,7 +84,7 @@ def ignfheightasciigrid_6():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_7():
+def test_ignfheightasciigrid_7():
 
     tst = gdaltest.GDALTest(
         'IGNFHeightASCIIGrid', 'ignfheightasciigrid_ar1_noprec.mnt', 1, 21)
@@ -92,7 +92,7 @@ def ignfheightasciigrid_7():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_description_multiword():
+def test_ignfheightasciigrid_description_multiword():
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
@@ -105,7 +105,7 @@ def ignfheightasciigrid_description_multiword():
     return 'success'
 
 
-def ignfheightasciigrid_invalid():
+def test_ignfheightasciigrid_invalid():
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. DESC\r1 2 3 4'
@@ -158,7 +158,7 @@ def ignfheightasciigrid_invalid():
     return 'success'
 
 
-def ignfheightasciigrid_huge():
+def test_ignfheightasciigrid_huge():
 
     filename = '/vsimem/ignfheightasciigrid_huge'
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
@@ -176,7 +176,7 @@ def ignfheightasciigrid_huge():
     return 'success'
 
 
-def ignfheightasciigrid_gra():
+def test_ignfheightasciigrid_gra():
 
     tst = gdaltest.GDALTest(
         'IGNFHeightASCIIGrid', 'ignfheightasciigrid.gra', 1, 21)
@@ -191,7 +191,7 @@ def ignfheightasciigrid_gra():
     return 'success'
 
 
-def ignfheightasciigrid_gra_invalid():
+def test_ignfheightasciigrid_gra_invalid():
 
     contents = ['49 50\r\n2\r\n',  # missing values
                 '49 50\r\n2 3\r\n',  # missing line
@@ -213,18 +213,18 @@ def ignfheightasciigrid_gra_invalid():
 
 
 gdaltest_list = [
-    ignfheightasciigrid_1,
-    ignfheightasciigrid_2,
-    ignfheightasciigrid_3,
-    ignfheightasciigrid_4,
-    ignfheightasciigrid_5,
-    ignfheightasciigrid_6,
-    ignfheightasciigrid_7,
-    ignfheightasciigrid_description_multiword,
-    ignfheightasciigrid_invalid,
-    ignfheightasciigrid_huge,
-    ignfheightasciigrid_gra,
-    ignfheightasciigrid_gra_invalid,
+    test_ignfheightasciigrid_1,
+    test_ignfheightasciigrid_2,
+    test_ignfheightasciigrid_3,
+    test_ignfheightasciigrid_4,
+    test_ignfheightasciigrid_5,
+    test_ignfheightasciigrid_6,
+    test_ignfheightasciigrid_7,
+    test_ignfheightasciigrid_description_multiword,
+    test_ignfheightasciigrid_invalid,
+    test_ignfheightasciigrid_huge,
+    test_ignfheightasciigrid_gra,
+    test_ignfheightasciigrid_gra_invalid,
 ]
 
 

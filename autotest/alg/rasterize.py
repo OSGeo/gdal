@@ -41,7 +41,7 @@ from osgeo import gdal, ogr, osr
 # Simple polygon rasterization.
 
 
-def rasterize_1():
+def test_rasterize_1():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -105,7 +105,7 @@ def rasterize_1():
 # Test rasterization with ALL_TOUCHED.
 
 
-def rasterize_2():
+def test_rasterize_2():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -151,7 +151,7 @@ def rasterize_2():
 # Rasterization with BURN_VALUE_FROM.
 
 
-def rasterize_3():
+def test_rasterize_3():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -207,7 +207,7 @@ def rasterize_3():
 # Rasterization with ATTRIBUTE.
 
 
-def rasterize_4():
+def test_rasterize_4():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -266,7 +266,7 @@ def rasterize_4():
 # Rasterization with MERGE_ALG=ADD.
 
 
-def rasterize_5():
+def test_rasterize_5():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -337,7 +337,7 @@ def rasterize_5():
 ###############################################################################
 # Test bug fix for #5580 (used to hang)
 
-def rasterize_6():
+def test_rasterize_6():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -361,12 +361,12 @@ def rasterize_6():
 
 
 gdaltest_list = [
-    rasterize_1,
-    rasterize_2,
-    rasterize_3,
-    rasterize_4,
-    rasterize_5,
-    rasterize_6
+    test_rasterize_1,
+    test_rasterize_2,
+    test_rasterize_3,
+    test_rasterize_4,
+    test_rasterize_5,
+    test_rasterize_6
 ]
 
 if __name__ == '__main__':

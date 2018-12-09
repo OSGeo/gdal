@@ -38,7 +38,7 @@ import gdaltest
 # Test GDAL_READDIR_LIMIT_ON_OPEN
 
 
-def envi_1():
+def test_envi_1():
 
     gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', '1')
 
@@ -81,7 +81,7 @@ def test_envi_open(filename, checksum):
     ut.testOpen()
 
 
-gdaltest_list = [envi_1]
+gdaltest_list = [test_envi_1]
 
 if __name__ == '__main__':
 

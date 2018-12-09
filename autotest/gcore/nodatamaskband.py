@@ -38,7 +38,7 @@ import gdaltest
 from osgeo import gdal
 
 
-def nodatamaskband_1():
+def test_nodatamaskband_1():
 
     for (dt, struct_type, v) in [(gdal.GDT_Byte, 'B', 255),
                                  (gdal.GDT_Int16, 'h', 32767),
@@ -115,7 +115,7 @@ def nodatamaskband_1():
 
 
 gdaltest_list = [
-    nodatamaskband_1,
+    test_nodatamaskband_1,
 ]
 
 if __name__ == '__main__':

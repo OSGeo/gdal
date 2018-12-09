@@ -38,7 +38,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def gmt_1():
+def test_gmt_1():
 
     gdaltest.gmt_drv = gdal.GetDriverByName('GMT')
 
@@ -56,7 +56,7 @@ def gmt_1():
 # Verify a simple createcopy operation with 16bit data.
 
 
-def gmt_2():
+def test_gmt_2():
 
     if gdaltest.gmt_drv is None:
         return 'skip'
@@ -68,8 +68,8 @@ def gmt_2():
 
 
 gdaltest_list = [
-    gmt_1,
-    gmt_2]
+    test_gmt_1,
+    test_gmt_2]
 
 
 if __name__ == '__main__':

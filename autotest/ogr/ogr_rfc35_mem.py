@@ -39,7 +39,7 @@ from osgeo import gdal
 # Initiate the test file
 
 
-def ogr_rfc35_mem_1():
+def test_ogr_rfc35_mem_1():
 
     gdaltest.rfc35_mem_ds = ogr.GetDriverByName('Memory').CreateDataSource('rfc35_test')
     lyr = gdaltest.rfc35_mem_ds.CreateLayer('rfc35_test')
@@ -147,7 +147,7 @@ def Check(lyr, expected_order):
     return 'success'
 
 
-def ogr_rfc35_mem_2():
+def test_ogr_rfc35_mem_2():
 
     lyr = gdaltest.rfc35_mem_ds.GetLayer(0)
 
@@ -215,7 +215,7 @@ def ogr_rfc35_mem_2():
 # Test AlterFieldDefn() for change of name and width
 
 
-def ogr_rfc35_mem_3():
+def test_ogr_rfc35_mem_3():
 
     lyr = gdaltest.rfc35_mem_ds.GetLayer(0)
 
@@ -267,7 +267,7 @@ def ogr_rfc35_mem_3():
 # Test AlterFieldDefn() for change of type
 
 
-def ogr_rfc35_mem_4():
+def test_ogr_rfc35_mem_4():
 
     lyr = gdaltest.rfc35_mem_ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
@@ -378,7 +378,7 @@ def ogr_rfc35_mem_4():
 # Test DeleteField()
 
 
-def ogr_rfc35_mem_5():
+def test_ogr_rfc35_mem_5():
 
     lyr = gdaltest.rfc35_mem_ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
@@ -435,7 +435,7 @@ def ogr_rfc35_mem_5():
 # Initiate the test file
 
 
-def ogr_rfc35_mem_cleanup():
+def test_ogr_rfc35_mem_cleanup():
 
     gdaltest.rfc35_mem_ds = None
 
@@ -443,12 +443,12 @@ def ogr_rfc35_mem_cleanup():
 
 
 gdaltest_list = [
-    ogr_rfc35_mem_1,
-    ogr_rfc35_mem_2,
-    ogr_rfc35_mem_3,
-    ogr_rfc35_mem_4,
-    ogr_rfc35_mem_5,
-    ogr_rfc35_mem_cleanup]
+    test_ogr_rfc35_mem_1,
+    test_ogr_rfc35_mem_2,
+    test_ogr_rfc35_mem_3,
+    test_ogr_rfc35_mem_4,
+    test_ogr_rfc35_mem_5,
+    test_ogr_rfc35_mem_cleanup]
 
 
 if __name__ == '__main__':

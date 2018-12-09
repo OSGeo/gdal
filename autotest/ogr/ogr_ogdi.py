@@ -39,7 +39,7 @@ import ogrtest
 ###############################################################################
 
 
-def ogr_ogdi_1():
+def test_ogr_ogdi_1():
 
     ogrtest.ogdi_ds = None
 
@@ -112,7 +112,7 @@ def ogr_ogdi_1():
 # Run test_ogrsf
 
 
-def ogr_ogdi_2():
+def test_ogr_ogdi_2():
 
     if ogrtest.ogdi_ds is None:
         return 'skip'
@@ -135,7 +135,7 @@ def ogr_ogdi_2():
 # Test GetFeature()
 
 
-def ogr_ogdi_3():
+def test_ogr_ogdi_3():
 
     if ogrtest.ogdi_ds is None:
         return 'skip'
@@ -183,7 +183,7 @@ def ogr_ogdi_3():
 # Extract of full dataset
 
 
-def ogr_ogdi_4():
+def test_ogr_ogdi_4():
 
     if ogrtest.ogdi_drv is None:
         return 'skip'
@@ -242,7 +242,7 @@ def ogr_ogdi_4():
 # Run test_ogrsf
 
 
-def ogr_ogdi_5():
+def test_ogr_ogdi_5():
 
     if ogrtest.ogdi_drv is None:
         return 'skip'
@@ -264,7 +264,7 @@ def ogr_ogdi_5():
 ###############################################################################
 
 
-def ogr_ogdi_cleanup():
+def test_ogr_ogdi_cleanup():
 
     if ogrtest.ogdi_ds is None:
         return 'skip'
@@ -274,12 +274,12 @@ def ogr_ogdi_cleanup():
 
 
 gdaltest_list = [
-    ogr_ogdi_1,
-    ogr_ogdi_2,
-    ogr_ogdi_3,
-    ogr_ogdi_4,
-    ogr_ogdi_5,
-    ogr_ogdi_cleanup]
+    test_ogr_ogdi_1,
+    test_ogr_ogdi_2,
+    test_ogr_ogdi_3,
+    test_ogr_ogdi_4,
+    test_ogr_ogdi_5,
+    test_ogr_ogdi_cleanup]
 
 if __name__ == '__main__':
 

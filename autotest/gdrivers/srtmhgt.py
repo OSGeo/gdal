@@ -40,7 +40,7 @@ import gdaltest
 ###############################################################################
 # Test a SRTMHGT Level 1 (made from a DTED Level 0)
 
-def srtmhgt_1():
+def test_srtmhgt_1():
 
     ds = gdal.Open('data/n43.dt0')
 
@@ -79,7 +79,7 @@ def srtmhgt_1():
 ###############################################################################
 # Test creating an in memory copy.
 
-def srtmhgt_2():
+def test_srtmhgt_2():
 
     ds = gdal.Open('tmp/n43w080.hgt')
     driver = gdal.GetDriverByName("SRTMHGT")
@@ -110,7 +110,7 @@ def srtmhgt_2():
 # Test reading from a .hgt.zip file
 
 
-def srtmhgt_3():
+def test_srtmhgt_3():
 
     ds = gdal.Open('tmp/n43w080.hgt')
     driver = gdal.GetDriverByName("SRTMHGT")
@@ -131,7 +131,7 @@ def srtmhgt_3():
 # Test reading from a .SRTMSWBD.raw.zip file (GRASS #3246)
 
 
-def srtmhgt_4():
+def test_srtmhgt_4():
 
     f = gdal.VSIFOpenL('/vsizip//vsimem/N43W080.SRTMSWBD.raw.zip/N43W080.raw', 'wb')
     if f is None:
@@ -157,7 +157,7 @@ def srtmhgt_4():
 # Cleanup.
 
 
-def srtmhgt_cleanup():
+def test_srtmhgt_cleanup():
     try:
         gdal.GetDriverByName("SRTMHGT").Delete('tmp/n43w080.hgt')
         gdal.GetDriverByName("SRTMHGT").Delete('/vsimem/n43w080.hgt')
@@ -169,11 +169,11 @@ def srtmhgt_cleanup():
 
 
 gdaltest_list = [
-    srtmhgt_1,
-    srtmhgt_2,
-    srtmhgt_3,
-    srtmhgt_4,
-    srtmhgt_cleanup
+    test_srtmhgt_1,
+    test_srtmhgt_2,
+    test_srtmhgt_3,
+    test_srtmhgt_4,
+    test_srtmhgt_cleanup
 ]
 
 

@@ -54,12 +54,12 @@ def test_xpm(downloadURL, fileName, checksum, download_size):
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
 
-def xpm_1():
+def test_xpm_1():
     tst = gdaltest.GDALTest('XPM', 'byte.tif', 1, 4583)
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
-gdaltest_list = [xpm_1]
+gdaltest_list = [test_xpm_1]
 
 
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ import gdaltest
 # Read existing simple 1 band SGI file.
 
 
-def sgi_1():
+def test_sgi_1():
 
     tst = gdaltest.GDALTest('SGI', 'byte.sgi', 1, 4672)
 
@@ -47,7 +47,7 @@ def sgi_1():
 # Write Test grayscale
 
 
-def sgi_2():
+def test_sgi_2():
 
     tst = gdaltest.GDALTest('SGI', 'byte.tif', 1, 4672)
 
@@ -57,7 +57,7 @@ def sgi_2():
 # Write Test rgb
 
 
-def sgi_3():
+def test_sgi_3():
 
     tst = gdaltest.GDALTest('SGI', 'rgbsmall.tif', 2, 21053)
 
@@ -65,9 +65,9 @@ def sgi_3():
 
 
 gdaltest_list = [
-    sgi_1,
-    sgi_2,
-    sgi_3,
+    test_sgi_1,
+    test_sgi_2,
+    test_sgi_3,
 ]
 
 

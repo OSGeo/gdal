@@ -123,7 +123,7 @@ def test_bag_2():
 # Test a southern hemisphere falseNorthing sample file.
 
 
-def bag_3():
+def test_bag_3():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -159,7 +159,7 @@ def bag_3():
 #
 
 
-def bag_vr_normal():
+def test_bag_vr_normal():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -231,7 +231,7 @@ def bag_vr_normal():
 #
 
 
-def bag_vr_list_supergrids():
+def test_bag_vr_list_supergrids():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -330,7 +330,7 @@ def bag_vr_list_supergrids():
 #
 
 
-def bag_vr_open_supergrids():
+def test_bag_vr_open_supergrids():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -413,7 +413,7 @@ def bag_vr_open_supergrids():
 #
 
 
-def bag_vr_resampled():
+def test_bag_vr_resampled():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -746,7 +746,7 @@ def bag_vr_resampled():
 #
 
 
-def bag_vr_resampled_mask():
+def test_bag_vr_resampled_mask():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -778,7 +778,7 @@ def bag_vr_resampled_mask():
 #
 
 
-def bag_vr_resampled_interpolated():
+def test_bag_vr_resampled_interpolated():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -817,7 +817,7 @@ def bag_vr_resampled_interpolated():
 #
 
 
-def bag_write_single_band():
+def test_bag_write_single_band():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -831,7 +831,7 @@ def bag_write_single_band():
 #
 
 
-def bag_write_two_bands():
+def test_bag_write_two_bands():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -865,7 +865,7 @@ def bag_write_two_bands():
 #
 
 
-def bag_write_south_up():
+def test_bag_write_south_up():
 
     if gdaltest.bag_drv is None:
         return 'skip'
@@ -899,16 +899,16 @@ def bag_write_south_up():
 
 
 gdaltest_list = [test_bag_2,
-                 bag_3,
-                 bag_vr_normal,
-                 bag_vr_list_supergrids,
-                 bag_vr_open_supergrids,
-                 bag_vr_resampled,
-                 bag_vr_resampled_mask,
-                 bag_vr_resampled_interpolated,
-                 bag_write_single_band,
-                 bag_write_two_bands,
-                 bag_write_south_up,
+                 test_bag_3,
+                 test_bag_vr_normal,
+                 test_bag_vr_list_supergrids,
+                 test_bag_vr_open_supergrids,
+                 test_bag_vr_resampled,
+                 test_bag_vr_resampled_mask,
+                 test_bag_vr_resampled_interpolated,
+                 test_bag_write_single_band,
+                 test_bag_write_two_bands,
+                 test_bag_write_south_up,
                  ]
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ import gdaltest
 # Create 3-band byte
 
 
-def kro_1():
+def test_kro_1():
 
     tst = gdaltest.GDALTest('KRO', 'rgbsmall.tif', 2, 21053)
 
@@ -49,7 +49,7 @@ def kro_1():
 # Create 1-band uint16
 
 
-def kro_2():
+def test_kro_2():
 
     tst = gdaltest.GDALTest('KRO', '../../gcore/data/uint16.tif', 1, 4672)
 
@@ -59,7 +59,7 @@ def kro_2():
 # Create 1-band float32
 
 
-def kro_3():
+def test_kro_3():
 
     tst = gdaltest.GDALTest('KRO', '../../gcore/data/float32.tif', 1, 4672)
 
@@ -69,7 +69,7 @@ def kro_3():
 # Create 4-band rgba uint16
 
 
-def kro_4():
+def test_kro_4():
 
     tst = gdaltest.GDALTest('KRO', 'rgba16.png', 1, 1886)
 
@@ -79,7 +79,7 @@ def kro_4():
 # Test optimized IO
 
 
-def kro_5():
+def test_kro_5():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
@@ -99,11 +99,11 @@ def kro_5():
 
 
 gdaltest_list = [
-    kro_1,
-    kro_2,
-    kro_3,
-    kro_4,
-    kro_5,
+    test_kro_1,
+    test_kro_2,
+    test_kro_3,
+    test_kro_4,
+    test_kro_5,
 ]
 
 

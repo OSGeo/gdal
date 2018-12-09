@@ -38,7 +38,7 @@ import gdaltest
 # Test a fake DOQ1 dataset
 
 
-def doq1_1():
+def test_doq1_1():
 
     tst = gdaltest.GDALTest('DOQ1', 'fakedoq1.doq', 1, 1)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -48,7 +48,7 @@ def doq1_1():
 
 
 gdaltest_list = [
-    doq1_1]
+    test_doq1_1]
 
 if __name__ == '__main__':
 

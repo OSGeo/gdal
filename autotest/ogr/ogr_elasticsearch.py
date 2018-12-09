@@ -42,7 +42,7 @@ from osgeo import osr
 #
 
 
-def ogr_elasticsearch_init():
+def test_ogr_elasticsearch_init():
 
     ogrtest.elasticsearch_drv = None
     ogrtest.srs_wgs84 = osr.SpatialReference()
@@ -60,7 +60,7 @@ def ogr_elasticsearch_init():
 # Test writing into an nonexistent ElasticSearch datastore.
 
 
-def ogr_elasticsearch_nonexistent_server():
+def test_ogr_elasticsearch_nonexistent_server():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -122,7 +122,7 @@ def ogr_elasticsearch_nonexistent_server():
 # Simple test
 
 
-def ogr_elasticsearch_1():
+def test_ogr_elasticsearch_1():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -432,7 +432,7 @@ def ogr_elasticsearch_1():
 # Geo_shape geometries
 
 
-def ogr_elasticsearch_2():
+def test_ogr_elasticsearch_2():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -483,7 +483,7 @@ def ogr_elasticsearch_2():
 # Test bulk insert and layer name laundering
 
 
-def ogr_elasticsearch_3():
+def test_ogr_elasticsearch_3():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -537,7 +537,7 @@ def ogr_elasticsearch_3():
 # Test basic read functionality
 
 
-def ogr_elasticsearch_4():
+def test_ogr_elasticsearch_4():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -1158,7 +1158,7 @@ def ogr_elasticsearch_4():
 # Write documents with non geojson structure
 
 
-def ogr_elasticsearch_5():
+def test_ogr_elasticsearch_5():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -1411,7 +1411,7 @@ def ogr_elasticsearch_5():
 # Test reading circle and envelope geometries
 
 
-def ogr_elasticsearch_6():
+def test_ogr_elasticsearch_6():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -1512,7 +1512,7 @@ def ogr_elasticsearch_6():
 # Test WRITE_MAPPING option
 
 
-def ogr_elasticsearch_7():
+def test_ogr_elasticsearch_7():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -1550,7 +1550,7 @@ def ogr_elasticsearch_7():
 # Test SRS support
 
 
-def ogr_elasticsearch_8():
+def test_ogr_elasticsearch_8():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -1614,7 +1614,7 @@ def ogr_elasticsearch_8():
 # Test ElasticSearch 5.X
 
 
-def ogr_elasticsearch_9():
+def test_ogr_elasticsearch_9():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -1726,7 +1726,7 @@ def ogr_elasticsearch_9():
 # Test SQL
 
 
-def ogr_elasticsearch_10():
+def test_ogr_elasticsearch_10():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -2371,7 +2371,7 @@ def ogr_elasticsearch_10():
 # Test isnull and unset
 
 
-def ogr_elasticsearch_11():
+def test_ogr_elasticsearch_11():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -2511,7 +2511,7 @@ def ogr_elasticsearch_11():
 # Test authentication
 
 
-def ogr_elasticsearch_authentication():
+def test_ogr_elasticsearch_authentication():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -2583,7 +2583,7 @@ def ogr_elasticsearch_delete_files():
     gdal.Unlink('/vsimem/fakeelasticsearch&USERPWD=user:pwd')
 
 
-def ogr_elasticsearch_cleanup():
+def test_ogr_elasticsearch_cleanup():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
 
@@ -2595,21 +2595,21 @@ def ogr_elasticsearch_cleanup():
 
 
 gdaltest_list = [
-    ogr_elasticsearch_init,
-    ogr_elasticsearch_nonexistent_server,
-    ogr_elasticsearch_1,
-    ogr_elasticsearch_2,
-    ogr_elasticsearch_3,
-    ogr_elasticsearch_4,
-    ogr_elasticsearch_5,
-    ogr_elasticsearch_6,
-    ogr_elasticsearch_7,
-    ogr_elasticsearch_8,
-    ogr_elasticsearch_9,
-    ogr_elasticsearch_10,
-    ogr_elasticsearch_11,
-    ogr_elasticsearch_authentication,
-    ogr_elasticsearch_cleanup,
+    test_ogr_elasticsearch_init,
+    test_ogr_elasticsearch_nonexistent_server,
+    test_ogr_elasticsearch_1,
+    test_ogr_elasticsearch_2,
+    test_ogr_elasticsearch_3,
+    test_ogr_elasticsearch_4,
+    test_ogr_elasticsearch_5,
+    test_ogr_elasticsearch_6,
+    test_ogr_elasticsearch_7,
+    test_ogr_elasticsearch_8,
+    test_ogr_elasticsearch_9,
+    test_ogr_elasticsearch_10,
+    test_ogr_elasticsearch_11,
+    test_ogr_elasticsearch_authentication,
+    test_ogr_elasticsearch_cleanup,
 ]
 
 # gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]

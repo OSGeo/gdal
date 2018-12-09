@@ -42,7 +42,7 @@ from osgeo import gdal
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 
-def png_copy_icc():
+def test_png_copy_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -118,7 +118,7 @@ def cvtTuple2String(t):
 # Test writing and reading of ICC profile in CreateCopy() options
 
 
-def png_copy_options_icc():
+def test_png_copy_options_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -161,7 +161,7 @@ def png_copy_options_icc():
 # Test writing and reading of ICC colorimetric data from options
 
 
-def png_copy_options_colorimetric_data():
+def test_png_copy_options_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -241,7 +241,7 @@ def png_copy_options_colorimetric_data():
 # Test writing and reading of ICC colorimetric data in the file
 
 
-def png_copy_colorimetric_data():
+def test_png_copy_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -324,7 +324,7 @@ def png_copy_colorimetric_data():
 # Test sRGB
 
 
-def png_sRGB():
+def test_png_sRGB():
     # Create dummy file
     options = ['SOURCE_ICC_PROFILE_NAME=sRGB']
 
@@ -361,11 +361,11 @@ def png_sRGB():
 
 
 gdaltest_list = [
-    png_copy_icc,
-    png_copy_options_icc,
-    png_copy_options_colorimetric_data,
-    png_copy_colorimetric_data,
-    png_sRGB,
+    test_png_copy_icc,
+    test_png_copy_options_icc,
+    test_png_copy_options_colorimetric_data,
+    test_png_copy_colorimetric_data,
+    test_png_sRGB,
 ]
 
 if __name__ == '__main__':

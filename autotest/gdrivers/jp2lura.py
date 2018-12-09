@@ -45,7 +45,7 @@ import gdaltest
 # Verify we have the driver.
 
 
-def jp2lura_1():
+def test_jp2lura_1():
 
     gdaltest.jp2lura_drv = gdal.GetDriverByName('JP2Lura')
     if gdaltest.jp2lura_drv is None:
@@ -72,7 +72,7 @@ def jp2lura_1():
 #
 
 
-def jp2lura_missing_license_num():
+def test_jp2lura_missing_license_num():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -95,7 +95,7 @@ def jp2lura_missing_license_num():
 #
 
 
-def jp2lura_invalid_license_num():
+def test_jp2lura_invalid_license_num():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -151,7 +151,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
 # Open byte.jp2
 
 
-def jp2lura_2():
+def test_jp2lura_2():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -184,7 +184,7 @@ def jp2lura_2():
 # Open int16.jp2
 
 
-def jp2lura_3():
+def test_jp2lura_3():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -215,7 +215,7 @@ def jp2lura_3():
 # Test copying byte.jp2
 
 
-def jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
+def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -289,14 +289,14 @@ def jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
     return 'success'
 
 
-def jp2lura_4_vsimem():
-    return jp2lura_4('/vsimem/jp2lura_4.jp2')
+def test_jp2lura_4_vsimem():
+    return test_jp2lura_4('/vsimem/jp2lura_4.jp2')
 
 ###############################################################################
 # Test copying int16.jp2
 
 
-def jp2lura_5():
+def test_jp2lura_5():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -308,7 +308,7 @@ def jp2lura_5():
 # Test reading ll.jp2
 
 
-def jp2lura_6():
+def test_jp2lura_6():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -328,7 +328,7 @@ def jp2lura_6():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def jp2lura_7():
+def test_jp2lura_7():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -340,7 +340,7 @@ def jp2lura_7():
 # Test a JP2Lura with the 3 bands having 13bit depth and the 4th one 1 bit
 
 
-def jp2lura_8():
+def test_jp2lura_8():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -364,7 +364,7 @@ def jp2lura_8():
 # Check that we can use .j2w world files (#4651)
 
 
-def jp2lura_9():
+def test_jp2lura_9():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -474,7 +474,7 @@ def DISABLED_jp2lura_11():
 # Check that PAM overrides internal georeferencing (#5279)
 
 
-def jp2lura_12():
+def test_jp2lura_12():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -523,7 +523,7 @@ def jp2lura_12():
 # Check that PAM overrides internal GCPs (#5279)
 
 
-def jp2lura_13():
+def test_jp2lura_13():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -587,7 +587,7 @@ def jp2lura_13():
 # Check that we get GCPs even there's no projection info
 
 
-def jp2lura_14():
+def test_jp2lura_14():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -603,7 +603,7 @@ def jp2lura_14():
 # Test reading PixelIsPoint file (#5437)
 
 
-def jp2lura_16():
+def test_jp2lura_16():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -643,7 +643,7 @@ def jp2lura_16():
 # Test writing PixelIsPoint file (#5437)
 
 
-def jp2lura_17():
+def test_jp2lura_17():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -680,7 +680,7 @@ def jp2lura_17():
 # multiple of 1024 (#5480)
 
 
-def jp2lura_18():
+def test_jp2lura_18():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -705,7 +705,7 @@ def jp2lura_18():
 # Test reading file where GMLJP2 has nul character instead of \n (#5760)
 
 
-def jp2lura_19():
+def test_jp2lura_19():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -722,7 +722,7 @@ def jp2lura_19():
 # Validate GMLJP2 content against schema
 
 
-def jp2lura_20():
+def test_jp2lura_20():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -794,7 +794,7 @@ def jp2lura_20():
 # Test RGBA support
 
 
-def jp2lura_22():
+def test_jp2lura_22():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1002,7 +1002,7 @@ def DISABLED_jp2lura_23():
 # Test Grey+alpha support
 
 
-def jp2lura_24():
+def test_jp2lura_24():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1073,7 +1073,7 @@ def jp2lura_24():
 # Test multiband support
 
 
-def jp2lura_25():
+def test_jp2lura_25():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1110,7 +1110,7 @@ def jp2lura_25():
 # Test CreateCopy() from a JPEG2000 with a 2048x2048 tiling
 
 
-def jp2lura_27():
+def test_jp2lura_27():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1196,7 +1196,7 @@ def jp2lura_test_codeblock(filename, codeblock_width, codeblock_height):
     return True
 
 
-def jp2lura_28():
+def test_jp2lura_28():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1235,7 +1235,7 @@ def jp2lura_28():
 # Test color table support
 
 
-def jp2lura_30():
+def test_jp2lura_30():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1347,7 +1347,7 @@ def DISABLED_jp2lura_33():
 # Test opening a file whose dimensions are > 2^31-1
 
 
-def jp2lura_34():
+def test_jp2lura_34():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1365,7 +1365,7 @@ def jp2lura_34():
 ###############################################################################
 # Test opening a truncated file
 
-def jp2lura_35():
+def test_jp2lura_35():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1383,7 +1383,7 @@ def jp2lura_35():
 # Test we cannot create files with more than 16384 bands
 
 
-def jp2lura_36():
+def test_jp2lura_36():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1402,7 +1402,7 @@ def jp2lura_36():
 # Test metadata reading & writing
 
 
-def jp2lura_37():
+def test_jp2lura_37():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1522,7 +1522,7 @@ def jp2lura_37():
 # Test non-EPSG SRS (so written with a GML dictionary)
 
 
-def jp2lura_38():
+def test_jp2lura_38():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1564,7 +1564,7 @@ def jp2lura_38():
 # Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
 
 
-def jp2lura_39():
+def test_jp2lura_39():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1638,7 +1638,7 @@ def jp2lura_39():
 # Test we can parse GMLJP2 v2.0
 
 
-def jp2lura_40():
+def test_jp2lura_40():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1722,7 +1722,7 @@ def jp2lura_40():
 # Test USE_SRC_CODESTREAM=YES
 
 
-def jp2lura_41():
+def test_jp2lura_41():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1772,7 +1772,7 @@ def jp2lura_41():
 # Get structure of a JPEG2000 file
 
 
-def jp2lura_43():
+def test_jp2lura_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
     if ret is None:
@@ -1784,7 +1784,7 @@ def jp2lura_43():
 # Test GMLJP2v2
 
 
-def jp2lura_45():
+def test_jp2lura_45():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1877,7 +1877,7 @@ def jp2lura_45():
 # Test writing & reading RPC in GeoJP2 box
 
 
-def jp2lura_47():
+def test_jp2lura_47():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1903,7 +1903,7 @@ def jp2lura_47():
 # Test reading a dataset whose tile dimensions are larger than dataset ones
 
 
-def jp2lura_48():
+def test_jp2lura_48():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1924,7 +1924,7 @@ def jp2lura_48():
 ###############################################################################
 
 
-def jp2lura_online_1():
+def test_jp2lura_online_1():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1947,7 +1947,7 @@ def jp2lura_online_1():
 ###############################################################################
 
 
-def jp2lura_online_2():
+def test_jp2lura_online_2():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -1979,7 +1979,7 @@ def jp2lura_online_2():
 ###############################################################################
 
 
-def jp2lura_online_3():
+def test_jp2lura_online_3():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2013,7 +2013,7 @@ def jp2lura_online_3():
 ###############################################################################
 
 
-def jp2lura_online_4():
+def test_jp2lura_online_4():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2048,7 +2048,7 @@ def jp2lura_online_4():
 # Try reading JP2Lura with color table
 
 
-def jp2lura_online_5():
+def test_jp2lura_online_5():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2073,7 +2073,7 @@ def jp2lura_online_5():
 # Try reading YCbCr JP2Lura as RGB
 
 
-def jp2lura_online_6():
+def test_jp2lura_online_6():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2099,7 +2099,7 @@ def jp2lura_online_6():
 # Test GDAL_GEOREF_SOURCES
 
 
-def jp2lura_49():
+def test_jp2lura_49():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2230,7 +2230,7 @@ def jp2lura_49():
 ###############################################################################
 # Test reading split IEEE-754 Float32
 
-def jp2lura_50():
+def test_jp2lura_50():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2242,7 +2242,7 @@ def jp2lura_50():
 # Test split IEEE-754 Float32
 
 
-def jp2lura_51():
+def test_jp2lura_51():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2324,7 +2324,7 @@ def jp2lura_51():
 # Test other data types
 
 
-def jp2lura_52():
+def test_jp2lura_52():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2365,7 +2365,7 @@ def jp2lura_52():
 # Test RATE and QUALITY
 
 
-def jp2lura_53():
+def test_jp2lura_53():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2424,7 +2424,7 @@ def jp2lura_53():
 # Test RasterIO edge cases
 
 
-def jp2lura_54():
+def test_jp2lura_54():
 
     if gdaltest.jp2lura_drv is None:
         return 'skip'
@@ -2461,7 +2461,7 @@ def jp2lura_54():
 
 
 ###############################################################################
-def jp2lura_cleanup():
+def test_jp2lura_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -2469,74 +2469,74 @@ def jp2lura_cleanup():
 
 
 gdaltest_list = [
-    jp2lura_1,
-    jp2lura_missing_license_num,
-    jp2lura_invalid_license_num,
-    jp2lura_2,
-    jp2lura_3,
-    jp2lura_4,
-    jp2lura_4_vsimem,
-    jp2lura_5,
-    jp2lura_6,
-    jp2lura_7,
-    jp2lura_8,
-    jp2lura_9,
+    test_jp2lura_1,
+    test_jp2lura_missing_license_num,
+    test_jp2lura_invalid_license_num,
+    test_jp2lura_2,
+    test_jp2lura_3,
+    test_jp2lura_4,
+    test_jp2lura_4_vsimem,
+    test_jp2lura_5,
+    test_jp2lura_6,
+    test_jp2lura_7,
+    test_jp2lura_8,
+    test_jp2lura_9,
     # jp2lura_10,
     # jp2lura_11,
-    jp2lura_12,
-    jp2lura_13,
-    jp2lura_14,
-    jp2lura_16,
-    jp2lura_17,
-    jp2lura_18,
-    jp2lura_19,
-    jp2lura_20,
+    test_jp2lura_12,
+    test_jp2lura_13,
+    test_jp2lura_14,
+    test_jp2lura_16,
+    test_jp2lura_17,
+    test_jp2lura_18,
+    test_jp2lura_19,
+    test_jp2lura_20,
     # jp2lura_21,
-    jp2lura_22,
+    test_jp2lura_22,
     # jp2lura_23,
-    jp2lura_24,
-    jp2lura_25,
+    test_jp2lura_24,
+    test_jp2lura_25,
     # jp2lura_26,
-    jp2lura_27,
-    jp2lura_28,
+    test_jp2lura_27,
+    test_jp2lura_28,
     # jp2lura_29,
-    jp2lura_30,
+    test_jp2lura_30,
     # jp2lura_31,
     # jp2lura_32,
     # jp2lura_33,
-    jp2lura_34,
-    jp2lura_35,
-    jp2lura_36,
-    jp2lura_37,
-    jp2lura_38,
-    jp2lura_39,
-    jp2lura_40,
-    jp2lura_41,
+    test_jp2lura_34,
+    test_jp2lura_35,
+    test_jp2lura_36,
+    test_jp2lura_37,
+    test_jp2lura_38,
+    test_jp2lura_39,
+    test_jp2lura_40,
+    test_jp2lura_41,
     # jp2lura_42,
-    jp2lura_43,
+    test_jp2lura_43,
     # jp2lura_44,
-    jp2lura_45,
+    test_jp2lura_45,
     # jp2lura_46,
-    jp2lura_47,
-    jp2lura_48,
-    jp2lura_49,
-    jp2lura_50,
-    jp2lura_51,
-    jp2lura_52,
-    jp2lura_53,
-    jp2lura_54,
-    jp2lura_online_1,
-    jp2lura_online_2,
-    jp2lura_online_3,
-    jp2lura_online_4,
-    jp2lura_online_5,
-    jp2lura_online_6,
-    jp2lura_cleanup]
+    test_jp2lura_47,
+    test_jp2lura_48,
+    test_jp2lura_49,
+    test_jp2lura_50,
+    test_jp2lura_51,
+    test_jp2lura_52,
+    test_jp2lura_53,
+    test_jp2lura_54,
+    test_jp2lura_online_1,
+    test_jp2lura_online_2,
+    test_jp2lura_online_3,
+    test_jp2lura_online_4,
+    test_jp2lura_online_5,
+    test_jp2lura_online_6,
+    test_jp2lura_cleanup]
 
 disabled_gdaltest_list = [
-    jp2lura_1,
-    jp2lura_53,
-    jp2lura_cleanup]
+    test_jp2lura_1,
+    test_jp2lura_53,
+    test_jp2lura_cleanup]
 
 if __name__ == '__main__':
 

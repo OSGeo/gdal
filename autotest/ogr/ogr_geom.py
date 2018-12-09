@@ -44,7 +44,7 @@ from osgeo import gdal
 # get_Area() methods as well).
 
 
-def ogr_geom_area():
+def test_ogr_geom_area():
 
     geom_wkt = 'MULTIPOLYGON( ((0 0,1 1,1 0,0 0)),((0 0,10 0, 10 10, 0 10),(1 1,1 2,2 2,2 1)) )'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -67,7 +67,7 @@ def ogr_geom_area():
 # getGeometryType value).
 
 
-def ogr_geom_area_linearring():
+def test_ogr_geom_area_linearring():
 
     geom = ogr.Geometry(type=ogr.wkbLinearRing)
     geom.AddPoint_2D(0, 0)
@@ -87,7 +87,7 @@ def ogr_geom_area_linearring():
 # Test Area calculation for a GeometryCollection
 
 
-def ogr_geom_area_geometrycollection():
+def test_ogr_geom_area_geometrycollection():
 
     # OGR >= 1.8.0
     geom_wkt = 'GEOMETRYCOLLECTION( POLYGON((0 0,1 1,1 0,0 0)), MULTIPOLYGON(((0 0,1 1,1 0,0 0))), LINESTRING(0 0,1 1), POINT(0 0), GEOMETRYCOLLECTION EMPTY )'
@@ -105,7 +105,7 @@ def ogr_geom_area_geometrycollection():
 # huge value With algorithm prior to #3556, this would return 0.
 
 
-def ogr_geom_area_linearring_big_offset():
+def test_ogr_geom_area_linearring_big_offset():
 
     geom = ogr.Geometry(type=ogr.wkbLinearRing)
     BIGOFFSET = 1.0e11
@@ -126,7 +126,7 @@ def ogr_geom_area_linearring_big_offset():
 # Test Area calculation for a Triangle
 
 
-def ogr_geom_area_triangle():
+def test_ogr_geom_area_triangle():
 
     geom_wkt = 'TRIANGLE((0 0,100 0,0 100,0 0))'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -145,7 +145,7 @@ def ogr_geom_area_triangle():
     return 'success'
 
 
-def ogr_geom_is_empty():
+def test_ogr_geom_is_empty():
 
     geom_wkt = 'LINESTRING EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -169,7 +169,7 @@ def ogr_geom_is_empty():
 # Test if a Triangle is Empty
 
 
-def ogr_geom_is_empty_triangle():
+def test_ogr_geom_is_empty_triangle():
 
     geom_wkt = 'TRIANGLE EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -197,7 +197,7 @@ def ogr_geom_is_empty_triangle():
     return 'success'
 
 
-def ogr_geom_pickle():
+def test_ogr_geom_pickle():
     geom_wkt = 'MULTIPOLYGON( ((0 0,1 1,1 0,0 0)),((0 0,10 0, 10 10, 0 10),(1 1,1 2,2 2,2 1)) )'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     p = pickle.dumps(geom)
@@ -214,7 +214,7 @@ def ogr_geom_pickle():
 # Test suite for PolyhedralSurface
 
 
-def ogr_geom_polyhedral_surface():
+def test_ogr_geom_polyhedral_surface():
 
     wkt_original = 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),\
 ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),\
@@ -325,7 +325,7 @@ def ogr_geom_polyhedral_surface():
 # Test suite for TIN
 
 
-def ogr_geom_tin():
+def test_ogr_geom_tin():
     poly1 = ogr.CreateGeometryFromWkt("TRIANGLE ((0 0 0,0 0 1,0 1 0,0 0 0))")
     poly2 = ogr.CreateGeometryFromWkt("TRIANGLE ((0 0 0,0 1 0,1 1 0,0 0 0))")
     tin = ogr.Geometry(ogr.wkbTIN)
@@ -458,7 +458,7 @@ def ogr_geom_tin():
 # Test OGRGeometry::getBoundary() result for point.
 
 
-def ogr_geom_boundary_point():
+def test_ogr_geom_boundary_point():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -482,7 +482,7 @@ def ogr_geom_boundary_point():
 # Test OGRGeometry::getBoundary() result for multipoint.
 
 
-def ogr_geom_boundary_multipoint():
+def test_ogr_geom_boundary_multipoint():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -501,7 +501,7 @@ def ogr_geom_boundary_multipoint():
 # Test OGRGeometry::getBoundary() result for linestring.
 
 
-def ogr_geom_boundary_linestring():
+def test_ogr_geom_boundary_linestring():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -537,7 +537,7 @@ def ogr_geom_boundary_linestring():
 # Test OGRGeometry::getBoundary() result for polygon.
 
 
-def ogr_geom_boundary_polygon():
+def test_ogr_geom_boundary_polygon():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -557,7 +557,7 @@ def ogr_geom_boundary_polygon():
 # Test OGRBuildPolygonFromEdges() on a geometry collection of line strings
 
 
-def ogr_geom_build_from_edges_1():
+def test_ogr_geom_build_from_edges_1():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -590,7 +590,7 @@ def ogr_geom_build_from_edges_1():
 # Test OGRBuildPolygonFromEdges() on a multilinestring
 
 
-def ogr_geom_build_from_edges_2():
+def test_ogr_geom_build_from_edges_2():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -622,7 +622,7 @@ def ogr_geom_build_from_edges_2():
 # Test OGRBuildPolygonFromEdges() on invalid geometries
 
 
-def ogr_geom_build_from_edges_3():
+def test_ogr_geom_build_from_edges_3():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -653,7 +653,7 @@ def ogr_geom_build_from_edges_3():
 # Test OGRBuildPolygonFromEdges() and identify exterior ring (#3610)
 
 
-def ogr_geom_build_from_edges_4():
+def test_ogr_geom_build_from_edges_4():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         gdaltest.post_reason('would crash')
@@ -699,7 +699,7 @@ def ogr_geom_build_from_edges_4():
 # Test GetArea() on empty linear ring (#2792)
 
 
-def ogr_geom_area_empty_linearring():
+def test_ogr_geom_area_empty_linearring():
 
     geom = ogr.Geometry(type=ogr.wkbLinearRing)
 
@@ -713,7 +713,7 @@ def ogr_geom_area_empty_linearring():
 # Test TransformTo()
 
 
-def ogr_geom_transform_to():
+def test_ogr_geom_transform_to():
 
     # Somewhere in Paris suburbs...
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
@@ -748,7 +748,7 @@ def ogr_geom_transform_to():
 # Test Transform()
 
 
-def ogr_geom_transform():
+def test_ogr_geom_transform():
 
     # Somewhere in Paris suburbs...
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
@@ -775,7 +775,7 @@ def ogr_geom_transform():
 # Test CloseRings()
 
 
-def ogr_geom_closerings():
+def test_ogr_geom_closerings():
 
     geom = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0))')
     geom.CloseRings()
@@ -795,7 +795,7 @@ def ogr_geom_closerings():
 # Test Segmentize()
 
 
-def ogr_geom_segmentize():
+def test_ogr_geom_segmentize():
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 10)')
     geom.Segmentize(1.00001)
@@ -834,7 +834,7 @@ def ogr_geom_segmentize():
 # Test Value()
 
 
-def ogr_geom_value():
+def test_ogr_geom_value():
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING(2 3,5 3,5 0)')
 
@@ -879,7 +879,7 @@ def ogr_geom_value():
 # Test FlattenTo2D(), GetDimension() and GetCoordinateDimension()
 
 
-def ogr_geom_flattenTo2D():
+def test_ogr_geom_flattenTo2D():
 
     geom = ogr.CreateGeometryFromWkt('POINT (1 2 3)')
 
@@ -911,7 +911,7 @@ def ogr_geom_flattenTo2D():
 # Test FlattenTo2D(), GetDimension() and GetCoordinateDimension() for Triangle
 
 
-def ogr_geom_flattenTo2D_triangle():
+def test_ogr_geom_flattenTo2D_triangle():
 
     geom = ogr.CreateGeometryFromWkt('TRIANGLE ((0 0 0,100 0 100,0 100 100,0 0 0))')
 
@@ -942,7 +942,7 @@ def ogr_geom_flattenTo2D_triangle():
 ###############################################################################
 
 
-def ogr_geom_linestring_limits():
+def test_ogr_geom_linestring_limits():
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING EMPTY')
     if geom.Length() != 0:
@@ -1017,7 +1017,7 @@ def ogr_geom_linestring_limits():
 ###############################################################################
 
 
-def ogr_geom_coord_round():
+def test_ogr_geom_coord_round():
 
     geom = ogr.CreateGeometryFromWkt('POINT(370441.860 5591000.590)')
     wkt = geom.ExportToWkt()
@@ -1031,7 +1031,7 @@ def ogr_geom_coord_round():
 ###############################################################################
 
 
-def ogr_geom_coord_round_2():
+def test_ogr_geom_coord_round_2():
 
     geom = ogr.CreateGeometryFromWkt('POINT(1.0 169.600374)')
     wkt = geom.ExportToWkt()
@@ -1046,7 +1046,7 @@ def ogr_geom_coord_round_2():
 # Test Area calculation for a Point
 
 
-def ogr_geom_area_point():
+def test_ogr_geom_area_point():
 
     geom_wkt = 'POINT(0 0)'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -1063,7 +1063,7 @@ def ogr_geom_area_point():
 # Test Length calculation for a Point
 
 
-def ogr_geom_length_point():
+def test_ogr_geom_length_point():
 
     # OGR >= 1.8.0
     geom_wkt = 'POINT(0 0)'
@@ -1081,7 +1081,7 @@ def ogr_geom_length_point():
 # Test Length calculation for a MultiLineString
 
 
-def ogr_geom_length_multilinestring():
+def test_ogr_geom_length_multilinestring():
 
     # OGR >= 1.8.0
     geom_wkt = 'MULTILINESTRING((0 0,0 1),(0 0,0 1))'
@@ -1098,7 +1098,7 @@ def ogr_geom_length_multilinestring():
 # Test Length calculation for a GeometryCollection
 
 
-def ogr_geom_length_geometrycollection():
+def test_ogr_geom_length_geometrycollection():
 
     # OGR >= 1.8.0
     geom_wkt = 'GEOMETRYCOLLECTION( POLYGON((0 0,0 1,1 1,1 0,0 0)), MULTILINESTRING((0 0,0 1),(0 0,0 1)), LINESTRING(0 0,0 1), LINESTRING(0 0,0 1), POINT(0 0), GEOMETRYCOLLECTION EMPTY )'
@@ -1115,7 +1115,7 @@ def ogr_geom_length_geometrycollection():
 # Test Geometry.GetPoints() (#4016)
 
 
-def ogr_geom_getpoints():
+def test_ogr_geom_getpoints():
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 1,2 3)')
     points = geom.GetPoints()
@@ -1171,7 +1171,7 @@ def ogr_geom_getpoints():
 # Test OGRGeometry::empty()
 
 
-def ogr_geom_empty():
+def test_ogr_geom_empty():
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,1 2,1 1,0 0))')
     g1.Empty()
@@ -1186,7 +1186,7 @@ def ogr_geom_empty():
 # Test OGRGeometry::empty() for Triangle
 
 
-def ogr_geom_empty_triangle():
+def test_ogr_geom_empty_triangle():
 
     g1 = ogr.CreateGeometryFromWkt('TRIANGLE ((0 0,100 0,0 100,0 0))')
     g1.Empty()
@@ -1201,7 +1201,7 @@ def ogr_geom_empty_triangle():
 # Test parsing WKT made of 2D and 3D parts
 
 
-def ogr_geom_mixed_coordinate_dimension():
+def test_ogr_geom_mixed_coordinate_dimension():
 
     # first part is 3D, second part is 2D of same length
     wkt = 'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2,50 60)))'
@@ -1227,7 +1227,7 @@ def ogr_geom_mixed_coordinate_dimension():
 # Test GetEnvelope3D()
 
 
-def ogr_geom_getenvelope3d():
+def test_ogr_geom_getenvelope3d():
 
     g = ogr.CreateGeometryFromWkt('POINT EMPTY')
     envelope = g.GetEnvelope3D()
@@ -1307,7 +1307,7 @@ def ogr_geom_getenvelope3d():
 # Test importing/exporting XXX Z EMPTY
 
 
-def ogr_geom_z_empty():
+def test_ogr_geom_z_empty():
 
     for geom in ['POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING',
                  'MULTIPOLYGON', 'GEOMETRYCOLLECTION', 'CIRCULARSTRING', 'COMPOUNDCURVE',
@@ -1333,7 +1333,7 @@ def ogr_geom_z_empty():
 # Test HasCurveGeometry and GetLinearGeometry
 
 
-def ogr_geom_getlineargeometry():
+def test_ogr_geom_getlineargeometry():
 
     for geom in ['POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING',
                  'MULTIPOLYGON', 'GEOMETRYCOLLECTION',
@@ -1381,7 +1381,7 @@ def ogr_geom_getlineargeometry():
 # Test GetDimension()
 
 
-def ogr_geom_getdimension():
+def test_ogr_geom_getdimension():
     for (geom, dim) in [('POINT EMPTY', 0),
                         ('LINESTRING EMPTY', 1),
                         ('POLYGON EMPTY', 2),
@@ -1420,7 +1420,7 @@ def ogr_geom_getdimension():
 # Test triangle
 
 
-def ogr_geom_triangle():
+def test_ogr_geom_triangle():
 
     wkt_original = 'TRIANGLE ((0 0,0 1,1 1,0 0))'
     geom = ogr.CreateGeometryFromWkt(wkt_original)
@@ -1455,7 +1455,7 @@ def ogr_geom_triangle():
 # Test importing invalid triangle WKT
 
 
-def ogr_geom_triangle_invalid_wkt():
+def test_ogr_geom_triangle_invalid_wkt():
 
     geom_wkt = 'TRIANGLE (0 0)'
     with gdaltest.error_handler():
@@ -1502,7 +1502,7 @@ def ogr_geom_triangle_invalid_wkt():
 # Test OGRTriangle. Tests if the GEOS/SFCGAL methods are working
 
 
-def ogr_geom_triangle_sfcgal():
+def test_ogr_geom_triangle_sfcgal():
 
     if not ogrtest.have_sfcgal():
         return 'skip'
@@ -1527,7 +1527,7 @@ def ogr_geom_triangle_sfcgal():
 # Test OGRCircularString
 
 
-def ogr_geom_circularstring():
+def test_ogr_geom_circularstring():
 
     in_wkt = 'CIRCULARSTRING (0 0,1 1,1 -1)'
 
@@ -2064,7 +2064,7 @@ def ogr_geom_circularstring():
 # Test OGRCompoundCurve
 
 
-def ogr_geom_compoundcurve():
+def test_ogr_geom_compoundcurve():
 
     in_wkt = 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1))'
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
@@ -2472,7 +2472,7 @@ def ogr_geom_compoundcurve():
 # Test OGRCurvePolygon
 
 
-def ogr_geom_curvepolygon():
+def test_ogr_geom_curvepolygon():
 
     in_wkt = 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))'
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
@@ -2861,7 +2861,7 @@ def ogr_geom_curvepolygon():
 # Test OGRMultiCurve
 
 
-def ogr_geom_multicurve():
+def test_ogr_geom_multicurve():
 
     # Simple test
     in_wkt = 'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0))'
@@ -2985,7 +2985,7 @@ def ogr_geom_multicurve():
 # Test OGRMultiSurface
 
 
-def ogr_geom_multisurface():
+def test_ogr_geom_multisurface():
 
     # Simple test
     in_wkt = 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0)))'
@@ -3125,7 +3125,7 @@ def ogr_geom_multisurface():
 # Test GetCurveGeometry
 
 
-def ogr_geom_getcurvegeometry():
+def test_ogr_geom_getcurvegeometry():
 
     for geom in ['POINT', 'LINESTRING', 'POLYGON', 'MULTIPOINT', 'MULTILINESTRING',
                  'MULTIPOLYGON', 'GEOMETRYCOLLECTION',
@@ -3586,7 +3586,7 @@ def ogr_geom_getcurvegeometry():
 # Test OGR_GT_ functions
 
 
-def ogr_geom_gt_functions():
+def test_ogr_geom_gt_functions():
 
     # GT_HasZ
     tuples = [(ogr.wkbPoint, 0),
@@ -3844,7 +3844,7 @@ def ogr_geom_gt_functions():
 # Limit cases
 
 
-def ogr_geom_api_limit_tests():
+def test_ogr_geom_api_limit_tests():
 
     p = ogr.Geometry(ogr.wkbPoint)
     lyr = ogr.Geometry(ogr.wkbLineString)
@@ -3893,7 +3893,7 @@ def ogr_geom_api_limit_tests():
 # Test Equals
 
 
-def ogr_geom_equals():
+def test_ogr_geom_equals():
 
     p_empty = ogr.Geometry(ogr.wkbPoint)
     p_0 = ogr.CreateGeometryFromWkt('POINT (0 0)')
@@ -3964,7 +3964,7 @@ def ogr_geom_equals():
 # Test FlattenTo2D(), SetCoordinateDimension(2) and SetCoordinateDimension(3) with Measured geometries
 
 
-def ogr_geom_measured_geometries_to_2D_or_3D():
+def test_ogr_geom_measured_geometries_to_2D_or_3D():
 
     list_wkt = [['POINT M (1 2 3)', 'POINT (1 2)', 'POINT Z (1 2 0)'],
                 ['POINT ZM (1 2 3 4)', 'POINT (1 2)', 'POINT Z (1 2 3)'],
@@ -4071,7 +4071,7 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
 # Test PostGIS EWKT with XYM
 
 
-def ogr_geom_postgis_ewkt_xym():
+def test_ogr_geom_postgis_ewkt_xym():
 
     list_wkt = [['POINTM(1 2 3)', 'POINT M (1 2 3)'],
                 ['GEOMETRYCOLLECTIONM(POINTM(1 2 3))', 'GEOMETRYCOLLECTION M (POINT M (1 2 3))'],
@@ -4091,7 +4091,7 @@ def ogr_geom_postgis_ewkt_xym():
 # Test ogr.wkbCurve / ogr.wkbSurface
 
 
-def ogr_geom_curve_surface():
+def test_ogr_geom_curve_surface():
 
     tests = [[ogr.wkbCurve, "Curve"],
              [ogr.wkbCurveZ, "3D Curve"],
@@ -4116,7 +4116,7 @@ def ogr_geom_curve_surface():
 # Test importing corrupted WKB
 
 
-def ogr_geom_import_corrupted_wkb():
+def test_ogr_geom_import_corrupted_wkb():
 
     list_wkt = ['POINT ZM (1 2 3 4)'
                 'LINESTRING ZM (1 2 3 4)'
@@ -4181,7 +4181,7 @@ def ogr_geom_import_corrupted_wkb():
 # Test conversions from/into triangle, TIN, PS
 
 
-def ogr_geom_triangle_ps_tin_conversion():
+def test_ogr_geom_triangle_ps_tin_conversion():
 
     wkts = ["TRIANGLE ((0 0,0 1,1 1,0 0))",
             "POLYGON ((0 0,0 1,1 1,0 0))",
@@ -4261,7 +4261,7 @@ def ogr_geom_triangle_ps_tin_conversion():
 ###############################################################################
 
 
-def ogr_geom_multipoint_envelope_bug():
+def test_ogr_geom_multipoint_envelope_bug():
 
     g = ogr.CreateGeometryFromWkt('MULTIPOINT(0 0,1 1)')
     minx, maxx, miny, maxy = g.GetEnvelope()
@@ -4282,7 +4282,7 @@ def ogr_geom_multipoint_envelope_bug():
 ###############################################################################
 
 
-def ogr_geom_polygon_empty_ring():
+def test_ogr_geom_polygon_empty_ring():
 
     g = ogr.Geometry(ogr.wkbPolygon)
     g2 = ogr.Geometry(ogr.wkbLinearRing)
@@ -4295,7 +4295,7 @@ def ogr_geom_polygon_empty_ring():
 ###############################################################################
 
 
-def ogr_geom_polygon_intersects_point():
+def test_ogr_geom_polygon_intersects_point():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -4316,7 +4316,7 @@ def ogr_geom_polygon_intersects_point():
 # Test fix for #7128
 
 
-def ogr_geom_geometrycollection():
+def test_ogr_geom_geometrycollection():
 
     wkt_list = ['GEOMETRYCOLLECTION (POINT EMPTY)',
                 'GEOMETRYCOLLECTION (LINESTRING EMPTY)',
@@ -4345,7 +4345,7 @@ def ogr_geom_geometrycollection():
 # Test fix for #7126
 
 
-def ogr_geom_assignspatialref():
+def test_ogr_geom_assignspatialref():
 
     g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POLYGON((0 0,0 1,1 1,0 0)),COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0)),POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0))))')
     sr = osr.SpatialReference()
@@ -4369,7 +4369,7 @@ def ogr_geom_assignspatialref():
 ###############################################################################
 
 
-def ogr_geom_swapxy():
+def test_ogr_geom_swapxy():
 
     g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(1 2,2 3),POLYGON((0 0,0 1,1 1,0 0)),COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0)),POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0))))')
     g.SwapXY()
@@ -4382,7 +4382,7 @@ def ogr_geom_swapxy():
 ###############################################################################
 
 
-def ogr_geom_remove_geometry():
+def test_ogr_geom_remove_geometry():
 
     # With GEOMETRYCOLLECTION
     g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (1 2),LINESTRING (1 2,2 3),POINT (3 4))')
@@ -4496,7 +4496,7 @@ def ogr_geom_remove_geometry():
 ###############################################################################
 
 
-def ogr_geom_sfcgal():
+def test_ogr_geom_sfcgal():
 
     if not ogrtest.have_sfcgal():
         return 'skip'
@@ -4518,7 +4518,7 @@ def ogr_geom_sfcgal():
 ###############################################################################
 
 
-def ogr_geom_cannot_add_triangle_to_multisurface():
+def test_ogr_geom_cannot_add_triangle_to_multisurface():
 
     g = ogr.Geometry(ogr.wkbMultiSurface)
     if g.AddGeometry(ogr.Geometry(ogr.wkbTriangle)) == 0:
@@ -4528,7 +4528,7 @@ def ogr_geom_cannot_add_triangle_to_multisurface():
 ###############################################################################
 
 
-def ogr_geom_force_polygonzm_to_linestring():
+def test_ogr_geom_force_polygonzm_to_linestring():
     g = ogr.CreateGeometryFromWkt('POLYGON ZM ((0 0 10 20,0 1 30 40,1 1 50 60,0 0 10 70))')
     wkt = ogr.ForceToLineString(g).ExportToIsoWkt()
     if wkt != 'LINESTRING ZM (0 0 10 20,0 1 30 40,1 1 50 60,0 0 10 70)':
@@ -4540,80 +4540,80 @@ def ogr_geom_force_polygonzm_to_linestring():
 # cleanup
 
 
-def ogr_geom_cleanup():
+def test_ogr_geom_cleanup():
     return 'success'
 
 
 gdaltest_list = [
-    ogr_geom_area,
-    ogr_geom_polyhedral_surface,
-    ogr_geom_tin,
-    ogr_geom_area_triangle,
-    ogr_geom_area_linearring,
-    ogr_geom_area_linearring_big_offset,
-    ogr_geom_area_geometrycollection,
-    ogr_geom_is_empty,
-    ogr_geom_is_empty_triangle,
-    ogr_geom_pickle,
-    ogr_geom_boundary_point,
-    ogr_geom_boundary_multipoint,
-    ogr_geom_boundary_linestring,
-    ogr_geom_boundary_polygon,
-    ogr_geom_build_from_edges_1,
-    ogr_geom_build_from_edges_2,
-    ogr_geom_build_from_edges_3,
-    ogr_geom_build_from_edges_4,
-    ogr_geom_area_empty_linearring,
-    ogr_geom_transform_to,
-    ogr_geom_transform,
-    ogr_geom_closerings,
-    ogr_geom_segmentize,
-    ogr_geom_value,
-    ogr_geom_flattenTo2D,
-    ogr_geom_flattenTo2D_triangle,
-    ogr_geom_linestring_limits,
-    ogr_geom_coord_round,
-    ogr_geom_coord_round_2,
-    ogr_geom_area_point,
-    ogr_geom_length_point,
-    ogr_geom_length_multilinestring,
-    ogr_geom_length_geometrycollection,
-    ogr_geom_empty_triangle,
-    ogr_geom_triangle,
-    ogr_geom_triangle_invalid_wkt,
-    ogr_geom_triangle_sfcgal,
-    ogr_geom_empty,
-    ogr_geom_getpoints,
-    ogr_geom_mixed_coordinate_dimension,
-    ogr_geom_getenvelope3d,
-    ogr_geom_z_empty,
-    ogr_geom_getlineargeometry,
-    ogr_geom_getdimension,
-    ogr_geom_circularstring,
-    ogr_geom_compoundcurve,
-    ogr_geom_curvepolygon,
-    ogr_geom_multicurve,
-    ogr_geom_multisurface,
-    ogr_geom_getcurvegeometry,
-    ogr_geom_gt_functions,
-    ogr_geom_api_limit_tests,
-    ogr_geom_equals,
-    ogr_geom_measured_geometries_to_2D_or_3D,
-    ogr_geom_postgis_ewkt_xym,
-    ogr_geom_curve_surface,
-    ogr_geom_import_corrupted_wkb,
-    ogr_geom_triangle_ps_tin_conversion,
-    ogr_geom_multipoint_envelope_bug,
-    ogr_geom_polygon_empty_ring,
-    ogr_geom_polygon_intersects_point,
-    ogr_geom_geometrycollection,
-    ogr_geom_assignspatialref,
-    ogr_geom_swapxy,
-    ogr_geom_remove_geometry,
-    ogr_geom_sfcgal,
-    ogr_geom_cannot_add_triangle_to_multisurface,
-    ogr_geom_force_polygonzm_to_linestring,
-    ogr_geom_cleanup]
+    test_ogr_geom_area,
+    test_ogr_geom_polyhedral_surface,
+    test_ogr_geom_tin,
+    test_ogr_geom_area_triangle,
+    test_ogr_geom_area_linearring,
+    test_ogr_geom_area_linearring_big_offset,
+    test_ogr_geom_area_geometrycollection,
+    test_ogr_geom_is_empty,
+    test_ogr_geom_is_empty_triangle,
+    test_ogr_geom_pickle,
+    test_ogr_geom_boundary_point,
+    test_ogr_geom_boundary_multipoint,
+    test_ogr_geom_boundary_linestring,
+    test_ogr_geom_boundary_polygon,
+    test_ogr_geom_build_from_edges_1,
+    test_ogr_geom_build_from_edges_2,
+    test_ogr_geom_build_from_edges_3,
+    test_ogr_geom_build_from_edges_4,
+    test_ogr_geom_area_empty_linearring,
+    test_ogr_geom_transform_to,
+    test_ogr_geom_transform,
+    test_ogr_geom_closerings,
+    test_ogr_geom_segmentize,
+    test_ogr_geom_value,
+    test_ogr_geom_flattenTo2D,
+    test_ogr_geom_flattenTo2D_triangle,
+    test_ogr_geom_linestring_limits,
+    test_ogr_geom_coord_round,
+    test_ogr_geom_coord_round_2,
+    test_ogr_geom_area_point,
+    test_ogr_geom_length_point,
+    test_ogr_geom_length_multilinestring,
+    test_ogr_geom_length_geometrycollection,
+    test_ogr_geom_empty_triangle,
+    test_ogr_geom_triangle,
+    test_ogr_geom_triangle_invalid_wkt,
+    test_ogr_geom_triangle_sfcgal,
+    test_ogr_geom_empty,
+    test_ogr_geom_getpoints,
+    test_ogr_geom_mixed_coordinate_dimension,
+    test_ogr_geom_getenvelope3d,
+    test_ogr_geom_z_empty,
+    test_ogr_geom_getlineargeometry,
+    test_ogr_geom_getdimension,
+    test_ogr_geom_circularstring,
+    test_ogr_geom_compoundcurve,
+    test_ogr_geom_curvepolygon,
+    test_ogr_geom_multicurve,
+    test_ogr_geom_multisurface,
+    test_ogr_geom_getcurvegeometry,
+    test_ogr_geom_gt_functions,
+    test_ogr_geom_api_limit_tests,
+    test_ogr_geom_equals,
+    test_ogr_geom_measured_geometries_to_2D_or_3D,
+    test_ogr_geom_postgis_ewkt_xym,
+    test_ogr_geom_curve_surface,
+    test_ogr_geom_import_corrupted_wkb,
+    test_ogr_geom_triangle_ps_tin_conversion,
+    test_ogr_geom_multipoint_envelope_bug,
+    test_ogr_geom_polygon_empty_ring,
+    test_ogr_geom_polygon_intersects_point,
+    test_ogr_geom_geometrycollection,
+    test_ogr_geom_assignspatialref,
+    test_ogr_geom_swapxy,
+    test_ogr_geom_remove_geometry,
+    test_ogr_geom_sfcgal,
+    test_ogr_geom_cannot_add_triangle_to_multisurface,
+    test_ogr_geom_force_polygonzm_to_linestring,
+    test_ogr_geom_cleanup]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]
 

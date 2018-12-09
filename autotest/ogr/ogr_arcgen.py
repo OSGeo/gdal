@@ -39,7 +39,7 @@ from osgeo import ogr
 # Read points
 
 
-def ogr_arcgen_points():
+def test_ogr_arcgen_points():
 
     ds = ogr.Open('data/points.gen')
     if ds is None:
@@ -76,7 +76,7 @@ def ogr_arcgen_points():
 # Read points25d
 
 
-def ogr_arcgen_points25d():
+def test_ogr_arcgen_points25d():
 
     ds = ogr.Open('data/points25d.gen')
     if ds is None:
@@ -113,7 +113,7 @@ def ogr_arcgen_points25d():
 # Read lines
 
 
-def ogr_arcgen_lines():
+def test_ogr_arcgen_lines():
 
     ds = ogr.Open('data/lines.gen')
     if ds is None:
@@ -146,7 +146,7 @@ def ogr_arcgen_lines():
 # Read lines25d
 
 
-def ogr_arcgen_lines25d():
+def test_ogr_arcgen_lines25d():
 
     ds = ogr.Open('data/lines25d.gen')
     if ds is None:
@@ -179,7 +179,7 @@ def ogr_arcgen_lines25d():
 # Read polygons
 
 
-def ogr_arcgen_polygons():
+def test_ogr_arcgen_polygons():
 
     ds = ogr.Open('data/polygons.gen')
     if ds is None:
@@ -212,7 +212,7 @@ def ogr_arcgen_polygons():
 # Read polygons25d
 
 
-def ogr_arcgen_polygons25d():
+def test_ogr_arcgen_polygons25d():
 
     ds = ogr.Open('data/polygons25d.gen')
     if ds is None:
@@ -243,12 +243,12 @@ def ogr_arcgen_polygons25d():
 
 
 gdaltest_list = [
-    ogr_arcgen_points,
-    ogr_arcgen_points25d,
-    ogr_arcgen_lines,
-    ogr_arcgen_lines25d,
-    ogr_arcgen_polygons,
-    ogr_arcgen_polygons25d]
+    test_ogr_arcgen_points,
+    test_ogr_arcgen_points25d,
+    test_ogr_arcgen_lines,
+    test_ogr_arcgen_lines25d,
+    test_ogr_arcgen_polygons,
+    test_ogr_arcgen_polygons25d]
 
 
 if __name__ == '__main__':

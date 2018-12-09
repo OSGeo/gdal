@@ -48,7 +48,7 @@ def _xmlsearch(root, nodetype, name):
 # Verify raster band subClass
 
 
-def vrtderived_1():
+def test_vrtderived_1():
     filename = 'tmp/derived.vrt'
     vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
 
@@ -98,7 +98,7 @@ def vrtderived_1():
 # Verify derived raster band pixel function type
 
 
-def vrtderived_2():
+def test_vrtderived_2():
     filename = 'tmp/derived.vrt'
     vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
 
@@ -152,7 +152,7 @@ def vrtderived_2():
 # Verify derived raster band transfer type
 
 
-def vrtderived_3():
+def test_vrtderived_3():
     filename = 'tmp/derived.vrt'
     vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
 
@@ -191,7 +191,7 @@ def vrtderived_3():
 # Check handling of invalid derived raster band transfer type
 
 
-def vrtderived_4():
+def test_vrtderived_4():
     filename = 'tmp/derived.vrt'
     vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
 
@@ -213,7 +213,7 @@ def vrtderived_4():
 # Check Python derived function with BufferRadius=1
 
 
-def vrtderived_5():
+def test_vrtderived_5():
 
     try:
         import numpy
@@ -236,7 +236,7 @@ def vrtderived_5():
 # Check Python derived function with BufferRadius=0 and no source
 
 
-def vrtderived_6():
+def test_vrtderived_6():
 
     try:
         import numpy
@@ -259,7 +259,7 @@ def vrtderived_6():
 # Check Python derived function with no started Python interpreter
 
 
-def vrtderived_7():
+def test_vrtderived_7():
 
     import test_cli_utilities
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -329,7 +329,7 @@ def vrtderived_7():
 # Check that GDAL_VRT_ENABLE_PYTHON=NO or undefined is honored
 
 
-def vrtderived_8():
+def test_vrtderived_8():
 
     try:
         import numpy
@@ -361,7 +361,7 @@ def vrtderived_8():
 # Check various failure modes with Python functions
 
 
-def vrtderived_9():
+def test_vrtderived_9():
 
     try:
         import numpy
@@ -681,7 +681,7 @@ def one_pix_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_y
     out_ar.fill(1)
 
 
-def vrtderived_10():
+def test_vrtderived_10():
 
     try:
         import numpy
@@ -757,7 +757,7 @@ def vrtderived_10():
 # Test serializing with python code
 
 
-def vrtderived_11():
+def test_vrtderived_11():
 
     try:
         import numpy
@@ -790,7 +790,7 @@ def vrtderived_11():
 # Test all data types with python code
 
 
-def vrtderived_12():
+def test_vrtderived_12():
 
     try:
         import numpy
@@ -853,7 +853,7 @@ def vrtderived_12():
 # Test translating a Python derived VRT
 
 
-def vrtderived_13():
+def test_vrtderived_13():
 
     try:
         import numpy
@@ -880,7 +880,7 @@ def vrtderived_13():
 # Test statistics functions
 
 
-def vrtderived_14():
+def test_vrtderived_14():
 
     try:
         import numpy
@@ -938,7 +938,7 @@ def vrtderived_15_worker(args_dict):
         ds.FlushCache()
 
 
-def vrtderived_15():
+def test_vrtderived_15():
 
     try:
         import numpy
@@ -971,7 +971,7 @@ def vrtderived_15():
 ###############################################################################
 # Cleanup.
 
-def vrtderived_cleanup():
+def test_vrtderived_cleanup():
     try:
         os.remove('tmp/derived.vrt')
     except OSError:
@@ -980,22 +980,22 @@ def vrtderived_cleanup():
 
 
 gdaltest_list = [
-    vrtderived_1,
-    vrtderived_2,
-    vrtderived_3,
-    vrtderived_4,
-    vrtderived_5,
-    vrtderived_6,
-    vrtderived_7,
-    vrtderived_8,
-    vrtderived_9,
-    vrtderived_10,
-    vrtderived_11,
-    vrtderived_12,
-    vrtderived_13,
-    vrtderived_14,
-    vrtderived_15,
-    vrtderived_cleanup,
+    test_vrtderived_1,
+    test_vrtderived_2,
+    test_vrtderived_3,
+    test_vrtderived_4,
+    test_vrtderived_5,
+    test_vrtderived_6,
+    test_vrtderived_7,
+    test_vrtderived_8,
+    test_vrtderived_9,
+    test_vrtderived_10,
+    test_vrtderived_11,
+    test_vrtderived_12,
+    test_vrtderived_13,
+    test_vrtderived_14,
+    test_vrtderived_15,
+    test_vrtderived_cleanup,
 ]
 
 if __name__ == '__main__':

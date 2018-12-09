@@ -97,7 +97,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     return ut.testCreateCopy(check_minmax=check_minmax)
 
 
-def mrf_zen_test():
+def test_mrf_zen_test():
     result = 'success'
     expectedCS = 770
     testvrt = '''
@@ -130,7 +130,7 @@ def mrf_zen_test():
     return result
 
 
-def mrf_overview_near_fact_2():
+def test_mrf_overview_near_fact_2():
 
     ref_ds = gdal.Translate('/vsimem/out.tif', 'data/byte.tif')
     ref_ds.BuildOverviews('NEAR', [2])
@@ -168,7 +168,7 @@ def mrf_overview_near_fact_2():
     return 'success'
 
 
-def mrf_overview_near_with_nodata_fact_2():
+def test_mrf_overview_near_with_nodata_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -202,7 +202,7 @@ def mrf_overview_near_with_nodata_fact_2():
     return 'success'
 
 
-def mrf_overview_avg_fact_2():
+def test_mrf_overview_avg_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -236,7 +236,7 @@ def mrf_overview_avg_fact_2():
     return 'success'
 
 
-def mrf_overview_avg_with_nodata_fact_2():
+def test_mrf_overview_avg_with_nodata_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -271,7 +271,7 @@ def mrf_overview_avg_with_nodata_fact_2():
     return 'success'
 
 
-def mrf_overview_near_fact_3():
+def test_mrf_overview_near_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                             format='MRF',
@@ -298,7 +298,7 @@ def mrf_overview_near_fact_3():
     return 'success'
 
 
-def mrf_overview_avg_fact_3():
+def test_mrf_overview_avg_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                             format='MRF',
@@ -325,7 +325,7 @@ def mrf_overview_avg_fact_3():
     return 'success'
 
 
-def mrf_overview_avg_with_nodata_fact_3():
+def test_mrf_overview_avg_with_nodata_fact_3():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -360,7 +360,7 @@ def mrf_overview_avg_with_nodata_fact_3():
     return 'success'
 
 
-def mrf_overview_partial_block():
+def test_mrf_overview_partial_block():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                             creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=8'])
@@ -384,7 +384,7 @@ def mrf_overview_partial_block():
     return 'success'
 
 
-def mrf_overview_near_implicit_level():
+def test_mrf_overview_near_implicit_level():
 
     # We ask only overview level 2, but MRF automatically creates 2 and 4
     # so check that 4 is properly initialized
@@ -424,7 +424,7 @@ def mrf_overview_near_implicit_level():
     return 'success'
 
 
-def mrf_overview_external():
+def test_mrf_overview_external():
 
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     ds = gdal.Open('/vsimem/out.mrf')
@@ -451,7 +451,7 @@ def mrf_overview_external():
     return 'success'
 
 
-def mrf_lerc_nodata():
+def test_mrf_lerc_nodata():
 
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                    noData=107, creationOptions=['COMPRESS=LERC'])
@@ -479,7 +479,7 @@ def mrf_lerc_nodata():
     return 'success'
 
 
-def mrf_lerc_with_huffman():
+def test_mrf_lerc_with_huffman():
 
     gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format='MRF',
                    width=5000, height=5000, creationOptions=['COMPRESS=LERC'])
@@ -502,7 +502,7 @@ def mrf_lerc_with_huffman():
     return 'success'
 
 
-def mrf_cached_source():
+def test_mrf_cached_source():
 
     # Caching MRF
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
@@ -645,7 +645,7 @@ def mrf_cached_source():
     return 'success'
 
 
-def mrf_versioned():
+def test_mrf_versioned():
 
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')
@@ -715,7 +715,7 @@ def mrf_versioned():
     return 'success'
 
 
-def mrf_cleanup():
+def test_mrf_cleanup():
 
     files = [
         '12bit_rose_extract.jpg.*',
@@ -748,22 +748,22 @@ def mrf_cleanup():
 
 
 gdaltest_list = [
-    mrf_overview_near_fact_2,
-    mrf_overview_near_with_nodata_fact_2,
-    mrf_overview_avg_fact_2,
-    mrf_overview_avg_with_nodata_fact_2,
-    mrf_overview_near_fact_3,
-    mrf_overview_avg_fact_3,
-    mrf_overview_avg_with_nodata_fact_3,
-    mrf_overview_partial_block,
-    mrf_overview_near_implicit_level,
-    mrf_overview_external,
-    mrf_lerc_nodata,
-    mrf_lerc_with_huffman,
-    mrf_cached_source,
-    mrf_versioned,
-    mrf_zen_test,
-    mrf_cleanup,
+    test_mrf_overview_near_fact_2,
+    test_mrf_overview_near_with_nodata_fact_2,
+    test_mrf_overview_avg_fact_2,
+    test_mrf_overview_avg_with_nodata_fact_2,
+    test_mrf_overview_near_fact_3,
+    test_mrf_overview_avg_fact_3,
+    test_mrf_overview_avg_with_nodata_fact_3,
+    test_mrf_overview_partial_block,
+    test_mrf_overview_near_implicit_level,
+    test_mrf_overview_external,
+    test_mrf_lerc_nodata,
+    test_mrf_lerc_with_huffman,
+    test_mrf_cached_source,
+    test_mrf_versioned,
+    test_mrf_zen_test,
+    test_mrf_cleanup,
 ]
 
 if __name__ == '__main__':

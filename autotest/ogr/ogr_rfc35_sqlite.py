@@ -39,7 +39,7 @@ from osgeo import gdal
 # Initiate the test file
 
 
-def ogr_rfc35_sqlite_1():
+def test_ogr_rfc35_sqlite_1():
 
     gdaltest.rfc35_sqlite_ds = None
     gdaltest.rfc35_sqlite_ds_name = None
@@ -161,7 +161,7 @@ def Check(lyr, expected_order):
     return 'success'
 
 
-def ogr_rfc35_sqlite_2():
+def test_ogr_rfc35_sqlite_2():
 
     if gdaltest.rfc35_sqlite_ds is None:
         return 'skip'
@@ -244,7 +244,7 @@ def ogr_rfc35_sqlite_2():
 # Test AlterFieldDefn() for change of name and width
 
 
-def ogr_rfc35_sqlite_3():
+def test_ogr_rfc35_sqlite_3():
 
     if gdaltest.rfc35_sqlite_ds is None:
         return 'skip'
@@ -305,7 +305,7 @@ def ogr_rfc35_sqlite_3():
 # Test AlterFieldDefn() for change of type
 
 
-def ogr_rfc35_sqlite_4():
+def test_ogr_rfc35_sqlite_4():
 
     if gdaltest.rfc35_sqlite_ds is None:
         return 'skip'
@@ -433,7 +433,7 @@ def ogr_rfc35_sqlite_4():
 # Test DeleteField()
 
 
-def ogr_rfc35_sqlite_5():
+def test_ogr_rfc35_sqlite_5():
 
     if gdaltest.rfc35_sqlite_ds is None:
         return 'skip'
@@ -505,7 +505,7 @@ def ogr_rfc35_sqlite_5():
 # Initiate the test file
 
 
-def ogr_rfc35_sqlite_cleanup():
+def test_ogr_rfc35_sqlite_cleanup():
 
     if gdaltest.rfc35_sqlite_ds_name is None:
         return 'skip'
@@ -517,12 +517,12 @@ def ogr_rfc35_sqlite_cleanup():
 
 
 gdaltest_list = [
-    ogr_rfc35_sqlite_1,
-    ogr_rfc35_sqlite_2,
-    ogr_rfc35_sqlite_3,
-    ogr_rfc35_sqlite_4,
-    ogr_rfc35_sqlite_5,
-    ogr_rfc35_sqlite_cleanup]
+    test_ogr_rfc35_sqlite_1,
+    test_ogr_rfc35_sqlite_2,
+    test_ogr_rfc35_sqlite_3,
+    test_ogr_rfc35_sqlite_4,
+    test_ogr_rfc35_sqlite_5,
+    test_ogr_rfc35_sqlite_cleanup]
 
 
 if __name__ == '__main__':

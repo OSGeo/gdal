@@ -36,7 +36,7 @@ from osgeo import osr
 #
 
 
-def osr_pci_1():
+def test_osr_pci_1():
 
     prj_parms = (0.0, 0.0, 45.0, 54.5, 47.0, 62.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     srs = osr.SpatialReference()
@@ -71,7 +71,7 @@ def osr_pci_1():
 #
 
 
-def osr_pci_2():
+def test_osr_pci_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
@@ -104,7 +104,7 @@ def osr_pci_2():
 #
 
 
-def osr_pci_3():
+def test_osr_pci_3():
 
     srs = osr.SpatialReference()
     srs.ImportFromPCI(
@@ -143,7 +143,7 @@ def osr_pci_3():
 #
 
 
-def osr_pci_4():
+def test_osr_pci_4():
 
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -170,7 +170,7 @@ def osr_pci_4():
 #
 
 
-def osr_pci_5():
+def test_osr_pci_5():
 
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -197,7 +197,7 @@ def osr_pci_5():
 #
 
 
-def osr_pci_6():
+def test_osr_pci_6():
 
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -225,7 +225,7 @@ def osr_pci_6():
 #
 
 
-def osr_pci_7():
+def test_osr_pci_7():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('GEOGCS["My GCS",DATUM["My Datum",SPHEROID["Bessel 1841",6377397.155,299.1528128,AUTHORITY["EPSG","7004"]],TOWGS84[565.04,49.91,465.84,0.4094,-0.3597,1.8685,4.077200000063286]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
@@ -244,13 +244,13 @@ def osr_pci_7():
 
 
 gdaltest_list = [
-    osr_pci_1,
-    osr_pci_2,
-    osr_pci_3,
-    osr_pci_4,
-    osr_pci_5,
-    osr_pci_6,
-    osr_pci_7,
+    test_osr_pci_1,
+    test_osr_pci_2,
+    test_osr_pci_3,
+    test_osr_pci_4,
+    test_osr_pci_5,
+    test_osr_pci_6,
+    test_osr_pci_7,
     None]
 
 if __name__ == '__main__':

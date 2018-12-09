@@ -84,7 +84,7 @@ def is_same(A, B):
             return False
 
 
-def algebra_setup():
+def test_algebra_setup():
 
     global ds, A, B, C, pointInB, D1, D2, empty
 
@@ -159,7 +159,7 @@ def algebra_setup():
     return 'success'
 
 
-def algebra_intersection():
+def test_algebra_intersection():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -267,7 +267,7 @@ def algebra_intersection():
     return 'success'
 
 
-def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
+def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -339,7 +339,7 @@ def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     return 'success'
 
 
-def algebra_union():
+def test_algebra_union():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -404,7 +404,7 @@ def algebra_union():
     return 'success'
 
 
-def algebra_symdifference():
+def test_algebra_symdifference():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -454,7 +454,7 @@ def algebra_symdifference():
     return 'success'
 
 
-def algebra_identify():
+def test_algebra_identify():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -504,7 +504,7 @@ def algebra_identify():
     return 'success'
 
 
-def algebra_update():
+def test_algebra_update():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -554,7 +554,7 @@ def algebra_update():
     return 'success'
 
 
-def algebra_clip():
+def test_algebra_clip():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -604,7 +604,7 @@ def algebra_clip():
     return 'success'
 
 
-def algebra_erase():
+def test_algebra_erase():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -683,7 +683,7 @@ def algebra_erase():
     return 'success'
 
 
-def algebra_cleanup():
+def test_algebra_cleanup():
     if not ogrtest.have_geos():
         return 'skip'
 
@@ -702,16 +702,16 @@ def algebra_cleanup():
 
 
 gdaltest_list = [
-    algebra_setup,
-    algebra_intersection,
-    algebra_KEEP_LOWER_DIMENSION_GEOMETRIES,
-    algebra_union,
-    algebra_symdifference,
-    algebra_identify,
-    algebra_update,
-    algebra_clip,
-    algebra_erase,
-    algebra_cleanup,
+    test_algebra_setup,
+    test_algebra_intersection,
+    test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES,
+    test_algebra_union,
+    test_algebra_symdifference,
+    test_algebra_identify,
+    test_algebra_update,
+    test_algebra_clip,
+    test_algebra_erase,
+    test_algebra_cleanup,
 ]
 
 if __name__ == '__main__':

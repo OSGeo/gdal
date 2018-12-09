@@ -37,7 +37,7 @@ from osgeo import ogr
 # Create a point in DB2 format, and verify the byte order flag.
 
 
-def ogr_db2_hack_1():
+def test_ogr_db2_hack_1():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER(1) != 0:
         return 'skip'
@@ -66,7 +66,7 @@ def ogr_db2_hack_1():
 # Verify that we can turn DB2 V7.2 mode back off!
 
 
-def ogr_db2_hack_2():
+def test_ogr_db2_hack_2():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER(0) != 0:
         gdaltest.post_reason('SetGenerate to turn off hack failed!')
@@ -96,7 +96,7 @@ def ogr_db2_hack_2():
 ###############################################################################
 # Try a more complex geometry, and verify we can read it back.
 
-def ogr_db2_hack_3():
+def test_ogr_db2_hack_3():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER(1) != 0:
         return 'skip'
@@ -131,9 +131,9 @@ def ogr_db2_hack_3():
 
 
 gdaltest_list = [
-    ogr_db2_hack_1,
-    ogr_db2_hack_2,
-    ogr_db2_hack_3
+    test_ogr_db2_hack_1,
+    test_ogr_db2_hack_2,
+    test_ogr_db2_hack_3
 ]
 
 if __name__ == '__main__':

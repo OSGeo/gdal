@@ -47,7 +47,7 @@ def cpl_debug_reset():
 # Open Driver
 
 
-def ogr_interlis1_1():
+def test_ogr_interlis1_1():
 
     gdaltest.have_ili_reader = 0
     driver = ogr.GetDriverByName('Interlis 1')
@@ -62,7 +62,7 @@ def ogr_interlis1_1():
 # Check that Ili1 point layer is properly read.
 
 
-def ogr_interlis1_2():
+def test_ogr_interlis1_2():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -127,7 +127,7 @@ def ogr_interlis1_2():
 # Ili1 FORMAT DEFAULT test.
 
 
-def ogr_interlis1_3():
+def test_ogr_interlis1_3():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -171,7 +171,7 @@ def ogr_interlis1_3():
 # Ili1 FORMAT test.
 
 
-def ogr_interlis1_4():
+def test_ogr_interlis1_4():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -215,7 +215,7 @@ def ogr_interlis1_4():
 # Write Ili1 transfer file without model.
 
 
-def ogr_interlis1_5():
+def test_ogr_interlis1_5():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -264,7 +264,7 @@ ENDE"""
 # Write Ili1 transfer file.
 
 
-def ogr_interlis1_6():
+def test_ogr_interlis1_6():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -310,7 +310,7 @@ ENDE"""
 # Ili1 character encoding test.
 
 
-def ogr_interlis1_7():
+def test_ogr_interlis1_7():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -396,7 +396,7 @@ ENDE"""
 # Ili1 VRT rename
 
 
-def ogr_interlis1_9():
+def test_ogr_interlis1_9():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -443,7 +443,7 @@ def ogr_interlis1_9():
 # Ili1 Area with polygonizing
 
 
-def ogr_interlis1_10():
+def test_ogr_interlis1_10():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -479,7 +479,7 @@ def ogr_interlis1_10():
 # Ili1 multi-geom test (RFC41)
 
 
-def ogr_interlis1_11():
+def test_ogr_interlis1_11():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -536,7 +536,7 @@ def ogr_interlis1_11():
 # Ili1 multi-geom test (RFC41)
 
 
-def ogr_interlis1_12():
+def test_ogr_interlis1_12():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -585,7 +585,7 @@ def ogr_interlis1_12():
 # Ili1 Surface test.
 
 
-def ogr_interlis1_13():
+def test_ogr_interlis1_13():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -841,7 +841,7 @@ def ogr_interlis1_13():
 # Ili1 Surface test with linear conversion.
 
 
-def ogr_interlis1_13_linear():
+def test_ogr_interlis1_13_linear():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1012,7 +1012,7 @@ def ogr_interlis1_13_linear():
 # Write Ili1 Arcs.
 
 
-def ogr_interlis1_14():
+def test_ogr_interlis1_14():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1064,7 +1064,7 @@ ENDE
 # Reading Ili2 without model
 
 
-def ogr_interlis2_1():
+def test_ogr_interlis2_1():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1094,7 +1094,7 @@ def ogr_interlis2_1():
 # Reading Ili2
 
 
-def ogr_interlis2_2():
+def test_ogr_interlis2_2():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1204,7 +1204,7 @@ def ogr_interlis2_2():
 ###############################################################################
 # Write Ili2 transfer file.
 
-def ogr_interlis2_3():
+def test_ogr_interlis2_3():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1301,7 +1301,7 @@ def ogr_interlis2_3():
 # Ili2 Oereb model
 
 
-def ogr_interlis2_4():
+def test_ogr_interlis2_4():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1394,7 +1394,7 @@ def ogr_interlis2_4():
 ###############################################################################
 # Check arc segmentation
 
-def ogr_interlis_arc1():
+def test_ogr_interlis_arc1():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1457,7 +1457,7 @@ def ogr_interlis_arc1():
 # Check polyline with arc
 
 
-def ogr_interlis_arc2():
+def test_ogr_interlis_arc2():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1489,7 +1489,7 @@ def ogr_interlis_arc2():
 #
 
 
-def ogr_interlis_cleanup():
+def test_ogr_interlis_cleanup():
 
     if not gdaltest.have_ili_reader:
         return 'skip'
@@ -1502,27 +1502,27 @@ def ogr_interlis_cleanup():
 
 
 gdaltest_list = [
-    ogr_interlis1_1,
-    ogr_interlis1_2,
-    ogr_interlis1_3,
-    ogr_interlis1_4,
-    ogr_interlis1_5,
-    ogr_interlis1_6,
-    ogr_interlis1_7,
-    ogr_interlis1_9,
-    ogr_interlis1_10,
-    ogr_interlis1_11,
-    ogr_interlis1_12,
-    ogr_interlis1_13,
-    ogr_interlis1_13_linear,
-    ogr_interlis1_14,
-    ogr_interlis2_1,
-    ogr_interlis2_2,
-    ogr_interlis2_3,
-    ogr_interlis2_4,
-    ogr_interlis_arc1,
-    ogr_interlis_arc2,
-    ogr_interlis_cleanup]
+    test_ogr_interlis1_1,
+    test_ogr_interlis1_2,
+    test_ogr_interlis1_3,
+    test_ogr_interlis1_4,
+    test_ogr_interlis1_5,
+    test_ogr_interlis1_6,
+    test_ogr_interlis1_7,
+    test_ogr_interlis1_9,
+    test_ogr_interlis1_10,
+    test_ogr_interlis1_11,
+    test_ogr_interlis1_12,
+    test_ogr_interlis1_13,
+    test_ogr_interlis1_13_linear,
+    test_ogr_interlis1_14,
+    test_ogr_interlis2_1,
+    test_ogr_interlis2_2,
+    test_ogr_interlis2_3,
+    test_ogr_interlis2_4,
+    test_ogr_interlis_arc1,
+    test_ogr_interlis_arc2,
+    test_ogr_interlis_cleanup]
 
 if __name__ == '__main__':
 

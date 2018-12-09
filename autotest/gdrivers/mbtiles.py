@@ -41,7 +41,7 @@ import webserver
 # Get the mbtiles driver
 
 
-def mbtiles_1():
+def test_mbtiles_1():
 
     gdaltest.mbtiles_drv = gdal.GetDriverByName('MBTiles')
 
@@ -51,7 +51,7 @@ def mbtiles_1():
 # Basic test
 
 
-def mbtiles_2():
+def test_mbtiles_2():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -120,7 +120,7 @@ def mbtiles_2():
 # Open a /vsicurl/ DB
 
 
-def mbtiles_3():
+def test_mbtiles_3():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -169,7 +169,7 @@ def mbtiles_3():
 #
 
 
-def mbtiles_start_webserver():
+def test_mbtiles_start_webserver():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -187,7 +187,7 @@ def mbtiles_start_webserver():
 #
 
 
-def mbtiles_http_jpeg_three_bands():
+def test_mbtiles_http_jpeg_three_bands():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -214,7 +214,7 @@ def mbtiles_http_jpeg_three_bands():
 #
 
 
-def mbtiles_http_jpeg_single_band():
+def test_mbtiles_http_jpeg_single_band():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -241,7 +241,7 @@ def mbtiles_http_jpeg_single_band():
 #
 
 
-def mbtiles_http_png():
+def test_mbtiles_http_png():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -268,7 +268,7 @@ def mbtiles_http_png():
 #
 
 
-def mbtiles_stop_webserver():
+def test_mbtiles_stop_webserver():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -285,7 +285,7 @@ def mbtiles_stop_webserver():
 # Basic test without any option
 
 
-def mbtiles_4():
+def test_mbtiles_4():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -328,7 +328,7 @@ def mbtiles_4():
 # Test write support of a single band dataset
 
 
-def mbtiles_5():
+def test_mbtiles_5():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -389,7 +389,7 @@ def mbtiles_5():
 # Test write support with options
 
 
-def mbtiles_6():
+def test_mbtiles_6():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -432,7 +432,7 @@ def mbtiles_6():
 # Test building overview
 
 
-def mbtiles_7():
+def test_mbtiles_7():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -503,7 +503,7 @@ def mbtiles_7():
 # Single band with 24 bit color table, PNG
 
 
-def mbtiles_8():
+def test_mbtiles_8():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -562,7 +562,7 @@ def mbtiles_8():
 # Test we are robust to invalid bounds
 
 
-def mbtiles_9():
+def test_mbtiles_9():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -595,7 +595,7 @@ def mbtiles_9():
 # Test compaction of temporary database
 
 
-def mbtiles_10():
+def test_mbtiles_10():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -624,7 +624,7 @@ def mbtiles_10():
 # Test opening a .mbtiles.sql file
 
 
-def mbtiles_11():
+def test_mbtiles_11():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -644,7 +644,7 @@ def mbtiles_11():
 ###############################################################################
 
 
-def mbtiles_raster_open_in_vector_mode():
+def test_mbtiles_raster_open_in_vector_mode():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -658,7 +658,7 @@ def mbtiles_raster_open_in_vector_mode():
 ###############################################################################
 
 
-def mbtiles_create():
+def test_mbtiles_create():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -738,7 +738,7 @@ def mbtiles_create():
 ###############################################################################
 # Cleanup
 
-def mbtiles_cleanup():
+def test_mbtiles_cleanup():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -747,25 +747,25 @@ def mbtiles_cleanup():
 
 
 gdaltest_list = [
-    mbtiles_1,
-    mbtiles_2,
-    mbtiles_3,
-    mbtiles_start_webserver,
-    mbtiles_http_jpeg_three_bands,
-    mbtiles_http_jpeg_single_band,
-    mbtiles_http_png,
-    mbtiles_stop_webserver,
-    mbtiles_4,
-    mbtiles_5,
-    mbtiles_6,
-    mbtiles_7,
-    mbtiles_8,
-    mbtiles_9,
-    mbtiles_10,
-    mbtiles_11,
-    mbtiles_raster_open_in_vector_mode,
-    mbtiles_create,
-    mbtiles_cleanup]
+    test_mbtiles_1,
+    test_mbtiles_2,
+    test_mbtiles_3,
+    test_mbtiles_start_webserver,
+    test_mbtiles_http_jpeg_three_bands,
+    test_mbtiles_http_jpeg_single_band,
+    test_mbtiles_http_png,
+    test_mbtiles_stop_webserver,
+    test_mbtiles_4,
+    test_mbtiles_5,
+    test_mbtiles_6,
+    test_mbtiles_7,
+    test_mbtiles_8,
+    test_mbtiles_9,
+    test_mbtiles_10,
+    test_mbtiles_11,
+    test_mbtiles_raster_open_in_vector_mode,
+    test_mbtiles_create,
+    test_mbtiles_cleanup]
 
 # gdaltest_list = [ mbtiles_1, mbtiles_create ]
 

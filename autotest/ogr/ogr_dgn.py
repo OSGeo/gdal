@@ -36,7 +36,7 @@ from osgeo import ogr
 # Verify we can open the test file.
 
 
-def ogr_dgn_1():
+def test_ogr_dgn_1():
 
     gdaltest.dgn_ds = ogr.Open('data/smalltest.dgn')
     if gdaltest.dgn_ds is None:
@@ -51,7 +51,7 @@ def ogr_dgn_1():
 # Check first feature, a text element.
 
 
-def ogr_dgn_2():
+def test_ogr_dgn_2():
     if gdaltest.dgn_ds is None:
         return 'skip'
 
@@ -77,7 +77,7 @@ def ogr_dgn_2():
 # Check second feature, a circle.
 
 
-def ogr_dgn_3():
+def test_ogr_dgn_3():
     if gdaltest.dgn_ds is None:
         return 'skip'
 
@@ -113,7 +113,7 @@ def ogr_dgn_3():
 # Check third feature, a polygon with fill styling.
 
 
-def ogr_dgn_4():
+def test_ogr_dgn_4():
     if gdaltest.dgn_ds is None:
         return 'skip'
 
@@ -140,7 +140,7 @@ def ogr_dgn_4():
 # Use attribute query to pick just the type 15 level 2 object.
 
 
-def ogr_dgn_5():
+def test_ogr_dgn_5():
 
     if gdaltest.dgn_ds is None:
         return 'skip'
@@ -155,7 +155,7 @@ def ogr_dgn_5():
 # Use spatial filter to just pick the big circle.
 
 
-def ogr_dgn_6():
+def test_ogr_dgn_6():
 
     if gdaltest.dgn_ds is None:
         return 'skip'
@@ -173,7 +173,7 @@ def ogr_dgn_6():
 # Copy our small dgn file to a new dgn file.
 
 
-def ogr_dgn_7():
+def test_ogr_dgn_7():
 
     if gdaltest.dgn_ds is None:
         return 'skip'
@@ -212,7 +212,7 @@ def ogr_dgn_7():
 #
 
 
-def ogr_dgn_8():
+def test_ogr_dgn_8():
 
     if gdaltest.dgn_ds is None:
         return 'skip'
@@ -289,7 +289,7 @@ def ogr_dgn_8():
 # Test delta encoding (#6806)
 
 
-def ogr_dgn_online_1():
+def test_ogr_dgn_online_1():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/dgn/DGNSample_v7.dgn', 'DGNSample_v7.dgn'):
         return 'skip'
@@ -310,7 +310,7 @@ def ogr_dgn_online_1():
 #  Cleanup
 
 
-def ogr_dgn_cleanup():
+def test_ogr_dgn_cleanup():
 
     if gdaltest.dgn_ds is not None:
         gdaltest.dgn_lyr = None
@@ -321,16 +321,16 @@ def ogr_dgn_cleanup():
 
 
 gdaltest_list = [
-    ogr_dgn_1,
-    ogr_dgn_2,
-    ogr_dgn_3,
-    ogr_dgn_4,
-    ogr_dgn_5,
-    ogr_dgn_6,
-    ogr_dgn_7,
-    ogr_dgn_8,
-    ogr_dgn_online_1,
-    ogr_dgn_cleanup]
+    test_ogr_dgn_1,
+    test_ogr_dgn_2,
+    test_ogr_dgn_3,
+    test_ogr_dgn_4,
+    test_ogr_dgn_5,
+    test_ogr_dgn_6,
+    test_ogr_dgn_7,
+    test_ogr_dgn_8,
+    test_ogr_dgn_online_1,
+    test_ogr_dgn_cleanup]
 
 if __name__ == '__main__':
 

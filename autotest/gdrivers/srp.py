@@ -41,7 +41,7 @@ import gdaltest
 # Read USRP dataset with PCB=0
 
 
-def srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
+def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32600 + 17)
@@ -94,21 +94,21 @@ def srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
 # Read USRP dataset with PCB=4
 
 
-def srp_2():
-    return srp_1('USRP_PCB4/FKUSRP01.IMG')
+def test_srp_2():
+    return test_srp_1('USRP_PCB4/FKUSRP01.IMG')
 
 ###############################################################################
 # Read USRP dataset with PCB=8
 
 
-def srp_3():
-    return srp_1('USRP_PCB8/FKUSRP01.IMG')
+def test_srp_3():
+    return test_srp_1('USRP_PCB8/FKUSRP01.IMG')
 
 ###############################################################################
 # Read from TRANSH01.THF file.
 
 
-def srp_4():
+def test_srp_4():
 
     tst = gdaltest.GDALTest('SRP', 'USRP_PCB0/TRANSH01.THF', 1, 24576)
     ret = tst.testOpen()
@@ -118,7 +118,7 @@ def srp_4():
 # Read from TRANSH01.THF file (without "optimization" for single GEN in THF)
 
 
-def srp_5():
+def test_srp_5():
 
     gdal.SetConfigOption('SRP_SINGLE_GEN_IN_THF_AS_DATASET', 'FALSE')
     ds = gdal.Open('data/USRP_PCB0/TRANSH01.THF')
@@ -154,7 +154,7 @@ def srp_5():
 # Read with subdataset syntax
 
 
-def srp_6():
+def test_srp_6():
 
     tst = gdaltest.GDALTest('SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute=1)
     return tst.testOpen()
@@ -163,7 +163,7 @@ def srp_6():
 ###############################################################################
 # Cleanup
 
-def srp_cleanup():
+def test_srp_cleanup():
 
     # FIXME ?
     os.unlink('data/USRP_PCB0/TRANSH01.THF.aux.xml')
@@ -173,13 +173,13 @@ def srp_cleanup():
 
 
 gdaltest_list = [
-    srp_1,
-    srp_2,
-    srp_3,
-    srp_4,
-    srp_5,
-    srp_6,
-    srp_cleanup
+    test_srp_1,
+    test_srp_2,
+    test_srp_3,
+    test_srp_4,
+    test_srp_5,
+    test_srp_6,
+    test_srp_cleanup
 ]
 
 if __name__ == '__main__':

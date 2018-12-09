@@ -44,7 +44,7 @@ import webserver
 # Find RDA driver
 
 
-def rda_test_presence():
+def test_rda_test_presence():
 
     gdaltest.rda_drv = gdal.GetDriverByName('RDA')
 
@@ -63,7 +63,7 @@ def rda_test_presence():
 ###############################################################################
 
 
-def rda_bad_connection_string():
+def test_rda_bad_connection_string():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -94,7 +94,7 @@ def rda_bad_connection_string():
 ###############################################################################
 
 
-def rda_missing_credentials():
+def test_rda_missing_credentials():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -110,7 +110,7 @@ def rda_missing_credentials():
 ###############################################################################
 
 
-def rda_failed_authentication():
+def test_rda_failed_authentication():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -182,7 +182,7 @@ def rda_failed_authentication():
 ###############################################################################
 
 
-def rda_error_metadata():
+def test_rda_error_metadata():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -367,7 +367,7 @@ def rda_error_metadata():
 ###############################################################################
 
 
-def rda_graph_nominal():
+def test_rda_graph_nominal():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -766,7 +766,7 @@ def rda_graph_nominal():
 ###############################################################################
 
 
-def rda_template_nominal():
+def test_rda_template_nominal():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1006,7 +1006,7 @@ def rda_template_nominal():
 
 ###############################################################################
 
-def rda_template_image_reference_nominal():
+def test_rda_template_image_reference_nominal():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1213,7 +1213,7 @@ def rda_template_image_reference_nominal():
     return 'success'
 
 
-def rda_read_gbdx_config():
+def test_rda_read_gbdx_config():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1272,7 +1272,7 @@ idaho_api_url = 127.0.0.1:%d/rda_api
 ###############################################################################
 
 
-def rda_download_queue():
+def test_rda_download_queue():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1351,7 +1351,7 @@ def rda_download_queue():
 ###############################################################################
 
 
-def rda_rpc():
+def test_rda_rpc():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1457,7 +1457,7 @@ def rda_rpc():
 ###############################################################################
 
 
-def rda_real_cache_dir():
+def test_rda_real_cache_dir():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1551,7 +1551,7 @@ def rda_real_cache_dir():
 ###############################################################################
 
 
-def rda_real_expired_authentication():
+def test_rda_real_expired_authentication():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1612,7 +1612,7 @@ def rda_real_expired_authentication():
 ###############################################################################
 
 
-def rda_bad_tile():
+def test_rda_bad_tile():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1730,7 +1730,7 @@ def rda_bad_tile():
 #
 
 
-def rda_cleanup():
+def test_rda_cleanup():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -1744,21 +1744,21 @@ def rda_cleanup():
 
 
 gdaltest_list = [
-    rda_test_presence,
-    rda_bad_connection_string,
-    rda_missing_credentials,
-    rda_failed_authentication,
-    rda_error_metadata,
-    rda_graph_nominal,
-    rda_template_nominal,
-    rda_template_image_reference_nominal,
-    rda_read_gbdx_config,
-    rda_download_queue,
-    rda_rpc,
-    rda_real_cache_dir,
-    rda_real_expired_authentication,
-    rda_bad_tile,
-    rda_cleanup]
+    test_rda_test_presence,
+    test_rda_bad_connection_string,
+    test_rda_missing_credentials,
+    test_rda_failed_authentication,
+    test_rda_error_metadata,
+    test_rda_graph_nominal,
+    test_rda_template_nominal,
+    test_rda_template_image_reference_nominal,
+    test_rda_read_gbdx_config,
+    test_rda_download_queue,
+    test_rda_rpc,
+    test_rda_real_cache_dir,
+    test_rda_real_expired_authentication,
+    test_rda_bad_tile,
+    test_rda_cleanup]
 
 if __name__ == '__main__':
 

@@ -92,7 +92,7 @@ def have_proj480():
 #
 
 
-def osr_proj4_1():
+def test_osr_proj4_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4('+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000 +k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000 +a=6377340.189000 +rf=299.324965 +towgs84=482.530,-130.596,564.557,-1.042,-0.214,-0.631,8.15')
@@ -109,7 +109,7 @@ def osr_proj4_1():
 #
 
 
-def osr_proj4_2():
+def test_osr_proj4_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat +units=m")
@@ -130,7 +130,7 @@ def osr_proj4_2():
 #
 
 
-def osr_proj4_3():
+def test_osr_proj4_3():
 
     srs = osr.SpatialReference()
 
@@ -154,7 +154,7 @@ def osr_proj4_3():
 #
 
 
-def osr_proj4_4():
+def test_osr_proj4_4():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=utm +zone=11 +datum=WGS84')
@@ -179,7 +179,7 @@ def osr_proj4_4():
 #
 
 
-def osr_proj4_5():
+def test_osr_proj4_5():
 
     srs = osr.SpatialReference()
 
@@ -209,7 +209,7 @@ def osr_proj4_5():
 #
 
 
-def osr_proj4_6():
+def test_osr_proj4_6():
 
     expect_proj4 = '+proj=merc +lon_0=0 +lat_ts=46.1333331 +x_0=1000 +y_0=2000 +datum=WGS84 +units=m +no_defs '
 
@@ -276,7 +276,7 @@ def osr_proj4_6():
 #
 
 
-def osr_proj4_7():
+def test_osr_proj4_7():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(23700)
@@ -321,7 +321,7 @@ def osr_proj4_7():
 # Check EPSG:3857, confirm Google Mercator hackery.
 
 
-def osr_proj4_8():
+def test_osr_proj4_8():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
@@ -349,7 +349,7 @@ def osr_proj4_8():
 #
 
 
-def osr_proj4_9():
+def test_osr_proj4_9():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4267)
@@ -377,7 +377,7 @@ def osr_proj4_9():
 #
 
 
-def osr_proj4_10():
+def test_osr_proj4_10():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4('+proj=geocent +ellps=WGS84 +towgs84=0,0,0 ')
@@ -405,7 +405,7 @@ def osr_proj4_10():
 #
 
 
-def osr_proj4_11():
+def test_osr_proj4_11():
 
     proj4strlist = ['+proj=bonne +lon_0=2 +lat_1=1 +x_0=3 +y_0=4',
                     '+proj=cass +lat_0=1 +lon_0=2 +x_0=3 +y_0=4',
@@ -504,7 +504,7 @@ def osr_proj4_11():
 #
 
 
-def osr_proj4_12():
+def test_osr_proj4_12():
 
     expect_wkt = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -534,7 +534,7 @@ def osr_proj4_12():
 #
 
 
-def osr_proj4_13():
+def test_osr_proj4_13():
 
     proj4strlist = ['',
                     # None,
@@ -562,7 +562,7 @@ def osr_proj4_13():
 #
 
 
-def osr_proj4_14():
+def test_osr_proj4_14():
 
     proj4str = '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +nodefs'
 
@@ -636,7 +636,7 @@ def osr_proj4_14():
 #
 
 
-def osr_proj4_15():
+def test_osr_proj4_15():
 
     srs = osr.SpatialReference()
     if srs.ImportFromProj4("+init=IGNF:LAMB93") != 0:
@@ -659,7 +659,7 @@ def osr_proj4_15():
 #
 
 
-def osr_proj4_16():
+def test_osr_proj4_16():
 
     def almost(a, b):
         if abs(a - b) > 0.000000000001:
@@ -702,7 +702,7 @@ def osr_proj4_16():
 #
 
 
-def osr_proj4_17():
+def test_osr_proj4_17():
 
     units = (('km', 'kilometre'),
              ('m', 'Meter'),
@@ -741,7 +741,7 @@ def osr_proj4_17():
 #
 
 
-def osr_proj4_18():
+def test_osr_proj4_18():
 
     for p in ['no_off', 'no_uoff']:
         srs = osr.SpatialReference()
@@ -765,7 +765,7 @@ def osr_proj4_18():
 # Test EXTENSION and AUTHORITY in DATUM
 
 
-def osr_proj4_19():
+def test_osr_proj4_19():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=longlat +datum=WGS84 +nadgrids=@null")
@@ -786,7 +786,7 @@ def osr_proj4_19():
 # Test EXTENSION in GOGCS
 
 
-def osr_proj4_20():
+def test_osr_proj4_20():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=longlat +foo=bar +wktext")
@@ -808,7 +808,7 @@ def osr_proj4_20():
 # Test importing datum other than WGS84, WGS72, NAD27 or NAD83
 
 
-def osr_proj4_21():
+def test_osr_proj4_21():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=longlat +datum=nzgd49")
@@ -828,7 +828,7 @@ def osr_proj4_21():
 # Test importing ellipsoid defined with +R
 
 
-def osr_proj4_22():
+def test_osr_proj4_22():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=longlat +R=1")
@@ -845,7 +845,7 @@ def osr_proj4_22():
 # Test importing ellipsoid defined with +a and +f
 
 
-def osr_proj4_23():
+def test_osr_proj4_23():
 
     # +f=0 particular case
     srs = osr.SpatialReference()
@@ -872,7 +872,7 @@ def osr_proj4_23():
 # Test importing linear units defined with +to_meter
 
 
-def osr_proj4_24():
+def test_osr_proj4_24():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +to_meter=1.0")
@@ -919,7 +919,7 @@ def osr_proj4_24():
 # Test importing linear units defined with +vto_meter
 
 
-def osr_proj4_25():
+def test_osr_proj4_25():
 
     if not have_proj480():
         return 'skip'
@@ -969,7 +969,7 @@ def osr_proj4_25():
 # Test importing linear units defined with +vunits
 
 
-def osr_proj4_26():
+def test_osr_proj4_26():
 
     if not have_proj480():
         return 'skip'
@@ -1009,7 +1009,7 @@ def osr_proj4_26():
 # Test geostationary +sweep (#6030)
 
 
-def osr_proj4_27():
+def test_osr_proj4_27():
 
     if not have_proj480():
         return 'skip'
@@ -1029,7 +1029,7 @@ def osr_proj4_27():
 # Test importing +init=epsg: with an override
 
 
-def osr_proj4_28():
+def test_osr_proj4_28():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+init=epsg:32631 +units=cm")
@@ -1043,7 +1043,7 @@ def osr_proj4_28():
     return 'success'
 
 
-def osr_proj4_28_missing_proj_epsg_dict():
+def test_osr_proj4_28_missing_proj_epsg_dict():
 
     python_exe = sys.executable
     if sys.platform == 'win32':
@@ -1056,7 +1056,7 @@ def osr_proj4_28_missing_proj_epsg_dict():
     return 'success'
 
 
-def osr_proj4_error_cases_export_mercator():
+def test_osr_proj4_error_cases_export_mercator():
 
     srs = osr.SpatialReference()
 
@@ -1082,36 +1082,36 @@ def osr_proj4_error_cases_export_mercator():
 
 
 gdaltest_list = [
-    osr_proj4_1,
-    osr_proj4_2,
-    osr_proj4_3,
-    osr_proj4_4,
-    osr_proj4_5,
-    osr_proj4_6,
-    osr_proj4_7,
-    osr_proj4_8,
-    osr_proj4_9,
-    osr_proj4_10,
-    osr_proj4_11,
-    osr_proj4_12,
-    osr_proj4_13,
-    osr_proj4_14,
-    osr_proj4_15,
-    osr_proj4_16,
-    osr_proj4_17,
-    osr_proj4_18,
-    osr_proj4_19,
-    osr_proj4_20,
-    osr_proj4_21,
-    osr_proj4_22,
-    osr_proj4_23,
-    osr_proj4_24,
-    osr_proj4_25,
-    osr_proj4_26,
-    osr_proj4_27,
-    osr_proj4_28,
-    osr_proj4_28_missing_proj_epsg_dict,
-    osr_proj4_error_cases_export_mercator,
+    test_osr_proj4_1,
+    test_osr_proj4_2,
+    test_osr_proj4_3,
+    test_osr_proj4_4,
+    test_osr_proj4_5,
+    test_osr_proj4_6,
+    test_osr_proj4_7,
+    test_osr_proj4_8,
+    test_osr_proj4_9,
+    test_osr_proj4_10,
+    test_osr_proj4_11,
+    test_osr_proj4_12,
+    test_osr_proj4_13,
+    test_osr_proj4_14,
+    test_osr_proj4_15,
+    test_osr_proj4_16,
+    test_osr_proj4_17,
+    test_osr_proj4_18,
+    test_osr_proj4_19,
+    test_osr_proj4_20,
+    test_osr_proj4_21,
+    test_osr_proj4_22,
+    test_osr_proj4_23,
+    test_osr_proj4_24,
+    test_osr_proj4_25,
+    test_osr_proj4_26,
+    test_osr_proj4_27,
+    test_osr_proj4_28,
+    test_osr_proj4_28_missing_proj_epsg_dict,
+    test_osr_proj4_error_cases_export_mercator,
 ]
 
 
@@ -1119,7 +1119,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 2 and sys.argv[1] == "osr_proj4_28":
         os.putenv('PROJ_LIB', '/i/dont_exist')
-        gdaltest.run_tests([osr_proj4_28])
+        gdaltest.run_tests([test_osr_proj4_28])
         sys.exit(0)
 
     gdaltest.setup_run('osr_proj4')

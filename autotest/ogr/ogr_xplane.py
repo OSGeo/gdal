@@ -38,7 +38,7 @@ from osgeo import ogr
 # Test apt.dat reading
 
 
-def ogr_xplane_apt_dat():
+def test_ogr_xplane_apt_dat():
 
     xplane_apt_ds = ogr.Open('data/apt.dat')
 
@@ -84,7 +84,7 @@ def ogr_xplane_apt_dat():
 ###############################################################################
 # Test apt.dat v810 reading
 
-def ogr_xplane_apt_v810_dat():
+def test_ogr_xplane_apt_v810_dat():
 
     xplane_apt_ds = ogr.Open('data/apt810/apt.dat')
 
@@ -130,7 +130,7 @@ def ogr_xplane_apt_v810_dat():
 # Test nav.dat reading
 
 
-def ogr_xplane_nav_dat():
+def test_ogr_xplane_nav_dat():
 
     xplane_nav_ds = ogr.Open('data/nav.dat')
 
@@ -167,7 +167,7 @@ def ogr_xplane_nav_dat():
 ###############################################################################
 # Test awy.dat reading
 
-def ogr_xplane_awy_dat():
+def test_ogr_xplane_awy_dat():
 
     xplane_awy_ds = ogr.Open('data/awy.dat')
 
@@ -197,7 +197,7 @@ def ogr_xplane_awy_dat():
 # Test fix.dat reading
 
 
-def ogr_xplane_fix_dat():
+def test_ogr_xplane_fix_dat():
 
     xplane_fix_ds = ogr.Open('data/fix.dat')
 
@@ -227,11 +227,11 @@ def ogr_xplane_fix_dat():
 
 
 gdaltest_list = [
-    ogr_xplane_apt_dat,
-    ogr_xplane_apt_v810_dat,
-    ogr_xplane_nav_dat,
-    ogr_xplane_awy_dat,
-    ogr_xplane_fix_dat]
+    test_ogr_xplane_apt_dat,
+    test_ogr_xplane_apt_v810_dat,
+    test_ogr_xplane_nav_dat,
+    test_ogr_xplane_awy_dat,
+    test_ogr_xplane_fix_dat]
 
 if __name__ == '__main__':
 

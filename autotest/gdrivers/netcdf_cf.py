@@ -556,7 +556,7 @@ def netcdf_cfproj_test_cf(proj, projNc):
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
-def netcdf_cf_1():
+def test_netcdf_cf_1():
 
     # setup netcdf and netcdf_cf environment
     netcdf_setup()
@@ -584,7 +584,7 @@ def netcdf_cf_1():
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
-def netcdf_cf_2():
+def test_netcdf_cf_2():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -603,7 +603,7 @@ def netcdf_cf_2():
 ###############################################################################
 # test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
 # note: this test fails in trunk (before r23246)
-def netcdf_cf_3():
+def test_netcdf_cf_3():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -630,7 +630,7 @@ def netcdf_cf_3():
 # test support for various CF projections
 
 
-def netcdf_cf_4():
+def test_netcdf_cf_4():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -647,7 +647,7 @@ def netcdf_cf_4():
 # test support for PS variants (bug #2893)
 
 
-def netcdf_cf_5():
+def test_netcdf_cf_5():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -671,11 +671,11 @@ def netcdf_cf_5():
 
 
 gdaltest_list = [
-    netcdf_cf_1,
-    netcdf_cf_2,
-    netcdf_cf_3,
-    netcdf_cf_4,
-    netcdf_cf_5,
+    test_netcdf_cf_1,
+    test_netcdf_cf_2,
+    test_netcdf_cf_3,
+    test_netcdf_cf_4,
+    test_netcdf_cf_5,
     None]
 
 if __name__ == '__main__':

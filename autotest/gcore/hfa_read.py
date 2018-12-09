@@ -61,14 +61,14 @@ def test_hfa_open(filename, checksum):
 ###############################################################################
 # Test bugfix for https://oss-fuzz.com/v2/testcase-detail/6053338875428864
 
-def hfa_read_completedefn_recursion():
+def test_hfa_read_completedefn_recursion():
 
     with gdaltest.error_handler():
         gdal.Open('data/hfa_completedefn_recursion.img')
     return 'success'
 
 
-gdaltest_list = [hfa_read_completedefn_recursion]
+gdaltest_list = [test_hfa_read_completedefn_recursion]
 
 if __name__ == '__main__':
 

@@ -40,7 +40,7 @@ from osgeo import osr
 #
 
 
-def osr_usgs_1():
+def test_osr_usgs_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromUSGS(
@@ -67,7 +67,7 @@ def osr_usgs_1():
 #
 
 
-def osr_usgs_2():
+def test_osr_usgs_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
@@ -97,8 +97,8 @@ def osr_usgs_2():
 
 
 gdaltest_list = [
-    osr_usgs_1,
-    osr_usgs_2,
+    test_osr_usgs_1,
+    test_osr_usgs_2,
     None]
 
 if __name__ == '__main__':

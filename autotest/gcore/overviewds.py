@@ -41,7 +41,7 @@ from osgeo import gdal
 # Error cases
 
 
-def overviewds_1():
+def test_overviewds_1():
     ds = gdal.OpenEx('data/byte.tif', open_options=['OVERVIEW_LEVEL=-1'])
     if ds is not None:
         return 'fail'
@@ -55,7 +55,7 @@ def overviewds_1():
 # Nominal cases
 
 
-def overviewds_2():
+def test_overviewds_2():
 
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
@@ -130,7 +130,7 @@ def overviewds_2():
 # Test GCP
 
 
-def overviewds_3():
+def test_overviewds_3():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/byte.tif', src_ds)
@@ -192,7 +192,7 @@ def myfloat(s):
     return float(s)
 
 
-def overviewds_4():
+def test_overviewds_4():
 
     shutil.copy('data/byte.tif', 'tmp/byte.tif')
     shutil.copy('data/test_rpc.txt', 'tmp/byte_rpc.txt')
@@ -250,7 +250,7 @@ def overviewds_4():
 # Test GEOLOCATION
 
 
-def overviewds_5():
+def test_overviewds_5():
 
     shutil.copy('data/sstgeo.tif', 'tmp/sstgeo.tif')
     shutil.copy('data/sstgeo.vrt', 'tmp/sstgeo.vrt')
@@ -311,7 +311,7 @@ def overviewds_5():
 # Test VRT
 
 
-def overviewds_6():
+def test_overviewds_6():
 
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
@@ -340,7 +340,7 @@ def overviewds_6():
 # Cleanup
 
 
-def overviewds_cleanup():
+def test_overviewds_cleanup():
 
     gdal.GetDriverByName('GTiff').Delete('tmp/byte.tif')
     try:
@@ -361,13 +361,13 @@ def overviewds_cleanup():
     return 'success'
 
 
-gdaltest_list = [overviewds_1,
-                 overviewds_2,
-                 overviewds_3,
-                 overviewds_4,
-                 overviewds_5,
-                 overviewds_6,
-                 overviewds_cleanup]
+gdaltest_list = [test_overviewds_1,
+                 test_overviewds_2,
+                 test_overviewds_3,
+                 test_overviewds_4,
+                 test_overviewds_5,
+                 test_overviewds_6,
+                 test_overviewds_cleanup]
 
 if __name__ == '__main__':
 

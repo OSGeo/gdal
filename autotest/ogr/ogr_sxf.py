@@ -36,7 +36,7 @@ from osgeo import ogr
 # Open SXF datasource.
 
 
-def ogr_sxf_1():
+def test_ogr_sxf_1():
 
     gdaltest.sxf_ds = None
     with gdaltest.error_handler():
@@ -51,7 +51,7 @@ def ogr_sxf_1():
 ###############################################################################
 # Run test_ogrsf
 
-def ogr_sxf_2():
+def test_ogr_sxf_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -69,7 +69,7 @@ def ogr_sxf_2():
 #
 
 
-def ogr_sxf_cleanup():
+def test_ogr_sxf_cleanup():
 
     if gdaltest.sxf_ds is None:
         return 'skip'
@@ -80,9 +80,9 @@ def ogr_sxf_cleanup():
 
 
 gdaltest_list = [
-    ogr_sxf_1,
-    ogr_sxf_2,
-    ogr_sxf_cleanup]
+    test_ogr_sxf_1,
+    test_ogr_sxf_2,
+    test_ogr_sxf_cleanup]
 
 if __name__ == '__main__':
 

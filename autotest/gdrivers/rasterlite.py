@@ -41,7 +41,7 @@ import gdaltest
 # Get the rasterlite driver
 
 
-def rasterlite_1():
+def test_rasterlite_1():
 
     gdaltest.rasterlite_drv = gdal.GetDriverByName('RASTERLITE')
     gdaltest.epsilon_drv = gdal.GetDriverByName('EPSILON')
@@ -57,7 +57,7 @@ def rasterlite_1():
 # Test opening a rasterlite DB without overviews
 
 
-def rasterlite_2():
+def test_rasterlite_2():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -135,7 +135,7 @@ def rasterlite_2():
 # Test opening a rasterlite DB with overviews
 
 
-def rasterlite_3():
+def test_rasterlite_3():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -176,7 +176,7 @@ def rasterlite_3():
 # Test opening a rasterlite DB with color table and user-defined spatial extent
 
 
-def rasterlite_4():
+def test_rasterlite_4():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -211,7 +211,7 @@ def rasterlite_4():
 # Test opening a rasterlite DB with color table and do color table expansion
 
 
-def rasterlite_5():
+def test_rasterlite_5():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -253,7 +253,7 @@ def rasterlite_5():
 # Test CreateCopy()
 
 
-def rasterlite_6():
+def test_rasterlite_6():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -306,7 +306,7 @@ def rasterlite_6():
 # Test BuildOverviews()
 
 
-def rasterlite_7():
+def test_rasterlite_7():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -349,7 +349,7 @@ def rasterlite_7():
 # Test CleanOverviews()
 
 
-def rasterlite_8():
+def test_rasterlite_8():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -370,7 +370,7 @@ def rasterlite_8():
 # Create a rasterlite dataset with EPSILON tiles
 
 
-def rasterlite_9():
+def test_rasterlite_9():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -389,7 +389,7 @@ def rasterlite_9():
 # Create a rasterlite dataset with EPSILON tiles
 
 
-def rasterlite_10():
+def test_rasterlite_10():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -408,7 +408,7 @@ def rasterlite_10():
 # Test BuildOverviews() with AVERAGE resampling
 
 
-def rasterlite_11():
+def test_rasterlite_11():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -443,7 +443,7 @@ def rasterlite_11():
 # Test opening a .rasterlite file
 
 
-def rasterlite_12():
+def test_rasterlite_12():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -461,7 +461,7 @@ def rasterlite_12():
 # Test opening a .rasterlite.sql file
 
 
-def rasterlite_13():
+def test_rasterlite_13():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -482,7 +482,7 @@ def rasterlite_13():
 # Cleanup
 
 
-def rasterlite_cleanup():
+def test_rasterlite_cleanup():
 
     if gdaltest.rasterlite_drv is None:
         return 'skip'
@@ -511,20 +511,20 @@ def rasterlite_cleanup():
 
 
 gdaltest_list = [
-    rasterlite_1,
-    rasterlite_2,
-    rasterlite_3,
-    rasterlite_4,
-    rasterlite_5,
-    rasterlite_6,
-    rasterlite_7,
-    rasterlite_8,
-    rasterlite_9,
-    rasterlite_10,
-    rasterlite_11,
-    rasterlite_12,
-    rasterlite_13,
-    rasterlite_cleanup]
+    test_rasterlite_1,
+    test_rasterlite_2,
+    test_rasterlite_3,
+    test_rasterlite_4,
+    test_rasterlite_5,
+    test_rasterlite_6,
+    test_rasterlite_7,
+    test_rasterlite_8,
+    test_rasterlite_9,
+    test_rasterlite_10,
+    test_rasterlite_11,
+    test_rasterlite_12,
+    test_rasterlite_13,
+    test_rasterlite_cleanup]
 
 if __name__ == '__main__':
 

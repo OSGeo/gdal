@@ -43,7 +43,7 @@ from osgeo import osr
 # Create wasp datasource
 
 
-def ogr_wasp_create_ds():
+def test_ogr_wasp_create_ds():
 
     wasp_drv = ogr.GetDriverByName('WAsP')
     wasp_drv.DeleteDataSource('tmp.map')
@@ -58,9 +58,9 @@ def ogr_wasp_create_ds():
 # Create elevation .map from linestrings z
 
 
-def ogr_wasp_elevation_from_linestring_z():
+def test_ogr_wasp_elevation_from_linestring_z():
 
-    if ogr_wasp_create_ds() != 'success':
+    if test_ogr_wasp_create_ds() != 'success':
         return 'skip'
 
     ref = osr.SpatialReference()
@@ -119,9 +119,9 @@ def ogr_wasp_elevation_from_linestring_z():
 # Create elevation .map from linestrings z with simplification
 
 
-def ogr_wasp_elevation_from_linestring_z_toler():
+def test_ogr_wasp_elevation_from_linestring_z_toler():
 
-    if ogr_wasp_create_ds() != 'success':
+    if test_ogr_wasp_create_ds() != 'success':
         return 'skip'
 
     ref = osr.SpatialReference()
@@ -189,9 +189,9 @@ def ogr_wasp_elevation_from_linestring_z_toler():
 ###############################################################################
 # Create elevation .map from linestrings field
 
-def ogr_wasp_elevation_from_linestring_field():
+def test_ogr_wasp_elevation_from_linestring_field():
 
-    if ogr_wasp_create_ds() != 'success':
+    if test_ogr_wasp_create_ds() != 'success':
         return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
@@ -244,9 +244,9 @@ def ogr_wasp_elevation_from_linestring_field():
 # Create roughness .map from linestrings fields
 
 
-def ogr_wasp_roughness_from_linestring_fields():
+def test_ogr_wasp_roughness_from_linestring_fields():
 
-    if ogr_wasp_create_ds() != 'success':
+    if test_ogr_wasp_create_ds() != 'success':
         return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
@@ -307,9 +307,9 @@ def ogr_wasp_roughness_from_linestring_fields():
 # Create .map from polygons z
 
 
-def ogr_wasp_roughness_from_polygon_z():
+def test_ogr_wasp_roughness_from_polygon_z():
 
-    if ogr_wasp_create_ds() != 'success':
+    if test_ogr_wasp_create_ds() != 'success':
         return 'skip'
 
     if not ogrtest.have_geos():
@@ -377,9 +377,9 @@ def ogr_wasp_roughness_from_polygon_z():
 # Create .map from polygons field
 
 
-def ogr_wasp_roughness_from_polygon_field():
+def test_ogr_wasp_roughness_from_polygon_field():
 
-    if ogr_wasp_create_ds() != 'success':
+    if test_ogr_wasp_create_ds() != 'success':
         return 'skip'
 
     if not ogrtest.have_geos():
@@ -452,9 +452,9 @@ def ogr_wasp_roughness_from_polygon_field():
 # a continuing line (pichart map)
 
 
-def ogr_wasp_merge():
+def test_ogr_wasp_merge():
 
-    if ogr_wasp_create_ds() != 'success':
+    if test_ogr_wasp_create_ds() != 'success':
         return 'skip'
 
     if not ogrtest.have_geos():
@@ -522,8 +522,8 @@ def ogr_wasp_merge():
 # Read map file
 
 
-def ogr_wasp_reading():
-    if ogr_wasp_elevation_from_linestring_z() != 'success':
+def test_ogr_wasp_reading():
+    if test_ogr_wasp_elevation_from_linestring_z() != 'success':
         return 'skip'
 
     gdaltest.wasp_ds = None
@@ -548,7 +548,7 @@ def ogr_wasp_reading():
 # Cleanup
 
 
-def ogr_wasp_cleanup():
+def test_ogr_wasp_cleanup():
 
     wasp_drv = ogr.GetDriverByName('WAsP')
     wasp_drv.DeleteDataSource('tmp.map')
@@ -556,16 +556,16 @@ def ogr_wasp_cleanup():
 
 
 gdaltest_list = [
-    ogr_wasp_create_ds,
-    ogr_wasp_elevation_from_linestring_z,
-    ogr_wasp_elevation_from_linestring_z_toler,
-    ogr_wasp_elevation_from_linestring_field,
-    ogr_wasp_roughness_from_linestring_fields,
-    ogr_wasp_roughness_from_polygon_z,
-    ogr_wasp_roughness_from_polygon_field,
-    ogr_wasp_merge,
-    ogr_wasp_reading,
-    ogr_wasp_cleanup
+    test_ogr_wasp_create_ds,
+    test_ogr_wasp_elevation_from_linestring_z,
+    test_ogr_wasp_elevation_from_linestring_z_toler,
+    test_ogr_wasp_elevation_from_linestring_field,
+    test_ogr_wasp_roughness_from_linestring_fields,
+    test_ogr_wasp_roughness_from_polygon_z,
+    test_ogr_wasp_roughness_from_polygon_field,
+    test_ogr_wasp_merge,
+    test_ogr_wasp_reading,
+    test_ogr_wasp_cleanup
 ]
 
 if __name__ == '__main__':

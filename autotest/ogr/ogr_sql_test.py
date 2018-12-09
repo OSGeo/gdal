@@ -39,7 +39,7 @@ import ogrtest
 # Test a simple query with a where clause.
 
 
-def ogr_sql_1():
+def test_ogr_sql_1():
     gdaltest.ds = ogr.Open('data')
     gdaltest.lyr = gdaltest.ds.GetLayerByName('poly')
 
@@ -62,7 +62,7 @@ def ogr_sql_1():
 # Test DISTINCT handling
 
 
-def ogr_sql_2():
+def test_ogr_sql_2():
 
     expect = [168, 169, 166, 158, 165]
 
@@ -78,7 +78,7 @@ def ogr_sql_2():
 # Test ORDER BY handling
 
 
-def ogr_sql_3():
+def test_ogr_sql_3():
 
     expect = [158, 165, 166, 168, 169]
 
@@ -94,7 +94,7 @@ def ogr_sql_3():
 # Test ORDER BY DESC handling
 
 
-def ogr_sql_3_desc():
+def test_ogr_sql_3_desc():
 
     expect = [169, 168, 166, 165, 158]
 
@@ -110,7 +110,7 @@ def ogr_sql_3_desc():
 # Test DISTINCT and ORDER BY on strings.
 
 
-def ogr_sql_4():
+def test_ogr_sql_4():
 
     expect = ['_158_', '_165_', '_166_', '_168_', '_170_', '_171_', '_179_']
 
@@ -126,7 +126,7 @@ def ogr_sql_4():
 # Test column functions.
 
 
-def ogr_sql_5():
+def test_ogr_sql_5():
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select max(eas_id), min(eas_id), avg(eas_id), sum(eas_id), count(eas_id) from idlink')
     feat = sql_lyr.GetNextFeature()
@@ -158,7 +158,7 @@ def ogr_sql_5():
 # Test simple COUNT() function.
 
 
-def ogr_sql_6():
+def test_ogr_sql_6():
 
     expect = [10]
 
@@ -174,7 +174,7 @@ def ogr_sql_6():
 # Verify that selecting the FID works properly.
 
 
-def ogr_sql_7():
+def test_ogr_sql_7():
 
     expect = [7, 8]
 
@@ -190,7 +190,7 @@ def ogr_sql_7():
 # Verify that wildcard expansion works properly.
 
 
-def ogr_sql_8():
+def test_ogr_sql_8():
 
     expect = ['35043369', '35043408']
 
@@ -206,7 +206,7 @@ def ogr_sql_8():
 # Verify that quoted table names work.
 
 
-def ogr_sql_9():
+def test_ogr_sql_9():
 
     expect = ['35043369', '35043408']
 
@@ -222,7 +222,7 @@ def ogr_sql_9():
 # Test the ILIKE operator.
 
 
-def ogr_sql_10():
+def test_ogr_sql_10():
 
     expect = [170]
 
@@ -238,7 +238,7 @@ def ogr_sql_10():
 # Test MAX() on empty dataset.
 
 
-def ogr_sql_11():
+def test_ogr_sql_11():
 
     expect = [None]
 
@@ -254,7 +254,7 @@ def ogr_sql_11():
 # Test DISTINCT on empty dataset.
 
 
-def ogr_sql_12():
+def test_ogr_sql_12():
 
     expect = []
 
@@ -270,7 +270,7 @@ def ogr_sql_12():
 # Verify selection of, and on ogr_geometry.
 
 
-def ogr_sql_13():
+def test_ogr_sql_13():
 
     expect = ['POLYGON', 'POLYGON', 'POLYGON', 'POLYGON', 'POLYGON',
               'POLYGON', 'POLYGON', 'POLYGON', 'POLYGON', 'POLYGON']
@@ -287,7 +287,7 @@ def ogr_sql_13():
 # Verify selection of, and on ogr_style and ogr_geom_wkt.
 
 
-def ogr_sql_14():
+def test_ogr_sql_14():
 
     expect = [
         'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")',
@@ -307,7 +307,7 @@ def ogr_sql_14():
 # Verify that selecting with filtering by FID works properly.
 
 
-def ogr_sql_15():
+def test_ogr_sql_15():
 
     expect = [7]
 
@@ -322,7 +322,7 @@ def ogr_sql_15():
 ###############################################################################
 
 
-def ogr_sql_16():
+def test_ogr_sql_16():
 
     expect = [2]
 
@@ -340,7 +340,7 @@ def ogr_sql_16():
 ###############################################################################
 # Test the RFC 21 CAST operator.
 #
-def ogr_sql_17():
+def test_ogr_sql_17():
 
     expect = ['1', '2']
 
@@ -392,7 +392,7 @@ def ogr_sql_17():
 ###############################################################################
 # Test extended character set
 
-def ogr_sql_18():
+def test_ogr_sql_18():
 
     if sys.version_info >= (3, 0, 0):
         return 'skip'
@@ -435,7 +435,7 @@ def ogr_sql_18():
 # Test empty request string
 
 
-def ogr_sql_19():
+def test_ogr_sql_19():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL('')
@@ -450,7 +450,7 @@ def ogr_sql_19():
 # Test query "SELECT * from my_layer" on layer without any field (#2788)
 
 
-def ogr_sql_20():
+def test_ogr_sql_20():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
@@ -475,7 +475,7 @@ def ogr_sql_20():
 # Test query "SELECT *, fid from my_layer" on layer without any field (#2788)
 
 
-def ogr_sql_21():
+def test_ogr_sql_21():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     mem_ds.CreateLayer("my_layer")
@@ -494,7 +494,7 @@ def ogr_sql_21():
 # Test multiple expansion of '*' as in "SELECT *, fid, *, my_layer.* from my_layer" (#2788)
 
 
-def ogr_sql_22():
+def test_ogr_sql_22():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
@@ -524,7 +524,7 @@ def ogr_sql_22():
 # Test query "SELECT DISTINCT test from my_layer" (#2788)
 
 
-def ogr_sql_23():
+def test_ogr_sql_23():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
@@ -552,7 +552,7 @@ def ogr_sql_23():
 # Test that style strings get carried with OGR SQL SELECT results. (#2808)
 
 
-def ogr_sql_24():
+def test_ogr_sql_24():
 
     result = 'success'
 
@@ -575,7 +575,7 @@ def ogr_sql_24():
 # Test for OGR_GEOM_AREA special field (#2949)
 
 
-def ogr_sql_25():
+def test_ogr_sql_25():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
@@ -610,7 +610,7 @@ def ogr_sql_25():
 #
 
 
-def ogr_sql_26():
+def test_ogr_sql_26():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     mem_lyr = mem_ds.CreateLayer("my_layer")
@@ -639,7 +639,7 @@ def ogr_sql_26():
 #
 
 
-def ogr_sql_27():
+def test_ogr_sql_27():
 
     ds = ogr.Open('data/testdatetime.csv')
 
@@ -662,7 +662,7 @@ def ogr_sql_27():
 # With RFC 28 new implementation, most of them are directly caught by the generated
 # code from the grammar
 
-def ogr_sql_28():
+def test_ogr_sql_28():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -837,7 +837,7 @@ def ogr_sql_28():
 # Verify that IS NULL and IS NOT NULL are working
 
 
-def ogr_sql_29():
+def test_ogr_sql_29():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -881,7 +881,7 @@ def ogr_sql_29():
 # Verify a select mixing a count(*) with something else works without errors
 
 
-def ogr_sql_30():
+def test_ogr_sql_30():
 
     gdal.ErrorReset()
 
@@ -901,7 +901,7 @@ def ogr_sql_30():
 # Regression test for #4022
 
 
-def ogr_sql_31():
+def test_ogr_sql_31():
 
     gdal.ErrorReset()
 
@@ -921,7 +921,7 @@ def ogr_sql_31():
 # Regression test for #4022 (same as above, but with dialect = 'OGRSQL')
 
 
-def ogr_sql_32():
+def test_ogr_sql_32():
 
     gdal.ErrorReset()
 
@@ -942,7 +942,7 @@ def ogr_sql_32():
 # Check ALTER TABLE commands
 
 
-def ogr_sql_33():
+def test_ogr_sql_33():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -991,7 +991,7 @@ def ogr_sql_33():
 # Test implicit conversion from string to numeric (#4259)
 
 
-def ogr_sql_34():
+def test_ogr_sql_34():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select count(*) from poly where eas_id in ('165')")
 
@@ -1016,7 +1016,7 @@ def ogr_sql_34():
 # Test huge SQL queries (#4262)
 
 
-def ogr_sql_35():
+def test_ogr_sql_35():
 
     cols = "area"
     for _ in range(10):
@@ -1033,7 +1033,7 @@ def ogr_sql_35():
 # Test select distinct on null values (#4353)
 
 
-def ogr_sql_36():
+def test_ogr_sql_36():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('ogr_sql_36')
     lyr = ds.CreateLayer('layer')
@@ -1089,7 +1089,7 @@ def ogr_sql_36():
 # Test select count([distinct] column) with null values (#4354)
 
 
-def ogr_sql_37():
+def test_ogr_sql_37():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('ogr_sql_37')
     lyr = ds.CreateLayer('layer')
@@ -1183,7 +1183,7 @@ def ogr_sql_37():
 # Test "SELECT MAX(OGR_GEOM_AREA) FROM XXXX" (#4633)
 
 
-def ogr_sql_38():
+def test_ogr_sql_38():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("SELECT MAX(OGR_GEOM_AREA) FROM poly")
 
@@ -1201,7 +1201,7 @@ def ogr_sql_38():
 # Test ORDER BY on a float special field
 
 
-def ogr_sql_39():
+def test_ogr_sql_39():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly ORDER BY OGR_GEOM_AREA")
 
@@ -1219,7 +1219,7 @@ def ogr_sql_39():
 # Test ORDER BY on a int special field
 
 
-def ogr_sql_40():
+def test_ogr_sql_40():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly ORDER BY FID DESC")
 
@@ -1233,7 +1233,7 @@ def ogr_sql_40():
 # Test ORDER BY on a string special field
 
 
-def ogr_sql_41():
+def test_ogr_sql_41():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly ORDER BY OGR_GEOMETRY")
 
@@ -1247,7 +1247,7 @@ def ogr_sql_41():
 # Test comparing to empty string
 
 
-def ogr_sql_42():
+def test_ogr_sql_42():
 
     lyr = gdaltest.ds.GetLayerByName('poly')
     lyr.SetAttributeFilter("prfedea <> ''")
@@ -1270,7 +1270,7 @@ def ogr_sql_42():
 # Test escape sequences
 
 
-def ogr_sql_43():
+def test_ogr_sql_43():
 
     ret = 'success'
     sql = "SELECT '\"' as a, '\\\'' as b, '\'\'' as c FROM poly"
@@ -1288,7 +1288,7 @@ def ogr_sql_43():
 # Test hstore_get_value()
 
 
-def ogr_sql_44():
+def test_ogr_sql_44():
 
     # Invalid parameters
     for sql in ["SELECT hstore_get_value('a') FROM poly",
@@ -1350,7 +1350,7 @@ def ogr_sql_44():
 # Test 64 bit GetFeatureCount()
 
 
-def ogr_sql_45():
+def test_ogr_sql_45():
 
     ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="poly">
@@ -1394,7 +1394,7 @@ def ogr_sql_45():
 # Test strict SQL quoting
 
 
-def ogr_sql_46():
+def test_ogr_sql_46():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('test')
     lyr = ds.CreateLayer('test')
@@ -1468,7 +1468,7 @@ def ogr_sql_46():
 # Test NULL sorting (#6155)
 
 
-def ogr_sql_47():
+def test_ogr_sql_47():
 
     ds = ogr.Open('data/sort_test.dbf')
     sql_lyr = ds.ExecuteSQL('SELECT * FROM sort_test ORDER BY text_value')
@@ -1491,7 +1491,7 @@ def ogr_sql_47():
 # Test sorting of more than 100 elements
 
 
-def ogr_sql_48():
+def test_ogr_sql_48():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -1519,7 +1519,7 @@ def ogr_sql_48():
     return 'success'
 
 
-def ogr_sql_cleanup():
+def test_ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
 
@@ -1527,56 +1527,56 @@ def ogr_sql_cleanup():
 
 
 gdaltest_list = [
-    ogr_sql_1,
-    ogr_sql_2,
-    ogr_sql_3,
-    ogr_sql_3_desc,
-    ogr_sql_4,
-    ogr_sql_5,
-    ogr_sql_6,
-    ogr_sql_7,
-    ogr_sql_8,
-    ogr_sql_9,
-    ogr_sql_10,
-    ogr_sql_11,
-    ogr_sql_12,
-    ogr_sql_13,
-    ogr_sql_14,
-    ogr_sql_15,
-    ogr_sql_16,
-    ogr_sql_17,
-    ogr_sql_18,
-    ogr_sql_19,
-    ogr_sql_20,
-    ogr_sql_21,
-    ogr_sql_22,
-    ogr_sql_23,
-    ogr_sql_24,
-    ogr_sql_25,
-    ogr_sql_26,
-    ogr_sql_27,
-    ogr_sql_28,
-    ogr_sql_29,
-    ogr_sql_30,
-    ogr_sql_31,
-    ogr_sql_32,
-    ogr_sql_33,
-    ogr_sql_34,
-    ogr_sql_35,
-    ogr_sql_36,
-    ogr_sql_37,
-    ogr_sql_38,
-    ogr_sql_39,
-    ogr_sql_40,
-    ogr_sql_41,
-    ogr_sql_42,
-    ogr_sql_43,
-    ogr_sql_44,
-    ogr_sql_45,
-    ogr_sql_46,
-    ogr_sql_47,
-    ogr_sql_48,
-    ogr_sql_cleanup]
+    test_ogr_sql_1,
+    test_ogr_sql_2,
+    test_ogr_sql_3,
+    test_ogr_sql_3_desc,
+    test_ogr_sql_4,
+    test_ogr_sql_5,
+    test_ogr_sql_6,
+    test_ogr_sql_7,
+    test_ogr_sql_8,
+    test_ogr_sql_9,
+    test_ogr_sql_10,
+    test_ogr_sql_11,
+    test_ogr_sql_12,
+    test_ogr_sql_13,
+    test_ogr_sql_14,
+    test_ogr_sql_15,
+    test_ogr_sql_16,
+    test_ogr_sql_17,
+    test_ogr_sql_18,
+    test_ogr_sql_19,
+    test_ogr_sql_20,
+    test_ogr_sql_21,
+    test_ogr_sql_22,
+    test_ogr_sql_23,
+    test_ogr_sql_24,
+    test_ogr_sql_25,
+    test_ogr_sql_26,
+    test_ogr_sql_27,
+    test_ogr_sql_28,
+    test_ogr_sql_29,
+    test_ogr_sql_30,
+    test_ogr_sql_31,
+    test_ogr_sql_32,
+    test_ogr_sql_33,
+    test_ogr_sql_34,
+    test_ogr_sql_35,
+    test_ogr_sql_36,
+    test_ogr_sql_37,
+    test_ogr_sql_38,
+    test_ogr_sql_39,
+    test_ogr_sql_40,
+    test_ogr_sql_41,
+    test_ogr_sql_42,
+    test_ogr_sql_43,
+    test_ogr_sql_44,
+    test_ogr_sql_45,
+    test_ogr_sql_46,
+    test_ogr_sql_47,
+    test_ogr_sql_48,
+    test_ogr_sql_cleanup]
 
 if __name__ == '__main__':
 

@@ -39,7 +39,7 @@ from osgeo import ogr
 # Basic test
 
 
-def ogr_htf_1():
+def test_ogr_htf_1():
 
     ds = ogr.Open('data/test.htf')
     if ds is None:
@@ -105,7 +105,7 @@ def ogr_htf_1():
 # Run test_ogrsf
 
 
-def ogr_htf_2():
+def test_ogr_htf_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -127,8 +127,8 @@ def ogr_htf_2():
 
 
 gdaltest_list = [
-    ogr_htf_1,
-    ogr_htf_2]
+    test_ogr_htf_1,
+    test_ogr_htf_2]
 
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ import gdaltest
 # Test reading OZF2 file
 
 
-def ozi_online_1():
+def test_ozi_online_1():
 
     if not gdaltest.download_file('http://www.oziexplorer2.com/maps/Europe2001_setup.exe', 'Europe2001_setup.exe'):
         return 'skip'
@@ -106,7 +106,7 @@ def ozi_online_1():
 
 
 gdaltest_list = [
-    ozi_online_1]
+    test_ozi_online_1]
 
 if __name__ == '__main__':
 

@@ -41,7 +41,7 @@ from osgeo import osr
 ###############################################################################
 # Create a UTM WGS84 coordinate system and check various items.
 
-def osr_basic_1():
+def test_osr_basic_1():
 
     utm_srs = osr.SpatialReference()
     # Southern hemisphere
@@ -93,7 +93,7 @@ def osr_basic_1():
 # Simple default NAD83 State Plane zone.
 
 
-def osr_basic_2():
+def test_osr_basic_2():
 
     srs = osr.SpatialReference()
     srs.SetStatePlane(403, 1)  # California III NAD83.
@@ -138,7 +138,7 @@ def osr_basic_2():
 # NAD83 State Plane zone, but overridden to be in Feet.
 
 
-def osr_basic_3():
+def test_osr_basic_3():
 
     srs = osr.SpatialReference()
 
@@ -211,7 +211,7 @@ def osr_basic_3():
 # Translate a coordinate system with nad shift into to PROJ.4 and back
 # and verify that the TOWGS84 parameters are preserved.
 
-def osr_basic_4():
+def test_osr_basic_4():
 
     srs = osr.SpatialReference()
     srs.SetGS(cm=-117.0, fe=100000.0, fn=100000)
@@ -239,7 +239,7 @@ def osr_basic_4():
 # Test URN support for OGC:CRS84.
 
 
-def osr_basic_5():
+def test_osr_basic_5():
 
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC:1.3:CRS84')
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
@@ -253,7 +253,7 @@ def osr_basic_5():
 # Test URN support for EPSG
 
 
-def osr_basic_6():
+def test_osr_basic_6():
 
     # Without version
     wkt_1 = osr.GetUserInputAsWKT('urn:x-ogc:def:crs:EPSG::4326')
@@ -286,7 +286,7 @@ def osr_basic_6():
 # Test URN support for auto projection.
 
 
-def osr_basic_7():
+def test_osr_basic_7():
 
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
     wkt_2 = 'PROJCS["UTM Zone 11, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]]]'
@@ -302,7 +302,7 @@ def osr_basic_7():
 # Test the SetLinearUnitsAndUpdateParameters() method.
 
 
-def osr_basic_8():
+def test_osr_basic_8():
 
     srs = osr.SpatialReference()
 
@@ -336,7 +336,7 @@ def osr_basic_8():
 # Test the Validate() method.
 
 
-def osr_basic_9():
+def test_osr_basic_9():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("PROJCS[\"unnamed\",GEOGCS[\"unnamed ellipse\",DATUM[\"unknown\",SPHEROID[\"unnamed\",6378137,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Mercator_2SP\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"]]")
@@ -349,7 +349,7 @@ def osr_basic_9():
 ###############################################################################
 # Test the Validate() method on PROJCS with AXIS definition (#2739)
 
-def osr_basic_10():
+def test_osr_basic_10():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
@@ -385,7 +385,7 @@ def osr_basic_10():
 # Test the IsSame() method (and the IsSameGeogCS() method through that)
 
 
-def osr_basic_11():
+def test_osr_basic_11():
 
     srs1 = osr.SpatialReference()
     srs1.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
@@ -441,7 +441,7 @@ def osr_basic_11():
 # Test URN support for OGC:CRS84.
 
 
-def osr_basic_12():
+def test_osr_basic_12():
 
     wkt_1 = osr.GetUserInputAsWKT('CRS:84')
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
@@ -455,7 +455,7 @@ def osr_basic_12():
 # Test GEOCCS lookup in supporting data files.
 
 
-def osr_basic_13():
+def test_osr_basic_13():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4328)
@@ -482,7 +482,7 @@ def osr_basic_13():
 # Manually setup a simple geocentric/wgs84 srs.
 
 
-def osr_basic_14():
+def test_osr_basic_14():
 
     srs = osr.SpatialReference()
     srs.SetGeocCS('My Geocentric')
@@ -511,7 +511,7 @@ def osr_basic_14():
 # Test validation and fixup methods.
 
 
-def osr_basic_15():
+def test_osr_basic_15():
 
     wkt = """GEOCCS["WGS 84 (geocentric)",
     PRIMEM["Greenwich",0,
@@ -544,7 +544,7 @@ def osr_basic_15():
 # Test OSRSetGeocCS()
 
 
-def osr_basic_16():
+def test_osr_basic_16():
 
     # Nominal test : change citation of a GEOCCS
     srs = osr.SpatialReference()
@@ -623,7 +623,7 @@ def osr_basic_16():
 # Test OGC URL support
 
 
-def osr_basic_17():
+def test_osr_basic_17():
 
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:EPSG::4326')
     wkt_2 = osr.GetUserInputAsWKT('http://www.opengis.net/def/crs/EPSG/0/4326')
@@ -637,7 +637,7 @@ def osr_basic_17():
 # Test OGC URL support for compound CRS
 
 
-def osr_basic_18():
+def test_osr_basic_18():
 
     # This is a dummy one, but who cares
     wkt = osr.GetUserInputAsWKT('http://www.opengis.net/def/crs-compound?1=http://www.opengis.net/def/crs/EPSG/0/4326&2=http://www.opengis.net/def/crs/EPSG/0/4326')
@@ -652,7 +652,7 @@ def osr_basic_18():
 # Test well known GCS names against their corresponding EPSG definitions (#6080)
 
 
-def osr_basic_19():
+def test_osr_basic_19():
 
     sr = osr.SpatialReference()
     sr.SetWellKnownGeogCS('WGS84')
@@ -708,7 +708,7 @@ def osr_basic_19():
 # Test GetAxisName() and GetAxisOrientation() and GetAngularUnitsName()
 
 
-def osr_basic_20():
+def test_osr_basic_20():
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSGA(4326)
@@ -744,7 +744,7 @@ def osr_basic_20():
 # Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
 
 
-def osr_basic_21():
+def test_osr_basic_21():
 
     wkt1 = """PROJCS["unnamed",
     GEOGCS["Segara (Jakarta)",
@@ -808,7 +808,7 @@ def osr_basic_21():
 # Test LCC_2SP -> LCC_1SP -> LCC_2SP
 
 
-def osr_basic_22():
+def test_osr_basic_22():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("""PROJCS["unnamed",
@@ -1005,7 +1005,7 @@ def osr_basic_22():
 # Test LCC_1SP -> LCC_2SP -> LCC_1SP
 
 
-def osr_basic_23():
+def test_osr_basic_23():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("""PROJCS["unnamed",
@@ -1073,7 +1073,7 @@ def osr_basic_23():
 # Test Mercator_1SP -> Mercator_2SP -> Mercator_1SP
 
 
-def osr_basic_24():
+def test_osr_basic_24():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("""PROJCS["unnamed",
@@ -1131,7 +1131,7 @@ def osr_basic_24():
 # Test corner cases of ConvertToOtherProjection()
 
 
-def osr_basic_25():
+def test_osr_basic_25():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("""GEOGCS["WGS 84",
@@ -1443,7 +1443,7 @@ def osr_basic_25():
 # Test corner cases of osr.SetGeocCS()
 
 
-def osr_basic_setgeogcs():
+def test_osr_basic_setgeogcs():
 
     sr = osr.SpatialReference()
     sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
@@ -1481,32 +1481,32 @@ def osr_basic_setgeogcs():
 
 
 gdaltest_list = [
-    osr_basic_1,
-    osr_basic_2,
-    osr_basic_3,
-    osr_basic_4,
-    osr_basic_5,
-    osr_basic_6,
-    osr_basic_7,
-    osr_basic_8,
-    osr_basic_9,
-    osr_basic_10,
-    osr_basic_11,
-    osr_basic_12,
-    osr_basic_13,
-    osr_basic_14,
-    osr_basic_15,
-    osr_basic_16,
-    osr_basic_17,
-    osr_basic_18,
-    osr_basic_19,
-    osr_basic_20,
-    osr_basic_21,
-    osr_basic_22,
-    osr_basic_23,
-    osr_basic_24,
-    osr_basic_25,
-    osr_basic_setgeogcs,
+    test_osr_basic_1,
+    test_osr_basic_2,
+    test_osr_basic_3,
+    test_osr_basic_4,
+    test_osr_basic_5,
+    test_osr_basic_6,
+    test_osr_basic_7,
+    test_osr_basic_8,
+    test_osr_basic_9,
+    test_osr_basic_10,
+    test_osr_basic_11,
+    test_osr_basic_12,
+    test_osr_basic_13,
+    test_osr_basic_14,
+    test_osr_basic_15,
+    test_osr_basic_16,
+    test_osr_basic_17,
+    test_osr_basic_18,
+    test_osr_basic_19,
+    test_osr_basic_20,
+    test_osr_basic_21,
+    test_osr_basic_22,
+    test_osr_basic_23,
+    test_osr_basic_24,
+    test_osr_basic_25,
+    test_osr_basic_setgeogcs,
     None]
 
 if __name__ == '__main__':

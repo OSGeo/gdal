@@ -51,7 +51,7 @@ import gdaltest
 # Verify we have the driver.
 
 
-def wcs_1():
+def test_wcs_1():
 
     # Disable wcs tests till we have a more reliable test server.
     gdaltest.wcs_drv = gdal.GetDriverByName('WCS')
@@ -92,7 +92,7 @@ def wcs_2():
 # Check various things about the configuration.
 
 
-def wcs_3():
+def test_wcs_3():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
         return 'skip'
@@ -133,7 +133,7 @@ def wcs_3():
 # Check checksum
 
 
-def wcs_4():
+def test_wcs_4():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
         return 'skip'
@@ -478,7 +478,7 @@ def setupFct():
 ###############################################################################
 
 
-def wcs_6():
+def test_wcs_6():
     driver = gdal.GetDriverByName('WCS')
     if driver is None:
         return 'skip'
@@ -577,7 +577,7 @@ def wcs_6():
 ###############################################################################
 
 
-def wcs_cleanup():
+def test_wcs_cleanup():
 
     gdaltest.wcs_drv = None
     gdaltest.wcs_ds = None
@@ -596,13 +596,13 @@ def wcs_cleanup():
 
 
 gdaltest_list = [
-    wcs_1,
+    test_wcs_1,
     # wcs_2, #FIXME: re-enable after adapting test
-    wcs_3,
-    wcs_4,
+    test_wcs_3,
+    test_wcs_4,
     # wcs_5, #FIXME: re-enable after adapting test
-    wcs_6,
-    wcs_cleanup]
+    test_wcs_6,
+    test_wcs_cleanup]
 
 
 if __name__ == '__main__':

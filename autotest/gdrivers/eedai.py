@@ -44,7 +44,7 @@ import webserver
 # Find EEDAI driver
 
 
-def eedai_1():
+def test_eedai_1():
 
     gdaltest.eedai_drv = gdal.GetDriverByName('EEDAI')
 
@@ -66,7 +66,7 @@ def eedai_1():
 # Nominal case
 
 
-def eedai_2():
+def test_eedai_2():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -366,7 +366,7 @@ def eedai_2():
 # Test OAuth2 with ServiceAccount
 
 
-def eedai_3():
+def test_eedai_3():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -419,7 +419,7 @@ gwE6fxOLyJDxuWRf
 # Test OAuth2 with GOOGLE_APPLICATION_CREDENTIALS
 
 
-def eedai_GOOGLE_APPLICATION_CREDENTIALS():
+def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -477,7 +477,7 @@ gwE6fxOLyJDxuWRf\n
 # Read credentials from simulated GCE instance
 
 
-def eedai_gce_credentials():
+def test_eedai_gce_credentials():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -546,7 +546,7 @@ def eedai_gce_credentials():
 # Request in PNG mode
 
 
-def eedai_4():
+def test_eedai_4():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -695,7 +695,7 @@ def eedai_4():
 # Request in AUTO GTIFF mode
 
 
-def eedai_geotiff():
+def test_eedai_geotiff():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -761,7 +761,7 @@ def eedai_geotiff():
 #
 
 
-def eedai_real_service():
+def test_eedai_real_service():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -810,7 +810,7 @@ def eedai_real_service():
 #
 
 
-def eedai_cleanup():
+def test_eedai_cleanup():
 
     if gdaltest.eedai_drv is None:
         return 'skip'
@@ -831,15 +831,15 @@ def eedai_cleanup():
 
 
 gdaltest_list = [
-    eedai_1,
-    eedai_2,
-    eedai_3,
-    eedai_GOOGLE_APPLICATION_CREDENTIALS,
-    eedai_gce_credentials,
-    eedai_4,
-    eedai_geotiff,
-    eedai_cleanup,
-    eedai_real_service,
+    test_eedai_1,
+    test_eedai_2,
+    test_eedai_3,
+    test_eedai_GOOGLE_APPLICATION_CREDENTIALS,
+    test_eedai_gce_credentials,
+    test_eedai_4,
+    test_eedai_geotiff,
+    test_eedai_cleanup,
+    test_eedai_real_service,
 ]
 
 if __name__ == '__main__':

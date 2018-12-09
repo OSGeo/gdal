@@ -39,7 +39,7 @@ import gdaltest
 # Test reading a - fake - IRIS dataset
 
 
-def iris_1():
+def test_iris_1():
 
     tst = gdaltest.GDALTest('IRIS', 'fakeiris.dat', 1, 65532)
     return tst.testOpen()
@@ -48,7 +48,7 @@ def iris_1():
 # Test reading a real world IRIS dataset.
 
 
-def iris_2():
+def test_iris_2():
 
     ds = gdal.Open('data/iristest.dat')
     if ds.GetRasterBand(1).Checksum() != 52872:
@@ -121,8 +121,8 @@ def iris_2():
 
 
 gdaltest_list = [
-    iris_1,
-    iris_2]
+    test_iris_1,
+    test_iris_2]
 
 if __name__ == '__main__':
 

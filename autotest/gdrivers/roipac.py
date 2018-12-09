@@ -39,7 +39,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def roipac_1():
+def test_roipac_1():
 
     tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
 
@@ -63,7 +63,7 @@ def roipac_1():
 # Test reading of metadata from the ROI_PAC metadata domain
 
 
-def roipac_2():
+def test_roipac_2():
 
     ds = gdal.Open('data/srtm.dem')
     val = ds.GetMetadataItem('YMAX', 'ROI_PAC')
@@ -76,7 +76,7 @@ def roipac_2():
 # Verify this can be exported losslessly.
 
 
-def roipac_3():
+def test_roipac_3():
 
     tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
     return tst.testCreateCopy(check_gt=1, new_filename='strm.tst.dem')
@@ -85,7 +85,7 @@ def roipac_3():
 # Verify VSIF*L capacity
 
 
-def roipac_4():
+def test_roipac_4():
 
     tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
     return tst.testCreateCopy(check_gt=1, new_filename='strm.tst.dem', vsimem=1)
@@ -94,7 +94,7 @@ def roipac_4():
 # Verify offset/scale metadata reading
 
 
-def roipac_5():
+def test_roipac_5():
 
     ds = gdal.Open('data/srtm.dem')
     band = ds.GetRasterBand(1)
@@ -111,7 +111,7 @@ def roipac_5():
 # Test .flg
 
 
-def roipac_6():
+def test_roipac_6():
 
     tst = gdaltest.GDALTest('roi_pac', 'byte.tif', 1, 4672)
     with gdaltest.error_handler():
@@ -120,12 +120,12 @@ def roipac_6():
 
 
 gdaltest_list = [
-    roipac_1,
-    roipac_2,
-    roipac_3,
-    roipac_4,
-    roipac_5,
-    roipac_6,
+    test_roipac_1,
+    test_roipac_2,
+    test_roipac_3,
+    test_roipac_4,
+    test_roipac_5,
+    test_roipac_6,
 ]
 
 

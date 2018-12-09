@@ -43,7 +43,7 @@ example_compd_wkt = 'COMPD_CS["OSGB36 / British National Grid + ODN",PROJCS["OSG
 # Test parsing and a few operations on a compound coordinate system.
 
 
-def osr_compd_1():
+def test_osr_compd_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(example_compd_wkt)
@@ -87,7 +87,7 @@ def osr_compd_1():
 # Test SetFromUserInput()
 
 
-def osr_compd_2():
+def test_osr_compd_2():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput(example_compd_wkt)
@@ -106,7 +106,7 @@ def osr_compd_2():
 # Test expansion of compound coordinate systems from EPSG definition.
 
 
-def osr_compd_3():
+def test_osr_compd_3():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(7401)
@@ -161,7 +161,7 @@ def osr_compd_3():
 # Test expansion of GCS+VERTCS compound coordinate system.
 
 
-def osr_compd_4():
+def test_osr_compd_4():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(7400)
@@ -206,7 +206,7 @@ def osr_compd_4():
 # expanded properly and converted to PROJ.4 format with the grids.
 
 
-def osr_compd_5():
+def test_osr_compd_5():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:26911+5703')
@@ -271,7 +271,7 @@ def osr_compd_5():
 # Test conversion from PROJ.4 to WKT including vertical units.
 
 
-def osr_compd_6():
+def test_osr_compd_6():
 
     if not osr_proj4.have_proj480():
         return 'skip'
@@ -329,7 +329,7 @@ def osr_compd_6():
 # Test SetCompound()
 
 
-def osr_compd_7():
+def test_osr_compd_7():
 
     srs_horiz = osr.SpatialReference()
     srs_horiz.ImportFromEPSG(4326)
@@ -388,7 +388,7 @@ def osr_compd_7():
 # Test ImportFromURN()
 
 
-def osr_compd_8():
+def test_osr_compd_8():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('urn:ogc:def:crs,crs:EPSG::27700,crs:EPSG::5701')
@@ -407,14 +407,14 @@ def osr_compd_8():
 
 
 gdaltest_list = [
-    osr_compd_1,
-    osr_compd_2,
-    osr_compd_3,
-    osr_compd_4,
-    osr_compd_5,
-    osr_compd_6,
-    osr_compd_7,
-    osr_compd_8,
+    test_osr_compd_1,
+    test_osr_compd_2,
+    test_osr_compd_3,
+    test_osr_compd_4,
+    test_osr_compd_5,
+    test_osr_compd_6,
+    test_osr_compd_7,
+    test_osr_compd_8,
     None]
 
 if __name__ == '__main__':

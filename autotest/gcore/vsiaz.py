@@ -46,7 +46,7 @@ def open_for_read(uri):
 ###############################################################################
 
 
-def vsiaz_init():
+def test_vsiaz_init():
 
     gdaltest.az_vars = {}
     for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
@@ -65,7 +65,7 @@ def vsiaz_init():
 # Error cases
 
 
-def vsiaz_real_server_errors():
+def test_vsiaz_real_server_errors():
 
     if not gdaltest.built_against_curl():
         return 'skip'
@@ -135,7 +135,7 @@ def vsiaz_real_server_errors():
 ###############################################################################
 
 
-def vsiaz_start_webserver():
+def test_vsiaz_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -159,7 +159,7 @@ def vsiaz_start_webserver():
 # Test with a fake Azure Blob server
 
 
-def vsiaz_fake_basic():
+def test_vsiaz_fake_basic():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -268,7 +268,7 @@ def vsiaz_fake_basic():
 # Test ReadDir() with a fake Azure Blob server
 
 
-def vsiaz_fake_readdir():
+def test_vsiaz_fake_readdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -405,7 +405,7 @@ def vsiaz_fake_readdir():
 # Test write
 
 
-def vsiaz_fake_write():
+def test_vsiaz_fake_write():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -688,7 +688,7 @@ def vsiaz_fake_write():
 # Test Unlink()
 
 
-def vsiaz_fake_unlink():
+def test_vsiaz_fake_unlink():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -720,7 +720,7 @@ def vsiaz_fake_unlink():
 # Test Mkdir() / Rmdir()
 
 
-def vsiaz_fake_mkdir_rmdir():
+def test_vsiaz_fake_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -858,7 +858,7 @@ def vsiaz_fake_mkdir_rmdir():
 ###############################################################################
 
 
-def vsiaz_fake_test_BlobEndpointInConnectionString():
+def test_vsiaz_fake_test_BlobEndpointInConnectionString():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -878,7 +878,7 @@ def vsiaz_fake_test_BlobEndpointInConnectionString():
 ###############################################################################
 
 
-def vsiaz_stop_webserver():
+def test_vsiaz_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1075,7 +1075,7 @@ def vsiaz_extra_1():
 ###############################################################################
 
 
-def vsiaz_cleanup():
+def test_vsiaz_cleanup():
 
     for var in gdaltest.az_vars:
         gdal.SetConfigOption(var, gdaltest.az_vars[var])
@@ -1083,17 +1083,17 @@ def vsiaz_cleanup():
     return 'success'
 
 
-gdaltest_list = [vsiaz_init,
-                 vsiaz_real_server_errors,
-                 vsiaz_start_webserver,
-                 vsiaz_fake_basic,
-                 vsiaz_fake_readdir,
-                 vsiaz_fake_write,
-                 vsiaz_fake_unlink,
-                 vsiaz_fake_mkdir_rmdir,
-                 vsiaz_fake_test_BlobEndpointInConnectionString,
-                 vsiaz_stop_webserver,
-                 vsiaz_cleanup]
+gdaltest_list = [test_vsiaz_init,
+                 test_vsiaz_real_server_errors,
+                 test_vsiaz_start_webserver,
+                 test_vsiaz_fake_basic,
+                 test_vsiaz_fake_readdir,
+                 test_vsiaz_fake_write,
+                 test_vsiaz_fake_unlink,
+                 test_vsiaz_fake_mkdir_rmdir,
+                 test_vsiaz_fake_test_BlobEndpointInConnectionString,
+                 test_vsiaz_stop_webserver,
+                 test_vsiaz_cleanup]
 
 # gdaltest_list = [ vsiaz_init, vsiaz_start_webserver, vsiaz_fake_mkdir_rmdir, vsiaz_stop_webserver, vsiaz_cleanup ]
 
@@ -1106,6 +1106,6 @@ if __name__ == '__main__':
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
         gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsiaz_cleanup])
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsiaz_cleanup])
 
     sys.exit(gdaltest.summarize())

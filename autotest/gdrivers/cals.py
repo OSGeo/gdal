@@ -38,7 +38,7 @@ import gdaltest
 # Source has no color table
 
 
-def cals_1():
+def test_cals_1():
 
     tst = gdaltest.GDALTest('CALS', 'small1bit.img', 1, 9907)
 
@@ -48,7 +48,7 @@ def cals_1():
 # Source has a color table (0,0,0),(255,255,255)
 
 
-def cals_2():
+def test_cals_2():
 
     # Has no color table
     tst = gdaltest.GDALTest('CALS', '../../gcore/data/oddsize1bit.tif', 1, 3883)
@@ -59,7 +59,7 @@ def cals_2():
 # Source has a color table (255,255,255),(0,0,0)
 
 
-def cals_3():
+def test_cals_3():
 
     src_ds = gdal.Open('../gcore/data/oddsize1bit.tif')
     tmp_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_2_tmp.cal', src_ds)
@@ -93,7 +93,7 @@ def cals_3():
 # Test CreateCopy() error conditions
 
 
-def cals_4():
+def test_cals_4():
 
     # 0 band
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
@@ -148,7 +148,7 @@ def cals_4():
 # Test PIXEL_PATH & LINE_PROGRESSION metadata item
 
 
-def cals_5():
+def test_cals_5():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
     src_ds.GetRasterBand(1).SetMetadataItem('NBITS', '1', 'IMAGE_STRUCTURE')
@@ -173,11 +173,11 @@ def cals_5():
 
 
 gdaltest_list = [
-    cals_1,
-    cals_2,
-    cals_3,
-    cals_4,
-    cals_5,
+    test_cals_1,
+    test_cals_2,
+    test_cals_3,
+    test_cals_4,
+    test_cals_5,
 ]
 
 

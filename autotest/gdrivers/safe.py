@@ -38,7 +38,7 @@ import gdaltest
 # reduced to 1% of their initial size and metadata stripped
 
 
-def safe_1():
+def test_safe_1():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -46,14 +46,14 @@ def safe_1():
     return tst.testOpen()
 
 
-def safe_2():
+def test_safe_2():
 
     tst = gdaltest.GDALTest(
         'SAFE', 'SAFE_FAKE/test.SAFE/manifest.safe', 2, 3732)
     return tst.testOpen()
 
 
-def safe_3():
+def test_safe_3():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -61,7 +61,7 @@ def safe_3():
     return tst.testOpen()
 
 
-def safe_4():
+def test_safe_4():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -69,7 +69,7 @@ def safe_4():
     return tst.testOpen()
 
 
-def safe_5():
+def test_safe_5():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -78,11 +78,11 @@ def safe_5():
 
 
 gdaltest_list = [
-    safe_1,
-    safe_2,
-    safe_3,
-    safe_4,
-    safe_5]
+    test_safe_1,
+    test_safe_2,
+    test_safe_3,
+    test_safe_4,
+    test_safe_5]
 
 if __name__ == '__main__':
 

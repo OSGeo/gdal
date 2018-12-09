@@ -46,7 +46,7 @@ from osgeo import ogr
 #
 
 
-def ogr_nas_1():
+def test_ogr_nas_1():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
@@ -106,7 +106,7 @@ def ogr_nas_1():
 #
 
 
-def ogr_nas_2():
+def test_ogr_nas_2():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
@@ -167,7 +167,7 @@ def ogr_nas_2():
 #
 
 
-def ogr_nas_3():
+def test_ogr_nas_3():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
@@ -192,7 +192,7 @@ def ogr_nas_3():
 #
 
 
-def ogr_nas_4():
+def test_ogr_nas_4():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
@@ -249,7 +249,7 @@ def ogr_nas_4():
 #
 
 
-def ogr_nas_5():
+def test_ogr_nas_5():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
@@ -335,11 +335,11 @@ def ogr_nas_5():
 
 
 gdaltest_list = [
-    ogr_nas_1,
-    ogr_nas_2,
-    ogr_nas_3,
-    ogr_nas_4,
-    ogr_nas_5]
+    test_ogr_nas_1,
+    test_ogr_nas_2,
+    test_ogr_nas_3,
+    test_ogr_nas_4,
+    test_ogr_nas_5]
 
 if __name__ == '__main__':
 

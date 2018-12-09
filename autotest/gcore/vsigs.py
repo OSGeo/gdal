@@ -46,7 +46,7 @@ def open_for_read(uri):
 ###############################################################################
 
 
-def vsigs_init():
+def test_vsigs_init():
 
     gdaltest.gs_vars = {}
     for var in ('GS_SECRET_ACCESS_KEY', 'GS_ACCESS_KEY_ID',
@@ -77,7 +77,7 @@ def vsigs_init():
 # Error cases
 
 
-def vsigs_1():
+def test_vsigs_1():
 
     if not gdaltest.built_against_curl():
         return 'skip'
@@ -165,7 +165,7 @@ def vsigs_1():
 ###############################################################################
 
 
-def vsigs_start_webserver():
+def test_vsigs_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -187,7 +187,7 @@ def vsigs_start_webserver():
 # Test with a fake Google Cloud Storage server
 
 
-def vsigs_2():
+def test_vsigs_2():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -290,7 +290,7 @@ def vsigs_2():
 # Test ReadDir() with a fake Google Cloud Storage server
 
 
-def vsigs_readdir():
+def test_vsigs_readdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -380,7 +380,7 @@ def vsigs_readdir():
 # Test write
 
 
-def vsigs_write():
+def test_vsigs_write():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -492,7 +492,7 @@ def vsigs_write():
 # Read credentials with OAuth2 refresh_token
 
 
-def vsigs_read_credentials_refresh_token_default_gdal_app():
+def test_vsigs_read_credentials_refresh_token_default_gdal_app():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -574,7 +574,7 @@ def vsigs_read_credentials_refresh_token_default_gdal_app():
 # Read credentials with OAuth2 refresh_token
 
 
-def vsigs_read_credentials_refresh_token_custom_app():
+def test_vsigs_read_credentials_refresh_token_custom_app():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -655,7 +655,7 @@ def vsigs_read_credentials_refresh_token_custom_app():
 # Read credentials with OAuth2 service account
 
 
-def vsigs_read_credentials_oauth2_service_account():
+def test_vsigs_read_credentials_oauth2_service_account():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -773,7 +773,7 @@ gwE6fxOLyJDxuWRf
 # Read credentials with OAuth2 service account through a json configuration file
 
 
-def vsigs_read_credentials_oauth2_service_account_json_file():
+def test_vsigs_read_credentials_oauth2_service_account_json_file():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -876,7 +876,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
 # Read credentials from simulated ~/.boto
 
 
-def vsigs_read_credentials_file():
+def test_vsigs_read_credentials_file():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -941,7 +941,7 @@ gs_secret_access_key = bar
 # Read credentials from simulated ~/.boto
 
 
-def vsigs_read_credentials_file_refresh_token():
+def test_vsigs_read_credentials_file_refresh_token():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1026,7 +1026,7 @@ client_secret = CLIENT_SECRET
 # Read credentials from simulated GCE instance
 
 
-def vsigs_read_credentials_gce():
+def test_vsigs_read_credentials_gce():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1116,7 +1116,7 @@ def vsigs_read_credentials_gce():
 # cached credentials
 
 
-def vsigs_read_credentials_gce_expiration():
+def test_vsigs_read_credentials_gce_expiration():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1189,7 +1189,7 @@ def vsigs_read_credentials_gce_expiration():
 ###############################################################################
 
 
-def vsigs_stop_webserver():
+def test_vsigs_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1393,7 +1393,7 @@ def vsigs_extra_1():
 ###############################################################################
 
 
-def vsigs_cleanup():
+def test_vsigs_cleanup():
 
     for var in gdaltest.gs_vars:
         gdal.SetConfigOption(var, gdaltest.gs_vars[var])
@@ -1401,22 +1401,22 @@ def vsigs_cleanup():
     return 'success'
 
 
-gdaltest_list = [vsigs_init,
-                 vsigs_1,
-                 vsigs_start_webserver,
-                 vsigs_2,
-                 vsigs_readdir,
-                 vsigs_write,
-                 vsigs_read_credentials_refresh_token_default_gdal_app,
-                 vsigs_read_credentials_refresh_token_custom_app,
-                 vsigs_read_credentials_oauth2_service_account,
-                 vsigs_read_credentials_oauth2_service_account_json_file,
-                 vsigs_read_credentials_file,
-                 vsigs_read_credentials_file_refresh_token,
-                 vsigs_read_credentials_gce,
-                 vsigs_read_credentials_gce_expiration,
-                 vsigs_stop_webserver,
-                 vsigs_cleanup]
+gdaltest_list = [test_vsigs_init,
+                 test_vsigs_1,
+                 test_vsigs_start_webserver,
+                 test_vsigs_2,
+                 test_vsigs_readdir,
+                 test_vsigs_write,
+                 test_vsigs_read_credentials_refresh_token_default_gdal_app,
+                 test_vsigs_read_credentials_refresh_token_custom_app,
+                 test_vsigs_read_credentials_oauth2_service_account,
+                 test_vsigs_read_credentials_oauth2_service_account_json_file,
+                 test_vsigs_read_credentials_file,
+                 test_vsigs_read_credentials_file_refresh_token,
+                 test_vsigs_read_credentials_gce,
+                 test_vsigs_read_credentials_gce_expiration,
+                 test_vsigs_stop_webserver,
+                 test_vsigs_cleanup]
 
 # gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_write, vsigs_stop_webserver, vsigs_cleanup ]
 
@@ -1429,6 +1429,6 @@ if __name__ == '__main__':
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
         gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsigs_cleanup])
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsigs_cleanup])
 
     sys.exit(gdaltest.summarize())

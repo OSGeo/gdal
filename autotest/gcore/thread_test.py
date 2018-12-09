@@ -56,7 +56,7 @@ def thread_test_1_worker(args_dict):
         gdal.PopErrorHandler()
 
 
-def thread_test_1():
+def test_thread_test_1():
 
     try:
         from osgeo import gdalnumeric
@@ -82,7 +82,7 @@ def thread_test_1():
     return ret
 
 
-gdaltest_list = [thread_test_1]
+gdaltest_list = [test_thread_test_1]
 
 
 if __name__ == '__main__':

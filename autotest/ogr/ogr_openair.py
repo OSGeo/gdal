@@ -39,7 +39,7 @@ from osgeo import ogr
 # Basic test
 
 
-def ogr_openair_1():
+def test_ogr_openair_1():
 
     ds = ogr.Open('data/openair_test.txt')
     if ds is None:
@@ -82,7 +82,7 @@ def ogr_openair_1():
 
 
 gdaltest_list = [
-    ogr_openair_1]
+    test_ogr_openair_1]
 
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@ from osgeo import osr
 from osgeo import gdal
 
 
-def ogr_jml_init():
+def test_ogr_jml_init():
 
     ds = ogr.Open('data/test.jml')
 
@@ -54,7 +54,7 @@ def ogr_jml_init():
 # Test reading
 
 
-def ogr_jml_1():
+def test_ogr_jml_1():
 
     if not gdaltest.jml_read_support:
         return 'skip'
@@ -132,7 +132,7 @@ def ogr_jml_1():
 # Test creating a file
 
 
-def ogr_jml_2():
+def test_ogr_jml_2():
 
     # Invalid filename
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -445,7 +445,7 @@ def ogr_jml_2():
 # Run test_ogrsf
 
 
-def ogr_jml_3():
+def test_ogr_jml_3():
 
     if not gdaltest.jml_read_support:
         return 'skip'
@@ -466,7 +466,7 @@ def ogr_jml_3():
 # Test a few error cases
 
 
-def ogr_jml_4():
+def test_ogr_jml_4():
 
     if not gdaltest.jml_read_support:
         return 'skip'
@@ -657,7 +657,7 @@ def ogr_jml_4():
 # Test reading SRS
 
 
-def ogr_jml_read_srs():
+def test_ogr_jml_read_srs():
 
     if not gdaltest.jml_read_support:
         return 'skip'
@@ -678,7 +678,7 @@ def ogr_jml_read_srs():
 #
 
 
-def ogr_jml_cleanup():
+def test_ogr_jml_cleanup():
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -686,13 +686,13 @@ def ogr_jml_cleanup():
 
 
 gdaltest_list = [
-    ogr_jml_init,
-    ogr_jml_1,
-    ogr_jml_2,
-    ogr_jml_3,
-    ogr_jml_4,
-    ogr_jml_read_srs,
-    ogr_jml_cleanup]
+    test_ogr_jml_init,
+    test_ogr_jml_1,
+    test_ogr_jml_2,
+    test_ogr_jml_3,
+    test_ogr_jml_4,
+    test_ogr_jml_read_srs,
+    test_ogr_jml_cleanup]
 
 if __name__ == '__main__':
 

@@ -39,7 +39,7 @@ from osgeo import gdal
 # Test a fairly default case.
 
 
-def proximity_1():
+def test_proximity_1():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/pat.tif')
@@ -70,7 +70,7 @@ def proximity_1():
 # Try several options
 
 
-def proximity_2():
+def test_proximity_2():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/pat.tif')
@@ -105,7 +105,7 @@ def proximity_2():
 # Try input nodata option
 
 
-def proximity_3():
+def test_proximity_3():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/pat.tif')
@@ -138,9 +138,9 @@ def proximity_3():
 
 
 gdaltest_list = [
-    proximity_1,
-    proximity_2,
-    proximity_3
+    test_proximity_1,
+    test_proximity_2,
+    test_proximity_3
 ]
 
 if __name__ == '__main__':

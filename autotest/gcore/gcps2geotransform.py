@@ -54,7 +54,7 @@ def _list2gcps(src_list):
 ###############################################################################
 # Test simple exact case of turning GCPs into a GeoTransform.
 
-def gcps2gt_1():
+def test_gcps2gt_1():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
@@ -71,7 +71,7 @@ def gcps2gt_1():
 # Similar but non-exact.
 
 
-def gcps2gt_2():
+def test_gcps2gt_2():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
@@ -89,7 +89,7 @@ def gcps2gt_2():
 # bApproxOK false, and no good solution.
 
 
-def gcps2gt_3():
+def test_gcps2gt_3():
 
     approx_ok = 0
     gt = gdal.GCPsToGeoTransform(_list2gcps([
@@ -108,7 +108,7 @@ def gcps2gt_3():
 # Single point - Should return None.
 
 
-def gcps2gt_4():
+def test_gcps2gt_4():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
@@ -123,7 +123,7 @@ def gcps2gt_4():
 # Two points - simple offset and scale, no rotation.
 
 
-def gcps2gt_5():
+def test_gcps2gt_5():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
@@ -139,7 +139,7 @@ def gcps2gt_5():
 # Special case for four points in a particular order.  Exact result.
 
 
-def gcps2gt_6():
+def test_gcps2gt_6():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (400000, 370000, 400000, 370000),
@@ -157,7 +157,7 @@ def gcps2gt_6():
 # Try a case that is hard to do without normalization.
 
 
-def gcps2gt_7():
+def test_gcps2gt_7():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (400000, 370000, 400000, 370000),
@@ -175,7 +175,7 @@ def gcps2gt_7():
 # A fairly messy real world case without a easy to predict result.
 
 
-def gcps2gt_8():
+def test_gcps2gt_8():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.01, 0.04, -87.05528672907, 39.22759504228),
@@ -194,14 +194,14 @@ def gcps2gt_8():
 
 
 gdaltest_list = [
-    gcps2gt_1,
-    gcps2gt_2,
-    gcps2gt_3,
-    gcps2gt_4,
-    gcps2gt_5,
-    gcps2gt_6,
-    gcps2gt_7,
-    gcps2gt_8,
+    test_gcps2gt_1,
+    test_gcps2gt_2,
+    test_gcps2gt_3,
+    test_gcps2gt_4,
+    test_gcps2gt_5,
+    test_gcps2gt_6,
+    test_gcps2gt_7,
+    test_gcps2gt_8,
 ]
 
 if __name__ == '__main__':

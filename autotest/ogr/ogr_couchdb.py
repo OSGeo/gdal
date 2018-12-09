@@ -43,7 +43,7 @@ from osgeo import ogr
 # Test if driver is available
 
 
-def ogr_couchdb_init():
+def test_ogr_couchdb_init():
 
     ogrtest.couchdb_drv = None
 
@@ -68,7 +68,7 @@ def ogr_couchdb_init():
 # Basic test
 
 
-def ogr_couchdb_1():
+def test_ogr_couchdb_1():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
@@ -93,7 +93,7 @@ def ogr_couchdb_1():
 # Test null / unset
 
 
-def ogr_couchdb_2():
+def test_ogr_couchdb_2():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
@@ -138,7 +138,7 @@ def ogr_couchdb_2():
 ###############################################################################
 # Cleanup
 
-def ogr_couchdb_cleanup():
+def test_ogr_couchdb_cleanup():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
@@ -151,10 +151,10 @@ def ogr_couchdb_cleanup():
 
 
 gdaltest_list = [
-    ogr_couchdb_init,
-    ogr_couchdb_1,
-    ogr_couchdb_2,
-    ogr_couchdb_cleanup
+    test_ogr_couchdb_init,
+    test_ogr_couchdb_1,
+    test_ogr_couchdb_2,
+    test_ogr_couchdb_cleanup
 ]
 
 if __name__ == '__main__':

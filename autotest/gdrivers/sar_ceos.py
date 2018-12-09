@@ -36,7 +36,7 @@ import gdaltest
 ###############################################################################
 
 
-def sar_ceos_online_1():
+def test_sar_ceos_online_1():
     list_files = ['ottawa_patch.img',
                   'ottawa_patch.led',
                   'ottawa_patch.nul',
@@ -52,7 +52,7 @@ def sar_ceos_online_1():
 
 
 gdaltest_list = [
-    sar_ceos_online_1]
+    test_sar_ceos_online_1]
 
 if __name__ == '__main__':
 

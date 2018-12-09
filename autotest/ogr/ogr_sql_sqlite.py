@@ -73,7 +73,7 @@ def ogr_sql_sqlite_available():
 # Tests that don't involve geometry
 
 
-def ogr_sql_sqlite_1():
+def test_ogr_sql_sqlite_1():
 
     ret = ogr_sql_sqlite_available()
     if ret == 'fail':
@@ -299,7 +299,7 @@ def ogr_sql_sqlite_1():
 # Tests that involve geometry  (but without needing Spatialite)
 
 
-def ogr_sql_sqlite_2():
+def test_ogr_sql_sqlite_2():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -427,7 +427,7 @@ def ogr_sql_sqlite_2():
 # Test that involves a join
 
 
-def ogr_sql_sqlite_3():
+def test_ogr_sql_sqlite_3():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -460,7 +460,7 @@ def ogr_sql_sqlite_3():
 # Test that involves a self-join (to check that we can open twice the same table)
 
 
-def ogr_sql_sqlite_4():
+def test_ogr_sql_sqlite_4():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -483,7 +483,7 @@ def ogr_sql_sqlite_4():
 # Test that involves spatialite
 
 
-def ogr_sql_sqlite_5():
+def test_ogr_sql_sqlite_5():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -523,7 +523,7 @@ def ogr_sql_sqlite_5():
 # we are fully compatible with regular SQLite
 
 
-def ogr_sql_sqlite_6():
+def test_ogr_sql_sqlite_6():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -533,15 +533,15 @@ def ogr_sql_sqlite_6():
 
     gdal.SetConfigOption('OGR_SQLITE_DIALECT_USE_SPATIALITE', 'NO')
 
-    ret = ogr_sql_sqlite_1()
+    ret = test_ogr_sql_sqlite_1()
     if ret != 'success':
         return ret
 
-    ret = ogr_sql_sqlite_2()
+    ret = test_ogr_sql_sqlite_2()
     if ret != 'success':
         return ret
 
-    ret = ogr_sql_sqlite_4()
+    ret = test_ogr_sql_sqlite_4()
     if ret != 'success':
         return ret
 
@@ -553,7 +553,7 @@ def ogr_sql_sqlite_6():
 # Test if there's a text column called GEOMETRY already in the table
 
 
-def ogr_sql_sqlite_7():
+def test_ogr_sql_sqlite_7():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -606,7 +606,7 @@ def ogr_sql_sqlite_7():
 # Test join with an external datasource
 
 
-def ogr_sql_sqlite_8():
+def test_ogr_sql_sqlite_8():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -630,7 +630,7 @@ def ogr_sql_sqlite_8():
 # Check parsing of sub-selects
 
 
-def ogr_sql_sqlite_9():
+def test_ogr_sql_sqlite_9():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -654,7 +654,7 @@ def ogr_sql_sqlite_9():
 # Test optimized count(*)
 
 
-def ogr_sql_sqlite_10():
+def test_ogr_sql_sqlite_10():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -678,7 +678,7 @@ def ogr_sql_sqlite_10():
 # Test correct parsing of litterals
 
 
-def ogr_sql_sqlite_11():
+def test_ogr_sql_sqlite_11():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -708,7 +708,7 @@ def ogr_sql_sqlite_11():
 # Test various error conditions
 
 
-def ogr_sql_sqlite_12():
+def test_ogr_sql_sqlite_12():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -741,7 +741,7 @@ def ogr_sql_sqlite_12():
 # Test ogr_layer_Extent(), ogr_layer_SRID() and ogr_layer_GeometryType()
 
 
-def ogr_sql_sqlite_13():
+def test_ogr_sql_sqlite_13():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -962,7 +962,7 @@ def ogr_sql_sqlite_14_and_15(sql):
 # Test 'idx_layername_geometryname' spatial index recognition
 
 
-def ogr_sql_sqlite_14():
+def test_ogr_sql_sqlite_14():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -981,7 +981,7 @@ def ogr_sql_sqlite_14():
 # Test 'SpatialIndex' spatial index recognition
 
 
-def ogr_sql_sqlite_15():
+def test_ogr_sql_sqlite_15():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1265,7 +1265,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 
 
 ###############################################################################
-def ogr_sql_sqlite_start_webserver():
+def test_ogr_sql_sqlite_start_webserver():
 
     ogrtest.webserver_process = None
     ogrtest.webserver_port = 0
@@ -1286,7 +1286,7 @@ def ogr_sql_sqlite_start_webserver():
 # Test ogr_geocode()
 
 
-def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%s'):
+def test_ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%s'):
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1414,7 +1414,7 @@ def ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%
 # Test ogr_geocode_reverse()
 
 
-def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}'):
+def test_ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}'):
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1533,55 +1533,55 @@ def ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocodi
 # Test ogr_geocode() with Yahoo geocoding service
 
 
-def ogr_sql_sqlite_18():
+def test_ogr_sql_sqlite_18():
 
-    return ogr_sql_sqlite_16('YAHOO', 'http://127.0.0.1:%d/yahoogeocoding?q=%%s')
+    return test_ogr_sql_sqlite_16('YAHOO', 'http://127.0.0.1:%d/yahoogeocoding?q=%%s')
 
 ###############################################################################
 # Test ogr_geocode_reverse() with Yahoo geocoding service
 
 
-def ogr_sql_sqlite_19():
+def test_ogr_sql_sqlite_19():
 
-    return ogr_sql_sqlite_17('YAHOO', 'http://127.0.0.1:%d/yahooreversegeocoding?q={lat},{lon}&gflags=R')
+    return test_ogr_sql_sqlite_17('YAHOO', 'http://127.0.0.1:%d/yahooreversegeocoding?q={lat},{lon}&gflags=R')
 
 ###############################################################################
 # Test ogr_geocode() with GeoNames.org geocoding service
 
 
-def ogr_sql_sqlite_20():
+def test_ogr_sql_sqlite_20():
 
-    return ogr_sql_sqlite_16('GEONAMES', 'http://127.0.0.1:%d/geonamesgeocoding?q=%%s')
+    return test_ogr_sql_sqlite_16('GEONAMES', 'http://127.0.0.1:%d/geonamesgeocoding?q=%%s')
 
 ###############################################################################
 # Test ogr_geocode_reverse() with GeoNames.org geocoding service
 
 
-def ogr_sql_sqlite_21():
+def test_ogr_sql_sqlite_21():
 
-    return ogr_sql_sqlite_17('GEONAMES', 'http://127.0.0.1:%d/geonamesreversegeocoding?lat={lat}&lng={lon}')
+    return test_ogr_sql_sqlite_17('GEONAMES', 'http://127.0.0.1:%d/geonamesreversegeocoding?lat={lat}&lng={lon}')
 
 ###############################################################################
 # Test ogr_geocode() with Bing geocoding service
 
 
-def ogr_sql_sqlite_22():
+def test_ogr_sql_sqlite_22():
 
-    return ogr_sql_sqlite_16('BING', 'http://127.0.0.1:%d/binggeocoding?q=%%s')
+    return test_ogr_sql_sqlite_16('BING', 'http://127.0.0.1:%d/binggeocoding?q=%%s')
 
 ###############################################################################
 # Test ogr_geocode_reverse() with Bing geocoding service
 
 
-def ogr_sql_sqlite_23():
+def test_ogr_sql_sqlite_23():
 
-    return ogr_sql_sqlite_17('BING', 'http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}')
+    return test_ogr_sql_sqlite_17('BING', 'http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}')
 
 ###############################################################################
 # Test ogr_deflate() and ogr_inflate()
 
 
-def ogr_sql_sqlite_24():
+def test_ogr_sql_sqlite_24():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1672,7 +1672,7 @@ def ogr_sql_sqlite_24():
 ###############################################################################
 
 
-def ogr_sql_sqlite_stop_webserver():
+def test_ogr_sql_sqlite_stop_webserver():
 
     if ogrtest.webserver_port == 0:
         return 'skip'
@@ -1700,7 +1700,7 @@ def ogr_sql_sqlite_25_test_errors(ds, fct):
         return True
 
 
-def ogr_sql_sqlite_25():
+def test_ogr_sql_sqlite_25():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1765,7 +1765,7 @@ def ogr_sql_sqlite_25():
     return 'success'
 
 
-def ogr_sql_sqlite_26():
+def test_ogr_sql_sqlite_26():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1906,7 +1906,7 @@ def ogr_sql_sqlite_26():
 ###############################################################################
 # Test MIN(), MAX() on a date
 
-def ogr_sql_sqlite_27():
+def test_ogr_sql_sqlite_27():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1945,7 +1945,7 @@ def ogr_sql_sqlite_27():
 # Test hstore_get_value()
 
 
-def ogr_sql_sqlite_28():
+def test_ogr_sql_sqlite_28():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -1994,7 +1994,7 @@ def ogr_sql_sqlite_28():
 # Test compat with curve geometries
 
 
-def ogr_sql_sqlite_29():
+def test_ogr_sql_sqlite_29():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -2028,7 +2028,7 @@ def ogr_sql_sqlite_29():
 # Test compat with M geometries
 
 
-def ogr_sql_sqlite_30():
+def test_ogr_sql_sqlite_30():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -2082,7 +2082,7 @@ def ogr_sql_sqlite_30():
 # Test filtering complex field name
 
 
-def ogr_sql_sqlite_31():
+def test_ogr_sql_sqlite_31():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -2108,39 +2108,39 @@ def ogr_sql_sqlite_31():
 
 
 gdaltest_list = [
-    ogr_sql_sqlite_1,
-    ogr_sql_sqlite_2,
-    ogr_sql_sqlite_3,
-    ogr_sql_sqlite_4,
-    ogr_sql_sqlite_5,
-    ogr_sql_sqlite_6,
-    ogr_sql_sqlite_7,
-    ogr_sql_sqlite_8,
-    ogr_sql_sqlite_9,
-    ogr_sql_sqlite_10,
-    ogr_sql_sqlite_11,
-    ogr_sql_sqlite_12,
-    ogr_sql_sqlite_13,
-    ogr_sql_sqlite_14,
-    ogr_sql_sqlite_15,
-    ogr_sql_sqlite_start_webserver,
-    ogr_sql_sqlite_16,
-    ogr_sql_sqlite_17,
-    ogr_sql_sqlite_18,
-    ogr_sql_sqlite_19,
-    ogr_sql_sqlite_20,
-    ogr_sql_sqlite_21,
-    ogr_sql_sqlite_22,
-    ogr_sql_sqlite_23,
-    ogr_sql_sqlite_stop_webserver,
-    ogr_sql_sqlite_24,
-    ogr_sql_sqlite_25,
-    ogr_sql_sqlite_26,
-    ogr_sql_sqlite_27,
-    ogr_sql_sqlite_28,
-    ogr_sql_sqlite_29,
-    ogr_sql_sqlite_30,
-    ogr_sql_sqlite_31
+    test_ogr_sql_sqlite_1,
+    test_ogr_sql_sqlite_2,
+    test_ogr_sql_sqlite_3,
+    test_ogr_sql_sqlite_4,
+    test_ogr_sql_sqlite_5,
+    test_ogr_sql_sqlite_6,
+    test_ogr_sql_sqlite_7,
+    test_ogr_sql_sqlite_8,
+    test_ogr_sql_sqlite_9,
+    test_ogr_sql_sqlite_10,
+    test_ogr_sql_sqlite_11,
+    test_ogr_sql_sqlite_12,
+    test_ogr_sql_sqlite_13,
+    test_ogr_sql_sqlite_14,
+    test_ogr_sql_sqlite_15,
+    test_ogr_sql_sqlite_start_webserver,
+    test_ogr_sql_sqlite_16,
+    test_ogr_sql_sqlite_17,
+    test_ogr_sql_sqlite_18,
+    test_ogr_sql_sqlite_19,
+    test_ogr_sql_sqlite_20,
+    test_ogr_sql_sqlite_21,
+    test_ogr_sql_sqlite_22,
+    test_ogr_sql_sqlite_23,
+    test_ogr_sql_sqlite_stop_webserver,
+    test_ogr_sql_sqlite_24,
+    test_ogr_sql_sqlite_25,
+    test_ogr_sql_sqlite_26,
+    test_ogr_sql_sqlite_27,
+    test_ogr_sql_sqlite_28,
+    test_ogr_sql_sqlite_29,
+    test_ogr_sql_sqlite_30,
+    test_ogr_sql_sqlite_31
 ]
 
 if __name__ == '__main__':

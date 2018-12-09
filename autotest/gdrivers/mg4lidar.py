@@ -40,7 +40,7 @@ from osgeo import gdal
 #
 
 
-def mg4lidar_1():
+def test_mg4lidar_1():
 
     drv = gdal.GetDriverByName('MG4Lidar')
     if drv is None:
@@ -98,7 +98,7 @@ def mg4lidar_1():
 
 
 gdaltest_list = [
-    mg4lidar_1]
+    test_mg4lidar_1]
 
 if __name__ == '__main__':
 

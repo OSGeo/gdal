@@ -40,7 +40,7 @@ import gdaltest
 # Create a MEM dataset, and set some data, then test it.
 
 
-def mem_1():
+def test_mem_1():
 
     #######################################################
     # Setup dataset
@@ -126,7 +126,7 @@ def mem_1():
 # Open an in-memory array.
 
 
-def mem_2():
+def test_mem_2():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('MEM:::')
@@ -208,7 +208,7 @@ def mem_2():
 # Test creating a MEM dataset with the "MEM:::" name
 
 
-def mem_3():
+def test_mem_3():
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('MEM:::', 1, 1, 1)
@@ -222,7 +222,7 @@ def mem_3():
 # Test creating a band interleaved multi-band MEM dataset
 
 
-def mem_4():
+def test_mem_4():
 
     drv = gdal.GetDriverByName('MEM')
 
@@ -252,7 +252,7 @@ def mem_4():
 # Test creating a pixel interleaved multi-band MEM dataset
 
 
-def mem_5():
+def test_mem_5():
 
     drv = gdal.GetDriverByName('MEM')
 
@@ -286,7 +286,7 @@ def mem_5():
 # Test out-of-memory situations
 
 
-def mem_6():
+def test_mem_6():
 
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
@@ -352,7 +352,7 @@ def mem_6():
 # Test AddBand()
 
 
-def mem_7():
+def test_mem_7():
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('MEM:::', 1, 1, 1)
@@ -367,7 +367,7 @@ def mem_7():
 # Test SetDefaultHistogram() / GetDefaultHistogram()
 
 
-def mem_8():
+def test_mem_8():
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('MEM:::', 1, 1, 1)
@@ -387,7 +387,7 @@ def mem_8():
 # Test RasterIO()
 
 
-def mem_9():
+def test_mem_9():
 
     # Test IRasterIO(GF_Read,)
     src_ds = gdal.Open('data/rgbsmall.tif')
@@ -510,7 +510,7 @@ def mem_9():
 # Test BuildOverviews()
 
 
-def mem_10():
+def test_mem_10():
 
     # Error case: building overview on a 0 band dataset
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
@@ -671,7 +671,7 @@ def mem_10():
 # Test CreateMaskBand()
 
 
-def mem_11():
+def test_mem_11():
 
     # Error case: building overview on a 0 band dataset
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
@@ -747,7 +747,7 @@ def mem_11():
 # Test CreateMaskBand() and overviews.
 
 
-def mem_12():
+def test_mem_12():
 
     # Test on per-band mask
     ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2)
@@ -789,7 +789,7 @@ def mem_12():
 # Check RAT support
 
 
-def mem_rat():
+def test_mem_rat():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
@@ -807,7 +807,7 @@ def mem_rat():
 # Check CategoryNames support
 
 
-def mem_categorynames():
+def test_mem_categorynames():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     ds.GetRasterBand(1).SetCategoryNames(['foo'])
@@ -825,7 +825,7 @@ def mem_categorynames():
 ###############################################################################
 # Check ColorTable support
 
-def mem_colortable():
+def test_mem_colortable():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     ct = gdal.ColorTable()
@@ -845,28 +845,28 @@ def mem_colortable():
 ###############################################################################
 # cleanup
 
-def mem_cleanup():
+def test_mem_cleanup():
     gdaltest.mem_ds = None
     return 'success'
 
 
 gdaltest_list = [
-    mem_1,
-    mem_2,
-    mem_3,
-    mem_4,
-    mem_5,
-    mem_6,
-    mem_7,
-    mem_8,
-    mem_9,
-    mem_10,
-    mem_11,
-    mem_12,
-    mem_rat,
-    mem_categorynames,
-    mem_colortable,
-    mem_cleanup]
+    test_mem_1,
+    test_mem_2,
+    test_mem_3,
+    test_mem_4,
+    test_mem_5,
+    test_mem_6,
+    test_mem_7,
+    test_mem_8,
+    test_mem_9,
+    test_mem_10,
+    test_mem_11,
+    test_mem_12,
+    test_mem_rat,
+    test_mem_categorynames,
+    test_mem_colortable,
+    test_mem_cleanup]
 
 if __name__ == '__main__':
 

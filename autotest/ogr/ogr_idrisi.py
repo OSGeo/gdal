@@ -39,7 +39,7 @@ import ogrtest
 # Test point layer
 
 
-def ogr_idrisi_1():
+def test_ogr_idrisi_1():
 
     ds = ogr.Open('data/points.vct')
     if ds is None:
@@ -142,7 +142,7 @@ def ogr_idrisi_1():
 # Test linestring layer
 
 
-def ogr_idrisi_2():
+def test_ogr_idrisi_2():
 
     ds = ogr.Open('data/lines.vct')
     if ds is None:
@@ -208,7 +208,7 @@ def ogr_idrisi_2():
 # Test polygon layer
 
 
-def ogr_idrisi_3():
+def test_ogr_idrisi_3():
 
     ds = ogr.Open('data/polygons.vct')
     if ds is None:
@@ -272,9 +272,9 @@ def ogr_idrisi_3():
 
 
 gdaltest_list = [
-    ogr_idrisi_1,
-    ogr_idrisi_2,
-    ogr_idrisi_3,
+    test_ogr_idrisi_1,
+    test_ogr_idrisi_2,
+    test_ogr_idrisi_3,
 ]
 
 if __name__ == '__main__':

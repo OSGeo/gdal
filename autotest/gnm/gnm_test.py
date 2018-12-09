@@ -45,7 +45,7 @@ from osgeo import gnm
 # Create file base network
 
 
-def gnm_filenetwork_create():
+def test_gnm_filenetwork_create():
 
     try:
         shutil.rmtree('tmp/test_gnm')
@@ -84,7 +84,7 @@ def gnm_filenetwork_create():
 # Open file base network
 
 
-def gnm_filenetwork_open():
+def test_gnm_filenetwork_open():
 
     if not ogrtest.have_gnm:
         return 'skip'
@@ -112,7 +112,7 @@ def gnm_filenetwork_open():
 # Import layers into file base network
 
 
-def gnm_import():
+def test_gnm_import():
 
     if not ogrtest.have_gnm:
         return 'skip'
@@ -150,7 +150,7 @@ def gnm_import():
 # autoconnect
 
 
-def gnm_autoconnect():
+def test_gnm_autoconnect():
 
     if not ogrtest.have_gnm:
         return 'skip'
@@ -173,7 +173,7 @@ def gnm_autoconnect():
 # Dijkstra shortest path
 
 
-def gnm_graph_dijkstra():
+def test_gnm_graph_dijkstra():
 
     if not ogrtest.have_gnm:
         return 'skip'
@@ -204,7 +204,7 @@ import ogrtest
 # KShortest Paths
 
 
-def gnm_graph_kshortest():
+def test_gnm_graph_kshortest():
 
     if not ogrtest.have_gnm:
         return 'skip'
@@ -233,7 +233,7 @@ def gnm_graph_kshortest():
 # ConnectedComponents
 
 
-def gnm_graph_connectedcomponents():
+def test_gnm_graph_connectedcomponents():
 
     if not ogrtest.have_gnm:
         return 'skip'
@@ -262,7 +262,7 @@ def gnm_graph_connectedcomponents():
 # Network deleting
 
 
-def gnm_delete():
+def test_gnm_delete():
 
     if not ogrtest.have_gnm:
         return 'skip'
@@ -280,14 +280,14 @@ def gnm_delete():
 
 
 gdaltest_list = [
-    gnm_filenetwork_create,
-    gnm_filenetwork_open,
-    gnm_import,
-    gnm_autoconnect,
-    gnm_graph_dijkstra,
-    gnm_graph_kshortest,
-    gnm_graph_connectedcomponents,
-    gnm_delete
+    test_gnm_filenetwork_create,
+    test_gnm_filenetwork_open,
+    test_gnm_import,
+    test_gnm_autoconnect,
+    test_gnm_graph_dijkstra,
+    test_gnm_graph_kshortest,
+    test_gnm_graph_connectedcomponents,
+    test_gnm_delete
 ]
 
 if __name__ == '__main__':

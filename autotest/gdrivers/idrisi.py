@@ -39,7 +39,7 @@ import gdaltest
 # Read test of byte file.
 
 
-def idrisi_1():
+def test_idrisi_1():
 
     tst = gdaltest.GDALTest('RST', 'byte.rst', 1, 5044)
     return tst.testOpen()
@@ -48,7 +48,7 @@ def idrisi_1():
 # Read test of byte file.
 
 
-def idrisi_2():
+def test_idrisi_2():
 
     tst = gdaltest.GDALTest('RST', 'real.rst', 1, 5275)
     return tst.testOpen()
@@ -57,7 +57,7 @@ def idrisi_2():
 #
 
 
-def idrisi_3():
+def test_idrisi_3():
 
     tst = gdaltest.GDALTest('RST', 'float32.bil', 1, 27)
 
@@ -67,7 +67,7 @@ def idrisi_3():
 #
 
 
-def idrisi_4():
+def test_idrisi_4():
 
     tst = gdaltest.GDALTest('RST', 'rgbsmall.tif', 2, 21053)
 
@@ -78,7 +78,7 @@ def idrisi_4():
 # Cleanup.
 
 
-def idrisi_cleanup():
+def test_idrisi_cleanup():
     gdaltest.clean_tmp()
     try:
         os.unlink('data/rgbsmall.tif.aux.xml')
@@ -92,11 +92,11 @@ def idrisi_cleanup():
 
 
 gdaltest_list = [
-    idrisi_1,
-    idrisi_2,
-    idrisi_3,
-    idrisi_4,
-    idrisi_cleanup]
+    test_idrisi_1,
+    test_idrisi_2,
+    test_idrisi_3,
+    test_idrisi_4,
+    test_idrisi_cleanup]
 
 if __name__ == '__main__':
 

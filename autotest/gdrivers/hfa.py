@@ -41,7 +41,7 @@ import gdaltest
 # Verify we can read the special histogram metadata from a provided image.
 
 
-def hfa_histread():
+def test_hfa_histread():
 
     ds = gdal.Open('../gcore/data/utmsmall.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -82,7 +82,7 @@ def hfa_histread():
 # info is preserved.
 
 
-def hfa_histwrite():
+def test_hfa_histwrite():
 
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('../gcore/data/utmsmall.img')
@@ -124,7 +124,7 @@ def hfa_histwrite():
 # histogram information, the new histogram can then be read back in.
 
 
-def hfa_histrewrite():
+def test_hfa_histrewrite():
 
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('../gcore/data/utmsmall.img')
@@ -165,7 +165,7 @@ def hfa_histrewrite():
 # Verify we can read metadata of int.img.
 
 
-def hfa_int_stats_1():
+def test_hfa_int_stats_1():
 
     ds = gdal.Open('data/int.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -205,7 +205,7 @@ def hfa_int_stats_1():
 # Verify we can read band statistics of int.img.
 
 
-def hfa_int_stats_2():
+def test_hfa_int_stats_2():
 
     ds = gdal.Open('data/int.img')
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
@@ -235,7 +235,7 @@ def hfa_int_stats_2():
 # Verify we can read metadata of float.img.
 
 
-def hfa_float_stats_1():
+def test_hfa_float_stats_1():
 
     ds = gdal.Open('data/float.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -283,7 +283,7 @@ def hfa_float_stats_1():
 # Verify we can read band statistics of float.img.
 
 
-def hfa_float_stats_2():
+def test_hfa_float_stats_2():
 
     ds = gdal.Open('data/float.img')
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
@@ -313,7 +313,7 @@ def hfa_float_stats_2():
 # Verify we can read image data.
 
 
-def hfa_int_read():
+def test_hfa_int_read():
 
     ds = gdal.Open('data/int.img')
     band = ds.GetRasterBand(1)
@@ -331,7 +331,7 @@ def hfa_int_read():
 # Verify we can read image data.
 
 
-def hfa_float_read():
+def test_hfa_float_read():
 
     ds = gdal.Open('data/float.img')
     band = ds.GetRasterBand(1)
@@ -357,7 +357,7 @@ def hfa_float_read():
 # verify we can read PE_STRING coordinate system.
 
 
-def hfa_pe_read():
+def test_hfa_pe_read():
 
     ds = gdal.Open('data/87test.img')
     wkt = ds.GetProjectionRef()
@@ -374,7 +374,7 @@ def hfa_pe_read():
 # Verify we can write PE_STRING nodes.
 
 
-def hfa_pe_write():
+def test_hfa_pe_write():
 
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('data/87test.img')
@@ -402,7 +402,7 @@ def hfa_pe_write():
 # Verify we can write and read large metadata items.
 
 
-def hfa_metadata_1():
+def test_hfa_metadata_1():
 
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create('tmp/md_1.img', 100, 150, 1, gdal.GDT_Byte)
@@ -428,7 +428,7 @@ def hfa_metadata_1():
 # nodes.
 
 
-def hfa_metadata_2():
+def test_hfa_metadata_2():
 
     ds = gdal.Open('tmp/md_1.img', gdal.GA_Update)
     md = ds.GetRasterBand(1).GetMetadata()
@@ -458,7 +458,7 @@ def hfa_metadata_2():
 # moving the HFAEntry to the end of the file.  (bug #1109)
 
 
-def hfa_grow_rrdlist():
+def test_hfa_grow_rrdlist():
 
     import shutil
 
@@ -490,7 +490,7 @@ def hfa_grow_rrdlist():
 # Make sure an old .ige file is deleted when creating a new dataset. (#1784)
 
 
-def hfa_clean_ige():
+def test_hfa_clean_ige():
 
     # Create an imagine file, forcing creation of an .ige file.
 
@@ -542,7 +542,7 @@ def hfa_clean_ige():
 # Verify that we can read this corrupt .aux file without hanging (#1907)
 
 
-def hfa_corrupt_aux():
+def test_hfa_corrupt_aux():
 
     # NOTE: we depend on being able to open .aux files as a weak sort of
     # dataset.
@@ -568,7 +568,7 @@ def hfa_corrupt_aux():
 # support MapInformation for units (#1967)
 
 
-def hfa_mapinformation_units():
+def test_hfa_mapinformation_units():
 
     # NOTE: we depend on being able to open .aux files as a weak sort of
     # dataset.
@@ -588,7 +588,7 @@ def hfa_mapinformation_units():
 # Write nodata value.
 
 
-def hfa_nodata_write():
+def test_hfa_nodata_write():
 
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create('tmp/nodata.img', 7, 7, 1, gdal.GDT_Byte)
@@ -611,7 +611,7 @@ def hfa_nodata_write():
 # Verify written nodata value.
 
 
-def hfa_nodata_read():
+def test_hfa_nodata_read():
 
     ds = gdal.Open('tmp/nodata.img')
     b = ds.GetRasterBand(1)
@@ -651,7 +651,7 @@ def hfa_nodata_read():
 # Verify we read simple affine geotransforms properly.
 
 
-def hfa_rotated_read():
+def test_hfa_rotated_read():
 
     ds = gdal.Open('data/fg118-91.aux')
 
@@ -676,7 +676,7 @@ def hfa_rotated_read():
 # Verify we can write affine geotransforms.
 
 
-def hfa_rotated_write():
+def test_hfa_rotated_write():
 
     # make sure we aren't preserving info in .aux.xml file
     try:
@@ -747,7 +747,7 @@ def hfa_rotated_write():
 ###############################################################################
 # Test creating an in memory copy.
 
-def hfa_vsimem():
+def test_hfa_vsimem():
 
     tst = gdaltest.GDALTest('HFA', 'byte.tif', 1, 4672)
 
@@ -758,7 +758,7 @@ def hfa_vsimem():
 # the .img file.  (#2422)
 
 
-def hfa_proName():
+def test_hfa_proName():
 
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/stateplane.vrt')
@@ -793,7 +793,7 @@ def hfa_proName():
 ###############################################################################
 # Read a compressed file where no block has been written (#2523)
 
-def hfa_read_empty_compressed():
+def test_hfa_read_empty_compressed():
 
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create('tmp/emptycompressed.img', 64, 64, 1, options=['COMPRESSED=YES'])
@@ -815,7 +815,7 @@ def hfa_read_empty_compressed():
 # Verify "unique values" based color table (#2419)
 
 
-def hfa_unique_values_color_table():
+def test_hfa_unique_values_color_table():
 
     ds = gdal.Open('data/i8u_c_i.img')
 
@@ -846,7 +846,7 @@ def hfa_unique_values_color_table():
 # Verify "unique values" based histogram.
 
 
-def hfa_unique_values_hist():
+def test_hfa_unique_values_hist():
 
     try:
         gdal.RasterAttributeTable()
@@ -897,7 +897,7 @@ def hfa_unique_values_hist():
 # Verify reading of 3rd order XFORM polynomials.
 
 
-def hfa_xforms_3rd():
+def test_hfa_xforms_3rd():
 
     ds = gdal.Open('data/42BW_420730_VT2.aux')
 
@@ -954,7 +954,7 @@ def hfa_xforms_3rd():
 # Verify that we can clear an existing color table
 
 
-def hfa_delete_colortable():
+def test_hfa_delete_colortable():
     # copy a file to tmp dir to modify.
     open('tmp/i8u.img', 'wb').write(open('data/i8u_c_i.img', 'rb').read())
 
@@ -990,7 +990,7 @@ def hfa_delete_colortable():
 # Verify that we can clear an existing color table (#2842)
 
 
-def hfa_delete_colortable2():
+def test_hfa_delete_colortable2():
 
     # copy a file to tmp dir to modify.
     src_ds = gdal.Open('../gcore/data/8bit_pal.bmp')
@@ -1030,7 +1030,7 @@ def hfa_delete_colortable2():
 # Verify we can read the special histogram metadata from a provided image.
 
 
-def hfa_excluded_values():
+def test_hfa_excluded_values():
 
     ds = gdal.Open('data/dem10.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -1046,7 +1046,7 @@ def hfa_excluded_values():
 # verify that we propagate nodata to overviews in .img/.rrd format.
 
 
-def hfa_ov_nodata():
+def test_hfa_ov_nodata():
 
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/nodata_int.asc')
@@ -1088,7 +1088,7 @@ def hfa_ov_nodata():
 # Confirm that we can read 8bit grayscale overviews for 1bit images.
 
 
-def hfa_read_bit2grayscale():
+def test_hfa_read_bit2grayscale():
 
     ds = gdal.Open('data/small1bit.img')
     band = ds.GetRasterBand(1)
@@ -1110,7 +1110,7 @@ def hfa_read_bit2grayscale():
 # the bit2grayscale algorithm (#2914)
 
 
-def hfa_write_bit2grayscale():
+def test_hfa_write_bit2grayscale():
 
     import shutil
 
@@ -1151,7 +1151,7 @@ def hfa_write_bit2grayscale():
 # Verify handling of camera model metadata (#2675)
 
 
-def hfa_camera_md():
+def test_hfa_camera_md():
 
     ds = gdal.Open('/vsisparse/data/251_sparse.xml')
 
@@ -1205,7 +1205,7 @@ def hfa_verify_dataset_projection(dataset_path, exp_wkt):
 # Verify can read Transverse Mercator (South Orientated) projections
 
 
-def hfa_read_tmso_projection():
+def test_hfa_read_tmso_projection():
     exp_wkt = 'PROJCS["Transverse Mercator (South Orientated)",GEOGCS["Cape-1",DATUM["Cape-1",SPHEROID["Clarke 1880 Arc",6378249.145,293.4663077168331],TOWGS84[-136,-108,-292,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator_South_Orientated"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",21],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]'
     return hfa_verify_dataset_projection('../gcore/data/22281.aux', exp_wkt)
 
@@ -1213,7 +1213,7 @@ def hfa_read_tmso_projection():
 # Verify can write Transverse Mercator (South Orientated) projections to aux files
 
 
-def hfa_write_tmso_projection():
+def test_hfa_write_tmso_projection():
     dataset_path = 'tmp/tmso.img'
     out_ds = gdal.GetDriverByName('HFA').Create(dataset_path, 1, 1)
     gt = (0, 1, 0, 0, 0, 1)
@@ -1229,7 +1229,7 @@ def hfa_write_tmso_projection():
 # Verify can read Hotine Oblique Mercator (Variant A) projections
 
 
-def hfa_read_homva_projection():
+def test_hfa_read_homva_projection():
     exp_wkt = 'PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["GDM 2000",SPHEROID["GRS 1980",6378137,298.2572220960422],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.13010236111111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]'
     return hfa_verify_dataset_projection('../gcore/data/3376.tif', exp_wkt)
 
@@ -1237,7 +1237,7 @@ def hfa_read_homva_projection():
 # Verify can write Transverse Mercator (South Orientated) projections to aux files
 
 
-def hfa_write_homva_projection():
+def test_hfa_write_homva_projection():
     dataset_path = 'tmp/homva.img'
     out_ds = gdal.GetDriverByName('HFA').Create(dataset_path, 1, 1)
     gt = (0, 1, 0, 0, 0, 1)
@@ -1254,7 +1254,7 @@ def hfa_write_homva_projection():
 # and fetching actual overviews.
 
 
-def hfa_rde_overviews():
+def test_hfa_rde_overviews():
 
     # Create an imagine file, forcing creation of an .ige file.
 
@@ -1293,7 +1293,7 @@ def hfa_rde_overviews():
 # in the .img and .rrd seem to be updated properly.
 
 
-def hfa_copyfiles():
+def test_hfa_copyfiles():
 
     drv = gdal.GetDriverByName('HFA')
     drv.CopyFiles('tmp/newnamexxx_after_copy.img', 'data/spill.img')
@@ -1349,7 +1349,7 @@ def hfa_copyfiles():
 ###############################################################################
 # Test the ability to write a RAT (#999)
 
-def hfa_write_rat():
+def test_hfa_write_rat():
 
     drv = gdal.GetDriverByName('HFA')
 
@@ -1399,7 +1399,7 @@ def hfa_write_rat():
 # Test STATISTICS creation option
 
 
-def hfa_createcopy_statistics():
+def test_hfa_createcopy_statistics():
 
     tmpAuxXml = '../gcore/data/byte.tif.aux.xml'
     try:
@@ -1432,7 +1432,7 @@ def hfa_createcopy_statistics():
 # Test GetUnitType()
 
 
-def hfa_read_elevation_units():
+def test_hfa_read_elevation_units():
 
     ds = gdal.Open('../gcore/data/erdas_cm.img')
     unittype = ds.GetRasterBand(1).GetUnitType()
@@ -1465,49 +1465,49 @@ def hfa_read_elevation_units():
 
 
 gdaltest_list = [
-    hfa_histread,
-    hfa_histwrite,
-    hfa_histrewrite,
-    hfa_int_stats_1,
-    hfa_int_stats_2,
-    hfa_float_stats_1,
-    hfa_float_stats_2,
-    hfa_int_read,
-    hfa_float_read,
-    hfa_pe_read,
-    hfa_pe_write,
-    hfa_metadata_1,
-    hfa_metadata_2,
-    hfa_grow_rrdlist,
-    hfa_clean_ige,
-    hfa_corrupt_aux,
-    hfa_mapinformation_units,
-    hfa_nodata_write,
-    hfa_nodata_read,
-    hfa_rotated_read,
-    hfa_rotated_write,
-    hfa_vsimem,
-    hfa_proName,
-    hfa_read_empty_compressed,
-    hfa_unique_values_color_table,
-    hfa_unique_values_hist,
-    hfa_xforms_3rd,
-    hfa_delete_colortable,
-    hfa_delete_colortable2,
-    hfa_excluded_values,
-    hfa_ov_nodata,
-    hfa_read_bit2grayscale,
-    hfa_write_bit2grayscale,
-    hfa_camera_md,
-    hfa_rde_overviews,
-    hfa_copyfiles,
-    hfa_write_rat,
-    hfa_createcopy_statistics,
-    hfa_read_tmso_projection,
-    hfa_read_homva_projection,
-    hfa_write_tmso_projection,
-    hfa_write_homva_projection,
-    hfa_read_elevation_units]
+    test_hfa_histread,
+    test_hfa_histwrite,
+    test_hfa_histrewrite,
+    test_hfa_int_stats_1,
+    test_hfa_int_stats_2,
+    test_hfa_float_stats_1,
+    test_hfa_float_stats_2,
+    test_hfa_int_read,
+    test_hfa_float_read,
+    test_hfa_pe_read,
+    test_hfa_pe_write,
+    test_hfa_metadata_1,
+    test_hfa_metadata_2,
+    test_hfa_grow_rrdlist,
+    test_hfa_clean_ige,
+    test_hfa_corrupt_aux,
+    test_hfa_mapinformation_units,
+    test_hfa_nodata_write,
+    test_hfa_nodata_read,
+    test_hfa_rotated_read,
+    test_hfa_rotated_write,
+    test_hfa_vsimem,
+    test_hfa_proName,
+    test_hfa_read_empty_compressed,
+    test_hfa_unique_values_color_table,
+    test_hfa_unique_values_hist,
+    test_hfa_xforms_3rd,
+    test_hfa_delete_colortable,
+    test_hfa_delete_colortable2,
+    test_hfa_excluded_values,
+    test_hfa_ov_nodata,
+    test_hfa_read_bit2grayscale,
+    test_hfa_write_bit2grayscale,
+    test_hfa_camera_md,
+    test_hfa_rde_overviews,
+    test_hfa_copyfiles,
+    test_hfa_write_rat,
+    test_hfa_createcopy_statistics,
+    test_hfa_read_tmso_projection,
+    test_hfa_read_homva_projection,
+    test_hfa_write_tmso_projection,
+    test_hfa_write_homva_projection,
+    test_hfa_read_elevation_units]
 
 if __name__ == '__main__':
 

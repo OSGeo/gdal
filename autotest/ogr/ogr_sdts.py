@@ -38,7 +38,7 @@ from osgeo import ogr
 # Test reading
 
 
-def ogr_sdts_1():
+def test_ogr_sdts_1():
 
     gdaltest.sdts_ds = ogr.Open('data/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF')
 
@@ -82,7 +82,7 @@ def ogr_sdts_1():
 #
 
 gdaltest_list = [
-    ogr_sdts_1]
+    test_ogr_sdts_1]
 
 if __name__ == '__main__':
 

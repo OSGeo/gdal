@@ -41,7 +41,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def dted_1():
+def test_dted_1():
 
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 49187)
     return tst.testOpen()
@@ -50,7 +50,7 @@ def dted_1():
 # Verify some auxiliary data.
 
 
-def dted_2():
+def test_dted_2():
 
     ds = gdal.Open('data/n43.dt0')
 
@@ -84,7 +84,7 @@ def dted_2():
 # Create simple copy and check.
 
 
-def dted_3():
+def test_dted_3():
 
     tst = gdaltest.GDALTest('DTED', 'n43.dt0', 1, 49187)
 
@@ -96,7 +96,7 @@ def dted_3():
 # Read subwindow.  Tests the tail recursion problem.
 
 
-def dted_4():
+def test_dted_4():
 
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 305,
                             5, 5, 5, 5)
@@ -106,7 +106,7 @@ def dted_4():
 # Test a DTED Level 1 (made from a DTED Level 0)
 
 
-def dted_5():
+def test_dted_5():
 
     driver = gdal.GetDriverByName("GTiff")
     ds = driver.Create('tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16)
@@ -130,7 +130,7 @@ def dted_5():
 # Test a DTED Level 2 (made from a DTED Level 0)
 
 
-def dted_6():
+def test_dted_6():
 
     driver = gdal.GetDriverByName("GTiff")
     ds = driver.Create('tmp/n43.dt2.tif', 3601, 3601, 1, gdal.GDT_Int16)
@@ -154,7 +154,7 @@ def dted_6():
 # Test a WGS72 georeferenced DTED
 
 
-def dted_7():
+def test_dted_7():
     ds = gdal.Open('data/n43_wgs72.dt0')
 
     # a warning is issued
@@ -176,7 +176,7 @@ def dted_7():
 # Test a file whose checksum is corrupted
 
 
-def dted_8():
+def test_dted_8():
     # this will enable DTED_VERIFY_CHECKSUM
     gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'YES')
 
@@ -206,7 +206,7 @@ def dted_8():
 # Test a DTED Level 1 above latitude 50 (made from a DTED Level 0)
 
 
-def dted_9():
+def test_dted_9():
 
     ds = gdal.Open('data/n43.dt0')
 
@@ -245,7 +245,7 @@ def dted_9():
 # Test creating an in memory copy.
 
 
-def dted_10():
+def test_dted_10():
 
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 49187)
     return tst.testCreateCopy(vsimem=1)
@@ -257,7 +257,7 @@ def dted_10():
 # inverted.  This was fixed in MIL-D-89020 Amendment 1, but some products may
 # be affected.
 
-def dted_11():
+def test_dted_11():
 
     ds = gdal.Open('data/n43_coord_inverted.dt0')
 
@@ -291,7 +291,7 @@ def dted_11():
 # Test a DTED file that begins with a HDR record, and not directly the UHL record (#2951)
 
 
-def dted_12():
+def test_dted_12():
 
     ds = gdal.Open('data/w118n033_trunc.dt1')
     if ds is None:
@@ -304,7 +304,7 @@ def dted_12():
 # a real-world DTED file
 
 
-def dted_13():
+def test_dted_13():
 
     tst = gdaltest.GDALTest('dted', 'n43_partial_cols.dt0', 1, 56006)
     return tst.testOpen()
@@ -314,7 +314,7 @@ def dted_13():
 # case for now.
 
 
-def dted_14():
+def test_dted_14():
 
     tst = gdaltest.GDALTest('dted', 'n43_sparse_cols.dt0', 1, 56369)
     return tst.testOpen()
@@ -323,7 +323,7 @@ def dted_14():
 # Perform simple read test with GDAL_DTED_SINGLE_BLOCK = YES
 
 
-def dted_15():
+def test_dted_15():
 
     gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', 'YES')
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 49187)
@@ -335,7 +335,7 @@ def dted_15():
 # Cleanup.
 
 
-def dted_cleanup():
+def test_dted_cleanup():
     try:
         os.remove('tmp/n43.dt1.tif')
         os.remove('tmp/n43.dt1.aux.xml')
@@ -352,22 +352,22 @@ def dted_cleanup():
 
 
 gdaltest_list = [
-    dted_1,
-    dted_2,
-    dted_3,
-    dted_4,
-    dted_5,
-    dted_6,
-    dted_7,
-    dted_8,
-    dted_9,
-    dted_10,
-    dted_11,
-    dted_12,
-    dted_13,
-    dted_14,
-    dted_15,
-    dted_cleanup
+    test_dted_1,
+    test_dted_2,
+    test_dted_3,
+    test_dted_4,
+    test_dted_5,
+    test_dted_6,
+    test_dted_7,
+    test_dted_8,
+    test_dted_9,
+    test_dted_10,
+    test_dted_11,
+    test_dted_12,
+    test_dted_13,
+    test_dted_14,
+    test_dted_15,
+    test_dted_cleanup
 ]
 
 

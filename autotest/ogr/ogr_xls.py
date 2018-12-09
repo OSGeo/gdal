@@ -40,7 +40,7 @@ from osgeo import ogr
 # Basic tests
 
 
-def ogr_xls_1():
+def test_ogr_xls_1():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
@@ -121,7 +121,7 @@ def ogr_xls_1():
 # Test OGR_XLS_HEADERS = DISABLE
 
 
-def ogr_xls_2():
+def test_ogr_xls_2():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
@@ -145,7 +145,7 @@ def ogr_xls_2():
 # Test OGR_XLS_FIELD_TYPES = STRING
 
 
-def ogr_xls_3():
+def test_ogr_xls_3():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
@@ -168,7 +168,7 @@ def ogr_xls_3():
 # Run test_ogrsf
 
 
-def ogr_xls_4():
+def test_ogr_xls_4():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
@@ -188,10 +188,10 @@ def ogr_xls_4():
 
 
 gdaltest_list = [
-    ogr_xls_1,
-    ogr_xls_2,
-    ogr_xls_3,
-    ogr_xls_4
+    test_ogr_xls_1,
+    test_ogr_xls_2,
+    test_ogr_xls_3,
+    test_ogr_xls_4
 ]
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ from osgeo import gdal
 # Verify we can open the test file.
 
 
-def ogr_s57_1():
+def test_ogr_s57_1():
 
     gdaltest.s57_ds = None
 
@@ -64,7 +64,7 @@ def ogr_s57_1():
 # matches our expectations.
 
 
-def ogr_s57_2():
+def test_ogr_s57_2():
     if gdaltest.s57_ds is None:
         return 'skip'
 
@@ -109,7 +109,7 @@ def ogr_s57_2():
 # Check the COALNE feature.
 
 
-def ogr_s57_3():
+def test_ogr_s57_3():
     if gdaltest.s57_ds is None:
         return 'skip'
 
@@ -137,7 +137,7 @@ def ogr_s57_3():
 # Check the M_QUAL feature.
 
 
-def ogr_s57_4():
+def test_ogr_s57_4():
     if gdaltest.s57_ds is None:
         return 'skip'
 
@@ -164,7 +164,7 @@ def ogr_s57_4():
 # Check the SOUNDG feature.
 
 
-def ogr_s57_5():
+def test_ogr_s57_5():
     if gdaltest.s57_ds is None:
         return 'skip'
 
@@ -193,7 +193,7 @@ def ogr_s57_5():
 # Test reading features from dataset with some double byte attributes. (#1526)
 
 
-def ogr_s57_6():
+def test_ogr_s57_6():
 
     ds = ogr.Open('data/bug1526.000')
 
@@ -214,7 +214,7 @@ def ogr_s57_6():
 # Test handling of a dataset with a multilinestring feature (#2147).
 
 
-def ogr_s57_7():
+def test_ogr_s57_7():
 
     ds = ogr.Open('data/bug2147_3R7D0889.000')
 
@@ -235,7 +235,7 @@ def ogr_s57_7():
 # Run test_ogrsf
 
 
-def ogr_s57_8():
+def test_ogr_s57_8():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -253,7 +253,7 @@ def ogr_s57_8():
 # Test S57 to S57 conversion
 
 
-def ogr_s57_9():
+def test_ogr_s57_9():
 
     gdal.Unlink('tmp/ogr_s57_9.000')
 
@@ -277,13 +277,13 @@ def ogr_s57_9():
         return 'fail'
 
     gdaltest.s57_ds = ds
-    if ogr_s57_2() != 'success':
+    if test_ogr_s57_2() != 'success':
         return 'fail'
-    if ogr_s57_3() != 'success':
+    if test_ogr_s57_3() != 'success':
         return 'fail'
-    if ogr_s57_4() != 'success':
+    if test_ogr_s57_4() != 'success':
         return 'fail'
-    if ogr_s57_5() != 'success':
+    if test_ogr_s57_5() != 'success':
         return 'fail'
 
     gdaltest.s57_ds = None
@@ -304,7 +304,7 @@ def ogr_s57_9():
         return 'fail'
 
     gdaltest.s57_ds = ds
-    if ogr_s57_4() != 'success':
+    if test_ogr_s57_4() != 'success':
         return 'fail'
 
     gdaltest.s57_ds = None
@@ -317,7 +317,7 @@ def ogr_s57_9():
 # Test opening a fake very small S57 file
 
 
-def ogr_s57_10():
+def test_ogr_s57_10():
 
     ds = ogr.Open('data/fake_s57.000')
     lyr = ds.GetLayer(0)
@@ -331,7 +331,7 @@ def ogr_s57_10():
 # using variant (C.1.5.1) logic.
 
 
-def ogr_s57_11():
+def test_ogr_s57_11():
 
     ds = ogr.Open('data/fake_s57_variant_C151.000')
     lyr = ds.GetLayer(0)
@@ -344,7 +344,7 @@ def ogr_s57_11():
 # Test decoding of Dutch inland ENCs (#3881).
 
 
-def ogr_s57_online_1():
+def test_ogr_s57_online_1():
 
     if not gdaltest.download_file('ftp://sdg.ivs90.nl/ENC/1R5MK050.000', '1R5MK050.000'):
         return 'skip'
@@ -375,7 +375,7 @@ def ogr_s57_online_1():
 # Test with ENC 3.0 TDS - tile without updates.
 
 
-def ogr_s57_online_2():
+def test_ogr_s57_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000', 'GB5X01SW.000'):
         return 'skip'
@@ -413,7 +413,7 @@ def ogr_s57_online_2():
 # Test with ENC 3.0 TDS - tile with updates.
 
 
-def ogr_s57_online_3():
+def test_ogr_s57_online_3():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.001', 'GB5X01SW.001'):
         return 'skip'
@@ -453,7 +453,7 @@ def ogr_s57_online_3():
 # Test ENC LL2 (#5048)
 
 
-def ogr_s57_online_4():
+def test_ogr_s57_online_4():
 
     if not gdaltest.download_file('http://www1.kaiho.mlit.go.jp/KOKAI/ENC/images/sample/sample.zip', 'sample.zip'):
         return 'skip'
@@ -485,7 +485,7 @@ def ogr_s57_online_4():
 #  Cleanup
 
 
-def ogr_s57_cleanup():
+def test_ogr_s57_cleanup():
 
     gdaltest.s57_ds = None
 
@@ -493,22 +493,22 @@ def ogr_s57_cleanup():
 
 
 gdaltest_list = [
-    ogr_s57_1,
-    ogr_s57_2,
-    ogr_s57_3,
-    ogr_s57_4,
-    ogr_s57_5,
-    ogr_s57_6,
-    ogr_s57_7,
-    ogr_s57_8,
-    ogr_s57_9,
-    ogr_s57_10,
-    ogr_s57_11,
-    ogr_s57_online_1,
-    ogr_s57_online_2,
-    ogr_s57_online_3,
-    ogr_s57_online_4,
-    ogr_s57_cleanup]
+    test_ogr_s57_1,
+    test_ogr_s57_2,
+    test_ogr_s57_3,
+    test_ogr_s57_4,
+    test_ogr_s57_5,
+    test_ogr_s57_6,
+    test_ogr_s57_7,
+    test_ogr_s57_8,
+    test_ogr_s57_9,
+    test_ogr_s57_10,
+    test_ogr_s57_11,
+    test_ogr_s57_online_1,
+    test_ogr_s57_online_2,
+    test_ogr_s57_online_3,
+    test_ogr_s57_online_4,
+    test_ogr_s57_cleanup]
 
 if __name__ == '__main__':
 

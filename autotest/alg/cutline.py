@@ -40,7 +40,7 @@ import gdaltest
 ###############################################################################
 
 
-def cutline_1():
+def test_cutline_1():
 
     tst = gdaltest.GDALTest('VRT', 'cutline_noblend.vrt', 1, 11409)
     return tst.testOpen()
@@ -48,7 +48,7 @@ def cutline_1():
 ###############################################################################
 
 
-def cutline_2():
+def test_cutline_2():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -59,7 +59,7 @@ def cutline_2():
 ###############################################################################
 
 
-def cutline_3():
+def test_cutline_3():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -70,7 +70,7 @@ def cutline_3():
 ###############################################################################
 
 
-def cutline_4():
+def test_cutline_4():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -124,10 +124,10 @@ def cutline_4():
 
 
 gdaltest_list = [
-    cutline_1,
-    cutline_2,
-    cutline_3,
-    cutline_4
+    test_cutline_1,
+    test_cutline_2,
+    test_cutline_3,
+    test_cutline_4
 ]
 
 if __name__ == '__main__':

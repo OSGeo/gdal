@@ -37,7 +37,7 @@ import gdaltest
 # Test reading a - fake - LAN 8 bit dataset
 
 
-def lan_1():
+def test_lan_1():
 
     tst = gdaltest.GDALTest('LAN', 'fakelan.lan', 1, 10)
     return tst.testOpen()
@@ -46,15 +46,15 @@ def lan_1():
 # Test reading a - fake - LAN 4 bit dataset
 
 
-def lan_2():
+def test_lan_2():
 
     tst = gdaltest.GDALTest('LAN', 'fakelan4bit.lan', 1, 10)
     return tst.testOpen()
 
 
 gdaltest_list = [
-    lan_1,
-    lan_2]
+    test_lan_1,
+    test_lan_2]
 
 if __name__ == '__main__':
 

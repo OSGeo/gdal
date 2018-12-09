@@ -42,7 +42,7 @@ import gdaltest
 # Test that the constructor of GDALDataset() behaves well with a big number of
 # opened/created datasets
 
-def misc_1():
+def test_misc_1():
 
     tab_ds = [None] * 5000
     drv = gdal.GetDriverByName('MEM')
@@ -59,7 +59,7 @@ def misc_1():
 # limit of maximum file descriptors opened at the same time
 
 
-def misc_2():
+def test_misc_2():
 
     tab_ds = [None for i in range(5000)]
     for i, _ in enumerate(tab_ds):
@@ -73,7 +73,7 @@ def misc_2():
 # Test OpenShared() with a dataset whose filename != description (#2797)
 
 
-def misc_3():
+def test_misc_3():
 
     with gdaltest.error_handler():
         ds = gdal.OpenShared('../gdrivers/data/small16.aux')
@@ -97,7 +97,7 @@ def misc_3():
 # Test Create() with invalid arguments
 
 
-def misc_4():
+def test_misc_4():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -195,7 +195,7 @@ def misc_5_internal(drv, datatype, nBands):
     return 1
 
 
-def misc_5():
+def test_misc_5():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -387,7 +387,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
     return 'success'
 
 
-def misc_6():
+def test_misc_6():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -443,7 +443,7 @@ def misc_6():
 # Test gdal.InvGeoTransform()
 
 
-def misc_7():
+def test_misc_7():
 
     try:
         gdal.InvGeoTransform
@@ -464,7 +464,7 @@ def misc_7():
 # Test gdal.ApplyGeoTransform()
 
 
-def misc_8():
+def test_misc_8():
 
     try:
         gdal.ApplyGeoTransform
@@ -482,7 +482,7 @@ def misc_8():
 # Test setting and retrieving > 2 GB values for GDAL max cache (#3689)
 
 
-def misc_9():
+def test_misc_9():
 
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(3000000000)
@@ -500,7 +500,7 @@ def misc_9():
 ###############################################################################
 # Test VSIBufferedReaderHandle (fix done in r21358)
 
-def misc_10():
+def test_misc_10():
 
     try:
         os.remove('data/byte.tif.gz.properties')
@@ -531,7 +531,7 @@ def misc_10():
 # Test that we can open a symlink whose pointed filename isn't a real
 # file, but a filename that GDAL recognizes
 
-def misc_11():
+def test_misc_11():
 
     if not gdaltest.support_symlink():
         return 'skip'
@@ -559,7 +559,7 @@ def misc_11():
 # Test CreateCopy() with a target filename in a non-existing dir
 
 
-def misc_12():
+def test_misc_12():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         gdaltest.post_reason('would crash')
@@ -629,7 +629,7 @@ def misc_12():
 # Test CreateCopy() with incompatible driver types (#5912)
 
 
-def misc_13():
+def test_misc_13():
 
     # Raster-only -> vector-only
     ds = gdal.Open('data/byte.tif')
@@ -654,7 +654,7 @@ def misc_13():
 ###############################################################################
 # Test ConfigureLogging()
 
-def misc_14():
+def test_misc_14():
     import collections
     import logging
 
@@ -729,7 +729,7 @@ def misc_14():
 ###############################################################################
 # Test SetErrorHandler
 
-def misc_15():
+def test_misc_15():
     messages0 = []
     def handle0(ecls, ecode, emsg):
         messages0.append((ecls, ecode, emsg))
@@ -800,7 +800,7 @@ def misc_15():
 ###############################################################################
 
 
-def misc_cleanup():
+def test_misc_cleanup():
 
     try:
         shutil.rmtree('tmp/tmp')
@@ -810,22 +810,22 @@ def misc_cleanup():
     return 'success'
 
 
-gdaltest_list = [misc_1,
-                 misc_2,
-                 misc_3,
-                 misc_4,
-                 misc_5,
-                 misc_6,
-                 misc_7,
-                 misc_8,
-                 misc_9,
-                 misc_10,
-                 misc_11,
-                 misc_12,
-                 misc_13,
-                 misc_14,
-                 misc_15,
-                 misc_cleanup]
+gdaltest_list = [test_misc_1,
+                 test_misc_2,
+                 test_misc_3,
+                 test_misc_4,
+                 test_misc_5,
+                 test_misc_6,
+                 test_misc_7,
+                 test_misc_8,
+                 test_misc_9,
+                 test_misc_10,
+                 test_misc_11,
+                 test_misc_12,
+                 test_misc_13,
+                 test_misc_14,
+                 test_misc_15,
+                 test_misc_cleanup]
 
 # gdaltest_list = [ misc_6 ]
 

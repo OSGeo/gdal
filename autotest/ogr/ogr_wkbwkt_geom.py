@@ -124,7 +124,7 @@ def test_wkbwkt_geom(unit):
 # Test geometry with very large exponents of coordinate values.
 
 
-def ogr_wkbwkt_geom_bigexponents():
+def test_ogr_wkbwkt_geom_bigexponents():
 
     bigx = -1.79769313486e+308
     bigy = -1.12345678901e+308
@@ -146,7 +146,7 @@ def ogr_wkbwkt_geom_bigexponents():
 ###############################################################################
 # Test importing broken/unhandled WKT.
 
-def ogr_wkbwkt_test_broken_geom():
+def test_ogr_wkbwkt_test_broken_geom():
 
     list_broken = ['POINT',
                    'POINT UNKNOWN',
@@ -387,7 +387,7 @@ def ogr_wkbwkt_test_broken_geom():
 # Test importing WKT SF1.2
 
 
-def ogr_wkbwkt_test_import_wkt_sf12():
+def test_ogr_wkbwkt_test_import_wkt_sf12():
 
     list_wkt_tuples = [('POINT EMPTY', 'POINT EMPTY'),
                        ('POINT Z EMPTY', 'POINT EMPTY'),
@@ -518,7 +518,7 @@ def ogr_wkbwkt_test_import_wkt_sf12():
 # doesn't work
 
 
-def ogr_wkbwkt_test_import_bad_multipoint_wkb():
+def test_ogr_wkbwkt_test_import_bad_multipoint_wkb():
 
     import struct
     wkb = struct.pack('B' * 30, 0, 0, 0, 0, 6, 0, 0, 0, 1, 0, 0, 0, 0, 1, 64, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0)
@@ -534,7 +534,7 @@ def ogr_wkbwkt_test_import_bad_multipoint_wkb():
 # Test WKT -> WKB -> WKT roundtripping for GEOMETRYCOLLECTION
 
 
-def ogr_wkbwkt_test_geometrycollection_wktwkb():
+def test_ogr_wkbwkt_test_geometrycollection_wktwkb():
 
     wkt_list = ['GEOMETRYCOLLECTION (POINT (0 1))',
                 'GEOMETRYCOLLECTION (LINESTRING (0 1,2 3))',
@@ -566,7 +566,7 @@ def ogr_wkbwkt_test_geometrycollection_wktwkb():
 # Test that importing too nested WKT doesn't cause stack overflows
 
 
-def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
+def test_ogr_wkbwkt_test_geometrycollection_wkt_recursion():
 
     wkt = 'GEOMETRYCOLLECTION (' * 31 + 'GEOMETRYCOLLECTION EMPTY' + ')' * 31
 
@@ -591,7 +591,7 @@ def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
 # Test that importing too nested WKB doesn't cause stack overflows
 
 
-def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
+def test_ogr_wkbwkt_test_geometrycollection_wkb_recursion():
 
     import struct
     wkb_repeat = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 1)
@@ -619,7 +619,7 @@ def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
 # Test ISO WKT compliant export of MULTIPOINT
 
 
-def ogr_wkbwkt_export_wkt_iso_multipoint():
+def test_ogr_wkbwkt_export_wkt_iso_multipoint():
 
     wkt = 'MULTIPOINT ((0 0),(1 1))'
     g = ogr.CreateGeometryFromWkt(wkt)
@@ -635,7 +635,7 @@ def ogr_wkbwkt_export_wkt_iso_multipoint():
 # Test exporting WKT with non finite values (#6319)
 
 
-def ogr_wkt_inf_nan():
+def test_ogr_wkt_inf_nan():
 
     g = ogr.Geometry(ogr.wkbPoint)
     g.AddPoint(float('inf'), float('-inf'), float('nan'))
@@ -651,7 +651,7 @@ def ogr_wkt_inf_nan():
 # Test corrupted WKT
 
 
-def ogr_wkt_multicurve_compoundcurve_corrupted():
+def test_ogr_wkt_multicurve_compoundcurve_corrupted():
 
     with gdaltest.error_handler():
         g = ogr.CreateGeometryFromWkt('MULTICURVE(COMPOUNDCURVE')
@@ -664,7 +664,7 @@ def ogr_wkt_multicurve_compoundcurve_corrupted():
 # Test corrupted WKT
 
 
-def ogr_wkt_multipolygon_corrupted():
+def test_ogr_wkt_multipolygon_corrupted():
 
     with gdaltest.error_handler():
         g = ogr.CreateGeometryFromWkt('MULTIPOLYGON(POLYGON((N')
@@ -681,17 +681,17 @@ def ogr_wkt_multipolygon_corrupted():
 
 
 gdaltest_list = [
-    ogr_wkbwkt_geom_bigexponents,
-    ogr_wkbwkt_test_broken_geom,
-    ogr_wkbwkt_test_import_wkt_sf12,
-    ogr_wkbwkt_test_import_bad_multipoint_wkb,
-    ogr_wkbwkt_test_geometrycollection_wktwkb,
-    ogr_wkbwkt_test_geometrycollection_wkt_recursion,
-    ogr_wkbwkt_test_geometrycollection_wkb_recursion,
-    ogr_wkbwkt_export_wkt_iso_multipoint,
-    ogr_wkt_inf_nan,
-    ogr_wkt_multicurve_compoundcurve_corrupted,
-    ogr_wkt_multipolygon_corrupted,
+    test_ogr_wkbwkt_geom_bigexponents,
+    test_ogr_wkbwkt_test_broken_geom,
+    test_ogr_wkbwkt_test_import_wkt_sf12,
+    test_ogr_wkbwkt_test_import_bad_multipoint_wkb,
+    test_ogr_wkbwkt_test_geometrycollection_wktwkb,
+    test_ogr_wkbwkt_test_geometrycollection_wkt_recursion,
+    test_ogr_wkbwkt_test_geometrycollection_wkb_recursion,
+    test_ogr_wkbwkt_export_wkt_iso_multipoint,
+    test_ogr_wkt_inf_nan,
+    test_ogr_wkt_multicurve_compoundcurve_corrupted,
+    test_ogr_wkt_multipolygon_corrupted,
 ]
 
 if __name__ == '__main__':

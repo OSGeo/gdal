@@ -42,7 +42,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def envi_1():
+def test_envi_1():
 
     tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
 
@@ -69,7 +69,7 @@ def envi_1():
 # Verify this can be exported losslessly.
 
 
-def envi_2():
+def test_envi_2():
 
     tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
     return tst.testCreateCopy(check_gt=1)
@@ -78,7 +78,7 @@ def envi_2():
 # Try the Create interface with an RGB image.
 
 
-def envi_3():
+def test_envi_3():
 
     tst = gdaltest.GDALTest('envi', 'rgbsmall.tif', 2, 21053)
     return tst.testCreate()
@@ -87,7 +87,7 @@ def envi_3():
 # Test LCC Projection.
 
 
-def envi_4():
+def test_envi_4():
 
     tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 24)
 
@@ -112,7 +112,7 @@ def envi_4():
 # Test TM Projection.
 
 
-def envi_5():
+def test_envi_5():
 
     tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 24)
     prj = """PROJCS["OSGB 1936 / British National Grid",
@@ -158,7 +158,7 @@ def envi_5():
 # Test LAEA Projection.
 
 
-def envi_6():
+def test_envi_6():
 
     gdaltest.envi_tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 24)
 
@@ -180,7 +180,7 @@ def envi_6():
 # Verify VSIF*L capacity
 
 
-def envi_7():
+def test_envi_7():
 
     tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
     return tst.testCreateCopy(check_gt=1, vsimem=1)
@@ -189,7 +189,7 @@ def envi_7():
 # Test fix for #3751
 
 
-def envi_8():
+def test_envi_8():
 
     ds = gdal.GetDriverByName('ENVI').Create('/vsimem/foo.bsq', 10, 10, 1)
     set_gt = (50000, 1, 0, 4500000, 0, -1)
@@ -209,7 +209,7 @@ def envi_8():
 # Verify reading a compressed file
 
 
-def envi_9():
+def test_envi_9():
 
     tst = gdaltest.GDALTest('envi', 'aea_compressed.dat', 1, 14823)
     return tst.testCreateCopy(check_gt=1)
@@ -218,7 +218,7 @@ def envi_9():
 # Test RPC reading and writing
 
 
-def envi_10():
+def test_envi_10():
 
     src_ds = gdal.Open('data/envirpc.img')
     out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envirpc.img', src_ds)
@@ -243,7 +243,7 @@ def envi_10():
 # Check .sta reading
 
 
-def envi_11():
+def test_envi_11():
 
     ds = gdal.Open('data/envistat')
     val = ds.GetRasterBand(1).GetStatistics(0, 0)
@@ -260,7 +260,7 @@ def envi_11():
 # Test category names reading and writing
 
 
-def envi_12():
+def test_envi_12():
 
     src_ds = gdal.Open('data/testenviclasses')
     out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/testenviclasses', src_ds)
@@ -297,7 +297,7 @@ def envi_12():
 # Test writing of metadata from the ENVI metadata domain and read it back (#4957)
 
 
-def envi_13():
+def test_envi_13():
 
     ds = gdal.GetDriverByName('ENVI').Create('/vsimem/envi_13.dat', 1, 1)
     ds.SetMetadata(['lines=100', 'sensor_type=Landsat TM', 'foo'], 'ENVI')
@@ -323,7 +323,7 @@ def envi_13():
 # Test that the image file is at the expected size on closing (#6662)
 
 
-def envi_14():
+def test_envi_14():
 
     gdal.GetDriverByName('ENVI').Create('/vsimem/envi_14.dat', 3, 4, 5, gdal.GDT_Int16)
 
@@ -340,7 +340,7 @@ def envi_14():
 # Test reading and writing geotransform matrix with rotation
 
 
-def envi_15():
+def test_envi_15():
 
     src_ds = gdal.Open('data/rotation.img')
     got_gt = src_ds.GetGeoTransform()
@@ -368,7 +368,7 @@ def envi_15():
 # Test reading a truncated ENVI dataset (see #915)
 
 
-def envi_truncated():
+def test_envi_truncated():
 
     gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_truncated.dat',
                                             gdal.Open('data/byte.tif'))
@@ -391,22 +391,22 @@ def envi_truncated():
 
 
 gdaltest_list = [
-    envi_1,
-    envi_2,
-    envi_3,
-    envi_4,
-    envi_5,
-    envi_6,
-    envi_7,
-    envi_8,
-    envi_9,
-    envi_10,
-    envi_11,
-    envi_12,
-    envi_13,
-    envi_14,
-    envi_15,
-    envi_truncated,
+    test_envi_1,
+    test_envi_2,
+    test_envi_3,
+    test_envi_4,
+    test_envi_5,
+    test_envi_6,
+    test_envi_7,
+    test_envi_8,
+    test_envi_9,
+    test_envi_10,
+    test_envi_11,
+    test_envi_12,
+    test_envi_13,
+    test_envi_14,
+    test_envi_15,
+    test_envi_truncated,
 ]
 
 

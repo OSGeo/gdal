@@ -42,7 +42,7 @@ import gdaltest
 # Fetch simple histogram.
 
 
-def histogram_1():
+def test_histogram_1():
 
     ds = gdal.Open('data/utmsmall.tif')
     hist = ds.GetRasterBand(1).GetHistogram()
@@ -60,7 +60,7 @@ def histogram_1():
 # Fetch histogram with specified sampling, using keywords.
 
 
-def histogram_2():
+def test_histogram_2():
 
     ds = gdal.Open('data/utmsmall.tif')
     hist = ds.GetRasterBand(1).GetHistogram(buckets=16, max=255.5, min=-0.5)
@@ -78,7 +78,7 @@ def histogram_2():
 # try on a different data type with out of range values included.
 
 
-def histogram_3():
+def test_histogram_3():
 
     ds = gdal.Open('data/int32_withneg.grd')
     hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
@@ -98,7 +98,7 @@ def histogram_3():
 # try on a different data type without out of range values included.
 
 
-def histogram_4():
+def test_histogram_4():
 
     ds = gdal.Open('data/int32_withneg.grd')
     hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
@@ -122,7 +122,7 @@ def histogram_4():
 # Test GetDefaultHistogram() on the file.
 
 
-def histogram_5():
+def test_histogram_5():
 
     ds = gdal.Open('data/utmsmall.tif')
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=1)
@@ -144,7 +144,7 @@ def histogram_5():
 # Test GetDefaultHistogram( force = 0 ) on a JPG file (#3304)
 
 
-def histogram_6():
+def test_histogram_6():
 
     shutil.copy('../gdrivers/data/albania.jpg', 'tmp/albania.jpg')
     ds = gdal.Open('tmp/albania.jpg')
@@ -160,12 +160,12 @@ def histogram_6():
 
 
 gdaltest_list = [
-    histogram_1,
-    histogram_2,
-    histogram_3,
-    histogram_4,
-    histogram_5,
-    histogram_6
+    test_histogram_1,
+    test_histogram_2,
+    test_histogram_3,
+    test_histogram_4,
+    test_histogram_5,
+    test_histogram_6
 ]
 
 if __name__ == '__main__':

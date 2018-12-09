@@ -40,7 +40,7 @@ import gdaltest
 # Data downloaded from : http://www.lantmateriet.se/upload/filer/kartor/programvaror/sverige500_swe99.zip
 
 
-def rik_online_1():
+def test_rik_online_1():
 
     if gdal.GetDriverByName('RIK') is None:
         return 'skip'
@@ -70,7 +70,7 @@ def rik_online_1():
 # Test a LZW compressed RIK dataset
 
 
-def rik_online_2():
+def test_rik_online_2():
 
     if gdal.GetDriverByName('RIK') is None:
         return 'skip'
@@ -83,8 +83,8 @@ def rik_online_2():
 
 
 gdaltest_list = [
-    rik_online_1,
-    rik_online_2
+    test_rik_online_1,
+    test_rik_online_2
 ]
 
 

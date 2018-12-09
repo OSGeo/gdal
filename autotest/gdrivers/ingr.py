@@ -41,7 +41,7 @@ import gdaltest
 # Read test of byte file.
 
 
-def ingr_1():
+def test_ingr_1():
 
     tst = gdaltest.GDALTest('INGR', '8bit_rgb.cot', 2, 4855)
     return tst.testOpen()
@@ -50,7 +50,7 @@ def ingr_1():
 # Read uint32 file.
 
 
-def ingr_2():
+def test_ingr_2():
 
     tst = gdaltest.GDALTest('INGR', 'uint32.cot', 1, 4672)
     return tst.testOpen()
@@ -59,7 +59,7 @@ def ingr_2():
 # Test paletted file, including checking the palette (format 02 I think).
 
 
-def ingr_3():
+def test_ingr_3():
 
     tst = gdaltest.GDALTest('INGR', '8bit_pal.cot', 1, 4855)
     result = tst.testOpen()
@@ -78,7 +78,7 @@ def ingr_3():
 # frmt02 is a plain byte format
 
 
-def ingr_4():
+def test_ingr_4():
 
     tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
     return tst.testOpen()
@@ -87,7 +87,7 @@ def ingr_4():
 # Test creation.
 
 
-def ingr_5():
+def test_ingr_5():
 
     tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
     return tst.testCreate()
@@ -96,7 +96,7 @@ def ingr_5():
 # Test createcopy.
 
 
-def ingr_6():
+def test_ingr_6():
 
     tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
     return tst.testCreate()
@@ -105,7 +105,7 @@ def ingr_6():
 # JPEG 8bit
 
 
-def ingr_7():
+def test_ingr_7():
 
     tst = gdaltest.GDALTest('INGR', 'frmt30.cot', 1, 29718)
     return tst.testOpen()
@@ -114,7 +114,7 @@ def ingr_7():
 # Read simple RLE
 
 
-def ingr_8():
+def test_ingr_8():
 
     tst = gdaltest.GDALTest('INGR', 'frmt09.cot', 1, 23035)
     return tst.testOpen()
@@ -123,7 +123,7 @@ def ingr_8():
 # Read Simple RLE Variable
 
 
-def ingr_9():
+def test_ingr_9():
 
     tst = gdaltest.GDALTest('INGR', 'frmt10.cot', 1, 47031)
     return tst.testOpen()
@@ -132,7 +132,7 @@ def ingr_9():
 # CCITT bitonal
 
 
-def ingr_10():
+def test_ingr_10():
 
     tst = gdaltest.GDALTest('INGR', 'frmt24.cit', 1, 23035)
     return tst.testOpen()
@@ -141,7 +141,7 @@ def ingr_10():
 # Adaptive RLE - 24 bit.
 
 
-def ingr_11():
+def test_ingr_11():
 
     tst = gdaltest.GDALTest('INGR', 'frmt27.cot', 2, 45616)
     return tst.testOpen()
@@ -150,7 +150,7 @@ def ingr_11():
 # Uncompressed RGB
 
 
-def ingr_12():
+def test_ingr_12():
 
     tst = gdaltest.GDALTest('INGR', 'frmt28.cot', 2, 45616)
     return tst.testOpen()
@@ -159,7 +159,7 @@ def ingr_12():
 # Adaptive RLE 8bit.
 
 
-def ingr_13():
+def test_ingr_13():
 
     tst = gdaltest.GDALTest('INGR', 'frmt29.cot', 1, 26968)
     return tst.testOpen()
@@ -168,7 +168,7 @@ def ingr_13():
 # JPEG RGB
 
 
-def ingr_14():
+def test_ingr_14():
 
     ds = gdal.Open('data/frmt31.cot')
     cs = ds.GetRasterBand(1).Checksum()
@@ -184,7 +184,7 @@ def ingr_14():
 # Same, but through vsimem all in memory.
 
 
-def ingr_15():
+def test_ingr_15():
 
     tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
     result = tst.testCreateCopy(vsimem=1)
@@ -200,7 +200,7 @@ def ingr_15():
 # Read simple RLE tiled
 
 
-def ingr_16():
+def test_ingr_16():
 
     tst = gdaltest.GDALTest('INGR', 'frmt09t.cot', 1, 3178)
     return tst.testOpen()
@@ -209,7 +209,7 @@ def ingr_16():
 # Test writing 9 RLE bitonal compression (#5030)
 
 
-def ingr_17():
+def test_ingr_17():
 
     src_ds = gdal.Open('data/frmt09.cot')
     out_ds = gdal.GetDriverByName('INGR').CreateCopy('/vsimem/ingr_17.rle', src_ds)
@@ -235,7 +235,7 @@ def ingr_17():
 # Test 'random access' in simple RLE
 
 
-def ingr_18():
+def test_ingr_18():
 
     ds = gdal.Open('data/frmt09.cot')
     for y in range(ds.RasterYSize):
@@ -263,32 +263,32 @@ def ingr_18():
     return 'success'
 
 
-def ingr_cleanup():
+def test_ingr_cleanup():
 
     gdal.Unlink('data/frmt09.cot.aux.xml')
     return 'success'
 
 
 gdaltest_list = [
-    ingr_1,
-    ingr_2,
-    ingr_3,
-    ingr_4,
-    ingr_5,
-    ingr_6,
-    ingr_7,
-    ingr_8,
-    ingr_9,
-    ingr_10,
-    ingr_11,
-    ingr_12,
-    ingr_13,
-    ingr_14,
-    ingr_15,
-    ingr_16,
-    ingr_17,
-    ingr_18,
-    ingr_cleanup]
+    test_ingr_1,
+    test_ingr_2,
+    test_ingr_3,
+    test_ingr_4,
+    test_ingr_5,
+    test_ingr_6,
+    test_ingr_7,
+    test_ingr_8,
+    test_ingr_9,
+    test_ingr_10,
+    test_ingr_11,
+    test_ingr_12,
+    test_ingr_13,
+    test_ingr_14,
+    test_ingr_15,
+    test_ingr_16,
+    test_ingr_17,
+    test_ingr_18,
+    test_ingr_cleanup]
 
 if __name__ == '__main__':
 

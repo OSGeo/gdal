@@ -38,7 +38,7 @@ from osgeo import osr
 ###############################################################################
 # Test osr.GetProjectionMethods()
 
-def osr_getprojectionmethods_1():
+def test_osr_getprojectionmethods_1():
 
     methods = osr.GetProjectionMethods()
     if methods[0][0] != 'Transverse_Mercator':
@@ -48,7 +48,7 @@ def osr_getprojectionmethods_1():
 
 
 gdaltest_list = [
-    osr_getprojectionmethods_1,
+    test_osr_getprojectionmethods_1,
     None]
 
 if __name__ == '__main__':

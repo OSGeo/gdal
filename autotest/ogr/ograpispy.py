@@ -45,7 +45,7 @@ from osgeo import gdal
 # Basic test without snapshoting
 
 
-def ograpispy_1():
+def test_ograpispy_1():
 
     gdal.SetConfigOption('OGR_API_SPY_FILE', 'tmp/ograpispy_1.py')
     test_py_scripts.run_py_script('data', 'testograpispy', '')
@@ -76,7 +76,7 @@ def ograpispy_1():
 # With snapshoting
 
 
-def ograpispy_2():
+def test_ograpispy_2():
 
     if not ogrtest.has_apispy:
         return 'skip'
@@ -136,7 +136,7 @@ def ograpispy_2():
 #
 
 
-def ograpispy_cleanup():
+def test_ograpispy_cleanup():
     gdal.Unlink('tmp/ograpispy_1.py')
     gdal.Unlink('tmp/ograpispy_2.py')
     gdal.Unlink('tmp/ograpispy_2.pyc')
@@ -155,9 +155,9 @@ def ograpispy_cleanup():
 
 
 gdaltest_list = [
-    ograpispy_1,
-    ograpispy_2,
-    ograpispy_cleanup
+    test_ograpispy_1,
+    test_ograpispy_2,
+    test_ograpispy_cleanup
 ]
 
 if __name__ == '__main__':

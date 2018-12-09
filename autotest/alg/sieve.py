@@ -40,7 +40,7 @@ from osgeo import gdal
 # Test a fairly default case.
 
 
-def sieve_1():
+def test_sieve_1():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
@@ -71,7 +71,7 @@ def sieve_1():
 # Try eight connected.
 
 
-def sieve_2():
+def test_sieve_2():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
@@ -102,7 +102,7 @@ def sieve_2():
 # Do a sieve resulting in unmergable polygons.
 
 
-def sieve_3():
+def test_sieve_3():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/unmergable.grd')
@@ -134,7 +134,7 @@ def sieve_3():
 # Try the bug 2634 simplified data.
 
 
-def sieve_4():
+def test_sieve_4():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_2634.grd')
@@ -166,7 +166,7 @@ def sieve_4():
 # Same as sieve_1, but we provide a mask band
 # This should yield the same result as we use an opaque band
 
-def sieve_5():
+def test_sieve_5():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
@@ -198,7 +198,7 @@ def sieve_5():
 # should stay roughly linear with the number of pixels (i.e. size^2)
 
 
-def sieve_6():
+def test_sieve_6():
 
     try:
         import numpy
@@ -237,7 +237,7 @@ def sieve_6():
 # Test with nodata
 
 
-def sieve_7():
+def test_sieve_7():
 
     gdal.FileFromMemBuffer('/vsimem/sieve_7.asc', """ncols        7
 nrows        7
@@ -294,7 +294,7 @@ NODATA_value 0
 # Test propagation in our search of biggest neighbour
 
 
-def sieve_8():
+def test_sieve_8():
 
     gdal.FileFromMemBuffer('/vsimem/sieve_8.asc',
                            """ncols        7
@@ -341,14 +341,14 @@ cellsize     60.000000000000
 
 
 gdaltest_list = [
-    sieve_1,
-    sieve_2,
-    sieve_3,
-    sieve_4,
-    sieve_5,
-    sieve_6,
-    sieve_7,
-    sieve_8
+    test_sieve_1,
+    test_sieve_2,
+    test_sieve_3,
+    test_sieve_4,
+    test_sieve_5,
+    test_sieve_6,
+    test_sieve_7,
+    test_sieve_8
 ]
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@ from osgeo import gdal
 import gdaltest
 
 # Read test
-def vsihdfs_1():
+def test_vsihdfs_1():
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
     if fp is None:
@@ -59,7 +59,7 @@ def vsihdfs_1():
     return 'success'
 
 # Seek test
-def vsihdfs_2():
+def test_vsihdfs_2():
     if gdaltest.have_vsihdfs == False:
         return 'skip'
 
@@ -88,7 +88,7 @@ def vsihdfs_2():
     return 'success'
 
 # Tell test
-def vsihdfs_3():
+def test_vsihdfs_3():
     if gdaltest.have_vsihdfs == False:
         return 'skip'
 
@@ -109,11 +109,11 @@ def vsihdfs_3():
     return 'success'
 
 # Write test
-def vsihdfs_4():
+def test_vsihdfs_4():
     return 'skip'
 
 # EOF test
-def vsihdfs_5():
+def test_vsihdfs_5():
     if gdaltest.have_vsihdfs == False:
         return 'skip'
 
@@ -146,7 +146,7 @@ def vsihdfs_5():
     return 'success'
 
 # Stat test
-def vsihdfs_6():
+def test_vsihdfs_6():
     if gdaltest.have_vsihdfs == False:
         return 'skip'
 
@@ -163,7 +163,7 @@ def vsihdfs_6():
     return 'success'
 
 # ReadDir test
-def vsihdfs_7():
+def test_vsihdfs_7():
     if gdaltest.have_vsihdfs == False:
         return 'skip'
 
@@ -175,13 +175,13 @@ def vsihdfs_7():
     return 'success'
 
 
-gdaltest_list = [vsihdfs_1,
-                 vsihdfs_2,
-                 vsihdfs_3,
-                 vsihdfs_4,
-                 vsihdfs_5,
-                 vsihdfs_6,
-                 vsihdfs_7]
+gdaltest_list = [test_vsihdfs_1,
+                 test_vsihdfs_2,
+                 test_vsihdfs_3,
+                 test_vsihdfs_4,
+                 test_vsihdfs_5,
+                 test_vsihdfs_6,
+                 test_vsihdfs_7]
 
 if __name__ == '__main__':
 

@@ -42,7 +42,7 @@ import test_cli_utilities
 # Open VRT datasource.
 
 
-def ogr_vrt_1():
+def test_ogr_vrt_1():
 
     with gdaltest.error_handler():
         # Complains about dummySrcDataSource as expected.
@@ -58,7 +58,7 @@ def ogr_vrt_1():
 # Also tests FID-copied-from-source.
 
 
-def ogr_vrt_2():
+def test_ogr_vrt_2():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -104,7 +104,7 @@ def ogr_vrt_2():
 # Also tests FID-from-attribute.
 
 
-def ogr_vrt_3():
+def test_ogr_vrt_3():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -142,7 +142,7 @@ def ogr_vrt_3():
 ###############################################################################
 # Test a spatial query.
 
-def ogr_vrt_4():
+def test_ogr_vrt_4():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -172,7 +172,7 @@ def ogr_vrt_4():
 ###############################################################################
 # Test an attribute query.
 
-def ogr_vrt_5():
+def test_ogr_vrt_5():
 
     lyr = gdaltest.vrt_ds.GetLayerByName('test3')
     lyr.ResetReading()
@@ -200,7 +200,7 @@ def ogr_vrt_5():
 # Test GetFeature() on layer with FID coming from a column.
 
 
-def ogr_vrt_6():
+def test_ogr_vrt_6():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -220,7 +220,7 @@ def ogr_vrt_6():
 #
 
 
-def ogr_vrt_7():
+def test_ogr_vrt_7():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -260,7 +260,7 @@ def ogr_vrt_7():
 #
 
 
-def ogr_vrt_8():
+def test_ogr_vrt_8():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -300,7 +300,7 @@ def ogr_vrt_8():
 ###############################################################################
 # Test that attribute filters are passed through to an underlying layer.
 
-def ogr_vrt_9():
+def test_ogr_vrt_9():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -335,7 +335,7 @@ def ogr_vrt_9():
 #
 
 
-def ogr_vrt_10():
+def test_ogr_vrt_10():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -359,7 +359,7 @@ def ogr_vrt_10():
 # Test also the reportGeomSrcColumn attribute
 
 
-def ogr_vrt_11():
+def test_ogr_vrt_11():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -471,7 +471,7 @@ def ogr_vrt_11():
 # Test VRT write capabilities with WKT geometries
 
 
-def ogr_vrt_12():
+def test_ogr_vrt_12():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -515,7 +515,7 @@ def ogr_vrt_12():
 # Test VRT write capabilities with WKB geometries
 
 
-def ogr_vrt_13():
+def test_ogr_vrt_13():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -558,7 +558,7 @@ def ogr_vrt_13():
 # Test SrcRegion element for VGS_Direct
 
 
-def ogr_vrt_14():
+def test_ogr_vrt_14():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -661,7 +661,7 @@ def ogr_vrt_14():
 ###############################################################################
 # Test SrcRegion element for VGS_WKT
 
-def ogr_vrt_15():
+def test_ogr_vrt_15():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -721,7 +721,7 @@ def ogr_vrt_15():
 ###############################################################################
 # Test SrcRegion element for VGS_PointFromColumns
 
-def ogr_vrt_16():
+def test_ogr_vrt_16():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -791,7 +791,7 @@ def ogr_vrt_16():
 ###############################################################################
 # Test explicit field definitions.
 
-def ogr_vrt_17():
+def test_ogr_vrt_17():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -860,7 +860,7 @@ def ogr_vrt_17():
 # when explicit fields are defined.
 
 
-def ogr_vrt_18():
+def test_ogr_vrt_18():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -892,7 +892,7 @@ def ogr_vrt_18():
 # Run test_ogrsf (optimized path)
 
 
-def ogr_vrt_19_optimized():
+def test_ogr_vrt_19_optimized():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -912,7 +912,7 @@ def ogr_vrt_19_optimized():
 # Run test_ogrsf (non optimized path)
 
 
-def ogr_vrt_19_nonoptimized():
+def test_ogr_vrt_19_nonoptimized():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -932,7 +932,7 @@ def ogr_vrt_19_nonoptimized():
 # Test VGS_Direct
 
 
-def ogr_vrt_20():
+def test_ogr_vrt_20():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -1186,7 +1186,7 @@ def ogr_vrt_21_internal():
     return 'success'
 
 
-def ogr_vrt_21():
+def test_ogr_vrt_21():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
         ret = ogr_vrt_21_internal()
@@ -1325,7 +1325,7 @@ def ogr_vrt_22_internal():
     return 'success'
 
 
-def ogr_vrt_22():
+def test_ogr_vrt_22():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
         ret = ogr_vrt_22_internal()
@@ -1338,7 +1338,7 @@ def ogr_vrt_22():
 # Test anti-recursion mechanism
 
 
-def ogr_vrt_23(shared_ds_flag=''):
+def test_ogr_vrt_23(shared_ds_flag=''):
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         gdaltest.post_reason('would crash')
@@ -1383,9 +1383,9 @@ def ogr_vrt_23(shared_ds_flag=''):
 # Test anti-recursion mechanism on shared DS
 
 
-def ogr_vrt_24():
+def test_ogr_vrt_24():
 
-    ret = ogr_vrt_23(' shared="1"')
+    ret = test_ogr_vrt_23(' shared="1"')
     if ret != 'success':
         return ret
 
@@ -1426,7 +1426,7 @@ def ogr_vrt_24():
 ###############################################################################
 # Test GetFIDColumn()
 
-def ogr_vrt_25():
+def test_ogr_vrt_25():
 
     with gdaltest.error_handler():
         ds = ogr.Open('data/vrt_test.vrt')
@@ -1469,7 +1469,7 @@ def ogr_vrt_25():
 # Test transaction support
 
 
-def ogr_vrt_26():
+def test_ogr_vrt_26():
 
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
@@ -1533,7 +1533,7 @@ def ogr_vrt_26():
 # Test shapebin geometry
 
 
-def ogr_vrt_27():
+def test_ogr_vrt_27():
 
     csv = """dummy,shapebin
 "dummy","01000000000000000000F03F0000000000000040"
@@ -1576,7 +1576,7 @@ def ogr_vrt_27():
 # Invalid VRT testing
 
 
-def ogr_vrt_28():
+def test_ogr_vrt_28():
 
     with gdaltest.error_handler():
         ds = ogr.Open("<OGRVRTDataSource></foo>")
@@ -1634,7 +1634,7 @@ def ogr_vrt_28():
 # Test OGRVRTWarpedLayer
 
 
-def ogr_vrt_29():
+def test_ogr_vrt_29():
 
     gdal.Unlink('tmp/ogr_vrt_29.shp')
     gdal.Unlink('tmp/ogr_vrt_29.shx')
@@ -2002,7 +2002,7 @@ def ogr_vrt_29():
 ###############################################################################
 # Test OGRVRTUnionLayer
 
-def ogr_vrt_30():
+def test_ogr_vrt_30():
 
     for filename in ['tmp/ogr_vrt_30_1.shp',
                      'tmp/ogr_vrt_30_1.shx',
@@ -2509,7 +2509,7 @@ def ogr_vrt_30():
 # Test anti-recursion mechanism with union layer
 
 
-def ogr_vrt_31(shared_ds_flag=''):
+def test_ogr_vrt_31(shared_ds_flag=''):
 
     rec1 = """<OGRVRTDataSource>
     <OGRVRTUnionLayer name="rec1">
@@ -2558,15 +2558,15 @@ def ogr_vrt_31(shared_ds_flag=''):
 # Test anti-recursion mechanism on shared DS
 
 
-def ogr_vrt_32():
+def test_ogr_vrt_32():
 
-    return ogr_vrt_31(' shared="1"')
+    return test_ogr_vrt_31(' shared="1"')
 
 
 ###############################################################################
 # Test multi-geometry support
 
-def ogr_vrt_33():
+def test_ogr_vrt_33():
 
     try:
         import shutil
@@ -3324,7 +3324,7 @@ def ogr_vrt_33():
 # Test SetIgnoredFields() with with PointFromColumns geometries
 
 
-def ogr_vrt_34():
+def test_ogr_vrt_34():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -3366,7 +3366,7 @@ def ogr_vrt_34():
 # Test nullable fields
 
 
-def ogr_vrt_35():
+def test_ogr_vrt_35():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -3446,7 +3446,7 @@ def ogr_vrt_35():
 # Test editing direct geometries
 
 
-def ogr_vrt_36():
+def test_ogr_vrt_36():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -3493,7 +3493,7 @@ def ogr_vrt_36():
 # Test implict non-spatial layers (#6336)
 
 
-def ogr_vrt_37():
+def test_ogr_vrt_37():
 
     with gdaltest.error_handler():
         ds = ogr.Open('data/vrt_test.vrt')
@@ -3517,7 +3517,7 @@ def ogr_vrt_37():
 # Test reading geometry type
 
 
-def ogr_vrt_38():
+def test_ogr_vrt_38():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -3572,7 +3572,7 @@ def ogr_vrt_38():
 # Test that attribute filtering works with <FID>
 
 
-def ogr_vrt_39():
+def test_ogr_vrt_39():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -3616,7 +3616,7 @@ def ogr_vrt_39():
 # Test PointZM support with encoding="PointFromColumns"
 
 
-def ogr_vrt_40():
+def test_ogr_vrt_40():
     if gdaltest.vrt_ds is None:
         return 'skip'
 
@@ -3657,7 +3657,7 @@ def ogr_vrt_40():
 # Test GetExtent() on erroneous definition
 
 
-def ogr_vrt_41():
+def test_ogr_vrt_41():
 
     ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="test">
@@ -3674,7 +3674,7 @@ def ogr_vrt_41():
 #
 
 
-def ogr_vrt_cleanup():
+def test_ogr_vrt_cleanup():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -3699,49 +3699,49 @@ def ogr_vrt_cleanup():
 
 
 gdaltest_list = [
-    ogr_vrt_1,
-    ogr_vrt_2,
-    ogr_vrt_3,
-    ogr_vrt_4,
-    ogr_vrt_5,
-    ogr_vrt_6,
-    ogr_vrt_7,
-    ogr_vrt_8,
-    ogr_vrt_9,
-    ogr_vrt_10,
-    ogr_vrt_11,
-    ogr_vrt_12,
-    ogr_vrt_13,
-    ogr_vrt_14,
-    ogr_vrt_15,
-    ogr_vrt_16,
-    ogr_vrt_17,
-    ogr_vrt_18,
-    ogr_vrt_19_optimized,
-    ogr_vrt_19_nonoptimized,
-    ogr_vrt_20,
-    ogr_vrt_21,
-    ogr_vrt_22,
-    ogr_vrt_23,
-    ogr_vrt_24,
-    ogr_vrt_25,
-    ogr_vrt_26,
-    ogr_vrt_27,
-    ogr_vrt_28,
-    ogr_vrt_29,
-    ogr_vrt_30,
-    ogr_vrt_31,
-    ogr_vrt_32,
-    ogr_vrt_33,
-    ogr_vrt_34,
-    ogr_vrt_35,
-    ogr_vrt_36,
-    ogr_vrt_37,
-    ogr_vrt_38,
-    ogr_vrt_39,
-    ogr_vrt_40,
-    ogr_vrt_41,
-    ogr_vrt_cleanup]
+    test_ogr_vrt_1,
+    test_ogr_vrt_2,
+    test_ogr_vrt_3,
+    test_ogr_vrt_4,
+    test_ogr_vrt_5,
+    test_ogr_vrt_6,
+    test_ogr_vrt_7,
+    test_ogr_vrt_8,
+    test_ogr_vrt_9,
+    test_ogr_vrt_10,
+    test_ogr_vrt_11,
+    test_ogr_vrt_12,
+    test_ogr_vrt_13,
+    test_ogr_vrt_14,
+    test_ogr_vrt_15,
+    test_ogr_vrt_16,
+    test_ogr_vrt_17,
+    test_ogr_vrt_18,
+    test_ogr_vrt_19_optimized,
+    test_ogr_vrt_19_nonoptimized,
+    test_ogr_vrt_20,
+    test_ogr_vrt_21,
+    test_ogr_vrt_22,
+    test_ogr_vrt_23,
+    test_ogr_vrt_24,
+    test_ogr_vrt_25,
+    test_ogr_vrt_26,
+    test_ogr_vrt_27,
+    test_ogr_vrt_28,
+    test_ogr_vrt_29,
+    test_ogr_vrt_30,
+    test_ogr_vrt_31,
+    test_ogr_vrt_32,
+    test_ogr_vrt_33,
+    test_ogr_vrt_34,
+    test_ogr_vrt_35,
+    test_ogr_vrt_36,
+    test_ogr_vrt_37,
+    test_ogr_vrt_38,
+    test_ogr_vrt_39,
+    test_ogr_vrt_40,
+    test_ogr_vrt_41,
+    test_ogr_vrt_cleanup]
 
 if __name__ == '__main__':
 

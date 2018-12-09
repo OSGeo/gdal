@@ -41,7 +41,7 @@ import gdaltest
 # Find WMTS driver
 
 
-def wmts_1():
+def test_wmts_1():
 
     gdaltest.wmts_drv = gdal.GetDriverByName('WMTS')
 
@@ -61,7 +61,7 @@ def wmts_1():
 # Error: no URL and invalid GDAL_WMTS service file documents
 
 
-def wmts_2():
+def test_wmts_2():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -100,7 +100,7 @@ def wmts_2():
 # Error: invalid URL
 
 
-def wmts_3():
+def test_wmts_3():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -118,7 +118,7 @@ def wmts_3():
 # Error: invalid URL
 
 
-def wmts_4():
+def test_wmts_4():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -136,7 +136,7 @@ def wmts_4():
 # Error: invalid XML in GetCapabilities response
 
 
-def wmts_5():
+def test_wmts_5():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -156,7 +156,7 @@ def wmts_5():
 # Error: invalid content in GetCapabilities response
 
 
-def wmts_6():
+def test_wmts_6():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -176,7 +176,7 @@ def wmts_6():
 # Error: no layers
 
 
-def wmts_7():
+def test_wmts_7():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -196,7 +196,7 @@ def wmts_7():
 # Error: missing TileMatrixSetLink and Style
 
 
-def wmts_8():
+def test_wmts_8():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -222,7 +222,7 @@ def wmts_8():
 # Error: missing TileMatrixSet
 
 
-def wmts_9():
+def test_wmts_9():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -255,7 +255,7 @@ def wmts_9():
 # Error: Missing SupportedCRS
 
 
-def wmts_10():
+def test_wmts_10():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -291,7 +291,7 @@ def wmts_10():
 # Error: Cannot find TileMatrix in TileMatrixSet
 
 
-def wmts_11():
+def test_wmts_11():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -328,7 +328,7 @@ def wmts_11():
 # Error: Missing required element in TileMatrix element
 
 
-def wmts_12():
+def test_wmts_12():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -366,7 +366,7 @@ def wmts_12():
 # Error: Missing ResourceURL
 
 
-def wmts_12bis():
+def test_wmts_12bis():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -411,7 +411,7 @@ def wmts_12bis():
 # Minimal
 
 
-def wmts_13():
+def test_wmts_13():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -553,7 +553,7 @@ def wmts_13():
 # Nominal RESTful
 
 
-def wmts_14():
+def test_wmts_14():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -850,7 +850,7 @@ def wmts_14():
 # Nominal KVP
 
 
-def wmts_15():
+def test_wmts_15():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1012,7 +1012,7 @@ def wmts_15():
 # AOI from layer WGS84BoundingBox
 
 
-def wmts_16():
+def test_wmts_16():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1102,7 +1102,7 @@ def wmts_16():
 # AOI from layer BoundingBox
 
 
-def wmts_17():
+def test_wmts_17():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1192,7 +1192,7 @@ def wmts_17():
 # AOI from TileMatrixSet BoundingBox
 
 
-def wmts_18():
+def test_wmts_18():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1282,7 +1282,7 @@ def wmts_18():
 # AOI from TileMatrixSetLimits
 
 
-def wmts_19():
+def test_wmts_19():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1377,7 +1377,7 @@ def wmts_19():
 # AOI from layer BoundingBox but restricted with TileMatrixSetLimits
 
 
-def wmts_20():
+def test_wmts_20():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1476,7 +1476,7 @@ def wmts_20():
 # Test ExtendBeyondDateLine
 
 
-def wmts_21():
+def test_wmts_21():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1589,7 +1589,7 @@ def wmts_21():
 # Test when WGS84BoundingBox is a densified reprojection of the tile matrix bbox
 
 
-def wmts_22():
+def test_wmts_22():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1729,27 +1729,27 @@ def wmts_23(imagetype, expected_cs):
     return 'success'
 
 
-def wmts_23_gray():
+def test_wmts_23_gray():
     return wmts_23('gray', [60137, 60137, 60137, 4428])
 
 
-def wmts_23_grayalpha():
+def test_wmts_23_grayalpha():
     return wmts_23('gray+alpha', [39910, 39910, 39910, 63180])
 
 
-def wmts_23_pal():
+def test_wmts_23_pal():
     return wmts_23('pal', [62950, 59100, 63864, 453])
 
 
-def wmts_23_rgb():
+def test_wmts_23_rgb():
     return wmts_23('rgb', [1020, 3665, 6180, 4428])
 
 
-def wmts_23_rgba():
+def test_wmts_23_rgba():
     return wmts_23('rgba', [65530, 51449, 1361, 59291])
 
 
-def wmts_invalid_global_to_tm_reprojection():
+def test_wmts_invalid_global_to_tm_reprojection():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -1810,7 +1810,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
 #
 
 
-def wmts_check_no_overflow_zoom_level():
+def test_wmts_check_no_overflow_zoom_level():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -2100,7 +2100,7 @@ def wmts_CleanCache():
 #
 
 
-def wmts_cleanup():
+def test_wmts_cleanup():
 
     if gdaltest.wmts_drv is None:
         return 'skip'
@@ -2124,37 +2124,37 @@ def wmts_cleanup():
 
 
 gdaltest_list = [
-    wmts_1,
-    wmts_2,
-    wmts_3,
-    wmts_4,
-    wmts_5,
-    wmts_6,
-    wmts_7,
-    wmts_8,
-    wmts_9,
-    wmts_10,
-    wmts_11,
-    wmts_12,
-    wmts_12bis,
-    wmts_13,
-    wmts_14,
-    wmts_15,
-    wmts_16,
-    wmts_17,
-    wmts_18,
-    wmts_19,
-    wmts_20,
-    wmts_21,
-    wmts_22,
-    wmts_23_gray,
-    wmts_23_grayalpha,
-    wmts_23_pal,
-    wmts_23_rgb,
-    wmts_23_rgba,
-    wmts_invalid_global_to_tm_reprojection,
-    wmts_check_no_overflow_zoom_level,
-    wmts_cleanup]
+    test_wmts_1,
+    test_wmts_2,
+    test_wmts_3,
+    test_wmts_4,
+    test_wmts_5,
+    test_wmts_6,
+    test_wmts_7,
+    test_wmts_8,
+    test_wmts_9,
+    test_wmts_10,
+    test_wmts_11,
+    test_wmts_12,
+    test_wmts_12bis,
+    test_wmts_13,
+    test_wmts_14,
+    test_wmts_15,
+    test_wmts_16,
+    test_wmts_17,
+    test_wmts_18,
+    test_wmts_19,
+    test_wmts_20,
+    test_wmts_21,
+    test_wmts_22,
+    test_wmts_23_gray,
+    test_wmts_23_grayalpha,
+    test_wmts_23_pal,
+    test_wmts_23_rgb,
+    test_wmts_23_rgba,
+    test_wmts_invalid_global_to_tm_reprojection,
+    test_wmts_check_no_overflow_zoom_level,
+    test_wmts_cleanup]
 
 if __name__ == '__main__':
 

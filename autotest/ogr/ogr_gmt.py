@@ -40,7 +40,7 @@ from osgeo import ogr
 # Open Memory datasource.
 
 
-def ogr_gmt_1():
+def test_ogr_gmt_1():
 
     gmt_drv = ogr.GetDriverByName('GMT')
     gdaltest.gmt_ds = gmt_drv.CreateDataSource('tmp/tpoly.gmt')
@@ -54,7 +54,7 @@ def ogr_gmt_1():
 # Create table from data/poly.shp
 
 
-def ogr_gmt_2():
+def test_ogr_gmt_2():
 
     #######################################################
     # Create gmtory Layer
@@ -97,7 +97,7 @@ def ogr_gmt_2():
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_gmt_3():
+def test_ogr_gmt_3():
 
     gdaltest.gmt_ds = ogr.Open('tmp/tpoly.gmt')
     gdaltest.gmt_lyr = gdaltest.gmt_ds.GetLayer(0)
@@ -133,7 +133,7 @@ def ogr_gmt_3():
 # Verify reading of multilinestring file. (#3802)
 
 
-def ogr_gmt_4():
+def test_ogr_gmt_4():
 
     ds = ogr.Open('data/test_multi.gmt')
     lyr = ds.GetLayer(0)
@@ -172,7 +172,7 @@ def ogr_gmt_4():
 # Write a multipolygon file and verify it.
 
 
-def ogr_gmt_5():
+def test_ogr_gmt_5():
 
     #######################################################
     # Create gmtory Layer
@@ -244,7 +244,7 @@ def ogr_gmt_5():
 ###############################################################################
 #
 
-def ogr_gmt_cleanup():
+def test_ogr_gmt_cleanup():
 
     if gdaltest.gmt_ds is not None:
         gdaltest.gmt_lyr = None
@@ -256,12 +256,12 @@ def ogr_gmt_cleanup():
 
 
 gdaltest_list = [
-    ogr_gmt_1,
-    ogr_gmt_2,
-    ogr_gmt_3,
-    ogr_gmt_4,
-    ogr_gmt_5,
-    ogr_gmt_cleanup]
+    test_ogr_gmt_1,
+    test_ogr_gmt_2,
+    test_ogr_gmt_3,
+    test_ogr_gmt_4,
+    test_ogr_gmt_5,
+    test_ogr_gmt_cleanup]
 
 if __name__ == '__main__':
 

@@ -39,7 +39,7 @@ from osgeo import osr
 from osgeo import gdal
 
 
-def ogr_georss_init():
+def test_ogr_georss_init():
 
     ds = ogr.Open('data/atom_rfc_sample.xml')
     if ds is None:
@@ -112,7 +112,7 @@ def ogr_georss_test_atom(filename):
 # Test reading an ATOM document without any geometry
 
 
-def ogr_georss_1():
+def test_ogr_georss_1():
 
     return ogr_georss_test_atom('data/atom_rfc_sample.xml')
 
@@ -120,7 +120,7 @@ def ogr_georss_1():
 # Test reading an ATOM document with atom: prefiw
 
 
-def ogr_georss_1_atom_ns():
+def test_ogr_georss_1_atom_ns():
 
     return ogr_georss_test_atom('data/atom_rfc_sample_atom_ns.xml')
 
@@ -128,7 +128,7 @@ def ogr_georss_1_atom_ns():
 # Test writing a Atom 1.0 document (doesn't need read support)
 
 
-def ogr_georss_1bis():
+def test_ogr_georss_1bis():
 
     try:
         os.remove('tmp/test_atom.xml')
@@ -159,7 +159,7 @@ def ogr_georss_1bis():
 ###############################################################################
 # Test reading document created at previous step
 
-def ogr_georss_1ter():
+def test_ogr_georss_1ter():
 
     return ogr_georss_test_atom('tmp/test_atom.xml')
 
@@ -242,7 +242,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
 # Test reading a RSS 2.0 document with GeoRSS simple geometries
 
 
-def ogr_georss_2():
+def test_ogr_georss_2():
 
     return ogr_georss_test_rss('data/test_georss_simple.xml', False)
 
@@ -250,7 +250,7 @@ def ogr_georss_2():
 # Test reading a RSS 2.0 document with GeoRSS GML geometries
 
 
-def ogr_georss_3():
+def test_ogr_georss_3():
 
     if not gdaltest.have_gml_reader:
         return 'skip'
@@ -336,7 +336,7 @@ def ogr_georss_create(filename, options):
 # Test writing a RSS 2.0 document in Simple dialect (doesn't need read support)
 
 
-def ogr_georss_4():
+def test_ogr_georss_4():
 
     if ogr_georss_create('tmp/test_rss2.xml', []) != 'success':
         return 'fail'
@@ -352,7 +352,7 @@ def ogr_georss_4():
 # Test reading document created at previous step
 
 
-def ogr_georss_5():
+def test_ogr_georss_5():
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', False)
 
@@ -360,7 +360,7 @@ def ogr_georss_5():
 # Test writing a RSS 2.0 document in GML dialect (doesn't need read support)
 
 
-def ogr_georss_6():
+def test_ogr_georss_6():
 
     if ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=GML']) != 'success':
         return 'fail'
@@ -376,7 +376,7 @@ def ogr_georss_6():
 # Test reading document created at previous step
 
 
-def ogr_georss_7():
+def test_ogr_georss_7():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
@@ -386,7 +386,7 @@ def ogr_georss_7():
 # Test writing a RSS 2.0 document in W3C Geo dialect (doesn't need read support)
 
 
-def ogr_georss_8():
+def test_ogr_georss_8():
 
     if ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=W3C_GEO']) != 'success':
         return 'fail'
@@ -402,7 +402,7 @@ def ogr_georss_8():
 # Test reading document created at previous step
 
 
-def ogr_georss_9():
+def test_ogr_georss_9():
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', True)
 
@@ -410,7 +410,7 @@ def ogr_georss_9():
 # Test writing a RSS 2.0 document in GML dialect with EPSG:32631
 
 
-def ogr_georss_10():
+def test_ogr_georss_10():
     try:
         os.remove('tmp/test32631.rss')
     except OSError:
@@ -460,7 +460,7 @@ def ogr_georss_10():
 # Test reading document created at previous step
 
 
-def ogr_georss_11():
+def test_ogr_georss_11():
 
     if not gdaltest.georss_read_support:
         return 'skip'
@@ -494,7 +494,7 @@ def ogr_georss_11():
 # Test various broken documents
 
 
-def ogr_georss_12():
+def test_ogr_georss_12():
 
     if not gdaltest.georss_read_support:
         return 'skip'
@@ -528,7 +528,7 @@ def ogr_georss_12():
 # Test writing non standard fields
 
 
-def ogr_georss_13():
+def test_ogr_georss_13():
     try:
         os.remove('tmp/nonstandard.rss')
     except OSError:
@@ -568,7 +568,7 @@ def ogr_georss_13():
 # Test reading document created at previous step
 
 
-def ogr_georss_14():
+def test_ogr_georss_14():
 
     if not gdaltest.georss_read_support:
         return 'skip'
@@ -594,7 +594,7 @@ def ogr_georss_14():
 # Test reading an in memory file (#2931)
 
 
-def ogr_georss_15():
+def test_ogr_georss_15():
 
     if not gdaltest.georss_read_support:
         return 'skip'
@@ -639,7 +639,7 @@ def ogr_georss_15():
 #
 
 
-def ogr_georss_cleanup():
+def test_ogr_georss_cleanup():
 
     list_files = ['tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss']
     for filename in list_files:
@@ -657,26 +657,26 @@ def ogr_georss_cleanup():
 
 
 gdaltest_list = [
-    ogr_georss_init,
-    ogr_georss_1,
-    ogr_georss_1_atom_ns,
-    ogr_georss_1bis,
-    ogr_georss_1ter,
-    ogr_georss_2,
-    ogr_georss_3,
-    ogr_georss_4,
-    ogr_georss_5,
-    ogr_georss_6,
-    ogr_georss_7,
-    ogr_georss_8,
-    ogr_georss_9,
-    ogr_georss_10,
-    ogr_georss_11,
-    ogr_georss_12,
-    ogr_georss_13,
-    ogr_georss_14,
-    ogr_georss_15,
-    ogr_georss_cleanup]
+    test_ogr_georss_init,
+    test_ogr_georss_1,
+    test_ogr_georss_1_atom_ns,
+    test_ogr_georss_1bis,
+    test_ogr_georss_1ter,
+    test_ogr_georss_2,
+    test_ogr_georss_3,
+    test_ogr_georss_4,
+    test_ogr_georss_5,
+    test_ogr_georss_6,
+    test_ogr_georss_7,
+    test_ogr_georss_8,
+    test_ogr_georss_9,
+    test_ogr_georss_10,
+    test_ogr_georss_11,
+    test_ogr_georss_12,
+    test_ogr_georss_13,
+    test_ogr_georss_14,
+    test_ogr_georss_15,
+    test_ogr_georss_cleanup]
 
 if __name__ == '__main__':
 

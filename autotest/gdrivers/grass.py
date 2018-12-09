@@ -38,7 +38,7 @@ import gdaltest
 ###############################################################################
 # Test if GRASS driver is present
 
-def grass_1():
+def test_grass_1():
 
     gdaltest.grass_drv = gdal.GetDriverByName('GRASS')
     if gdaltest.grass_drv is None:
@@ -50,7 +50,7 @@ def grass_1():
 # Read existing simple 1 band GRASS dataset.
 
 
-def grass_2():
+def test_grass_2():
 
     if gdaltest.grass_drv is None:
         return 'skip'
@@ -79,8 +79,8 @@ def grass_2():
 
 
 gdaltest_list = [
-    grass_1,
-    grass_2
+    test_grass_1,
+    test_grass_2
 ]
 
 

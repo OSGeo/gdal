@@ -82,7 +82,7 @@ def test_ogr_csw_pycsw():
 ###############################################################################
 
 
-def ogr_csw_vsimem_fail_because_not_enabled():
+def test_ogr_csw_vsimem_fail_because_not_enabled():
     gdal.PushErrorHandler()
     ds = ogr.Open('CSW:/vsimem/csw_endpoint')
     gdal.PopErrorHandler()
@@ -93,7 +93,7 @@ def ogr_csw_vsimem_fail_because_not_enabled():
 
 
 ###############################################################################
-def ogr_csw_vsimem_fail_because_no_get_capabilities():
+def test_ogr_csw_vsimem_fail_because_no_get_capabilities():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.PushErrorHandler()
@@ -107,7 +107,7 @@ def ogr_csw_vsimem_fail_because_no_get_capabilities():
 ###############################################################################
 
 
-def ogr_csw_vsimem_fail_because_empty_response():
+def test_ogr_csw_vsimem_fail_because_empty_response():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities',
@@ -128,7 +128,7 @@ def ogr_csw_vsimem_fail_because_empty_response():
 ###############################################################################
 
 
-def ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
+def test_ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities',
@@ -149,7 +149,7 @@ def ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
 ###############################################################################
 
 
-def ogr_csw_vsimem_fail_because_exception():
+def test_ogr_csw_vsimem_fail_because_exception():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities',
@@ -170,7 +170,7 @@ def ogr_csw_vsimem_fail_because_exception():
 ###############################################################################
 
 
-def ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
+def test_ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities',
@@ -191,7 +191,7 @@ def ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
 ###############################################################################
 
 
-def ogr_csw_vsimem_fail_because_missing_version():
+def test_ogr_csw_vsimem_fail_because_missing_version():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdal.FileFromMemBuffer('/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities',
@@ -214,7 +214,7 @@ def ogr_csw_vsimem_fail_because_missing_version():
 ###############################################################################
 
 
-def ogr_csw_vsimem_csw_minimal_instance():
+def test_ogr_csw_vsimem_csw_minimal_instance():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     # Invalid response, but enough for use
@@ -533,7 +533,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 ###############################################################################
 
 
-def ogr_csw_vsimem_csw_output_schema_csw():
+def test_ogr_csw_vsimem_csw_output_schema_csw():
     ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options=['OUTPUT_SCHEMA=CSW'])
     lyr = ds.GetLayer(0)
 
@@ -594,7 +594,7 @@ def ogr_csw_vsimem_csw_output_schema_csw():
 ###############################################################################
 
 
-def ogr_csw_vsimem_csw_output_schema_gmd():
+def test_ogr_csw_vsimem_csw_output_schema_gmd():
     ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options=['OUTPUT_SCHEMA=GMD'])
     lyr = ds.GetLayer(0)
 
@@ -636,7 +636,7 @@ def ogr_csw_vsimem_csw_output_schema_gmd():
 ###############################################################################
 
 
-def ogr_csw_vsimem_csw_output_schema_fgdc():
+def test_ogr_csw_vsimem_csw_output_schema_fgdc():
     ds = gdal.OpenEx('CSW:/vsimem/csw_endpoint', open_options=['OUTPUT_SCHEMA=http://www.opengis.net/cat/csw/csdgm'])
     lyr = ds.GetLayer(0)
 
@@ -680,7 +680,7 @@ def ogr_csw_vsimem_csw_output_schema_fgdc():
 ###############################################################################
 
 
-def ogr_csw_vsimem_cleanup():
+def test_ogr_csw_vsimem_cleanup():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
 
     for f in gdal.ReadDir('/vsimem/'):
@@ -690,18 +690,18 @@ def ogr_csw_vsimem_cleanup():
 
 
 gdaltest_list = [
-    ogr_csw_vsimem_fail_because_not_enabled,
-    ogr_csw_vsimem_fail_because_no_get_capabilities,
-    ogr_csw_vsimem_fail_because_empty_response,
-    ogr_csw_vsimem_fail_because_no_CSW_Capabilities,
-    ogr_csw_vsimem_fail_because_exception,
-    ogr_csw_vsimem_fail_because_invalid_xml_capabilities,
-    ogr_csw_vsimem_fail_because_missing_version,
-    ogr_csw_vsimem_csw_minimal_instance,
-    ogr_csw_vsimem_csw_output_schema_csw,
-    ogr_csw_vsimem_csw_output_schema_gmd,
-    ogr_csw_vsimem_csw_output_schema_fgdc,
-    ogr_csw_vsimem_cleanup,
+    test_ogr_csw_vsimem_fail_because_not_enabled,
+    test_ogr_csw_vsimem_fail_because_no_get_capabilities,
+    test_ogr_csw_vsimem_fail_because_empty_response,
+    test_ogr_csw_vsimem_fail_because_no_CSW_Capabilities,
+    test_ogr_csw_vsimem_fail_because_exception,
+    test_ogr_csw_vsimem_fail_because_invalid_xml_capabilities,
+    test_ogr_csw_vsimem_fail_because_missing_version,
+    test_ogr_csw_vsimem_csw_minimal_instance,
+    test_ogr_csw_vsimem_csw_output_schema_csw,
+    test_ogr_csw_vsimem_csw_output_schema_gmd,
+    test_ogr_csw_vsimem_csw_output_schema_fgdc,
+    test_ogr_csw_vsimem_cleanup,
 ]
 
 if __name__ == '__main__':

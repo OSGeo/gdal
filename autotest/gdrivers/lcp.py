@@ -40,7 +40,7 @@ import gdaltest
 #  Test test_FARSITE_UTM12.LCP
 
 
-def lcp_1():
+def test_lcp_1():
 
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
     if ds.RasterCount != 8:
@@ -140,7 +140,7 @@ def lcp_1():
 # test test_USGS_LFNM_Alb83.lcp
 
 
-def lcp_2():
+def test_lcp_2():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
     if ds.RasterCount != 8:
@@ -236,7 +236,7 @@ def lcp_2():
 #  Test for empty prj
 
 
-def lcp_3():
+def test_lcp_3():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
     if ds is None:
@@ -251,7 +251,7 @@ def lcp_3():
 #  Test that the prj file isn't added to the sibling list if it isn't there.
 
 
-def lcp_4():
+def test_lcp_4():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
     if ds is None:
@@ -266,7 +266,7 @@ def lcp_4():
 #  Test for valid prj
 
 
-def lcp_5():
+def test_lcp_5():
 
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
     if ds is None:
@@ -281,7 +281,7 @@ def lcp_5():
 #  Test for valid sibling list
 
 
-def lcp_6():
+def test_lcp_6():
 
     retval = 'success'
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
@@ -303,7 +303,7 @@ def lcp_6():
 #  Test create copy that copies data over
 
 
-def lcp_7():
+def test_lcp_7():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -339,7 +339,7 @@ def lcp_7():
 #  Test create copy with invalid bands
 
 
-def lcp_8():
+def test_lcp_8():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -375,7 +375,7 @@ def lcp_8():
 #  Test create copy
 
 
-def lcp_9():
+def test_lcp_9():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -403,7 +403,7 @@ def lcp_9():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_10():
+def test_lcp_10():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -443,7 +443,7 @@ def lcp_10():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_11():
+def test_lcp_11():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -483,7 +483,7 @@ def lcp_11():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_12():
+def test_lcp_12():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -522,7 +522,7 @@ def lcp_12():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_13():
+def test_lcp_13():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -562,7 +562,7 @@ def lcp_13():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_14():
+def test_lcp_14():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -602,7 +602,7 @@ def lcp_14():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_15():
+def test_lcp_15():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -642,7 +642,7 @@ def lcp_15():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_16():
+def test_lcp_16():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -688,7 +688,7 @@ def lcp_16():
 #  documentation.  Docs say mg/ha * 10 and tn/ac * 10, metadata is not * 10.
 
 
-def lcp_17():
+def test_lcp_17():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -729,7 +729,7 @@ def lcp_17():
 #  Test create copy and make sure creation options work.
 
 
-def lcp_18():
+def test_lcp_18():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -763,7 +763,7 @@ def lcp_18():
 #  Test create copy and make sure creation options work.
 
 
-def lcp_19():
+def test_lcp_19():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -798,7 +798,7 @@ def lcp_19():
 #  Test create copy and make sure DESCRIPTION co works
 
 
-def lcp_20():
+def test_lcp_20():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -833,7 +833,7 @@ def lcp_20():
 #  Test create copy and make data is copied over via checksums
 
 
-def lcp_21():
+def test_lcp_21():
     try:
         import random
         import struct
@@ -877,7 +877,7 @@ def lcp_21():
 #  Test create copy and make data is copied over via numpy comparison.
 
 
-def lcp_22():
+def test_lcp_22():
     try:
         import random
         import struct
@@ -924,7 +924,7 @@ def lcp_22():
 ###############################################################################
 #  Test create copy and make sure invalid creation options are caught.
 
-def lcp_23():
+def test_lcp_23():
 
     mem_drv = gdal.GetDriverByName('MEM')
     if mem_drv is None:
@@ -960,29 +960,29 @@ def lcp_23():
 
 
 gdaltest_list = [
-    lcp_1,
-    lcp_2,
-    lcp_3,
-    lcp_4,
-    lcp_5,
-    lcp_6,
-    lcp_7,
-    lcp_8,
-    lcp_9,
-    lcp_10,
-    lcp_11,
-    lcp_12,
-    lcp_13,
-    lcp_14,
-    lcp_15,
-    lcp_16,
-    lcp_17,
-    lcp_18,
-    lcp_19,
-    lcp_20,
-    lcp_21,
-    lcp_22,
-    lcp_23]
+    test_lcp_1,
+    test_lcp_2,
+    test_lcp_3,
+    test_lcp_4,
+    test_lcp_5,
+    test_lcp_6,
+    test_lcp_7,
+    test_lcp_8,
+    test_lcp_9,
+    test_lcp_10,
+    test_lcp_11,
+    test_lcp_12,
+    test_lcp_13,
+    test_lcp_14,
+    test_lcp_15,
+    test_lcp_16,
+    test_lcp_17,
+    test_lcp_18,
+    test_lcp_19,
+    test_lcp_20,
+    test_lcp_21,
+    test_lcp_22,
+    test_lcp_23]
 
 if __name__ == '__main__':
 

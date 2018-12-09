@@ -39,7 +39,7 @@ import gdaltest
 # Read test of byte file.
 
 
-def byn_1():
+def test_byn_1():
 
     tst = gdaltest.GDALTest('BYN', 'cgg2013ai08_reduced.byn', 1, 64764)
     return tst.testOpen()
@@ -47,7 +47,7 @@ def byn_1():
 ###############################################################################
 #
 
-def byn_2():
+def test_byn_2():
 
     tst = gdaltest.GDALTest('BYN', 'cgg2013ai08_reduced.byn', 1, 64764)
     return tst.testCreateCopy(new_filename='tmp/byn_test_2.byn')
@@ -56,8 +56,8 @@ def byn_2():
 #
 
 gdaltest_list = [
-    byn_1,
-    byn_2]
+    test_byn_1,
+    test_byn_2]
 
 if __name__ == '__main__':
 

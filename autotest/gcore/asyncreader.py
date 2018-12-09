@@ -38,7 +38,7 @@ from osgeo import gdal
 # Test AsyncReader interface on the default (synchronous) implementation
 
 
-def asyncreader_1():
+def test_asyncreader_1():
 
     ds = gdal.Open('data/rgbsmall.tif')
     asyncreader = ds.BeginAsyncReader(0, 0, ds.RasterXSize, ds.RasterYSize)
@@ -71,7 +71,7 @@ def asyncreader_1():
     return 'success'
 
 
-gdaltest_list = [asyncreader_1]
+gdaltest_list = [test_asyncreader_1]
 
 
 if __name__ == '__main__':

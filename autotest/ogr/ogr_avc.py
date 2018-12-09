@@ -62,7 +62,7 @@ def check_content(ds):
 # Open AVCE00 datasource.
 
 
-def ogr_avc_1():
+def test_ogr_avc_1():
 
     # Example given at Annex A of http://avce00.maptools.org/docs/v7_e00_cover.html
     avc_ds = ogr.Open('data/test.e00')
@@ -78,7 +78,7 @@ def ogr_avc_1():
 # Open AVCBin datasource.
 
 
-def ogr_avc_2():
+def test_ogr_avc_2():
 
     avc_ds = ogr.Open('data/testavc/testavc')
     if avc_ds.GetLayer(0).GetSpatialRef() is None:
@@ -93,7 +93,7 @@ def ogr_avc_2():
 # Try opening a compressed E00 (which is not supported)
 
 
-def ogr_avc_3():
+def test_ogr_avc_3():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     avc_ds = ogr.Open('data/compressed.e00')
@@ -114,7 +114,7 @@ def ogr_avc_3():
 # Open larger AVCBin datasource.
 
 
-def ogr_avc_4():
+def test_ogr_avc_4():
 
     for filename in ['data/testpointavc/testpointavc', 'data/testpoint.e00']:
         avc_ds = ogr.Open(filename)
@@ -156,7 +156,7 @@ def ogr_avc_4():
 # Open AVCBin datasource with polygon
 
 
-def ogr_avc_5():
+def test_ogr_avc_5():
 
     for filename in ['data/testpolyavc/testpolyavc', 'data/testpoly.e00']:
         avc_ds = ogr.Open(filename)
@@ -202,11 +202,11 @@ def ogr_avc_5():
 
 
 gdaltest_list = [
-    ogr_avc_1,
-    ogr_avc_2,
-    ogr_avc_3,
-    ogr_avc_4,
-    ogr_avc_5
+    test_ogr_avc_1,
+    test_ogr_avc_2,
+    test_ogr_avc_3,
+    test_ogr_avc_4,
+    test_ogr_avc_5
 ]
 
 if __name__ == '__main__':

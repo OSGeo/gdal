@@ -41,7 +41,7 @@ import gdaltest
 # Test CreateCopy() to a KMZ file
 
 
-def kmlsuperoverlay_1():
+def test_kmlsuperoverlay_1():
 
     tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options=['FORMAT=PNG'])
 
@@ -51,7 +51,7 @@ def kmlsuperoverlay_1():
 # Test CreateCopy() to a KML file
 
 
-def kmlsuperoverlay_2():
+def test_kmlsuperoverlay_2():
 
     tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options=['FORMAT=PNG'])
 
@@ -61,7 +61,7 @@ def kmlsuperoverlay_2():
 # Test CreateCopy() to a KML file
 
 
-def kmlsuperoverlay_3():
+def test_kmlsuperoverlay_3():
 
     src_ds = gdal.Open('data/utm.tif')
     ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('tmp/tmp.kml', src_ds)
@@ -95,7 +95,7 @@ def kmlsuperoverlay_3():
 # Test overviews
 
 
-def kmlsuperoverlay_4():
+def test_kmlsuperoverlay_4():
 
     vrt_xml = """<VRTDataset rasterXSize="800" rasterYSize="400">
   <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
@@ -198,7 +198,7 @@ def kmlsuperoverlay_4():
 # Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
 
 
-def kmlsuperoverlay_5():
+def test_kmlsuperoverlay_5():
 
     try:
         from xml.etree import ElementTree
@@ -267,7 +267,7 @@ def kmlsuperoverlay_5():
 # Test raster KML with alternate structure (such as http://opentopo.sdsc.edu/files/Haiti/NGA_Haiti_LiDAR2.kmz))
 
 
-def kmlsuperoverlay_6():
+def test_kmlsuperoverlay_6():
 
     ds = gdal.Open('data/kmlimage.kmz')
     if ds.GetProjectionRef().find('WGS_1984') < 0:
@@ -304,7 +304,7 @@ def kmlsuperoverlay_6():
 # Test raster KML with single Overlay (such as https://trac.osgeo.org/gdal/ticket/6712)
 
 
-def kmlsuperoverlay_7():
+def test_kmlsuperoverlay_7():
 
     ds = gdal.Open('data/small_world.kml')
     if ds.GetProjectionRef().find('WGS_1984') < 0:
@@ -334,7 +334,7 @@ def kmlsuperoverlay_7():
 # KML/PNG files in transparent areas
 
 
-def kmlsuperoverlay_8():
+def test_kmlsuperoverlay_8():
 
     # a large raster with actual data on each end and blank space in between
     src_ds = gdal.Open("""<VRTDataset rasterXSize="2048" rasterYSize="512">
@@ -441,7 +441,7 @@ def kmlsuperoverlay_8():
 # Cleanup
 
 
-def kmlsuperoverlay_cleanup():
+def test_kmlsuperoverlay_cleanup():
 
     gdal.Unlink('/vsimem/0/0/0.png')
     gdal.Unlink('/vsimem/0/0/0.kml')
@@ -454,15 +454,15 @@ def kmlsuperoverlay_cleanup():
 
 
 gdaltest_list = [
-    kmlsuperoverlay_1,
-    kmlsuperoverlay_2,
-    kmlsuperoverlay_3,
-    kmlsuperoverlay_4,
-    kmlsuperoverlay_5,
-    kmlsuperoverlay_6,
-    kmlsuperoverlay_7,
-    kmlsuperoverlay_8,
-    kmlsuperoverlay_cleanup]
+    test_kmlsuperoverlay_1,
+    test_kmlsuperoverlay_2,
+    test_kmlsuperoverlay_3,
+    test_kmlsuperoverlay_4,
+    test_kmlsuperoverlay_5,
+    test_kmlsuperoverlay_6,
+    test_kmlsuperoverlay_7,
+    test_kmlsuperoverlay_8,
+    test_kmlsuperoverlay_cleanup]
 
 if __name__ == '__main__':
 

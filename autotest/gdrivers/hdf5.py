@@ -62,7 +62,7 @@ def check_no_file_leaks():
 # Confirm expected subdataset information.
 
 
-def hdf5_2():
+def test_hdf5_2():
     ds = gdal.Open('data/groups.h5')
 
     sds_list = ds.GetMetadata('SUBDATASETS')
@@ -91,7 +91,7 @@ def hdf5_2():
 # subdataset stuff.
 
 
-def hdf5_3():
+def test_hdf5_3():
 
     ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
 
@@ -112,7 +112,7 @@ def hdf5_3():
 # Confirm subdataset access, and checksum.
 
 
-def hdf5_4():
+def test_hdf5_4():
 
     ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
 
@@ -127,7 +127,7 @@ def hdf5_4():
 # Similar check on a 16bit dataset.
 
 
-def hdf5_5():
+def test_hdf5_5():
 
     ds = gdal.Open('HDF5:"data/groups.h5"://MyGroup/dset1')
 
@@ -142,7 +142,7 @@ def hdf5_5():
 # Test generating an overview on a subdataset.
 
 
-def hdf5_6():
+def test_hdf5_6():
 
     shutil.copyfile('data/groups.h5', 'tmp/groups.h5')
 
@@ -181,7 +181,7 @@ def hdf5_6():
 # Coarse metadata check (regression test for #2412).
 
 
-def hdf5_7():
+def test_hdf5_7():
 
     ds = gdal.Open('data/metadata.h5')
     metadata = ds.GetMetadata()
@@ -209,7 +209,7 @@ def hdf5_7():
 # Test metadata names.
 
 
-def hdf5_8():
+def test_hdf5_8():
 
     ds = gdal.Open('data/metadata.h5')
     metadata = ds.GetMetadata()
@@ -273,7 +273,7 @@ def hdf5_8():
 # Variable length string metadata check (regression test for #4228).
 
 
-def hdf5_9():
+def test_hdf5_9():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         gdaltest.post_reason('would crash')
@@ -318,7 +318,7 @@ def hdf5_9():
 # Test CSK_DGM.h5 (#4160)
 
 
-def hdf5_10():
+def test_hdf5_10():
 
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
@@ -356,7 +356,7 @@ def hdf5_10():
 # Test CSK_GEC.h5 (#4160)
 
 
-def hdf5_11():
+def test_hdf5_11():
 
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
@@ -393,7 +393,7 @@ def hdf5_11():
 # Test ODIM_H5 (#5032)
 
 
-def hdf5_12():
+def test_hdf5_12():
 
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/5032/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf', 'norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf'):
         return 'skip'
@@ -422,7 +422,7 @@ def hdf5_12():
 # Test MODIS L2 HDF5 GCPs (#6666)
 
 
-def hdf5_13():
+def test_hdf5_13():
 
     if not gdaltest.download_file('http://oceandata.sci.gsfc.nasa.gov/cgi/getfile/A2016273115000.L2_LAC_OC.nc', 'A2016273115000.L2_LAC_OC.nc'):
         return 'skip'
@@ -446,7 +446,7 @@ def hdf5_13():
 # Test complex data subsets
 
 
-def hdf5_14():
+def test_hdf5_14():
 
     ds = gdal.Open('data/complex.h5')
     sds_list = ds.GetMetadata('SUBDATASETS')
@@ -476,7 +476,7 @@ def hdf5_14():
 # Start with Float32
 
 
-def hdf5_15():
+def test_hdf5_15():
 
     ds = gdal.Open('HDF5:"data/complex.h5"://f32')
 
@@ -490,7 +490,7 @@ def hdf5_15():
 # Repeat for Float64
 
 
-def hdf5_16():
+def test_hdf5_16():
 
     ds = gdal.Open('HDF5:"data/complex.h5"://f64')
 
@@ -504,7 +504,7 @@ def hdf5_16():
 # Repeat for Float16
 
 
-def hdf5_17():
+def test_hdf5_17():
 
     ds = gdal.Open('HDF5:"data/complex.h5"://f16')
 
@@ -516,7 +516,7 @@ def hdf5_17():
     return 'success'
 
 
-def hdf5_single_char_varname():
+def test_hdf5_single_char_varname():
 
     ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
     if ds is None:
@@ -525,7 +525,7 @@ def hdf5_single_char_varname():
     return 'success'
 
 
-def hdf5_virtual_file():
+def test_hdf5_virtual_file():
     hdf5_files = [
         'CSK_GEC.h5',
         'vlstr_metadata.h5',
@@ -569,24 +569,24 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
 
 
 gdaltest_list = [
-    hdf5_2,
-    hdf5_3,
-    hdf5_4,
-    hdf5_5,
-    hdf5_6,
-    hdf5_7,
-    hdf5_8,
-    hdf5_9,
-    hdf5_10,
-    hdf5_11,
-    hdf5_12,
-    hdf5_13,
-    hdf5_14,
-    hdf5_15,
-    hdf5_16,
-    hdf5_17,
-    hdf5_single_char_varname,
-    hdf5_virtual_file,
+    test_hdf5_2,
+    test_hdf5_3,
+    test_hdf5_4,
+    test_hdf5_5,
+    test_hdf5_6,
+    test_hdf5_7,
+    test_hdf5_8,
+    test_hdf5_9,
+    test_hdf5_10,
+    test_hdf5_11,
+    test_hdf5_12,
+    test_hdf5_13,
+    test_hdf5_14,
+    test_hdf5_15,
+    test_hdf5_16,
+    test_hdf5_17,
+    test_hdf5_single_char_varname,
+    test_hdf5_virtual_file,
 ]
 
 

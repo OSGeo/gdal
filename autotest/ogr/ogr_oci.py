@@ -40,7 +40,7 @@ from osgeo import gdal
 # Open ORACLE.
 
 
-def ogr_oci_1():
+def test_ogr_oci_1():
 
     gdaltest.oci_ds = None
 
@@ -62,7 +62,7 @@ def ogr_oci_1():
 # Create Oracle table from data/poly.shp
 
 
-def ogr_oci_2():
+def test_ogr_oci_2():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -140,7 +140,7 @@ def reverse_rings(poly):
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_oci_3():
+def test_ogr_oci_3():
     if gdaltest.oci_ds is None:
         return 'skip'
 
@@ -185,7 +185,7 @@ def ogr_oci_3():
 # geometries are still OK.
 
 
-def ogr_oci_4():
+def test_ogr_oci_4():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -223,7 +223,7 @@ def ogr_oci_4():
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_oci_5():
+def test_ogr_oci_5():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -245,7 +245,7 @@ def ogr_oci_5():
 # Test ExecuteSQL() results layers with geometry.
 
 
-def ogr_oci_6():
+def test_ogr_oci_6():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -271,7 +271,7 @@ def ogr_oci_6():
 # Test spatial filtering.
 
 
-def ogr_oci_7():
+def test_ogr_oci_7():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -295,7 +295,7 @@ def ogr_oci_7():
 # to an oracle coordinate system using the ORACLE authority code.
 
 
-def ogr_oci_8():
+def test_ogr_oci_8():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -343,7 +343,7 @@ def ogr_oci_8():
 # the coordinate system gets properly remapped to the Oracle WGS84.
 
 
-def ogr_oci_9():
+def test_ogr_oci_9():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -388,7 +388,7 @@ def ogr_oci_9():
 # Test handling of specialized Oracle Rectangle Geometries.
 
 
-def ogr_oci_10():
+def test_ogr_oci_10():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -436,7 +436,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
 # Test handling of specialized Oracle circle Geometries.
 
 
-def ogr_oci_11():
+def test_ogr_oci_11():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -475,7 +475,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
 # Test handling of specialized Oracle circular arc linestring Geometries.
 
 
-def ogr_oci_12():
+def test_ogr_oci_12():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -513,7 +513,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
 # Test handling of specialized Oracle circular arc polygon Geometries.
 
 
-def ogr_oci_13():
+def test_ogr_oci_13():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -552,7 +552,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
 # Test handling of compount linestring.
 
 
-def ogr_oci_14():
+def test_ogr_oci_14():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -591,7 +591,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
 # Test handling of compount polygon.
 
 
-def ogr_oci_15():
+def test_ogr_oci_15():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -630,7 +630,7 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
 # Test deleting an existing layer.
 
 
-def ogr_oci_16():
+def test_ogr_oci_16():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -666,7 +666,7 @@ def ogr_oci_16():
 # Test that synctodisk actually sets the layer bounds metadata.
 
 
-def ogr_oci_17():
+def test_ogr_oci_17():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -740,7 +740,7 @@ def ogr_oci_17():
 # Test layer geometry types
 
 
-def ogr_oci_18():
+def test_ogr_oci_18():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -810,7 +810,7 @@ def ogr_oci_18():
 # Test date / datetime
 
 
-def ogr_oci_19():
+def test_ogr_oci_19():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -844,7 +844,7 @@ def ogr_oci_19():
 # Test not nullable fields
 
 
-def ogr_oci_20():
+def test_ogr_oci_20():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -943,7 +943,7 @@ def ogr_oci_20():
 # Test default values
 
 
-def ogr_oci_21():
+def test_ogr_oci_21():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -1052,7 +1052,7 @@ def ogr_oci_21():
 #
 
 
-def ogr_oci_cleanup():
+def test_ogr_oci_cleanup():
 
     if gdaltest.oci_ds is None:
         return 'skip'
@@ -1086,28 +1086,28 @@ def ogr_oci_cleanup():
 
 
 gdaltest_list = [
-    ogr_oci_1,
-    ogr_oci_2,
-    ogr_oci_3,
-    ogr_oci_4,
-    ogr_oci_5,
-    ogr_oci_6,
-    ogr_oci_7,
-    ogr_oci_8,
-    ogr_oci_9,
-    ogr_oci_10,
-    ogr_oci_11,
-    ogr_oci_12,
-    ogr_oci_13,
-    ogr_oci_14,
-    ogr_oci_15,
-    ogr_oci_16,
-    ogr_oci_17,
-    ogr_oci_18,
-    ogr_oci_19,
-    ogr_oci_20,
-    ogr_oci_21,
-    ogr_oci_cleanup]
+    test_ogr_oci_1,
+    test_ogr_oci_2,
+    test_ogr_oci_3,
+    test_ogr_oci_4,
+    test_ogr_oci_5,
+    test_ogr_oci_6,
+    test_ogr_oci_7,
+    test_ogr_oci_8,
+    test_ogr_oci_9,
+    test_ogr_oci_10,
+    test_ogr_oci_11,
+    test_ogr_oci_12,
+    test_ogr_oci_13,
+    test_ogr_oci_14,
+    test_ogr_oci_15,
+    test_ogr_oci_16,
+    test_ogr_oci_17,
+    test_ogr_oci_18,
+    test_ogr_oci_19,
+    test_ogr_oci_20,
+    test_ogr_oci_21,
+    test_ogr_oci_cleanup]
 
 if __name__ == '__main__':
 

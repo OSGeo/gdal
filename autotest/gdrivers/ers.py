@@ -41,7 +41,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def ers_1():
+def test_ers_1():
 
     tst = gdaltest.GDALTest('ERS', 'srtm.ers', 1, 64074)
     if tst.testOpen() != 'success':
@@ -59,7 +59,7 @@ def ers_1():
 # Create simple copy and check.
 
 
-def ers_2():
+def test_ers_2():
 
     tst = gdaltest.GDALTest('ERS', 'float32.bil', 1, 27)
     return tst.testCreateCopy(new_filename='tmp/float32.ers',
@@ -69,7 +69,7 @@ def ers_2():
 # Test multi-band file.
 
 
-def ers_3():
+def test_ers_3():
 
     tst = gdaltest.GDALTest('ERS', 'rgbsmall.tif', 2, 21053)
     return tst.testCreate(new_filename='tmp/rgbsmall.ers')
@@ -78,7 +78,7 @@ def ers_3():
 # Test HeaderOffset case.
 
 
-def ers_4():
+def test_ers_4():
 
     gt = (143.59625, 0.025, 0.0, -39.38125, 0.0, -0.025)
     srs = """GEOGCS["GEOCENTRIC DATUM of AUSTRALIA",
@@ -94,7 +94,7 @@ def ers_4():
 # Confirm we can recognised signed 8bit data.
 
 
-def ers_5():
+def test_ers_5():
 
     ds = gdal.Open('data/8s.ers')
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
@@ -111,7 +111,7 @@ def ers_5():
 # Confirm a copy preserves the signed byte info.
 
 
-def ers_6():
+def test_ers_6():
 
     drv = gdal.GetDriverByName('ERS')
 
@@ -135,7 +135,7 @@ def ers_6():
 # Test opening a file with everything in lower case.
 
 
-def ers_7():
+def test_ers_7():
 
     ds = gdal.Open('data/caseinsensitive.ers')
 
@@ -152,7 +152,7 @@ def ers_7():
 # Test GCP support
 
 
-def ers_8():
+def test_ers_8():
 
     src_ds = gdal.Open('../gcore/data/gcps.vrt')
     drv = gdal.GetDriverByName('ERS')
@@ -194,7 +194,7 @@ def ers_8():
 # Test NoData support (#4207)
 
 
-def ers_9():
+def test_ers_9():
 
     drv = gdal.GetDriverByName('ERS')
     ds = drv.Create('/vsimem/ers_9.ers', 1, 1)
@@ -225,7 +225,7 @@ def ers_9():
 # Test PROJ, DATUM, UNITS support (#4229)
 
 
-def ers_10():
+def test_ers_10():
 
     drv = gdal.GetDriverByName('ERS')
     ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options=['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=METERS'])
@@ -372,7 +372,7 @@ def ers_10():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8744
 
 
-def ers_recursive_opening():
+def test_ers_recursive_opening():
     ds = gdal.Open('/vsitar/data/test_ers_recursive.tar/test.ers')
     ds.GetFileList()
     return 'success'
@@ -381,24 +381,24 @@ def ers_recursive_opening():
 # Cleanup
 
 
-def ers_cleanup():
+def test_ers_cleanup():
     gdaltest.clean_tmp()
     return 'success'
 
 
 gdaltest_list = [
-    ers_1,
-    ers_2,
-    ers_3,
-    ers_4,
-    ers_5,
-    ers_6,
-    ers_7,
-    ers_8,
-    ers_9,
-    ers_10,
-    ers_recursive_opening,
-    ers_cleanup
+    test_ers_1,
+    test_ers_2,
+    test_ers_3,
+    test_ers_4,
+    test_ers_5,
+    test_ers_6,
+    test_ers_7,
+    test_ers_8,
+    test_ers_9,
+    test_ers_10,
+    test_ers_recursive_opening,
+    test_ers_cleanup
 ]
 
 

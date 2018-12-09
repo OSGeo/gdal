@@ -40,7 +40,7 @@ from osgeo import gdal
 # Test writing a 1x1 buffer to a 10x6 raster and read it back
 
 
-def rasterio_1():
+def test_rasterio_1():
     data = 'A'.encode('ascii')
 
     drv = gdal.GetDriverByName('GTiff')
@@ -70,7 +70,7 @@ def rasterio_1():
 # Test writing a 5x4 buffer to a 10x6 raster and read it back
 
 
-def rasterio_2():
+def test_rasterio_2():
     data = 'AAAAAAAAAAAAAAAAAAAA'.encode('ascii')
 
     drv = gdal.GetDriverByName('GTiff')
@@ -100,7 +100,7 @@ def rasterio_2():
 # Test extensive read & writes into a non tiled raster
 
 
-def rasterio_3():
+def test_rasterio_3():
 
     data = [['' for i in range(4)] for i in range(5)]
     for xsize in range(5):
@@ -144,7 +144,7 @@ def rasterio_3():
 # Test extensive read & writes into a tiled raster
 
 
-def rasterio_4():
+def test_rasterio_4():
 
     data = ['' for i in range(5 * 4)]
     for size in range(5 * 4):
@@ -196,7 +196,7 @@ def rasterio_4():
 # Test error cases of ReadRaster()
 
 
-def rasterio_5():
+def test_rasterio_5():
 
     ds = gdal.Open('data/byte.tif')
 
@@ -282,7 +282,7 @@ def rasterio_5():
 # Test error cases of WriteRaster()
 
 
-def rasterio_6():
+def test_rasterio_6():
 
     ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
 
@@ -332,7 +332,7 @@ def rasterio_6():
 # Test that default window reading works via ReadRaster()
 
 
-def rasterio_7():
+def test_rasterio_7():
 
     ds = gdal.Open('data/byte.tif')
 
@@ -378,7 +378,7 @@ def rasterio_8_progress_callback_2(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def rasterio_8():
+def test_rasterio_8():
 
     ds = gdal.Open('data/byte.tif')
 
@@ -529,7 +529,7 @@ def rasterio_9_checksum(data, buf_xsize, buf_ysize, data_type=gdal.GDT_Byte):
     return cs
 
 
-def rasterio_9():
+def test_rasterio_9():
     ds = gdal.Open('data/byte.tif')
 
     # Test RasterBand.ReadRaster, with Bilinear
@@ -806,7 +806,7 @@ def rasterio_9():
 # Test error when getting a block
 
 
-def rasterio_10():
+def test_rasterio_10():
     ds = gdal.Open('data/byte_truncated.tif')
 
     gdal.PushErrorHandler()
@@ -839,7 +839,7 @@ def rasterio_10():
 # Test cubic resampling and nbits
 
 
-def rasterio_11():
+def test_rasterio_11():
 
     try:
         from osgeo import gdalnumeric
@@ -882,7 +882,7 @@ def rasterio_12_progress_callback(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def rasterio_12():
+def test_rasterio_12():
 
     try:
         from osgeo import gdalnumeric
@@ -944,7 +944,7 @@ def rasterio_12():
 # Test cubic resampling with masking
 
 
-def rasterio_13():
+def test_rasterio_13():
 
     try:
         from osgeo import gdalnumeric
@@ -975,7 +975,7 @@ def rasterio_13():
 # Test average downsampling by a factor of 2 on exact boundaries
 
 
-def rasterio_14():
+def test_rasterio_14():
 
     gdal.FileFromMemBuffer('/vsimem/rasterio_14.asc',
                            """ncols        6
@@ -1039,7 +1039,7 @@ cellsize     0
 # Test average oversampling by an integer factor (should behave like nearest)
 
 
-def rasterio_15():
+def test_rasterio_15():
 
     gdal.FileFromMemBuffer('/vsimem/rasterio_15.asc',
                            """ncols        2
@@ -1071,7 +1071,7 @@ cellsize     0
 # Test mode downsampling by a factor of 2 on exact boundaries
 
 
-def rasterio_16():
+def test_rasterio_16():
 
     gdal.FileFromMemBuffer('/vsimem/rasterio_16.asc',
                            """ncols        6
@@ -1102,7 +1102,7 @@ cellsize     0
 ###############################################################################
 
 
-def rasterio_lanczos_nodata():
+def test_rasterio_lanczos_nodata():
 
     ds = gdal.Open('data/rasterio_lanczos_nodata.tif')
 
@@ -1129,7 +1129,7 @@ def rasterio_lanczos_nodata():
 ###############################################################################
 
 
-def rasterio_resampled_value_is_nodata():
+def test_rasterio_resampled_value_is_nodata():
 
     gdal.FileFromMemBuffer('/vsimem/in.asc',
 """ncols        4
@@ -1207,24 +1207,24 @@ nodata_value 0
     return 'success'
 
 gdaltest_list = [
-    rasterio_1,
-    rasterio_2,
-    rasterio_3,
-    rasterio_4,
-    rasterio_5,
-    rasterio_6,
-    rasterio_7,
-    rasterio_8,
-    rasterio_9,
-    rasterio_10,
-    rasterio_11,
-    rasterio_12,
-    rasterio_13,
-    rasterio_14,
-    rasterio_15,
-    rasterio_16,
-    rasterio_lanczos_nodata,
-    rasterio_resampled_value_is_nodata,
+    test_rasterio_1,
+    test_rasterio_2,
+    test_rasterio_3,
+    test_rasterio_4,
+    test_rasterio_5,
+    test_rasterio_6,
+    test_rasterio_7,
+    test_rasterio_8,
+    test_rasterio_9,
+    test_rasterio_10,
+    test_rasterio_11,
+    test_rasterio_12,
+    test_rasterio_13,
+    test_rasterio_14,
+    test_rasterio_15,
+    test_rasterio_16,
+    test_rasterio_lanczos_nodata,
+    test_rasterio_resampled_value_is_nodata,
 ]
 
 # gdaltest_list = [ rasterio_16 ]

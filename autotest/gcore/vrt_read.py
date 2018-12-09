@@ -81,7 +81,7 @@ def test_vrt_open(filename, checksum):
 # The VRT references a non existing TIF file
 
 
-def vrt_read_1():
+def test_vrt_read_1():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/idontexist.vrt')
@@ -96,7 +96,7 @@ def vrt_read_1():
 # The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
 
 
-def vrt_read_2():
+def test_vrt_read_2():
 
     ds = gdal.Open('data/idontexist2.vrt')
     if ds is None:
@@ -120,7 +120,7 @@ def vrt_read_2():
 # Test init of band data in case of cascaded VRT (ticket #2867)
 
 
-def vrt_read_3():
+def test_vrt_read_3():
 
     driver_tif = gdal.GetDriverByName("GTIFF")
 
@@ -152,7 +152,7 @@ def vrt_read_3():
 ###############################################################################
 # Test complex source with complex data (#3977)
 
-def vrt_read_4():
+def test_vrt_read_4():
 
     try:
         import numpy as np
@@ -196,7 +196,7 @@ def vrt_read_4():
 # Test serializing and deserializing of various band metadata
 
 
-def vrt_read_5():
+def test_vrt_read_5():
 
     src_ds = gdal.Open('data/testserialization.asc')
     ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_5.vrt', src_ds)
@@ -278,7 +278,7 @@ def vrt_read_5():
 # Test GetMinimum() and GetMaximum()
 
 
-def vrt_read_6():
+def test_vrt_read_6():
 
     gdal.Unlink('data/byte.tif.aux.xml')
     src_ds = gdal.Open('data/byte.tif')
@@ -318,7 +318,7 @@ def vrt_read_6():
 # Test GDALOpen() anti-recursion mechanism
 
 
-def vrt_read_7():
+def test_vrt_read_7():
 
     filename = "/vsimem/vrt_read_7.vrt"
 
@@ -354,7 +354,7 @@ def vrt_read_7():
 # Test ComputeRasterMinMax()
 
 
-def vrt_read_8():
+def test_vrt_read_8():
 
     src_ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_8.tif', src_ds)
@@ -380,7 +380,7 @@ def vrt_read_8():
 # Test ComputeStatistics()
 
 
-def vrt_read_9():
+def test_vrt_read_9():
 
     src_ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_9.tif', src_ds)
@@ -406,7 +406,7 @@ def vrt_read_9():
 # Test GetHistogram() & GetDefaultHistogram()
 
 
-def vrt_read_10():
+def test_vrt_read_10():
 
     src_ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_10.tif', src_ds)
@@ -499,7 +499,7 @@ def vrt_read_10():
 # Test resolving files from a symlinked vrt using relativeToVRT with an absolute symlink
 
 
-def vrt_read_11():
+def test_vrt_read_11():
 
     if not gdaltest.support_symlink():
         return 'skip'
@@ -526,7 +526,7 @@ def vrt_read_11():
 # with a relative symlink pointing to a relative symlink
 
 
-def vrt_read_12():
+def test_vrt_read_12():
 
     if not gdaltest.support_symlink():
         return 'skip'
@@ -552,7 +552,7 @@ def vrt_read_12():
 # Test resolving files from a symlinked vrt using relativeToVRT with a relative symlink
 
 
-def vrt_read_13():
+def test_vrt_read_13():
 
     if not gdaltest.support_symlink():
         return 'skip'
@@ -585,7 +585,7 @@ def vrt_read_13():
 # Test ComputeStatistics() when the VRT is a subwindow of the source dataset (#5468)
 
 
-def vrt_read_14():
+def test_vrt_read_14():
 
     src_ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_14.tif', src_ds)
@@ -620,7 +620,7 @@ def vrt_read_14():
 # Test RasterIO() with resampling on SimpleSource
 
 
-def vrt_read_15():
+def test_vrt_read_15():
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
   <VRTRasterBand dataType="Byte" band="1">
@@ -652,7 +652,7 @@ def vrt_read_15():
 # Test RasterIO() with resampling on ComplexSource
 
 
-def vrt_read_16():
+def test_vrt_read_16():
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
   <VRTRasterBand dataType="Byte" band="1">
@@ -684,7 +684,7 @@ def vrt_read_16():
 # Test RasterIO() with resampling on AveragedSource
 
 
-def vrt_read_17():
+def test_vrt_read_17():
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
   <VRTRasterBand dataType="Byte" band="1">
@@ -711,7 +711,7 @@ def vrt_read_17():
 # Test that relative path is correctly VRT-in-VRT
 
 
-def vrt_read_18():
+def test_vrt_read_18():
 
     vrt_ds = gdal.Open('data/vrtinvrt.vrt')
     cs = vrt_ds.GetRasterBand(1).Checksum()
@@ -725,7 +725,7 @@ def vrt_read_18():
 # Test shared="0"
 
 
-def vrt_read_19():
+def test_vrt_read_19():
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -762,7 +762,7 @@ def vrt_read_19():
 ###############################################################################
 # Test 2 level of VRT with shared="0"
 
-def vrt_read_20():
+def test_vrt_read_20():
 
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -820,7 +820,7 @@ def vrt_read_20():
 # Test implicit virtual overviews
 
 
-def vrt_read_21():
+def test_vrt_read_21():
 
     ds = gdal.Open('data/byte.tif')
     data = ds.ReadRaster(0, 0, 20, 20, 400, 400)
@@ -940,7 +940,7 @@ def vrt_read_21():
 # Test that we honour NBITS with SimpleSource and ComplexSource
 
 
-def vrt_read_22():
+def test_vrt_read_22():
 
     ds = gdal.Open('data/byte.tif')
     data = ds.ReadRaster()
@@ -1052,7 +1052,7 @@ def vrt_read_22():
 # an underlying dataset without nodata
 
 
-def vrt_read_23():
+def test_vrt_read_23():
 
     try:
         from osgeo import gdalnumeric
@@ -1115,7 +1115,7 @@ def vrt_read_23():
 # Test floating point rounding issues when the VRT does a zoom-in
 
 
-def vrt_read_24():
+def test_vrt_read_24():
 
     ds = gdal.Open('data/zoom_in.vrt')
     data = ds.ReadRaster(34, 5, 66, 87)
@@ -1140,7 +1140,7 @@ def vrt_read_24():
 # Test GetDataCoverageStatus()
 
 
-def vrt_read_25():
+def test_vrt_read_25():
 
     import ogrtest
     if not ogrtest.have_geos():
@@ -1204,7 +1204,7 @@ def vrt_read_25():
 # Test consistency of RasterIO() with resampling, that is extracting different
 # sub-windows give consistent results
 
-def vrt_read_26():
+def test_vrt_read_26():
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="22" rasterYSize="22">
   <VRTRasterBand dataType="Byte" band="1">
@@ -1237,7 +1237,7 @@ def vrt_read_26():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1553
 
 
-def vrt_read_27():
+def test_vrt_read_27():
 
     gdal.Open('data/empty_gcplist.vrt')
 
@@ -1247,7 +1247,7 @@ def vrt_read_27():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1551
 
 
-def vrt_read_28():
+def test_vrt_read_28():
 
     with gdaltest.error_handler():
         ds = gdal.Open('<VRTDataset rasterXSize="1 "rasterYSize="1"><VRTRasterBand band="-2147483648"><SimpleSource></SimpleSource></VRTRasterBand></VRTDataset>')
@@ -1260,7 +1260,7 @@ def vrt_read_28():
 ###############################################################################
 # Check VRT source sharing and non-sharing situations (#6949)
 
-def vrt_read_29():
+def test_vrt_read_29():
 
     f = open('data/byte.tif')
     lst_before = gdaltest.get_opened_files()
@@ -1337,7 +1337,7 @@ def vrt_read_29():
 # Check VRT reading with DatasetRasterIO
 
 
-def vrt_read_30():
+def test_vrt_read_30():
 
     ds = gdal.Open("""<VRTDataset rasterXSize="2" rasterYSize="2">
   <VRTRasterBand dataType="Byte" band="1">
@@ -1362,7 +1362,7 @@ def vrt_read_30():
 # Check that we take into account intermediate data type demotion
 
 
-def vrt_read_31():
+def test_vrt_read_31():
 
     gdal.FileFromMemBuffer('/vsimem/in.asc',
                            """ncols        2
@@ -1401,7 +1401,7 @@ dy           1
 # Test reading a VRT where the NODATA & NoDataValue are slighly below the
 # minimum float value (https://github.com/OSGeo/gdal/issues/1071)
 
-def vrt_float32_with_nodata_slightly_below_float_min():
+def test_vrt_float32_with_nodata_slightly_below_float_min():
 
     shutil.copyfile('data/minfloat.tif', 'tmp/minfloat.tif')
     shutil.copyfile('data/minfloat_nodata_slightly_out_of_float.vrt',
@@ -1440,7 +1440,7 @@ def vrt_float32_with_nodata_slightly_below_float_min():
 ###############################################################################
 # Fix issue raised in https://lists.osgeo.org/pipermail/gdal-dev/2018-December/049415.html
 
-def vrt_subpixel_offset():
+def test_vrt_subpixel_offset():
 
     ds = gdal.Open('data/vrt_subpixel_offset.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -1456,7 +1456,7 @@ def vrt_subpixel_offset():
 # Check bug fix of bug fix of
 # https://lists.osgeo.org/pipermail/gdal-dev/2018-December/049415.html
 
-def vrt_dstsize_larger_than_source():
+def test_vrt_dstsize_larger_than_source():
 
     ds = gdal.Open('data/dstsize_larger_than_source.vrt')
     cs = ds.GetRasterBand(1).Checksum()
@@ -1469,40 +1469,40 @@ def vrt_dstsize_larger_than_source():
 
 
 gdaltest_list = [
-    vrt_read_1,
-    vrt_read_2,
-    vrt_read_3,
-    vrt_read_4,
-    vrt_read_5,
-    vrt_read_6,
-    vrt_read_7,
-    vrt_read_8,
-    vrt_read_9,
-    vrt_read_10,
-    vrt_read_11,
-    vrt_read_12,
-    vrt_read_13,
-    vrt_read_14,
-    vrt_read_15,
-    vrt_read_16,
-    vrt_read_17,
-    vrt_read_18,
-    vrt_read_19,
-    vrt_read_20,
-    vrt_read_21,
-    vrt_read_22,
-    vrt_read_23,
-    vrt_read_24,
-    vrt_read_25,
-    vrt_read_26,
-    vrt_read_27,
-    vrt_read_28,
-    vrt_read_29,
-    vrt_read_30,
-    vrt_read_31,
-    vrt_float32_with_nodata_slightly_below_float_min,
-    vrt_subpixel_offset,
-    vrt_dstsize_larger_than_source,
+    test_vrt_read_1,
+    test_vrt_read_2,
+    test_vrt_read_3,
+    test_vrt_read_4,
+    test_vrt_read_5,
+    test_vrt_read_6,
+    test_vrt_read_7,
+    test_vrt_read_8,
+    test_vrt_read_9,
+    test_vrt_read_10,
+    test_vrt_read_11,
+    test_vrt_read_12,
+    test_vrt_read_13,
+    test_vrt_read_14,
+    test_vrt_read_15,
+    test_vrt_read_16,
+    test_vrt_read_17,
+    test_vrt_read_18,
+    test_vrt_read_19,
+    test_vrt_read_20,
+    test_vrt_read_21,
+    test_vrt_read_22,
+    test_vrt_read_23,
+    test_vrt_read_24,
+    test_vrt_read_25,
+    test_vrt_read_26,
+    test_vrt_read_27,
+    test_vrt_read_28,
+    test_vrt_read_29,
+    test_vrt_read_30,
+    test_vrt_read_31,
+    test_vrt_float32_with_nodata_slightly_below_float_min,
+    test_vrt_subpixel_offset,
+    test_vrt_dstsize_larger_than_source,
 ]
 
 

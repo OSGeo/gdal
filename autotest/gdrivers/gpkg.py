@@ -79,7 +79,7 @@ def validate(filename, quiet=False):
 # Test if GPKG and tile drivers are available
 
 
-def gpkg_init():
+def test_gpkg_init():
 
     gdaltest.gpkg_dr = None
 
@@ -201,7 +201,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 # Single band, PNG
 
 
-def gpkg_1():
+def test_gpkg_1():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -319,7 +319,7 @@ def gpkg_1():
 # Single band, JPEG
 
 
-def gpkg_2():
+def test_gpkg_2():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -421,7 +421,7 @@ def gpkg_2():
 # Single band, WEBP
 
 
-def gpkg_3():
+def test_gpkg_3():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -544,7 +544,7 @@ def gpkg_3():
 # Three band, PNG
 
 
-def gpkg_4(tile_drv_name='PNG'):
+def test_gpkg_4(tile_drv_name='PNG'):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -623,15 +623,15 @@ def gpkg_4(tile_drv_name='PNG'):
 # Three band, JPEG
 
 
-def gpkg_5():
-    return gpkg_4(tile_drv_name='JPEG')
+def test_gpkg_5():
+    return test_gpkg_4(tile_drv_name='JPEG')
 
 ###############################################################################
 # Three band, WEBP
 
 
-def gpkg_6():
-    return gpkg_4(tile_drv_name='WEBP')
+def test_gpkg_6():
+    return test_gpkg_4(tile_drv_name='WEBP')
 
 ###############################################################################
 # 4 band, PNG
@@ -652,7 +652,7 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent=False, alpha_fully_opaque=
     return tmp_ds
 
 
-def gpkg_7(tile_drv_name='PNG'):
+def test_gpkg_7(tile_drv_name='PNG'):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -743,15 +743,15 @@ def gpkg_7(tile_drv_name='PNG'):
 # 4 band, JPEG
 
 
-def gpkg_8():
-    return gpkg_7(tile_drv_name='JPEG')
+def test_gpkg_8():
+    return test_gpkg_7(tile_drv_name='JPEG')
 
 ###############################################################################
 # 4 band, WEBP
 
 
-def gpkg_9():
-    return gpkg_7(tile_drv_name='WEBP')
+def test_gpkg_9():
+    return test_gpkg_7(tile_drv_name='WEBP')
 
 ###############################################################################
 #
@@ -771,7 +771,7 @@ def get_georeferenced_ds_with_pct32():
 # Single band with 32 bit color table, PNG
 
 
-def gpkg_10():
+def test_gpkg_10():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -892,7 +892,7 @@ def gpkg_10():
 # Single band with 32 bit color table, JPEG
 
 
-def gpkg_11(tile_drv_name='JPEG'):
+def test_gpkg_11(tile_drv_name='JPEG'):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -948,14 +948,14 @@ def gpkg_11(tile_drv_name='JPEG'):
 # Single band with 32 bit color table, WEBP
 
 
-def gpkg_12():
-    return gpkg_11(tile_drv_name='WEBP')
+def test_gpkg_12():
+    return test_gpkg_11(tile_drv_name='WEBP')
 
 ###############################################################################
 # Single band with 24 bit color table, PNG
 
 
-def gpkg_13():
+def test_gpkg_13():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1026,7 +1026,7 @@ def gpkg_13():
 # Test creation and opening options
 
 
-def gpkg_14():
+def test_gpkg_14():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1440,7 +1440,7 @@ def gpkg_14():
 # Test error cases
 
 
-def gpkg_15():
+def test_gpkg_15():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1605,7 +1605,7 @@ def gpkg_15():
 # Test block/tile caching
 
 
-def gpkg_16():
+def test_gpkg_16():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1651,7 +1651,7 @@ def gpkg_16():
 # Test overviews with single band dataset
 
 
-def gpkg_17():
+def test_gpkg_17():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1818,7 +1818,7 @@ def gpkg_17():
 # Test overviews with 3 band dataset
 
 
-def gpkg_18():
+def test_gpkg_18():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -1973,7 +1973,7 @@ def gpkg_18():
 # Test overviews with 24-bit color palette single band dataset
 
 
-def gpkg_19():
+def test_gpkg_19():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2026,7 +2026,7 @@ def gpkg_19():
 # Test PNG8
 
 
-def gpkg_20():
+def test_gpkg_20():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2129,7 +2129,7 @@ def gpkg_20():
 # Test metadata
 
 
-def gpkg_21():
+def test_gpkg_21():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2426,7 +2426,7 @@ def get_georeferenced_greyalpha_ds():
     return tmp_ds
 
 
-def gpkg_22(tile_drv_name='PNG'):
+def test_gpkg_22(tile_drv_name='PNG'):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2504,28 +2504,28 @@ def gpkg_22(tile_drv_name='PNG'):
 # Two band, JPEG
 
 
-def gpkg_23():
-    return gpkg_22(tile_drv_name='JPEG')
+def test_gpkg_23():
+    return test_gpkg_22(tile_drv_name='JPEG')
 
 ###############################################################################
 # Two band, WEBP
 
 
-def gpkg_24():
-    return gpkg_22(tile_drv_name='WEBP')
+def test_gpkg_24():
+    return test_gpkg_22(tile_drv_name='WEBP')
 
 ###############################################################################
 # Two band, mixed
 
 
-def gpkg_25():
-    return gpkg_22(tile_drv_name=None)
+def test_gpkg_25():
+    return test_gpkg_22(tile_drv_name=None)
 
 ###############################################################################
 # Test TILING_SCHEME
 
 
-def gpkg_26():
+def test_gpkg_26():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2660,7 +2660,7 @@ def gpkg_26():
 # Test behaviour with low block cache max
 
 
-def gpkg_27():
+def test_gpkg_27():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2689,7 +2689,7 @@ def gpkg_27():
 # block that would have gone through the GPKG in-memory cache
 
 
-def gpkg_28():
+def test_gpkg_28():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2732,7 +2732,7 @@ def gpkg_28():
 # Variation of gpkg_28 with 2 blocks
 
 
-def gpkg_29(x=0):
+def test_gpkg_29(x=0):
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2777,15 +2777,15 @@ def gpkg_29(x=0):
 # Variation of gpkg_29 where the read is done in another block
 
 
-def gpkg_30():
+def test_gpkg_30():
 
-    return gpkg_29(x=200)
+    return test_gpkg_29(x=200)
 
 ###############################################################################
 # 1 band to RGBA
 
 
-def gpkg_31():
+def test_gpkg_31():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2816,7 +2816,7 @@ def gpkg_31():
 # grey-alpha to RGBA
 
 
-def gpkg_32():
+def test_gpkg_32():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2855,7 +2855,7 @@ def gpkg_32():
 # Single band with 32 bit color table -> RGBA
 
 
-def gpkg_33():
+def test_gpkg_33():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2888,7 +2888,7 @@ def gpkg_33():
 # Test partial tiles with overviews (#6335)
 
 
-def gpkg_34():
+def test_gpkg_34():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2917,7 +2917,7 @@ def gpkg_34():
 # Test dirty block flushing while reading block (#6365)
 
 
-def gpkg_35():
+def test_gpkg_35():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -2968,7 +2968,7 @@ def gpkg_35():
 # Single band with 24 bit color table, PNG, GoogleMapsCompatible
 
 
-def gpkg_36():
+def test_gpkg_36():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3002,7 +3002,7 @@ def gpkg_36():
 # factors
 
 
-def gpkg_37():
+def test_gpkg_37():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3025,7 +3025,7 @@ def gpkg_37():
 # Test generating more than 1000 tiles
 
 
-def gpkg_38():
+def test_gpkg_38():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3068,7 +3068,7 @@ def gpkg_38():
 # Test tile gridded coverage data
 
 
-def gpkg_39():
+def test_gpkg_39():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3569,7 +3569,7 @@ cellsize     60
 # Test VERSION
 
 
-def gpkg_40():
+def test_gpkg_40():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3660,7 +3660,7 @@ def gpkg_40():
 # Robustness test
 
 
-def gpkg_41():
+def test_gpkg_41():
 
     if gdaltest.gpkg_dr is None or gdal.GetConfigOption('TRAVIS') is not None or \
        gdal.GetConfigOption('APPVEYOR') is not None:
@@ -3681,7 +3681,7 @@ def gpkg_41():
 # Test opening in vector mode a database without gpkg_geometry_columns
 
 
-def gpkg_42():
+def test_gpkg_42():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3715,7 +3715,7 @@ def gpkg_42():
 # Test adding raster to a database without pre-existing raster support tables.
 
 
-def gpkg_43():
+def test_gpkg_43():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3758,7 +3758,7 @@ def gpkg_43():
 # Test opening a .gpkg.sql file
 
 
-def gpkg_44():
+def test_gpkg_44():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3776,7 +3776,7 @@ def gpkg_44():
 # Test opening a .gpkg file
 
 
-def gpkg_45():
+def test_gpkg_45():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3791,7 +3791,7 @@ def gpkg_45():
 # Test fix for #6932
 
 
-def gpkg_46():
+def test_gpkg_46():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3835,7 +3835,7 @@ def gpkg_46():
 # Test fix for #6976
 
 
-def gpkg_47():
+def test_gpkg_47():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3860,7 +3860,7 @@ def gpkg_47():
 # subdatasets on Windows)
 
 
-def gpkg_48():
+def test_gpkg_48():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3891,7 +3891,7 @@ def gpkg_48():
 ###############################################################################
 
 
-def gpkg_delete_raster_layer():
+def test_gpkg_delete_raster_layer():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3929,7 +3929,7 @@ def gpkg_delete_raster_layer():
 ###############################################################################
 
 
-def gpkg_delete_gridded_coverage_raster_layer():
+def test_gpkg_delete_gridded_coverage_raster_layer():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3957,7 +3957,7 @@ def gpkg_delete_gridded_coverage_raster_layer():
 
 
 ###############################################################################
-def gpkg_open_old_gpkg_elevation_tiles_extension():
+def test_gpkg_open_old_gpkg_elevation_tiles_extension():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3977,7 +3977,7 @@ def gpkg_open_old_gpkg_elevation_tiles_extension():
 ###############################################################################
 
 
-def gpkg_GeneralCmdLineProcessor():
+def test_gpkg_GeneralCmdLineProcessor():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -3999,7 +3999,7 @@ def gpkg_GeneralCmdLineProcessor():
 ###############################################################################
 
 
-def gpkg_match_overview_factor():
+def test_gpkg_match_overview_factor():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4021,7 +4021,7 @@ def gpkg_match_overview_factor():
 #
 
 
-def gpkg_cleanup():
+def test_gpkg_cleanup():
 
     if gdaltest.gpkg_dr is None:
         return 'skip'
@@ -4037,61 +4037,61 @@ def gpkg_cleanup():
 
 
 gdaltest_list = [
-    gpkg_init,
-    gpkg_1,
-    gpkg_2,
-    gpkg_3,
-    gpkg_4,
-    gpkg_5,
-    gpkg_6,
-    gpkg_7,
-    gpkg_8,
-    gpkg_9,
-    gpkg_10,
-    gpkg_11,
-    gpkg_12,
-    gpkg_13,
-    gpkg_14,
-    gpkg_15,
-    gpkg_16,
-    gpkg_17,
-    gpkg_18,
-    gpkg_19,
-    gpkg_20,
-    gpkg_21,
-    gpkg_22,
-    gpkg_23,
-    gpkg_24,
-    gpkg_25,
-    gpkg_26,
-    gpkg_27,
-    gpkg_28,
-    gpkg_29,
-    gpkg_30,
-    gpkg_31,
-    gpkg_32,
-    gpkg_33,
-    gpkg_34,
-    gpkg_35,
-    gpkg_36,
-    gpkg_37,
-    gpkg_38,
-    gpkg_39,
-    gpkg_40,
-    gpkg_41,
-    gpkg_42,
-    gpkg_43,
-    gpkg_44,
-    gpkg_45,
-    gpkg_46,
-    gpkg_47,
-    gpkg_48,
-    gpkg_delete_raster_layer,
-    gpkg_open_old_gpkg_elevation_tiles_extension,
-    gpkg_GeneralCmdLineProcessor,
-    gpkg_match_overview_factor,
-    gpkg_delete_gridded_coverage_raster_layer,
-    gpkg_cleanup,
+    test_gpkg_init,
+    test_gpkg_1,
+    test_gpkg_2,
+    test_gpkg_3,
+    test_gpkg_4,
+    test_gpkg_5,
+    test_gpkg_6,
+    test_gpkg_7,
+    test_gpkg_8,
+    test_gpkg_9,
+    test_gpkg_10,
+    test_gpkg_11,
+    test_gpkg_12,
+    test_gpkg_13,
+    test_gpkg_14,
+    test_gpkg_15,
+    test_gpkg_16,
+    test_gpkg_17,
+    test_gpkg_18,
+    test_gpkg_19,
+    test_gpkg_20,
+    test_gpkg_21,
+    test_gpkg_22,
+    test_gpkg_23,
+    test_gpkg_24,
+    test_gpkg_25,
+    test_gpkg_26,
+    test_gpkg_27,
+    test_gpkg_28,
+    test_gpkg_29,
+    test_gpkg_30,
+    test_gpkg_31,
+    test_gpkg_32,
+    test_gpkg_33,
+    test_gpkg_34,
+    test_gpkg_35,
+    test_gpkg_36,
+    test_gpkg_37,
+    test_gpkg_38,
+    test_gpkg_39,
+    test_gpkg_40,
+    test_gpkg_41,
+    test_gpkg_42,
+    test_gpkg_43,
+    test_gpkg_44,
+    test_gpkg_45,
+    test_gpkg_46,
+    test_gpkg_47,
+    test_gpkg_48,
+    test_gpkg_delete_raster_layer,
+    test_gpkg_open_old_gpkg_elevation_tiles_extension,
+    test_gpkg_GeneralCmdLineProcessor,
+    test_gpkg_match_overview_factor,
+    test_gpkg_delete_gridded_coverage_raster_layer,
+    test_gpkg_cleanup,
 ]
 # gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
 if __name__ == '__main__':

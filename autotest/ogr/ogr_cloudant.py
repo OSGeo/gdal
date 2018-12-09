@@ -42,7 +42,7 @@ from osgeo import ogr
 # Test if driver is available
 
 
-def ogr_cloudant_init():
+def test_ogr_cloudant_init():
 
     ogrtest.cloudant_drv = None
 
@@ -74,7 +74,7 @@ def ogr_cloudant_init():
 # Test GetFeatureCount()
 
 
-def ogr_cloudant_GetFeatureCount():
+def test_ogr_cloudant_GetFeatureCount():
     if ogrtest.cloudant_drv is None:
         return 'skip'
 
@@ -98,7 +98,7 @@ def ogr_cloudant_GetFeatureCount():
 # Test GetNextFeature()
 
 
-def ogr_cloudant_GetNextFeature():
+def test_ogr_cloudant_GetNextFeature():
     if ogrtest.cloudant_drv is None:
         return 'skip'
 
@@ -125,7 +125,7 @@ def ogr_cloudant_GetNextFeature():
 # Test GetSpatialRef()
 
 
-def ogr_cloudant_GetSpatialRef():
+def test_ogr_cloudant_GetSpatialRef():
     if ogrtest.cloudant_drv is None:
         return 'skip'
 
@@ -148,7 +148,7 @@ def ogr_cloudant_GetSpatialRef():
 # Test GetExtent()
 
 
-def ogr_cloudant_GetExtent():
+def test_ogr_cloudant_GetExtent():
     if ogrtest.cloudant_drv is None:
         return 'skip'
 
@@ -176,7 +176,7 @@ def ogr_cloudant_GetExtent():
 # Test SetSpatialFilter()
 
 
-def ogr_cloudant_SetSpatialFilter():
+def test_ogr_cloudant_SetSpatialFilter():
     if ogrtest.cloudant_drv is None:
         return 'skip'
 
@@ -206,12 +206,12 @@ def ogr_cloudant_SetSpatialFilter():
 
 
 gdaltest_list = [
-    ogr_cloudant_init,
-    ogr_cloudant_GetFeatureCount,
-    ogr_cloudant_GetNextFeature,
-    ogr_cloudant_GetSpatialRef,
-    ogr_cloudant_GetExtent,
-    ogr_cloudant_SetSpatialFilter
+    test_ogr_cloudant_init,
+    test_ogr_cloudant_GetFeatureCount,
+    test_ogr_cloudant_GetNextFeature,
+    test_ogr_cloudant_GetSpatialRef,
+    test_ogr_cloudant_GetExtent,
+    test_ogr_cloudant_SetSpatialFilter
 ]
 
 if __name__ == '__main__':

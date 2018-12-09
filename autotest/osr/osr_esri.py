@@ -49,7 +49,7 @@ from osgeo import osr
 # gdal_datum.csv file.
 
 
-def osr_esri_1():
+def test_osr_esri_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4202)
@@ -80,7 +80,7 @@ def osr_esri_1():
 # translating certain GEOGCSes to ESRI format.
 
 
-def osr_esri_2():
+def test_osr_esri_2():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=utm +zone=11 +south +datum=WGS84')
@@ -103,7 +103,7 @@ def osr_esri_2():
 # Verify that Unnamed is changed to Unknown in morphToESRI().
 
 
-def osr_esri_3():
+def test_osr_esri_3():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=mill +datum=WGS84')
@@ -121,7 +121,7 @@ def osr_esri_3():
 # Verify Polar Stereographic translations work properly OGR to ESRI.
 
 
-def osr_esri_4():
+def test_osr_esri_4():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["PS Test",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",-80.2333],PARAMETER["central_meridian",171],PARAMETER["scale_factor",0.9999],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]')
@@ -144,7 +144,7 @@ def osr_esri_4():
 # Verify Polar Stereographic translations work properly ESRI to OGR.
 
 
-def osr_esri_5():
+def test_osr_esri_5():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["PS Test",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Stereographic_South_Pole"],PARAMETER["standard_parallel_1",-80.2333],PARAMETER["central_meridian",171],PARAMETER["scale_factor",0.9999],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]')
@@ -168,7 +168,7 @@ def osr_esri_5():
 # per bug 187.
 
 
-def osr_esri_6():
+def test_osr_esri_6():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Texas Centric Mapping System/Lambert Conformal",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",1500000.0],PARAMETER["False_Northing",5000000.0],PARAMETER["Central_Meridian",-100.0],PARAMETER["Standard_Parallel_1",27.5],PARAMETER["Standard_Parallel_2",35.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",18.0],UNIT["Meter",1.0]]')
@@ -187,7 +187,7 @@ def osr_esri_6():
 # Verify that FEET is treated as US survey feet per bug #1533.
 
 
-def osr_esri_7():
+def test_osr_esri_7():
 
     prj = ['Projection    STATEPLANE',
            'Fipszone      903',
@@ -238,7 +238,7 @@ def osr_esri_7():
 # Verify that handling of numerically specified units (see bug #1533)
 
 
-def osr_esri_8():
+def test_osr_esri_8():
 
     prj = ['Projection    STATEPLANE',
            'Fipszone      903',
@@ -287,7 +287,7 @@ def osr_esri_8():
 # Verify Equidistant Conic handling.
 
 
-def osr_esri_9():
+def test_osr_esri_9():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["edc",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Equidistant_Conic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-96.0],PARAMETER["Standard_Parallel_1",29.5],PARAMETER["Standard_Parallel_2",45.5],PARAMETER["Latitude_Of_Origin",37.5],UNIT["Meter",1.0]]')
@@ -320,7 +320,7 @@ def osr_esri_9():
 # Verify Plate_Carree handling.
 
 
-def osr_esri_10():
+def test_osr_esri_10():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Plate_Carree"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]')
@@ -353,7 +353,7 @@ def osr_esri_10():
 # Verify arc/info style TM handling.
 
 
-def osr_esri_11():
+def test_osr_esri_11():
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['Projection    TRANSVERSE',
@@ -387,7 +387,7 @@ def osr_esri_11():
 # Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
 
 
-def osr_esri_12():
+def test_osr_esri_12():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('ESRI::PROJCS["Lambert Conformal Conic",GEOGCS["grs80",DATUM["D_North_American_1983",SPHEROID["Geodetic_Reference_System_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["standard_parallel_1",34.33333333333334],PARAMETER["standard_parallel_2",36.16666666666666],PARAMETER["latitude_of_origin",33.75],PARAMETER["central_meridian",-79],PARAMETER["false_easting",609601.22],PARAMETER["false_northing",0],UNIT["Meter",1]]')
@@ -420,7 +420,7 @@ def osr_esri_12():
 # but read directly from file.
 
 
-def osr_esri_13():
+def test_osr_esri_13():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('data/lcc_esri.prj')
@@ -453,7 +453,7 @@ def osr_esri_13():
 # Verify that state plane epsg authority values are not applied if the
 # linear units are changed for old style .prj files (bug #1697)
 
-def osr_esri_14():
+def test_osr_esri_14():
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['PROJECTION STATEPLANE',
@@ -484,7 +484,7 @@ def osr_esri_14():
 # of the rectified_grid_angle parameter.
 
 
-def osr_esri_15():
+def test_osr_esri_15():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Bern_1898_Bern_LV03C",GEOGCS["GCS_Bern_1898_Bern",DATUM["D_Bern_1898",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Bern",7.439583333333333],UNIT["Degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",0.0],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0]]')
@@ -519,7 +519,7 @@ def osr_esri_15():
 # cleanup of parameters.
 
 
-def osr_esri_16():
+def test_osr_esri_16():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=eqc +lat_0=0 +lat_ts=-10 +lon_0=2 +x=100000 +y_0=200000 +ellps=sphere')
@@ -540,7 +540,7 @@ def osr_esri_16():
 ###############################################################################
 # Test LAEA support (#3017)
 
-def osr_esri_17():
+def test_osr_esri_17():
 
     original = 'PROJCS["ETRS89 / ETRS-LAEA",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]],UNIT["metre",1],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",52],PARAMETER["longitude_of_center",10],PARAMETER["false_easting",4321000],PARAMETER["false_northing",3210000]]'
     srs = osr.SpatialReference()
@@ -574,7 +574,7 @@ def osr_esri_17():
 # Test EC morphing.
 
 
-def osr_esri_18():
+def test_osr_esri_18():
 
     original = """PROJCS["World_Equidistant_Cylindrical",
     GEOGCS["GCS_WGS_1984",
@@ -621,7 +621,7 @@ def osr_esri_18():
 # Test spheroid remapping (per #3904)
 
 
-def osr_esri_19():
+def test_osr_esri_19():
 
     original = """GEOGCS["GCS_South_American_1969",DATUM["D_South_American_1969",SPHEROID["GRS_1967_Truncated",6378160.0,298.25]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]"""
 
@@ -737,7 +737,7 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
 # Orthographics (#4249)
 
 
-def osr_esri_20():
+def test_osr_esri_20():
 
     result = 'success'
 
@@ -931,7 +931,7 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
     return result
 
 
-def osr_esri_21():
+def test_osr_esri_21():
 
     # FIXME ?
     if sys.version_info >= (3, 0, 0):
@@ -1116,7 +1116,7 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
 # Test EPSG->OGC->ESRI->OGC
 
 
-def osr_esri_22():
+def test_osr_esri_22():
 
     result = 'success'
 
@@ -1137,7 +1137,7 @@ def osr_esri_22():
 # set GDAL_FIX_ESRI_WKT=DATUM (bugs #4378 and #4345), don't expect to fail
 
 
-def osr_esri_23():
+def test_osr_esri_23():
 
     result = 'success'
 
@@ -1160,7 +1160,7 @@ def osr_esri_23():
 #
 
 
-def osr_esri_24():
+def test_osr_esri_24():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt('''PROJCS["Custom",
@@ -1189,7 +1189,7 @@ def osr_esri_24():
 #
 
 
-def osr_esri_25():
+def test_osr_esri_25():
     srs = osr.SpatialReference()
     srs.SetFromUserInput(
         'PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",'
@@ -1235,7 +1235,7 @@ def osr_esri_25():
 #
 
 
-def osr_esri_26():
+def test_osr_esri_26():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""PROJCS["NAD_1983_HARN_WISCRS_Washburn_County_Meters",GEOGCS["GCS_North_American_1983_HARN",DATUM["D_North_American_1983_HARN",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",234086.8682],PARAMETER["False_Northing",188358.6058],PARAMETER["Central_Meridian",-91.78333333333333],PARAMETER["Standard_Parallel_1",45.96121983333334],PARAMETER["Scale_Factor",1.0000475376],PARAMETER["Latitude_Of_Origin",45.96121983333334],UNIT["Meter",1.0]]""")
     srs.MorphFromESRI()
@@ -1250,7 +1250,7 @@ def osr_esri_26():
 # Test Mercator_2SP (#4861)
 
 
-def osr_esri_27():
+def test_osr_esri_27():
 
     esri_wkt = """PROJCS["Batavia_NEIEZ",
     GEOGCS["GCS_Batavia",
@@ -1310,7 +1310,7 @@ def osr_esri_27():
 ###############################################################################
 # Test Mercator_1SP (#4861)
 
-def osr_esri_28():
+def test_osr_esri_28():
 
     ogc_wkt = """PROJCS["Segara (Jakarta) / NEIEZ (deprecated)",
     GEOGCS["Segara (Jakarta)",
@@ -1381,7 +1381,7 @@ def osr_esri_28():
 # Test Web Mercator
 
 
-def osr_esri_29():
+def test_osr_esri_29():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
@@ -1469,7 +1469,7 @@ def osr_esri_29():
 # Verify import of custom ellipsoid
 
 
-def osr_esri_30():
+def test_osr_esri_30():
 
     prj = ['Projection    GEOGRAPHIC',
            'Parameters    6370000.0  6370000.0',
@@ -1497,7 +1497,7 @@ def osr_esri_30():
 # Verify import of old-style Mercator
 
 
-def osr_esri_31():
+def test_osr_esri_31():
 
     prj = ['Projection    MERCATOR',
            'Datum         WGS84',
@@ -1548,7 +1548,7 @@ def osr_esri_31():
 # Bad Equidistant Conic
 
 
-def osr_esri_32():
+def test_osr_esri_32():
     # Autofuzz POC from b/65416453
     prj = [
         'PROJECTIONLOCA?L_CSw?(  EQUIDISTANT_CONIC',
@@ -1568,7 +1568,7 @@ def osr_esri_32():
 # Test morphing invalid PROJCS WKT does not crash
 
 
-def osr_esri_33():
+def test_osr_esri_33():
 
     sr = osr.SpatialReference()
     sr.ImportFromWkt('PROJCS[]')
@@ -1582,39 +1582,39 @@ def osr_esri_33():
 
 
 gdaltest_list = [
-    osr_esri_1,
-    osr_esri_2,
-    osr_esri_3,
-    osr_esri_4,
-    osr_esri_5,
-    osr_esri_6,
-    osr_esri_7,
-    osr_esri_8,
-    osr_esri_9,
-    osr_esri_10,
-    osr_esri_11,
-    osr_esri_12,
-    osr_esri_13,
-    osr_esri_14,
-    osr_esri_15,
-    osr_esri_16,
-    osr_esri_17,
-    osr_esri_18,
-    osr_esri_19,
-    osr_esri_20,
-    osr_esri_21,
-    osr_esri_22,
-    osr_esri_23,
-    osr_esri_24,
-    osr_esri_25,
-    osr_esri_26,
-    osr_esri_27,
-    osr_esri_28,
-    osr_esri_29,
-    osr_esri_30,
-    osr_esri_31,
-    osr_esri_32,
-    osr_esri_33,
+    test_osr_esri_1,
+    test_osr_esri_2,
+    test_osr_esri_3,
+    test_osr_esri_4,
+    test_osr_esri_5,
+    test_osr_esri_6,
+    test_osr_esri_7,
+    test_osr_esri_8,
+    test_osr_esri_9,
+    test_osr_esri_10,
+    test_osr_esri_11,
+    test_osr_esri_12,
+    test_osr_esri_13,
+    test_osr_esri_14,
+    test_osr_esri_15,
+    test_osr_esri_16,
+    test_osr_esri_17,
+    test_osr_esri_18,
+    test_osr_esri_19,
+    test_osr_esri_20,
+    test_osr_esri_21,
+    test_osr_esri_22,
+    test_osr_esri_23,
+    test_osr_esri_24,
+    test_osr_esri_25,
+    test_osr_esri_26,
+    test_osr_esri_27,
+    test_osr_esri_28,
+    test_osr_esri_29,
+    test_osr_esri_30,
+    test_osr_esri_31,
+    test_osr_esri_32,
+    test_osr_esri_33,
     None]
 
 if __name__ == '__main__':

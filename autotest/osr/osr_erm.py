@@ -37,7 +37,7 @@ from osgeo import osr
 #
 
 
-def osr_erm_1():
+def test_osr_erm_1():
 
     for sphere_datum in ['SPHERE', 'SPHERE2', 'USSPHERE']:
         srs = osr.SpatialReference()
@@ -56,7 +56,7 @@ def osr_erm_1():
 #
 
 
-def osr_erm_2():
+def test_osr_erm_2():
 
     srs = osr.SpatialReference()
     if srs.ImportFromERM('EPSG:3395', 'EPSG:3395', 'METRE') != 0 \
@@ -77,8 +77,8 @@ def osr_erm_2():
 
 
 gdaltest_list = [
-    osr_erm_1,
-    osr_erm_2,
+    test_osr_erm_1,
+    test_osr_erm_2,
     None]
 
 if __name__ == '__main__':

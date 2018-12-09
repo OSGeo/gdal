@@ -38,7 +38,7 @@ from osgeo import osr
 # Test with WGS 84 datum
 
 
-def osr_ozi_1():
+def test_osr_ozi_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromOzi(["OziExplorer Map Data File Version 2.2",
@@ -60,7 +60,7 @@ def osr_ozi_1():
 # Test with another datum known by OZI and whose EPSG code is known
 
 
-def osr_ozi_2():
+def test_osr_ozi_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromOzi(["OziExplorer Map Data File Version 2.2",
@@ -83,7 +83,7 @@ def osr_ozi_2():
 # Test with another datum known by OZI and whose EPSG code is unknown
 
 
-def osr_ozi_3():
+def test_osr_ozi_3():
 
     srs = osr.SpatialReference()
     srs.ImportFromOzi(["OziExplorer Map Data File Version 2.2",
@@ -103,9 +103,9 @@ def osr_ozi_3():
 
 
 gdaltest_list = [
-    osr_ozi_1,
-    osr_ozi_2,
-    osr_ozi_3,
+    test_osr_ozi_1,
+    test_osr_ozi_2,
+    test_osr_ozi_3,
     None]
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ from osgeo import ogr
 # Open INGRES test datasource.
 
 
-def ogr_ingres_1():
+def test_ogr_ingres_1():
 
     gdaltest.ingres_ds = None
 
@@ -57,7 +57,7 @@ def ogr_ingres_1():
 # Create table from data/poly.shp
 
 
-def ogr_ingres_2():
+def test_ogr_ingres_2():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
@@ -102,7 +102,7 @@ def ogr_ingres_2():
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_ingres_3():
+def test_ogr_ingres_3():
     if gdaltest.ingres_ds is None:
         return 'skip'
 
@@ -139,7 +139,7 @@ def ogr_ingres_3():
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_ingres_4():
+def test_ogr_ingres_4():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
@@ -162,7 +162,7 @@ def ogr_ingres_4():
 # so we disable this test.
 
 
-def ogr_ingres_5():
+def test_ogr_ingres_5():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
@@ -190,7 +190,7 @@ def ogr_ingres_5():
 # Test spatial filtering.
 
 
-def ogr_ingres_6():
+def test_ogr_ingres_6():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
@@ -213,7 +213,7 @@ def ogr_ingres_6():
 # Test adding a new field.
 
 
-def ogr_ingres_7():
+def test_ogr_ingres_7():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
@@ -260,7 +260,7 @@ def ogr_ingres_7():
 # Test deleting a feature.
 
 
-def ogr_ingres_8():
+def test_ogr_ingres_8():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
@@ -297,7 +297,7 @@ def ogr_ingres_8():
 #
 
 
-def ogr_ingres_cleanup():
+def test_ogr_ingres_cleanup():
 
     if gdaltest.ingres_ds is None:
         return 'skip'
@@ -309,15 +309,15 @@ def ogr_ingres_cleanup():
 
 
 gdaltest_list = [
-    ogr_ingres_1,
-    ogr_ingres_2,
-    ogr_ingres_3,
-    ogr_ingres_4,
-    ogr_ingres_5,
-    ogr_ingres_6,
-    ogr_ingres_7,
-    ogr_ingres_8,
-    ogr_ingres_cleanup]
+    test_ogr_ingres_1,
+    test_ogr_ingres_2,
+    test_ogr_ingres_3,
+    test_ogr_ingres_4,
+    test_ogr_ingres_5,
+    test_ogr_ingres_6,
+    test_ogr_ingres_7,
+    test_ogr_ingres_8,
+    test_ogr_ingres_cleanup]
 
 if __name__ == '__main__':
 

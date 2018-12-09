@@ -43,7 +43,7 @@ from osgeo import osr
 # Open Shapefile
 
 
-def ogr_shape_1():
+def test_ogr_shape_1():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     shape_drv.DeleteDataSource('tmp')
@@ -58,7 +58,7 @@ def ogr_shape_1():
 # Create table from data/poly.shp
 
 
-def ogr_shape_2():
+def test_ogr_shape_2():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -104,7 +104,7 @@ def ogr_shape_2():
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_shape_3():
+def test_ogr_shape_3():
     if gdaltest.shape_ds is None:
         return 'skip'
 
@@ -136,7 +136,7 @@ def ogr_shape_3():
 # Write a feature without a geometry, and verify that it works OK.
 
 
-def ogr_shape_4():
+def test_ogr_shape_4():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -169,7 +169,7 @@ def ogr_shape_4():
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_shape_5():
+def test_ogr_shape_5():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -188,7 +188,7 @@ def ogr_shape_5():
 # Test ExecuteSQL() results layers with geometry.
 
 
-def ogr_shape_6():
+def test_ogr_shape_6():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -211,7 +211,7 @@ def ogr_shape_6():
 # Test spatial filtering.
 
 
-def ogr_shape_7():
+def test_ogr_shape_7():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -234,7 +234,7 @@ def ogr_shape_7():
 # Create spatial index, and verify we get the same results.
 
 
-def ogr_shape_8():
+def test_ogr_shape_8():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -274,7 +274,7 @@ def ogr_shape_8():
 # Test that we don't return a polygon if we are "inside" but non-overlapping.
 
 
-def ogr_shape_9():
+def test_ogr_shape_9():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -295,7 +295,7 @@ def ogr_shape_9():
 # Do a fair size query that should pull in a few shapes.
 
 
-def ogr_shape_10():
+def test_ogr_shape_10():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -311,7 +311,7 @@ def ogr_shape_10():
 # Do a mixed indexed attribute and spatial query.
 
 
-def ogr_shape_11():
+def test_ogr_shape_11():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -340,7 +340,7 @@ def ogr_shape_11():
 # Check that multipolygon of asm.shp is properly returned.
 
 
-def ogr_shape_12():
+def test_ogr_shape_12():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -386,7 +386,7 @@ def ogr_shape_12():
 # Perform a SetFeature() on a couple features, resetting the size.
 
 
-def ogr_shape_13():
+def test_ogr_shape_13():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -429,7 +429,7 @@ def ogr_shape_13():
 # Verify last changes.
 
 
-def ogr_shape_14():
+def test_ogr_shape_14():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -470,7 +470,7 @@ def ogr_shape_14():
 # Delete a feature, and verify reduced count.
 
 
-def ogr_shape_15():
+def test_ogr_shape_15():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -505,7 +505,7 @@ def ogr_shape_15():
 # Repack and verify a few things.
 
 
-def ogr_shape_16():
+def test_ogr_shape_16():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -542,7 +542,7 @@ def ogr_shape_16():
 # Test adding a field to the schema of a populated layer.
 
 
-def ogr_shape_16_1():
+def test_ogr_shape_16_1():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -576,7 +576,7 @@ def ogr_shape_16_1():
 # Simple test with point shapefile with no associated .dbf
 
 
-def ogr_shape_17():
+def test_ogr_shape_17():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -627,7 +627,7 @@ def ogr_shape_17():
 # Test reading data/poly.PRJ file with mixed-case file name
 
 
-def ogr_shape_18():
+def test_ogr_shape_18():
 
     shp_ds = ogr.Open('data/poly.shp')
     shp_lyr = shp_ds.GetLayer(0)
@@ -657,7 +657,7 @@ def ogr_shape_18():
 # and deciding on polygon vs. multipolygon (#1217)
 
 
-def ogr_shape_19():
+def test_ogr_shape_19():
 
     ds = ogr.Open('data/Stacks.shp')
     lyr = ds.GetLayer(0)
@@ -677,7 +677,7 @@ def ogr_shape_19():
 # From GDAL 1.6.0, the expected behaviour is to return a feature with a NULL geometry
 
 
-def ogr_shape_20():
+def test_ogr_shape_20():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -718,7 +718,7 @@ def ogr_shape_20():
 # Test robutness towards broken/unfriendly shapefiles
 
 
-def ogr_shape_21():
+def test_ogr_shape_21():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -756,7 +756,7 @@ def ogr_shape_21():
 ###############################################################################
 # Test writing and reading all handled data types
 
-def ogr_shape_22():
+def test_ogr_shape_22():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -892,7 +892,7 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
 ###############################################################################
 # Test writing and reading all handled geometry types
 
-def ogr_shape_23():
+def test_ogr_shape_23():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -1051,7 +1051,7 @@ def ogr_shape_23():
 ###############################################################################
 # Test reading a polygon whose outer and the inner ring touches at one point (#2589)
 
-def ogr_shape_24():
+def test_ogr_shape_24():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -1071,7 +1071,7 @@ def ogr_shape_24():
 # part, but not inside it, and sharing the same first point... (#2589)
 
 
-def ogr_shape_25():
+def test_ogr_shape_25():
     layer_name = 'touchingrings2'
     wkt = 'MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)), ((100 100,100 200,200 200,200 100,100 100)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
@@ -1099,7 +1099,7 @@ def ogr_shape_25():
 # Test a polygon made of one outer ring and two inner rings (special case
 # in organizePolygons()
 
-def ogr_shape_26():
+def test_ogr_shape_26():
     layer_name = 'oneouterring'
     wkt = 'POLYGON ((100 100,100 200,200 200,200 100,100 100),(110 110,120 110,120 120,110 120,110 110),(130 110,140 110,140 120,130 120,130 110))'
     geom = ogr.CreateGeometryFromWkt(wkt)
@@ -1115,7 +1115,7 @@ def ogr_shape_26():
 # Test alternate date formatting (#2746)
 
 
-def ogr_shape_27():
+def test_ogr_shape_27():
 
     result = 'success'
 
@@ -1138,7 +1138,7 @@ def ogr_shape_27():
 # Test reading a 3 GB .DBF (#3011)
 
 
-def ogr_shape_28():
+def test_ogr_shape_28():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
@@ -1248,7 +1248,7 @@ def ogr_shape_28():
 # Test that REPACK doesn't change extension case (#3293)
 
 
-def ogr_shape_29():
+def test_ogr_shape_29():
 
     os.mkdir('tmp/UPPERCASE')
     shutil.copy('data/poly.shp', 'tmp/UPPERCASE/UPPERCASE.SHP')
@@ -1288,7 +1288,7 @@ def ogr_shape_29():
 # Test that REPACK doesn't change extension case (#3293)
 
 
-def ogr_shape_30():
+def test_ogr_shape_30():
 
     os.mkdir('tmp/lowercase')
     shutil.copy('data/poly.shp', 'tmp/lowercase/lowercase.shp')
@@ -1319,7 +1319,7 @@ def ogr_shape_30():
 # FIXME: Empty field names are allowed now!
 
 
-def ogr_shape_31():
+def test_ogr_shape_31():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -1393,7 +1393,7 @@ def ogr_shape_31():
 # Assuming 2^32 is the max value for unsigned int.
 
 
-def ogr_shape_32():
+def test_ogr_shape_32():
     # This test takes a few minutes and disk space. Hence, skipped by default.
     # To run this test, make sure that the directory BigFilePath points to has
     # 4.5 GB space available or give a new directory that does and delete the
@@ -1459,7 +1459,7 @@ def ogr_shape_32():
 # coordinate offset (#3356)
 
 
-def ogr_shape_33():
+def test_ogr_shape_33():
 
     ds = ogr.Open('data/bigoffset.shp')
     lyr = ds.GetLayer(0)
@@ -1477,7 +1477,7 @@ def ogr_shape_33():
 # Check that we can write correct winding order even with polygons with big
 # coordinate offset (#33XX)
 
-def ogr_shape_34():
+def test_ogr_shape_34():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/bigoffset.shp')
     lyr = ds.CreateLayer('bigoffset')
@@ -1503,7 +1503,7 @@ def ogr_shape_34():
 # Check that we can read & write a VSI*L dataset
 
 
-def ogr_shape_35():
+def test_ogr_shape_35():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test35.shp')
     srs = osr.SpatialReference()
@@ -1536,7 +1536,7 @@ def ogr_shape_35():
 # Check that we can read from the root of a .ZIP file
 
 
-def ogr_shape_36():
+def test_ogr_shape_36():
 
     ds = ogr.Open('/vsizip/data/poly.zip')
     if ds is None:
@@ -1562,7 +1562,7 @@ def ogr_shape_36():
 # Check that we can read from the root of a .tar.gz file
 
 
-def ogr_shape_37():
+def test_ogr_shape_37():
 
     ds = ogr.Open('/vsitar/data/poly.tar.gz')
     if ds is None:
@@ -1600,7 +1600,7 @@ def ogr_shape_37():
 # Check that we can read from a .tar file
 
 
-def ogr_shape_37_bis():
+def test_ogr_shape_37_bis():
 
     ds = ogr.Open('/vsitar/data/poly.tar')
     if ds is None:
@@ -1635,7 +1635,7 @@ def ogr_shape_37_bis():
 # Check that we cannot create duplicated layers
 
 
-def ogr_shape_38():
+def test_ogr_shape_38():
 
     ds = ogr.Open('/vsimem/', update=1)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -1654,7 +1654,7 @@ def ogr_shape_38():
 # coordinate offset (#3356)
 
 
-def ogr_shape_39():
+def test_ogr_shape_39():
 
     ds = ogr.Open('data/multipatch.shp')
     lyr = ds.GetLayer(0)
@@ -1671,7 +1671,7 @@ def ogr_shape_39():
 ###############################################################################
 # Make some changes to a shapefile and check the index files. qix, sbn & sbx
 
-def ogr_shape_40():
+def test_ogr_shape_40():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -1753,7 +1753,7 @@ def ogr_shape_40():
 # Run test_ogrsf
 
 
-def ogr_shape_41():
+def test_ogr_shape_41():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -1779,7 +1779,7 @@ def ogr_shape_41():
 # Run test_ogrsf with -sql
 
 
-def ogr_shape_42():
+def test_ogr_shape_42():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -1805,7 +1805,7 @@ def ogr_shape_42():
 # Test /vsizip//vsicurl/
 
 
-def ogr_shape_43():
+def test_ogr_shape_43():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
@@ -1875,7 +1875,7 @@ def ogr_shape_44_DISABLED():
 # Test ignored fields works ok on a shapefile.
 
 
-def ogr_shape_45():
+def test_ogr_shape_45():
 
     shp_ds = ogr.Open('data/poly.shp')
     shp_layer = shp_ds.GetLayer(0)
@@ -1948,7 +1948,7 @@ def ogr_shape_45():
 # directory as 'foo.shp'
 
 
-def ogr_shape_46():
+def test_ogr_shape_46():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_46.shp')
     ds.CreateLayer('you_can_put_here_what_you_want_i_dont_care')
@@ -1972,7 +1972,7 @@ def ogr_shape_46():
 # file, but a filename that OGR recognizes
 
 
-def ogr_shape_47():
+def test_ogr_shape_47():
 
     if not gdaltest.support_symlink():
         return 'skip'
@@ -1994,7 +1994,7 @@ def ogr_shape_47():
 # Test RECOMPUTE EXTENT ON (#4027)
 
 
-def ogr_shape_48():
+def test_ogr_shape_48():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_48.shp')
     lyr = ds.CreateLayer('ogr_shape_48')
@@ -2069,7 +2069,7 @@ def ogr_shape_48():
 # Test that we can read at an LDID/87 file and recode to UTF-8.
 
 
-def ogr_shape_49():
+def test_ogr_shape_49():
 
     ds = ogr.Open('data/facility_surface_dd.dbf')
     lyr = ds.GetLayer(0)
@@ -2095,7 +2095,7 @@ def ogr_shape_49():
 # Test that we can read encoded field names
 
 
-def ogr_shape_50():
+def test_ogr_shape_50():
 
     ds = ogr.Open('data/chinese.dbf')
     if ds is None:
@@ -2133,7 +2133,7 @@ def ogr_shape_50():
 # Test that we can add a field when there's no dbf file initially
 
 
-def ogr_shape_51():
+def test_ogr_shape_51():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         gdaltest.post_reason('would crash')
@@ -2180,7 +2180,7 @@ def ogr_shape_51():
 # Test fix for #3356
 
 
-def ogr_shape_52():
+def test_ogr_shape_52():
 
     expected_geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON (((175.524709766699999 -40.17203475,175.524757883299998 -40.172050566700001,175.52480505 -40.1720663,175.524858766699992 -40.172091433299997,175.524913916700001 -40.172112966699999,175.524966049999989 -40.172136933300003,175.525030633299991 -40.17216185,175.5250873 -40.17218215,175.52515168330001 -40.1722011,175.525217666700001 -40.172221216700002,175.525269416700013 -40.172234466699997,175.5253165 -40.1722478,175.52535415 -40.1722577667,175.52538385 -40.17226365,175.525436816699994 -40.1722814333,175.525507016700004 -40.17229905,175.525594783299994 -40.172322033299999,175.525669933300009 -40.172339533299997,175.52574 -40.17235335,175.525807566699996 -40.1723672,175.52585005 -40.17237395,175.52588115 -40.172378683300003,175.525969816700012 -40.172388633300002,175.526057266700008 -40.1724020833,175.52723455 -40.17253515,175.527275583299996 -40.1725388,175.527324533300003 -40.17254675,175.527394866700007 -40.172552766700001,175.527473066699997 -40.172561616700001,175.527576666700014 -40.172572916699998,175.527678333300003 -40.172584266699999,175.527787883299993 -40.17259845,175.52789345 -40.172609716700002,175.527953933300012 -40.17261295,175.528028083300001 -40.1726174,175.52809835 -40.1726219333,175.528151650000012 -40.172625833300003,175.528190349999988 -40.17262725,175.528230900000011 -40.172631183299998,175.5282776 -40.1726338,175.528322800000012 -40.172637633299999,175.5283648 -40.17263915,175.5284115 -40.172641766700004,175.528452133299993 -40.17264435,175.528492133300006 -40.172646033299998,175.52856465 -40.17264805,175.528621733300014 -40.1726492,175.52868035 -40.172650333299998,175.528751333299994 -40.172652383299997,175.528814566699992 -40.1726534,175.528883933299994 -40.172653116699998,175.528939383300013 -40.17265195,175.529002566700001 -40.1726518,175.529070350000012 -40.172650366699997,175.529136633299998 -40.17265015,175.529193616700013 -40.17264895,175.529250616700011 -40.172647733300003,175.529313800000011 -40.172647583299998,175.529376783299995 -40.172647016699997,175.52895773329999 -40.172694633299997,175.528450866700013 -40.172752216699998,175.52835635 -40.172753466700001,175.52741181670001 -40.1727757333,175.52685245 -40.172532333299998,175.52627245 -40.172501266700003,175.5262405167 -40.172502816700003,175.5258356 -40.172522816700003,175.5256125 -40.172533833300001,175.525424433300003 -40.172543116699998,175.524834133300004 -40.1725533,175.524739033299994 -40.172414983300001,175.5247128 -40.17207405,175.524709766699999 -40.17203475)),((175.531267916699989 -40.17286525,175.5312654 -40.172863283300003,175.531252849999987 -40.172853516700002,175.531054566699993 -40.172822366699997,175.530193283300008 -40.172687333299997,175.529890266699994 -40.1726398,175.529916116700008 -40.172639383300002,175.529972483300014 -40.172639216699999,175.53002885 -40.1726398,175.530085183300002 -40.17264115,175.530141500000013 -40.17264325,175.530197733300014 -40.172646133299999,175.530253916699991 -40.172649766699998,175.530309983299986 -40.172654166699999,175.53036595 -40.172659333299997,175.5304218 -40.17266525,175.53047748329999 -40.172671916699997,175.530533016699991 -40.17267935,175.5305883833 -40.1726875333,175.530643533300008 -40.172696466700003,175.530722333299991 -40.172710633299999,175.530800633300004 -40.1727263167,175.5308541 -40.17273795,175.5309073 -40.1727503,175.530960216700009 -40.172763366700003,175.531012816700013 -40.172777133300002,175.5310651 -40.1727916,175.53111705 -40.172806766699999,175.531168650000012 -40.172822633300001,175.531219883299997 -40.172839183299999,175.531270733300005 -40.1728564,175.531267916699989 -40.17286525)))')
 
@@ -2219,7 +2219,7 @@ def ogr_shape_52():
 # Test various expected error cases
 
 
-def ogr_shape_53():
+def test_ogr_shape_53():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_53.shp')
     lyr = ds.CreateLayer('ogr_shape_53')
@@ -2551,7 +2551,7 @@ def ogr_shape_54_test_layer(ds, layer_index):
     return 'success'
 
 
-def ogr_shape_54():
+def test_ogr_shape_54():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_54'
@@ -2680,7 +2680,7 @@ def ogr_shape_54():
 # Test that we cannot add more fields that the maximum allowed
 
 
-def ogr_shape_55():
+def test_ogr_shape_55():
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_55'
     ds = shape_drv.CreateDataSource(ds_name)
@@ -2728,7 +2728,7 @@ def ogr_shape_55():
 # Test that we cannot add more fields that the maximum allowed record length
 
 
-def ogr_shape_56():
+def test_ogr_shape_56():
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_56'
     ds = shape_drv.CreateDataSource(ds_name)
@@ -2776,7 +2776,7 @@ def ogr_shape_56():
 # Test that we emit a warning if the truncation of a field value occurs
 
 
-def ogr_shape_57():
+def test_ogr_shape_57():
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_57'
     ds = shape_drv.CreateDataSource(ds_name)
@@ -2814,7 +2814,7 @@ def ogr_shape_57():
 # Test creating and reading back all geometry types
 
 
-def ogr_shape_58():
+def test_ogr_shape_58():
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_58'
     ds = shape_drv.CreateDataSource(ds_name)
@@ -2869,7 +2869,7 @@ def ogr_shape_58():
 # Test reading a shape with XYM geometries
 
 
-def ogr_shape_59():
+def test_ogr_shape_59():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -2935,7 +2935,7 @@ def ogr_shape_59():
 # Test reading a shape with XYZM geometries
 
 
-def ogr_shape_60():
+def test_ogr_shape_60():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -2970,7 +2970,7 @@ def ogr_shape_60():
 # Test field auto-growing
 
 
-def ogr_shape_61():
+def test_ogr_shape_61():
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_61'
     ds = shape_drv.CreateDataSource(ds_name)
@@ -3040,7 +3040,7 @@ def ogr_shape_61():
 # Test field resizing
 
 
-def ogr_shape_62():
+def test_ogr_shape_62():
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds_name = '/vsimem/ogr_shape_62'
     ds = shape_drv.CreateDataSource(ds_name)
@@ -3108,7 +3108,7 @@ def ogr_shape_62():
 # More testing of recoding
 
 
-def ogr_shape_63():
+def test_ogr_shape_63():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_63.dbf')
     lyr = ds.CreateLayer('ogr_shape_63', geom_type=ogr.wkbNone)
@@ -3175,7 +3175,7 @@ def ogr_shape_63():
 # Test creating layers whose name include dot character
 
 
-def ogr_shape_64():
+def test_ogr_shape_64():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_64')
 
@@ -3226,7 +3226,7 @@ def ogr_shape_64():
 # Test reading a DBF with a 'nan' as a numeric value (#4799)
 
 
-def ogr_shape_65():
+def test_ogr_shape_65():
 
     ds = ogr.Open('data/nan.dbf')
     lyr = ds.GetLayer(0)
@@ -3245,7 +3245,7 @@ def ogr_shape_65():
 # Test failures when creating files and datasources
 
 
-def ogr_shape_66():
+def test_ogr_shape_66():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/i_dont_exist/bar.dbf')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -3288,7 +3288,7 @@ def ogr_shape_66():
 # Test opening an empty .sbn spatial index
 
 
-def ogr_shape_67():
+def test_ogr_shape_67():
 
     shutil.copy('data/emptyshapefilewithsbn.shp', 'tmp/emptyshapefilewithsbn.shp')
     shutil.copy('data/emptyshapefilewithsbn.shx', 'tmp/emptyshapefilewithsbn.shx')
@@ -3314,7 +3314,7 @@ def ogr_shape_67():
 # Test opening a shape datasource with files with mixed case and then REPACK
 
 
-def ogr_shape_68():
+def test_ogr_shape_68():
 
     if sys.platform == 'darwin':
         print("Fails on MacOSX. Not sure why.")
@@ -3412,7 +3412,7 @@ def ogr_shape_68():
 # Test fix for #5135 (creating a field of type Integer with a big width)
 
 
-def ogr_shape_69():
+def test_ogr_shape_69():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_69.shp')
     lyr = ds.CreateLayer('ogr_shape_69')
@@ -3443,7 +3443,7 @@ def ogr_shape_69():
 # (shapefile opened twice on Windows)
 
 
-def ogr_shape_70():
+def test_ogr_shape_70():
 
     if sys.platform != 'win32':
         return 'skip'
@@ -3484,7 +3484,7 @@ def ogr_shape_70():
 # Test heterogeneous file permissions on .shp and .dbf.
 
 
-def ogr_shape_71():
+def test_ogr_shape_71():
 
     if sys.platform.find('linux') != 0:
         return 'skip'
@@ -3516,7 +3516,7 @@ def ogr_shape_71():
 # Test shapefile size limit
 
 
-def ogr_shape_72():
+def test_ogr_shape_72():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
@@ -3601,7 +3601,7 @@ def ogr_shape_72():
 # twice by the same point (#5342)
 
 
-def ogr_shape_73():
+def test_ogr_shape_73():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_73.shp')
     lyr = ds.CreateLayer('ogr_shape_73', geom_type=ogr.wkbPolygon)
@@ -3632,7 +3632,7 @@ def ogr_shape_73():
 # two outer rings are touching, by the first vertex of one.
 
 
-def ogr_shape_74():
+def test_ogr_shape_74():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_74.shp')
     lyr = ds.CreateLayer('ogr_shape_74', geom_type=ogr.wkbPolygon)
@@ -3669,7 +3669,7 @@ def ogr_shape_74():
 # Test GetFileList()
 
 
-def ogr_shape_75():
+def test_ogr_shape_75():
 
     ds = gdal.OpenEx('data/poly.shp')
     if ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.PRJ'] and \
@@ -3706,7 +3706,7 @@ def ogr_shape_75():
 # Test opening shapefile whose .prj has a UTF-8 BOM marker
 
 
-def ogr_shape_76():
+def test_ogr_shape_76():
 
     ds = ogr.Open('data/prjwithutf8bom.shp')
     lyr = ds.GetLayer(0)
@@ -3720,7 +3720,7 @@ def ogr_shape_76():
 # Test opening shapefile whose .shx doesn't follow the official shapefile spec (#5608)
 
 
-def ogr_shape_77():
+def test_ogr_shape_77():
 
     ds = ogr.Open('data/nonconformant_shx_ticket5608.shp')
     lyr = ds.GetLayer(0)
@@ -3736,7 +3736,7 @@ def ogr_shape_77():
 # loss of precision (#5625)
 
 
-def ogr_shape_78():
+def test_ogr_shape_78():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_78.dbf')
     lyr = ds.CreateLayer('ogr_shape_78')
@@ -3799,7 +3799,7 @@ def ogr_shape_78():
 # Test adding a field after creating features with 0 field
 
 
-def ogr_shape_79():
+def test_ogr_shape_79():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_79.dbf')
     lyr = ds.CreateLayer('ogr_shape_79')
@@ -3833,7 +3833,7 @@ def ogr_shape_79():
 # Test reading a shape with invalid extent (nan values) (#5702)
 
 
-def ogr_shape_80():
+def test_ogr_shape_80():
 
     ds = ogr.Open('data/extentnan.shp')
     lyr = ds.GetLayer(0)
@@ -3849,7 +3849,7 @@ def ogr_shape_80():
 # Test REPACK after SetFeature() and geometry change (#XXXX)
 
 
-def ogr_shape_81():
+def test_ogr_shape_81():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_81.shp')
     lyr = ds.CreateLayer('ogr_shape_81')
@@ -3931,7 +3931,7 @@ def ogr_shape_81():
 # Test string length more than 254 bytes in UTF-8 encoding cut to 254 bytes
 
 
-def ogr_shape_82():
+def test_ogr_shape_82():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -4008,7 +4008,7 @@ def ogr_shape_82():
 # Test behaviour with curve geometries
 
 
-def ogr_shape_83():
+def test_ogr_shape_83():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_83.shp')
     lyr = ds.CreateLayer('ogr_shape_83', geom_type=ogr.wkbCurvePolygon)
@@ -4032,7 +4032,7 @@ def ogr_shape_83():
 # Test SPATIAL_INDEX creation option
 
 
-def ogr_shape_84():
+def test_ogr_shape_84():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_84.shp')
     lyr = ds.CreateLayer('ogr_shape_84', options=['SPATIAL_INDEX=YES'])
@@ -4052,7 +4052,7 @@ def ogr_shape_84():
 # Test Integer64
 
 
-def ogr_shape_85():
+def test_ogr_shape_85():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_85.shp')
     lyr = ds.CreateLayer('ogr_shape_85')
@@ -4148,7 +4148,7 @@ def ogr_shape_85():
 # OGR can not produce such a file (unless patched)
 
 
-def ogr_shape_86():
+def test_ogr_shape_86():
 
     ds = ogr.Open('data/mixed_shape_type_non_conformant.shp')
     sql_lyr = ds.ExecuteSQL("select count(distinct ogr_geometry) from mixed_shape_type_non_conformant")
@@ -4164,7 +4164,7 @@ def ogr_shape_86():
 # Check we accept opening standalone .dbf files with weird header lengths (#6035)
 
 
-def ogr_shape_87():
+def test_ogr_shape_87():
 
     ds = ogr.Open('data/weird_header_length.dbf')
     lyr = ds.GetLayer(0)
@@ -4178,7 +4178,7 @@ def ogr_shape_87():
 # Test REPACK after SetFeature() and geometry change, without DBF
 
 
-def ogr_shape_88():
+def test_ogr_shape_88():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_88.shp')
     lyr = ds.CreateLayer('ogr_shape_88')
@@ -4206,7 +4206,7 @@ def ogr_shape_88():
 # Test reading geometry bigger than 10 MB
 
 
-def ogr_shape_89():
+def test_ogr_shape_89():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_89.shp')
     lyr = ds.CreateLayer('ogr_shape_89')
@@ -4257,7 +4257,7 @@ def ogr_shape_89():
 # Test reading a lot of geometries
 
 
-def ogr_shape_90():
+def test_ogr_shape_90():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_90.shp')
     lyr = ds.CreateLayer('ogr_shape_90')
@@ -4300,7 +4300,7 @@ def ogr_shape_90():
 # Test reading XYM geometries but with missing M array (#6317)
 
 
-def ogr_shape_91():
+def test_ogr_shape_91():
 
     ds = ogr.Open('data/arcm_without_m.shp')
     lyr = ds.GetLayer(0)
@@ -4318,7 +4318,7 @@ def ogr_shape_91():
 # Test reading multipoint Z geometries without M
 
 
-def ogr_shape_92():
+def test_ogr_shape_92():
 
     ds = ogr.Open('data/multipointz_without_m.shp')
     lyr = ds.GetLayer(0)
@@ -4335,7 +4335,7 @@ def ogr_shape_92():
 # Test reading point Z geometries without M
 
 
-def ogr_shape_93():
+def test_ogr_shape_93():
 
     ds = ogr.Open('data/pointz_without_m.shp')
     lyr = ds.GetLayer(0)
@@ -4352,7 +4352,7 @@ def ogr_shape_93():
 # Test SHPT creation option / CreateLayer(geom_type = xxx)
 
 
-def ogr_shape_94():
+def test_ogr_shape_94():
 
     tests = [["POINT", ogr.wkbPoint, "POINT (1 2)"],
              ["POINTM", ogr.wkbPointM, "POINT M (1 2 3)"],
@@ -4426,7 +4426,7 @@ def ogr_shape_94():
 # Test demoting of ZM to Z when the M values are nodata
 
 
-def ogr_shape_95():
+def test_ogr_shape_95():
 
     ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp')
     lyr = ds.GetLayer(0)
@@ -4473,7 +4473,7 @@ def ogr_shape_95():
 # Test updating a XYM shapefile (#6331)
 
 
-def ogr_shape_96():
+def test_ogr_shape_96():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_96.shp')
     lyr = ds.CreateLayer('ogr_shape_96')
@@ -4510,7 +4510,7 @@ def ogr_shape_96():
 # Test updating a XYZM shapefile
 
 
-def ogr_shape_97():
+def test_ogr_shape_97():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_97.shp')
     lyr = ds.CreateLayer('ogr_shape_97')
@@ -4547,7 +4547,7 @@ def ogr_shape_97():
 # Test restore function when .shx file is missing
 
 
-def ogr_shape_98():
+def test_ogr_shape_98():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -4583,7 +4583,7 @@ def ogr_shape_98():
 # Import TOWGS84 from EPSG when possible (#6485)
 
 
-def ogr_shape_99():
+def test_ogr_shape_99():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_99.shp')
     lyr = ds.CreateLayer('ogr_shape_99')
@@ -4632,7 +4632,7 @@ def ogr_shape_99():
 # Test REPACK with both implementations
 
 
-def ogr_shape_100():
+def test_ogr_shape_100():
 
     old_val = gdal.GetConfigOption('OGR_SHAPE_PACK_IN_PLACE')
 
@@ -4750,7 +4750,7 @@ def ogr_shape_100():
 # Test auto repack
 
 
-def ogr_shape_101():
+def test_ogr_shape_101():
 
     for i in range(2):
 
@@ -4868,7 +4868,7 @@ def ogr_shape_101():
 # Test reading invalid .prj
 
 
-def ogr_shape_102():
+def test_ogr_shape_102():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_102.shp')
     lyr = ds.CreateLayer('ogr_shape_102', geom_type=ogr.wkbPoint)
@@ -4909,7 +4909,7 @@ def check_EOF(filename, expected=True):
     return True
 
 
-def ogr_shape_103():
+def test_ogr_shape_103():
 
     filename = '/vsimem/ogr_shape_103.dbf'
 
@@ -5096,7 +5096,7 @@ def ogr_shape_103():
 # Test writing MULTIPATCH
 
 
-def ogr_shape_104():
+def test_ogr_shape_104():
 
     for (wkt, lyr_type, options, expected_wkt) in \
         [['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], None],
@@ -5143,7 +5143,7 @@ def ogr_shape_104():
 # Test reading .dbf with substantial padding after last field definition.
 
 
-def ogr_shape_105():
+def test_ogr_shape_105():
 
     ds = ogr.Open('data/padding_after_field_defns.dbf')
     lyr = ds.GetLayer(0)
@@ -5161,7 +5161,7 @@ def ogr_shape_105():
 # Test that rewriting the last shape reuses the space it took. (#6787)
 
 
-def ogr_shape_106():
+def test_ogr_shape_106():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_106.shp')
@@ -5238,7 +5238,7 @@ def is_same(filename1, filename2, verbose=True):
 # Test that multiple edition of the last shape works properly (#7031)
 
 
-def ogr_shape_107():
+def test_ogr_shape_107():
 
     layer_name = 'ogr_shape_107'
     filename = '/vsimem/' + layer_name + '.shp'
@@ -5323,7 +5323,7 @@ def ogr_shape_107():
 # Test spatial + attribute filter
 
 
-def ogr_shape_108():
+def test_ogr_shape_108():
 
     ds = ogr.Open('data/poly.shp')
     lyr = ds.GetLayer(0)
@@ -5341,7 +5341,7 @@ def ogr_shape_108():
 ###############################################################################
 # Test writing invalid polygon
 
-def ogr_shape_109():
+def test_ogr_shape_109():
 
     layer_name = 'ogr_shape_109'
     filename = '/vsimem/' + layer_name + '.shp'
@@ -5364,7 +5364,7 @@ def ogr_shape_109():
 ###############################################################################
 
 
-def ogr_shape_110_write_invalid_multipatch():
+def test_ogr_shape_110_write_invalid_multipatch():
 
     layer_name = 'ogr_shape_110'
     filename = '/vsimem/' + layer_name + '.shp'
@@ -5386,7 +5386,7 @@ def ogr_shape_110_write_invalid_multipatch():
 ###############################################################################
 
 
-def ogr_shape_111_delete_field_no_record():
+def test_ogr_shape_111_delete_field_no_record():
 
     layer_name = 'ogr_shape_111_delete_field_no_record'
     filename = '/vsimem/' + layer_name + '.shp'
@@ -5415,7 +5415,7 @@ def ogr_shape_111_delete_field_no_record():
 ###############################################################################
 
 
-def ogr_shape_cleanup():
+def test_ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
         return 'skip'
@@ -5457,120 +5457,120 @@ def ogr_shape_cleanup():
 
 
 gdaltest_list = [
-    ogr_shape_1,
-    ogr_shape_2,
-    ogr_shape_3,
-    ogr_shape_4,
-    ogr_shape_5,
-    ogr_shape_6,
-    ogr_shape_7,
-    ogr_shape_8,
-    ogr_shape_9,
-    ogr_shape_10,
-    ogr_shape_11,
-    ogr_shape_12,
-    ogr_shape_13,
-    ogr_shape_14,
-    ogr_shape_15,
-    ogr_shape_16,
-    ogr_shape_16_1,
-    ogr_shape_17,
-    ogr_shape_18,
-    ogr_shape_19,
-    ogr_shape_20,
-    ogr_shape_21,
-    ogr_shape_22,
-    ogr_shape_23,
-    ogr_shape_24,
-    ogr_shape_25,
-    ogr_shape_26,
-    ogr_shape_27,
-    ogr_shape_28,
-    ogr_shape_29,
-    ogr_shape_30,
-    ogr_shape_31,
-    ogr_shape_32,
-    ogr_shape_33,
-    ogr_shape_34,
-    ogr_shape_35,
-    ogr_shape_36,
-    ogr_shape_37,
-    ogr_shape_37_bis,
-    ogr_shape_38,
-    ogr_shape_39,
-    ogr_shape_40,
-    ogr_shape_41,
-    ogr_shape_42,
-    ogr_shape_43,
+    test_ogr_shape_1,
+    test_ogr_shape_2,
+    test_ogr_shape_3,
+    test_ogr_shape_4,
+    test_ogr_shape_5,
+    test_ogr_shape_6,
+    test_ogr_shape_7,
+    test_ogr_shape_8,
+    test_ogr_shape_9,
+    test_ogr_shape_10,
+    test_ogr_shape_11,
+    test_ogr_shape_12,
+    test_ogr_shape_13,
+    test_ogr_shape_14,
+    test_ogr_shape_15,
+    test_ogr_shape_16,
+    test_ogr_shape_16_1,
+    test_ogr_shape_17,
+    test_ogr_shape_18,
+    test_ogr_shape_19,
+    test_ogr_shape_20,
+    test_ogr_shape_21,
+    test_ogr_shape_22,
+    test_ogr_shape_23,
+    test_ogr_shape_24,
+    test_ogr_shape_25,
+    test_ogr_shape_26,
+    test_ogr_shape_27,
+    test_ogr_shape_28,
+    test_ogr_shape_29,
+    test_ogr_shape_30,
+    test_ogr_shape_31,
+    test_ogr_shape_32,
+    test_ogr_shape_33,
+    test_ogr_shape_34,
+    test_ogr_shape_35,
+    test_ogr_shape_36,
+    test_ogr_shape_37,
+    test_ogr_shape_37_bis,
+    test_ogr_shape_38,
+    test_ogr_shape_39,
+    test_ogr_shape_40,
+    test_ogr_shape_41,
+    test_ogr_shape_42,
+    test_ogr_shape_43,
     # ogr_shape_44,
-    ogr_shape_45,
-    ogr_shape_46,
-    ogr_shape_47,
-    ogr_shape_48,
-    ogr_shape_49,
-    ogr_shape_50,
-    ogr_shape_51,
-    ogr_shape_52,
-    ogr_shape_53,
-    ogr_shape_54,
-    ogr_shape_55,
-    ogr_shape_56,
-    ogr_shape_57,
-    ogr_shape_58,
-    ogr_shape_59,
-    ogr_shape_60,
-    ogr_shape_61,
-    ogr_shape_62,
-    ogr_shape_63,
-    ogr_shape_64,
-    ogr_shape_65,
-    ogr_shape_66,
-    ogr_shape_67,
-    ogr_shape_68,
-    ogr_shape_69,
-    ogr_shape_70,
-    ogr_shape_71,
-    ogr_shape_72,
-    ogr_shape_73,
-    ogr_shape_74,
-    ogr_shape_75,
-    ogr_shape_76,
-    ogr_shape_77,
-    ogr_shape_78,
-    ogr_shape_79,
-    ogr_shape_80,
-    ogr_shape_81,
-    ogr_shape_82,
-    ogr_shape_83,
-    ogr_shape_84,
-    ogr_shape_85,
-    ogr_shape_86,
-    ogr_shape_87,
-    ogr_shape_88,
-    ogr_shape_89,
-    ogr_shape_90,
-    ogr_shape_91,
-    ogr_shape_92,
-    ogr_shape_93,
-    ogr_shape_94,
-    ogr_shape_95,
-    ogr_shape_96,
-    ogr_shape_97,
-    ogr_shape_98,
-    ogr_shape_99,
-    ogr_shape_100,
-    ogr_shape_101,
-    ogr_shape_102,
-    ogr_shape_103,
-    ogr_shape_104,
-    ogr_shape_105,
-    ogr_shape_106,
-    ogr_shape_107,
-    ogr_shape_108,
-    ogr_shape_109,
-    ogr_shape_110_write_invalid_multipatch,
-    ogr_shape_111_delete_field_no_record,
-    ogr_shape_cleanup]
+    test_ogr_shape_45,
+    test_ogr_shape_46,
+    test_ogr_shape_47,
+    test_ogr_shape_48,
+    test_ogr_shape_49,
+    test_ogr_shape_50,
+    test_ogr_shape_51,
+    test_ogr_shape_52,
+    test_ogr_shape_53,
+    test_ogr_shape_54,
+    test_ogr_shape_55,
+    test_ogr_shape_56,
+    test_ogr_shape_57,
+    test_ogr_shape_58,
+    test_ogr_shape_59,
+    test_ogr_shape_60,
+    test_ogr_shape_61,
+    test_ogr_shape_62,
+    test_ogr_shape_63,
+    test_ogr_shape_64,
+    test_ogr_shape_65,
+    test_ogr_shape_66,
+    test_ogr_shape_67,
+    test_ogr_shape_68,
+    test_ogr_shape_69,
+    test_ogr_shape_70,
+    test_ogr_shape_71,
+    test_ogr_shape_72,
+    test_ogr_shape_73,
+    test_ogr_shape_74,
+    test_ogr_shape_75,
+    test_ogr_shape_76,
+    test_ogr_shape_77,
+    test_ogr_shape_78,
+    test_ogr_shape_79,
+    test_ogr_shape_80,
+    test_ogr_shape_81,
+    test_ogr_shape_82,
+    test_ogr_shape_83,
+    test_ogr_shape_84,
+    test_ogr_shape_85,
+    test_ogr_shape_86,
+    test_ogr_shape_87,
+    test_ogr_shape_88,
+    test_ogr_shape_89,
+    test_ogr_shape_90,
+    test_ogr_shape_91,
+    test_ogr_shape_92,
+    test_ogr_shape_93,
+    test_ogr_shape_94,
+    test_ogr_shape_95,
+    test_ogr_shape_96,
+    test_ogr_shape_97,
+    test_ogr_shape_98,
+    test_ogr_shape_99,
+    test_ogr_shape_100,
+    test_ogr_shape_101,
+    test_ogr_shape_102,
+    test_ogr_shape_103,
+    test_ogr_shape_104,
+    test_ogr_shape_105,
+    test_ogr_shape_106,
+    test_ogr_shape_107,
+    test_ogr_shape_108,
+    test_ogr_shape_109,
+    test_ogr_shape_110_write_invalid_multipatch,
+    test_ogr_shape_111_delete_field_no_record,
+    test_ogr_shape_cleanup]
 
 # gdaltest_list = [ ogr_shape_107 ]
 

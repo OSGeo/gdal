@@ -39,7 +39,7 @@ import gdaltest
 # Open a little-endian NTv2 grid
 
 
-def ntv2_1():
+def test_ntv2_1():
 
     tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10)
     gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
@@ -49,7 +49,7 @@ def ntv2_1():
 # Open a big-endian NTv2 grid
 
 
-def ntv2_2():
+def test_ntv2_2():
 
     tst = gdaltest.GDALTest('NTV2', 'test_ntv2_be.gsb', 2, 10)
     gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
@@ -59,7 +59,7 @@ def ntv2_2():
 # Test creating a little-endian NTv2 grid
 
 
-def ntv2_3():
+def test_ntv2_3():
 
     tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10, options=['ENDIANNESS=LE'])
     return tst.testCreateCopy(vsimem=1)
@@ -68,7 +68,7 @@ def ntv2_3():
 # Test creating a big-endian NTv2 grid
 
 
-def ntv2_4():
+def test_ntv2_4():
 
     tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10, options=['ENDIANNESS=BE'])
     return tst.testCreateCopy(vsimem=1)
@@ -77,7 +77,7 @@ def ntv2_4():
 # Test appending to a little-endian NTv2 grid
 
 
-def ntv2_5():
+def test_ntv2_5():
 
     src_ds = gdal.Open('data/test_ntv2_le.gsb')
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_5.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=LE'])
@@ -101,7 +101,7 @@ def ntv2_5():
 # Test appending to a big-endian NTv2 grid
 
 
-def ntv2_6():
+def test_ntv2_6():
 
     src_ds = gdal.Open('data/test_ntv2_le.gsb')
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_6.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=BE'])
@@ -125,7 +125,7 @@ def ntv2_6():
 # Test creating a file with invalid filename
 
 
-def ntv2_7():
+def test_ntv2_7():
 
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('NTv2').Create('/does/not/exist.gsb', 1, 1, 4, gdal.GDT_Float32)
@@ -142,7 +142,7 @@ def ntv2_7():
 ###############################################################################
 
 
-def ntv2_online_1():
+def test_ntv2_online_1():
 
     if not gdaltest.download_file('http://download.osgeo.org/proj/nzgd2kgrid0005.gsb', 'nzgd2kgrid0005.gsb'):
         return 'skip'
@@ -159,7 +159,7 @@ def ntv2_online_1():
 ###############################################################################
 
 
-def ntv2_online_2():
+def test_ntv2_online_2():
 
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
@@ -172,7 +172,7 @@ def ntv2_online_2():
 ###############################################################################
 
 
-def ntv2_online_3():
+def test_ntv2_online_3():
 
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
@@ -184,16 +184,16 @@ def ntv2_online_3():
 
 
 gdaltest_list = [
-    ntv2_1,
-    ntv2_2,
-    ntv2_3,
-    ntv2_4,
-    ntv2_5,
-    ntv2_6,
-    ntv2_7,
-    ntv2_online_1,
-    ntv2_online_2,
-    ntv2_online_3,
+    test_ntv2_1,
+    test_ntv2_2,
+    test_ntv2_3,
+    test_ntv2_4,
+    test_ntv2_5,
+    test_ntv2_6,
+    test_ntv2_7,
+    test_ntv2_online_1,
+    test_ntv2_online_2,
+    test_ntv2_online_3,
 ]
 
 

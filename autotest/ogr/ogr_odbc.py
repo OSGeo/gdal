@@ -41,7 +41,7 @@ import ogrtest
 # Basic testing
 
 
-def ogr_odbc_1():
+def test_ogr_odbc_1():
 
     ogrtest.odbc_drv = None
     if sys.platform != 'win32':
@@ -148,7 +148,7 @@ def ogr_odbc_1():
 # Run test_ogrsf
 
 
-def ogr_odbc_2():
+def test_ogr_odbc_2():
     if ogrtest.odbc_drv is None:
         return 'skip'
 
@@ -168,7 +168,7 @@ def ogr_odbc_2():
 # Cleanup
 
 
-def ogr_odbc_cleanup():
+def test_ogr_odbc_cleanup():
     if ogrtest.odbc_drv is None:
         return 'skip'
 
@@ -178,9 +178,9 @@ def ogr_odbc_cleanup():
 
 
 gdaltest_list = [
-    ogr_odbc_1,
-    ogr_odbc_2,
-    ogr_odbc_cleanup
+    test_ogr_odbc_1,
+    test_ogr_odbc_2,
+    test_ogr_odbc_cleanup
 ]
 
 if __name__ == '__main__':

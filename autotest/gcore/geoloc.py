@@ -38,14 +38,14 @@ import gdaltest
 # Verify warped result.
 
 
-def geoloc_1():
+def test_geoloc_1():
 
     tst = gdaltest.GDALTest('VRT', 'warpsst.vrt', 1, 61818)
     return tst.testOpen(check_filelist=False)
 
 
 gdaltest_list = [
-    geoloc_1]
+    test_geoloc_1]
 
 if __name__ == '__main__':
 

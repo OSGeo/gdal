@@ -304,7 +304,7 @@ gdaltest_list_internal = [
 #
 
 
-def ogr_pgeo_main():
+def test_ogr_pgeo_main():
 
     # Run with the PGeo driver only (MDB disabled)
     gdaltest.run_tests([ogr_pgeo_1])
@@ -318,7 +318,7 @@ def ogr_pgeo_main():
 
 
 gdaltest_list = [
-    ogr_pgeo_main
+    test_ogr_pgeo_main
 ]
 
 if __name__ == '__main__':

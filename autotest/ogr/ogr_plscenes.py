@@ -41,7 +41,7 @@ import gdaltest
 # Find PLScenes driver
 
 
-def ogr_plscenes_init():
+def test_ogr_plscenes_init():
 
     gdaltest.plscenes_drv = ogr.GetDriverByName('PLScenes')
 
@@ -53,7 +53,7 @@ def ogr_plscenes_init():
 # Test Data V1 API catalog listing with a single catalog
 
 
-def ogr_plscenes_data_v1_catalog_no_paging():
+def test_ogr_plscenes_data_v1_catalog_no_paging():
 
     if gdaltest.plscenes_drv is None:
         return 'skip'
@@ -88,7 +88,7 @@ def ogr_plscenes_data_v1_catalog_no_paging():
 # Test Data V1 API catalog listing with catalog paging
 
 
-def ogr_plscenes_data_v1_catalog_paging():
+def test_ogr_plscenes_data_v1_catalog_paging():
 
     if gdaltest.plscenes_drv is None:
         return 'skip'
@@ -133,7 +133,7 @@ def ogr_plscenes_data_v1_catalog_paging():
 # Test Data V1 API
 
 
-def ogr_plscenes_data_v1_nominal():
+def test_ogr_plscenes_data_v1_nominal():
 
     if gdaltest.plscenes_drv is None:
         return 'skip'
@@ -619,7 +619,7 @@ def ogr_plscenes_data_v1_nominal():
 # Test robustness to errors in Data V1 API
 
 
-def ogr_plscenes_data_v1_errors():
+def test_ogr_plscenes_data_v1_errors():
 
     if gdaltest.plscenes_drv is None:
         return 'skip'
@@ -735,7 +735,7 @@ def ogr_plscenes_data_v1_errors():
 # Test Data V1 API against real server
 
 
-def ogr_plscenes_data_v1_live():
+def test_ogr_plscenes_data_v1_live():
 
     if gdaltest.plscenes_drv is None:
         return 'skip'
@@ -839,12 +839,12 @@ def ogr_plscenes_data_v1_live():
 
 
 gdaltest_list = [
-    ogr_plscenes_init,
-    ogr_plscenes_data_v1_catalog_no_paging,
-    ogr_plscenes_data_v1_catalog_paging,
-    ogr_plscenes_data_v1_nominal,
-    ogr_plscenes_data_v1_errors,
-    ogr_plscenes_data_v1_live
+    test_ogr_plscenes_init,
+    test_ogr_plscenes_data_v1_catalog_no_paging,
+    test_ogr_plscenes_data_v1_catalog_paging,
+    test_ogr_plscenes_data_v1_nominal,
+    test_ogr_plscenes_data_v1_errors,
+    test_ogr_plscenes_data_v1_live
 ]
 
 if __name__ == '__main__':

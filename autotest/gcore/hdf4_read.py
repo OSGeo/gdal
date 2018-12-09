@@ -68,7 +68,7 @@ def test_hdf4_open(filename, checksum):
 # Test HDF4_SDS with single subdataset
 
 
-def hdf4_read_online_1():
+def test_hdf4_read_online_1():
 
     gdaltest.hdf4_drv = gdal.GetDriverByName('HDF4')
 
@@ -86,7 +86,7 @@ def hdf4_read_online_1():
 # Test HDF4_SDS with GEOLOCATION info
 
 
-def hdf4_read_online_2():
+def test_hdf4_read_online_2():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -114,7 +114,7 @@ def hdf4_read_online_2():
 ###############################################################################
 # Test HDF4_EOS:EOS_GRID
 
-def hdf4_read_online_3():
+def test_hdf4_read_online_3():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -150,7 +150,7 @@ def hdf4_read_online_3():
 # Test HDF4_SDS:SEAWIFS_L1A
 
 
-def hdf4_read_online_4():
+def test_hdf4_read_online_4():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -177,7 +177,7 @@ def hdf4_read_online_4():
 # Test fix for #2208
 
 
-def hdf4_read_online_5():
+def test_hdf4_read_online_5():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -198,7 +198,7 @@ def hdf4_read_online_5():
 # Test fix for #3386 where block size is dataset size
 
 
-def hdf4_read_online_6():
+def test_hdf4_read_online_6():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -236,7 +236,7 @@ def hdf4_read_online_6():
 # Test fix for #3386 where block size is smaller than dataset size
 
 
-def hdf4_read_online_7():
+def test_hdf4_read_online_7():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -274,7 +274,7 @@ def hdf4_read_online_7():
 # Test reading a HDF4_EOS:EOS_GRID where preferred block height reported would be 1
 # but that will lead to very poor performance (#3386)
 
-def hdf4_read_online_8():
+def test_hdf4_read_online_8():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -312,7 +312,7 @@ def hdf4_read_online_8():
 # Test reading L1G MTL metadata metadata
 
 
-def hdf4_read_online_9():
+def test_hdf4_read_online_9():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -341,7 +341,7 @@ def hdf4_read_online_9():
 # Test that non-tiled access works (#4672)
 
 
-def hdf4_read_online_10():
+def test_hdf4_read_online_10():
 
     if gdaltest.hdf4_drv is None:
         return 'skip'
@@ -369,16 +369,16 @@ def hdf4_read_online_10():
 
 
 gdaltest_list = [
-    hdf4_read_online_1,
-    hdf4_read_online_2,
-    hdf4_read_online_3,
-    hdf4_read_online_4,
-    hdf4_read_online_5,
-    hdf4_read_online_6,
-    hdf4_read_online_7,
-    hdf4_read_online_8,
-    hdf4_read_online_9,
-    hdf4_read_online_10,
+    test_hdf4_read_online_1,
+    test_hdf4_read_online_2,
+    test_hdf4_read_online_3,
+    test_hdf4_read_online_4,
+    test_hdf4_read_online_5,
+    test_hdf4_read_online_6,
+    test_hdf4_read_online_7,
+    test_hdf4_read_online_8,
+    test_hdf4_read_online_9,
+    test_hdf4_read_online_10,
 ]
 
 if __name__ == '__main__':

@@ -275,7 +275,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
 ###############################################################################
 # Perform simple read test.
 
-def netcdf_1():
+def test_netcdf_1():
 
     # setup netcdf environment
     netcdf_setup()
@@ -299,7 +299,7 @@ def netcdf_1():
 # operation because the new file will only be accessible via subdatasets.
 
 
-def netcdf_2():
+def test_netcdf_2():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -350,7 +350,7 @@ def netcdf_2():
 ###############################################################################
 
 
-def netcdf_3():
+def test_netcdf_3():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -372,7 +372,7 @@ def netcdf_3():
 # In #2582 5dimensional files were causing problems.  Verify use ok.
 
 
-def netcdf_4():
+def test_netcdf_4():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -395,7 +395,7 @@ def netcdf_4():
 # dimension - check handling now on band 7.
 
 
-def netcdf_5():
+def test_netcdf_5():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -418,7 +418,7 @@ def netcdf_5():
 # 1 standard parallel.
 
 
-def netcdf_6():
+def test_netcdf_6():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -444,7 +444,7 @@ def netcdf_6():
 # 2 standard parallels.
 
 
-def netcdf_7():
+def test_netcdf_7():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -473,7 +473,7 @@ def netcdf_7():
 # now just look for PROJECTION=Albers_Conic_Equal_Area and some parameters
 
 
-def netcdf_8():
+def test_netcdf_8():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -506,7 +506,7 @@ def netcdf_8():
 # check to see if projected systems default to wgs84 if no spheroid def
 
 
-def netcdf_9():
+def test_netcdf_9():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -533,7 +533,7 @@ def netcdf_9():
 # check if km pixel size makes it through to gt
 
 
-def netcdf_10():
+def test_netcdf_10():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -567,7 +567,7 @@ def netcdf_10():
 # check if ll gets caught in km pixel size check
 
 
-def netcdf_11():
+def test_netcdf_11():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -589,7 +589,7 @@ def netcdf_11():
 # check for scale/offset set/get.
 
 
-def netcdf_12():
+def test_netcdf_12():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -611,7 +611,7 @@ def netcdf_12():
 # check for scale/offset = None if no scale or offset is available
 
 
-def netcdf_13():
+def test_netcdf_13():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -633,7 +633,7 @@ def netcdf_13():
 # check for scale/offset for two variables
 
 
-def netcdf_14():
+def test_netcdf_14():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -668,7 +668,7 @@ def netcdf_14():
 # This test fails in 1.8.1, because the driver does not support NC2 (bug #3890)
 
 
-def netcdf_15():
+def test_netcdf_15():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -688,7 +688,7 @@ def netcdf_15():
 # check support for netcdf-4
 
 
-def netcdf_16():
+def test_netcdf_16():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -725,7 +725,7 @@ def netcdf_16():
 # check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
 
 
-def netcdf_17():
+def test_netcdf_17():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -767,7 +767,7 @@ def netcdf_17():
 # check support for netcdf-4 classic (NC4C)
 
 
-def netcdf_18():
+def test_netcdf_18():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -801,7 +801,7 @@ def netcdf_18():
 # check support for reading with DEFLATE compression, requires NC4
 
 
-def netcdf_19():
+def test_netcdf_19():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -820,7 +820,7 @@ def netcdf_19():
 # check support for writing with DEFLATE compression, requires NC4
 
 
-def netcdf_20():
+def test_netcdf_20():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -835,7 +835,7 @@ def netcdf_20():
 ###############################################################################
 # check support for writing large file with DEFLATE compression
 # if chunking is not defined properly within the netcdf driver, this test can take 1h
-def netcdf_21():
+def test_netcdf_21():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -883,7 +883,7 @@ def netcdf_21():
 
 ###############################################################################
 # check support for hdf4
-def netcdf_22():
+def test_netcdf_22():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -910,7 +910,7 @@ def netcdf_22():
 # check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
 
 
-def netcdf_23():
+def test_netcdf_23():
 
     # don't skip if netcdf is not enabled in GDAL
     # if gdaltest.netcdf_drv is None:
@@ -950,7 +950,7 @@ def netcdf_23():
 # check support for reading attributes (single values and array values)
 
 
-def netcdf_24():
+def test_netcdf_24():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1007,7 +1007,7 @@ def netcdf_24_nc4():
 # check support for writing attributes (single values and array values)
 
 
-def netcdf_25():
+def test_netcdf_25():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1074,7 +1074,7 @@ def netcdf_25_nc4():
 # depending on y-axis order
 
 
-def netcdf_26():
+def test_netcdf_26():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1104,7 +1104,7 @@ def netcdf_26():
 # check support for GDAL_NETCDF_BOTTOMUP configuration option
 
 
-def netcdf_27():
+def test_netcdf_27():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1193,7 +1193,7 @@ def netcdf_test_4dfile(ofile):
 # check support for writing multi-dimensional files using CreateCopy()
 
 
-def netcdf_28():
+def test_netcdf_28():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1219,7 +1219,7 @@ def netcdf_28():
 # metadata to netcdf file with SetMetadata() and SetMetadataItem()).
 
 
-def netcdf_29():
+def test_netcdf_29():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1261,7 +1261,7 @@ def netcdf_29():
 # check support for file with nan values (bug #4705)
 
 
-def netcdf_30():
+def test_netcdf_30():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1281,7 +1281,7 @@ def netcdf_30():
 # 1 pixel (in width or height) still unsupported because we can't get the pixel dimensions
 
 
-def netcdf_31():
+def test_netcdf_31():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1306,7 +1306,7 @@ def netcdf_31():
 # Test NC_UBYTE write/read - netcdf-4 (FORMAT=NC4) only (#5053)
 
 
-def netcdf_32():
+def test_netcdf_32():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1333,7 +1333,7 @@ def netcdf_32():
 # TEST NC_UBYTE metadata read - netcdf-4 (FORMAT=NC4) only (#5053)
 
 
-def netcdf_33():
+def test_netcdf_33():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1352,7 +1352,7 @@ def netcdf_33():
 # if chunking is not supported within the netcdf driver, this test can take very long
 
 
-def netcdf_34():
+def test_netcdf_34():
 
     filename = 'utm-big-chunks.nc'
     # this timeout is more than enough - on my system takes <1s with fix, about 25 seconds without
@@ -1401,7 +1401,7 @@ def netcdf_34():
 # test writing a long metadata > 8196 chars (bug #5113)
 
 
-def netcdf_35():
+def test_netcdf_35():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1437,7 +1437,7 @@ def netcdf_35():
 # test for correct geotransform (bug #5114)
 
 
-def netcdf_36():
+def test_netcdf_36():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1465,7 +1465,7 @@ def netcdf_36():
 # test for correct geotransform with longitude wrap
 
 
-def netcdf_36_lonwrap():
+def test_netcdf_36_lonwrap():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1493,7 +1493,7 @@ def netcdf_36_lonwrap():
 # test for reading gaussian grid (bugs #4513 and #5118)
 
 
-def netcdf_37():
+def test_netcdf_37():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1532,7 +1532,7 @@ def netcdf_37():
 # test for correct geotransform of projected data in km units (bug #5118)
 
 
-def netcdf_38():
+def test_netcdf_38():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1561,7 +1561,7 @@ def netcdf_38():
 # Test VRT and NETCDF:
 
 
-def netcdf_39():
+def test_netcdf_39():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1638,7 +1638,7 @@ def netcdf_39():
 # Check support of reading of chunked bottom-up files.
 
 
-def netcdf_40():
+def test_netcdf_40():
 
     if gdaltest.netcdf_drv is None or not gdaltest.netcdf_drv_has_nc4:
         return 'skip'
@@ -1649,7 +1649,7 @@ def netcdf_40():
 # Test support for georeferenced file without CF convention
 
 
-def netcdf_41():
+def test_netcdf_41():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1671,7 +1671,7 @@ def netcdf_41():
 # Test writing & reading GEOLOCATION array
 
 
-def netcdf_42():
+def test_netcdf_42():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1726,7 +1726,7 @@ def netcdf_42():
 # Test reading GEOLOCATION array from geotransform (non default)
 
 
-def netcdf_43():
+def test_netcdf_43():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1755,7 +1755,7 @@ def netcdf_43():
 # Test NC_USHORT/UINT read/write - netcdf-4 only (#6337)
 
 
-def netcdf_44():
+def test_netcdf_44():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1774,7 +1774,7 @@ def netcdf_44():
 # Test reading a vector NetCDF 3 file
 
 
-def netcdf_45():
+def test_netcdf_45():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1830,7 +1830,7 @@ def netcdf_45():
 # Test reading a vector NetCDF 3 file
 
 
-def netcdf_46():
+def test_netcdf_46():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1850,7 +1850,7 @@ def netcdf_46():
 # Test reading a vector NetCDF 4 file
 
 
-def netcdf_47():
+def test_netcdf_47():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1904,7 +1904,7 @@ def netcdf_47():
 # Test reading a vector NetCDF 3 file without any geometry
 
 
-def netcdf_48():
+def test_netcdf_48():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1926,7 +1926,7 @@ def netcdf_48():
 # Test reading a vector NetCDF 3 file with X,Y,Z vars as float
 
 
-def netcdf_49():
+def test_netcdf_49():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -1957,7 +1957,7 @@ def netcdf_49():
 # Test creating a vector NetCDF 3 file with WKT geometry field
 
 
-def netcdf_50():
+def test_netcdf_50():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2006,7 +2006,7 @@ def netcdf_50():
 # Test creating a vector NetCDF 3 file with X,Y,Z fields
 
 
-def netcdf_51():
+def test_netcdf_51():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2090,7 +2090,7 @@ def netcdf_51():
 # Test creating a vector NetCDF 3 file with X,Y,Z fields with WRITE_GDAL_TAGS=NO
 
 
-def netcdf_51_no_gdal_tags():
+def test_netcdf_51_no_gdal_tags():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2141,7 +2141,7 @@ def netcdf_51_no_gdal_tags():
 # Test creating a vector NetCDF 4 file with X,Y,Z fields
 
 
-def netcdf_52():
+def test_netcdf_52():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2225,7 +2225,7 @@ def netcdf_52():
 # Test creating a vector NetCDF 4 file with WKT geometry field
 
 
-def netcdf_53():
+def test_netcdf_53():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2277,7 +2277,7 @@ def netcdf_53():
 # Test appending to a vector NetCDF 4 file with unusual types (ubyte, ushort...)
 
 
-def netcdf_54():
+def test_netcdf_54():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2324,7 +2324,7 @@ def netcdf_54():
 # Test auto-grow of bidimensional char variables in a vector NetCDF 4 file
 
 
-def netcdf_55():
+def test_netcdf_55():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2371,7 +2371,7 @@ def netcdf_55():
 # Test truncation of bidimensional char variables and WKT in a vector NetCDF 3 file
 
 
-def netcdf_56():
+def test_netcdf_56():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2407,7 +2407,7 @@ def netcdf_56():
 # Test one layer per file creation
 
 
-def netcdf_57():
+def test_netcdf_57():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2459,7 +2459,7 @@ def netcdf_57():
 # Test one layer per group (NC4)
 
 
-def netcdf_58():
+def test_netcdf_58():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2494,7 +2494,7 @@ def netcdf_58():
 # check for UnitType set/get.
 
 
-def netcdf_59():
+def test_netcdf_59():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2520,7 +2520,7 @@ def netcdf_59():
 # http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_indexed_ragged_array_representation_of_profiles
 
 
-def netcdf_60():
+def test_netcdf_60():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2562,7 +2562,7 @@ def netcdf_60():
 # Test appending to a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
-def netcdf_61():
+def test_netcdf_61():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2599,7 +2599,7 @@ def netcdf_61():
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
-def netcdf_62():
+def test_netcdf_62():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2628,7 +2628,7 @@ def netcdf_62():
     return 'success'
 
 
-def netcdf_62_ncdump_check():
+def test_netcdf_62_ncdump_check():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2656,7 +2656,7 @@ def netcdf_62_ncdump_check():
     return 'success'
 
 
-def netcdf_62_cf_check():
+def test_netcdf_62_cf_check():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2677,7 +2677,7 @@ def netcdf_62_cf_check():
 # Test creating a NC4 "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
-def netcdf_63():
+def test_netcdf_63():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2710,7 +2710,7 @@ def netcdf_63():
     return 'success'
 
 
-def netcdf_63_ncdump_check():
+def test_netcdf_63_ncdump_check():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2747,7 +2747,7 @@ def netcdf_63_ncdump_check():
 # but without a profile field.
 
 
-def netcdf_64():
+def test_netcdf_64():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2781,7 +2781,7 @@ def netcdf_64():
 # (they must be filled as empty strings to avoid crashes in netcdf lib)
 
 
-def netcdf_65():
+def test_netcdf_65():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2814,7 +2814,7 @@ def netcdf_65():
 # from a config file
 
 
-def netcdf_66():
+def test_netcdf_66():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2917,7 +2917,7 @@ def netcdf_66():
     return 'success'
 
 
-def netcdf_66_ncdump_check():
+def test_netcdf_66_ncdump_check():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2953,7 +2953,7 @@ def netcdf_66_ncdump_check():
 # blocks in the x axischeck for partial block reading.
 
 
-def netcdf_67():
+def test_netcdf_67():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -2988,7 +2988,7 @@ def netcdf_67():
 ###############################################################################
 # Test reading SRS from srid attribute (#6613)
 
-def netcdf_68():
+def test_netcdf_68():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3006,7 +3006,7 @@ def netcdf_68():
 # Test opening a dataset with a 1D variable with 0 record (#6645)
 
 
-def netcdf_69():
+def test_netcdf_69():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3021,7 +3021,7 @@ def netcdf_69():
 # Test that we don't erroneously identify non-longitude axis as longitude (#6759)
 
 
-def netcdf_70():
+def test_netcdf_70():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3040,7 +3040,7 @@ def netcdf_70():
 # (https://github.com/OSGeo/gdal/pull/200)
 
 
-def netcdf_71():
+def test_netcdf_71():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3058,7 +3058,7 @@ def netcdf_71():
 # test int64 attributes / dim
 
 
-def netcdf_72():
+def test_netcdf_72():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3078,7 +3078,7 @@ def netcdf_72():
 # test geostationary with radian units (https://github.com/OSGeo/gdal/pull/220)
 
 
-def netcdf_73():
+def test_netcdf_73():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3096,7 +3096,7 @@ def netcdf_73():
 # test geostationary with microradian units (https://github.com/OSGeo/gdal/pull/220)
 
 
-def netcdf_74():
+def test_netcdf_74():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3114,7 +3114,7 @@ def netcdf_74():
 # test opening a ncdump file
 
 
-def netcdf_75():
+def test_netcdf_75():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3150,7 +3150,7 @@ def netcdf_75():
 # test opening a vector ncdump file
 
 
-def netcdf_76():
+def test_netcdf_76():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3171,7 +3171,7 @@ def netcdf_76():
 # test opening a raster file that used to be confused with a vector file (#6974)
 
 
-def netcdf_77():
+def test_netcdf_77():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3195,7 +3195,7 @@ def netcdf_77():
 # test we handle correctly valid_range={0,255} for a byte dataset with
 # negative nodata value
 
-def netcdf_78():
+def test_netcdf_78():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3218,7 +3218,7 @@ def netcdf_78():
 # negative nodata value
 
 
-def netcdf_79():
+def test_netcdf_79():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3240,7 +3240,7 @@ def netcdf_79():
 # Test creating and opening with accent
 
 
-def netcdf_80():
+def test_netcdf_80():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3252,7 +3252,7 @@ def netcdf_80():
 # netCDF file in rotated_pole projection
 
 
-def netcdf_81():
+def test_netcdf_81():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3287,7 +3287,7 @@ def netcdf_81():
 # 1D variable, several corresponding variables)
 
 
-def netcdf_82():
+def test_netcdf_82():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3324,7 +3324,7 @@ def netcdf_82():
 
 
 ###############################################################################
-def netcdf_uffd():
+def test_netcdf_uffd():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -3354,95 +3354,95 @@ def netcdf_uffd():
 
 
 gdaltest_list = [
-    netcdf_1,
-    netcdf_2,
-    netcdf_3,
-    netcdf_4,
-    netcdf_5,
-    netcdf_6,
-    netcdf_7,
-    netcdf_8,
-    netcdf_9,
-    netcdf_10,
-    netcdf_11,
-    netcdf_12,
-    netcdf_13,
-    netcdf_14,
-    netcdf_15,
-    netcdf_16,
-    netcdf_17,
-    netcdf_18,
-    netcdf_19,
-    netcdf_20,
-    netcdf_21,
-    netcdf_22,
-    netcdf_23,
-    netcdf_24,
-    netcdf_25,
-    netcdf_26,
-    netcdf_27,
-    netcdf_28,
-    netcdf_29,
-    netcdf_30,
-    netcdf_31,
-    netcdf_32,
-    netcdf_33,
-    netcdf_34,
-    netcdf_35,
-    netcdf_36,
-    netcdf_36_lonwrap,
-    netcdf_37,
-    netcdf_38,
-    netcdf_39,
-    netcdf_40,
-    netcdf_41,
-    netcdf_42,
-    netcdf_43,
-    netcdf_44,
-    netcdf_45,
-    netcdf_46,
-    netcdf_47,
-    netcdf_48,
-    netcdf_49,
-    netcdf_50,
-    netcdf_51,
-    netcdf_51_no_gdal_tags,
-    netcdf_52,
-    netcdf_53,
-    netcdf_54,
-    netcdf_55,
-    netcdf_56,
-    netcdf_57,
-    netcdf_58,
-    netcdf_59,
-    netcdf_60,
-    netcdf_61,
-    netcdf_62,
-    netcdf_62_ncdump_check,
-    netcdf_62_cf_check,
-    netcdf_63,
-    netcdf_63_ncdump_check,
-    netcdf_64,
-    netcdf_65,
-    netcdf_66,
-    netcdf_66_ncdump_check,
-    netcdf_67,
-    netcdf_68,
-    netcdf_69,
-    netcdf_70,
-    netcdf_71,
-    netcdf_72,
-    netcdf_73,
-    netcdf_74,
-    netcdf_75,
-    netcdf_76,
-    netcdf_77,
-    netcdf_78,
-    netcdf_79,
-    netcdf_80,
-    netcdf_81,
-    netcdf_82,
-    netcdf_uffd,
+    test_netcdf_1,
+    test_netcdf_2,
+    test_netcdf_3,
+    test_netcdf_4,
+    test_netcdf_5,
+    test_netcdf_6,
+    test_netcdf_7,
+    test_netcdf_8,
+    test_netcdf_9,
+    test_netcdf_10,
+    test_netcdf_11,
+    test_netcdf_12,
+    test_netcdf_13,
+    test_netcdf_14,
+    test_netcdf_15,
+    test_netcdf_16,
+    test_netcdf_17,
+    test_netcdf_18,
+    test_netcdf_19,
+    test_netcdf_20,
+    test_netcdf_21,
+    test_netcdf_22,
+    test_netcdf_23,
+    test_netcdf_24,
+    test_netcdf_25,
+    test_netcdf_26,
+    test_netcdf_27,
+    test_netcdf_28,
+    test_netcdf_29,
+    test_netcdf_30,
+    test_netcdf_31,
+    test_netcdf_32,
+    test_netcdf_33,
+    test_netcdf_34,
+    test_netcdf_35,
+    test_netcdf_36,
+    test_netcdf_36_lonwrap,
+    test_netcdf_37,
+    test_netcdf_38,
+    test_netcdf_39,
+    test_netcdf_40,
+    test_netcdf_41,
+    test_netcdf_42,
+    test_netcdf_43,
+    test_netcdf_44,
+    test_netcdf_45,
+    test_netcdf_46,
+    test_netcdf_47,
+    test_netcdf_48,
+    test_netcdf_49,
+    test_netcdf_50,
+    test_netcdf_51,
+    test_netcdf_51_no_gdal_tags,
+    test_netcdf_52,
+    test_netcdf_53,
+    test_netcdf_54,
+    test_netcdf_55,
+    test_netcdf_56,
+    test_netcdf_57,
+    test_netcdf_58,
+    test_netcdf_59,
+    test_netcdf_60,
+    test_netcdf_61,
+    test_netcdf_62,
+    test_netcdf_62_ncdump_check,
+    test_netcdf_62_cf_check,
+    test_netcdf_63,
+    test_netcdf_63_ncdump_check,
+    test_netcdf_64,
+    test_netcdf_65,
+    test_netcdf_66,
+    test_netcdf_66_ncdump_check,
+    test_netcdf_67,
+    test_netcdf_68,
+    test_netcdf_69,
+    test_netcdf_70,
+    test_netcdf_71,
+    test_netcdf_72,
+    test_netcdf_73,
+    test_netcdf_74,
+    test_netcdf_75,
+    test_netcdf_76,
+    test_netcdf_77,
+    test_netcdf_78,
+    test_netcdf_79,
+    test_netcdf_80,
+    test_netcdf_81,
+    test_netcdf_82,
+    test_netcdf_uffd,
 ]
 
 ###############################################################################

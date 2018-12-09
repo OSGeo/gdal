@@ -39,7 +39,7 @@ import ogrtest
 # Test a join.
 
 
-def ogr_join_1():
+def test_ogr_join_1():
     gdaltest.ds = ogr.Open('data')
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
@@ -58,7 +58,7 @@ def ogr_join_1():
 # Check the values we are actually getting back (restricting the search a bit)
 
 
-def ogr_join_2():
+def test_ogr_join_2():
 
     expect = ['_166_', '_158_', '_165_']
 
@@ -77,7 +77,7 @@ def ogr_join_2():
 # Try various naming conversions for the selected fields.
 
 
-def ogr_join_3():
+def test_ogr_join_3():
 
     expect = ['_166_', '_158_', '_165_']
 
@@ -96,7 +96,7 @@ def ogr_join_3():
 # Verify that records for which a join can't be found work ok.
 
 
-def ogr_join_4():
+def test_ogr_join_4():
 
     expect = ['_179_', '_171_', None, None]
 
@@ -115,7 +115,7 @@ def ogr_join_4():
 # Verify that table aliases work
 
 
-def ogr_join_5():
+def test_ogr_join_5():
 
     expect = [179, 171, 173, 172]
 
@@ -134,7 +134,7 @@ def ogr_join_5():
 # Again, ordering by a primary field.
 
 
-def ogr_join_6():
+def test_ogr_join_6():
 
     expect = [171, 172, 173, 179]
 
@@ -153,7 +153,7 @@ def ogr_join_6():
 # Test joining to an external datasource.
 
 
-def ogr_join_7():
+def test_ogr_join_7():
 
     expect = [171, 172, 173, 179]
 
@@ -172,7 +172,7 @@ def ogr_join_7():
 # Test doing two joins at once.
 
 
-def ogr_join_8():
+def test_ogr_join_8():
 
     expect = [171, None, None, 179]
 
@@ -193,7 +193,7 @@ def ogr_join_8():
 # with join clauses)
 
 
-def ogr_join_9():
+def test_ogr_join_9():
 
     expect = [179, 171, 173, 172]
 
@@ -211,7 +211,7 @@ def ogr_join_9():
 ###############################################################################
 
 
-def ogr_join_10():
+def test_ogr_join_10():
 
     expect = [None, None, None, None, None, None, None, None, None, None]
 
@@ -229,7 +229,7 @@ def ogr_join_10():
 # Test join on string field
 
 
-def ogr_join_11():
+def test_ogr_join_11():
 
     expect = ['_168_', '_179_', '_171_', '_170_', '_165_', '_158_', '_166_']
 
@@ -246,7 +246,7 @@ def ogr_join_11():
 # Test fix for #4112 (join between 2 datasources)
 
 
-def ogr_join_12():
+def test_ogr_join_12():
     ds = ogr.Open('data/poly.shp')
 
     sql_lyr = ds.ExecuteSQL(
@@ -265,7 +265,7 @@ def ogr_join_12():
 # Test joining a float column with a string column (#4321)
 
 
-def ogr_join_13():
+def test_ogr_join_13():
 
     expect = ['_168_', '_179_', '_171_', None, None, None, '_166_', '_158_', '_165_', '_170_']
 
@@ -283,7 +283,7 @@ def ogr_join_13():
 # Test joining a string column with a float column (#4321, actually addressed by #4259)
 
 
-def ogr_join_14():
+def test_ogr_join_14():
 
     expect = [168, 179, 171, 170, 165, 158, 166]
 
@@ -301,7 +301,7 @@ def ogr_join_14():
 # Test multiple joins with expressions (#4521)
 
 
-def ogr_join_15():
+def test_ogr_join_15():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_join_14')
     lyr = ds.CreateLayer('first')
@@ -345,7 +345,7 @@ def ogr_join_15():
 # Test non-support of a secondarytable.fieldname in a where clause
 
 
-def ogr_join_16():
+def test_ogr_join_16():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -366,7 +366,7 @@ def ogr_join_16():
 # Test non-support of a secondarytable.fieldname in a order by clause
 
 
-def ogr_join_17():
+def test_ogr_join_17():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -388,7 +388,7 @@ def ogr_join_17():
 # Test inverted order of fields in ON
 
 
-def ogr_join_18():
+def test_ogr_join_18():
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
         'SELECT * FROM poly LEFT JOIN idlink ON idlink.eas_id = poly.eas_id')
@@ -406,7 +406,7 @@ def ogr_join_18():
 # Test unrecognized primary field
 
 
-def ogr_join_19():
+def test_ogr_join_19():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -426,7 +426,7 @@ def ogr_join_19():
 # Test unrecognized secondary field
 
 
-def ogr_join_20():
+def test_ogr_join_20():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -446,7 +446,7 @@ def ogr_join_20():
 # Test unexpected secondary table
 
 
-def ogr_join_21():
+def test_ogr_join_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -468,7 +468,7 @@ def ogr_join_21():
 # Test join with a complex expression as ON
 
 
-def ogr_join_22():
+def test_ogr_join_22():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('first')
@@ -499,7 +499,7 @@ def ogr_join_22():
 # Test join with NULL keys
 
 
-def ogr_join_23():
+def test_ogr_join_23():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('first')
@@ -532,7 +532,7 @@ def ogr_join_23():
 ###############################################################################
 
 
-def ogr_join_cleanup():
+def test_ogr_join_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
 
@@ -540,30 +540,30 @@ def ogr_join_cleanup():
 
 
 gdaltest_list = [
-    ogr_join_1,
-    ogr_join_2,
-    ogr_join_3,
-    ogr_join_4,
-    ogr_join_5,
-    ogr_join_6,
-    ogr_join_7,
-    ogr_join_8,
-    ogr_join_9,
-    ogr_join_10,
-    ogr_join_11,
-    ogr_join_12,
-    ogr_join_13,
-    ogr_join_14,
-    ogr_join_15,
-    ogr_join_16,
-    ogr_join_17,
-    ogr_join_18,
-    ogr_join_19,
-    ogr_join_20,
-    ogr_join_21,
-    ogr_join_22,
-    ogr_join_23,
-    ogr_join_cleanup]
+    test_ogr_join_1,
+    test_ogr_join_2,
+    test_ogr_join_3,
+    test_ogr_join_4,
+    test_ogr_join_5,
+    test_ogr_join_6,
+    test_ogr_join_7,
+    test_ogr_join_8,
+    test_ogr_join_9,
+    test_ogr_join_10,
+    test_ogr_join_11,
+    test_ogr_join_12,
+    test_ogr_join_13,
+    test_ogr_join_14,
+    test_ogr_join_15,
+    test_ogr_join_16,
+    test_ogr_join_17,
+    test_ogr_join_18,
+    test_ogr_join_19,
+    test_ogr_join_20,
+    test_ogr_join_21,
+    test_ogr_join_22,
+    test_ogr_join_23,
+    test_ogr_join_cleanup]
 
 if __name__ == '__main__':
 

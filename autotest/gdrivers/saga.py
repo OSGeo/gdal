@@ -40,7 +40,7 @@ import gdaltest
 # Test opening
 
 
-def saga_1():
+def test_saga_1():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
     return tst.testOpen(check_prj="""PROJCS["NAD_1927_UTM_Zone_11N",
@@ -61,7 +61,7 @@ def saga_1():
 # Test copying a reference sample with CreateCopy()
 
 
-def saga_2():
+def test_saga_2():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
     return tst.testCreateCopy(new_filename='tmp/createcopy.sdat', check_srs=True)
@@ -70,7 +70,7 @@ def saga_2():
 # Test copying a reference sample with Create()
 
 
-def saga_3():
+def test_saga_3():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
     return tst.testCreate(new_filename='tmp/copy.sdat', out_bands=1)
@@ -79,7 +79,7 @@ def saga_3():
 # Test CreateCopy() for various data types
 
 
-def saga_4():
+def test_saga_4():
 
     src_files = ['byte.tif',
                  'int16.tif',
@@ -105,7 +105,7 @@ def saga_4():
 # Test Create() for various data types
 
 
-def saga_5():
+def test_saga_5():
 
     src_files = ['byte.tif',
                  'int16.tif',
@@ -131,7 +131,7 @@ def saga_5():
 # Test creating empty datasets and check that nodata values are properly written
 
 
-def saga_6():
+def test_saga_6():
 
     gdal_types = [gdal.GDT_Byte,
                   gdal.GDT_Int16,
@@ -180,7 +180,7 @@ def saga_6():
 # Test /vsimem
 
 
-def saga_7():
+def test_saga_7():
 
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
     return tst.testCreateCopy(new_filename='/vsimem/createcopy.sdat')
@@ -189,7 +189,7 @@ def saga_7():
 ###############################################################################
 # Test zipped saga grid (.sg-grd-z)
 
-def saga_8():
+def test_saga_8():
     tst = gdaltest.GDALTest('SAGA', '4byteFloat.sg-grd-z', 1, 108)
     return tst.testOpen(check_prj="""PROJCS["NAD_1927_UTM_Zone_11N",
     GEOGCS["GCS_North_American_1927",
@@ -207,14 +207,14 @@ def saga_8():
 
 
 gdaltest_list = [
-    saga_1,
-    saga_2,
-    saga_3,
-    saga_4,
-    saga_5,
-    saga_6,
-    saga_7,
-    saga_8]
+    test_saga_1,
+    test_saga_2,
+    test_saga_3,
+    test_saga_4,
+    test_saga_5,
+    test_saga_6,
+    test_saga_7,
+    test_saga_8]
 
 if __name__ == '__main__':
 

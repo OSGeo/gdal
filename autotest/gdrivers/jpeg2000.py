@@ -63,7 +63,7 @@ def is_buggy_jasper():
 # Verify we have the driver.
 
 
-def jpeg2000_1():
+def test_jpeg2000_1():
 
     gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
 
@@ -75,7 +75,7 @@ def jpeg2000_1():
 # Open byte.jp2
 
 
-def jpeg2000_2():
+def test_jpeg2000_2():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -108,7 +108,7 @@ def jpeg2000_2():
 # Open int16.jp2
 
 
-def jpeg2000_3():
+def test_jpeg2000_3():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -134,7 +134,7 @@ def jpeg2000_3():
 # Test copying byte.jp2
 
 
-def jpeg2000_4():
+def test_jpeg2000_4():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -154,7 +154,7 @@ def jpeg2000_4():
 # Test copying int16.jp2
 
 
-def jpeg2000_5():
+def test_jpeg2000_5():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -166,7 +166,7 @@ def jpeg2000_5():
 # Test reading ll.jp2
 
 
-def jpeg2000_6():
+def test_jpeg2000_6():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -186,7 +186,7 @@ def jpeg2000_6():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def jpeg2000_7():
+def test_jpeg2000_7():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -198,7 +198,7 @@ def jpeg2000_7():
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
 
-def jpeg2000_8():
+def test_jpeg2000_8():
 
     if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
         return 'skip'
@@ -222,7 +222,7 @@ def jpeg2000_8():
 # Check that we can use .j2w world files (#4651)
 
 
-def jpeg2000_9():
+def test_jpeg2000_9():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -248,7 +248,7 @@ def jpeg2000_9():
 # Check writing a file with more than 4 bands (#4686)
 
 
-def jpeg2000_10():
+def test_jpeg2000_10():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -281,7 +281,7 @@ def jpeg2000_10():
 # Test auto-promotion of 1bit alpha band to 8bit
 
 
-def jpeg2000_11():
+def test_jpeg2000_11():
 
     if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
         return 'skip'
@@ -331,7 +331,7 @@ def jpeg2000_11():
 ###############################################################################
 
 
-def jpeg2000_online_1():
+def test_jpeg2000_online_1():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -354,7 +354,7 @@ def jpeg2000_online_1():
 ###############################################################################
 
 
-def jpeg2000_online_2():
+def test_jpeg2000_online_2():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -386,7 +386,7 @@ def jpeg2000_online_2():
 ###############################################################################
 
 
-def jpeg2000_online_3():
+def test_jpeg2000_online_3():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -421,7 +421,7 @@ def jpeg2000_online_3():
 ###############################################################################
 
 
-def jpeg2000_online_4():
+def test_jpeg2000_online_4():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -459,7 +459,7 @@ def jpeg2000_online_4():
 # Try reading JPEG2000 with color table
 
 
-def jpeg2000_online_5():
+def test_jpeg2000_online_5():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -484,7 +484,7 @@ def jpeg2000_online_5():
 # Try reading YCbCr JPEG2000 as RGB
 
 
-def jpeg2000_online_6():
+def test_jpeg2000_online_6():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
@@ -508,7 +508,7 @@ def jpeg2000_online_6():
 ###############################################################################
 
 
-def jpeg2000_cleanup():
+def test_jpeg2000_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -516,24 +516,24 @@ def jpeg2000_cleanup():
 
 
 gdaltest_list = [
-    jpeg2000_1,
-    jpeg2000_2,
-    jpeg2000_3,
-    jpeg2000_4,
-    jpeg2000_5,
-    jpeg2000_6,
-    jpeg2000_7,
-    jpeg2000_8,
-    jpeg2000_9,
-    jpeg2000_10,
-    jpeg2000_11,
-    jpeg2000_online_1,
-    jpeg2000_online_2,
-    jpeg2000_online_3,
-    jpeg2000_online_4,
-    jpeg2000_online_5,
-    jpeg2000_online_6,
-    jpeg2000_cleanup]
+    test_jpeg2000_1,
+    test_jpeg2000_2,
+    test_jpeg2000_3,
+    test_jpeg2000_4,
+    test_jpeg2000_5,
+    test_jpeg2000_6,
+    test_jpeg2000_7,
+    test_jpeg2000_8,
+    test_jpeg2000_9,
+    test_jpeg2000_10,
+    test_jpeg2000_11,
+    test_jpeg2000_online_1,
+    test_jpeg2000_online_2,
+    test_jpeg2000_online_3,
+    test_jpeg2000_online_4,
+    test_jpeg2000_online_5,
+    test_jpeg2000_online_6,
+    test_jpeg2000_cleanup]
 
 if __name__ == '__main__':
 

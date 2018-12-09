@@ -43,7 +43,7 @@ from osgeo import osr
 # Create wasp datasource
 
 
-def ogr_selafin_create_ds():
+def test_ogr_selafin_create_ds():
 
     gdaltest.selafin_ds = None
     try:
@@ -62,8 +62,8 @@ def ogr_selafin_create_ds():
 # Add a few points to the datasource
 
 
-def ogr_selafin_create_nodes():
-    if ogr_selafin_create_ds() != 'success':
+def test_ogr_selafin_create_nodes():
+    if test_ogr_selafin_create_ds() != 'success':
         return 'skip'
     ref = osr.SpatialReference()
     ref.ImportFromEPSG(4326)
@@ -96,7 +96,7 @@ def ogr_selafin_create_nodes():
 # Add a set of elements to the datasource
 
 
-def ogr_selafin_create_elements():
+def test_ogr_selafin_create_elements():
 
     gdaltest.selafin_ds = ogr.Open('tmp/tmp.slf', 1)
     if gdaltest.selafin_ds is None:
@@ -159,7 +159,7 @@ def ogr_selafin_create_elements():
 # Add a field and set its values for point features
 
 
-def ogr_selafin_set_field():
+def test_ogr_selafin_set_field():
 
     gdaltest.selafin_ds = ogr.Open('tmp/tmp.slf', 1)
     if gdaltest.selafin_ds is None:
@@ -197,7 +197,7 @@ def ogr_selafin_set_field():
 ###############################################################################
 # Cleanup
 
-def ogr_selafin_cleanup():
+def test_ogr_selafin_cleanup():
 
     selafin_drv = ogr.GetDriverByName('Selafin')
     selafin_drv.DeleteDataSource('tmp/tmp.slf')
@@ -205,11 +205,11 @@ def ogr_selafin_cleanup():
 
 
 gdaltest_list = [
-    ogr_selafin_create_ds,
-    ogr_selafin_create_nodes,
-    ogr_selafin_create_elements,
-    ogr_selafin_set_field,
-    ogr_selafin_cleanup
+    test_ogr_selafin_create_ds,
+    test_ogr_selafin_create_nodes,
+    test_ogr_selafin_create_elements,
+    test_ogr_selafin_set_field,
+    test_ogr_selafin_cleanup
 ]
 
 if __name__ == '__main__':

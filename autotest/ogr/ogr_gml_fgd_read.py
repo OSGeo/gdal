@@ -49,7 +49,7 @@ _fgd_dir = 'data/gml_jpfgd/'
 ###############################################################################
 # Test reading Japanese FGD GML (v4) ElevPt file
 
-def ogr_gml_fgd_1():
+def test_ogr_gml_fgd_1():
 
     gdaltest.have_gml_fgd_reader = 0
 
@@ -95,7 +95,7 @@ def ogr_gml_fgd_1():
 ###############################################################################
 # Test reading Japanese FGD GML (v4) BldA file
 
-def ogr_gml_fgd_2():
+def test_ogr_gml_fgd_2():
     if not gdaltest.have_gml_fgd_reader:
         return 'skip'
 
@@ -135,8 +135,8 @@ def ogr_gml_fgd_2():
 
 
 gdaltest_list = [
-    ogr_gml_fgd_1,
-    ogr_gml_fgd_2
+    test_ogr_gml_fgd_1,
+    test_ogr_gml_fgd_2
 ]
 
 

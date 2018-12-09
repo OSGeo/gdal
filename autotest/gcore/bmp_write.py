@@ -37,7 +37,7 @@ import gdaltest
 # Test creating an in memory copy.
 
 
-def bmp_vsimem():
+def test_bmp_vsimem():
 
     tst = gdaltest.GDALTest('BMP', 'byte.tif', 1, 4672)
 
@@ -47,7 +47,7 @@ def bmp_vsimem():
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = [bmp_vsimem]
+gdaltest_list = [test_bmp_vsimem]
 
 
 init_list = [

@@ -41,7 +41,7 @@ import gdaltest
 # Read test of floating point reference data.
 
 
-def pcidsk_1():
+def test_pcidsk_1():
 
     tst = gdaltest.GDALTest('PCIDSK', 'utm.pix', 1, 39576)
     return tst.testOpen()
@@ -50,7 +50,7 @@ def pcidsk_1():
 # Test lossless copying (16, multiband) via Create().
 
 
-def pcidsk_2():
+def test_pcidsk_2():
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042)
 
@@ -60,7 +60,7 @@ def pcidsk_2():
 # Test copying of georeferencing and projection.
 
 
-def pcidsk_3():
+def test_pcidsk_3():
 
     tst = gdaltest.GDALTest('PCIDSK', 'utm.pix', 1, 39576)
 
@@ -70,7 +70,7 @@ def pcidsk_3():
 # Test overview reading.
 
 
-def pcidsk_4():
+def test_pcidsk_4():
 
     ds = gdal.Open('data/utm.pix')
 
@@ -90,7 +90,7 @@ def pcidsk_4():
 # Test writing metadata to a newly created file.
 
 
-def pcidsk_5():
+def test_pcidsk_5():
 
     # Are we using the new PCIDSK SDK based driver?
     driver = gdal.GetDriverByName('PCIDSK')
@@ -137,7 +137,7 @@ def pcidsk_5():
 # Test writing metadata to a band.
 
 
-def pcidsk_6():
+def test_pcidsk_6():
 
     if gdaltest.pcidsk_new == 0:
         return 'skip'
@@ -173,7 +173,7 @@ def pcidsk_6():
 # Test creating a color table and reading it back.
 
 
-def pcidsk_7():
+def test_pcidsk_7():
 
     if gdaltest.pcidsk_new == 0:
         return 'skip'
@@ -237,7 +237,7 @@ def pcidsk_7():
 # Test FILE interleaving.
 
 
-def pcidsk_8():
+def test_pcidsk_8():
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
                             options=['INTERLEAVING=FILE'])
@@ -277,7 +277,7 @@ def pcidsk_9():
 # Test overview creation.
 
 
-def pcidsk_10():
+def test_pcidsk_10():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
 
@@ -310,7 +310,7 @@ def pcidsk_10():
 # Test INTERLEAVING=TILED interleaving.
 
 
-def pcidsk_11():
+def test_pcidsk_11():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
 
@@ -323,7 +323,7 @@ def pcidsk_11():
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=RLE
 
 
-def pcidsk_12():
+def test_pcidsk_12():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
 
@@ -336,7 +336,7 @@ def pcidsk_12():
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=JPEG
 
 
-def pcidsk_13():
+def test_pcidsk_13():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
 
@@ -369,7 +369,7 @@ def pcidsk_13():
 # Test SetDescription()
 
 
-def pcidsk_14():
+def test_pcidsk_14():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
 
@@ -398,7 +398,7 @@ def pcidsk_14():
 # Test mixed raster and vector
 
 
-def pcidsk_15():
+def test_pcidsk_15():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
 
@@ -487,7 +487,7 @@ def pcidsk_15():
 ###############################################################################
 
 
-def pcidsk_external_ovr():
+def test_pcidsk_external_ovr():
 
     gdal.Translate('/vsimem/test.pix', 'data/byte.tif', format='PCIDSK')
     ds = gdal.Open('/vsimem/test.pix')
@@ -509,7 +509,7 @@ def pcidsk_external_ovr():
 ###############################################################################
 
 
-def pcidsk_external_ovr_rrd():
+def test_pcidsk_external_ovr_rrd():
 
     gdal.Translate('/vsimem/test.pix', 'data/byte.tif', format='PCIDSK')
     ds = gdal.Open('/vsimem/test.pix', gdal.GA_Update)
@@ -532,7 +532,7 @@ def pcidsk_external_ovr_rrd():
 # Check various items from a modern irvine.pix
 
 
-def pcidsk_online_1():
+def test_pcidsk_online_1():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
 
@@ -575,32 +575,32 @@ def pcidsk_online_1():
 # Cleanup.
 
 
-def pcidsk_cleanup():
+def test_pcidsk_cleanup():
     gdaltest.pcidsk_ds = None
     gdaltest.clean_tmp()
     return 'success'
 
 
 gdaltest_list = [
-    pcidsk_1,
-    pcidsk_2,
-    pcidsk_3,
-    pcidsk_4,
-    pcidsk_5,
-    pcidsk_6,
-    pcidsk_7,
-    pcidsk_8,
+    test_pcidsk_1,
+    test_pcidsk_2,
+    test_pcidsk_3,
+    test_pcidsk_4,
+    test_pcidsk_5,
+    test_pcidsk_6,
+    test_pcidsk_7,
+    test_pcidsk_8,
     # pcidsk_9,
-    pcidsk_10,
-    pcidsk_11,
-    pcidsk_12,
-    pcidsk_13,
-    pcidsk_14,
-    pcidsk_15,
-    pcidsk_external_ovr,
-    pcidsk_external_ovr_rrd,
-    pcidsk_online_1,
-    pcidsk_cleanup]
+    test_pcidsk_10,
+    test_pcidsk_11,
+    test_pcidsk_12,
+    test_pcidsk_13,
+    test_pcidsk_14,
+    test_pcidsk_15,
+    test_pcidsk_external_ovr,
+    test_pcidsk_external_ovr_rrd,
+    test_pcidsk_online_1,
+    test_pcidsk_cleanup]
 
 if __name__ == '__main__':
 

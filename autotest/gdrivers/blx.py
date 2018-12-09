@@ -38,7 +38,7 @@ import gdaltest
 ###############################################################################
 # Test reading a little-endian BLX
 
-def blx_1():
+def test_blx_1():
 
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
@@ -49,7 +49,7 @@ def blx_1():
 ###############################################################################
 # Test reading a big-endian BLX
 
-def blx_2():
+def test_blx_2():
 
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
@@ -60,7 +60,7 @@ def blx_2():
 ###############################################################################
 # Test writing a little-endian BLX
 
-def blx_3():
+def test_blx_3():
 
     tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
     return tst.testCreateCopy(check_gt=1, check_srs=1)
@@ -69,7 +69,7 @@ def blx_3():
 ###############################################################################
 # Test writing a big-endian BLX
 
-def blx_4():
+def test_blx_4():
 
     tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024, options=['BIGENDIAN=YES'])
     return tst.testCreateCopy(check_gt=1, check_srs=1)
@@ -78,7 +78,7 @@ def blx_4():
 ###############################################################################
 # Test overviews
 
-def blx_5():
+def test_blx_5():
 
     ds = gdal.Open('data/s4103.blx')
 
@@ -111,11 +111,11 @@ def blx_5():
 
 
 gdaltest_list = [
-    blx_1,
-    blx_2,
-    blx_3,
-    blx_4,
-    blx_5
+    test_blx_1,
+    test_blx_2,
+    test_blx_3,
+    test_blx_4,
+    test_blx_5
 ]
 
 

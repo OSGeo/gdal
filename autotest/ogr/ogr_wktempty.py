@@ -71,7 +71,7 @@ def test_empty_wkt(test_input, expected):
         geom.Destroy()
 
 
-def ogr_wktempty_test_partial_empty_geoms():
+def test_ogr_wktempty_test_partial_empty_geoms():
 
     # Multipoint with a valid point and an empty point
     wkt = 'MULTIPOINT (1 1)'
@@ -150,7 +150,7 @@ def ogr_wktempty_test_partial_empty_geoms():
     return 'success'
 
 
-gdaltest_list = [ogr_wktempty_test_partial_empty_geoms]
+gdaltest_list = [test_ogr_wktempty_test_partial_empty_geoms]
 
 if __name__ == '__main__':
 

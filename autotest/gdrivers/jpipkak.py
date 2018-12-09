@@ -38,7 +38,7 @@ import gdaltest
 # Read test of simple byte reference data.
 
 
-def jpipkak_1():
+def test_jpipkak_1():
 
     return 'skip'
 
@@ -67,7 +67,7 @@ def jpipkak_1():
 #
 
 
-def jpipkak_2():
+def test_jpipkak_2():
 
     return 'skip'
 
@@ -101,7 +101,7 @@ def jpipkak_2():
 # Test an 11bit image.
 
 
-def jpipkak_3():
+def test_jpipkak_3():
 
     return 'skip'
 
@@ -129,7 +129,7 @@ def jpipkak_3():
 # Test a 20bit image, reduced to 16bit during processing.
 
 
-def jpipkak_4():
+def test_jpipkak_4():
 
     return 'skip'
 
@@ -157,7 +157,7 @@ def jpipkak_4():
 # Test an overview level that will result in multiple fetches with subwindows.
 
 
-def jpipkak_5():
+def test_jpipkak_5():
 
     return 'skip'
 
@@ -183,11 +183,11 @@ def jpipkak_5():
 
 
 gdaltest_list = [
-    jpipkak_1,
-    jpipkak_2,
-    jpipkak_3,
-    jpipkak_4,
-    jpipkak_5
+    test_jpipkak_1,
+    test_jpipkak_2,
+    test_jpipkak_3,
+    test_jpipkak_4,
+    test_jpipkak_5
 ]
 
 if __name__ == '__main__':

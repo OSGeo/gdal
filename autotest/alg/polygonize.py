@@ -41,7 +41,7 @@ from osgeo import gdal, ogr
 # Test a fairly simple case, with nodata masking.
 
 
-def polygonize_1(is_int_polygonize=True):
+def test_polygonize_1(is_int_polygonize=True):
 
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -87,14 +87,14 @@ def polygonize_1(is_int_polygonize=True):
     return 'success' if tr else 'fail'
 
 
-def polygonize_1_float():
-    return polygonize_1(is_int_polygonize=False)
+def test_polygonize_1_float():
+    return test_polygonize_1(is_int_polygonize=False)
 
 ###############################################################################
 # Test a simple case without masking.
 
 
-def polygonize_2():
+def test_polygonize_2():
 
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -132,7 +132,7 @@ def polygonize_2():
 # A more involved case with a complex looping.
 
 
-def polygonize_3():
+def test_polygonize_3():
 
     src_ds = gdal.Open('data/polygonize_in_2.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -175,7 +175,7 @@ def polygonize_3():
 # Test a simple case without masking but with 8-connectedness.
 
 
-def polygonize_4():
+def test_polygonize_4():
 
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -211,11 +211,11 @@ def polygonize_4():
 
 
 gdaltest_list = [
-    polygonize_1,
-    polygonize_1_float,
-    polygonize_2,
-    polygonize_3,
-    polygonize_4
+    test_polygonize_1,
+    test_polygonize_1_float,
+    test_polygonize_2,
+    test_polygonize_3,
+    test_polygonize_4
 ]
 
 if __name__ == '__main__':

@@ -40,7 +40,7 @@ import gdaltest
 # Read test of simple byte reference data.
 
 
-def aigrid_1():
+def test_aigrid_1():
 
     tst = gdaltest.GDALTest('AIG', 'abc3x1', 1, 3)
     return tst.testOpen()
@@ -49,7 +49,7 @@ def aigrid_1():
 # Verify some auxiliary data.
 
 
-def aigrid_2():
+def test_aigrid_2():
 
     ds = gdal.Open('data/abc3x1/prj.adf')
 
@@ -80,7 +80,7 @@ def aigrid_2():
 # Verify the colormap, and nodata setting for test file.
 
 
-def aigrid_3():
+def test_aigrid_3():
 
     ds = gdal.Open('data/abc3x1')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
@@ -101,7 +101,7 @@ def aigrid_3():
 # Read test of simple byte reference data with data directory name in all uppercase
 
 
-def aigrid_4():
+def test_aigrid_4():
 
     tst = gdaltest.GDALTest('AIG', 'ABC3X1UC', 1, 3)
     return tst.testOpen()
@@ -110,7 +110,7 @@ def aigrid_4():
 # Verify the colormap, and nodata setting for test file with names of coverage directory and all files in it in all uppercase. Additionally also test for case where clr file resides in parent directory of coverage.
 
 
-def aigrid_5():
+def test_aigrid_5():
 
     ds = gdal.Open('data/ABC3X1UC')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
@@ -132,7 +132,7 @@ def aigrid_5():
 # Verify dataset whose sta.adf is 24 bytes
 
 
-def aigrid_6():
+def test_aigrid_6():
 
     ds = gdal.Open('data/aigrid_sta_24bytes/teststa')
 
@@ -150,7 +150,7 @@ def aigrid_6():
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
 
 
-def aigrid_online_1():
+def test_aigrid_online_1():
 
     list_files = ['info/arc.dir',
                   'info/arc0000.dat',
@@ -246,7 +246,7 @@ def aigrid_online_1():
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
 
 
-def aigrid_online_2():
+def test_aigrid_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/ai_bug_6886.zip', 'ai_bug_6886.zip'):
         return 'skip'
@@ -270,14 +270,14 @@ def aigrid_online_2():
 
 
 gdaltest_list = [
-    aigrid_1,
-    aigrid_2,
-    aigrid_3,
-    aigrid_4,
-    aigrid_5,
-    aigrid_6,
-    aigrid_online_1,
-    aigrid_online_2]
+    test_aigrid_1,
+    test_aigrid_2,
+    test_aigrid_3,
+    test_aigrid_4,
+    test_aigrid_5,
+    test_aigrid_6,
+    test_aigrid_online_1,
+    test_aigrid_online_2]
 
 if __name__ == '__main__':
 

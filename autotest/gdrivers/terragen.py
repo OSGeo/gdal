@@ -36,7 +36,7 @@ import gdaltest
 ###############################################################################
 
 
-def terragen_1():
+def test_terragen_1():
 
     tst = gdaltest.GDALTest('terragen', 'float32.ter', 1, 1128)
 
@@ -46,7 +46,7 @@ def terragen_1():
 # Write
 
 
-def terragen_2():
+def test_terragen_2():
 
     gdal.Translate('/vsimem/out.ter', 'data/float32.tif', options='-of TERRAGEN -co MINUSERPIXELVALUE=74 -co MAXUSERPIXELVALUE=255')
     gdal.Translate('/vsimem/out.tif', '/vsimem/out.ter', options='-unscale')
@@ -60,8 +60,8 @@ def terragen_2():
 
 
 gdaltest_list = [
-    terragen_1,
-    terragen_2
+    test_terragen_1,
+    test_terragen_2
 ]
 
 

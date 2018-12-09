@@ -43,7 +43,7 @@ import ogrtest
 # expression for the value.
 
 
-def ogr_rfc28_1():
+def test_ogr_rfc28_1():
     gdaltest.ds = ogr.Open('data')
     gdaltest.lyr = gdaltest.ds.GetLayerByName('poly')
 
@@ -60,7 +60,7 @@ def ogr_rfc28_1():
 # Test CONCAT operator in the context of a WHERE clause.
 
 
-def ogr_rfc28_2():
+def test_ogr_rfc28_2():
     gdaltest.lyr.SetAttributeFilter("CONCAT('x',PRFEDEA) = 'x35043423'")
 
     count = gdaltest.lyr.GetFeatureCount()
@@ -75,7 +75,7 @@ def ogr_rfc28_2():
 # Test '+' operator on strings.
 
 
-def ogr_rfc28_3():
+def test_ogr_rfc28_3():
     gdaltest.lyr.SetAttributeFilter("'x'+PRFEDEA = 'x35043423'")
 
     count = gdaltest.lyr.GetFeatureCount()
@@ -90,7 +90,7 @@ def ogr_rfc28_3():
 # Test '%' operator.
 
 
-def ogr_rfc28_4():
+def test_ogr_rfc28_4():
     gdaltest.lyr.SetAttributeFilter("EAS_ID % 5 = 1")
 
     count = gdaltest.lyr.GetFeatureCount()
@@ -105,7 +105,7 @@ def ogr_rfc28_4():
 # Test '%' operator.
 
 
-def ogr_rfc28_5():
+def test_ogr_rfc28_5():
     gdaltest.lyr.SetAttributeFilter("EAS_ID % 5 = 1")
 
     count = gdaltest.lyr.GetFeatureCount()
@@ -120,7 +120,7 @@ def ogr_rfc28_5():
 # Test support for a quoted field name.
 
 
-def ogr_rfc28_6():
+def test_ogr_rfc28_6():
     gdaltest.lyr.SetAttributeFilter("\"EAS_ID\" = 166")
 
     count = gdaltest.lyr.GetFeatureCount()
@@ -135,7 +135,7 @@ def ogr_rfc28_6():
 # test with distinguished name for field in where clause.
 
 
-def ogr_rfc28_7_wrong_quoting():
+def test_ogr_rfc28_7_wrong_quoting():
     with gdaltest.error_handler():
         ql = gdaltest.ds.ExecuteSQL("select eas_id from idlink where \"idlink.eas_id\" = 166")
 
@@ -148,7 +148,7 @@ def ogr_rfc28_7_wrong_quoting():
     return 'success'
 
 
-def ogr_rfc28_7_good_quoting():
+def test_ogr_rfc28_7_good_quoting():
     ql = gdaltest.ds.ExecuteSQL("select eas_id from idlink where idlink.eas_id = 166")
 
     count = ql.GetFeatureCount()
@@ -163,7 +163,7 @@ def ogr_rfc28_7_good_quoting():
 # test with distinguished name for field in target columns.
 
 
-def ogr_rfc28_8_wrong_quoting():
+def test_ogr_rfc28_8_wrong_quoting():
     with gdaltest.error_handler():
         ql = gdaltest.ds.ExecuteSQL("select \"idlink.eas_id\" from idlink where \"idlink.eas_id\" = 166")
 
@@ -180,7 +180,7 @@ def ogr_rfc28_8_wrong_quoting():
     return 'success' if tr else 'fail'
 
 
-def ogr_rfc28_8_good_quoting():
+def test_ogr_rfc28_8_good_quoting():
     ql = gdaltest.ds.ExecuteSQL("select idlink.eas_id from idlink where idlink.eas_id = 166")
 
     count = ql.GetFeatureCount()
@@ -199,7 +199,7 @@ def ogr_rfc28_8_good_quoting():
 # Test with quoted funky (non-identifier) name.
 
 
-def ogr_rfc28_9():
+def test_ogr_rfc28_9():
     ds = ogr.Open('data/oddname.csv')
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("\"Funky @Name\" = '32'")
@@ -218,7 +218,7 @@ def ogr_rfc28_9():
 # test quoted names for funky columns in SELECT WHERE (confirm unparse quoting)
 
 
-def ogr_rfc28_10():
+def test_ogr_rfc28_10():
     ds = ogr.Open('data/oddname.csv')
     lyr = ds.ExecuteSQL("SELECT * from oddname where \"Funky @Name\" = '32'")
 
@@ -237,7 +237,7 @@ def ogr_rfc28_10():
 # test quoted funky names in output columns list.
 
 
-def ogr_rfc28_11():
+def test_ogr_rfc28_11():
     ds = ogr.Open('data/oddname.csv')
     lyr = ds.ExecuteSQL("SELECT \"Funky @Name\" from oddname where prime_meridian_code = '8902'")
 
@@ -256,7 +256,7 @@ def ogr_rfc28_11():
 # test selecting fixed string fields.
 
 
-def ogr_rfc28_12():
+def test_ogr_rfc28_12():
     lyr = gdaltest.ds.ExecuteSQL("SELECT 'constant string', 'other' as abc, eas_id from idlink where eas_id = 165")
 
     count = lyr.GetFeatureCount()
@@ -285,7 +285,7 @@ def ogr_rfc28_12():
 # Test SUBSTR operator in the context of a WHERE clause.
 
 
-def ogr_rfc28_13():
+def test_ogr_rfc28_13():
     gdaltest.lyr.SetAttributeFilter("SUBSTR(PRFEDEA,5,4) = '3423'")
 
     count = gdaltest.lyr.GetFeatureCount()
@@ -300,7 +300,7 @@ def ogr_rfc28_13():
 # test selecting fixed string fields.
 
 
-def ogr_rfc28_14():
+def test_ogr_rfc28_14():
     lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA,4,5) from poly where eas_id in (168,179)")
 
     expect = ['43411', '43423']
@@ -314,7 +314,7 @@ def ogr_rfc28_14():
 # Test CONCAT with more than two arguments.
 
 
-def ogr_rfc28_15():
+def test_ogr_rfc28_15():
     lyr = gdaltest.ds.ExecuteSQL("SELECT CONCAT(PRFEDEA,' ',CAST(EAS_ID AS CHARACTER(3))) from poly where eas_id in (168,179)")
 
     expect = ['35043411 168', '35043423 179']
@@ -328,7 +328,7 @@ def ogr_rfc28_15():
 # Test parse support for negative numbers (#3724)
 
 
-def ogr_rfc28_16():
+def test_ogr_rfc28_16():
     lyr = gdaltest.ds.ExecuteSQL("SELECT -1, 3--1,3*-1,2e-1,3-1 from poly where eas_id = 168")
 
     expect = [-1]
@@ -358,7 +358,7 @@ def ogr_rfc28_16():
 # Test evaluation of division - had a problem with type conversion.
 
 
-def ogr_rfc28_17():
+def test_ogr_rfc28_17():
     lyr = gdaltest.ds.ExecuteSQL("SELECT 5/2, 5.0/2.0, 5/2.0, 5.0/2 from poly where eas_id = 168")
 
     expect = [2]
@@ -384,7 +384,7 @@ def ogr_rfc28_17():
 ###############################################################################
 # Test some special distinct cases.
 
-def ogr_rfc28_18():
+def test_ogr_rfc28_18():
     lyr = gdaltest.ds.ExecuteSQL("SELECT COUNT(distinct id), COUNT(distinct id) as \"xx\" from departs")
 
     expect = [1]
@@ -402,7 +402,7 @@ def ogr_rfc28_18():
 ###############################################################################
 # Verify that NOT IN ( list ) works
 
-def ogr_rfc28_19():
+def test_ogr_rfc28_19():
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select * from poly where eas_id not in (158,165)')
 
@@ -420,7 +420,7 @@ def ogr_rfc28_19():
 ###############################################################################
 # Verify arithmetic operator precedence and unary minus
 
-def ogr_rfc28_20():
+def test_ogr_rfc28_20():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -444,7 +444,7 @@ def ogr_rfc28_20():
 # Verify that BETWEEN works
 
 
-def ogr_rfc28_21():
+def test_ogr_rfc28_21():
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select * from poly where eas_id between 165 and 169')
 
@@ -468,7 +468,7 @@ def ogr_rfc28_21():
 # Verify that NOT BETWEEN works
 
 
-def ogr_rfc28_22():
+def test_ogr_rfc28_22():
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select * from poly where eas_id not between 165 and 169')
 
@@ -492,7 +492,7 @@ def ogr_rfc28_22():
 # Verify that NOT LIKE works
 
 
-def ogr_rfc28_23():
+def test_ogr_rfc28_23():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select * from poly where PRFEDEA NOT LIKE '35043413'")
 
@@ -516,7 +516,7 @@ def ogr_rfc28_23():
 # Verify that NULL works
 
 
-def ogr_rfc28_24():
+def test_ogr_rfc28_24():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select *, NULL, NULL as nullstrfield, CAST(null as integer) as nullintfield from poly where NULL IS NULL")
 
@@ -551,7 +551,7 @@ def ogr_rfc28_24():
 # Verify that LIKE pattern ESCAPE escape_char works
 
 
-def ogr_rfc28_25():
+def test_ogr_rfc28_25():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select * from poly where prfedea LIKE 'x35043408' ESCAPE 'x'")
 
@@ -569,7 +569,7 @@ def ogr_rfc28_25():
 # Test SUBSTR with negative offsets
 
 
-def ogr_rfc28_26():
+def test_ogr_rfc28_26():
     lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA,-2) from poly where eas_id in (168,179)")
 
     expect = ['11', '23']
@@ -583,7 +583,7 @@ def ogr_rfc28_26():
 # Test that we correctly let floating point values as floating point, and not as integer (#4634)"
 
 
-def ogr_rfc28_27():
+def test_ogr_rfc28_27():
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE 4000000000. > 2000000000.")
 
@@ -610,7 +610,7 @@ def ogr_rfc28_28_test(formula, expected_val):
     return 'success'
 
 
-def ogr_rfc28_28():
+def test_ogr_rfc28_28():
 
     operators = ['+', '-', '*', '/', '%']
     formulas = []
@@ -695,7 +695,7 @@ def ogr_rfc28_28():
 # Test behaviour of binary operations when one operand is a NULL value
 
 
-def ogr_rfc28_29():
+def test_ogr_rfc28_29():
 
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink where (eas_id + cast(null as integer)) is not null or eas_id = 170 + cast(null as integer) or (eas_id + cast(null as float)) is not null or eas_id = 170.0 + cast(null as float)")
 
@@ -709,7 +709,7 @@ def ogr_rfc28_29():
 # Test behaviour of binary operations on strings when one operand is a NULL value
 
 
-def ogr_rfc28_30():
+def test_ogr_rfc28_30():
 
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink2 where F1 <> 'foo' or concat(F1,cast(null as character(32))) is not null")
 
@@ -723,7 +723,7 @@ def ogr_rfc28_30():
 # Test UNION ALL
 
 
-def ogr_rfc28_31():
+def test_ogr_rfc28_31():
 
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink union all select * from idlink2")
 
@@ -737,7 +737,7 @@ def ogr_rfc28_31():
 # Test UNION ALL with parenthesis
 
 
-def ogr_rfc28_32():
+def test_ogr_rfc28_32():
 
     lyr = gdaltest.ds.ExecuteSQL("(select * from idlink) union all (select * from idlink2 order by eas_id)")
 
@@ -751,7 +751,7 @@ def ogr_rfc28_32():
 # Test lack of end-of-string character
 
 
-def ogr_rfc28_33():
+def test_ogr_rfc28_33():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink where name='foo")
@@ -763,7 +763,7 @@ def ogr_rfc28_33():
 # Test wildcard expansion of an unknown table.
 
 
-def ogr_rfc28_34():
+def test_ogr_rfc28_34():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select foo.* from idlink")
@@ -779,7 +779,7 @@ def ogr_rfc28_34():
 # Test selecting more than one distinct
 
 
-def ogr_rfc28_35():
+def test_ogr_rfc28_35():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id, distinct name from idlink")
@@ -794,7 +794,7 @@ def ogr_rfc28_35():
 # Test selecting more than one distinct
 
 
-def ogr_rfc28_35_bis():
+def test_ogr_rfc28_35_bis():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id, name from idlink")
@@ -809,7 +809,7 @@ def ogr_rfc28_35_bis():
 # Test selecting more than one distinct
 
 
-def ogr_rfc28_35_ter():
+def test_ogr_rfc28_35_ter():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select distinct * from idlink")
@@ -824,7 +824,7 @@ def ogr_rfc28_35_ter():
 # Test ORDER BY a DISTINCT list by more than one key
 
 
-def ogr_rfc28_36():
+def test_ogr_rfc28_36():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -842,7 +842,7 @@ def ogr_rfc28_36():
 # Test different fields for ORDER BY and DISTINCT
 
 
-def ogr_rfc28_37():
+def test_ogr_rfc28_37():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -860,7 +860,7 @@ def ogr_rfc28_37():
 # Test invalid SUBSTR
 
 
-def ogr_rfc28_38():
+def test_ogr_rfc28_38():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -888,7 +888,7 @@ def ogr_rfc28_38():
 # Test COUNT() on a 0-row result
 
 
-def ogr_rfc28_39():
+def test_ogr_rfc28_39():
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT COUNT(*) from poly where 0 = 1")
 
@@ -902,7 +902,7 @@ def ogr_rfc28_39():
 # Test MIN(), MAX() and AVG() on a date (#5333)
 
 
-def ogr_rfc28_40():
+def test_ogr_rfc28_40():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -937,7 +937,7 @@ def ogr_rfc28_40():
 ###############################################################################
 # Verify that SELECT * works on a layer with a field that has a dot character (#5379)
 
-def ogr_rfc28_41():
+def test_ogr_rfc28_41():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -969,7 +969,7 @@ def ogr_rfc28_41():
 # Test boolean and int16 support
 
 
-def ogr_rfc28_42():
+def test_ogr_rfc28_42():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -1055,7 +1055,7 @@ def ogr_rfc28_42():
 # Test integer64 support
 
 
-def ogr_rfc28_43():
+def test_ogr_rfc28_43():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -1116,7 +1116,7 @@ def ogr_rfc28_43():
 # Test crazy quoting of table and fields
 
 
-def ogr_rfc28_44():
+def test_ogr_rfc28_44():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr.withpoint')
@@ -1204,7 +1204,7 @@ def ogr_rfc28_44():
 # Test 'FROM table_name AS alias'
 
 
-def ogr_rfc28_45():
+def test_ogr_rfc28_45():
 
     ql = gdaltest.ds.ExecuteSQL("select eas_id from idlink as il where il.eas_id = 166")
 
@@ -1220,7 +1220,7 @@ def ogr_rfc28_45():
 # Test fid special column and 64 bit
 
 
-def ogr_rfc28_46():
+def test_ogr_rfc28_46():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr')
@@ -1283,7 +1283,7 @@ def ogr_rfc28_46():
 # Test LIMIT and OFFSET
 
 
-def ogr_rfc28_47():
+def test_ogr_rfc28_47():
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 0")
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [])
@@ -1424,7 +1424,7 @@ def ogr_rfc28_47():
 # Test date/datetime comparisons (#6810)
 
 
-def ogr_rfc28_48():
+def test_ogr_rfc28_48():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr')
@@ -1536,7 +1536,7 @@ def ogr_rfc28_48():
 
 
 ###############################################################################
-def ogr_rfc28_int_overflows():
+def test_ogr_rfc28_int_overflows():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr')
@@ -1590,7 +1590,7 @@ def ogr_rfc28_int_overflows():
 ###############################################################################
 
 
-def ogr_rfc28_cleanup():
+def test_ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
 
@@ -1598,60 +1598,60 @@ def ogr_rfc28_cleanup():
 
 
 gdaltest_list = [
-    ogr_rfc28_1,
-    ogr_rfc28_2,
-    ogr_rfc28_3,
-    ogr_rfc28_4,
-    ogr_rfc28_5,
-    ogr_rfc28_6,
-    ogr_rfc28_7_wrong_quoting,
-    ogr_rfc28_7_good_quoting,
-    ogr_rfc28_8_wrong_quoting,
-    ogr_rfc28_8_good_quoting,
-    ogr_rfc28_9,
-    ogr_rfc28_10,
-    ogr_rfc28_11,
-    ogr_rfc28_12,
-    ogr_rfc28_13,
-    ogr_rfc28_14,
-    ogr_rfc28_15,
-    ogr_rfc28_16,
-    ogr_rfc28_17,
-    ogr_rfc28_18,
-    ogr_rfc28_19,
-    ogr_rfc28_20,
-    ogr_rfc28_21,
-    ogr_rfc28_22,
-    ogr_rfc28_23,
-    ogr_rfc28_24,
-    ogr_rfc28_25,
-    ogr_rfc28_26,
-    ogr_rfc28_27,
-    ogr_rfc28_28,
-    ogr_rfc28_29,
-    ogr_rfc28_30,
-    ogr_rfc28_31,
-    ogr_rfc28_32,
-    ogr_rfc28_33,
-    ogr_rfc28_34,
-    ogr_rfc28_35,
-    ogr_rfc28_35_bis,
-    ogr_rfc28_35_ter,
-    ogr_rfc28_36,
-    ogr_rfc28_37,
-    ogr_rfc28_38,
-    ogr_rfc28_39,
-    ogr_rfc28_40,
-    ogr_rfc28_41,
-    ogr_rfc28_42,
-    ogr_rfc28_43,
-    ogr_rfc28_44,
-    ogr_rfc28_45,
-    ogr_rfc28_46,
-    ogr_rfc28_47,
-    ogr_rfc28_48,
-    ogr_rfc28_int_overflows,
-    ogr_rfc28_cleanup]
+    test_ogr_rfc28_1,
+    test_ogr_rfc28_2,
+    test_ogr_rfc28_3,
+    test_ogr_rfc28_4,
+    test_ogr_rfc28_5,
+    test_ogr_rfc28_6,
+    test_ogr_rfc28_7_wrong_quoting,
+    test_ogr_rfc28_7_good_quoting,
+    test_ogr_rfc28_8_wrong_quoting,
+    test_ogr_rfc28_8_good_quoting,
+    test_ogr_rfc28_9,
+    test_ogr_rfc28_10,
+    test_ogr_rfc28_11,
+    test_ogr_rfc28_12,
+    test_ogr_rfc28_13,
+    test_ogr_rfc28_14,
+    test_ogr_rfc28_15,
+    test_ogr_rfc28_16,
+    test_ogr_rfc28_17,
+    test_ogr_rfc28_18,
+    test_ogr_rfc28_19,
+    test_ogr_rfc28_20,
+    test_ogr_rfc28_21,
+    test_ogr_rfc28_22,
+    test_ogr_rfc28_23,
+    test_ogr_rfc28_24,
+    test_ogr_rfc28_25,
+    test_ogr_rfc28_26,
+    test_ogr_rfc28_27,
+    test_ogr_rfc28_28,
+    test_ogr_rfc28_29,
+    test_ogr_rfc28_30,
+    test_ogr_rfc28_31,
+    test_ogr_rfc28_32,
+    test_ogr_rfc28_33,
+    test_ogr_rfc28_34,
+    test_ogr_rfc28_35,
+    test_ogr_rfc28_35_bis,
+    test_ogr_rfc28_35_ter,
+    test_ogr_rfc28_36,
+    test_ogr_rfc28_37,
+    test_ogr_rfc28_38,
+    test_ogr_rfc28_39,
+    test_ogr_rfc28_40,
+    test_ogr_rfc28_41,
+    test_ogr_rfc28_42,
+    test_ogr_rfc28_43,
+    test_ogr_rfc28_44,
+    test_ogr_rfc28_45,
+    test_ogr_rfc28_46,
+    test_ogr_rfc28_47,
+    test_ogr_rfc28_48,
+    test_ogr_rfc28_int_overflows,
+    test_ogr_rfc28_cleanup]
 
 if __name__ == '__main__':
 

@@ -138,7 +138,7 @@ def check(feat, fieldname, value):
 # Copy to Integer
 
 
-def ogr_feature_cp_integer():
+def test_ogr_feature_cp_integer():
     src_feature = mk_src_feature()
     src_feature.field_integerlist = [15]
     src_feature.field_reallist = [17.5]
@@ -199,7 +199,7 @@ def ogr_feature_cp_integer():
 # Copy to Integer64
 
 
-def ogr_feature_cp_integer64():
+def test_ogr_feature_cp_integer64():
     src_feature = mk_src_feature()
     src_feature.field_integerlist = [15]
     src_feature.field_reallist = [17.5]
@@ -256,7 +256,7 @@ def ogr_feature_cp_integer64():
 # Copy to Real
 
 
-def ogr_feature_cp_real():
+def test_ogr_feature_cp_real():
     src_feature = mk_src_feature()
     src_feature.field_integerlist = [15]
     src_feature.field_reallist = [17.5]
@@ -301,7 +301,7 @@ def ogr_feature_cp_real():
 # Copy to String
 
 
-def ogr_feature_cp_string():
+def test_ogr_feature_cp_string():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTString)
@@ -349,7 +349,7 @@ def ogr_feature_cp_string():
 # Copy to Binary
 
 
-def ogr_feature_cp_binary():
+def test_ogr_feature_cp_binary():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTBinary)
@@ -405,7 +405,7 @@ def ogr_feature_cp_binary():
 # Copy to date
 
 
-def ogr_feature_cp_date():
+def test_ogr_feature_cp_date():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTDate)
@@ -453,7 +453,7 @@ def ogr_feature_cp_date():
 # Copy to time
 
 
-def ogr_feature_cp_time():
+def test_ogr_feature_cp_time():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTTime)
@@ -501,7 +501,7 @@ def ogr_feature_cp_time():
 # Copy to datetime
 
 
-def ogr_feature_cp_datetime():
+def test_ogr_feature_cp_datetime():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTDateTime)
@@ -549,7 +549,7 @@ def ogr_feature_cp_datetime():
 # Copy to integerlist
 
 
-def ogr_feature_cp_integerlist():
+def test_ogr_feature_cp_integerlist():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTIntegerList)
@@ -599,7 +599,7 @@ def ogr_feature_cp_integerlist():
 # Copy to integer64list
 
 
-def ogr_feature_cp_integer64list():
+def test_ogr_feature_cp_integer64list():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTInteger64List)
@@ -647,7 +647,7 @@ def ogr_feature_cp_integer64list():
 # Copy to reallist
 
 
-def ogr_feature_cp_reallist():
+def test_ogr_feature_cp_reallist():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTRealList)
@@ -695,7 +695,7 @@ def ogr_feature_cp_reallist():
 # Copy to stringlist
 
 
-def ogr_feature_cp_stringlist():
+def test_ogr_feature_cp_stringlist():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTStringList)
@@ -743,7 +743,7 @@ def ogr_feature_cp_stringlist():
 ###############################################################################
 # Test SetField() / GetField() with unicode string
 
-def ogr_feature_unicode():
+def test_ogr_feature_unicode():
     if sys.version_info >= (3, 0, 0):
         return 'skip'
 
@@ -778,7 +778,7 @@ def ogr_feature_unicode():
 # Test 64bit FID
 
 
-def ogr_feature_64bit_fid():
+def test_ogr_feature_64bit_fid():
 
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
@@ -791,7 +791,7 @@ def ogr_feature_64bit_fid():
 # Test 64bit integer
 
 
-def ogr_feature_overflow_64bit_integer():
+def test_ogr_feature_overflow_64bit_integer():
 
     feat_def = ogr.FeatureDefn('test')
     feat_def.AddFieldDefn(ogr.FieldDefn('test', ogr.OFTInteger64))
@@ -816,7 +816,7 @@ def ogr_feature_overflow_64bit_integer():
 # Test SetNullable(), IsNullable() and Validate()
 
 
-def ogr_feature_nullable_validate():
+def test_ogr_feature_nullable_validate():
     # No fields
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
@@ -947,7 +947,7 @@ def ogr_feature_nullable_validate():
 # Test SetDefault(), GetDefault(), IsDefaultDriverSpecific() and FillUnsetWithDefault()
 
 
-def ogr_feature_default():
+def test_ogr_feature_default():
 
     feat_def = ogr.FeatureDefn('test')
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
@@ -1035,7 +1035,7 @@ def ogr_feature_default():
 # Test GetNativeData(), SetNativeData(), GetNativeMediaType(), SetNativeMediaType():
 
 
-def ogr_feature_native_data():
+def test_ogr_feature_native_data():
 
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
@@ -1127,7 +1127,7 @@ def ogr_feature_native_data():
 # Test assigning our geometry to ourselves
 
 
-def ogr_feature_set_geometry_self():
+def test_ogr_feature_set_geometry_self():
 
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
@@ -1146,7 +1146,7 @@ def ogr_feature_set_geometry_self():
 # Test SetFieldNull(), IsFieldNull()
 
 
-def ogr_feature_null_field():
+def test_ogr_feature_null_field():
 
     feat_def = ogr.FeatureDefn('test')
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
@@ -1242,7 +1242,7 @@ def ogr_feature_null_field():
     return 'success'
 
 
-def ogr_feature_cleanup():
+def test_ogr_feature_cleanup():
 
     gdaltest.src_feature = None
 
@@ -1250,27 +1250,27 @@ def ogr_feature_cleanup():
 
 
 gdaltest_list = [
-    ogr_feature_cp_integer,
-    ogr_feature_cp_integer64,
-    ogr_feature_cp_real,
-    ogr_feature_cp_string,
-    ogr_feature_cp_binary,
-    ogr_feature_cp_date,
-    ogr_feature_cp_time,
-    ogr_feature_cp_datetime,
-    ogr_feature_cp_integerlist,
-    ogr_feature_cp_integer64list,
-    ogr_feature_cp_reallist,
-    ogr_feature_cp_stringlist,
-    ogr_feature_unicode,
-    ogr_feature_64bit_fid,
-    ogr_feature_overflow_64bit_integer,
-    ogr_feature_nullable_validate,
-    ogr_feature_default,
-    ogr_feature_native_data,
-    ogr_feature_set_geometry_self,
-    ogr_feature_null_field,
-    ogr_feature_cleanup]
+    test_ogr_feature_cp_integer,
+    test_ogr_feature_cp_integer64,
+    test_ogr_feature_cp_real,
+    test_ogr_feature_cp_string,
+    test_ogr_feature_cp_binary,
+    test_ogr_feature_cp_date,
+    test_ogr_feature_cp_time,
+    test_ogr_feature_cp_datetime,
+    test_ogr_feature_cp_integerlist,
+    test_ogr_feature_cp_integer64list,
+    test_ogr_feature_cp_reallist,
+    test_ogr_feature_cp_stringlist,
+    test_ogr_feature_unicode,
+    test_ogr_feature_64bit_fid,
+    test_ogr_feature_overflow_64bit_integer,
+    test_ogr_feature_nullable_validate,
+    test_ogr_feature_default,
+    test_ogr_feature_native_data,
+    test_ogr_feature_set_geometry_self,
+    test_ogr_feature_null_field,
+    test_ogr_feature_cleanup]
 
 if __name__ == '__main__':
 

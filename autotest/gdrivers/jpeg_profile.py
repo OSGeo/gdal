@@ -42,7 +42,7 @@ from osgeo import gdal
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 
-def jpeg_copy_icc():
+def test_jpeg_copy_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -85,7 +85,7 @@ def jpeg_copy_icc():
 # Test writing and reading of ICC profile in CreateCopy() options
 
 
-def jpeg_copy_options_icc():
+def test_jpeg_copy_options_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -128,7 +128,7 @@ def jpeg_copy_options_icc():
 # Test writing and reading of 64K+ ICC profile in CreateCopy()
 
 
-def jpeg_copy_icc_64K():
+def test_jpeg_copy_icc_64K():
 
     # In JPEG, APP2 chunks can only be 64K, so they would be split up.
     # It will still work, but need to test that the segmented ICC profile
@@ -211,9 +211,9 @@ def jpeg_copy_icc_64K():
 
 
 gdaltest_list = [
-    jpeg_copy_icc,
-    jpeg_copy_options_icc,
-    jpeg_copy_icc_64K,
+    test_jpeg_copy_icc,
+    test_jpeg_copy_options_icc,
+    test_jpeg_copy_icc_64K,
 ]
 
 if __name__ == '__main__':

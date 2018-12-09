@@ -41,7 +41,7 @@ from osgeo import osr
 # file with the adjusted central_meridian.
 
 
-def osr_epsg_1():
+def test_osr_epsg_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(26591)
@@ -58,7 +58,7 @@ def osr_epsg_1():
 # from gcs.override.csv.
 
 
-def osr_epsg_2():
+def test_osr_epsg_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4312)
@@ -76,7 +76,7 @@ def osr_epsg_2():
 # towgs84 values set properly (#3579)
 
 
-def osr_epsg_3():
+def test_osr_epsg_3():
 
     for epsg in [3120, 2172, 2173, 2174, 2175, 3333, 3334, 3335, 3329, 3330, 3331, 3332, 3328, 4179]:
         srs = osr.SpatialReference()
@@ -97,7 +97,7 @@ def osr_epsg_3():
 #   Check that EPSG:4326 is *not* considered as lat/long (#3813)
 
 
-def osr_epsg_4():
+def test_osr_epsg_4():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -116,7 +116,7 @@ def osr_epsg_4():
 #   Check that EPSGA:4326 is considered as lat/long
 
 
-def osr_epsg_5():
+def test_osr_epsg_5():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSGA(4326)
@@ -135,7 +135,7 @@ def osr_epsg_5():
 #   Test datum shift for OSGB 36
 
 
-def osr_epsg_6():
+def test_osr_epsg_6():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4277)
@@ -151,7 +151,7 @@ def osr_epsg_6():
 #   Check that EPSG:2193 is *not* considered as N/E
 
 
-def osr_epsg_7():
+def test_osr_epsg_7():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(2193)
@@ -170,7 +170,7 @@ def osr_epsg_7():
 #   Check that EPSGA:2193 is considered as N/E
 
 
-def osr_epsg_8():
+def test_osr_epsg_8():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSGA(2193)
@@ -189,7 +189,7 @@ def osr_epsg_8():
 #   Check EPSG:3857
 
 
-def osr_epsg_9():
+def test_osr_epsg_9():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
@@ -209,7 +209,7 @@ def osr_epsg_9():
 #   Test AutoIdentifyEPSG() on Polar Stereographic
 
 
-def osr_epsg_10():
+def test_osr_epsg_10():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""PROJCS["PS         WGS84",
@@ -285,7 +285,7 @@ def osr_epsg_10():
 # Test datum shift for EPSG:2065 (PCS based override)
 
 
-def osr_epsg_11():
+def test_osr_epsg_11():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(2065)
@@ -302,7 +302,7 @@ def osr_epsg_11():
 # different EPSG codes)
 
 
-def osr_epsg_12():
+def test_osr_epsg_12():
 
     sr1 = osr.SpatialReference()
     sr1.ImportFromEPSG(3857)
@@ -318,7 +318,7 @@ def osr_epsg_12():
 # Test FindMatches()
 
 
-def osr_epsg_13():
+def test_osr_epsg_13():
 
     # One exact match (and test PROJCS)
     sr = osr.SpatialReference()
@@ -442,7 +442,7 @@ def osr_epsg_13():
 ###############################################################################
 
 
-def osr_epsg_gcs_deprecated():
+def test_osr_epsg_gcs_deprecated():
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4268)
@@ -454,7 +454,7 @@ def osr_epsg_gcs_deprecated():
 ###############################################################################
 
 
-def osr_epsg_geoccs_deprecated():
+def test_osr_epsg_geoccs_deprecated():
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4346)
@@ -467,21 +467,21 @@ def osr_epsg_geoccs_deprecated():
 
 
 gdaltest_list = [
-    osr_epsg_1,
-    osr_epsg_2,
-    osr_epsg_3,
-    osr_epsg_4,
-    osr_epsg_5,
-    osr_epsg_6,
-    osr_epsg_7,
-    osr_epsg_8,
-    osr_epsg_9,
-    osr_epsg_10,
-    osr_epsg_11,
-    osr_epsg_12,
-    osr_epsg_13,
-    osr_epsg_gcs_deprecated,
-    osr_epsg_geoccs_deprecated,
+    test_osr_epsg_1,
+    test_osr_epsg_2,
+    test_osr_epsg_3,
+    test_osr_epsg_4,
+    test_osr_epsg_5,
+    test_osr_epsg_6,
+    test_osr_epsg_7,
+    test_osr_epsg_8,
+    test_osr_epsg_9,
+    test_osr_epsg_10,
+    test_osr_epsg_11,
+    test_osr_epsg_12,
+    test_osr_epsg_13,
+    test_osr_epsg_gcs_deprecated,
+    test_osr_epsg_geoccs_deprecated,
     None]
 
 if __name__ == '__main__':

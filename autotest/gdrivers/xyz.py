@@ -40,7 +40,7 @@ import gdaltest
 # Test CreateCopy() of byte.tif
 
 
-def xyz_1():
+def test_xyz_1():
 
     tst = gdaltest.GDALTest('XYZ', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1, check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
@@ -49,7 +49,7 @@ def xyz_1():
 # Test CreateCopy() of float.img
 
 
-def xyz_2():
+def test_xyz_2():
 
     src_ds = gdal.Open('data/float.img')
     ds = gdal.GetDriverByName('XYZ').CreateCopy('tmp/float.xyz', src_ds, options=['COLUMN_SEPARATOR=,', 'ADD_HEADER_LINE=YES'])
@@ -66,7 +66,7 @@ def xyz_2():
 # Test random access to lines of imagery
 
 
-def xyz_3():
+def test_xyz_3():
 
     content = """Y X Z
 0 0 65
@@ -114,7 +114,7 @@ def xyz_4_checkline(ds, i, expected_bytes):
     return struct.unpack('B' * ds.RasterXSize, buf) == expected_bytes
 
 
-def xyz_4():
+def test_xyz_4():
 
     content = """
 440750.001 3751290 1
@@ -160,7 +160,7 @@ def xyz_4():
 ###############################################################################
 # Test XYZ with only integral values and comma field separator
 
-def xyz_5():
+def test_xyz_5():
 
     content = """0,1,100
 0.5,1,100
@@ -193,7 +193,7 @@ def xyz_5():
 ###############################################################################
 # Test XYZ with comma decimal separator and semi-colon field separator
 
-def xyz_6():
+def test_xyz_6():
 
     content = """0;1;100
 0,5;1;100
@@ -226,7 +226,7 @@ def xyz_6():
 ###############################################################################
 # Test XYZ with not completely equal stepX and stepY
 
-def xyz_7():
+def test_xyz_7():
 
     content = """y x z
    51.500000  354.483333     54.721
@@ -275,7 +275,7 @@ def xyz_7():
 # Test particular case of XYZ file with missed samples (#6934)
 
 
-def xyz_8():
+def test_xyz_8():
 
     content = """0 500 50
 750 500 100
@@ -304,21 +304,21 @@ def xyz_8():
 ###############################################################################
 # Cleanup
 
-def xyz_cleanup():
+def test_xyz_cleanup():
 
     return 'success'
 
 
 gdaltest_list = [
-    xyz_1,
-    xyz_2,
-    xyz_3,
-    xyz_4,
-    xyz_5,
-    xyz_6,
-    xyz_7,
-    xyz_8,
-    xyz_cleanup]
+    test_xyz_1,
+    test_xyz_2,
+    test_xyz_3,
+    test_xyz_4,
+    test_xyz_5,
+    test_xyz_6,
+    test_xyz_7,
+    test_xyz_8,
+    test_xyz_cleanup]
 
 if __name__ == '__main__':
 

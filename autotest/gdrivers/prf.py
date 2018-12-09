@@ -33,13 +33,13 @@ from osgeo import gdal
 ###############################################################################
 
 
-def prf_1():
+def test_prf_1():
 
     tst = gdaltest.GDALTest('prf', './PRF/ph.prf', 1, 43190)
     return tst.testOpen(check_gt=(1, 2, 3, -7, 5, 6))
 
 
-def prf_2():
+def test_prf_2():
 
     ds = gdal.Open('./data/PRF/dem.x-dem')
 
@@ -82,7 +82,7 @@ def prf_2():
     return 'success'
 
 
-def prf_3():
+def test_prf_3():
 
     ds = gdal.Open('./data/PRF/ph.prf')
 
@@ -98,7 +98,7 @@ def prf_3():
     return 'success'
 
 
-def prf_4():
+def test_prf_4():
 
     tst = gdaltest.GDALTest('prf', './PRF/dem.x-dem', 1, 0)
     return tst.testOpen(check_gt=(1.5, 1.0, 0.0, 9329.0, 0.0, -2.0))
@@ -108,10 +108,10 @@ def prf_4():
 
 
 gdaltest_list = [
-    prf_1,
-    prf_2,
-    prf_3,
-    prf_4
+    test_prf_1,
+    test_prf_2,
+    test_prf_3,
+    test_prf_4
 ]
 
 if __name__ == '__main__':

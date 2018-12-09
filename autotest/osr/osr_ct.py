@@ -43,7 +43,7 @@ import gdaltest
 ###############################################################################
 # Verify that we have PROJ.4 available.
 
-def osr_ct_1():
+def test_osr_ct_1():
 
     gdaltest.have_proj4 = 0
 
@@ -81,7 +81,7 @@ def osr_ct_1():
 # Actually perform a simple LL to UTM conversion.
 
 
-def osr_ct_2():
+def test_osr_ct_2():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -109,7 +109,7 @@ def osr_ct_2():
 # geometry which also uses it is deleted.
 
 
-def osr_ct_3():
+def test_osr_ct_3():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -146,7 +146,7 @@ def osr_ct_3():
 # Works for both OG and NG bindings
 
 
-def osr_ct_4():
+def test_osr_ct_4():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -176,7 +176,7 @@ def osr_ct_4():
 # New in NG bindings (#3020)
 
 
-def osr_ct_5():
+def test_osr_ct_5():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -205,7 +205,7 @@ def osr_ct_5():
 # Test osr.CreateCoordinateTransformation() method
 
 
-def osr_ct_6():
+def test_osr_ct_6():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -240,7 +240,7 @@ def osr_ct_6():
 # Actually perform a simple Pseudo Mercator to LL conversion.
 
 
-def osr_ct_7():
+def test_osr_ct_7():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -284,7 +284,7 @@ def osr_ct_7():
 # Test WebMercator -> WGS84 optimized transform
 
 
-def osr_ct_8():
+def test_osr_ct_8():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -329,7 +329,7 @@ def osr_ct_8():
 # Cleanup
 
 
-def osr_ct_cleanup():
+def test_osr_ct_cleanup():
 
     if gdaltest.have_proj4 == 0:
         return 'skip'
@@ -340,15 +340,15 @@ def osr_ct_cleanup():
 
 
 gdaltest_list = [
-    osr_ct_1,
-    osr_ct_2,
-    osr_ct_3,
-    osr_ct_4,
-    osr_ct_5,
-    osr_ct_6,
-    osr_ct_7,
-    osr_ct_8,
-    osr_ct_cleanup,
+    test_osr_ct_1,
+    test_osr_ct_2,
+    test_osr_ct_3,
+    test_osr_ct_4,
+    test_osr_ct_5,
+    test_osr_ct_6,
+    test_osr_ct_7,
+    test_osr_ct_8,
+    test_osr_ct_cleanup,
     None]
 
 if __name__ == '__main__':

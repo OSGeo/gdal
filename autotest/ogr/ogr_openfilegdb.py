@@ -81,7 +81,7 @@ ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
 ###############################################################################
 # Disable FileGDB driver
 
-def ogr_openfilegdb_init():
+def test_ogr_openfilegdb_init():
 
     ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
     if ogrtest.fgdb_drv is not None:
@@ -269,7 +269,7 @@ def ogr_openfilegdb_make_test_data():
 # Basic tests
 
 
-def ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=True):
+def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=True):
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -421,18 +421,18 @@ def ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=True):
     return 'success'
 
 
-def ogr_openfilegdb_1_92():
-    return ogr_openfilegdb_1(filename='data/testopenfilegdb92.gdb.zip', version10=False)
+def test_ogr_openfilegdb_1_92():
+    return test_ogr_openfilegdb_1(filename='data/testopenfilegdb92.gdb.zip', version10=False)
 
 
-def ogr_openfilegdb_1_93():
-    return ogr_openfilegdb_1(filename='data/testopenfilegdb93.gdb.zip', version10=False)
+def test_ogr_openfilegdb_1_93():
+    return test_ogr_openfilegdb_1(filename='data/testopenfilegdb93.gdb.zip', version10=False)
 
 ###############################################################################
 # Run test_ogrsf
 
 
-def ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
+def test_ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -447,18 +447,18 @@ def ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
     return 'success'
 
 
-def ogr_openfilegdb_2_92():
-    return ogr_openfilegdb_2(filename='data/testopenfilegdb92.gdb.zip')
+def test_ogr_openfilegdb_2_92():
+    return test_ogr_openfilegdb_2(filename='data/testopenfilegdb92.gdb.zip')
 
 
-def ogr_openfilegdb_2_93():
-    return ogr_openfilegdb_2(filename='data/testopenfilegdb93.gdb.zip')
+def test_ogr_openfilegdb_2_93():
+    return test_ogr_openfilegdb_2(filename='data/testopenfilegdb93.gdb.zip')
 
 ###############################################################################
 # Open a .gdbtable directly
 
 
-def ogr_openfilegdb_3():
+def test_ogr_openfilegdb_3():
 
     ds = ogr.Open('/vsizip/data/testopenfilegdb.gdb.zip/testopenfilegdb.gdb/a00000009.gdbtable')
     if ds.GetLayerCount() != 1:
@@ -491,7 +491,7 @@ def ogr_openfilegdb_3():
 # Test use of attribute indexes
 
 
-def ogr_openfilegdb_4():
+def test_ogr_openfilegdb_4():
 
     ds = ogr.Open('/vsizip/data/testopenfilegdb.gdb.zip/testopenfilegdb.gdb')
 
@@ -714,7 +714,7 @@ def ogr_openfilegdb_4():
 # Test opening an unzipped dataset
 
 
-def ogr_openfilegdb_5():
+def test_ogr_openfilegdb_5():
 
     try:
         shutil.rmtree('tmp/testopenfilegdb.gdb')
@@ -740,7 +740,7 @@ def ogr_openfilegdb_5():
 # Test special SQL processing for min/max/count/sum/avg values
 
 
-def ogr_openfilegdb_6():
+def test_ogr_openfilegdb_6():
 
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
 
@@ -788,7 +788,7 @@ def ogr_openfilegdb_6():
 # Test special SQL processing for ORDER BY
 
 
-def ogr_openfilegdb_7():
+def test_ogr_openfilegdb_7():
 
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
 
@@ -871,7 +871,7 @@ def ogr_openfilegdb_7():
 # Test reading a .gdbtable without .gdbtablx
 
 
-def ogr_openfilegdb_8():
+def test_ogr_openfilegdb_8():
 
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     dict_feat_count = {}
@@ -912,7 +912,7 @@ def ogr_openfilegdb_8():
 # Test reading a .gdbtable outside a .gdb
 
 
-def ogr_openfilegdb_9():
+def test_ogr_openfilegdb_9():
 
     try:
         os.stat('tmp/testopenfilegdb.gdb')
@@ -959,7 +959,7 @@ def unfuzz(backup):
     f.close()
 
 
-def ogr_openfilegdb_10():
+def test_ogr_openfilegdb_10():
 
     try:
         os.stat('tmp/testopenfilegdb.gdb')
@@ -1116,7 +1116,7 @@ def get_spi_state(ds, lyr):
     return value
 
 
-def ogr_openfilegdb_11():
+def test_ogr_openfilegdb_11():
 
     # Test building spatial index with GetFeatureCount()
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
@@ -1307,7 +1307,7 @@ def ogr_openfilegdb_11():
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
 
 
-def ogr_openfilegdb_12():
+def test_ogr_openfilegdb_12():
 
     ds = ogr.Open('/vsizip/data/test3005.gdb.zip')
     lyr = ds.GetLayer(0)
@@ -1328,7 +1328,7 @@ def ogr_openfilegdb_12():
 # Test opening a FGDB v9 with a non spatial table (#5673)
 
 
-def ogr_openfilegdb_13():
+def test_ogr_openfilegdb_13():
 
     ds = ogr.Open('/vsizip/data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
     lyr = ds.GetLayer(0)
@@ -1354,7 +1354,7 @@ def ogr_openfilegdb_13():
 # Test not nullable fields
 
 
-def ogr_openfilegdb_14():
+def test_ogr_openfilegdb_14():
 
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('testnotnullable')
@@ -1375,7 +1375,7 @@ def ogr_openfilegdb_14():
 # Test default values
 
 
-def ogr_openfilegdb_15():
+def test_ogr_openfilegdb_15():
 
     ds = ogr.Open('data/test_default_val.gdb.zip')
     lyr = ds.GetLayer(0)
@@ -1406,7 +1406,7 @@ def ogr_openfilegdb_15():
 ###############################################################################
 # Read layers with sparse pages
 
-def ogr_openfilegdb_16():
+def test_ogr_openfilegdb_16():
 
     ds = ogr.Open('data/sparse.gdb.zip')
     lyr = ds.GetLayer(0)
@@ -1443,7 +1443,7 @@ def ogr_openfilegdb_16():
 # Read a MULTILINESTRING ZM with a dummy M array (#6528)
 
 
-def ogr_openfilegdb_17():
+def test_ogr_openfilegdb_17():
 
     ds = ogr.Open('data/multilinestringzm_with_dummy_m_array.gdb.zip')
     lyr = ds.GetLayer(0)
@@ -1458,7 +1458,7 @@ def ogr_openfilegdb_17():
 # Read curves
 
 
-def ogr_openfilegdb_18():
+def test_ogr_openfilegdb_18():
 
     ds = ogr.Open('data/curves.gdb')
     lyr = ds.GetLayerByName('line')
@@ -1501,7 +1501,7 @@ def ogr_openfilegdb_18():
 # Test opening '.'
 
 
-def ogr_openfilegdb_19():
+def test_ogr_openfilegdb_19():
 
     os.chdir('data/curves.gdb')
     ds = ogr.Open('.')
@@ -1516,7 +1516,7 @@ def ogr_openfilegdb_19():
 # one of the starting point (#7017)
 
 
-def ogr_openfilegdb_20():
+def test_ogr_openfilegdb_20():
 
     ds = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb')
     lyr = ds.GetLayer(0)
@@ -1548,7 +1548,7 @@ def ogr_openfilegdb_20():
 # Test selecting FID column with OGRSQL
 
 
-def ogr_openfilegdb_21():
+def test_ogr_openfilegdb_21():
 
     ds = ogr.Open('data/curves.gdb')
     sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
@@ -1580,7 +1580,7 @@ def ogr_openfilegdb_21():
 # Cleanup
 
 
-def ogr_openfilegdb_cleanup():
+def test_ogr_openfilegdb_cleanup():
 
     if ogrtest.fgdb_drv is not None:
         ogrtest.fgdb_drv.Register()
@@ -1603,34 +1603,34 @@ def ogr_openfilegdb_cleanup():
 
 
 gdaltest_list = [
-    ogr_openfilegdb_init,
+    test_ogr_openfilegdb_init,
     # ogr_openfilegdb_make_test_data,
-    ogr_openfilegdb_1,
-    ogr_openfilegdb_1_92,
-    ogr_openfilegdb_1_93,
-    ogr_openfilegdb_2,
-    ogr_openfilegdb_2_92,
-    ogr_openfilegdb_2_93,
-    ogr_openfilegdb_3,
-    ogr_openfilegdb_4,
-    ogr_openfilegdb_5,
-    ogr_openfilegdb_6,
-    ogr_openfilegdb_7,
-    ogr_openfilegdb_8,
-    ogr_openfilegdb_9,
-    ogr_openfilegdb_10,
-    ogr_openfilegdb_11,
-    ogr_openfilegdb_12,
-    ogr_openfilegdb_13,
-    ogr_openfilegdb_14,
-    ogr_openfilegdb_15,
-    ogr_openfilegdb_16,
-    ogr_openfilegdb_17,
-    ogr_openfilegdb_18,
-    ogr_openfilegdb_19,
-    ogr_openfilegdb_20,
-    ogr_openfilegdb_21,
-    ogr_openfilegdb_cleanup,
+    test_ogr_openfilegdb_1,
+    test_ogr_openfilegdb_1_92,
+    test_ogr_openfilegdb_1_93,
+    test_ogr_openfilegdb_2,
+    test_ogr_openfilegdb_2_92,
+    test_ogr_openfilegdb_2_93,
+    test_ogr_openfilegdb_3,
+    test_ogr_openfilegdb_4,
+    test_ogr_openfilegdb_5,
+    test_ogr_openfilegdb_6,
+    test_ogr_openfilegdb_7,
+    test_ogr_openfilegdb_8,
+    test_ogr_openfilegdb_9,
+    test_ogr_openfilegdb_10,
+    test_ogr_openfilegdb_11,
+    test_ogr_openfilegdb_12,
+    test_ogr_openfilegdb_13,
+    test_ogr_openfilegdb_14,
+    test_ogr_openfilegdb_15,
+    test_ogr_openfilegdb_16,
+    test_ogr_openfilegdb_17,
+    test_ogr_openfilegdb_18,
+    test_ogr_openfilegdb_19,
+    test_ogr_openfilegdb_20,
+    test_ogr_openfilegdb_21,
+    test_ogr_openfilegdb_cleanup,
 ]
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@ import gdaltest
 # Test an extract from a real dataset
 
 
-def gff_1():
+def test_gff_1():
     # 12088 = 2048 + 8 * 1255
     if not gdaltest.download_file('http://sandia.gov/RADAR/complex_data/MiniSAR20050519p0001image008.gff', 'MiniSAR20050519p0001image008.gff', 12088):
         return 'skip'
@@ -51,7 +51,7 @@ def gff_1():
 
 
 gdaltest_list = [
-    gff_1]
+    test_gff_1]
 
 if __name__ == '__main__':
 

@@ -40,7 +40,7 @@ from osgeo import osr
 # and the central meridian.
 
 
-def osr_pm_1():
+def test_osr_pm_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27572)
@@ -60,7 +60,7 @@ def osr_pm_1():
 # and the central meridian in the PROJ.4 string.
 
 
-def osr_pm_2():
+def test_osr_pm_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27572)
@@ -83,7 +83,7 @@ def osr_pm_2():
 # are properly preserved.
 
 
-def osr_pm_3():
+def test_osr_pm_3():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4('+proj=utm +zone=30 +datum=WGS84 +pm=bogota')
@@ -102,9 +102,9 @@ def osr_pm_3():
 ###############################################################################
 
 gdaltest_list = [
-    osr_pm_1,
-    osr_pm_2,
-    osr_pm_3,
+    test_osr_pm_1,
+    test_osr_pm_2,
+    test_osr_pm_3,
     None]
 
 if __name__ == '__main__':

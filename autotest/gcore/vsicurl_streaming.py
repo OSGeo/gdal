@@ -39,7 +39,7 @@ import gdaltest
 #
 
 
-def vsicurl_streaming_1():
+def test_vsicurl_streaming_1():
     drv = gdal.GetDriverByName('HTTP')
 
     if drv is None:
@@ -139,7 +139,7 @@ def vsicurl_streaming_1():
     return 'success'
 
 
-gdaltest_list = [vsicurl_streaming_1]
+gdaltest_list = [test_vsicurl_streaming_1]
 
 if __name__ == '__main__':
 

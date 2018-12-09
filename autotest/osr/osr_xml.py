@@ -41,7 +41,7 @@ from osgeo import osr
 #
 
 
-def osr_xml_1():
+def test_osr_xml_1():
 
     gdaltest.srs_xml = """<gml:ProjectedCRS>
   <gml:srsName>WGS 84 / UTM zone 31N</gml:srsName>
@@ -191,7 +191,7 @@ def osr_xml_1():
 #
 
 
-def osr_xml_2():
+def test_osr_xml_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(gdaltest.srs_wkt)
@@ -212,8 +212,8 @@ def osr_xml_2():
 
 
 gdaltest_list = [
-    osr_xml_1,
-    osr_xml_2]
+    test_osr_xml_1,
+    test_osr_xml_2]
 
 if __name__ == '__main__':
 

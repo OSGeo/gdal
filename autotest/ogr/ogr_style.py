@@ -41,7 +41,7 @@ from osgeo import gdal
 #
 
 
-def ogr_style_styletable():
+def test_ogr_style_styletable():
 
     style_table = ogr.StyleTable()
     style_table.AddStyle("style1_normal", 'SYMBOL(id:"http://style1_normal",c:#67452301)')
@@ -142,7 +142,7 @@ def ogr_style_styletable():
 
 
 gdaltest_list = [
-    ogr_style_styletable]
+    test_ogr_style_styletable]
 
 if __name__ == '__main__':
 

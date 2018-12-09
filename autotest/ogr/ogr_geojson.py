@@ -203,7 +203,7 @@ def copy_shape_to_geojson(gjname, compress=None):
 # Find GeoJSON driver
 
 
-def ogr_geojson_1():
+def test_ogr_geojson_1():
 
     gdaltest.geojson_drv = ogr.GetDriverByName('GeoJSON')
 
@@ -215,7 +215,7 @@ def ogr_geojson_1():
 # Test file-based DS with standalone "Point" feature object.
 
 
-def ogr_geojson_2():
+def test_ogr_geojson_2():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -248,7 +248,7 @@ def ogr_geojson_2():
 # Test file-based DS with standalone "LineString" feature object.
 
 
-def ogr_geojson_3():
+def test_ogr_geojson_3():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -281,7 +281,7 @@ def ogr_geojson_3():
 # Test file-based DS with standalone "Polygon" feature object.
 
 
-def ogr_geojson_4():
+def test_ogr_geojson_4():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -314,7 +314,7 @@ def ogr_geojson_4():
 # Test file-based DS with standalone "GeometryCollection" feature object.
 
 
-def ogr_geojson_5():
+def test_ogr_geojson_5():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -347,7 +347,7 @@ def ogr_geojson_5():
 # Test file-based DS with standalone "MultiPoint" feature object.
 
 
-def ogr_geojson_6():
+def test_ogr_geojson_6():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -380,7 +380,7 @@ def ogr_geojson_6():
 # Test file-based DS with standalone "MultiLineString" feature object.
 
 
-def ogr_geojson_7():
+def test_ogr_geojson_7():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -413,7 +413,7 @@ def ogr_geojson_7():
 # Test file-based DS with standalone "MultiPolygon" feature object.
 
 
-def ogr_geojson_8():
+def test_ogr_geojson_8():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -446,7 +446,7 @@ def ogr_geojson_8():
 # Test translation of data/gjpoint.shp to GeoJSON file
 
 
-def ogr_geojson_9():
+def test_ogr_geojson_9():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -479,7 +479,7 @@ def ogr_geojson_9():
 # Test translation of data/gjpoint.shp to GZip compressed GeoJSON file
 
 
-def ogr_geojson_10():
+def test_ogr_geojson_10():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -511,7 +511,7 @@ def ogr_geojson_10():
 ###############################################################################
 
 
-def ogr_geojson_11():
+def test_ogr_geojson_11():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -559,7 +559,7 @@ def ogr_geojson_11():
 # Test DS passed as name with standalone "Point" feature object (#3377)
 
 
-def ogr_geojson_12():
+def test_ogr_geojson_12():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -583,7 +583,7 @@ def ogr_geojson_12():
 ###############################################################################
 # Test writing to stdout (#3381)
 
-def ogr_geojson_13():
+def test_ogr_geojson_13():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -601,7 +601,7 @@ def ogr_geojson_13():
 # Test reading & writing various degenerated geometries
 
 
-def ogr_geojson_14():
+def test_ogr_geojson_14():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -633,7 +633,7 @@ def ogr_geojson_14():
 # Test Feature.ExportToJson (#3870)
 
 
-def ogr_geojson_15():
+def test_ogr_geojson_15():
 
     feature_defn = ogr.FeatureDefn()
     feature_defn.AddFieldDefn(ogr.FieldDefn("foo"))
@@ -678,7 +678,7 @@ def ogr_geojson_15():
 # Test reading ESRI point file
 
 
-def ogr_geojson_16():
+def test_ogr_geojson_16():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -741,7 +741,7 @@ def ogr_geojson_16():
 # Test reading ESRI linestring file
 
 
-def ogr_geojson_17():
+def test_ogr_geojson_17():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -800,7 +800,7 @@ def ogr_geojson_17():
 # Test reading ESRI polygon file
 
 
-def ogr_geojson_18():
+def test_ogr_geojson_18():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -850,7 +850,7 @@ def ogr_geojson_18():
 # Test reading ESRI multipoint file
 
 
-def ogr_geojson_19():
+def test_ogr_geojson_19():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -887,7 +887,7 @@ def ogr_geojson_19():
 # Test reading files with no extension (#4314)
 
 
-def ogr_geojson_20():
+def test_ogr_geojson_20():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -923,7 +923,7 @@ def ogr_geojson_20():
 # Test reading output of geocouch spatiallist
 
 
-def ogr_geojson_21():
+def test_ogr_geojson_21():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -957,7 +957,7 @@ def ogr_geojson_21():
 # Same as ogr_geojson_21 with several features
 
 
-def ogr_geojson_22():
+def test_ogr_geojson_22():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1005,7 +1005,7 @@ def ogr_geojson_22():
 # Write GeoJSON with bbox and test SRS writing&reading back
 
 
-def ogr_geojson_23():
+def test_ogr_geojson_23():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1055,7 +1055,7 @@ def ogr_geojson_23():
 # Test alternate form of geojson
 
 
-def ogr_geojson_24():
+def test_ogr_geojson_24():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1119,7 +1119,7 @@ def ogr_geojson_24():
 # Test TopoJSON
 
 
-def ogr_geojson_25():
+def test_ogr_geojson_25():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1233,7 +1233,7 @@ def ogr_geojson_25():
 # Test 64bit support
 
 
-def ogr_geojson_26():
+def test_ogr_geojson_26():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1315,7 +1315,7 @@ def ogr_geojson_26():
 # Test workaround for 64bit values (returned as strings)
 
 
-def ogr_geojson_27():
+def test_ogr_geojson_27():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1357,7 +1357,7 @@ def ogr_geojson_27():
 # Test reading ESRI point file with z value
 
 
-def ogr_geojson_28():
+def test_ogr_geojson_28():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1418,7 +1418,7 @@ def ogr_geojson_28():
 # Test reading ESRI linestring file with z
 
 
-def ogr_geojson_29():
+def test_ogr_geojson_29():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1456,7 +1456,7 @@ def ogr_geojson_29():
 # Test reading ESRI multipoint file with z
 
 
-def ogr_geojson_30():
+def test_ogr_geojson_30():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1494,7 +1494,7 @@ def ogr_geojson_30():
 # Test reading ESRI polygon file with z
 
 
-def ogr_geojson_31():
+def test_ogr_geojson_31():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1532,7 +1532,7 @@ def ogr_geojson_31():
 # Test reading ESRI multipoint file with m, but no z (hasM=true, hasZ omitted)
 
 
-def ogr_geojson_32():
+def test_ogr_geojson_32():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1569,7 +1569,7 @@ def ogr_geojson_32():
 # Test reading ESRI multipoint file with hasZ=true, but only 2 components.
 
 
-def ogr_geojson_33():
+def test_ogr_geojson_33():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1606,7 +1606,7 @@ def ogr_geojson_33():
 # Test reading ESRI multipoint file with z and m
 
 
-def ogr_geojson_34():
+def test_ogr_geojson_34():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1643,7 +1643,7 @@ def ogr_geojson_34():
 # Test handling of huge coordinates (#5377)
 
 
-def ogr_geojson_35():
+def test_ogr_geojson_35():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1747,7 +1747,7 @@ def ogr_geojson_35():
 # Test reading file with UTF-8 BOM (which is supposed to be illegal in JSON...) (#5630)
 
 
-def ogr_geojson_36():
+def test_ogr_geojson_36():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1764,7 +1764,7 @@ def ogr_geojson_36():
 # Test boolean type support
 
 
-def ogr_geojson_37():
+def test_ogr_geojson_37():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1822,7 +1822,7 @@ def ogr_geojson_37():
 # Test datetime/date/time type support
 
 
-def ogr_geojson_38():
+def test_ogr_geojson_38():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -1871,7 +1871,7 @@ def ogr_geojson_38():
 # Test id top-object level
 
 
-def ogr_geojson_39():
+def test_ogr_geojson_39():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -2066,7 +2066,7 @@ def ogr_geojson_39():
 # Test nested attributes
 
 
-def ogr_geojson_40():
+def test_ogr_geojson_40():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -2120,7 +2120,7 @@ def ogr_geojson_40():
 # Test ogr.CreateGeometryFromJson()
 
 
-def ogr_geojson_41():
+def test_ogr_geojson_41():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -2157,7 +2157,7 @@ def ogr_geojson_41():
 # Test ESRI FeatureService scrolling
 
 
-def ogr_geojson_42():
+def test_ogr_geojson_42():
 
     if gdaltest.geojson_drv is None:
         return 'skip'
@@ -2373,7 +2373,7 @@ def ogr_geojson_42():
 # Test Feature without geometry
 
 
-def ogr_geojson_43():
+def test_ogr_geojson_43():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2399,7 +2399,7 @@ def ogr_geojson_43():
 # Test null Feature (#6166)
 
 
-def ogr_geojson_44():
+def test_ogr_geojson_44():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2412,7 +2412,7 @@ def ogr_geojson_44():
 # Test native data support
 
 
-def ogr_geojson_45():
+def test_ogr_geojson_45():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2558,7 +2558,7 @@ def ogr_geojson_45():
 # Test that writing JSon content as value of a string field is serialized as it
 
 
-def ogr_geojson_46():
+def test_ogr_geojson_46():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2587,7 +2587,7 @@ def ogr_geojson_46():
 # Test update support
 
 
-def ogr_geojson_47():
+def test_ogr_geojson_47():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2769,7 +2769,7 @@ def ogr_geojson_47():
 # Test update support with file that has a single feature not in a FeatureCollection
 
 
-def ogr_geojson_48():
+def test_ogr_geojson_48():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2810,7 +2810,7 @@ def ogr_geojson_48():
 # Test ARRAY_AS_STRING
 
 
-def ogr_geojson_49():
+def test_ogr_geojson_49():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2838,7 +2838,7 @@ def ogr_geojson_49():
 # Test that we serialize floating point values with enough significant figures
 
 
-def ogr_geojson_50():
+def test_ogr_geojson_50():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -2917,7 +2917,7 @@ def ogr_geojson_50():
 # Test writing empty geometries
 
 
-def ogr_geojson_51():
+def test_ogr_geojson_51():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3002,7 +3002,7 @@ def ogr_geojson_51():
 # Test NULL type detection
 
 
-def ogr_geojson_52():
+def test_ogr_geojson_52():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3042,7 +3042,7 @@ def ogr_geojson_52():
 # Test that M is ignored (this is a test of OGRLayer::CreateFeature() actually)
 
 
-def ogr_geojson_53():
+def test_ogr_geojson_53():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3070,7 +3070,7 @@ def ogr_geojson_53():
 # Test NULL type detection when first value is null
 
 
-def ogr_geojson_54():
+def test_ogr_geojson_54():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3130,7 +3130,7 @@ def read_file(filename):
     return content
 
 
-def ogr_geojson_55():
+def test_ogr_geojson_55():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3243,7 +3243,7 @@ def ogr_geojson_55():
 # Test RFC 7946 (that require geos)
 
 
-def ogr_geojson_56():
+def test_ogr_geojson_56():
     if gdaltest.geojson_drv is None:
         return 'skip'
     if not ogrtest.have_geos():
@@ -3319,7 +3319,7 @@ def ogr_geojson_56():
 # Test RFC 7946 and reprojection
 
 
-def ogr_geojson_57():
+def test_ogr_geojson_57():
     if gdaltest.geojson_drv is None:
         return 'skip'
     if not ogrtest.have_geos():
@@ -3564,7 +3564,7 @@ def ogr_geojson_57():
 # Test using the name member of FeatureCollection
 
 
-def ogr_geojson_58():
+def test_ogr_geojson_58():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3595,7 +3595,7 @@ def ogr_geojson_58():
 # Test using the description member of FeatureCollection
 
 
-def ogr_geojson_59():
+def test_ogr_geojson_59():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3627,7 +3627,7 @@ def ogr_geojson_59():
 # Test null vs unset field
 
 
-def ogr_geojson_60():
+def test_ogr_geojson_60():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
@@ -3673,7 +3673,7 @@ def ogr_geojson_60():
 ###############################################################################
 # Test corner cases
 
-def ogr_geojson_61():
+def test_ogr_geojson_61():
 
     # Invalid JSon
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_61.json',
@@ -3710,7 +3710,7 @@ def ogr_geojson_61():
 # Test crs object
 
 
-def ogr_geojson_62():
+def test_ogr_geojson_62():
 
     # crs type=name tests
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name" }, "features":[] }""")
@@ -3797,7 +3797,7 @@ def ogr_geojson_62():
 # Extensive test of field tye promotion
 
 
-def ogr_geojson_63():
+def test_ogr_geojson_63():
 
     ds_ref = ogr.Open('data/test_type_promotion_ref.json')
     lyr_ref = ds_ref.GetLayer(0)
@@ -3809,7 +3809,7 @@ def ogr_geojson_63():
 # Test exporting XYM / XYZM (#6935)
 
 
-def ogr_geojson_64():
+def test_ogr_geojson_64():
 
     g = ogr.CreateGeometryFromWkt('POINT ZM(1 2 3 4)')
     if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
@@ -3838,7 +3838,7 @@ def ogr_geojson_64():
 # See https://github.com/r-spatial/sf/issues/449#issuecomment-319369945
 
 
-def ogr_geojson_65():
+def test_ogr_geojson_65():
 
     ds = ogr.Open("""{
 "type": "FeatureCollection",
@@ -3864,7 +3864,7 @@ def ogr_geojson_65():
 # Test features with properties not being a dictionary
 
 
-def ogr_geojson_66():
+def test_ogr_geojson_66():
 
     ds = ogr.Open("""{
 "type": "FeatureCollection",
@@ -3890,7 +3890,7 @@ def ogr_geojson_66():
 ###############################################################################
 # Test reading GeoJSON files starting with {"features":[{"geometry":.... (#7198)
 
-def ogr_geojson_67():
+def test_ogr_geojson_67():
 
     ds = ogr.Open('data/grenada.geojson')
     if ds is None:
@@ -3909,7 +3909,7 @@ def ogr_geojson_67():
 ###############################################################################
 # Test reading ESRIJSON files starting with {"features":[{"geometry":.... (#7198)
 
-def ogr_geojson_68():
+def test_ogr_geojson_68():
 
     ds = ogr.Open('data/esrijsonstartingwithfeaturesgeometry.json')
     if ds is None:
@@ -3927,7 +3927,7 @@ def ogr_geojson_68():
 ###############################################################################
 
 
-def ogr_geojson_id_field_and_id_type():
+def test_ogr_geojson_id_field_and_id_type():
 
     gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', options='-f GeoJSON -lco ID_TYPE=String -preserve_fid -limit 1 -fid 2')
     got = read_file('/vsimem/out.json')
@@ -4042,7 +4042,7 @@ def ogr_geojson_id_field_and_id_type():
 ###############################################################################
 
 
-def ogr_geojson_geom_export_failure():
+def test_ogr_geojson_geom_export_failure():
 
     g = ogr.CreateGeometryFromWkt('POINT EMPTY')
     geojson = g.ExportToJson()
@@ -4092,7 +4092,7 @@ def ogr_geojson_geom_export_failure():
 ###############################################################################
 
 
-def ogr_geojson_starting_with_crs():
+def test_ogr_geojson_starting_with_crs():
 
     ds = ogr.Open("""{
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32631" } },
@@ -4113,7 +4113,7 @@ def ogr_geojson_starting_with_crs():
 # Test we properly flush the file in SyncToDisk() in append situations
 
 
-def ogr_geojson_append_flush():
+def test_ogr_geojson_append_flush():
 
     tmpfilename = 'tmp/ogr_geojson_append_flush.json'
     f = gdal.VSIFOpenL(tmpfilename, 'wb')
@@ -4148,7 +4148,7 @@ def ogr_geojson_append_flush():
 ###############################################################################
 
 
-def ogr_geojson_empty_geometrycollection():
+def test_ogr_geojson_empty_geometrycollection():
 
     g = ogr.CreateGeometryFromJson('{"type": "GeometryCollection", "geometries": []}')
     if g.ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
@@ -4160,7 +4160,7 @@ def ogr_geojson_empty_geometrycollection():
 ###############################################################################
 
 
-def ogr_esrijson_without_geometryType():
+def test_ogr_esrijson_without_geometryType():
 
     ds = ogr.Open("""{
   "spatialReference" : {
@@ -4191,7 +4191,7 @@ def ogr_esrijson_without_geometryType():
 ###############################################################################
 
 
-def ogr_geojson_read_fields_with_different_case():
+def test_ogr_geojson_read_fields_with_different_case():
 
     ds = ogr.Open("""{
 "type": "FeatureCollection",
@@ -4212,7 +4212,7 @@ def ogr_geojson_read_fields_with_different_case():
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1068
 
 
-def ogr_geojson_clip_geometries_rfc7946():
+def test_ogr_geojson_clip_geometries_rfc7946():
 
     if not ogrtest.have_geos():
         return 'skip'
@@ -4256,7 +4256,7 @@ def ogr_geojson_clip_geometries_rfc7946():
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1109
 
 
-def ogr_geojson_non_finite():
+def test_ogr_geojson_non_finite():
 
     json_content = """{
   "type": "FeatureCollection",
@@ -4331,7 +4331,7 @@ def ogr_geojson_non_finite():
 ###############################################################################
 
 
-def ogr_geojson_cleanup():
+def test_ogr_geojson_cleanup():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
 
@@ -4367,84 +4367,84 @@ def ogr_geojson_cleanup():
 
 
 gdaltest_list = [
-    ogr_geojson_1,
-    ogr_geojson_2,
-    ogr_geojson_3,
-    ogr_geojson_4,
-    ogr_geojson_5,
-    ogr_geojson_6,
-    ogr_geojson_7,
-    ogr_geojson_8,
-    ogr_geojson_9,
-    ogr_geojson_10,
-    ogr_geojson_11,
-    ogr_geojson_12,
-    ogr_geojson_13,
-    ogr_geojson_14,
-    ogr_geojson_15,
-    ogr_geojson_16,
-    ogr_geojson_17,
-    ogr_geojson_18,
-    ogr_geojson_19,
-    ogr_geojson_20,
-    ogr_geojson_21,
-    ogr_geojson_22,
-    ogr_geojson_23,
-    ogr_geojson_24,
-    ogr_geojson_25,
-    ogr_geojson_26,
-    ogr_geojson_27,
-    ogr_geojson_28,
-    ogr_geojson_29,
-    ogr_geojson_30,
-    ogr_geojson_31,
-    ogr_geojson_32,
-    ogr_geojson_33,
-    ogr_geojson_34,
-    ogr_geojson_35,
-    ogr_geojson_36,
-    ogr_geojson_37,
-    ogr_geojson_38,
-    ogr_geojson_39,
-    ogr_geojson_40,
-    ogr_geojson_41,
-    ogr_geojson_42,
-    ogr_geojson_43,
-    ogr_geojson_44,
-    ogr_geojson_45,
-    ogr_geojson_46,
-    ogr_geojson_47,
-    ogr_geojson_48,
-    ogr_geojson_49,
-    ogr_geojson_50,
-    ogr_geojson_51,
-    ogr_geojson_52,
-    ogr_geojson_53,
-    ogr_geojson_54,
-    ogr_geojson_55,
-    ogr_geojson_56,
-    ogr_geojson_57,
-    ogr_geojson_58,
-    ogr_geojson_59,
-    ogr_geojson_60,
-    ogr_geojson_61,
-    ogr_geojson_62,
-    ogr_geojson_63,
-    ogr_geojson_64,
-    ogr_geojson_65,
-    ogr_geojson_66,
-    ogr_geojson_67,
-    ogr_geojson_68,
-    ogr_geojson_id_field_and_id_type,
-    ogr_geojson_geom_export_failure,
-    ogr_geojson_starting_with_crs,
-    ogr_geojson_append_flush,
-    ogr_geojson_empty_geometrycollection,
-    ogr_esrijson_without_geometryType,
-    ogr_geojson_read_fields_with_different_case,
-    ogr_geojson_clip_geometries_rfc7946,
-    ogr_geojson_non_finite,
-    ogr_geojson_cleanup]
+    test_ogr_geojson_1,
+    test_ogr_geojson_2,
+    test_ogr_geojson_3,
+    test_ogr_geojson_4,
+    test_ogr_geojson_5,
+    test_ogr_geojson_6,
+    test_ogr_geojson_7,
+    test_ogr_geojson_8,
+    test_ogr_geojson_9,
+    test_ogr_geojson_10,
+    test_ogr_geojson_11,
+    test_ogr_geojson_12,
+    test_ogr_geojson_13,
+    test_ogr_geojson_14,
+    test_ogr_geojson_15,
+    test_ogr_geojson_16,
+    test_ogr_geojson_17,
+    test_ogr_geojson_18,
+    test_ogr_geojson_19,
+    test_ogr_geojson_20,
+    test_ogr_geojson_21,
+    test_ogr_geojson_22,
+    test_ogr_geojson_23,
+    test_ogr_geojson_24,
+    test_ogr_geojson_25,
+    test_ogr_geojson_26,
+    test_ogr_geojson_27,
+    test_ogr_geojson_28,
+    test_ogr_geojson_29,
+    test_ogr_geojson_30,
+    test_ogr_geojson_31,
+    test_ogr_geojson_32,
+    test_ogr_geojson_33,
+    test_ogr_geojson_34,
+    test_ogr_geojson_35,
+    test_ogr_geojson_36,
+    test_ogr_geojson_37,
+    test_ogr_geojson_38,
+    test_ogr_geojson_39,
+    test_ogr_geojson_40,
+    test_ogr_geojson_41,
+    test_ogr_geojson_42,
+    test_ogr_geojson_43,
+    test_ogr_geojson_44,
+    test_ogr_geojson_45,
+    test_ogr_geojson_46,
+    test_ogr_geojson_47,
+    test_ogr_geojson_48,
+    test_ogr_geojson_49,
+    test_ogr_geojson_50,
+    test_ogr_geojson_51,
+    test_ogr_geojson_52,
+    test_ogr_geojson_53,
+    test_ogr_geojson_54,
+    test_ogr_geojson_55,
+    test_ogr_geojson_56,
+    test_ogr_geojson_57,
+    test_ogr_geojson_58,
+    test_ogr_geojson_59,
+    test_ogr_geojson_60,
+    test_ogr_geojson_61,
+    test_ogr_geojson_62,
+    test_ogr_geojson_63,
+    test_ogr_geojson_64,
+    test_ogr_geojson_65,
+    test_ogr_geojson_66,
+    test_ogr_geojson_67,
+    test_ogr_geojson_68,
+    test_ogr_geojson_id_field_and_id_type,
+    test_ogr_geojson_geom_export_failure,
+    test_ogr_geojson_starting_with_crs,
+    test_ogr_geojson_append_flush,
+    test_ogr_geojson_empty_geometrycollection,
+    test_ogr_esrijson_without_geometryType,
+    test_ogr_geojson_read_fields_with_different_case,
+    test_ogr_geojson_clip_geometries_rfc7946,
+    test_ogr_geojson_non_finite,
+    test_ogr_geojson_cleanup]
 
 if __name__ == '__main__':
 

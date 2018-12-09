@@ -38,7 +38,7 @@ import gdaltest
 # Open a little-endian NTv2 grid
 
 
-def ntv1_1():
+def test_ntv1_1():
 
     tst = gdaltest.GDALTest('NTV1', 'ntv1_can_truncated.dat', 1, 65532)
     gt = (-44.375, 0.25, 0.0, 40.375, 0.0, -0.25)
@@ -46,7 +46,7 @@ def ntv1_1():
 
 
 gdaltest_list = [
-    ntv1_1,
+    test_ntv1_1,
 ]
 
 

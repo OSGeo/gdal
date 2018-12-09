@@ -40,7 +40,7 @@ import gdaltest
 # Read a truncated and modified version of http://download.osgeo.org/gdal/data/pds/mc02.img
 
 
-def pds_1():
+def test_pds_1():
 
     tst = gdaltest.GDALTest('PDS', 'mc02_truncated.img', 1, 47151)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL "MARS"",GEOGCS["GCS_"MARS"",DATUM["D_"MARS"",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0]]"""
@@ -57,7 +57,7 @@ def pds_1():
 ###############################################################################
 # Read a truncated and modified version of ftp://pdsimage2.wr.usgs.gov/cdroms/magellan/mg_1103/fl78n018/fl73n003.img
 
-def pds_2():
+def test_pds_2():
 
     tst = gdaltest.GDALTest('PDS', 'fl73n003_truncated.img', 1, 34962)
     expected_prj = """PROJCS["SINUSOIDAL VENUS",
@@ -100,7 +100,7 @@ def pds_2():
 # 16bits image
 
 
-def pds_3():
+def test_pds_3():
 
     # Shut down warning about missing projection
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -123,7 +123,7 @@ def pds_3():
 # Read a hacked example of reading a detached file with an offset #3177.
 
 
-def pds_4():
+def test_pds_4():
 
     tst = gdaltest.GDALTest('PDS', 'pds_3177.lbl', 1, 3418)
     gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
@@ -138,7 +138,7 @@ def pds_4():
 # Read a hacked example of reading a detached file with an offset #3355.
 
 
-def pds_5():
+def test_pds_5():
 
     tst = gdaltest.GDALTest('PDS', 'pds_3355.lbl', 1, 2748)
     return tst.testOpen()
@@ -148,7 +148,7 @@ def pds_5():
 # driver mostly intended to support jpeg2000 files with PDS labels.
 
 
-def pds_6():
+def test_pds_6():
 
     if os.path.exists('data/byte.tif.aux.xml'):
         os.unlink('data/byte.tif.aux.xml')
@@ -186,7 +186,7 @@ def pds_6():
 # Read an uncompressed image via the PDS label. (#3943)
 
 
-def pds_7():
+def test_pds_7():
 
     tst = gdaltest.GDALTest('PDS', 'LDEM_4.LBL', 1, 50938,
                             0, 0, 1440, 2)
@@ -220,7 +220,7 @@ def pds_7():
 # geotransform (#3940)
 
 
-def pds_8():
+def test_pds_8():
 
     # values for MAGELLAN FMAP data.
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '1.5')
@@ -247,7 +247,7 @@ def pds_8():
 # an hexadecimal floating point value (#3939)
 
 
-def pds_9():
+def test_pds_9():
 
     # Derived from http://pdsimage.wr.usgs.gov/data/co-v_e_j_s-radar-3-sbdr-v1.0/CORADR_0035/DATA/BIDR/BIEQI49N071_D035_T00AS01_V02.LBL
     tst = gdaltest.GDALTest('PDS', 'PDS_WITH_ZIP_IMG.LBL', 1, 0)
@@ -273,7 +273,7 @@ def pds_9():
 # Test PDS label with nested arrays (#6970)
 
 
-def pds_10():
+def test_pds_10():
 
     gdal.FileFromMemBuffer('/vsimem/pds_10',
                            """PDS_VERSION_ID                       = "PDS3"
@@ -338,7 +338,7 @@ END
 # https://github.com/OSGeo/gdal/issues/955
 
 
-def pds_line_offset_not_multiple_of_record():
+def test_pds_line_offset_not_multiple_of_record():
 
     tst = gdaltest.GDALTest('PDS', 'pds/map_000_038_truncated.lbl', 1, 14019)
     return tst.testOpen()
@@ -349,25 +349,25 @@ def pds_line_offset_not_multiple_of_record():
 # Test ability of using OBJECT = FILE section to support CRISM
 # as well as BAND_STORAGE_TYPE = LINE_INTERLEAVED
 
-def pds_band_storage_type_line_interleaved():
+def test_pds_band_storage_type_line_interleaved():
 
     tst = gdaltest.GDALTest('PDS', 'pds/hsp00017ba0_01_ra218s_trr3_truncated.lbl', 1, 364)
     return tst.testOpen()
 
 
 gdaltest_list = [
-    pds_1,
-    pds_2,
-    pds_3,
-    pds_4,
-    pds_5,
-    pds_6,
-    pds_7,
-    pds_8,
-    pds_9,
-    pds_10,
-    pds_line_offset_not_multiple_of_record,
-    pds_band_storage_type_line_interleaved]
+    test_pds_1,
+    test_pds_2,
+    test_pds_3,
+    test_pds_4,
+    test_pds_5,
+    test_pds_6,
+    test_pds_7,
+    test_pds_8,
+    test_pds_9,
+    test_pds_10,
+    test_pds_line_offset_not_multiple_of_record,
+    test_pds_band_storage_type_line_interleaved]
 
 if __name__ == '__main__':
 

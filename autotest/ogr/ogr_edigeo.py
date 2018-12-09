@@ -40,7 +40,7 @@ import ogrtest
 ###############################################################################
 
 
-def ogr_edigeo_1():
+def test_ogr_edigeo_1():
 
     filelist = ['E000AB01.THF',
                 'EDAB01S1.VEC',
@@ -125,7 +125,7 @@ def ogr_edigeo_1():
 
 
 gdaltest_list = [
-    ogr_edigeo_1]
+    test_ogr_edigeo_1]
 
 if __name__ == '__main__':
 

@@ -126,7 +126,7 @@ def ogr_ods_check(ds):
 # Basic tests
 
 
-def ogr_ods_1():
+def test_ogr_ods_1():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -147,7 +147,7 @@ def ogr_ods_1():
 # Basic tests
 
 
-def ogr_ods_kspread_1():
+def test_ogr_ods_kspread_1():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -245,7 +245,7 @@ def ogr_ods_kspread_1():
 # Test OGR_ODS_HEADERS = DISABLE
 
 
-def ogr_ods_2():
+def test_ogr_ods_2():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -269,7 +269,7 @@ def ogr_ods_2():
 # Test OGR_ODS_FIELD_TYPES = STRING
 
 
-def ogr_ods_3():
+def test_ogr_ods_3():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -292,7 +292,7 @@ def ogr_ods_3():
 # Run test_ogrsf
 
 
-def ogr_ods_4():
+def test_ogr_ods_4():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -314,7 +314,7 @@ def ogr_ods_4():
 # Test write support
 
 
-def ogr_ods_5():
+def test_ogr_ods_5():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -338,7 +338,7 @@ def ogr_ods_5():
 # Test formula evaluation
 
 
-def ogr_ods_6():
+def test_ogr_ods_6():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -385,7 +385,7 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 # Test update support
 
 
-def ogr_ods_7():
+def test_ogr_ods_7():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -430,7 +430,7 @@ def ogr_ods_7():
 # Test Integer64
 
 
-def ogr_ods_8():
+def test_ogr_ods_8():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -471,7 +471,7 @@ def ogr_ods_8():
 # Test DateTime with milliseconds
 
 
-def ogr_ods_9():
+def test_ogr_ods_9():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -519,7 +519,7 @@ def ogr_ods_9():
 # Test Boolean
 
 
-def ogr_ods_boolean():
+def test_ogr_ods_boolean():
 
     drv = ogr.GetDriverByName('ODS')
     if drv is None:
@@ -564,17 +564,17 @@ def ogr_ods_boolean():
 
 
 gdaltest_list = [
-    ogr_ods_1,
-    ogr_ods_kspread_1,
-    ogr_ods_2,
-    ogr_ods_3,
-    ogr_ods_4,
-    ogr_ods_5,
-    ogr_ods_6,
-    ogr_ods_7,
-    ogr_ods_8,
-    ogr_ods_9,
-    ogr_ods_boolean,
+    test_ogr_ods_1,
+    test_ogr_ods_kspread_1,
+    test_ogr_ods_2,
+    test_ogr_ods_3,
+    test_ogr_ods_4,
+    test_ogr_ods_5,
+    test_ogr_ods_6,
+    test_ogr_ods_7,
+    test_ogr_ods_8,
+    test_ogr_ods_9,
+    test_ogr_ods_boolean,
 ]
 
 if __name__ == '__main__':

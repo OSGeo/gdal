@@ -38,7 +38,7 @@ import gdaltest
 # Test CreateCopy() of byte.tif
 
 
-def hf2_1():
+def test_hf2_1():
 
     tst = gdaltest.GDALTest('HF2', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1, check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
@@ -47,7 +47,7 @@ def hf2_1():
 # Test CreateCopy() of byte.tif with options
 
 
-def hf2_2():
+def test_hf2_2():
 
     tst = gdaltest.GDALTest('HF2', 'byte.tif', 1, 4672, options=['COMPRESS=YES', 'BLOCKSIZE=10'])
     ret = tst.testCreateCopy(new_filename='tmp/hf2_2.hfz')
@@ -61,7 +61,7 @@ def hf2_2():
 # Test CreateCopy() of float.img
 
 
-def hf2_3():
+def test_hf2_3():
 
     tst = gdaltest.GDALTest('HF2', 'float.img', 1, 23529)
     return tst.testCreateCopy(check_minmax=0)
@@ -70,7 +70,7 @@ def hf2_3():
 # Test CreateCopy() of n43.dt0
 
 
-def hf2_4():
+def test_hf2_4():
 
     tst = gdaltest.GDALTest('HF2', 'n43.dt0', 1, 49187)
     return tst.testCreateCopy()
@@ -79,17 +79,17 @@ def hf2_4():
 # Cleanup
 
 
-def hf2_cleanup():
+def test_hf2_cleanup():
 
     return 'success'
 
 
 gdaltest_list = [
-    hf2_1,
-    hf2_2,
-    hf2_3,
-    hf2_4,
-    hf2_cleanup]
+    test_hf2_1,
+    test_hf2_2,
+    test_hf2_3,
+    test_hf2_4,
+    test_hf2_cleanup]
 
 if __name__ == '__main__':
 

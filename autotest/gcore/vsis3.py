@@ -47,7 +47,7 @@ def open_for_read(uri):
 ###############################################################################
 
 
-def vsis3_init():
+def test_vsis3_init():
 
     gdaltest.aws_vars = {}
     for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER', 'AWS_DEFAULT_REGION', 'AWS_DEFAULT_PROFILE', 'AWS_NO_SIGN_REQUEST'):
@@ -71,7 +71,7 @@ def vsis3_init():
 # Test AWS_NO_SIGN_REQUEST=YES
 
 
-def vsis3_no_sign_request():
+def test_vsis3_no_sign_request():
 
     if not gdaltest.built_against_curl():
         return 'skip'
@@ -103,7 +103,7 @@ def vsis3_no_sign_request():
 # Error cases
 
 
-def vsis3_1():
+def test_vsis3_1():
 
     if not gdaltest.built_against_curl():
         return 'skip'
@@ -164,7 +164,7 @@ def vsis3_1():
 ###############################################################################
 
 
-def vsis3_start_webserver():
+def test_vsis3_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -211,7 +211,7 @@ def get_s3_fake_bucket_resource_method(request):
 # Test with a fake AWS server
 
 
-def vsis3_2():
+def test_vsis3_2():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -662,7 +662,7 @@ def vsis3_2():
 # Test ReadDir() with a fake AWS server
 
 
-def vsis3_readdir():
+def test_vsis3_readdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1103,7 +1103,7 @@ def vsis3_readdir():
 # Test OpenDir() with a fake AWS server
 
 
-def vsis3_opendir():
+def test_vsis3_opendir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1323,7 +1323,7 @@ def vsis3_opendir():
 # Test simple PUT support with a fake AWS server
 
 
-def vsis3_4():
+def test_vsis3_4():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1538,7 +1538,7 @@ def vsis3_4():
 # Test simple DELETE support with a fake AWS server
 
 
-def vsis3_5():
+def test_vsis3_5():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1628,7 +1628,7 @@ def vsis3_5():
 # Test multipart upload with a fake AWS server
 
 
-def vsis3_6():
+def test_vsis3_6():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -1867,7 +1867,7 @@ def vsis3_6():
 # Test Mkdir() / Rmdir()
 
 
-def vsis3_7():
+def test_vsis3_7():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2024,7 +2024,7 @@ def vsis3_7():
 # Test handling of file and directory with same name
 
 
-def vsis3_8():
+def test_vsis3_8():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2071,7 +2071,7 @@ def vsis3_8():
 # Test vsisync() with SYNC_STRATEGY=ETAG
 
 
-def vsis3_sync_etag():
+def test_vsis3_sync_etag():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2237,7 +2237,7 @@ def vsis3_sync_etag():
 # Test vsisync() with SYNC_STRATEGY=TIMESTAMP
 
 
-def vsis3_sync_timestamp():
+def test_vsis3_sync_timestamp():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2312,7 +2312,7 @@ def vsis3_sync_timestamp():
 # Read credentials from simulated ~/.aws/credentials
 
 
-def vsis3_read_credentials_file():
+def test_vsis3_read_credentials_file():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2360,7 +2360,7 @@ aws_secret_access_key = bar
 # Read credentials from simulated  ~/.aws/config
 
 
-def vsis3_read_config_file():
+def test_vsis3_read_config_file():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2409,7 +2409,7 @@ aws_secret_access_key = bar
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
 
 
-def vsis3_read_credentials_config_file():
+def test_vsis3_read_credentials_config_file():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2474,7 +2474,7 @@ aws_secret_access_key = bar
 # a non default profile
 
 
-def vsis3_read_credentials_config_file_non_default():
+def test_vsis3_read_credentials_config_file_non_default():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2538,7 +2538,7 @@ aws_secret_access_key = bar
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
 
 
-def vsis3_read_credentials_config_file_inconsistent():
+def test_vsis3_read_credentials_config_file_inconsistent():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2608,7 +2608,7 @@ aws_secret_access_key = bar
 # Read credentials from simulated EC2 instance
 
 
-def vsis3_read_credentials_ec2():
+def test_vsis3_read_credentials_ec2():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2678,7 +2678,7 @@ def vsis3_read_credentials_ec2():
 # cached credentials
 
 
-def vsis3_read_credentials_ec2_expiration():
+def test_vsis3_read_credentials_ec2_expiration():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2737,7 +2737,7 @@ def vsis3_read_credentials_ec2_expiration():
 ###############################################################################
 
 
-def vsis3_stop_webserver():
+def test_vsis3_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
@@ -2947,7 +2947,7 @@ def vsis3_extra_1():
 ###############################################################################
 
 
-def vsis3_cleanup():
+def test_vsis3_cleanup():
 
     for var in gdaltest.aws_vars:
         gdal.SetConfigOption(var, gdaltest.aws_vars[var])
@@ -2959,29 +2959,29 @@ def vsis3_cleanup():
     return 'success'
 
 
-gdaltest_list = [vsis3_init,
-                 vsis3_no_sign_request,
-                 vsis3_1,
-                 vsis3_start_webserver,
-                 vsis3_2,
-                 vsis3_readdir,
-                 vsis3_opendir,
-                 vsis3_4,
-                 vsis3_5,
-                 vsis3_6,
-                 vsis3_7,
-                 vsis3_8,
-                 vsis3_sync_etag,
-                 vsis3_sync_timestamp,
-                 vsis3_read_credentials_file,
-                 vsis3_read_config_file,
-                 vsis3_read_credentials_config_file,
-                 vsis3_read_credentials_config_file_non_default,
-                 vsis3_read_credentials_config_file_inconsistent,
-                 vsis3_read_credentials_ec2,
-                 vsis3_read_credentials_ec2_expiration,
-                 vsis3_stop_webserver,
-                 vsis3_cleanup]
+gdaltest_list = [test_vsis3_init,
+                 test_vsis3_no_sign_request,
+                 test_vsis3_1,
+                 test_vsis3_start_webserver,
+                 test_vsis3_2,
+                 test_vsis3_readdir,
+                 test_vsis3_opendir,
+                 test_vsis3_4,
+                 test_vsis3_5,
+                 test_vsis3_6,
+                 test_vsis3_7,
+                 test_vsis3_8,
+                 test_vsis3_sync_etag,
+                 test_vsis3_sync_timestamp,
+                 test_vsis3_read_credentials_file,
+                 test_vsis3_read_config_file,
+                 test_vsis3_read_credentials_config_file,
+                 test_vsis3_read_credentials_config_file_non_default,
+                 test_vsis3_read_credentials_config_file_inconsistent,
+                 test_vsis3_read_credentials_ec2,
+                 test_vsis3_read_credentials_ec2_expiration,
+                 test_vsis3_stop_webserver,
+                 test_vsis3_cleanup]
 
 # gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_opendir, vsis3_stop_webserver, vsis3_cleanup ]
 
@@ -2994,6 +2994,6 @@ if __name__ == '__main__':
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
         gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsis3_cleanup])
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsis3_cleanup])
 
     sys.exit(gdaltest.summarize())

@@ -43,7 +43,7 @@ from osgeo import gdal
 # Check that we can read PAM metadata for existing PNM file.
 
 
-def pam_1():
+def test_pam_1():
 
     gdaltest.pam_setting = gdal.GetConfigOption('GDAL_PAM_ENABLED', "NULL")
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
@@ -81,7 +81,7 @@ def pam_1():
 # Verify that we can write XML to a new file.
 
 
-def pam_2():
+def test_pam_2():
 
     driver = gdal.GetDriverByName('PNM')
     ds = driver.Create('tmp/pam.pnm', 10, 10)
@@ -105,7 +105,7 @@ def pam_2():
 # Check that we can read PAM metadata for existing PNM file.
 
 
-def pam_3():
+def test_pam_3():
 
     ds = gdal.Open("tmp/pam.pnm")
 
@@ -158,7 +158,7 @@ def pam_3():
 #
 
 
-def pam_4():
+def test_pam_4():
 
     # Copy test dataset to tmp directory so that the .aux.xml file
     # won't be rewritten with the statistics in the master dataset.
@@ -182,7 +182,7 @@ def pam_4():
 #
 
 
-def pam_5():
+def test_pam_5():
 
     ds = gdal.Open('data/sasha.tif')
     filelist = ds.GetFileList()
@@ -201,7 +201,7 @@ def pam_5():
 #
 
 
-def pam_6():
+def test_pam_6():
 
     ds = gdal.Open('data/f2r23.tif')
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
@@ -220,7 +220,7 @@ def pam_6():
 #
 
 
-def pam_7():
+def test_pam_7():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
 
@@ -246,7 +246,7 @@ def pam_7():
 #
 
 
-def pam_8():
+def test_pam_8():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
 
@@ -271,7 +271,7 @@ def pam_8():
 #
 
 
-def pam_9():
+def test_pam_9():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pam_9.tif', 1, 1, 1)
     ds = None
@@ -308,7 +308,7 @@ def pam_9():
 # Test serializing and deserializing of various band metadata
 
 
-def pam_10():
+def test_pam_10():
 
     src_ds = gdal.Open('data/testserialization.asc')
     ds = gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/pam_10.asc', src_ds)
@@ -391,7 +391,7 @@ def pam_10():
 # Test PamProxyDb mechanism
 
 
-def pam_11():
+def test_pam_11():
 
     # Create a read-only directory
     try:
@@ -456,7 +456,7 @@ def pam_11():
 # Test histogram with 64bit counts
 
 
-def pam_12():
+def test_pam_12():
 
     shutil.copy('data/byte.tif', 'tmp')
     open('tmp/byte.tif.aux.xml', 'wt').write("""<PAMDataset>
@@ -505,7 +505,7 @@ def pam_12():
 #
 
 
-def pam_13():
+def test_pam_13():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
 
@@ -543,7 +543,7 @@ def pam_13():
 ###############################################################################
 # Cleanup.
 
-def pam_cleanup():
+def test_pam_cleanup():
     gdaltest.clean_tmp()
     if gdaltest.pam_setting != 'NULL':
         gdal.SetConfigOption('GDAL_PAM_ENABLED', gdaltest.pam_setting)
@@ -564,20 +564,20 @@ def pam_cleanup():
 
 
 gdaltest_list = [
-    pam_1,
-    pam_2,
-    pam_3,
-    pam_4,
-    pam_5,
-    pam_6,
-    pam_7,
-    pam_8,
-    pam_9,
-    pam_10,
-    pam_11,
-    pam_12,
-    pam_13,
-    pam_cleanup]
+    test_pam_1,
+    test_pam_2,
+    test_pam_3,
+    test_pam_4,
+    test_pam_5,
+    test_pam_6,
+    test_pam_7,
+    test_pam_8,
+    test_pam_9,
+    test_pam_10,
+    test_pam_11,
+    test_pam_12,
+    test_pam_13,
+    test_pam_cleanup]
 
 if __name__ == '__main__':
 

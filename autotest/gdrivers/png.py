@@ -40,7 +40,7 @@ import gdaltest
 # Read test of simple byte reference data.
 
 
-def png_1():
+def test_png_1():
 
     tst = gdaltest.GDALTest('PNG', 'test.png', 1, 57921)
     return tst.testOpen()
@@ -49,7 +49,7 @@ def png_1():
 # Test lossless copying.
 
 
-def png_2():
+def test_png_2():
 
     tst = gdaltest.GDALTest('PNG', 'test.png', 1, 57921)
 
@@ -59,7 +59,7 @@ def png_2():
 # Verify the geotransform, colormap, and nodata setting for test file.
 
 
-def png_3():
+def test_png_3():
 
     ds = gdal.Open('data/test.png')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
@@ -96,7 +96,7 @@ def png_3():
 # Test RGB mode creation and reading.
 
 
-def png_4():
+def test_png_4():
 
     tst = gdaltest.GDALTest('PNG', 'rgb.ntf', 3, 21349)
 
@@ -106,7 +106,7 @@ def png_4():
 # Test RGBA 16bit read support.
 
 
-def png_5():
+def test_png_5():
 
     tst = gdaltest.GDALTest('PNG', 'rgba16.png', 3, 1815)
     return tst.testOpen()
@@ -115,7 +115,7 @@ def png_5():
 # Test RGBA 16bit mode creation and reading.
 
 
-def png_6():
+def test_png_6():
 
     tst = gdaltest.GDALTest('PNG', 'rgba16.png', 4, 4873)
 
@@ -126,7 +126,7 @@ def png_6():
 # This is handled via the tRNS block in PNG.
 
 
-def png_7():
+def test_png_7():
 
     drv = gdal.GetDriverByName('PNG')
     srcds = gdal.Open('data/tbbn2c16.png')
@@ -153,7 +153,7 @@ def png_7():
 # recovery from errors caused by reading broken file..
 
 
-def png_8():
+def test_png_8():
 
     drv = gdal.GetDriverByName('PNG')
     ds_src = gdal.Open('data/idat_broken.png')
@@ -206,7 +206,7 @@ def png_8():
 ###############################################################################
 # Test creating an in memory copy.
 
-def png_9():
+def test_png_9():
 
     tst = gdaltest.GDALTest('PNG', 'byte.tif', 1, 4672)
 
@@ -216,7 +216,7 @@ def png_9():
 # Test writing to /vsistdout/
 
 
-def png_10():
+def test_png_10():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('PNG').CreateCopy('/vsistdout_redirect//vsimem/tmp.png', src_ds)
@@ -239,7 +239,7 @@ def png_10():
 # Test CreateCopy() interruption
 
 
-def png_11():
+def test_png_11():
 
     tst = gdaltest.GDALTest('PNG', 'byte.tif', 1, 4672)
 
@@ -251,7 +251,7 @@ def png_11():
 # Test optimized IRasterIO
 
 
-def png_12():
+def test_png_12():
     ds = gdal.Open('../gcore/data/stefan_full_rgba.png')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
 
@@ -288,7 +288,7 @@ def png_12():
 # Test metadata
 
 
-def png_13():
+def test_png_13():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetMetadataItem('foo', 'bar')
@@ -312,7 +312,7 @@ def png_13():
 # Test support for nbits < 8
 
 
-def png_14():
+def test_png_14():
 
     src_ds = gdal.Open('../gcore/data/oddsize1bit.tif')
     expected_cs = src_ds.GetRasterBand(1).Checksum()
@@ -362,20 +362,20 @@ def png_14():
 
 
 gdaltest_list = [
-    png_1,
-    png_2,
-    png_3,
-    png_4,
-    png_5,
-    png_6,
-    png_7,
-    png_8,
-    png_9,
-    png_10,
-    png_11,
-    png_12,
-    png_13,
-    png_14
+    test_png_1,
+    test_png_2,
+    test_png_3,
+    test_png_4,
+    test_png_5,
+    test_png_6,
+    test_png_7,
+    test_png_8,
+    test_png_9,
+    test_png_10,
+    test_png_11,
+    test_png_12,
+    test_png_13,
+    test_png_14
 ]
 
 if __name__ == '__main__':

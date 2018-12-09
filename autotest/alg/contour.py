@@ -42,7 +42,7 @@ import ogrtest
 # Test with -a and -i options
 
 
-def contour_1():
+def test_contour_1():
 
     try:
         os.remove('tmp/contour.shp')
@@ -132,7 +132,7 @@ def contour_1():
 # Test with -fl option and -3d option
 
 
-def contour_2():
+def test_contour_2():
 
     try:
         os.remove('tmp/contour.shp')
@@ -201,7 +201,7 @@ def contour_2():
 #
 
 
-def contour_real_world_case():
+def test_contour_real_world_case():
 
     ogr_ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbLineString)
@@ -225,7 +225,7 @@ def contour_real_world_case():
 
 # Test with -p option (polygonize)
 
-def contour_3():
+def test_contour_3():
 
     try:
         os.remove('tmp/contour.shp')
@@ -303,7 +303,7 @@ def contour_3():
 # Cleanup
 
 
-def contour_cleanup():
+def test_contour_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
     try:
         os.remove('tmp/gdal_contour.tif')
@@ -314,11 +314,11 @@ def contour_cleanup():
 
 
 gdaltest_list = [
-    contour_1,
-    contour_2,
-    contour_real_world_case,
-    contour_3,
-    contour_cleanup
+    test_contour_1,
+    test_contour_2,
+    test_contour_real_world_case,
+    test_contour_3,
+    test_contour_cleanup
 ]
 
 

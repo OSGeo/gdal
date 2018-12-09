@@ -48,7 +48,7 @@ wkts = [('POINT (0 1 2)', 'points', 0),
 # Test creation
 
 
-def ogr_pcidsk_1():
+def test_ogr_pcidsk_1():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
@@ -140,7 +140,7 @@ def ogr_pcidsk_1():
 # Test reading
 
 
-def ogr_pcidsk_2():
+def test_ogr_pcidsk_2():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
@@ -212,7 +212,7 @@ def ogr_pcidsk_2():
 # Check with test_ogrsf
 
 
-def ogr_pcidsk_3():
+def test_ogr_pcidsk_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -242,7 +242,7 @@ def ogr_pcidsk_3():
 # Test that we cannot open a raster only pcidsk in read-only mode
 
 
-def ogr_pcidsk_4():
+def test_ogr_pcidsk_4():
 
     if ogr.GetDriverByName('PCIDSK') is None:
         return 'skip'
@@ -261,7 +261,7 @@ def ogr_pcidsk_4():
 # Test that we can open a raster only pcidsk in update mode
 
 
-def ogr_pcidsk_5():
+def test_ogr_pcidsk_5():
 
     if ogr.GetDriverByName('PCIDSK') is None:
         return 'skip'
@@ -279,7 +279,7 @@ def ogr_pcidsk_5():
 ###############################################################################
 
 
-def ogr_pcidsk_add_field_to_non_empty_layer():
+def test_ogr_pcidsk_add_field_to_non_empty_layer():
 
     if ogr.GetDriverByName('PCIDSK') is None:
         return 'skip'
@@ -308,7 +308,7 @@ def ogr_pcidsk_add_field_to_non_empty_layer():
 ###############################################################################
 
 
-def ogr_pcidsk_too_many_layers():
+def test_ogr_pcidsk_too_many_layers():
 
     if ogr.GetDriverByName('PCIDSK') is None:
         return 'skip'
@@ -330,7 +330,7 @@ def ogr_pcidsk_too_many_layers():
 ###############################################################################
 # Check a polygon layer
 
-def ogr_pcidsk_online_1():
+def test_ogr_pcidsk_online_1():
 
     if ogr.GetDriverByName('PCIDSK') is None:
         return 'skip'
@@ -365,7 +365,7 @@ def ogr_pcidsk_online_1():
 # Check a polygon layer
 
 
-def ogr_pcidsk_online_2():
+def test_ogr_pcidsk_online_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -389,7 +389,7 @@ def ogr_pcidsk_online_2():
 # Cleanup
 
 
-def ogr_pcidsk_cleanup():
+def test_ogr_pcidsk_cleanup():
 
     gdal.Unlink('tmp/ogr_pcidsk_1.pix')
 
@@ -397,16 +397,16 @@ def ogr_pcidsk_cleanup():
 
 
 gdaltest_list = [
-    ogr_pcidsk_1,
-    ogr_pcidsk_2,
-    ogr_pcidsk_3,
-    ogr_pcidsk_4,
-    ogr_pcidsk_5,
-    ogr_pcidsk_add_field_to_non_empty_layer,
-    ogr_pcidsk_too_many_layers,
-    ogr_pcidsk_online_1,
-    ogr_pcidsk_online_2,
-    ogr_pcidsk_cleanup]
+    test_ogr_pcidsk_1,
+    test_ogr_pcidsk_2,
+    test_ogr_pcidsk_3,
+    test_ogr_pcidsk_4,
+    test_ogr_pcidsk_5,
+    test_ogr_pcidsk_add_field_to_non_empty_layer,
+    test_ogr_pcidsk_too_many_layers,
+    test_ogr_pcidsk_online_1,
+    test_ogr_pcidsk_online_2,
+    test_ogr_pcidsk_cleanup]
 
 if __name__ == '__main__':
 

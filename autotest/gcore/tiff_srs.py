@@ -43,7 +43,7 @@ import gdaltest
 # Test fix for #4677:
 
 
-def tiff_srs_without_linear_units():
+def test_tiff_srs_without_linear_units():
 
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=vandg +datum=WGS84')
@@ -73,7 +73,7 @@ def tiff_srs_without_linear_units():
 # Test COMPDCS without VerticalCSType
 
 
-def tiff_srs_compd_cs():
+def test_tiff_srs_compd_cs():
 
     sr = osr.SpatialReference()
     # EPSG:7400 without the Authority
@@ -121,7 +121,7 @@ def tiff_srs_compd_cs():
 # Test reading a GeoTIFF with both StdParallel1 and ScaleAtNatOrigin defined (#5791)
 
 
-def tiff_srs_weird_mercator_2sp():
+def test_tiff_srs_weird_mercator_2sp():
 
     ds = gdal.Open('data/weird_mercator_2sp.tif')
     gdal.PushErrorHandler()
@@ -167,7 +167,7 @@ def tiff_srs_weird_mercator_2sp():
 # Test reading ESRI WGS_1984_Web_Mercator_Auxiliary_Sphere
 
 
-def tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
+def test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
 
     ds = gdal.Open('data/WGS_1984_Web_Mercator_Auxiliary_Sphere.tif')
     wkt = ds.GetProjectionRef()
@@ -200,7 +200,7 @@ def tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
 # Test writing and reading various angular units
 
 
-def tiff_srs_angular_units():
+def test_tiff_srs_angular_units():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
     ds.SetProjection("""GEOGCS["WGS 84 (arc-second)",
@@ -301,7 +301,7 @@ def tiff_srs_angular_units():
 # Test writing and reading a unknown datum but with a known ellipsoid
 
 
-def tiff_custom_datum_known_ellipsoid():
+def test_tiff_custom_datum_known_ellipsoid():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_custom_datum_known_ellipsoid.tif', 1, 1)
     ds.SetProjection("""GEOGCS["WGS 84 based",
@@ -327,7 +327,7 @@ def tiff_custom_datum_known_ellipsoid():
 # override to another unit (us-feet) ... (#6210)
 
 
-def tiff_srs_epsg_2853_with_us_feet():
+def test_tiff_srs_epsg_2853_with_us_feet():
 
     old_val = gdal.GetConfigOption('GTIFF_IMPORT_FROM_EPSG')
     gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', 'YES')
@@ -354,7 +354,7 @@ def tiff_srs_epsg_2853_with_us_feet():
 # Test reading a SRS with a PCSCitationGeoKey = "LUnits = ..."
 
 
-def tiff_srs_PCSCitationGeoKey_LUnits():
+def test_tiff_srs_PCSCitationGeoKey_LUnits():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif', 1, 1)
     ds.SetProjection("""PROJCS["UTM Zone 32, Northern Hemisphere",
@@ -388,7 +388,7 @@ def tiff_srs_PCSCitationGeoKey_LUnits():
 # Test reading a geotiff key ProjectionGeoKey (Short,1): Unknown-3856
 
 
-def tiff_srs_projection_3856():
+def test_tiff_srs_projection_3856():
 
     ds = gdal.Open('data/projection_3856.tif')
     wkt = ds.GetProjectionRef()
@@ -405,7 +405,7 @@ def tiff_srs_projection_3856():
 # Test reading a geotiff with a LOCAL_CS and a Imagine citation
 
 
-def tiff_srs_imagine_localcs_citation():
+def test_tiff_srs_imagine_localcs_citation():
 
     ds = gdal.Open('data/imagine_localcs_citation.tif')
     wkt = ds.GetProjectionRef()
@@ -423,7 +423,7 @@ def tiff_srs_imagine_localcs_citation():
 # override the default coming from EPSG
 
 
-def tiff_srs_towgs84_override():
+def test_tiff_srs_towgs84_override():
 
     ds = gdal.Open('data/gtiff_towgs84_override.tif')
     wkt = ds.GetProjectionRef()
@@ -440,7 +440,7 @@ def tiff_srs_towgs84_override():
 # Test reading PCSCitationGeoKey (#7199)
 
 
-def tiff_srs_pcscitation():
+def test_tiff_srs_pcscitation():
 
     ds = gdal.Open('data/pcscitation.tif')
     wkt = ds.GetProjectionRef()
@@ -560,18 +560,18 @@ def test_tiff_srs_proj4(proj4):
 
 
 gdaltest_list = [
-    tiff_srs_without_linear_units,
-    tiff_srs_compd_cs,
-    tiff_srs_weird_mercator_2sp,
-    tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere,
-    tiff_srs_angular_units,
-    tiff_custom_datum_known_ellipsoid,
-    tiff_srs_epsg_2853_with_us_feet,
-    tiff_srs_PCSCitationGeoKey_LUnits,
-    tiff_srs_projection_3856,
-    tiff_srs_imagine_localcs_citation,
-    tiff_srs_towgs84_override,
-    tiff_srs_pcscitation,
+    test_tiff_srs_without_linear_units,
+    test_tiff_srs_compd_cs,
+    test_tiff_srs_weird_mercator_2sp,
+    test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere,
+    test_tiff_srs_angular_units,
+    test_tiff_custom_datum_known_ellipsoid,
+    test_tiff_srs_epsg_2853_with_us_feet,
+    test_tiff_srs_PCSCitationGeoKey_LUnits,
+    test_tiff_srs_projection_3856,
+    test_tiff_srs_imagine_localcs_citation,
+    test_tiff_srs_towgs84_override,
+    test_tiff_srs_pcscitation,
 ]
 
 if __name__ == '__main__':

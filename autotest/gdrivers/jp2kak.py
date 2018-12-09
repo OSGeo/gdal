@@ -40,7 +40,7 @@ import gdaltest
 # Read test of simple byte reference data.
 
 
-def jp2kak_1():
+def test_jp2kak_1():
 
     gdaltest.jp2kak_drv = gdal.GetDriverByName('JP2KAK')
     if gdaltest.jp2kak_drv is None:
@@ -55,7 +55,7 @@ def jp2kak_1():
 # Read test of simple 16bit reference data.
 
 
-def jp2kak_2():
+def test_jp2kak_2():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -67,7 +67,7 @@ def jp2kak_2():
 # Test lossless copying.
 
 
-def jp2kak_3():
+def test_jp2kak_3():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -81,7 +81,7 @@ def jp2kak_3():
 # Test GeoJP2 production with geotransform.
 
 
-def jp2kak_4():
+def test_jp2kak_4():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -95,7 +95,7 @@ def jp2kak_4():
 # Test GeoJP2 production with gcps.
 
 
-def jp2kak_5():
+def test_jp2kak_5():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -110,7 +110,7 @@ def jp2kak_5():
 #
 
 
-def jp2kak_8():
+def test_jp2kak_8():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -126,7 +126,7 @@ def jp2kak_8():
 #
 
 
-def jp2kak_9():
+def test_jp2kak_9():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -140,7 +140,7 @@ def jp2kak_9():
 #
 
 
-def jp2kak_10():
+def test_jp2kak_10():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -168,7 +168,7 @@ def jp2kak_10():
 #
 
 
-def jp2kak_11():
+def test_jp2kak_11():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -186,7 +186,7 @@ def jp2kak_11():
 #
 
 
-def jp2kak_12():
+def test_jp2kak_12():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -204,7 +204,7 @@ def jp2kak_12():
 # Test internal overviews.
 #
 
-def jp2kak_13():
+def test_jp2kak_13():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -239,7 +239,7 @@ def jp2kak_13():
 #
 
 
-def jp2kak_14():
+def test_jp2kak_14():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -285,7 +285,7 @@ def jp2kak_14():
 #
 
 
-def jp2kak_15():
+def test_jp2kak_15():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -308,7 +308,7 @@ def jp2kak_15():
 #
 
 
-def jp2kak_16():
+def test_jp2kak_16():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -341,7 +341,7 @@ def jp2kak_16():
 # This test case was adapted from the "jp2kak_7()" case above.
 
 
-def jp2kak_17():
+def test_jp2kak_17():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -375,7 +375,7 @@ def jp2kak_17():
 # Test lossless copying of Int16
 
 
-def jp2kak_18():
+def test_jp2kak_18():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -389,7 +389,7 @@ def jp2kak_18():
 # Test lossless copying of UInt16
 
 
-def jp2kak_19():
+def test_jp2kak_19():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -403,7 +403,7 @@ def jp2kak_19():
 # Test auto-promotion of 1bit alpha band to 8bit
 
 
-def jp2kak_20():
+def test_jp2kak_20():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -461,7 +461,7 @@ def jp2kak_20():
 # Test non nearest upsampling
 
 
-def jp2kak_21():
+def test_jp2kak_21():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -499,7 +499,7 @@ def jp2kak_21():
 # Test RGBA datasets
 
 
-def jp2kak_22():
+def test_jp2kak_22():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
@@ -530,7 +530,7 @@ def jp2kak_22():
 ###############################################################################
 # Cleanup.
 
-def jp2kak_cleanup():
+def test_jp2kak_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -538,27 +538,27 @@ def jp2kak_cleanup():
 
 
 gdaltest_list = [
-    jp2kak_1,
-    jp2kak_2,
-    jp2kak_3,
-    jp2kak_4,
-    jp2kak_5,
-    jp2kak_8,
-    jp2kak_9,
-    jp2kak_10,
-    jp2kak_11,
-    jp2kak_12,
-    jp2kak_13,
-    jp2kak_14,
-    jp2kak_15,
-    jp2kak_16,
-    jp2kak_17,
-    jp2kak_18,
-    jp2kak_19,
-    jp2kak_20,
-    jp2kak_21,
-    jp2kak_22,
-    jp2kak_cleanup]
+    test_jp2kak_1,
+    test_jp2kak_2,
+    test_jp2kak_3,
+    test_jp2kak_4,
+    test_jp2kak_5,
+    test_jp2kak_8,
+    test_jp2kak_9,
+    test_jp2kak_10,
+    test_jp2kak_11,
+    test_jp2kak_12,
+    test_jp2kak_13,
+    test_jp2kak_14,
+    test_jp2kak_15,
+    test_jp2kak_16,
+    test_jp2kak_17,
+    test_jp2kak_18,
+    test_jp2kak_19,
+    test_jp2kak_20,
+    test_jp2kak_21,
+    test_jp2kak_22,
+    test_jp2kak_cleanup]
 
 if __name__ == '__main__':
 

@@ -39,7 +39,7 @@ from osgeo import osr
 #
 
 
-def osr_micoordsys_1():
+def test_osr_micoordsys_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromMICoordSys('Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0')
@@ -61,7 +61,7 @@ def osr_micoordsys_1():
 #
 
 
-def osr_micoordsys_2():
+def test_osr_micoordsys_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
@@ -91,7 +91,7 @@ def osr_micoordsys_2():
 #
 
 
-def osr_micoordsys_3():
+def test_osr_micoordsys_3():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
@@ -123,9 +123,9 @@ def osr_micoordsys_3():
 
 
 gdaltest_list = [
-    osr_micoordsys_1,
-    osr_micoordsys_2,
-    osr_micoordsys_3]
+    test_osr_micoordsys_1,
+    test_osr_micoordsys_2,
+    test_osr_micoordsys_3]
 
 if __name__ == '__main__':
 

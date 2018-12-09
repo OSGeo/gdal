@@ -43,7 +43,7 @@ import gdaltest
 # Find PLMosaic driver
 
 
-def plmosaic_1():
+def test_plmosaic_1():
 
     gdaltest.plmosaic_drv = gdal.GetDriverByName('PLMosaic')
 
@@ -55,7 +55,7 @@ def plmosaic_1():
 # Error: no API_KEY
 
 
-def plmosaic_2():
+def test_plmosaic_2():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -75,7 +75,7 @@ def plmosaic_2():
 # Error case: invalid root URL
 
 
-def plmosaic_3():
+def test_plmosaic_3():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -95,7 +95,7 @@ def plmosaic_3():
 # Error case: invalid JSON
 
 
-def plmosaic_4():
+def test_plmosaic_4():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -117,7 +117,7 @@ def plmosaic_4():
 # Error case: not a JSON dictionary
 
 
-def plmosaic_5():
+def test_plmosaic_5():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -139,7 +139,7 @@ def plmosaic_5():
 # Error case: missing "mosaics" element
 
 
-def plmosaic_6():
+def test_plmosaic_6():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -161,7 +161,7 @@ def plmosaic_6():
 # Valid root but no mosaics
 
 
-def plmosaic_7():
+def test_plmosaic_7():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -184,7 +184,7 @@ def plmosaic_7():
 # Valid root with 2 mosaics
 
 
-def plmosaic_8():
+def test_plmosaic_8():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -242,7 +242,7 @@ def plmosaic_8():
 # Error case: invalid mosaic
 
 
-def plmosaic_9():
+def test_plmosaic_9():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -263,7 +263,7 @@ def plmosaic_9():
 # Invalid mosaic definition: invalid JSON
 
 
-def plmosaic_9bis():
+def test_plmosaic_9bis():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -285,7 +285,7 @@ def plmosaic_9bis():
 # Invalid mosaic definition: JSON without mosaics array
 
 
-def plmosaic_9ter():
+def test_plmosaic_9ter():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -307,7 +307,7 @@ def plmosaic_9ter():
 # Invalid mosaic definition: missing parameters
 
 
-def plmosaic_10():
+def test_plmosaic_10():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -334,7 +334,7 @@ def plmosaic_10():
 # Invalid mosaic definition: unsupported projection
 
 
-def plmosaic_11():
+def test_plmosaic_11():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -367,7 +367,7 @@ def plmosaic_11():
 # Invalid mosaic definition: unsupported datatype
 
 
-def plmosaic_12():
+def test_plmosaic_12():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -400,7 +400,7 @@ def plmosaic_12():
 # Invalid mosaic definition: unsupported resolution
 
 
-def plmosaic_13():
+def test_plmosaic_13():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -433,7 +433,7 @@ def plmosaic_13():
 # Invalid mosaic definition: unsupported quad_size
 
 
-def plmosaic_14():
+def test_plmosaic_14():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -466,7 +466,7 @@ def plmosaic_14():
 # Nearly valid mosaic definition. Warning about invalid links.tiles
 
 
-def plmosaic_15():
+def test_plmosaic_15():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -513,7 +513,7 @@ def plmosaic_15():
 # Valid mosaic definition
 
 
-def plmosaic_16():
+def test_plmosaic_16():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -586,7 +586,7 @@ def plmosaic_16():
 # Open with explicit MOSAIC dataset open option
 
 
-def plmosaic_17():
+def test_plmosaic_17():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -756,7 +756,7 @@ def plmosaic_17():
 # Test location info
 
 
-def plmosaic_18():
+def test_plmosaic_18():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -808,7 +808,7 @@ def plmosaic_18():
 # Try error in saving in cache
 
 
-def plmosaic_19():
+def test_plmosaic_19():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -839,7 +839,7 @@ def plmosaic_19():
 # Try disabling cache
 
 
-def plmosaic_20():
+def test_plmosaic_20():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -868,7 +868,7 @@ def plmosaic_20():
 # Try use_tiles
 
 
-def plmosaic_21():
+def test_plmosaic_21():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -966,7 +966,7 @@ def plmosaic_21():
 # Valid mosaic definition with bbox
 
 
-def plmosaic_with_bbox():
+def test_plmosaic_with_bbox():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -1072,7 +1072,7 @@ def plmosaic_with_bbox():
 #
 
 
-def plmosaic_cleanup():
+def test_plmosaic_cleanup():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
@@ -1100,31 +1100,31 @@ def plmosaic_cleanup():
 
 
 gdaltest_list = [
-    plmosaic_1,
-    plmosaic_2,
-    plmosaic_3,
-    plmosaic_4,
-    plmosaic_5,
-    plmosaic_6,
-    plmosaic_7,
-    plmosaic_8,
-    plmosaic_9,
-    plmosaic_9bis,
-    plmosaic_9ter,
-    plmosaic_10,
-    plmosaic_11,
-    plmosaic_12,
-    plmosaic_13,
-    plmosaic_14,
-    plmosaic_15,
-    plmosaic_16,
-    plmosaic_17,
-    plmosaic_18,
-    plmosaic_19,
-    plmosaic_20,
-    plmosaic_21,
-    plmosaic_with_bbox,
-    plmosaic_cleanup]
+    test_plmosaic_1,
+    test_plmosaic_2,
+    test_plmosaic_3,
+    test_plmosaic_4,
+    test_plmosaic_5,
+    test_plmosaic_6,
+    test_plmosaic_7,
+    test_plmosaic_8,
+    test_plmosaic_9,
+    test_plmosaic_9bis,
+    test_plmosaic_9ter,
+    test_plmosaic_10,
+    test_plmosaic_11,
+    test_plmosaic_12,
+    test_plmosaic_13,
+    test_plmosaic_14,
+    test_plmosaic_15,
+    test_plmosaic_16,
+    test_plmosaic_17,
+    test_plmosaic_18,
+    test_plmosaic_19,
+    test_plmosaic_20,
+    test_plmosaic_21,
+    test_plmosaic_with_bbox,
+    test_plmosaic_cleanup]
 
 if __name__ == '__main__':
 

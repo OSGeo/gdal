@@ -60,7 +60,7 @@ def ogr_rfc30_1_internal(filename, layer_name):
     return 'success'
 
 
-def ogr_rfc30_1():
+def test_ogr_rfc30_1():
 
     if version_info >= (3, 0, 0):
         filename = '/vsimem/\u00e9.shp'
@@ -73,7 +73,7 @@ def ogr_rfc30_1():
     return ogr_rfc30_1_internal(filename, layer_name)
 
 
-def ogr_rfc30_1_bis():
+def test_ogr_rfc30_1_bis():
 
     if version_info >= (3, 0, 0):
         return 'skip'
@@ -87,7 +87,7 @@ def ogr_rfc30_1_bis():
     return ogr_rfc30_1_internal(filename, layer_name)
 
 
-gdaltest_list = [ogr_rfc30_1, ogr_rfc30_1_bis]
+gdaltest_list = [test_ogr_rfc30_1, test_ogr_rfc30_1_bis]
 
 if __name__ == '__main__':
 

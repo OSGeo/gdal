@@ -45,7 +45,7 @@ import gdaltest
 # Test if DB2 and tile drivers are available
 
 
-def gpkg_init():
+def test_gpkg_init():
 
     gdaltest.db2_drv = None
 
@@ -169,7 +169,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 # Single band, PNG
 
 
-def gpkg_1():
+def test_gpkg_1():
 
     if gdaltest.db2_drv is None:
         return 'skip'
@@ -224,8 +224,8 @@ def gpkg_1():
 
 
 gdaltest_list = [
-    gpkg_init,
-    gpkg_1
+    test_gpkg_init,
+    test_gpkg_1
 ]
 # gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ import gdaltest
 ###############################################################################
 
 
-def jpegls_1():
+def test_jpegls_1():
 
     if gdal.GetDriverByName('JPEGLS') is None:
         return 'skip'
@@ -48,7 +48,7 @@ def jpegls_1():
 ###############################################################################
 
 
-def jpegls_2():
+def test_jpegls_2():
 
     if gdal.GetDriverByName('JPEGLS') is None:
         return 'skip'
@@ -58,8 +58,8 @@ def jpegls_2():
 
 
 gdaltest_list = [
-    jpegls_1,
-    jpegls_2]
+    test_jpegls_1,
+    test_jpegls_2]
 
 
 if __name__ == '__main__':

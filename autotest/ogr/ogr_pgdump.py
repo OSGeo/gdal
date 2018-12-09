@@ -42,7 +42,7 @@ from osgeo import gdal
 # Create table from data/poly.shp
 
 
-def ogr_pgdump_1():
+def test_ogr_pgdump_1():
 
     try:
         os.remove('tmp/tpoly.sql')
@@ -110,7 +110,7 @@ def ogr_pgdump_1():
 # Create table from data/poly.shp with PG_USE_COPY=YES
 
 
-def ogr_pgdump_2():
+def test_ogr_pgdump_2():
 
     try:
         os.remove('tmp/tpoly.sql')
@@ -184,7 +184,7 @@ def ogr_pgdump_2():
 ###############################################################################
 # Create table from data/poly.shp without any geometry
 
-def ogr_pgdump_3():
+def test_ogr_pgdump_3():
 
     try:
         os.remove('tmp/tpoly.sql')
@@ -270,7 +270,7 @@ def ogr_pgdump_3():
 # Test multi-geometry support
 
 
-def ogr_pgdump_4():
+def test_ogr_pgdump_4():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('tmp/ogr_pgdump_4.sql', options=['LINEFORMAT=LF'])
     if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
@@ -323,7 +323,7 @@ def ogr_pgdump_4():
 # Test non nullable field support
 
 
-def ogr_pgdump_5():
+def test_ogr_pgdump_5():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_5.sql', options=['LINEFORMAT=LF'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -385,7 +385,7 @@ def ogr_pgdump_5():
 # Test default values
 
 
-def ogr_pgdump_6():
+def test_ogr_pgdump_6():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_6.sql', options=['LINEFORMAT=LF'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -479,7 +479,7 @@ def ogr_pgdump_6():
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
 
-def ogr_pgdump_7():
+def test_ogr_pgdump_7():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_7.sql', options=['LINEFORMAT=LF'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['FID=myfid'])
@@ -590,7 +590,7 @@ def ogr_pgdump_7():
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
 
-def ogr_pgdump_8():
+def test_ogr_pgdump_8():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_8.sql', options=['LINEFORMAT=LF'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['FID=myfid'])
@@ -709,7 +709,7 @@ def ogr_pgdump_8():
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
 
-def ogr_pgdump_9(pg_use_copy='YES'):
+def test_ogr_pgdump_9(pg_use_copy='YES'):
 
     gdal.SetConfigOption('PG_USE_COPY', pg_use_copy)
 
@@ -771,14 +771,14 @@ def ogr_pgdump_9(pg_use_copy='YES'):
     return 'success'
 
 
-def ogr_pgdump_10():
-    return ogr_pgdump_9('NO')
+def test_ogr_pgdump_10():
+    return test_ogr_pgdump_9('NO')
 
 ###############################################################################
 # Export POINT EMPTY for PostGIS 2.2
 
 
-def ogr_pgdump_11():
+def test_ogr_pgdump_11():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_11.sql', options=['LINEFORMAT=LF'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint, options=['POSTGIS_VERSION=2.2'])
@@ -809,7 +809,7 @@ def ogr_pgdump_11():
 # is not-nullable, and hence the CreateGeomField() interface is used.
 
 
-def ogr_pgdump_12():
+def test_ogr_pgdump_12():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_12.sql', options=['LINEFORMAT=LF'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['GEOMETRY_NAME=another_name'])
@@ -832,7 +832,7 @@ def ogr_pgdump_12():
 # Test ZM support
 
 
-def ogr_pgdump_13():
+def test_ogr_pgdump_13():
 
     tests = [[ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',2)", "0101000000000000000000F03F0000000000000040"]],
              [ogr.wkbUnknown, ['GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRY", "0101000000000000000000F03F0000000000000040"]],
@@ -906,7 +906,7 @@ def ogr_pgdump_13():
 # Test description
 
 
-def ogr_pgdump_14():
+def test_ogr_pgdump_14():
 
     # Set with DESCRIPTION layer creation option
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options=['LINEFORMAT=LF'])
@@ -965,7 +965,7 @@ def ogr_pgdump_14():
 # NULL vs unset
 
 
-def ogr_pgdump_15():
+def test_ogr_pgdump_15():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_15.sql', options=['LINEFORMAT=LF'])
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -995,7 +995,7 @@ def ogr_pgdump_15():
 # Test sequence updating
 
 
-def ogr_pgdump_16():
+def test_ogr_pgdump_16():
 
     for pg_use_copy in ('YES', 'NO'):
 
@@ -1027,7 +1027,7 @@ def ogr_pgdump_16():
 # Cleanup
 
 
-def ogr_pgdump_cleanup():
+def test_ogr_pgdump_cleanup():
 
     try:
         os.remove('tmp/tpoly.sql')
@@ -1041,23 +1041,23 @@ def ogr_pgdump_cleanup():
 
 
 gdaltest_list = [
-    ogr_pgdump_1,
-    ogr_pgdump_2,
-    ogr_pgdump_3,
-    ogr_pgdump_4,
-    ogr_pgdump_5,
-    ogr_pgdump_6,
-    ogr_pgdump_7,
-    ogr_pgdump_8,
-    ogr_pgdump_9,
-    ogr_pgdump_10,
-    ogr_pgdump_11,
-    ogr_pgdump_12,
-    ogr_pgdump_13,
-    ogr_pgdump_14,
-    ogr_pgdump_15,
-    ogr_pgdump_16,
-    ogr_pgdump_cleanup]
+    test_ogr_pgdump_1,
+    test_ogr_pgdump_2,
+    test_ogr_pgdump_3,
+    test_ogr_pgdump_4,
+    test_ogr_pgdump_5,
+    test_ogr_pgdump_6,
+    test_ogr_pgdump_7,
+    test_ogr_pgdump_8,
+    test_ogr_pgdump_9,
+    test_ogr_pgdump_10,
+    test_ogr_pgdump_11,
+    test_ogr_pgdump_12,
+    test_ogr_pgdump_13,
+    test_ogr_pgdump_14,
+    test_ogr_pgdump_15,
+    test_ogr_pgdump_16,
+    test_ogr_pgdump_cleanup]
 
 
 if __name__ == '__main__':

@@ -62,7 +62,7 @@ def CheckFileSize(src_filename):
 # Initiate the test file
 
 
-def ogr_rfc35_mitab_1():
+def test_ogr_rfc35_mitab_1():
 
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/rfc35_test.tab')
     lyr = ds.CreateLayer('rfc35_test')
@@ -177,7 +177,7 @@ def Check(lyr, expected_order):
     return 'success'
 
 
-def ogr_rfc35_mitab_2():
+def test_ogr_rfc35_mitab_2():
 
     ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
@@ -296,7 +296,7 @@ def ogr_rfc35_mitab_2():
 # Test AlterFieldDefn() for change of name and width
 
 
-def ogr_rfc35_mitab_3():
+def test_ogr_rfc35_mitab_3():
 
     ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
@@ -358,7 +358,7 @@ def ogr_rfc35_mitab_3():
 # Test AlterFieldDefn() for change of type
 
 
-def ogr_rfc35_mitab_4():
+def test_ogr_rfc35_mitab_4():
 
     ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
@@ -543,7 +543,7 @@ def ogr_rfc35_mitab_4():
 # Test DeleteField()
 
 
-def ogr_rfc35_mitab_5():
+def test_ogr_rfc35_mitab_5():
 
     ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
@@ -640,7 +640,7 @@ def ogr_rfc35_mitab_5():
 # Initiate the test file
 
 
-def ogr_rfc35_mitab_cleanup():
+def test_ogr_rfc35_mitab_cleanup():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/rfc35_test.tab')
 
@@ -648,12 +648,12 @@ def ogr_rfc35_mitab_cleanup():
 
 
 gdaltest_list = [
-    ogr_rfc35_mitab_1,
-    ogr_rfc35_mitab_2,
-    ogr_rfc35_mitab_3,
-    ogr_rfc35_mitab_4,
-    ogr_rfc35_mitab_5,
-    ogr_rfc35_mitab_cleanup]
+    test_ogr_rfc35_mitab_1,
+    test_ogr_rfc35_mitab_2,
+    test_ogr_rfc35_mitab_3,
+    test_ogr_rfc35_mitab_4,
+    test_ogr_rfc35_mitab_5,
+    test_ogr_rfc35_mitab_cleanup]
 
 
 if __name__ == '__main__':

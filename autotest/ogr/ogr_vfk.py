@@ -43,7 +43,7 @@ from osgeo import ogr
 # check number of fields and features
 
 
-def ogr_vfk_1():
+def test_ogr_vfk_1():
 
     gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
     if gdaltest.vfk_drv is None:
@@ -89,7 +89,7 @@ def ogr_vfk_1():
 # Read the first feature from layer 'PAR', check envelope
 
 
-def ogr_vfk_2():
+def test_ogr_vfk_2():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -121,7 +121,7 @@ def ogr_vfk_2():
 # Read features from layer 'SOBR', test attribute query
 
 
-def ogr_vfk_3():
+def test_ogr_vfk_3():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -152,7 +152,7 @@ def ogr_vfk_3():
 # Read features from layer 'SBP', test random access, check length
 
 
-def ogr_vfk_4():
+def test_ogr_vfk_4():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -176,7 +176,7 @@ def ogr_vfk_4():
 # Read features from layer 'HP', check geometry type
 
 
-def ogr_vfk_5():
+def test_ogr_vfk_5():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -199,7 +199,7 @@ def ogr_vfk_5():
 # Re-Open file (test .db persistence)
 
 
-def ogr_vfk_6():
+def test_ogr_vfk_6():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -242,7 +242,7 @@ def ogr_vfk_6():
 # Read PAR layer, check data types (Integer64 new in GDAL 2.2)
 
 
-def ogr_vfk_7():
+def test_ogr_vfk_7():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -264,7 +264,7 @@ def ogr_vfk_7():
 # Open DB file as datasource (new in GDAL 2.2)
 
 
-def ogr_vfk_8():
+def test_ogr_vfk_8():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -292,7 +292,7 @@ def ogr_vfk_8():
 # Open datasource with SUPPRESS_GEOMETRY open option (new in GDAL 2.3)
 
 
-def ogr_vfk_9():
+def test_ogr_vfk_9():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -321,7 +321,7 @@ def ogr_vfk_9():
 # Open datasource with FILE_FIELD open option (new in GDAL 2.4)
 
 
-def ogr_vfk_10():
+def test_ogr_vfk_10():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -352,7 +352,7 @@ def ogr_vfk_10():
 # Read PAR layer, check sequential feature access consistency
 
 
-def ogr_vfk_11():
+def test_ogr_vfk_11():
     def count_features():
         gdaltest.vfk_layer_par.ResetReading()
         count = 0
@@ -381,7 +381,7 @@ def ogr_vfk_11():
 # cleanup
 
 
-def ogr_vfk_cleanup():
+def test_ogr_vfk_cleanup():
 
     if gdaltest.vfk_drv is None:
         return 'skip'
@@ -403,18 +403,18 @@ def ogr_vfk_cleanup():
 
 
 gdaltest_list = [
-    ogr_vfk_1,
-    ogr_vfk_2,
-    ogr_vfk_3,
-    ogr_vfk_4,
-    ogr_vfk_5,
-    ogr_vfk_6,
-    ogr_vfk_7,
-    ogr_vfk_8,
-    ogr_vfk_9,
-    ogr_vfk_10,
-    ogr_vfk_11,
-    ogr_vfk_cleanup]
+    test_ogr_vfk_1,
+    test_ogr_vfk_2,
+    test_ogr_vfk_3,
+    test_ogr_vfk_4,
+    test_ogr_vfk_5,
+    test_ogr_vfk_6,
+    test_ogr_vfk_7,
+    test_ogr_vfk_8,
+    test_ogr_vfk_9,
+    test_ogr_vfk_10,
+    test_ogr_vfk_11,
+    test_ogr_vfk_cleanup]
 
 if __name__ == '__main__':
     gdaltest.setup_run('ogr_vfk')

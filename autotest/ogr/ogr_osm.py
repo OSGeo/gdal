@@ -42,7 +42,7 @@ import ogrtest
 # Test .pbf
 
 
-def ogr_osm_1(filename='data/test.pbf'):
+def test_ogr_osm_1(filename='data/test.pbf'):
 
     ogrtest.osm_drv = ogr.GetDriverByName('OSM')
     if ogrtest.osm_drv is None:
@@ -281,14 +281,14 @@ def ogr_osm_1(filename='data/test.pbf'):
 # Test .osm
 
 
-def ogr_osm_2():
-    return ogr_osm_1('data/test.osm')
+def test_ogr_osm_2():
+    return test_ogr_osm_1('data/test.osm')
 
 ###############################################################################
 # Test ogr2ogr
 
 
-def ogr_osm_3(options=None, all_layers=False):
+def test_ogr_osm_3(options=None, all_layers=False):
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -308,7 +308,7 @@ def ogr_osm_3(options=None, all_layers=False):
     with gdaltest.error_handler():
         gdal.VectorTranslate('tmp/ogr_osm_3', 'data/test.pbf', options=layers + options)
 
-    ret = ogr_osm_1(filepath)
+    ret = test_ogr_osm_1(filepath)
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filepath)
 
@@ -318,9 +318,9 @@ def ogr_osm_3(options=None, all_layers=False):
 # Test ogr2ogr with --config OSM_USE_CUSTOM_INDEXING NO and -skip
 
 
-def ogr_osm_3_sqlite_nodes():
+def test_ogr_osm_3_sqlite_nodes():
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
-    ret = ogr_osm_3(options='-skip')
+    ret = test_ogr_osm_3(options='-skip')
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', None)
     return ret
 
@@ -328,9 +328,9 @@ def ogr_osm_3_sqlite_nodes():
 # Test ogr2ogr with --config OSM_COMPRESS_NODES YES
 
 
-def ogr_osm_3_custom_compress_nodes():
+def test_ogr_osm_3_custom_compress_nodes():
     gdal.SetConfigOption('OSM_COMPRESS_NODES', 'YES')
-    ret = ogr_osm_3()
+    ret = test_ogr_osm_3()
     gdal.SetConfigOption('OSM_COMPRESS_NODES', None)
     return ret
 
@@ -338,14 +338,14 @@ def ogr_osm_3_custom_compress_nodes():
 # Test ogr2ogr with all layers
 
 
-def ogr_osm_3_all_layers():
-    return ogr_osm_3(options='-skip', all_layers=True)
+def test_ogr_osm_3_all_layers():
+    return test_ogr_osm_3(options='-skip', all_layers=True)
 
 ###############################################################################
 # Test optimization when reading only the points layer through a SQL request
 
 
-def ogr_osm_4():
+def test_ogr_osm_4():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -409,7 +409,7 @@ def ogr_osm_4():
 # Test optimizations for early attribute filter evaluation
 
 
-def ogr_osm_5():
+def test_ogr_osm_5():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -457,7 +457,7 @@ def ogr_osm_5():
 # Test ogr2ogr -sql
 
 
-def ogr_osm_6():
+def test_ogr_osm_6():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -493,7 +493,7 @@ def ogr_osm_6():
 # with SQLite dialect (#4825)
 
 
-def ogr_osm_7():
+def test_ogr_osm_7():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -519,7 +519,7 @@ def ogr_osm_7():
 # Test 64-bit ids
 
 
-def ogr_osm_8():
+def test_ogr_osm_8():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -553,14 +553,14 @@ def ogr_osm_8():
 # Same as ogr_osm_8 but with OSM_USE_CUSTOM_INDEXING=NO
 
 
-def ogr_osm_9():
+def test_ogr_osm_9():
 
     if ogrtest.osm_drv is None:
         return 'skip'
 
     old_val = gdal.GetConfigOption('OSM_USE_CUSTOM_INDEXING')
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
-    ret = ogr_osm_8()
+    ret = test_ogr_osm_8()
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', old_val)
 
     return ret
@@ -569,7 +569,7 @@ def ogr_osm_9():
 # Some error conditions
 
 
-def ogr_osm_10():
+def test_ogr_osm_10():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -659,7 +659,7 @@ def ogr_osm_10():
 # Test all_tags
 
 
-def ogr_osm_11():
+def test_ogr_osm_11():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -690,7 +690,7 @@ def ogr_osm_11():
 # Test that attribute filter set on a line layer is well taken into
 # account
 
-def ogr_osm_12():
+def test_ogr_osm_12():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -717,21 +717,21 @@ def ogr_osm_12():
 # Test test_uncompressed_dense_true_nometadata.pbf
 
 
-def ogr_osm_test_uncompressed_dense_true_nometadata_pbf():
-    return ogr_osm_1('data/test_uncompressed_dense_true_nometadata.pbf')
+def test_ogr_osm_test_uncompressed_dense_true_nometadata_pbf():
+    return test_ogr_osm_1('data/test_uncompressed_dense_true_nometadata.pbf')
 
 ###############################################################################
 # Test test_uncompressed_dense_false.pbf
 
 
-def ogr_osm_test_uncompressed_dense_false_pbf():
-    return ogr_osm_1('data/test_uncompressed_dense_false.pbf')
+def test_ogr_osm_test_uncompressed_dense_false_pbf():
+    return test_ogr_osm_1('data/test_uncompressed_dense_false.pbf')
 
 # Special case: if an object has a 'osm_id' key, then do not use it to override
 # "our" osm_id field. But put it in other_fields (#6347)
 
 
-def ogr_osm_13():
+def test_ogr_osm_13():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
         return 'skip'
@@ -760,7 +760,7 @@ def ogr_osm_13():
 # Test that we handle polygons in other_relations (#6475)
 
 
-def ogr_osm_14():
+def test_ogr_osm_14():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
         return 'skip'
@@ -817,7 +817,7 @@ def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
     return 0
 
 
-def ogr_osm_15():
+def test_ogr_osm_15():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -907,7 +907,7 @@ def ogr_osm_15():
 # Test laundering of tags (https://github.com/OSGeo/gdal/pull/161)
 
 
-def ogr_osm_16():
+def test_ogr_osm_16():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
         return 'skip'
@@ -947,7 +947,7 @@ attributes=foo:baar,foo:bar
 # GDALVectorTranslate() in random feature mode, when there is no feature)
 
 
-def ogr_osm_17():
+def test_ogr_osm_17():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
         return 'skip'
@@ -973,7 +973,7 @@ def ogr_osm_17():
 # regarding EOF
 
 
-def ogr_osm_18():
+def test_ogr_osm_18():
 
     if ogrtest.osm_drv is None:
         return 'skip'
@@ -994,29 +994,29 @@ def ogr_osm_18():
 
 
 gdaltest_list = [
-    ogr_osm_1,
-    ogr_osm_2,
-    ogr_osm_3,
-    ogr_osm_3_sqlite_nodes,
-    ogr_osm_3_custom_compress_nodes,
-    ogr_osm_3_all_layers,
-    ogr_osm_4,
-    ogr_osm_5,
-    ogr_osm_6,
-    ogr_osm_7,
-    ogr_osm_8,
-    ogr_osm_9,
-    ogr_osm_10,
-    ogr_osm_11,
-    ogr_osm_12,
-    ogr_osm_test_uncompressed_dense_true_nometadata_pbf,
-    ogr_osm_test_uncompressed_dense_false_pbf,
-    ogr_osm_13,
-    ogr_osm_14,
-    ogr_osm_15,
-    ogr_osm_16,
-    ogr_osm_17,
-    ogr_osm_18,
+    test_ogr_osm_1,
+    test_ogr_osm_2,
+    test_ogr_osm_3,
+    test_ogr_osm_3_sqlite_nodes,
+    test_ogr_osm_3_custom_compress_nodes,
+    test_ogr_osm_3_all_layers,
+    test_ogr_osm_4,
+    test_ogr_osm_5,
+    test_ogr_osm_6,
+    test_ogr_osm_7,
+    test_ogr_osm_8,
+    test_ogr_osm_9,
+    test_ogr_osm_10,
+    test_ogr_osm_11,
+    test_ogr_osm_12,
+    test_ogr_osm_test_uncompressed_dense_true_nometadata_pbf,
+    test_ogr_osm_test_uncompressed_dense_false_pbf,
+    test_ogr_osm_13,
+    test_ogr_osm_14,
+    test_ogr_osm_15,
+    test_ogr_osm_16,
+    test_ogr_osm_17,
+    test_ogr_osm_18,
 ]
 
 if __name__ == '__main__':

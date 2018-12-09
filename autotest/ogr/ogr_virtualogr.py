@@ -69,7 +69,7 @@ def ogr_virtualogr_run_sql(sql_statement):
 # Basic tests
 
 
-def ogr_virtualogr_1():
+def test_ogr_virtualogr_1():
 
     import ogr_sql_sqlite
     if not ogr_sql_sqlite.ogr_sql_sqlite_available():
@@ -144,7 +144,7 @@ def ogr_virtualogr_1():
 # Test detection of suspicious use of VirtualOGR
 
 
-def ogr_virtualogr_2():
+def test_ogr_virtualogr_2():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -227,7 +227,7 @@ def ogr_virtualogr_2():
 # Test GDAL as a SQLite3 dynamically loaded extension
 
 
-def ogr_virtualogr_3():
+def test_ogr_virtualogr_3():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -266,7 +266,7 @@ def ogr_virtualogr_3():
 # Test ogr_datasource_load_layers()
 
 
-def ogr_virtualogr_4():
+def test_ogr_virtualogr_4():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -335,7 +335,7 @@ def ogr_virtualogr_4():
 # Test failed CREATE VIRTUAL TABLE USING VirtualOGR
 
 
-def ogr_virtualogr_5():
+def test_ogr_virtualogr_5():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
@@ -362,11 +362,11 @@ def ogr_virtualogr_5():
 
 
 gdaltest_list = [
-    ogr_virtualogr_1,
-    ogr_virtualogr_2,
-    ogr_virtualogr_3,
-    ogr_virtualogr_4,
-    ogr_virtualogr_5,
+    test_ogr_virtualogr_1,
+    test_ogr_virtualogr_2,
+    test_ogr_virtualogr_3,
+    test_ogr_virtualogr_4,
+    test_ogr_virtualogr_5,
 ]
 
 if __name__ == '__main__':

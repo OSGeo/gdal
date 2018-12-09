@@ -40,7 +40,7 @@ import gdaltest
 # Test opening a L1C product
 
 
-def sentinel2_l1c_1():
+def test_sentinel2_l1c_1():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     gdal.ErrorReset()
@@ -141,7 +141,7 @@ def sentinel2_l1c_1():
 # Test opening a L1C subdataset on the 10m bands
 
 
-def sentinel2_l1c_2():
+def test_sentinel2_l1c_2():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     gdal.ErrorReset()
@@ -281,7 +281,7 @@ def sentinel2_l1c_2():
 # Test opening a L1C subdataset on the 60m bands and enabling alpha band
 
 
-def sentinel2_l1c_3():
+def test_sentinel2_l1c_3():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:60m:EPSG_32632' % filename_xml, open_options=['ALPHA=YES'])
@@ -313,7 +313,7 @@ def sentinel2_l1c_3():
 # Test opening a L1C subdataset on the PREVIEW bands
 
 
-def sentinel2_l1c_4():
+def test_sentinel2_l1c_4():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:PREVIEW:EPSG_32632' % filename_xml)
@@ -348,7 +348,7 @@ def sentinel2_l1c_4():
 # Test opening invalid XML files
 
 
-def sentinel2_l1c_5():
+def test_sentinel2_l1c_5():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -541,7 +541,7 @@ def sentinel2_l1c_5():
 # Windows specific test to test support for long filenames
 
 
-def sentinel2_l1c_6():
+def test_sentinel2_l1c_6():
 
     if sys.platform != 'win32':
         return 'skip'
@@ -568,7 +568,7 @@ def sentinel2_l1c_6():
 # Test with a real JP2 tile
 
 
-def sentinel2_l1c_7():
+def test_sentinel2_l1c_7():
 
     gdal.FileFromMemBuffer('/vsimem/test.xml',
                            """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
@@ -643,7 +643,7 @@ def sentinel2_l1c_7():
 # Test opening a L1C tile
 
 
-def sentinel2_l1c_tile_1():
+def test_sentinel2_l1c_tile_1():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
@@ -732,7 +732,7 @@ def sentinel2_l1c_tile_1():
 # Test opening a L1C tile without main MTD file
 
 
-def sentinel2_l1c_tile_2():
+def test_sentinel2_l1c_tile_2():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
@@ -777,7 +777,7 @@ def sentinel2_l1c_tile_2():
 # Test opening a L1C tile subdataset on the 10m bands
 
 
-def sentinel2_l1c_tile_3():
+def test_sentinel2_l1c_tile_3():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
@@ -914,7 +914,7 @@ def sentinel2_l1c_tile_3():
 # Test opening a L1C tile subdataset on the 10m bands without main MTD file
 
 
-def sentinel2_l1c_tile_4():
+def test_sentinel2_l1c_tile_4():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
@@ -1012,7 +1012,7 @@ def sentinel2_l1c_tile_4():
 # Test opening a L1C tile subdataset on the preview bands
 
 
-def sentinel2_l1c_tile_5():
+def test_sentinel2_l1c_tile_5():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
@@ -1060,7 +1060,7 @@ def sentinel2_l1c_tile_5():
 # Test opening invalid XML files
 
 
-def sentinel2_l1c_tile_6():
+def test_sentinel2_l1c_tile_6():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1122,7 +1122,7 @@ def sentinel2_l1c_tile_6():
 # Test opening a L1B product
 
 
-def sentinel2_l1b_1():
+def test_sentinel2_l1b_1():
 
     filename_xml = 'data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/S2B_OPER_MTD_SAFL1B.xml'
     gdal.ErrorReset()
@@ -1204,7 +1204,7 @@ def sentinel2_l1b_1():
 # Test opening a L1B granule
 
 
-def sentinel2_l1b_2():
+def test_sentinel2_l1b_2():
 
     filename_xml = 'data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml'
     gdal.ErrorReset()
@@ -1290,7 +1290,7 @@ def sentinel2_l1b_2():
 # Test opening a L1B subdataset
 
 
-def sentinel2_l1b_3():
+def test_sentinel2_l1b_3():
 
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m')
@@ -1448,7 +1448,7 @@ def sentinel2_l1b_3():
 # Test opening a L1B granule (with missing tile, without any ../../main_mtd.xml)
 
 
-def sentinel2_l1b_4():
+def test_sentinel2_l1b_4():
 
     gdal.FileFromMemBuffer('/vsimem/foo/S2B_PROD_MTD_foo.xml',
                            """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
@@ -1560,7 +1560,7 @@ def sentinel2_l1b_4():
 # Test opening invalid XML files
 
 
-def sentinel2_l1b_5():
+def test_sentinel2_l1b_5():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1755,7 +1755,7 @@ def sentinel2_l1b_5():
 # Test opening a L2A product
 
 
-def sentinel2_l2a_1():
+def test_sentinel2_l2a_1():
 
     filename_xml = 'data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml'
     gdal.ErrorReset()
@@ -1864,7 +1864,7 @@ def sentinel2_l2a_1():
 # Test opening a L21 subdataset on the 60m bands
 
 
-def sentinel2_l2a_2():
+def test_sentinel2_l2a_2():
 
     filename_xml = 'data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml'
     gdal.ErrorReset()
@@ -2033,7 +2033,7 @@ def sentinel2_l2a_2():
 # Test opening invalid XML files
 
 
-def sentinel2_l2a_3():
+def test_sentinel2_l2a_3():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -2113,7 +2113,7 @@ def sentinel2_l2a_3():
 # Test opening a L2A MSIL2A product
 
 
-def sentinel2_l2a_4():
+def test_sentinel2_l2a_4():
 
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
@@ -2235,7 +2235,7 @@ def sentinel2_l2a_4():
 # Test opening a L2A MSIL2A subdataset on the 60m bands
 
 
-def sentinel2_l2a_5():
+def test_sentinel2_l2a_5():
 
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
@@ -2362,7 +2362,7 @@ def sentinel2_l2a_5():
 # Test opening a L2A MSIL2Ap product
 
 
-def sentinel2_l2a_6():
+def test_sentinel2_l2a_6():
 
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
@@ -2489,7 +2489,7 @@ def sentinel2_l2a_6():
 # Test opening a L2A MSIL2Ap subdataset on the 60m bands
 
 
-def sentinel2_l2a_7():
+def test_sentinel2_l2a_7():
 
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
@@ -2622,7 +2622,7 @@ def sentinel2_l2a_7():
 # Test opening a L1C Safe Compact product
 
 
-def sentinel2_l1c_safe_compact_1():
+def test_sentinel2_l1c_safe_compact_1():
 
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     gdal.ErrorReset()
@@ -2723,7 +2723,7 @@ def sentinel2_l1c_safe_compact_1():
 # Test opening a L1C Safe Compact subdataset on the 10m bands
 
 
-def sentinel2_l1c_safe_compact_2():
+def test_sentinel2_l1c_safe_compact_2():
 
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     gdal.ErrorReset()
@@ -2857,7 +2857,7 @@ def sentinel2_l1c_safe_compact_2():
 # Test opening a L1C subdataset on the TCI bands
 
 
-def sentinel2_l1c_safe_compact_3():
+def test_sentinel2_l1c_safe_compact_3():
 
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:TCI:EPSG_32632' % filename_xml)
@@ -2890,34 +2890,34 @@ def sentinel2_l1c_safe_compact_3():
 
 
 gdaltest_list = [
-    sentinel2_l1c_1,
-    sentinel2_l1c_2,
-    sentinel2_l1c_3,
-    sentinel2_l1c_4,
-    sentinel2_l1c_5,
-    sentinel2_l1c_6,
-    sentinel2_l1c_7,
-    sentinel2_l1c_tile_1,
-    sentinel2_l1c_tile_2,
-    sentinel2_l1c_tile_3,
-    sentinel2_l1c_tile_4,
-    sentinel2_l1c_tile_5,
-    sentinel2_l1c_tile_6,
-    sentinel2_l1b_1,
-    sentinel2_l1b_2,
-    sentinel2_l1b_3,
-    sentinel2_l1b_4,
-    sentinel2_l1b_5,
-    sentinel2_l2a_1,
-    sentinel2_l2a_2,
-    sentinel2_l2a_3,
-    sentinel2_l2a_4,
-    sentinel2_l2a_5,
-    sentinel2_l2a_6,
-    sentinel2_l2a_7,
-    sentinel2_l1c_safe_compact_1,
-    sentinel2_l1c_safe_compact_2,
-    sentinel2_l1c_safe_compact_3
+    test_sentinel2_l1c_1,
+    test_sentinel2_l1c_2,
+    test_sentinel2_l1c_3,
+    test_sentinel2_l1c_4,
+    test_sentinel2_l1c_5,
+    test_sentinel2_l1c_6,
+    test_sentinel2_l1c_7,
+    test_sentinel2_l1c_tile_1,
+    test_sentinel2_l1c_tile_2,
+    test_sentinel2_l1c_tile_3,
+    test_sentinel2_l1c_tile_4,
+    test_sentinel2_l1c_tile_5,
+    test_sentinel2_l1c_tile_6,
+    test_sentinel2_l1b_1,
+    test_sentinel2_l1b_2,
+    test_sentinel2_l1b_3,
+    test_sentinel2_l1b_4,
+    test_sentinel2_l1b_5,
+    test_sentinel2_l2a_1,
+    test_sentinel2_l2a_2,
+    test_sentinel2_l2a_3,
+    test_sentinel2_l2a_4,
+    test_sentinel2_l2a_5,
+    test_sentinel2_l2a_6,
+    test_sentinel2_l2a_7,
+    test_sentinel2_l1c_safe_compact_1,
+    test_sentinel2_l1c_safe_compact_2,
+    test_sentinel2_l1c_safe_compact_3
 ]
 
 if __name__ == '__main__':

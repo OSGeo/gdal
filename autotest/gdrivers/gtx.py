@@ -37,7 +37,7 @@ import gdaltest
 # Test reading a small gtx file.
 
 
-def gtx_1():
+def test_gtx_1():
 
     tst = gdaltest.GDALTest('GTX', 'hydroc1.gtx', 1, 64183)
     gt = (276.725, 0.05, 0.0, 42.775, 0.0, -0.05)
@@ -45,7 +45,7 @@ def gtx_1():
 
 
 gdaltest_list = [
-    gtx_1]
+    test_gtx_1]
 
 if __name__ == '__main__':
 

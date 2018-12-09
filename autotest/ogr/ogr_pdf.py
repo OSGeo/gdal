@@ -56,7 +56,7 @@ def has_read_support():
 # Test write support
 
 
-def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
+def test_ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
     if ogr.GetDriverByName('PDF') is None:
         return 'skip'
@@ -129,7 +129,7 @@ def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 # Test read support
 
 
-def ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
+def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 
     if not has_read_support():
         return 'skip'
@@ -221,21 +221,21 @@ def ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 # Test write support without writing attributes
 
 
-def ogr_pdf_3():
-    return ogr_pdf_1('tmp/ogr_pdf_2.pdf', 'NO')
+def test_ogr_pdf_3():
+    return test_ogr_pdf_1('tmp/ogr_pdf_2.pdf', 'NO')
 
 ###############################################################################
 # Check read support without writing attributes
 
 
-def ogr_pdf_4():
-    return ogr_pdf_2('tmp/ogr_pdf_2.pdf', False)
+def test_ogr_pdf_4():
+    return test_ogr_pdf_2('tmp/ogr_pdf_2.pdf', False)
 
 
 ###############################################################################
 # Switch from poppler to podofo if both are available
 
-def ogr_pdf_4_podofo():
+def test_ogr_pdf_4_podofo():
 
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
     if gdal_pdf_drv is None:
@@ -245,7 +245,7 @@ def ogr_pdf_4_podofo():
     if 'HAVE_POPPLER' in md and 'HAVE_PODOFO' in md:
         gdal.SetConfigOption("GDAL_PDF_LIB", "PODOFO")
         print('Using podofo now')
-        ret = ogr_pdf_4()
+        ret = test_ogr_pdf_4()
         gdal.SetConfigOption("GDAL_PDF_LIB", None)
         return ret
     return 'skip'
@@ -254,7 +254,7 @@ def ogr_pdf_4_podofo():
 # Test read support with OGR_PDF_READ_NON_STRUCTURED=YES
 
 
-def ogr_pdf_5():
+def test_ogr_pdf_5():
 
     if not has_read_support():
         return 'skip'
@@ -277,7 +277,7 @@ def ogr_pdf_5():
 # Test read support with a non-OGR datasource
 
 
-def ogr_pdf_online_1():
+def test_ogr_pdf_online_1():
 
     if not has_read_support():
         return 'skip'
@@ -335,7 +335,7 @@ def ogr_pdf_online_1():
 # Test read support of non-structured content
 
 
-def ogr_pdf_online_2():
+def test_ogr_pdf_online_2():
 
     if not has_read_support():
         return 'skip'
@@ -409,7 +409,7 @@ def ogr_pdf_online_2():
 # Cleanup
 
 
-def ogr_pdf_cleanup():
+def test_ogr_pdf_cleanup():
 
     if ogr.GetDriverByName('PDF') is None:
         return 'skip'
@@ -421,15 +421,15 @@ def ogr_pdf_cleanup():
 
 
 gdaltest_list = [
-    ogr_pdf_1,
-    ogr_pdf_2,
-    ogr_pdf_3,
-    ogr_pdf_4,
-    ogr_pdf_4_podofo,
-    ogr_pdf_5,
-    ogr_pdf_online_1,
-    ogr_pdf_online_2,
-    ogr_pdf_cleanup
+    test_ogr_pdf_1,
+    test_ogr_pdf_2,
+    test_ogr_pdf_3,
+    test_ogr_pdf_4,
+    test_ogr_pdf_4_podofo,
+    test_ogr_pdf_5,
+    test_ogr_pdf_online_1,
+    test_ogr_pdf_online_2,
+    test_ogr_pdf_cleanup
 ]
 
 if __name__ == '__main__':

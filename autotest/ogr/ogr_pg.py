@@ -165,7 +165,7 @@ def test_ogr_pg_1():
 # Create table from data/poly.shp
 
 
-def ogr_pg_2(with_and_without_postgis):
+def test_ogr_pg_2(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -261,7 +261,7 @@ def ogr_pg_2(with_and_without_postgis):
 # Test reading a layer extent
 
 
-def ogr_pg_19(with_and_without_postgis):
+def test_ogr_pg_19(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -304,7 +304,7 @@ def ogr_pg_19(with_and_without_postgis):
 # Test reading a SQL result layer extent
 
 
-def ogr_pg_19_2(with_and_without_postgis):
+def test_ogr_pg_19_2(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -330,7 +330,7 @@ def ogr_pg_19_2(with_and_without_postgis):
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_pg_3(with_and_without_postgis):
+def test_ogr_pg_3(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -375,7 +375,7 @@ def ogr_pg_3(with_and_without_postgis):
 # geometries are still OK.
 
 
-def ogr_pg_4(with_and_without_postgis):
+def test_ogr_pg_4(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -420,7 +420,7 @@ def ogr_pg_4(with_and_without_postgis):
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_pg_5(with_and_without_postgis):
+def test_ogr_pg_5(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -443,7 +443,7 @@ def ogr_pg_5(with_and_without_postgis):
 # Test ExecuteSQL() results layers with geometry.
 
 
-def ogr_pg_6(with_and_without_postgis):
+def test_ogr_pg_6(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -481,7 +481,7 @@ def ogr_pg_6(with_and_without_postgis):
 # Test spatial filtering.
 
 
-def ogr_pg_7(with_and_without_postgis):
+def test_ogr_pg_7(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -521,7 +521,7 @@ def ogr_pg_7(with_and_without_postgis):
 # No geometry in this test.
 
 
-def ogr_pg_8(with_and_without_postgis):
+def test_ogr_pg_8(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -553,7 +553,7 @@ def ogr_pg_8(with_and_without_postgis):
 # Verify inplace update of a feature with SetFeature().
 
 
-def ogr_pg_9(with_and_without_postgis):
+def test_ogr_pg_9(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -629,7 +629,7 @@ def ogr_pg_9(with_and_without_postgis):
 # Verify that DeleteFeature() works properly.
 
 
-def ogr_pg_10(with_and_without_postgis):
+def test_ogr_pg_10(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -665,7 +665,7 @@ def ogr_pg_10(with_and_without_postgis):
 # Create table from data/poly.shp in INSERT mode.
 
 
-def ogr_pg_11(with_and_without_postgis):
+def test_ogr_pg_11(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -719,7 +719,7 @@ def ogr_pg_11(with_and_without_postgis):
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_pg_12(with_and_without_postgis):
+def test_ogr_pg_12(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -751,7 +751,7 @@ def ogr_pg_12(with_and_without_postgis):
 # Create a table with some date fields.
 
 
-def ogr_pg_13(with_and_without_postgis):
+def test_ogr_pg_13(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -788,7 +788,7 @@ def ogr_pg_13(with_and_without_postgis):
 # Fetch in several timezones to test our timezone processing.
 
 
-def ogr_pg_14(with_and_without_postgis):
+def test_ogr_pg_14(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -853,7 +853,7 @@ def ogr_pg_14(with_and_without_postgis):
 # Test very large query.
 
 
-def ogr_pg_15(with_and_without_postgis):
+def test_ogr_pg_15(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -876,7 +876,7 @@ def ogr_pg_15(with_and_without_postgis):
 ###############################################################################
 # Test very large statement.
 
-def ogr_pg_16(with_and_without_postgis):
+def test_ogr_pg_16(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -902,7 +902,7 @@ def ogr_pg_16(with_and_without_postgis):
 # Test requesting a non-existent table by name (bug 1480).
 
 
-def ogr_pg_17(with_and_without_postgis):
+def test_ogr_pg_17(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -927,7 +927,7 @@ def ogr_pg_17(with_and_without_postgis):
 # Test getting a layer by name that was not previously a layer.
 
 
-def ogr_pg_18(with_and_without_postgis):
+def test_ogr_pg_18(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -949,7 +949,7 @@ def ogr_pg_18(with_and_without_postgis):
 # Test reading 4-dim geometry in EWKT format
 
 
-def ogr_pg_20(with_and_without_postgis):
+def test_ogr_pg_20(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -1037,7 +1037,7 @@ def ogr_pg_20(with_and_without_postgis):
 # Test reading 4-dimension geometries in EWKB format
 
 
-def ogr_pg_21(with_and_without_postgis):
+def test_ogr_pg_21(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -1071,7 +1071,7 @@ def ogr_pg_21(with_and_without_postgis):
 # Check if the sub geometries of TIN and POLYHEDRALSURFACE are valid
 
 
-def ogr_pg_21_subgeoms(with_and_without_postgis):
+def test_ogr_pg_21_subgeoms(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -1116,7 +1116,7 @@ def ogr_pg_21_subgeoms(with_and_without_postgis):
 # Check if the 3d geometries of TIN, Triangle and POLYHEDRALSURFACE are valid
 
 
-def ogr_pg_21_3d_geometries():
+def test_ogr_pg_21_3d_geometries():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1168,7 +1168,7 @@ def ogr_pg_21_3d_geometries():
 # This test checks if schema support and schema name quoting works well.
 
 
-def ogr_pg_22(with_and_without_postgis):
+def test_ogr_pg_22(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1227,7 +1227,7 @@ def ogr_pg_22(with_and_without_postgis):
 # Create table with all data types
 
 
-def ogr_pg_23(with_and_without_postgis):
+def test_ogr_pg_23(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1417,7 +1417,7 @@ def check_value_23(layer_defn, feat):
 # Test with PG: connection
 
 
-def ogr_pg_24(with_and_without_postgis):
+def test_ogr_pg_24(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1442,7 +1442,7 @@ def ogr_pg_24(with_and_without_postgis):
 # Test with PG: connection and SELECT query
 
 
-def ogr_pg_25(with_and_without_postgis):
+def test_ogr_pg_25(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1469,7 +1469,7 @@ def ogr_pg_25(with_and_without_postgis):
 # Duplicate all data types in INSERT mode
 
 
-def ogr_pg_28(with_and_without_postgis):
+def test_ogr_pg_28(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1520,7 +1520,7 @@ def ogr_pg_28(with_and_without_postgis):
 # Test with PG: connection
 
 
-def ogr_pg_29(with_and_without_postgis):
+def test_ogr_pg_29(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1552,7 +1552,7 @@ def ogr_pg_29(with_and_without_postgis):
 # Duplicate all data types in PG_USE_COPY mode
 
 
-def ogr_pg_30(with_and_without_postgis):
+def test_ogr_pg_30(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1600,7 +1600,7 @@ def ogr_pg_30(with_and_without_postgis):
 ###############################################################################
 # Test the tables= connection string option
 
-def ogr_pg_31(with_and_without_postgis):
+def test_ogr_pg_31(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1641,7 +1641,7 @@ def ogr_pg_31(with_and_without_postgis):
 # Test approximate srtext (#2123, #3508)
 
 
-def ogr_pg_32(with_and_without_postgis):
+def test_ogr_pg_32(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -1782,7 +1782,7 @@ def ogr_pg_32(with_and_without_postgis):
 # Test encoding as UTF8
 
 
-def ogr_pg_33(with_and_without_postgis):
+def test_ogr_pg_33(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1804,7 +1804,7 @@ def ogr_pg_33(with_and_without_postgis):
 # Test encoding as Latin1
 
 
-def ogr_pg_34(with_and_without_postgis):
+def test_ogr_pg_34(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1842,7 +1842,7 @@ def ogr_pg_34(with_and_without_postgis):
 ###############################################################################
 # Test for buffer overflows
 
-def ogr_pg_35(with_and_without_postgis):
+def test_ogr_pg_35(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1874,7 +1874,7 @@ def ogr_pg_35(with_and_without_postgis):
 # Test support for inherited tables : tables inherited from a Postgis Table
 
 
-def ogr_pg_36(with_and_without_postgis):
+def test_ogr_pg_36(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1929,7 +1929,7 @@ def ogr_pg_36(with_and_without_postgis):
     return 'success'
 
 
-def ogr_pg_36_bis(with_and_without_postgis):
+def test_ogr_pg_36_bis(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -1955,7 +1955,7 @@ def ogr_pg_36_bis(with_and_without_postgis):
 # Test support for inherited tables : Postgis table inherited from a non-Postgis table
 
 
-def ogr_pg_37(with_and_without_postgis):
+def test_ogr_pg_37(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -1986,7 +1986,7 @@ def ogr_pg_37(with_and_without_postgis):
 # Test support for multiple geometry columns (RFC 41)
 
 
-def ogr_pg_38(with_and_without_postgis):
+def test_ogr_pg_38(with_and_without_postgis):
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
 
@@ -2074,7 +2074,7 @@ def ogr_pg_38(with_and_without_postgis):
 # Test support for named views
 
 
-def ogr_pg_39(with_and_without_postgis):
+def test_ogr_pg_39(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -2165,7 +2165,7 @@ def ogr_pg_39(with_and_without_postgis):
 # Test GetFeature() with an invalid id
 
 
-def ogr_pg_40(with_and_without_postgis):
+def test_ogr_pg_40(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -2179,7 +2179,7 @@ def ogr_pg_40(with_and_without_postgis):
 # Test active_schema= option
 
 
-def ogr_pg_41(with_and_without_postgis):
+def test_ogr_pg_41(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -2250,7 +2250,7 @@ def ogr_pg_41(with_and_without_postgis):
 # Test schemas= option
 
 
-def ogr_pg_42(with_and_without_postgis):
+def test_ogr_pg_42(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -2315,7 +2315,7 @@ def ogr_pg_42(with_and_without_postgis):
 ###############################################################################
 # Test schemas= option
 
-def ogr_pg_43(with_and_without_postgis):
+def test_ogr_pg_43(with_and_without_postgis):
     if gdaltest.pg_ds is None:
         return 'skip'
 
@@ -2352,7 +2352,7 @@ def ogr_pg_43(with_and_without_postgis):
 # Test for table and column names that need quoting (#2945)
 
 
-def ogr_pg_44(with_and_without_postgis):
+def test_ogr_pg_44(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2400,7 +2400,7 @@ def ogr_pg_44(with_and_without_postgis):
 # Test SetNextByIndex (#3117)
 
 
-def ogr_pg_45(with_and_without_postgis):
+def test_ogr_pg_45(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2434,7 +2434,7 @@ def ogr_pg_45(with_and_without_postgis):
 # with SetFeature()
 
 
-def ogr_pg_46(with_and_without_postgis):
+def test_ogr_pg_46(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2496,7 +2496,7 @@ def ogr_pg_46(with_and_without_postgis):
 # Test that we can handle 'geography' column type introduced in PostGIS 1.5
 
 
-def ogr_pg_47(with_and_without_postgis):
+def test_ogr_pg_47(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2613,7 +2613,7 @@ def ogr_pg_47(with_and_without_postgis):
 # PostGIS DB.
 
 
-def ogr_pg_48(with_and_without_postgis):
+def test_ogr_pg_48(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2698,7 +2698,7 @@ def ogr_pg_48(with_and_without_postgis):
 # Go on with previous test but set PGSQL_OGR_FID this time
 
 
-def ogr_pg_49(with_and_without_postgis):
+def test_ogr_pg_49(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2729,7 +2729,7 @@ def ogr_pg_49(with_and_without_postgis):
 # This tests writing using COPY and INSERT
 
 
-def ogr_pg_50(with_and_without_postgis):
+def test_ogr_pg_50(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2798,7 +2798,7 @@ def ogr_pg_50(with_and_without_postgis):
 # Run test_ogrsf
 
 
-def ogr_pg_51(with_and_without_postgis):
+def test_ogr_pg_51(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2819,7 +2819,7 @@ def ogr_pg_51(with_and_without_postgis):
 # Run test_ogrsf with -sql
 
 
-def ogr_pg_52(with_and_without_postgis):
+def test_ogr_pg_52(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2840,7 +2840,7 @@ def ogr_pg_52(with_and_without_postgis):
 # Test creating a layer with explicitly wkbNone geometry type.
 
 
-def ogr_pg_53(with_and_without_postgis):
+def test_ogr_pg_53(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2901,7 +2901,7 @@ def ogr_pg_53(with_and_without_postgis):
 # Check that we can overwrite a non-spatial geometry table (#4012)
 
 
-def ogr_pg_53_bis(with_and_without_postgis):
+def test_ogr_pg_53_bis(with_and_without_postgis):
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2926,7 +2926,7 @@ def ogr_pg_53_bis(with_and_without_postgis):
 # Test reading AsEWKB()
 
 
-def ogr_pg_54(with_and_without_postgis):
+def test_ogr_pg_54(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2951,7 +2951,7 @@ def ogr_pg_54(with_and_without_postgis):
 # Test reading geoms as Base64 encoded strings
 
 
-def ogr_pg_55(with_and_without_postgis):
+def test_ogr_pg_55(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -2984,7 +2984,7 @@ def ogr_pg_55(with_and_without_postgis):
 # non-spatial table and without FID in COPY mode (#4040)
 
 
-def ogr_pg_56(with_and_without_postgis):
+def test_ogr_pg_56(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3073,7 +3073,7 @@ def ogr_pg_56(with_and_without_postgis):
 # Test inserting an empty feature
 
 
-def ogr_pg_57(with_and_without_postgis):
+def test_ogr_pg_57(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3093,7 +3093,7 @@ def ogr_pg_57(with_and_without_postgis):
 # Test RFC35
 
 
-def ogr_pg_58(with_and_without_postgis):
+def test_ogr_pg_58(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3154,7 +3154,7 @@ def ogr_pg_58(with_and_without_postgis):
 # but which is not the layer name.
 
 
-def ogr_pg_59(with_and_without_postgis):
+def test_ogr_pg_59(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3184,7 +3184,7 @@ def ogr_pg_59(with_and_without_postgis):
 # non-incrementing PK.
 
 
-def ogr_pg_60(with_and_without_postgis):
+def test_ogr_pg_60(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3222,7 +3222,7 @@ def ogr_pg_60(with_and_without_postgis):
 # Test insertion of features with FID set in COPY mode (#4495)
 
 
-def ogr_pg_61(with_and_without_postgis):
+def test_ogr_pg_61(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3270,7 +3270,7 @@ def ogr_pg_61(with_and_without_postgis):
 # Test ExecuteSQL() and getting SRID of the request (#4699)
 
 
-def ogr_pg_62(with_and_without_postgis):
+def test_ogr_pg_62(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3305,7 +3305,7 @@ def ogr_pg_62(with_and_without_postgis):
 # Test COLUMN_TYPES layer creation option (#4788)
 
 
-def ogr_pg_63(with_and_without_postgis):
+def test_ogr_pg_63(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3350,7 +3350,7 @@ def ogr_pg_63(with_and_without_postgis):
 # Test OGR_TRUNCATE config. option (#5091)
 
 
-def ogr_pg_64(with_and_without_postgis):
+def test_ogr_pg_64(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3393,7 +3393,7 @@ def ogr_pg_64(with_and_without_postgis):
 # Test RFC 41
 
 
-def ogr_pg_65(with_and_without_postgis):
+def test_ogr_pg_65(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3555,7 +3555,7 @@ def ogr_pg_65(with_and_without_postgis):
 # Run test_ogrsf
 
 
-def ogr_pg_66(with_and_without_postgis):
+def test_ogr_pg_66(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3579,7 +3579,7 @@ def ogr_pg_66(with_and_without_postgis):
 # Test retrieving SRID from values (#5131)
 
 
-def ogr_pg_67(with_and_without_postgis):
+def test_ogr_pg_67(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3630,7 +3630,7 @@ def ogr_pg_67(with_and_without_postgis):
 # Test retrieving SRID from values even if we don't have select rights on geometry_columns (#5131)
 
 
-def ogr_pg_68(with_and_without_postgis):
+def test_ogr_pg_68(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3688,7 +3688,7 @@ def has_run_load_tables(ds):
     return int(ds.GetMetadataItem("bHasLoadTables", "_DEBUG_"))
 
 
-def ogr_pg_69(with_and_without_postgis):
+def test_ogr_pg_69(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3731,7 +3731,7 @@ def ogr_pg_69(with_and_without_postgis):
 # Test historical non-differed creation of tables (#5547)
 
 
-def ogr_pg_70(with_and_without_postgis):
+def test_ogr_pg_70(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3793,7 +3793,7 @@ def ogr_pg_70(with_and_without_postgis):
 # Test interoperability of WKT/WKB with PostGIS.
 
 
-def ogr_pg_71(with_and_without_postgis):
+def test_ogr_pg_71(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3930,7 +3930,7 @@ def ogr_pg_71(with_and_without_postgis):
 # Test 64 bit FID
 
 
-def ogr_pg_72(with_and_without_postgis):
+def test_ogr_pg_72(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -3999,7 +3999,7 @@ def ogr_pg_72(with_and_without_postgis):
 # Test not nullable fields
 
 
-def ogr_pg_73(with_and_without_postgis):
+def test_ogr_pg_73(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -4108,7 +4108,7 @@ def ogr_pg_73(with_and_without_postgis):
 # Test default values
 
 
-def ogr_pg_74(with_and_without_postgis):
+def test_ogr_pg_74(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -4280,7 +4280,7 @@ def ogr_pg_74(with_and_without_postgis):
 # Test creating a field with the fid name
 
 
-def ogr_pg_75(with_and_without_postgis):
+def test_ogr_pg_75(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -4401,7 +4401,7 @@ def ogr_pg_76_get_transaction_state(ds):
             int(ds.GetMetadataItem("bUserTransactionActive", "_DEBUG_")))
 
 
-def ogr_pg_76(with_and_without_postgis):
+def test_ogr_pg_76(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -4876,7 +4876,7 @@ def ogr_pg_76_scenario4(lyr1, lyr2with_and_without_postgis):
 # Test ogr2ogr can insert multiple layers at once
 
 
-def ogr_pg_77(with_and_without_postgis):
+def test_ogr_pg_77(with_and_without_postgis):
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -4934,7 +4934,7 @@ def ogr_pg_77(with_and_without_postgis):
 # Test manually added geometry constraints
 
 
-def ogr_pg_78(with_and_without_postgis):
+def test_ogr_pg_78(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis_2:
         return 'skip'
@@ -5032,7 +5032,7 @@ def ogr_pg_78(with_and_without_postgis):
 # Test PRELUDE_STATEMENTS and CLOSING_STATEMENTS open options
 
 
-def ogr_pg_79(with_and_without_postgis):
+def test_ogr_pg_79(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5116,7 +5116,7 @@ def ogr_pg_79(with_and_without_postgis):
 # Test retrieving an error from ExecuteSQL() (#6194)
 
 
-def ogr_pg_80():
+def test_ogr_pg_80():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5137,7 +5137,7 @@ def ogr_pg_80():
 # Test that ogr2ogr -skip properly rollbacks transactions (#6328)
 
 
-def ogr_pg_81():
+def test_ogr_pg_81():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5186,7 +5186,7 @@ def ogr_pg_81():
 # is not-nullable, and hence the CreateGeomField() interface is used.
 
 
-def ogr_pg_82():
+def test_ogr_pg_82():
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -5204,7 +5204,7 @@ def ogr_pg_82():
 # Test ZM support
 
 
-def ogr_pg_83():
+def test_ogr_pg_83():
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
@@ -5273,7 +5273,7 @@ def ogr_pg_83():
 # Test description
 
 
-def ogr_pg_84():
+def test_ogr_pg_84():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5354,7 +5354,7 @@ def ogr_pg_84():
 # Test append of several layers in PG_USE_COPY mode (#6411)
 
 
-def ogr_pg_85():
+def test_ogr_pg_85():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5415,7 +5415,7 @@ def ogr_pg_85():
 # Test OFTBinary
 
 
-def ogr_pg_86():
+def test_ogr_pg_86():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5458,7 +5458,7 @@ def ogr_pg_86():
 # Test sequence updating (#7032)
 
 
-def ogr_pg_87():
+def test_ogr_pg_87():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5493,7 +5493,7 @@ def ogr_pg_87():
 # Test JSON subtype
 
 
-def ogr_pg_json():
+def test_ogr_pg_json():
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5529,7 +5529,7 @@ def ogr_pg_json():
 #
 
 
-def ogr_pg_table_cleanup(with_and_without_postgis):
+def test_ogr_pg_table_cleanup(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -5608,13 +5608,13 @@ def ogr_pg_table_cleanup(with_and_without_postgis):
     return 'success'
 
 
-def ogr_pg_cleanup(with_and_without_postgis):
+def test_ogr_pg_cleanup(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
         return 'skip'
 
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
-    ogr_pg_table_cleanup()
+    test_ogr_pg_table_cleanup()
 
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
@@ -5625,98 +5625,98 @@ def ogr_pg_cleanup(with_and_without_postgis):
 
 
 gdaltest_list = [
-    ogr_pg_table_cleanup,
-    ogr_pg_2,
-    ogr_pg_19,
-    ogr_pg_19_2,
-    ogr_pg_3,
-    ogr_pg_4,
-    ogr_pg_5,
-    ogr_pg_6,
-    ogr_pg_7,
-    ogr_pg_8,
-    ogr_pg_9,
-    ogr_pg_10,
-    ogr_pg_11,
-    ogr_pg_12,
-    ogr_pg_13,
-    ogr_pg_14,
-    ogr_pg_15,
-    ogr_pg_16,
-    ogr_pg_17,
-    ogr_pg_18,
-    ogr_pg_20,
-    ogr_pg_21,
-    ogr_pg_21_subgeoms,
-    ogr_pg_21_3d_geometries,
-    ogr_pg_22,
-    ogr_pg_23,
-    ogr_pg_24,
-    ogr_pg_25,
-    ogr_pg_28,
-    ogr_pg_29,
-    ogr_pg_30,
-    ogr_pg_31,
-    ogr_pg_32,
-    ogr_pg_33,
-    ogr_pg_34,
-    ogr_pg_35,
-    ogr_pg_36,
-    ogr_pg_36_bis,
-    ogr_pg_37,
-    ogr_pg_38,
-    ogr_pg_39,
-    ogr_pg_40,
-    ogr_pg_41,
-    ogr_pg_42,
-    ogr_pg_43,
-    ogr_pg_44,
-    ogr_pg_45,
-    ogr_pg_46,
-    ogr_pg_47,
-    ogr_pg_48,
-    ogr_pg_49,
-    ogr_pg_50,
-    ogr_pg_51,
-    ogr_pg_52,
-    ogr_pg_53,
-    ogr_pg_53_bis,
-    ogr_pg_54,
-    ogr_pg_55,
-    ogr_pg_56,
-    ogr_pg_57,
-    ogr_pg_58,
-    ogr_pg_59,
-    ogr_pg_60,
-    ogr_pg_61,
-    ogr_pg_62,
-    ogr_pg_63,
-    ogr_pg_64,
-    ogr_pg_65,
-    ogr_pg_66,
-    ogr_pg_67,
-    ogr_pg_68,
-    ogr_pg_69,
-    ogr_pg_70,
-    ogr_pg_71,
-    ogr_pg_72,
-    ogr_pg_73,
-    ogr_pg_74,
-    ogr_pg_75,
-    ogr_pg_76,
-    ogr_pg_77,
-    ogr_pg_78,
-    ogr_pg_79,
-    ogr_pg_80,
-    ogr_pg_81,
-    ogr_pg_82,
-    ogr_pg_83,
-    ogr_pg_84,
-    ogr_pg_85,
-    ogr_pg_86,
-    ogr_pg_87,
-    ogr_pg_json,
-    ogr_pg_cleanup
+    test_ogr_pg_table_cleanup,
+    test_ogr_pg_2,
+    test_ogr_pg_19,
+    test_ogr_pg_19_2,
+    test_ogr_pg_3,
+    test_ogr_pg_4,
+    test_ogr_pg_5,
+    test_ogr_pg_6,
+    test_ogr_pg_7,
+    test_ogr_pg_8,
+    test_ogr_pg_9,
+    test_ogr_pg_10,
+    test_ogr_pg_11,
+    test_ogr_pg_12,
+    test_ogr_pg_13,
+    test_ogr_pg_14,
+    test_ogr_pg_15,
+    test_ogr_pg_16,
+    test_ogr_pg_17,
+    test_ogr_pg_18,
+    test_ogr_pg_20,
+    test_ogr_pg_21,
+    test_ogr_pg_21_subgeoms,
+    test_ogr_pg_21_3d_geometries,
+    test_ogr_pg_22,
+    test_ogr_pg_23,
+    test_ogr_pg_24,
+    test_ogr_pg_25,
+    test_ogr_pg_28,
+    test_ogr_pg_29,
+    test_ogr_pg_30,
+    test_ogr_pg_31,
+    test_ogr_pg_32,
+    test_ogr_pg_33,
+    test_ogr_pg_34,
+    test_ogr_pg_35,
+    test_ogr_pg_36,
+    test_ogr_pg_36_bis,
+    test_ogr_pg_37,
+    test_ogr_pg_38,
+    test_ogr_pg_39,
+    test_ogr_pg_40,
+    test_ogr_pg_41,
+    test_ogr_pg_42,
+    test_ogr_pg_43,
+    test_ogr_pg_44,
+    test_ogr_pg_45,
+    test_ogr_pg_46,
+    test_ogr_pg_47,
+    test_ogr_pg_48,
+    test_ogr_pg_49,
+    test_ogr_pg_50,
+    test_ogr_pg_51,
+    test_ogr_pg_52,
+    test_ogr_pg_53,
+    test_ogr_pg_53_bis,
+    test_ogr_pg_54,
+    test_ogr_pg_55,
+    test_ogr_pg_56,
+    test_ogr_pg_57,
+    test_ogr_pg_58,
+    test_ogr_pg_59,
+    test_ogr_pg_60,
+    test_ogr_pg_61,
+    test_ogr_pg_62,
+    test_ogr_pg_63,
+    test_ogr_pg_64,
+    test_ogr_pg_65,
+    test_ogr_pg_66,
+    test_ogr_pg_67,
+    test_ogr_pg_68,
+    test_ogr_pg_69,
+    test_ogr_pg_70,
+    test_ogr_pg_71,
+    test_ogr_pg_72,
+    test_ogr_pg_73,
+    test_ogr_pg_74,
+    test_ogr_pg_75,
+    test_ogr_pg_76,
+    test_ogr_pg_77,
+    test_ogr_pg_78,
+    test_ogr_pg_79,
+    test_ogr_pg_80,
+    test_ogr_pg_81,
+    test_ogr_pg_82,
+    test_ogr_pg_83,
+    test_ogr_pg_84,
+    test_ogr_pg_85,
+    test_ogr_pg_86,
+    test_ogr_pg_87,
+    test_ogr_pg_json,
+    test_ogr_pg_cleanup
 ]
 
 

@@ -102,19 +102,19 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     return 'success'
 
 
-def ogr_geojsonseq_lf():
+def test_ogr_geojsonseq_lf():
     return _ogr_geojsonseq_create('/vsimem/test', [], False)
 
 
-def ogr_geojsonseq_rs():
+def test_ogr_geojsonseq_rs():
     return _ogr_geojsonseq_create('/vsimem/test', ['RS=YES'], True)
 
 
-def ogr_geojsonseq_rs_auto():
+def test_ogr_geojsonseq_rs_auto():
     return _ogr_geojsonseq_create('/vsimem/test.geojsons', [], True)
 
 
-def ogr_geojsonseq_inline():
+def test_ogr_geojsonseq_inline():
 
     ds = ogr.Open("""{"type":"Feature","properties":{},"geometry":null}
 {"type":"Feature","properties":{},"geometry":null}""")
@@ -125,7 +125,7 @@ def ogr_geojsonseq_inline():
     return 'success'
 
 
-def ogr_geojsonseq_prefix():
+def test_ogr_geojsonseq_prefix():
 
     ds = ogr.Open("""GeoJSONSeq:data/test.geojsonl""")
     lyr = ds.GetLayer(0)
@@ -135,7 +135,7 @@ def ogr_geojsonseq_prefix():
     return 'success'
 
 
-def ogr_geojsonseq_seq_geometries():
+def test_ogr_geojsonseq_seq_geometries():
 
     with gdaltest.config_option('OGR_GEOJSONSEQ_CHUNK_SIZE', '10'):
         ds = ogr.Open("""{"type":"Point","coordinates":[2,49]}
@@ -153,7 +153,7 @@ def ogr_geojsonseq_seq_geometries():
     return 'success'
 
 
-def ogr_geojsonseq_reprojection():
+def test_ogr_geojsonseq_reprojection():
 
     filename = '/vsimem/ogr_geojsonseq_reprojection.geojsonl'
     ds = ogr.GetDriverByName('GeoJSONSeq').CreateDataSource(filename)
@@ -181,7 +181,7 @@ def ogr_geojsonseq_reprojection():
     return 'success'
 
 
-def ogr_geojsonseq_read_rs_json_pretty():
+def test_ogr_geojsonseq_read_rs_json_pretty():
 
     ds = ogr.Open('data/test.geojsons')
     lyr = ds.GetLayer(0)
@@ -202,7 +202,7 @@ def ogr_geojsonseq_read_rs_json_pretty():
     return 'success'
 
 
-def ogr_geojsonseq_test_ogrsf():
+def test_ogr_geojsonseq_test_ogrsf():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -219,15 +219,15 @@ def ogr_geojsonseq_test_ogrsf():
 
 
 gdaltest_list = [
-    ogr_geojsonseq_lf,
-    ogr_geojsonseq_rs,
-    ogr_geojsonseq_rs_auto,
-    ogr_geojsonseq_inline,
-    ogr_geojsonseq_prefix,
-    ogr_geojsonseq_seq_geometries,
-    ogr_geojsonseq_reprojection,
-    ogr_geojsonseq_read_rs_json_pretty,
-    ogr_geojsonseq_test_ogrsf,
+    test_ogr_geojsonseq_lf,
+    test_ogr_geojsonseq_rs,
+    test_ogr_geojsonseq_rs_auto,
+    test_ogr_geojsonseq_inline,
+    test_ogr_geojsonseq_prefix,
+    test_ogr_geojsonseq_seq_geometries,
+    test_ogr_geojsonseq_reprojection,
+    test_ogr_geojsonseq_read_rs_json_pretty,
+    test_ogr_geojsonseq_test_ogrsf,
 ]
 
 if __name__ == '__main__':

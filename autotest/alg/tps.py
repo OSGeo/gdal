@@ -39,7 +39,7 @@ from osgeo import gdal, osr
 # Test error case (#5586)
 
 
-def tps_1():
+def test_tps_1():
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('foo', 2, 2)
@@ -64,7 +64,7 @@ def tps_1():
 
 
 gdaltest_list = [
-    tps_1,
+    test_tps_1,
 ]
 
 if __name__ == '__main__':

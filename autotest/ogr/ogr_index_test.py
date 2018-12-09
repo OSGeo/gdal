@@ -38,7 +38,7 @@ import ogrtest
 # Create a MIF file to be our primary table.
 
 
-def ogr_index_1():
+def test_ogr_index_1():
 
     from osgeo import gdal
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -84,7 +84,7 @@ def ogr_index_1():
 # Create a dbf file to be our secondary table.  Close it, and reopen shared.
 
 
-def ogr_index_2():
+def test_ogr_index_2():
 
     drv = ogr.GetDriverByName('ESRI Shapefile')
     gdaltest.s_ds = drv.CreateDataSource('join_t.dbf')
@@ -115,7 +115,7 @@ def ogr_index_2():
 # Verify a simple join without indexing.
 
 
-def ogr_index_3():
+def test_ogr_index_3():
 
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
               'Value 1']
@@ -134,7 +134,7 @@ def ogr_index_3():
 # Create an INDEX on the SKEY and VALUE field in the join table.
 
 
-def ogr_index_4():
+def test_ogr_index_4():
 
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING skey')
@@ -145,7 +145,7 @@ def ogr_index_4():
 # Check that indexable single int lookup works.
 
 
-def ogr_index_5():
+def test_ogr_index_5():
 
     gdaltest.s_lyr.SetAttributeFilter('SKEY = 5')
 
@@ -161,7 +161,7 @@ def ogr_index_5():
 # work OK too.
 
 
-def ogr_index_6():
+def test_ogr_index_6():
 
     gdaltest.s_ds.Release()
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
@@ -179,7 +179,7 @@ def ogr_index_6():
 # Check that range query that isn't currently implemented using index works.
 
 
-def ogr_index_7():
+def test_ogr_index_7():
 
     gdaltest.s_lyr.SetAttributeFilter('SKEY < 3')
 
@@ -193,7 +193,7 @@ def ogr_index_7():
 # Try join again.
 
 
-def ogr_index_8():
+def test_ogr_index_8():
 
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
               'Value 1']
@@ -213,7 +213,7 @@ def ogr_index_8():
 # work.
 
 
-def ogr_index_9():
+def test_ogr_index_9():
 
     gdaltest.s_ds.ExecuteSQL('DROP INDEX ON join_t USING value')
     gdaltest.s_ds.ExecuteSQL('DROP INDEX ON join_t USING skey')
@@ -284,7 +284,7 @@ def ogr_index_9():
 # Test fix for #4326
 
 
-def ogr_index_10():
+def test_ogr_index_10():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_index_10.shp')
     lyr = ds.CreateLayer('ogr_index_10')
@@ -442,7 +442,7 @@ def ogr_index_11_check(lyr, expected_fids):
     return 'success'
 
 
-def ogr_index_11():
+def test_ogr_index_11():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_index_11.dbf')
     lyr = ds.CreateLayer('ogr_index_11', geom_type=ogr.wkbNone)
@@ -490,7 +490,7 @@ def ogr_index_11():
 ###############################################################################
 
 
-def ogr_index_cleanup():
+def test_ogr_index_cleanup():
     try:
         gdaltest.p_ds.Release()
     except:
@@ -522,18 +522,18 @@ def ogr_index_cleanup():
 
 
 gdaltest_list = [
-    ogr_index_1,
-    ogr_index_2,
-    ogr_index_3,
-    ogr_index_4,
-    ogr_index_5,
-    ogr_index_6,
-    ogr_index_7,
-    ogr_index_8,
-    ogr_index_9,
-    ogr_index_10,
-    ogr_index_11,
-    ogr_index_cleanup]
+    test_ogr_index_1,
+    test_ogr_index_2,
+    test_ogr_index_3,
+    test_ogr_index_4,
+    test_ogr_index_5,
+    test_ogr_index_6,
+    test_ogr_index_7,
+    test_ogr_index_8,
+    test_ogr_index_9,
+    test_ogr_index_10,
+    test_ogr_index_11,
+    test_ogr_index_cleanup]
 
 if __name__ == '__main__':
 

@@ -39,7 +39,7 @@ import gdaltest
 # Test CreateCopy() of int16.tif
 
 
-def bt_1():
+def test_bt_1():
 
     tst = gdaltest.GDALTest('BT', 'int16.tif', 1, 4672)
     srs = osr.SpatialReference()
@@ -51,7 +51,7 @@ def bt_1():
 # Test CreateCopy() of int32.tif
 
 
-def bt_2():
+def test_bt_2():
 
     tst = gdaltest.GDALTest('BT', 'int32.tif', 1, 4672)
     srs = osr.SpatialReference()
@@ -63,7 +63,7 @@ def bt_2():
 # Test CreateCopy() of float32.tif
 
 
-def bt_3():
+def test_bt_3():
 
     tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
     srs = osr.SpatialReference()
@@ -75,7 +75,7 @@ def bt_3():
 # Test Create() of float32.tif
 
 
-def bt_4():
+def test_bt_4():
 
     tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
     return tst.testCreate(out_bands=1)
@@ -84,7 +84,7 @@ def bt_4():
 # Test testSetProjection() of float32.tif
 
 
-def bt_5():
+def test_bt_5():
 
     tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
     return tst.testSetProjection()
@@ -93,7 +93,7 @@ def bt_5():
 # Test testSetGeoTransform() of float32.tif
 
 
-def bt_6():
+def test_bt_6():
 
     tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
     return tst.testSetGeoTransform()
@@ -102,7 +102,7 @@ def bt_6():
 # Cleanup
 
 
-def bt_cleanup():
+def test_bt_cleanup():
 
     gdal.Unlink('/vsimem/int16.tif.prj')
     gdal.Unlink('tmp/int32.tif.prj')
@@ -112,13 +112,13 @@ def bt_cleanup():
 
 
 gdaltest_list = [
-    bt_1,
-    bt_2,
-    bt_3,
-    bt_4,
-    bt_5,
-    bt_6,
-    bt_cleanup]
+    test_bt_1,
+    test_bt_2,
+    test_bt_3,
+    test_bt_4,
+    test_bt_5,
+    test_bt_6,
+    test_bt_cleanup]
 
 if __name__ == '__main__':
 

@@ -42,7 +42,7 @@ import ogrtest
 # Find EEDA driver
 
 
-def eeda_1():
+def test_eeda_1():
 
     ogrtest.eeda_drv = ogr.GetDriverByName('EEDA')
 
@@ -57,7 +57,7 @@ def eeda_1():
 # Nominal case
 
 
-def eeda_2():
+def test_eeda_2():
 
     if ogrtest.eeda_drv is None:
         return 'skip'
@@ -335,7 +335,7 @@ def eeda_2():
 # Nominal case where collection is in eedaconf.json
 
 
-def eeda_3():
+def test_eeda_3():
 
     if ogrtest.eeda_drv is None:
         return 'skip'
@@ -361,7 +361,7 @@ def eeda_3():
 # Test that name and id variants are handled correctly.
 
 
-def eeda_4():
+def test_eeda_4():
 
     if ogrtest.eeda_drv is None:
         return 'skip'
@@ -456,7 +456,7 @@ def eeda_4():
 #
 
 
-def eeda_cleanup():
+def test_eeda_cleanup():
 
     if ogrtest.eeda_drv is None:
         return 'skip'
@@ -478,11 +478,11 @@ def eeda_cleanup():
 
 
 gdaltest_list = [
-    eeda_1,
-    eeda_2,
-    eeda_3,
-    eeda_4,
-    eeda_cleanup]
+    test_eeda_1,
+    test_eeda_2,
+    test_eeda_3,
+    test_eeda_4,
+    test_eeda_cleanup]
 
 if __name__ == '__main__':
 
