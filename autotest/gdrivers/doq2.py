@@ -64,8 +64,6 @@ def test_doq2_1():
     ds = None
 
 
-gdaltest_list = [
-    test_doq2_1]
 
 if __name__ == '__main__':
 

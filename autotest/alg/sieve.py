@@ -325,16 +325,6 @@ cellsize     60.000000000000
         pytest.fail('got wrong checksum')
     
 
-gdaltest_list = [
-    test_sieve_1,
-    test_sieve_2,
-    test_sieve_3,
-    test_sieve_4,
-    test_sieve_5,
-    test_sieve_6,
-    test_sieve_7,
-    test_sieve_8
-]
 
 if __name__ == '__main__':
 

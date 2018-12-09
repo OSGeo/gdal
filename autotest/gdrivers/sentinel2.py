@@ -2426,36 +2426,6 @@ def test_sentinel2_l1c_safe_compact_3():
     assert band.DataType == gdal.GDT_Byte
 
 
-gdaltest_list = [
-    test_sentinel2_l1c_1,
-    test_sentinel2_l1c_2,
-    test_sentinel2_l1c_3,
-    test_sentinel2_l1c_4,
-    test_sentinel2_l1c_5,
-    test_sentinel2_l1c_6,
-    test_sentinel2_l1c_7,
-    test_sentinel2_l1c_tile_1,
-    test_sentinel2_l1c_tile_2,
-    test_sentinel2_l1c_tile_3,
-    test_sentinel2_l1c_tile_4,
-    test_sentinel2_l1c_tile_5,
-    test_sentinel2_l1c_tile_6,
-    test_sentinel2_l1b_1,
-    test_sentinel2_l1b_2,
-    test_sentinel2_l1b_3,
-    test_sentinel2_l1b_4,
-    test_sentinel2_l1b_5,
-    test_sentinel2_l2a_1,
-    test_sentinel2_l2a_2,
-    test_sentinel2_l2a_3,
-    test_sentinel2_l2a_4,
-    test_sentinel2_l2a_5,
-    test_sentinel2_l2a_6,
-    test_sentinel2_l2a_7,
-    test_sentinel2_l1c_safe_compact_1,
-    test_sentinel2_l1c_safe_compact_2,
-    test_sentinel2_l1c_safe_compact_3
-]
 
 if __name__ == '__main__':
 

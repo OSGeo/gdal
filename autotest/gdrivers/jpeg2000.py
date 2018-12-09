@@ -441,25 +441,6 @@ def test_jpeg2000_cleanup():
     gdaltest.reregister_all_jpeg2000_drivers()
 
 
-gdaltest_list = [
-    test_jpeg2000_1,
-    test_jpeg2000_2,
-    test_jpeg2000_3,
-    test_jpeg2000_4,
-    test_jpeg2000_5,
-    test_jpeg2000_6,
-    test_jpeg2000_7,
-    test_jpeg2000_8,
-    test_jpeg2000_9,
-    test_jpeg2000_10,
-    test_jpeg2000_11,
-    test_jpeg2000_online_1,
-    test_jpeg2000_online_2,
-    test_jpeg2000_online_3,
-    test_jpeg2000_online_4,
-    test_jpeg2000_online_5,
-    test_jpeg2000_online_6,
-    test_jpeg2000_cleanup]
 
 if __name__ == '__main__':
 

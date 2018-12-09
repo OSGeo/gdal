@@ -1400,38 +1400,6 @@ def test_isis_31():
     assert cs == 1
 
 
-gdaltest_list = [
-    test_isis_1,
-    test_isis_2,
-    test_isis_3,
-    test_isis_4,
-    test_isis_5,
-    test_isis_6,
-    test_isis_7,
-    test_isis_8,
-    test_isis_9,
-    test_isis_10,
-    test_isis_11,
-    test_isis_12,
-    test_isis_13,
-    test_isis_14,
-    test_isis_15,
-    test_isis_16,
-    test_isis_17,
-    test_isis_18,
-    test_isis_19,
-    test_isis_20,
-    test_isis_21,
-    test_isis_22,
-    test_isis_23,
-    test_isis_24,
-    test_isis_25,
-    test_isis_26,
-    test_isis_27,
-    test_isis_28,
-    test_isis_29,
-    test_isis_30,
-    test_isis_31]
 
 
 if __name__ == '__main__':

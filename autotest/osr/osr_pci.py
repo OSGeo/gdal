@@ -195,15 +195,6 @@ def test_osr_pci_7():
         'ExportToPCI result wrong.'
 
 
-gdaltest_list = [
-    test_osr_pci_1,
-    test_osr_pci_2,
-    test_osr_pci_3,
-    test_osr_pci_4,
-    test_osr_pci_5,
-    test_osr_pci_6,
-    test_osr_pci_7,
-    None]
 
 if __name__ == '__main__':
 

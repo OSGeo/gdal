@@ -376,19 +376,6 @@ def test_vrtmask_11():
 def test_vrtmask_cleanup():
     pass
 
-gdaltest_list = [
-    test_vrtmask_1,
-    test_vrtmask_2,
-    test_vrtmask_3,
-    test_vrtmask_4,
-    test_vrtmask_5,
-    test_vrtmask_6,
-    test_vrtmask_7,
-    test_vrtmask_8,
-    test_vrtmask_9,
-    test_vrtmask_10,
-    test_vrtmask_11,
-    test_vrtmask_cleanup]
 
 if __name__ == '__main__':
 

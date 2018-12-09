@@ -1039,12 +1039,6 @@ def ogr_carto_rw_1():
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
 
 
-gdaltest_list = [
-    test_ogr_carto_init,
-    test_ogr_carto_vsimem,
-    test_ogr_carto_vsimem_cleanup,
-    test_ogr_carto_test_ogrsf
-]
 
 
 gdaltest_rw_list = [

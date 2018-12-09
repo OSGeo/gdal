@@ -112,11 +112,6 @@ def test_ogr_db2_hack_3():
     ogr.SetGenerate_DB2_V72_BYTE_ORDER(0)
 
 
-gdaltest_list = [
-    test_ogr_db2_hack_1,
-    test_ogr_db2_hack_2,
-    test_ogr_db2_hack_3
-]
 
 if __name__ == '__main__':
 

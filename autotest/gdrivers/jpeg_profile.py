@@ -186,11 +186,6 @@ def test_jpeg_copy_icc_64K():
 ###############################################################################################
 
 
-gdaltest_list = [
-    test_jpeg_copy_icc,
-    test_jpeg_copy_options_icc,
-    test_jpeg_copy_icc_64K,
-]
 
 if __name__ == '__main__':
 

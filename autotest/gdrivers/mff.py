@@ -61,10 +61,6 @@ def test_mff_3():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_mff_1,
-    test_mff_2,
-    test_mff_3]
 
 if __name__ == '__main__':
 

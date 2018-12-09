@@ -752,17 +752,6 @@ def test_eedai_cleanup():
     gdal.RmdirRecursive('/vsimem/ee/')
 
 
-gdaltest_list = [
-    test_eedai_1,
-    test_eedai_2,
-    test_eedai_3,
-    test_eedai_GOOGLE_APPLICATION_CREDENTIALS,
-    test_eedai_gce_credentials,
-    test_eedai_4,
-    test_eedai_geotiff,
-    test_eedai_cleanup,
-    test_eedai_real_service,
-]
 
 if __name__ == '__main__':
 

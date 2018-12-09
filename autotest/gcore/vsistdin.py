@@ -130,7 +130,6 @@ def test_vsistdin_4():
     gdal.Unlink("tmp/vsistdin_4_out.tif")
 
 
-gdaltest_list = [test_vsistdin_1, test_vsistdin_2, test_vsistdin_3, test_vsistdin_4]
 
 
 if __name__ == '__main__':

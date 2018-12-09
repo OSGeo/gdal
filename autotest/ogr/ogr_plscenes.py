@@ -706,14 +706,6 @@ def test_ogr_plscenes_data_v1_live():
     assert ds.RasterCount != 0
 
 
-gdaltest_list = [
-    test_ogr_plscenes_init,
-    test_ogr_plscenes_data_v1_catalog_no_paging,
-    test_ogr_plscenes_data_v1_catalog_paging,
-    test_ogr_plscenes_data_v1_nominal,
-    test_ogr_plscenes_data_v1_errors,
-    test_ogr_plscenes_data_v1_live
-]
 
 if __name__ == '__main__':
 

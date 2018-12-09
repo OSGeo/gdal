@@ -322,17 +322,6 @@ def test_ogr_pcidsk_cleanup():
     gdal.Unlink('tmp/ogr_pcidsk_1.pix')
 
 
-gdaltest_list = [
-    test_ogr_pcidsk_1,
-    test_ogr_pcidsk_2,
-    test_ogr_pcidsk_3,
-    test_ogr_pcidsk_4,
-    test_ogr_pcidsk_5,
-    test_ogr_pcidsk_add_field_to_non_empty_layer,
-    test_ogr_pcidsk_too_many_layers,
-    test_ogr_pcidsk_online_1,
-    test_ogr_pcidsk_online_2,
-    test_ogr_pcidsk_cleanup]
 
 if __name__ == '__main__':
 

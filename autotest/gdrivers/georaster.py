@@ -473,23 +473,6 @@ def test_georaster_cleanup():
 #
 
 
-gdaltest_list = [
-    test_georaster_init,
-    test_georaster_byte,
-    test_georaster_int16,
-    test_georaster_int32,
-    test_georaster_rgb_b1,
-    test_georaster_rgb_b2,
-    test_georaster_rgb_b3_bsq,
-    test_georaster_rgb_b3_bip,
-    test_georaster_rgb_b3_bil,
-    test_georaster_byte_deflate,
-    test_georaster_rgb_deflate_b3,
-    test_georaster_1bit,
-    test_georaster_2bit,
-    test_georaster_4bit,
-    test_georaster_cleanup
-]
 
 if __name__ == '__main__':
 

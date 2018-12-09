@@ -534,14 +534,6 @@ def test_wcs_cleanup():
 
     
 
-gdaltest_list = [
-    test_wcs_1,
-    # wcs_2, #FIXME: re-enable after adapting test
-    test_wcs_3,
-    test_wcs_4,
-    # wcs_5, #FIXME: re-enable after adapting test
-    test_wcs_6,
-    test_wcs_cleanup]
 
 
 if __name__ == '__main__':

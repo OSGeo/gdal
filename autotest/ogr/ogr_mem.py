@@ -648,25 +648,6 @@ def test_ogr_mem_cleanup():
     gdaltest.mem_ds = None
 
 
-gdaltest_list = [
-    test_ogr_mem_1,
-    test_ogr_mem_2,
-    test_ogr_mem_3,
-    test_ogr_mem_4,
-    test_ogr_mem_5,
-    test_ogr_mem_6,
-    test_ogr_mem_7,
-    test_ogr_mem_8,
-    test_ogr_mem_9,
-    test_ogr_mem_10,
-    test_ogr_mem_11,
-    test_ogr_mem_12,
-    test_ogr_mem_13,
-    test_ogr_mem_14,
-    test_ogr_mem_15,
-    test_ogr_mem_16,
-    test_ogr_mem_17,
-    test_ogr_mem_cleanup]
 
 if __name__ == '__main__':
 

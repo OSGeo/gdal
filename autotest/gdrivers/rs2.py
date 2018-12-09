@@ -74,10 +74,6 @@ def test_rs2_3():
     assert got_rpc == expected_rpc
 
 
-gdaltest_list = [
-    test_rs2_1,
-    test_rs2_2,
-    test_rs2_3]
 
 if __name__ == '__main__':
 

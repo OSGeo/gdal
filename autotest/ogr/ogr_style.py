@@ -106,8 +106,6 @@ def test_ogr_style_styletable():
 # Build tests runner
 
 
-gdaltest_list = [
-    test_ogr_style_styletable]
 
 if __name__ == '__main__':
 

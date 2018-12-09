@@ -608,23 +608,6 @@ def test_kea_14():
     gdaltest.kea_driver.Delete('tmp/out2.kea')
 
 
-gdaltest_list = [
-    test_kea_init,
-    test_kea_1,
-    test_kea_2,
-    test_kea_3,
-    test_kea_4,
-    test_kea_5,
-    test_kea_6,
-    test_kea_7,
-    test_kea_8,
-    test_kea_9,
-    test_kea_10,
-    test_kea_11,
-    test_kea_12,
-    test_kea_13,
-    test_kea_14
-]
 
 if __name__ == '__main__':
 

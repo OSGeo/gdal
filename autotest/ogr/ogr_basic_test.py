@@ -686,26 +686,6 @@ def test_ogr_basic_cleanup():
     gdaltest.ds = None
 
 
-gdaltest_list = [
-    test_ogr_basic_1,
-    test_ogr_basic_2,
-    test_ogr_basic_3,
-    test_ogr_basic_4,
-    test_ogr_basic_5,
-    test_ogr_basic_6,
-    test_ogr_basic_7,
-    test_ogr_basic_8,
-    test_ogr_basic_9,
-    test_ogr_basic_10,
-    test_ogr_basic_11,
-    test_ogr_basic_12,
-    test_ogr_basic_13,
-    test_ogr_basic_14,
-    test_ogr_basic_15,
-    test_ogr_basic_16,
-    test_ogr_basic_invalid_unicode,
-    test_ogr_basic_dataset_slice,
-    test_ogr_basic_cleanup]
 
 # gdaltest_list = [ ogr_basic_13 ]
 

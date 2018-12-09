@@ -280,12 +280,6 @@ def test_ogr_nas_5():
 
     
 
-gdaltest_list = [
-    test_ogr_nas_1,
-    test_ogr_nas_2,
-    test_ogr_nas_3,
-    test_ogr_nas_4,
-    test_ogr_nas_5]
 
 if __name__ == '__main__':
 

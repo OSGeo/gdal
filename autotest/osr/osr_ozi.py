@@ -93,11 +93,6 @@ def test_osr_ozi_3():
     assert gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt())
 
 
-gdaltest_list = [
-    test_osr_ozi_1,
-    test_osr_ozi_2,
-    test_osr_ozi_3,
-    None]
 
 if __name__ == '__main__':
 

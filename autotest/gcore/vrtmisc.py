@@ -505,29 +505,6 @@ def test_vrtmisc_histogram():
 def test_vrtmisc_cleanup():
     pass
 
-gdaltest_list = [
-    test_vrtmisc_1,
-    test_vrtmisc_2,
-    test_vrtmisc_3,
-    test_vrtmisc_4,
-    test_vrtmisc_5,
-    test_vrtmisc_6,
-    test_vrtmisc_7,
-    test_vrtmisc_8,
-    test_vrtmisc_9,
-    test_vrtmisc_10,
-    test_vrtmisc_11,
-    test_vrtmisc_12,
-    test_vrtmisc_13,
-    test_vrtmisc_14,
-    test_vrtmisc_15,
-    test_vrtmisc_16,
-    test_vrtmisc_17,
-    test_vrtmisc_18,
-    test_vrtmisc_rat,
-    test_vrtmisc_colortable,
-    test_vrtmisc_histogram,
-    test_vrtmisc_cleanup]
 
 if __name__ == '__main__':
 

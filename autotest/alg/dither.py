@@ -95,9 +95,6 @@ def test_dither_1():
 
     
 
-gdaltest_list = [
-    test_dither_1
-]
 
 
 if __name__ == '__main__':

@@ -47,8 +47,6 @@ def test_doq1_1():
     return ret
 
 
-gdaltest_list = [
-    test_doq1_1]
 
 if __name__ == '__main__':
 

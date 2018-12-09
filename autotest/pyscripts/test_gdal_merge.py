@@ -238,14 +238,6 @@ def test_gdal_merge_cleanup():
 
     
 
-gdaltest_list = [
-    test_gdal_merge_1,
-    test_gdal_merge_2,
-    test_gdal_merge_3,
-    test_gdal_merge_4,
-    test_gdal_merge_5,
-    test_gdal_merge_cleanup
-]
 
 
 if __name__ == '__main__':

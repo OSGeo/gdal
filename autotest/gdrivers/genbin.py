@@ -72,9 +72,6 @@ def test_genbin_1():
     return tst.testOpen(check_prj=prj, check_gt=gt)
 
 
-gdaltest_list = [
-    test_genbin_1
-]
 
 
 if __name__ == '__main__':

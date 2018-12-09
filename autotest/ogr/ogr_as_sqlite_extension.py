@@ -110,7 +110,6 @@ def do(sqlite3name, gdalname):
         sys.exit(1)
 
 
-gdaltest_list = []
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:

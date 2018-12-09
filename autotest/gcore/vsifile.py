@@ -834,32 +834,6 @@ def test_vsifile_opendir():
     gdal.RmdirRecursive('/vsimem/vsifile_opendir')
 
 
-gdaltest_list = [test_vsifile_1,
-                 test_vsifile_2,
-                 test_vsifile_3,
-                 test_vsifile_4,
-                 test_vsifile_5,
-                 test_vsifile_6,
-                 test_vsifile_7,
-                 test_vsifile_8,
-                 test_vsifile_9,
-                 test_vsifile_10,
-                 test_vsifile_11,
-                 test_vsifile_12,
-                 test_vsifile_13,
-                 test_vsifile_14,
-                 test_vsifile_15,
-                 test_vsifile_16,
-                 test_vsifile_17,
-                 test_vsifile_18,
-                 test_vsifile_19,
-                 test_vsifile_20,
-                 test_vsifile_21,
-                 test_vsifile_22,
-                 test_vsitar_bug_675,
-                 test_vsigzip_multi_thread,
-                 test_vsifile_opendir,
-                 test_vsisync]
 
 if __name__ == '__main__':
 

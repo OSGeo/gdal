@@ -660,13 +660,6 @@ def test_netcdf_cf_5():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_netcdf_cf_1,
-    test_netcdf_cf_2,
-    test_netcdf_cf_3,
-    test_netcdf_cf_4,
-    test_netcdf_cf_5,
-    None]
 
 if __name__ == '__main__':
 

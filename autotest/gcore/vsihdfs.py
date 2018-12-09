@@ -151,13 +151,6 @@ def test_vsihdfs_7():
     assert len(lst) >= 360
 
 
-gdaltest_list = [test_vsihdfs_1,
-                 test_vsihdfs_2,
-                 test_vsihdfs_3,
-                 test_vsihdfs_4,
-                 test_vsihdfs_5,
-                 test_vsihdfs_6,
-                 test_vsihdfs_7]
 
 if __name__ == '__main__':
 

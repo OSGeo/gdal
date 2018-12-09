@@ -90,12 +90,6 @@ def test_idrisi_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_idrisi_1,
-    test_idrisi_2,
-    test_idrisi_3,
-    test_idrisi_4,
-    test_idrisi_cleanup]
 
 if __name__ == '__main__':
 

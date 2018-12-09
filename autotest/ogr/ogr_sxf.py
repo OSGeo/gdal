@@ -74,10 +74,6 @@ def test_ogr_sxf_cleanup():
     gdaltest.sxf_ds = None
 
 
-gdaltest_list = [
-    test_ogr_sxf_1,
-    test_ogr_sxf_2,
-    test_ogr_sxf_cleanup]
 
 if __name__ == '__main__':
 

@@ -148,13 +148,6 @@ def test_srtmhgt_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_srtmhgt_1,
-    test_srtmhgt_2,
-    test_srtmhgt_3,
-    test_srtmhgt_4,
-    test_srtmhgt_cleanup
-]
 
 
 if __name__ == '__main__':

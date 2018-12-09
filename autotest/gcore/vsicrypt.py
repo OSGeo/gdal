@@ -522,12 +522,6 @@ def test_vsicrypt_6():
     gdal.Unlink('/vsimem/file.bin')
 
 
-gdaltest_list = [test_vsicrypt_1,
-                 test_vsicrypt_2,
-                 test_vsicrypt_3,
-                 test_vsicrypt_4,
-                 test_vsicrypt_5,
-                 test_vsicrypt_6]
 
 if __name__ == '__main__':
 

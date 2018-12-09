@@ -730,26 +730,6 @@ def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
 
-gdaltest_list = [
-    test_numpy_rw_1,
-    test_numpy_rw_2,
-    test_numpy_rw_3,
-    test_numpy_rw_4,
-    test_numpy_rw_5,
-    test_numpy_rw_6,
-    test_numpy_rw_7,
-    test_numpy_rw_8,
-    test_numpy_rw_9,
-    test_numpy_rw_10,
-    test_numpy_rw_11,
-    test_numpy_rw_12,
-    test_numpy_rw_13,
-    test_numpy_rw_14,
-    test_numpy_rw_15,
-    test_numpy_rw_16,
-    test_numpy_rw_17,
-    test_numpy_rw_18,
-    test_numpy_rw_cleanup]
 
 if __name__ == '__main__':
 

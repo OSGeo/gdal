@@ -444,19 +444,6 @@ def test_ogr_index_cleanup():
         'tmp/ogr_index_11.dbf')
 
 
-gdaltest_list = [
-    test_ogr_index_1,
-    test_ogr_index_2,
-    test_ogr_index_3,
-    test_ogr_index_4,
-    test_ogr_index_5,
-    test_ogr_index_6,
-    test_ogr_index_7,
-    test_ogr_index_8,
-    test_ogr_index_9,
-    test_ogr_index_10,
-    test_ogr_index_11,
-    test_ogr_index_cleanup]
 
 if __name__ == '__main__':
 

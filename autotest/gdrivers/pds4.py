@@ -1078,25 +1078,6 @@ def test_pds4_18():
     gdal.GetDriverByName('PDS4').Delete(filename)
 
 
-gdaltest_list = [
-    test_pds4_1,
-    test_pds4_2,
-    test_pds4_3,
-    test_pds4_4,
-    test_pds4_5,
-    test_pds4_6,
-    test_pds4_7,
-    test_pds4_8,
-    test_pds4_9,
-    test_pds4_10,
-    test_pds4_11,
-    test_pds4_12,
-    test_pds4_13,
-    test_pds4_14,
-    test_pds4_15,
-    test_pds4_16,
-    test_pds4_17,
-    test_pds4_18]
 
 if __name__ == '__main__':
 

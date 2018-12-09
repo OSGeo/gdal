@@ -191,20 +191,6 @@ def test_ignfheightasciigrid_gra_invalid():
     
 
 
-gdaltest_list = [
-    test_ignfheightasciigrid_1,
-    test_ignfheightasciigrid_2,
-    test_ignfheightasciigrid_3,
-    test_ignfheightasciigrid_4,
-    test_ignfheightasciigrid_5,
-    test_ignfheightasciigrid_6,
-    test_ignfheightasciigrid_7,
-    test_ignfheightasciigrid_description_multiword,
-    test_ignfheightasciigrid_invalid,
-    test_ignfheightasciigrid_huge,
-    test_ignfheightasciigrid_gra,
-    test_ignfheightasciigrid_gra_invalid,
-]
 
 
 if __name__ == '__main__':

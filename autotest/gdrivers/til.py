@@ -108,10 +108,6 @@ def test_til_3():
 
     
 
-gdaltest_list = [
-    test_til_1,
-    test_til_2,
-    test_til_3]
 
 if __name__ == '__main__':
 

@@ -199,10 +199,6 @@ def test_gpkg_1():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_gpkg_init,
-    test_gpkg_1
-]
 # gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
 if __name__ == '__main__':
 

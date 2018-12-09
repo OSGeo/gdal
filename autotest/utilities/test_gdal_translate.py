@@ -970,47 +970,6 @@ def test_gdal_translate_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_gdal_translate_1,
-    test_gdal_translate_2,
-    test_gdal_translate_3,
-    test_gdal_translate_4,
-    test_gdal_translate_5,
-    test_gdal_translate_6,
-    test_gdal_translate_7,
-    test_gdal_translate_8,
-    test_gdal_translate_9,
-    test_gdal_translate_10,
-    test_gdal_translate_11,
-    test_gdal_translate_12,
-    test_gdal_translate_13,
-    test_gdal_translate_14,
-    test_gdal_translate_15,
-    test_gdal_translate_16,
-    test_gdal_translate_17,
-    test_gdal_translate_18,
-    test_gdal_translate_19,
-    test_gdal_translate_20,
-    test_gdal_translate_21,
-    test_gdal_translate_22,
-    test_gdal_translate_23,
-    test_gdal_translate_24,
-    test_gdal_translate_25,
-    test_gdal_translate_26,
-    test_gdal_translate_27,
-    test_gdal_translate_28,
-    test_gdal_translate_29,
-    test_gdal_translate_30,
-    test_gdal_translate_31,
-    test_gdal_translate_32,
-    test_gdal_translate_33,
-    test_gdal_translate_34,
-    test_gdal_translate_35,
-    test_gdal_translate_36,
-    test_gdal_translate_37,
-    test_gdal_translate_38,
-    test_gdal_translate_cleanup
-]
 
 
 if __name__ == '__main__':

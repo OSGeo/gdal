@@ -159,11 +159,6 @@ def test_derived_test3():
 
     
 
-gdaltest_list = [
-    test_derived_test1,
-    test_derived_test2,
-    test_derived_test3
-]
 
 if __name__ == '__main__':
 

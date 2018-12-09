@@ -91,8 +91,6 @@ def test_mg4lidar_1():
     ds = None
 
 
-gdaltest_list = [
-    test_mg4lidar_1]
 
 if __name__ == '__main__':
 

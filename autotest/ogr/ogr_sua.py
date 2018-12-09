@@ -64,8 +64,6 @@ def test_ogr_sua_1():
 
     
 
-gdaltest_list = [
-    test_ogr_sua_1]
 
 
 if __name__ == '__main__':

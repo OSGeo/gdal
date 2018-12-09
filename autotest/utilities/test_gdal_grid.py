@@ -900,22 +900,6 @@ def test_gdal_grid_cleanup():
 
     
 
-gdaltest_list = [
-    test_gdal_grid_1,
-    test_gdal_grid_2,
-    test_gdal_grid_3,
-    test_gdal_grid_4,
-    test_gdal_grid_5,
-    test_gdal_grid_6,
-    test_gdal_grid_7,
-    test_gdal_grid_8,
-    test_gdal_grid_9,
-    test_gdal_grid_10,
-    test_gdal_grid_11,
-    test_gdal_grid_12,
-    test_gdal_grid_clipsrc,
-    test_gdal_grid_cleanup
-]
 
 
 if __name__ == '__main__':

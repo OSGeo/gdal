@@ -247,19 +247,6 @@ def test_usgsdem_cleanup():
 
     
 
-gdaltest_list = [
-    test_usgsdem_1,
-    test_usgsdem_2,
-    test_usgsdem_3,
-    test_usgsdem_4,
-    test_usgsdem_5,
-    test_usgsdem_6,
-    test_usgsdem_7,
-    test_usgsdem_8,
-    test_usgsdem_9,
-    test_usgsdem_with_extra_values_at_end_of_profile,
-    test_usgsdem_with_spaces_after_byte_864,
-    test_usgsdem_cleanup]
 
 if __name__ == '__main__':
 

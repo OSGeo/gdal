@@ -60,9 +60,6 @@ def test_tps_1():
     assert transformer is None
 
 
-gdaltest_list = [
-    test_tps_1,
-]
 
 if __name__ == '__main__':
 

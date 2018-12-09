@@ -226,13 +226,6 @@ def test_gta_create(filename, checksum):
     ut.testCreateCopy()
 
 
-gdaltest_list = [
-    test_gta_1,
-    test_gta_2,
-    test_gta_3,
-    test_gta_4,
-    test_gta_5,
-]
 
 if __name__ == '__main__':
 

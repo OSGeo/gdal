@@ -924,24 +924,6 @@ def test_ogr_pgdump_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_ogr_pgdump_1,
-    test_ogr_pgdump_2,
-    test_ogr_pgdump_3,
-    test_ogr_pgdump_4,
-    test_ogr_pgdump_5,
-    test_ogr_pgdump_6,
-    test_ogr_pgdump_7,
-    test_ogr_pgdump_8,
-    test_ogr_pgdump_9,
-    test_ogr_pgdump_10,
-    test_ogr_pgdump_11,
-    test_ogr_pgdump_12,
-    test_ogr_pgdump_13,
-    test_ogr_pgdump_14,
-    test_ogr_pgdump_15,
-    test_ogr_pgdump_16,
-    test_ogr_pgdump_cleanup]
 
 
 if __name__ == '__main__':

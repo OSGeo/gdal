@@ -70,11 +70,6 @@ def test_sigdem_in_memory():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_sigdem_copy_check_prj,
-    test_sigdem_non_square,
-    test_sigdem_in_memory
-]
 
 if __name__ == '__main__':
 

@@ -1900,41 +1900,6 @@ def test_ogr_sql_sqlite_31():
     assert value == 25
 
 
-gdaltest_list = [
-    test_ogr_sql_sqlite_1,
-    test_ogr_sql_sqlite_2,
-    test_ogr_sql_sqlite_3,
-    test_ogr_sql_sqlite_4,
-    test_ogr_sql_sqlite_5,
-    test_ogr_sql_sqlite_6,
-    test_ogr_sql_sqlite_7,
-    test_ogr_sql_sqlite_8,
-    test_ogr_sql_sqlite_9,
-    test_ogr_sql_sqlite_10,
-    test_ogr_sql_sqlite_11,
-    test_ogr_sql_sqlite_12,
-    test_ogr_sql_sqlite_13,
-    test_ogr_sql_sqlite_14,
-    test_ogr_sql_sqlite_15,
-    test_ogr_sql_sqlite_start_webserver,
-    test_ogr_sql_sqlite_16,
-    test_ogr_sql_sqlite_17,
-    test_ogr_sql_sqlite_18,
-    test_ogr_sql_sqlite_19,
-    test_ogr_sql_sqlite_20,
-    test_ogr_sql_sqlite_21,
-    test_ogr_sql_sqlite_22,
-    test_ogr_sql_sqlite_23,
-    test_ogr_sql_sqlite_stop_webserver,
-    test_ogr_sql_sqlite_24,
-    test_ogr_sql_sqlite_25,
-    test_ogr_sql_sqlite_26,
-    test_ogr_sql_sqlite_27,
-    test_ogr_sql_sqlite_28,
-    test_ogr_sql_sqlite_29,
-    test_ogr_sql_sqlite_30,
-    test_ogr_sql_sqlite_31
-]
 
 if __name__ == '__main__':
 

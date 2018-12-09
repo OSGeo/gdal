@@ -71,8 +71,6 @@ def test_ogr_openair_1():
 
     
 
-gdaltest_list = [
-    test_ogr_openair_1]
 
 
 if __name__ == '__main__':

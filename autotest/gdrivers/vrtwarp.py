@@ -416,20 +416,6 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
 # Test different nodata values on bands and partial blocks (#6581)
 
 
-gdaltest_list = [
-    test_vrtwarp_1,
-    test_vrtwarp_2,
-    test_vrtwarp_3,
-    test_vrtwarp_4,
-    test_vrtwarp_5,
-    test_vrtwarp_6,
-    test_vrtwarp_7,
-    test_vrtwarp_8,
-    test_vrtwarp_9,
-    test_vrtwarp_10,
-    test_vrtwarp_11,
-    test_vrtwarp_read_vrt_of_warped_vrt
-]
 
 
 if __name__ == '__main__':

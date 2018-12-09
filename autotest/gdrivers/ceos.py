@@ -45,8 +45,6 @@ def test_ceos_1():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_ceos_1]
 
 if __name__ == '__main__':
 

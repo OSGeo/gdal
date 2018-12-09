@@ -570,20 +570,6 @@ def test_ogr_csw_vsimem_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogr_csw_vsimem_fail_because_not_enabled,
-    test_ogr_csw_vsimem_fail_because_no_get_capabilities,
-    test_ogr_csw_vsimem_fail_because_empty_response,
-    test_ogr_csw_vsimem_fail_because_no_CSW_Capabilities,
-    test_ogr_csw_vsimem_fail_because_exception,
-    test_ogr_csw_vsimem_fail_because_invalid_xml_capabilities,
-    test_ogr_csw_vsimem_fail_because_missing_version,
-    test_ogr_csw_vsimem_csw_minimal_instance,
-    test_ogr_csw_vsimem_csw_output_schema_csw,
-    test_ogr_csw_vsimem_csw_output_schema_gmd,
-    test_ogr_csw_vsimem_csw_output_schema_fgdc,
-    test_ogr_csw_vsimem_cleanup,
-]
 
 if __name__ == '__main__':
 

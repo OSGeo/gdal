@@ -355,24 +355,6 @@ NODATA_value  2.2250738585072014e-308
 ###############################################################################
 
 
-gdaltest_list = [
-    test_aaigrid_1,
-    test_aaigrid_2,
-    test_aaigrid_comma,
-    test_aaigrid_3,
-    test_aaigrid_4,
-    test_aaigrid_5,
-    test_aaigrid_6,
-    test_aaigrid_6bis,
-    test_aaigrid_7,
-    test_aaigrid_8,
-    test_aaigrid_9,
-    test_aaigrid_10,
-    test_aaigrid_11,
-    test_aaigrid_12,
-    test_aaigrid_13,
-    test_aaigrid_14,
-    test_aaigrid_15]
 
 if __name__ == '__main__':
 

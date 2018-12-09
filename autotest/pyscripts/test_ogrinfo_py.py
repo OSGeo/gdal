@@ -333,21 +333,6 @@ OGRFeature(test_ogrinfo_23):2
     os.unlink('tmp/test_ogrinfo_23.csv')
 
 
-gdaltest_list = [
-    test_ogrinfo_py_1,
-    test_ogrinfo_py_2,
-    test_ogrinfo_py_3,
-    test_ogrinfo_py_4,
-    test_ogrinfo_py_5,
-    test_ogrinfo_py_6,
-    test_ogrinfo_py_7,
-    test_ogrinfo_py_8,
-    test_ogrinfo_py_9,
-    test_ogrinfo_py_10,
-    test_ogrinfo_py_11,
-    test_ogrinfo_py_22,
-    test_ogrinfo_py_23,
-]
 
 
 if __name__ == '__main__':

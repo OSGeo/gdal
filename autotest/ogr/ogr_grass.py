@@ -69,10 +69,6 @@ def test_ogr_grass_2():
     ds = None
 
 
-gdaltest_list = [
-    test_ogr_grass_1,
-    test_ogr_grass_2
-]
 
 
 if __name__ == '__main__':

@@ -833,31 +833,6 @@ def test_ogr_osm_18():
     assert count == 2
 
 
-gdaltest_list = [
-    test_ogr_osm_1,
-    test_ogr_osm_2,
-    test_ogr_osm_3,
-    test_ogr_osm_3_sqlite_nodes,
-    test_ogr_osm_3_custom_compress_nodes,
-    test_ogr_osm_3_all_layers,
-    test_ogr_osm_4,
-    test_ogr_osm_5,
-    test_ogr_osm_6,
-    test_ogr_osm_7,
-    test_ogr_osm_8,
-    test_ogr_osm_9,
-    test_ogr_osm_10,
-    test_ogr_osm_11,
-    test_ogr_osm_12,
-    test_ogr_osm_test_uncompressed_dense_true_nometadata_pbf,
-    test_ogr_osm_test_uncompressed_dense_false_pbf,
-    test_ogr_osm_13,
-    test_ogr_osm_14,
-    test_ogr_osm_15,
-    test_ogr_osm_16,
-    test_ogr_osm_17,
-    test_ogr_osm_18,
-]
 
 if __name__ == '__main__':
 

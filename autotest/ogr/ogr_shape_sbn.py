@@ -136,10 +136,6 @@ def test_ogr_shape_sbn_2():
     return search_all_features(lyr)
 
 
-gdaltest_list = [
-    test_ogr_shape_sbn_1,
-    test_ogr_shape_sbn_2,
-]
 
 if __name__ == '__main__':
 

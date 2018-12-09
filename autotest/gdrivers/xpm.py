@@ -59,7 +59,6 @@ def test_xpm_1():
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
-gdaltest_list = [test_xpm_1]
 
 
 if __name__ == '__main__':

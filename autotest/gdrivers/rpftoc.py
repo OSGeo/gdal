@@ -104,11 +104,6 @@ def test_rpftoc_4():
     os.unlink('tmp/RPFTOC01.ON2')
 
 
-gdaltest_list = [
-    test_rpftoc_1,
-    test_rpftoc_2,
-    test_rpftoc_3,
-    test_rpftoc_4]
 
 if __name__ == '__main__':
 

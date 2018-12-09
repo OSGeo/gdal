@@ -923,38 +923,6 @@ def test_osr_proj4_error_cases_export_mercator():
     assert got == ''
 
 
-gdaltest_list = [
-    test_osr_proj4_1,
-    test_osr_proj4_2,
-    test_osr_proj4_3,
-    test_osr_proj4_4,
-    test_osr_proj4_5,
-    test_osr_proj4_6,
-    test_osr_proj4_7,
-    test_osr_proj4_8,
-    test_osr_proj4_9,
-    test_osr_proj4_10,
-    test_osr_proj4_11,
-    test_osr_proj4_12,
-    test_osr_proj4_13,
-    test_osr_proj4_14,
-    test_osr_proj4_15,
-    test_osr_proj4_16,
-    test_osr_proj4_17,
-    test_osr_proj4_18,
-    test_osr_proj4_19,
-    test_osr_proj4_20,
-    test_osr_proj4_21,
-    test_osr_proj4_22,
-    test_osr_proj4_23,
-    test_osr_proj4_24,
-    test_osr_proj4_25,
-    test_osr_proj4_26,
-    test_osr_proj4_27,
-    test_osr_proj4_28,
-    test_osr_proj4_28_missing_proj_epsg_dict,
-    test_osr_proj4_error_cases_export_mercator,
-]
 
 
 if __name__ == '__main__':

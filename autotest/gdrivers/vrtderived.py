@@ -853,24 +853,6 @@ def test_vrtderived_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_vrtderived_1,
-    test_vrtderived_2,
-    test_vrtderived_3,
-    test_vrtderived_4,
-    test_vrtderived_5,
-    test_vrtderived_6,
-    test_vrtderived_7,
-    test_vrtderived_8,
-    test_vrtderived_9,
-    test_vrtderived_10,
-    test_vrtderived_11,
-    test_vrtderived_12,
-    test_vrtderived_13,
-    test_vrtderived_14,
-    test_vrtderived_15,
-    test_vrtderived_cleanup,
-]
 
 if __name__ == '__main__':
 

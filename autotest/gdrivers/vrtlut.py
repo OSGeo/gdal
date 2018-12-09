@@ -49,9 +49,6 @@ def test_vrtlut_1():
 def test_vrtlut_cleanup():
     pass
 
-gdaltest_list = [
-    test_vrtlut_1,
-    test_vrtlut_cleanup]
 
 if __name__ == '__main__':
 

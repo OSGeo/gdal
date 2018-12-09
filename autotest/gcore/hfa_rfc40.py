@@ -473,22 +473,6 @@ def test_hfa_rfc40_cleanup():
     gdal.GetDriverByName('HFA').Delete("tmp/test.img")
 
 
-gdaltest_list = [
-    test_hfa_rfc40_1,
-    test_hfa_rfc40_2,
-    test_hfa_rfc40_3,
-    test_hfa_rfc40_4,
-    test_hfa_rfc40_5,
-    test_hfa_rfc40_6,
-    test_hfa_rfc40_7,
-    test_hfa_rfc40_8,
-    test_hfa_rfc40_9,
-    test_hfa_rfc40_10,
-    test_hfa_rfc40_11,
-    test_hfa_rfc40_12,
-    test_hfa_rfc40_13,
-    test_hfa_rfc40_cleanup,
-]
 
 if __name__ == '__main__':
 

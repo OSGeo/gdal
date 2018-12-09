@@ -432,21 +432,6 @@ def test_rasterlite_cleanup():
 
     
 
-gdaltest_list = [
-    test_rasterlite_1,
-    test_rasterlite_2,
-    test_rasterlite_3,
-    test_rasterlite_4,
-    test_rasterlite_5,
-    test_rasterlite_6,
-    test_rasterlite_7,
-    test_rasterlite_8,
-    test_rasterlite_9,
-    test_rasterlite_10,
-    test_rasterlite_11,
-    test_rasterlite_12,
-    test_rasterlite_13,
-    test_rasterlite_cleanup]
 
 if __name__ == '__main__':
 

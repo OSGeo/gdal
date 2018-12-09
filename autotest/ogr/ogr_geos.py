@@ -593,40 +593,6 @@ def test_ogr_geos_polygonize():
     assert got is None, ('Got: %s' % got.ExportToWkt())
 
 
-gdaltest_list = [
-    test_ogr_geos_union,
-    test_ogr_geos_intersection,
-    test_ogr_geos_difference,
-    test_ogr_geos_symmetric_difference,
-    test_ogr_geos_sym_difference,
-    test_ogr_geos_intersect,
-    test_ogr_geos_disjoint,
-    test_ogr_geos_touches,
-    test_ogr_geos_crosses,
-    test_ogr_geos_within,
-    test_ogr_geos_contains,
-    test_ogr_geos_overlaps,
-    test_ogr_geos_buffer,
-    test_ogr_geos_centroid,
-    test_ogr_geos_centroid_multipolygon,
-    test_ogr_geos_centroid_point_empty,
-    test_ogr_geos_simplify_linestring,
-    test_ogr_geos_simplifypreservetopology_linestring,
-    test_ogr_geos_unioncascaded,
-    test_ogr_geos_convexhull,
-    test_ogr_geos_distance,
-    test_ogr_geos_isring,
-    test_ogr_geos_issimple_true,
-    test_ogr_geos_issimple_false,
-    test_ogr_geos_isvalid_true,
-    test_ogr_geos_isvalid_true_linestringM,
-    test_ogr_geos_isvalid_true_circularStringM,
-    test_ogr_geos_isvalid_true_triangle,
-    test_ogr_geos_isvalid_false,
-    test_ogr_geos_pointonsurface,
-    test_ogr_geos_DelaunayTriangulation,
-    test_ogr_geos_polygonize,
-]
 
 if __name__ == '__main__':
 

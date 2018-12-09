@@ -135,14 +135,6 @@ def test_gdallocationinfo_6():
     assert ret.find(expected_ret) >= 0
 
 
-gdaltest_list = [
-    test_gdallocationinfo_1,
-    test_gdallocationinfo_2,
-    test_gdallocationinfo_3,
-    test_gdallocationinfo_4,
-    test_gdallocationinfo_5,
-    test_gdallocationinfo_6,
-]
 
 
 if __name__ == '__main__':

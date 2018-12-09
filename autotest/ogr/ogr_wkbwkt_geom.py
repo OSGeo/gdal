@@ -616,19 +616,6 @@ def test_ogr_wkt_multipolygon_corrupted():
 # sys.stdin.readline()
 
 
-gdaltest_list = [
-    test_ogr_wkbwkt_geom_bigexponents,
-    test_ogr_wkbwkt_test_broken_geom,
-    test_ogr_wkbwkt_test_import_wkt_sf12,
-    test_ogr_wkbwkt_test_import_bad_multipoint_wkb,
-    test_ogr_wkbwkt_test_geometrycollection_wktwkb,
-    test_ogr_wkbwkt_test_geometrycollection_wkt_recursion,
-    test_ogr_wkbwkt_test_geometrycollection_wkb_recursion,
-    test_ogr_wkbwkt_export_wkt_iso_multipoint,
-    test_ogr_wkt_inf_nan,
-    test_ogr_wkt_multicurve_compoundcurve_corrupted,
-    test_ogr_wkt_multipolygon_corrupted,
-]
 
 if __name__ == '__main__':
 

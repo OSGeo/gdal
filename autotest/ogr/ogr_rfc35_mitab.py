@@ -569,13 +569,6 @@ def test_ogr_rfc35_mitab_cleanup():
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/rfc35_test.tab')
 
 
-gdaltest_list = [
-    test_ogr_rfc35_mitab_1,
-    test_ogr_rfc35_mitab_2,
-    test_ogr_rfc35_mitab_3,
-    test_ogr_rfc35_mitab_4,
-    test_ogr_rfc35_mitab_5,
-    test_ogr_rfc35_mitab_cleanup]
 
 
 if __name__ == '__main__':

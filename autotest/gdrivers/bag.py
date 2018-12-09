@@ -668,18 +668,6 @@ def test_bag_write_south_up():
     gdal.Unlink('/vsimem/out.bag')
 
 
-gdaltest_list = [test_bag_2,
-                 test_bag_3,
-                 test_bag_vr_normal,
-                 test_bag_vr_list_supergrids,
-                 test_bag_vr_open_supergrids,
-                 test_bag_vr_resampled,
-                 test_bag_vr_resampled_mask,
-                 test_bag_vr_resampled_interpolated,
-                 test_bag_write_single_band,
-                 test_bag_write_two_bands,
-                 test_bag_write_south_up,
-                 ]
 
 if __name__ == '__main__':
 

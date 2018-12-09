@@ -56,7 +56,6 @@ def test_sdts_1():
     assert md['TITLE'] == 'ALANSON, MI-24000'
 
 
-gdaltest_list = [test_sdts_1]
 
 if __name__ == '__main__':
 

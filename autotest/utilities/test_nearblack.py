@@ -259,17 +259,6 @@ def test_nearblack_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_nearblack_1,
-    test_nearblack_2,
-    test_nearblack_3,
-    test_nearblack_4,
-    test_nearblack_5,
-    test_nearblack_6,
-    test_nearblack_7,
-    test_nearblack_8,
-    test_nearblack_cleanup
-]
 
 
 if __name__ == '__main__':

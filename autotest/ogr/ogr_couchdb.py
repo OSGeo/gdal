@@ -137,12 +137,6 @@ def test_ogr_couchdb_cleanup():
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
 
 
-gdaltest_list = [
-    test_ogr_couchdb_init,
-    test_ogr_couchdb_1,
-    test_ogr_couchdb_2,
-    test_ogr_couchdb_cleanup
-]
 
 if __name__ == '__main__':
 

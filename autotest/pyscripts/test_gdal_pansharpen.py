@@ -102,11 +102,6 @@ def test_gdal_pansharpen_cleanup():
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world_pan.tif')
 
 
-gdaltest_list = [
-    test_gdal_pansharpen_1,
-    test_gdal_pansharpen_2,
-    test_gdal_pansharpen_cleanup
-]
 
 if __name__ == '__main__':
 

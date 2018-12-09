@@ -83,9 +83,6 @@ def test_transformgeoloc_1():
     print(geoloc_ds.ReadAsArray())
 
 
-gdaltest_list = [
-    test_transformgeoloc_1,
-]
 
 if __name__ == '__main__':
 

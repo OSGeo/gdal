@@ -167,16 +167,6 @@ def test_gcps2gt_8():
     assert gdaltest.geotransform_equals(gt, gt_expected, 0.00001)
 
 
-gdaltest_list = [
-    test_gcps2gt_1,
-    test_gcps2gt_2,
-    test_gcps2gt_3,
-    test_gcps2gt_4,
-    test_gcps2gt_5,
-    test_gcps2gt_6,
-    test_gcps2gt_7,
-    test_gcps2gt_8,
-]
 
 if __name__ == '__main__':
 

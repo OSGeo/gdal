@@ -306,18 +306,6 @@ def test_hdf4_read_online_10():
     ds = None
 
 
-gdaltest_list = [
-    test_hdf4_read_online_1,
-    test_hdf4_read_online_2,
-    test_hdf4_read_online_3,
-    test_hdf4_read_online_4,
-    test_hdf4_read_online_5,
-    test_hdf4_read_online_6,
-    test_hdf4_read_online_7,
-    test_hdf4_read_online_8,
-    test_hdf4_read_online_9,
-    test_hdf4_read_online_10,
-]
 
 if __name__ == '__main__':
 

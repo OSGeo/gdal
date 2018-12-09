@@ -158,14 +158,6 @@ def test_vrtfilt_6():
 def test_vrtfilt_cleanup():
     pass
 
-gdaltest_list = [
-    test_vrtfilt_1,
-    test_vrtfilt_2,
-    test_vrtfilt_3,
-    test_vrtfilt_4,
-    test_vrtfilt_5,
-    test_vrtfilt_6,
-    test_vrtfilt_cleanup]
 
 if __name__ == '__main__':
 

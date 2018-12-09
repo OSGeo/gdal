@@ -1466,22 +1466,6 @@ def test_rda_cleanup():
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
 
-gdaltest_list = [
-    test_rda_test_presence,
-    test_rda_bad_connection_string,
-    test_rda_missing_credentials,
-    test_rda_failed_authentication,
-    test_rda_error_metadata,
-    test_rda_graph_nominal,
-    test_rda_template_nominal,
-    test_rda_template_image_reference_nominal,
-    test_rda_read_gbdx_config,
-    test_rda_download_queue,
-    test_rda_rpc,
-    test_rda_real_cache_dir,
-    test_rda_real_expired_authentication,
-    test_rda_bad_tile,
-    test_rda_cleanup]
 
 if __name__ == '__main__':
 

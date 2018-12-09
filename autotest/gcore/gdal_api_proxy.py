@@ -404,10 +404,6 @@ def test_gdal_api_proxy_sub_clean():
     gdal.Unlink('tmp/gdalapiproxysocket')
 
 
-gdaltest_list = [test_gdal_api_proxy_1,
-                 test_gdal_api_proxy_2,
-                 test_gdal_api_proxy_3,
-                 test_gdal_api_proxy_4]
 
 if __name__ == '__main__':
 

@@ -276,13 +276,6 @@ def test_overviewds_cleanup():
 
     
 
-gdaltest_list = [test_overviewds_1,
-                 test_overviewds_2,
-                 test_overviewds_3,
-                 test_overviewds_4,
-                 test_overviewds_5,
-                 test_overviewds_6,
-                 test_overviewds_cleanup]
 
 if __name__ == '__main__':
 

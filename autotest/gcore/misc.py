@@ -744,22 +744,6 @@ def test_misc_cleanup():
 
     
 
-gdaltest_list = [test_misc_1,
-                 test_misc_2,
-                 test_misc_3,
-                 test_misc_4,
-                 test_misc_5,
-                 test_misc_6,
-                 test_misc_7,
-                 test_misc_8,
-                 test_misc_9,
-                 test_misc_10,
-                 test_misc_11,
-                 test_misc_12,
-                 test_misc_13,
-                 test_misc_14,
-                 test_misc_15,
-                 test_misc_cleanup]
 
 # gdaltest_list = [ misc_6 ]
 

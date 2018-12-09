@@ -1454,41 +1454,6 @@ def test_osr_esri_33():
 #
 
 
-gdaltest_list = [
-    test_osr_esri_1,
-    test_osr_esri_2,
-    test_osr_esri_3,
-    test_osr_esri_4,
-    test_osr_esri_5,
-    test_osr_esri_6,
-    test_osr_esri_7,
-    test_osr_esri_8,
-    test_osr_esri_9,
-    test_osr_esri_10,
-    test_osr_esri_11,
-    test_osr_esri_12,
-    test_osr_esri_13,
-    test_osr_esri_14,
-    test_osr_esri_15,
-    test_osr_esri_16,
-    test_osr_esri_17,
-    test_osr_esri_18,
-    test_osr_esri_19,
-    test_osr_esri_20,
-    test_osr_esri_21,
-    test_osr_esri_22,
-    test_osr_esri_23,
-    test_osr_esri_24,
-    test_osr_esri_25,
-    test_osr_esri_26,
-    test_osr_esri_27,
-    test_osr_esri_28,
-    test_osr_esri_29,
-    test_osr_esri_30,
-    test_osr_esri_31,
-    test_osr_esri_32,
-    test_osr_esri_33,
-    None]
 
 if __name__ == '__main__':
 

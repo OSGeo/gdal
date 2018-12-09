@@ -467,18 +467,6 @@ def test_ogr_wasp_cleanup():
     wasp_drv.DeleteDataSource('tmp.map')
 
 
-gdaltest_list = [
-    test_ogr_wasp_create_ds,
-    test_ogr_wasp_elevation_from_linestring_z,
-    test_ogr_wasp_elevation_from_linestring_z_toler,
-    test_ogr_wasp_elevation_from_linestring_field,
-    test_ogr_wasp_roughness_from_linestring_fields,
-    test_ogr_wasp_roughness_from_polygon_z,
-    test_ogr_wasp_roughness_from_polygon_field,
-    test_ogr_wasp_merge,
-    test_ogr_wasp_reading,
-    test_ogr_wasp_cleanup
-]
 
 if __name__ == '__main__':
     gdal.PushErrorHandler('CPLQuietErrorHandler')

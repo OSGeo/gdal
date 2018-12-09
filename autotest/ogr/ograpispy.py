@@ -142,11 +142,6 @@ def test_ograpispy_cleanup():
     gdal.Unlink('/vsimem/test2.csv')
 
 
-gdaltest_list = [
-    test_ograpispy_1,
-    test_ograpispy_2,
-    test_ograpispy_cleanup
-]
 
 if __name__ == '__main__':
 

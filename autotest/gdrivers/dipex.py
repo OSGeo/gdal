@@ -43,8 +43,6 @@ def test_dipex_1():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_dipex_1]
 
 if __name__ == '__main__':
 

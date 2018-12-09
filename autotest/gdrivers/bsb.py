@@ -135,15 +135,6 @@ def test_bsb_6():
     return ret
 
 
-gdaltest_list = [
-    test_bsb_0,
-    test_bsb_1,
-    test_bsb_2,
-    test_bsb_3,
-    test_bsb_4,
-    test_bsb_5,
-    test_bsb_6
-]
 
 
 if __name__ == '__main__':

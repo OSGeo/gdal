@@ -878,30 +878,6 @@ def test_lcp_23():
     return retval
 
 
-gdaltest_list = [
-    test_lcp_1,
-    test_lcp_2,
-    test_lcp_3,
-    test_lcp_4,
-    test_lcp_5,
-    test_lcp_6,
-    test_lcp_7,
-    test_lcp_8,
-    test_lcp_9,
-    test_lcp_10,
-    test_lcp_11,
-    test_lcp_12,
-    test_lcp_13,
-    test_lcp_14,
-    test_lcp_15,
-    test_lcp_16,
-    test_lcp_17,
-    test_lcp_18,
-    test_lcp_19,
-    test_lcp_20,
-    test_lcp_21,
-    test_lcp_22,
-    test_lcp_23]
 
 if __name__ == '__main__':
 

@@ -72,11 +72,6 @@ def test_paux_cleanup():
     gdal.Unlink('/vsimem/byte.tif.tst.aux.xml')
 
 
-gdaltest_list = [
-    test_paux_1,
-    test_paux_2,
-    test_paux_3,
-    test_paux_cleanup]
 
 if __name__ == '__main__':
 

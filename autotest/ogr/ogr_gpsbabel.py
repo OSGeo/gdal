@@ -132,11 +132,6 @@ def test_ogr_gpsbabel_3():
        res.find('$GPGSA') == -1)), 'did not get expected result'
 
 
-gdaltest_list = [
-    test_ogr_gpsbabel_init,
-    test_ogr_gpsbabel_1,
-    test_ogr_gpsbabel_2,
-    test_ogr_gpsbabel_3]
 
 
 if __name__ == '__main__':

@@ -69,9 +69,6 @@ def test_pcraster_2():
     assert band1.GetNoDataValue() == 255, 'PCRaster NODATA value wrong or missing.'
 
 
-gdaltest_list = [
-    test_pcraster_1,
-    test_pcraster_2]
 
 
 if __name__ == '__main__':

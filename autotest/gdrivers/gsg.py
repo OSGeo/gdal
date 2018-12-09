@@ -95,16 +95,6 @@ def test_gsg_8():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_gsg_1,
-    test_gsg_2,
-    test_gsg_3,
-    test_gsg_4,
-    test_gsg_5,
-    test_gsg_6,
-    test_gsg_7,
-    test_gsg_8
-]
 
 
 if __name__ == '__main__':

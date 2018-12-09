@@ -536,23 +536,6 @@ def test_mrsid_cleanup():
     gdaltest.reregister_all_jpeg2000_drivers()
 
 
-gdaltest_list = [
-    test_mrsid_1,
-    test_mrsid_2,
-    test_mrsid_3,
-    test_mrsid_4,
-    test_mrsid_5,
-    test_mrsid_6,
-    test_mrsid_7,
-    test_mrsid_8,
-    test_mrsid_9,
-    test_mrsid_10,
-    test_mrsid_11,
-    test_mrsid_online_1,
-    test_mrsid_online_2,
-    test_mrsid_online_3,
-    test_mrsid_online_4,
-    test_mrsid_cleanup]
 
 if __name__ == '__main__':
 

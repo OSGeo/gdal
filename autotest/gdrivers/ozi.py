@@ -86,8 +86,6 @@ def test_ozi_online_1():
     assert cs == 16025, 'bad checksum'
 
 
-gdaltest_list = [
-    test_ozi_online_1]
 
 if __name__ == '__main__':
 

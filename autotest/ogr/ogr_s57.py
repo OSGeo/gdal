@@ -401,23 +401,6 @@ def test_ogr_s57_cleanup():
     gdaltest.s57_ds = None
 
 
-gdaltest_list = [
-    test_ogr_s57_1,
-    test_ogr_s57_2,
-    test_ogr_s57_3,
-    test_ogr_s57_4,
-    test_ogr_s57_5,
-    test_ogr_s57_6,
-    test_ogr_s57_7,
-    test_ogr_s57_8,
-    test_ogr_s57_9,
-    test_ogr_s57_10,
-    test_ogr_s57_11,
-    test_ogr_s57_online_1,
-    test_ogr_s57_online_2,
-    test_ogr_s57_online_3,
-    test_ogr_s57_online_4,
-    test_ogr_s57_cleanup]
 
 if __name__ == '__main__':
 

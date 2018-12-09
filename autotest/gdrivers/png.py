@@ -301,22 +301,6 @@ def test_png_14():
     assert nbits is None
 
 
-gdaltest_list = [
-    test_png_1,
-    test_png_2,
-    test_png_3,
-    test_png_4,
-    test_png_5,
-    test_png_6,
-    test_png_7,
-    test_png_8,
-    test_png_9,
-    test_png_10,
-    test_png_11,
-    test_png_12,
-    test_png_13,
-    test_png_14
-]
 
 if __name__ == '__main__':
 

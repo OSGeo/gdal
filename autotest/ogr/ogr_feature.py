@@ -934,28 +934,6 @@ def test_ogr_feature_cleanup():
     gdaltest.src_feature = None
 
 
-gdaltest_list = [
-    test_ogr_feature_cp_integer,
-    test_ogr_feature_cp_integer64,
-    test_ogr_feature_cp_real,
-    test_ogr_feature_cp_string,
-    test_ogr_feature_cp_binary,
-    test_ogr_feature_cp_date,
-    test_ogr_feature_cp_time,
-    test_ogr_feature_cp_datetime,
-    test_ogr_feature_cp_integerlist,
-    test_ogr_feature_cp_integer64list,
-    test_ogr_feature_cp_reallist,
-    test_ogr_feature_cp_stringlist,
-    test_ogr_feature_unicode,
-    test_ogr_feature_64bit_fid,
-    test_ogr_feature_overflow_64bit_integer,
-    test_ogr_feature_nullable_validate,
-    test_ogr_feature_default,
-    test_ogr_feature_native_data,
-    test_ogr_feature_set_geometry_self,
-    test_ogr_feature_null_field,
-    test_ogr_feature_cleanup]
 
 if __name__ == '__main__':
 

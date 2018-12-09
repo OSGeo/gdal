@@ -116,8 +116,6 @@ def test_ogr_edigeo_1():
     ds.Destroy()
 
 
-gdaltest_list = [
-    test_ogr_edigeo_1]
 
 if __name__ == '__main__':
 

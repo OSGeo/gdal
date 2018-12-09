@@ -140,13 +140,6 @@ def test_cals_5():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_cals_1,
-    test_cals_2,
-    test_cals_3,
-    test_cals_4,
-    test_cals_5,
-]
 
 
 if __name__ == '__main__':

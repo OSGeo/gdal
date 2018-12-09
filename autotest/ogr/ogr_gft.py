@@ -287,13 +287,6 @@ def test_ogr_gft_ogr2ogr_spatial():
     ds = None
 
 
-gdaltest_list = [
-    test_ogr_gft_init,
-    test_ogr_gft_read,
-    test_ogr_gft_write,
-    test_ogr_gft_ogr2ogr_non_spatial,
-    test_ogr_gft_ogr2ogr_spatial,
-]
 
 if __name__ == '__main__':
 

@@ -73,7 +73,6 @@ def test_bmp_online_2():
     return tst.testOpen()
 
 
-gdaltest_list = [test_bmp_online_1, test_bmp_online_2]
 
 if __name__ == '__main__':
 

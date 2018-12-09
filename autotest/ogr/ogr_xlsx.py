@@ -545,24 +545,6 @@ def test_ogr_xlsx_boolean():
     gdal.Unlink(out_filename)
 
 
-gdaltest_list = [
-    test_ogr_xlsx_1,
-    test_ogr_xlsx_2,
-    test_ogr_xlsx_3,
-    test_ogr_xlsx_4,
-    test_ogr_xlsx_5,
-    test_ogr_xlsx_6,
-    test_ogr_xlsx_7,
-    test_ogr_xlsx_8,
-    test_ogr_xlsx_9,
-    test_ogr_xlsx_10,
-    test_ogr_xlsx_11,
-    test_ogr_xlsx_12,
-    test_ogr_xlsx_13,
-    test_ogr_xlsx_14,
-    test_ogr_xlsx_15,
-    test_ogr_xlsx_boolean,
-]
 
 if __name__ == '__main__':
 

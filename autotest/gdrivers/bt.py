@@ -109,14 +109,6 @@ def test_bt_cleanup():
     gdal.Unlink('tmp/float32.tif.prj')
 
 
-gdaltest_list = [
-    test_bt_1,
-    test_bt_2,
-    test_bt_3,
-    test_bt_4,
-    test_bt_5,
-    test_bt_6,
-    test_bt_cleanup]
 
 if __name__ == '__main__':
 

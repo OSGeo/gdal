@@ -182,14 +182,6 @@ def test_rgb2pct_cleanup():
 
     
 
-gdaltest_list = [
-    test_rgb2pct_1,
-    test_pct2rgb_1,
-    test_rgb2pct_2,
-    test_rgb2pct_3,
-    test_pct2rgb_4,
-    test_rgb2pct_cleanup
-]
 
 
 if __name__ == '__main__':

@@ -423,16 +423,6 @@ def test_hfa_create_compress(filename, checksum, testfunction):
     getattr(ut, testfunction)()
 
 
-gdaltest_list = [test_hfa_write_desc,
-                 test_hfa_write_4bit,
-                 test_hfa_write_4bit_compressed,
-                 test_hfa_write_nd_invalid,
-                 test_hfa_update_overviews,
-                 test_hfa_clean_external_overviews,
-                 test_hfa_bug_2525,
-                 test_hfa_use_rrd,
-                 test_hfa_update_existing_aux_overviews,
-                 test_hfa_write_invalid_wkt]
 
 
 if __name__ == '__main__':

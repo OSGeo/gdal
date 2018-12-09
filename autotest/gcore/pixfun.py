@@ -711,38 +711,6 @@ def test_pixfun_dB2pow():
 
 ###############################################################################
 
-gdaltest_list = [
-    test_pixfun_real_c,
-    test_pixfun_real_r,
-    test_pixfun_imag_c,
-    test_pixfun_imag_r,
-    test_pixfun_complex,
-    test_pixfun_mod_c,
-    test_pixfun_mod_r,
-    test_pixfun_phase_c,
-    test_pixfun_phase_r,
-    test_pixfun_conj_c,
-    test_pixfun_conj_r,
-    test_pixfun_sum_r,
-    test_pixfun_sum_c,
-    test_pixfun_diff_r,
-    test_pixfun_diff_c,
-    test_pixfun_mul_r,
-    test_pixfun_mul_c,
-    test_pixfun_cmul_c,
-    test_pixfun_cmul_r,
-    test_pixfun_inv_r,
-    test_pixfun_inv_c,
-    test_pixfun_intensity_c,
-    test_pixfun_intensity_r,
-    test_pixfun_sqrt,
-    test_pixfun_log10_r,
-    test_pixfun_log10_c,
-    test_pixfun_dB_r,
-    test_pixfun_dB_c,
-    test_pixfun_dB2amp,
-    test_pixfun_dB2pow,
-]
 
 
 if __name__ == '__main__':

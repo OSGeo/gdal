@@ -99,9 +99,6 @@ def test_dimap_2():
 
     
 
-gdaltest_list = [
-    test_dimap_1,
-    test_dimap_2]
 
 if __name__ == '__main__':
 

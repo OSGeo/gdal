@@ -213,15 +213,6 @@ def test_aigrid_online_2():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_aigrid_1,
-    test_aigrid_2,
-    test_aigrid_3,
-    test_aigrid_4,
-    test_aigrid_5,
-    test_aigrid_6,
-    test_aigrid_online_1,
-    test_aigrid_online_2]
 
 if __name__ == '__main__':
 

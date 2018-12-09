@@ -341,16 +341,6 @@ def test_osr_compd_8():
     assert wkt.find('COMPD_CS') == 0, 'COMPD_CS not recognised as compound.'
 
 
-gdaltest_list = [
-    test_osr_compd_1,
-    test_osr_compd_2,
-    test_osr_compd_3,
-    test_osr_compd_4,
-    test_osr_compd_5,
-    test_osr_compd_6,
-    test_osr_compd_7,
-    test_osr_compd_8,
-    None]
 
 if __name__ == '__main__':
 

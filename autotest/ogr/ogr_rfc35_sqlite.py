@@ -390,13 +390,6 @@ def test_ogr_rfc35_sqlite_cleanup():
     ogr.GetDriverByName('SQLite').DeleteDataSource(gdaltest.rfc35_sqlite_ds_name)
 
 
-gdaltest_list = [
-    test_ogr_rfc35_sqlite_1,
-    test_ogr_rfc35_sqlite_2,
-    test_ogr_rfc35_sqlite_3,
-    test_ogr_rfc35_sqlite_4,
-    test_ogr_rfc35_sqlite_5,
-    test_ogr_rfc35_sqlite_cleanup]
 
 
 if __name__ == '__main__':

@@ -293,16 +293,6 @@ def test_ogr_ingres_cleanup():
     gdaltest.ingres_ds = None
 
 
-gdaltest_list = [
-    test_ogr_ingres_1,
-    test_ogr_ingres_2,
-    test_ogr_ingres_3,
-    test_ogr_ingres_4,
-    test_ogr_ingres_5,
-    test_ogr_ingres_6,
-    test_ogr_ingres_7,
-    test_ogr_ingres_8,
-    test_ogr_ingres_cleanup]
 
 if __name__ == '__main__':
 

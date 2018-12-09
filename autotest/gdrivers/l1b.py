@@ -245,15 +245,6 @@ def test_l1b_little_endian():
     ds = None
 
 
-gdaltest_list = [
-    test_l1b_geoloc,
-    test_l1b_solar_zenith_angles_before_noaa_15,
-    test_l1b_metadata_before_noaa_15,
-    test_l1b_angles_after_noaa_15,
-    test_l1b_clouds_after_noaa_15,
-    test_l1b_metadata_after_noaa_15,
-    test_l1b_little_endian,
-]
 
 
 if __name__ == '__main__':

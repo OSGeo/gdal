@@ -359,13 +359,6 @@ def test_ogr_rfc35_mem_cleanup():
     gdaltest.rfc35_mem_ds = None
 
 
-gdaltest_list = [
-    test_ogr_rfc35_mem_1,
-    test_ogr_rfc35_mem_2,
-    test_ogr_rfc35_mem_3,
-    test_ogr_rfc35_mem_4,
-    test_ogr_rfc35_mem_5,
-    test_ogr_rfc35_mem_cleanup]
 
 
 if __name__ == '__main__':

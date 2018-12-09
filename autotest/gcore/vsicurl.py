@@ -463,24 +463,6 @@ def test_vsicurl_stop_webserver():
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
-gdaltest_list = [test_vsicurl_1,
-                 # vsicurl_2,
-                 # vsicurl_3,
-                 test_vsicurl_4,
-                 test_vsicurl_5,
-                 #vsicurl_6_disabled,
-                 test_vsicurl_7,
-                 # vsicurl_8,
-                 test_vsicurl_9,
-                 test_vsicurl_10,
-                 test_vsicurl_11,
-                 test_vsicurl_start_webserver,
-                 test_vsicurl_test_redirect,
-                 test_vsicurl_test_clear_cache,
-                 test_vsicurl_test_retry,
-                 test_vsicurl_test_fallback_from_head_to_get,
-                 test_vsicurl_test_parse_html_filelist_apache,
-                 test_vsicurl_stop_webserver]
 
 if __name__ == '__main__':
 

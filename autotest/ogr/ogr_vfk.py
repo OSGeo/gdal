@@ -340,19 +340,6 @@ def test_ogr_vfk_cleanup():
 #
 
 
-gdaltest_list = [
-    test_ogr_vfk_1,
-    test_ogr_vfk_2,
-    test_ogr_vfk_3,
-    test_ogr_vfk_4,
-    test_ogr_vfk_5,
-    test_ogr_vfk_6,
-    test_ogr_vfk_7,
-    test_ogr_vfk_8,
-    test_ogr_vfk_9,
-    test_ogr_vfk_10,
-    test_ogr_vfk_11,
-    test_ogr_vfk_cleanup]
 
 if __name__ == '__main__':
     gdaltest.setup_run('ogr_vfk')

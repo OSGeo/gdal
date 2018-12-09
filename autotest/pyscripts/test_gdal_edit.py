@@ -336,18 +336,6 @@ def test_gdal_edit_py_cleanup():
     gdal.Unlink('tmp/test_gdal_edit_py.tif')
 
 
-gdaltest_list = [
-    test_gdal_edit_py_1,
-    test_gdal_edit_py_2,
-    test_gdal_edit_py_3,
-    test_gdal_edit_py_4,
-    test_gdal_edit_py_5,
-    test_gdal_edit_py_6,
-    test_gdal_edit_py_7,
-    test_gdal_edit_py_8,
-    test_gdal_edit_py_unsetrpc,
-    test_gdal_edit_py_cleanup,
-]
 
 
 if __name__ == '__main__':

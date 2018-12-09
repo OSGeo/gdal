@@ -74,12 +74,6 @@ def test_pnm_4():
     return tst.testCreateCopy()
 
 
-gdaltest_list = [
-    test_pnm_1,
-    test_pnm_2,
-    test_pnm_3,
-    test_pnm_4
-]
 
 
 if __name__ == '__main__':

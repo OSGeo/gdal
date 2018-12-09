@@ -62,9 +62,6 @@ def test_loslas_online_1():
     return tst.testOpen(check_gt=gt, check_stat=stats, check_prj='WGS84')
 
 
-gdaltest_list = [
-    test_loslas_online_1,
-]
 
 
 if __name__ == '__main__':

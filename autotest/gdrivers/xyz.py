@@ -251,16 +251,6 @@ def test_xyz_cleanup():
 
     pass
 
-gdaltest_list = [
-    test_xyz_1,
-    test_xyz_2,
-    test_xyz_3,
-    test_xyz_4,
-    test_xyz_5,
-    test_xyz_6,
-    test_xyz_7,
-    test_xyz_8,
-    test_xyz_cleanup]
 
 if __name__ == '__main__':
 

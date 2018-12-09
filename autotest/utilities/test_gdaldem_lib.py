@@ -449,26 +449,6 @@ def test_gdaldem_lib_nodata():
 
     
 
-gdaltest_list = [
-    test_gdaldem_lib_hillshade,
-    test_gdaldem_lib_hillshade_float,
-    test_gdaldem_lib_hillshade_float_png,
-    test_gdaldem_lib_hillshade_combined,
-    test_gdaldem_lib_hillshade_ZevenbergenThorne,
-    test_gdaldem_lib_hillshade_ZevenbergenThorne_combined,
-    test_gdaldem_lib_hillshade_compute_edges,
-    test_gdaldem_lib_hillshade_compute_edges_float,
-    test_gdaldem_lib_hillshade_azimuth,
-    test_gdaldem_lib_hillshade_multidirectional,
-    test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne,
-    test_gdaldem_lib_color_relief,
-    test_gdaldem_lib_tpi,
-    test_gdaldem_lib_tri,
-    test_gdaldem_lib_roughness,
-    test_gdaldem_lib_slope_ZevenbergenThorne,
-    test_gdaldem_lib_aspect_ZevenbergenThorne,
-    test_gdaldem_lib_nodata
-]
 
 
 if __name__ == '__main__':

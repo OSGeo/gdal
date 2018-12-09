@@ -93,11 +93,6 @@ def test_identify_4():
     assert dr is not None, 'Did not get a driver!'
 
 
-gdaltest_list = [
-    test_identify_1,
-    test_identify_2,
-    test_identify_3,
-    test_identify_4]
 
 if __name__ == '__main__':
 

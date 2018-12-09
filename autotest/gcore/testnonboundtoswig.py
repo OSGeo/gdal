@@ -343,9 +343,6 @@ def test_testnonboundtoswig_VRTDerivedBands():
     assert ref_data == got_data, 'wrong data'
 
 
-gdaltest_list = [test_testnonboundtoswig_init,
-                 test_testnonboundtoswig_GDALSimpleImageWarp,
-                 test_testnonboundtoswig_VRTDerivedBands]
 
 if __name__ == '__main__':
 

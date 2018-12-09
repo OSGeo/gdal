@@ -52,10 +52,6 @@ def test_ngsgeoid_2():
     return tst.testOpen(check_gt=(229.99166666666667, 0.016666666666670001, 0.0, 40.00833333333334, 0.0, -0.016666666666670001), check_prj='WGS84')
 
 
-gdaltest_list = [
-    test_ngsgeoid_1,
-    test_ngsgeoid_2
-]
 
 if __name__ == '__main__':
 

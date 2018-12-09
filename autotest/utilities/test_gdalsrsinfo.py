@@ -349,27 +349,6 @@ def test_gdalsrsinfo_17():
 #
 
 
-gdaltest_list = [
-    test_gdalsrsinfo_1,
-    test_gdalsrsinfo_2,
-    test_gdalsrsinfo_3,
-    test_gdalsrsinfo_4,
-    test_gdalsrsinfo_5,
-    test_gdalsrsinfo_6,
-    test_gdalsrsinfo_7,
-    test_gdalsrsinfo_8,
-    test_gdalsrsinfo_9,
-    test_gdalsrsinfo_10,
-    test_gdalsrsinfo_11,
-    test_gdalsrsinfo_12,
-    test_gdalsrsinfo_13,
-    test_gdalsrsinfo_14,
-    test_gdalsrsinfo_14bis,
-    test_gdalsrsinfo_15,
-    test_gdalsrsinfo_16,
-    test_gdalsrsinfo_17,
-    None
-]
 
 
 if __name__ == '__main__':

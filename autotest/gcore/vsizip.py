@@ -642,26 +642,6 @@ def test_vsizip_byte_zip64_local_header_zeroed():
     size = gdal.VSIStatL('/vsizip/data/byte_zip64_local_header_zeroed.zip/byte.tif').size
     assert size == 736
 
-gdaltest_list = [test_vsizip_1,
-                 test_vsizip_2,
-                 test_vsizip_3,
-                 test_vsizip_4,
-                 test_vsizip_5,
-                 test_vsizip_6,
-                 test_vsizip_7,
-                 test_vsizip_8,
-                 test_vsizip_9,
-                 test_vsizip_10,
-                 test_vsizip_11,
-                 test_vsizip_12,
-                 test_vsizip_13,
-                 test_vsizip_14,
-                 test_vsizip_multi_thread,
-                 test_vsizip_multi_thread_below_threshold,
-                 test_vsizip_create_zip64,
-                 test_vsizip_create_zip64_stream_larger_than_4G,
-                 test_vsizip_byte_zip64_local_header_zeroed,
-                 ]
 
 
 if __name__ == '__main__':

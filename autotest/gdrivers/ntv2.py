@@ -164,18 +164,6 @@ def test_ntv2_online_3():
     return tst.testCreate(vsimem=1, out_bands=4)
 
 
-gdaltest_list = [
-    test_ntv2_1,
-    test_ntv2_2,
-    test_ntv2_3,
-    test_ntv2_4,
-    test_ntv2_5,
-    test_ntv2_6,
-    test_ntv2_7,
-    test_ntv2_online_1,
-    test_ntv2_online_2,
-    test_ntv2_online_3,
-]
 
 
 if __name__ == '__main__':

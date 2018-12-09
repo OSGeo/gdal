@@ -110,9 +110,6 @@ def test_iris_2():
 
     
 
-gdaltest_list = [
-    test_iris_1,
-    test_iris_2]
 
 if __name__ == '__main__':
 

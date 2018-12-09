@@ -97,13 +97,6 @@ def test_kro_5():
     gdal.Unlink('tmp/kro_5.kro')
 
 
-gdaltest_list = [
-    test_kro_1,
-    test_kro_2,
-    test_kro_3,
-    test_kro_4,
-    test_kro_5,
-]
 
 
 if __name__ == '__main__':

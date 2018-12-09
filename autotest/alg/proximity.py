@@ -132,11 +132,6 @@ def test_proximity_3():
         pytest.fail('got wrong checksum')
     
 
-gdaltest_list = [
-    test_proximity_1,
-    test_proximity_2,
-    test_proximity_3
-]
 
 if __name__ == '__main__':
 

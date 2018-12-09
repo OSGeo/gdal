@@ -185,13 +185,6 @@ def test_ogr_arcgen_polygons25d():
 
     
 
-gdaltest_list = [
-    test_ogr_arcgen_points,
-    test_ogr_arcgen_points25d,
-    test_ogr_arcgen_lines,
-    test_ogr_arcgen_lines25d,
-    test_ogr_arcgen_polygons,
-    test_ogr_arcgen_polygons25d]
 
 
 if __name__ == '__main__':

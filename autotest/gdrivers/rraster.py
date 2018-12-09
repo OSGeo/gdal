@@ -412,23 +412,6 @@ def test_rraster_colorinterpretation():
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
 
-gdaltest_list = [
-    test_rraster_1,
-    test_rraster_1_copy,
-    test_rraster_rgba,
-    test_rraster_rgba_copy,
-    test_rraster_ct_rgb,
-    test_rraster_ct_rgb_copy,
-    test_rraster_ct_rgba,
-    test_rraster_ct_rgba_copy,
-    test_rraster_rat,
-    test_rraster_rat_copy,
-    test_rraster_signedbyte,
-    test_rraster_datatypes,
-    test_rraster_nodata_and_metadata,
-    test_rraster_update,
-    test_rraster_colorinterpretation,
-]
 
 
 if __name__ == '__main__':

@@ -1185,44 +1185,6 @@ def test_vrt_dstsize_larger_than_source():
     assert cs == 33273
 
 
-gdaltest_list = [
-    test_vrt_read_1,
-    test_vrt_read_2,
-    test_vrt_read_3,
-    test_vrt_read_4,
-    test_vrt_read_5,
-    test_vrt_read_6,
-    test_vrt_read_7,
-    test_vrt_read_8,
-    test_vrt_read_9,
-    test_vrt_read_10,
-    test_vrt_read_11,
-    test_vrt_read_12,
-    test_vrt_read_13,
-    test_vrt_read_14,
-    test_vrt_read_15,
-    test_vrt_read_16,
-    test_vrt_read_17,
-    test_vrt_read_18,
-    test_vrt_read_19,
-    test_vrt_read_20,
-    test_vrt_read_21,
-    test_vrt_read_22,
-    test_vrt_read_23,
-    test_vrt_read_24,
-    test_vrt_read_25,
-    test_vrt_read_26,
-    test_vrt_read_27,
-    test_vrt_read_28,
-    test_vrt_read_29,
-    test_vrt_read_30,
-    test_vrt_read_31,
-    test_vrt_float32_with_nodata_slightly_below_float_min,
-    test_vrt_subpixel_offset,
-    test_vrt_dstsize_larger_than_source,
-]
-
-
 if __name__ == '__main__':
 
     gdaltest.setup_run('vrt_read')

@@ -485,22 +485,6 @@ def test_ogr_gpx_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_ogr_gpx_init,
-    test_ogr_gpx_1,
-    test_ogr_gpx_2,
-    test_ogr_gpx_3,
-    test_ogr_gpx_4,
-    test_ogr_gpx_5,
-    test_ogr_gpx_6,
-    # Rerun test 1, 2 and 4 with generated tmp/tmp.gpx
-    test_ogr_gpx_1,
-    test_ogr_gpx_2,
-    test_ogr_gpx_4,
-    test_ogr_gpx_7,
-    test_ogr_gpx_8,
-    test_ogr_gpx_9,
-    test_ogr_gpx_cleanup]
 
 if __name__ == '__main__':
 

@@ -981,29 +981,6 @@ def test_ogr_oci_cleanup():
     gdaltest.shp_ds = None
 
 
-gdaltest_list = [
-    test_ogr_oci_1,
-    test_ogr_oci_2,
-    test_ogr_oci_3,
-    test_ogr_oci_4,
-    test_ogr_oci_5,
-    test_ogr_oci_6,
-    test_ogr_oci_7,
-    test_ogr_oci_8,
-    test_ogr_oci_9,
-    test_ogr_oci_10,
-    test_ogr_oci_11,
-    test_ogr_oci_12,
-    test_ogr_oci_13,
-    test_ogr_oci_14,
-    test_ogr_oci_15,
-    test_ogr_oci_16,
-    test_ogr_oci_17,
-    test_ogr_oci_18,
-    test_ogr_oci_19,
-    test_ogr_oci_20,
-    test_ogr_oci_21,
-    test_ogr_oci_cleanup]
 
 if __name__ == '__main__':
 

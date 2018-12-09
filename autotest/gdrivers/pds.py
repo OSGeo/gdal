@@ -318,19 +318,6 @@ def test_pds_band_storage_type_line_interleaved():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_pds_1,
-    test_pds_2,
-    test_pds_3,
-    test_pds_4,
-    test_pds_5,
-    test_pds_6,
-    test_pds_7,
-    test_pds_8,
-    test_pds_9,
-    test_pds_10,
-    test_pds_line_offset_not_multiple_of_record,
-    test_pds_band_storage_type_line_interleaved]
 
 if __name__ == '__main__':
 

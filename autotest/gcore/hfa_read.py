@@ -67,7 +67,6 @@ def test_hfa_read_completedefn_recursion():
         gdal.Open('data/hfa_completedefn_recursion.img')
     
 
-gdaltest_list = [test_hfa_read_completedefn_recursion]
 
 if __name__ == '__main__':
 

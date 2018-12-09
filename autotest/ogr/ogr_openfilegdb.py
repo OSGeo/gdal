@@ -1341,36 +1341,6 @@ def test_ogr_openfilegdb_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogr_openfilegdb_init,
-    # ogr_openfilegdb_make_test_data,
-    test_ogr_openfilegdb_1,
-    test_ogr_openfilegdb_1_92,
-    test_ogr_openfilegdb_1_93,
-    test_ogr_openfilegdb_2,
-    test_ogr_openfilegdb_2_92,
-    test_ogr_openfilegdb_2_93,
-    test_ogr_openfilegdb_3,
-    test_ogr_openfilegdb_4,
-    test_ogr_openfilegdb_5,
-    test_ogr_openfilegdb_6,
-    test_ogr_openfilegdb_7,
-    test_ogr_openfilegdb_8,
-    test_ogr_openfilegdb_9,
-    test_ogr_openfilegdb_10,
-    test_ogr_openfilegdb_11,
-    test_ogr_openfilegdb_12,
-    test_ogr_openfilegdb_13,
-    test_ogr_openfilegdb_14,
-    test_ogr_openfilegdb_15,
-    test_ogr_openfilegdb_16,
-    test_ogr_openfilegdb_17,
-    test_ogr_openfilegdb_18,
-    test_ogr_openfilegdb_19,
-    test_ogr_openfilegdb_20,
-    test_ogr_openfilegdb_21,
-    test_ogr_openfilegdb_cleanup,
-]
 
 if __name__ == '__main__':
 

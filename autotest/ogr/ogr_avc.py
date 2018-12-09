@@ -160,13 +160,6 @@ def test_ogr_avc_5():
 
     
 
-gdaltest_list = [
-    test_ogr_avc_1,
-    test_ogr_avc_2,
-    test_ogr_avc_3,
-    test_ogr_avc_4,
-    test_ogr_avc_5
-]
 
 if __name__ == '__main__':
 

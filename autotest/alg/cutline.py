@@ -120,12 +120,6 @@ def test_cutline_4():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_cutline_1,
-    test_cutline_2,
-    test_cutline_3,
-    test_cutline_4
-]
 
 if __name__ == '__main__':
 

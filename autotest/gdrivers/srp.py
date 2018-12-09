@@ -145,15 +145,6 @@ def test_srp_cleanup():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_srp_1,
-    test_srp_2,
-    test_srp_3,
-    test_srp_4,
-    test_srp_5,
-    test_srp_6,
-    test_srp_cleanup
-]
 
 if __name__ == '__main__':
 

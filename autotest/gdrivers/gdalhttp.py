@@ -277,16 +277,6 @@ def test_http_cleanup():
     gdaltest.dods_drv = None
 
 
-gdaltest_list = [test_http_1,
-                 test_http_2,
-                 test_http_3,
-                 # http_4_old,
-                 test_http_4,
-                 test_http_5,
-                 test_http_6,
-                 test_http_test_ssl_verifystatus,
-                 test_http_test_use_capi_store,
-                 test_http_cleanup]
 
 # gdaltest_list = [ http_test_use_capi_store ]
 

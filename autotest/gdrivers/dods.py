@@ -124,7 +124,6 @@ def dods_cleanup():
     gdaltest.dods_grid_ds = None
 
 
-gdaltest_list = []
 
 manual_gdaltest_list = [
     dods_1,

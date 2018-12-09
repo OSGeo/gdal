@@ -1381,47 +1381,6 @@ def test_ogr2ogr_py_46():
     gdal.Unlink('tmp/test_ogr2ogr_45.xsd')
 
 
-gdaltest_list = [
-    test_ogr2ogr_py_1,
-    test_ogr2ogr_py_2,
-    test_ogr2ogr_py_3,
-    test_ogr2ogr_py_4,
-    test_ogr2ogr_py_5,
-    test_ogr2ogr_py_6,
-    test_ogr2ogr_py_7,
-    test_ogr2ogr_py_8,
-    test_ogr2ogr_py_9,
-    test_ogr2ogr_py_10,
-    test_ogr2ogr_py_11,
-    test_ogr2ogr_py_12,
-    test_ogr2ogr_py_13,
-    # test_ogr2ogr_py_14,
-    test_ogr2ogr_py_15,
-    test_ogr2ogr_py_16,
-    test_ogr2ogr_py_17,
-    # test_ogr2ogr_py_18,
-    test_ogr2ogr_py_19,
-    test_ogr2ogr_py_20,
-    test_ogr2ogr_py_21,
-    test_ogr2ogr_py_22,
-    test_ogr2ogr_py_23,
-    test_ogr2ogr_py_24,
-    test_ogr2ogr_py_25,
-    test_ogr2ogr_py_26,
-    test_ogr2ogr_py_27,
-    test_ogr2ogr_py_31,
-    test_ogr2ogr_py_32,
-    test_ogr2ogr_py_33,
-    test_ogr2ogr_py_34,
-    test_ogr2ogr_py_35,
-    test_ogr2ogr_py_36,
-    test_ogr2ogr_py_37,
-    test_ogr2ogr_py_38,
-    test_ogr2ogr_py_39,
-    test_ogr2ogr_py_43,
-    test_ogr2ogr_py_44,
-    test_ogr2ogr_py_45,
-    test_ogr2ogr_py_46]
 
 if __name__ == '__main__':
 

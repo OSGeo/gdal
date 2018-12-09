@@ -81,10 +81,6 @@ def test_osr_usgs_2():
         'Can not import Lambert Conformal Conic projection.'
 
 
-gdaltest_list = [
-    test_osr_usgs_1,
-    test_osr_usgs_2,
-    None]
 
 if __name__ == '__main__':
 

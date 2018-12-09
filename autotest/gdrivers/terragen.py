@@ -57,10 +57,6 @@ def test_terragen_2():
     gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.tif')
 
 
-gdaltest_list = [
-    test_terragen_1,
-    test_terragen_2
-]
 
 
 if __name__ == '__main__':

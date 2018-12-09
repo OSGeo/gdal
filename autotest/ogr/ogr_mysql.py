@@ -898,36 +898,6 @@ def test_ogr_mysql_cleanup():
     gdaltest.mysql_ds = None
 
 
-gdaltest_list = [
-    test_ogr_mysql_1,
-    #    ogr_mysql_cleanup,
-    test_ogr_mysql_2,
-    test_ogr_mysql_19,
-    test_ogr_mysql_3,
-    test_ogr_mysql_4,
-    test_ogr_mysql_5,
-    test_ogr_mysql_6,
-    test_ogr_mysql_7,
-    test_ogr_mysql_8,
-    test_ogr_mysql_9,
-    test_ogr_mysql_10,
-    # ogr_mysql_11 to _14 are PG only features
-    test_ogr_mysql_15,
-    test_ogr_mysql_16,
-    test_ogr_mysql_17,
-    # Fails but it is probably OK
-    #    ogr_mysql_18,
-    test_ogr_mysql_20,
-    test_ogr_mysql_21,
-    test_ogr_mysql_22,
-    test_ogr_mysql_23,
-    test_ogr_mysql_24,
-    test_ogr_mysql_72,
-    test_ogr_mysql_25,
-    test_ogr_mysql_26,
-    test_ogr_mysql_longlat,
-    test_ogr_mysql_cleanup
-]
 
 if __name__ == '__main__':
 

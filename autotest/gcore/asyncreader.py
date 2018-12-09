@@ -64,7 +64,6 @@ def test_asyncreader_1():
 
     
 
-gdaltest_list = [test_asyncreader_1]
 
 
 if __name__ == '__main__':

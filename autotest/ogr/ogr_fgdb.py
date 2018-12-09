@@ -2195,38 +2195,6 @@ def test_ogr_fgdb_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogr_fgdb_init,
-    test_ogr_fgdb_1,
-    test_ogr_fgdb_DeleteField,
-    test_ogr_fgdb_2,
-    test_ogr_fgdb_3,
-    test_ogr_fgdb_sql,
-    test_ogr_fgdb_4,
-    test_ogr_fgdb_5,
-    test_ogr_fgdb_6,
-    test_ogr_fgdb_7,
-    test_ogr_fgdb_8,
-    test_ogr_fgdb_9,
-    test_ogr_fgdb_10,
-    test_ogr_fgdb_11,
-    test_ogr_fgdb_12,
-    test_ogr_fgdb_13,
-    test_ogr_fgdb_14,
-    test_ogr_fgdb_15,
-    test_ogr_fgdb_16,
-    test_ogr_fgdb_17,
-    test_ogr_fgdb_18,
-    test_ogr_fgdb_19,
-    test_ogr_fgdb_19bis,
-    test_ogr_fgdb_20,
-    test_ogr_fgdb_21,
-    test_ogr_fgdb_22,
-    test_ogr_fgdb_23,
-    test_ogr_fgdb_24,
-    test_ogr_fgdb_25,
-    test_ogr_fgdb_cleanup,
-]
 
 disabled_gdaltest_list = [
     test_ogr_fgdb_init,

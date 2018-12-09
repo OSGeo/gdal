@@ -302,20 +302,6 @@ def test_ers_cleanup():
     gdaltest.clean_tmp()
 
 
-gdaltest_list = [
-    test_ers_1,
-    test_ers_2,
-    test_ers_3,
-    test_ers_4,
-    test_ers_5,
-    test_ers_6,
-    test_ers_7,
-    test_ers_8,
-    test_ers_9,
-    test_ers_10,
-    test_ers_recursive_opening,
-    test_ers_cleanup
-]
 
 
 if __name__ == '__main__':

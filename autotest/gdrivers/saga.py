@@ -193,15 +193,6 @@ def test_saga_8():
     UNIT["Meter",1]]""")
 
 
-gdaltest_list = [
-    test_saga_1,
-    test_saga_2,
-    test_saga_3,
-    test_saga_4,
-    test_saga_5,
-    test_saga_6,
-    test_saga_7,
-    test_saga_8]
 
 if __name__ == '__main__':
 

@@ -350,20 +350,6 @@ def test_ogrmerge_12():
     gdal.Unlink('/vsimem/out.vrt')
 
 
-gdaltest_list = [
-    test_ogrmerge_1,
-    test_ogrmerge_2,
-    test_ogrmerge_3,
-    test_ogrmerge_4,
-    test_ogrmerge_5,
-    test_ogrmerge_6,
-    test_ogrmerge_7,
-    test_ogrmerge_8,
-    test_ogrmerge_9,
-    test_ogrmerge_10,
-    test_ogrmerge_11,
-    test_ogrmerge_12
-]
 
 
 if __name__ == '__main__':

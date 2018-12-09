@@ -367,17 +367,6 @@ def test_ogr_pdf_cleanup():
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_2.pdf')
 
 
-gdaltest_list = [
-    test_ogr_pdf_1,
-    test_ogr_pdf_2,
-    test_ogr_pdf_3,
-    test_ogr_pdf_4,
-    test_ogr_pdf_4_podofo,
-    test_ogr_pdf_5,
-    test_ogr_pdf_online_1,
-    test_ogr_pdf_online_2,
-    test_ogr_pdf_cleanup
-]
 
 if __name__ == '__main__':
 

@@ -247,26 +247,6 @@ def test_ingr_cleanup():
     gdal.Unlink('data/frmt09.cot.aux.xml')
 
 
-gdaltest_list = [
-    test_ingr_1,
-    test_ingr_2,
-    test_ingr_3,
-    test_ingr_4,
-    test_ingr_5,
-    test_ingr_6,
-    test_ingr_7,
-    test_ingr_8,
-    test_ingr_9,
-    test_ingr_10,
-    test_ingr_11,
-    test_ingr_12,
-    test_ingr_13,
-    test_ingr_14,
-    test_ingr_15,
-    test_ingr_16,
-    test_ingr_17,
-    test_ingr_18,
-    test_ingr_cleanup]
 
 if __name__ == '__main__':
 

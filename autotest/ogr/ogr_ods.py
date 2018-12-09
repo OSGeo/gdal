@@ -456,19 +456,6 @@ def test_ogr_ods_boolean():
     gdal.Unlink(out_filename)
 
 
-gdaltest_list = [
-    test_ogr_ods_1,
-    test_ogr_ods_kspread_1,
-    test_ogr_ods_2,
-    test_ogr_ods_3,
-    test_ogr_ods_4,
-    test_ogr_ods_5,
-    test_ogr_ods_6,
-    test_ogr_ods_7,
-    test_ogr_ods_8,
-    test_ogr_ods_9,
-    test_ogr_ods_boolean,
-]
 
 if __name__ == '__main__':
 

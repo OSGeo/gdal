@@ -621,24 +621,6 @@ def test_mrf_cleanup():
     gdal.Unlink('/vsimem/out.til')
 
 
-gdaltest_list = [
-    test_mrf_overview_near_fact_2,
-    test_mrf_overview_near_with_nodata_fact_2,
-    test_mrf_overview_avg_fact_2,
-    test_mrf_overview_avg_with_nodata_fact_2,
-    test_mrf_overview_near_fact_3,
-    test_mrf_overview_avg_fact_3,
-    test_mrf_overview_avg_with_nodata_fact_3,
-    test_mrf_overview_partial_block,
-    test_mrf_overview_near_implicit_level,
-    test_mrf_overview_external,
-    test_mrf_lerc_nodata,
-    test_mrf_lerc_with_huffman,
-    test_mrf_cached_source,
-    test_mrf_versioned,
-    test_mrf_zen_test,
-    test_mrf_cleanup,
-]
 
 if __name__ == '__main__':
 

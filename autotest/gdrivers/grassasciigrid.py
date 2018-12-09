@@ -46,9 +46,6 @@ def test_grassasciigrid_1():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_grassasciigrid_1
-]
 
 if __name__ == '__main__':
 

@@ -1265,28 +1265,6 @@ def test_ogr_interlis_cleanup():
     gdaltest.clean_tmp()
 
 
-gdaltest_list = [
-    test_ogr_interlis1_1,
-    test_ogr_interlis1_2,
-    test_ogr_interlis1_3,
-    test_ogr_interlis1_4,
-    test_ogr_interlis1_5,
-    test_ogr_interlis1_6,
-    test_ogr_interlis1_7,
-    test_ogr_interlis1_9,
-    test_ogr_interlis1_10,
-    test_ogr_interlis1_11,
-    test_ogr_interlis1_12,
-    test_ogr_interlis1_13,
-    test_ogr_interlis1_13_linear,
-    test_ogr_interlis1_14,
-    test_ogr_interlis2_1,
-    test_ogr_interlis2_2,
-    test_ogr_interlis2_3,
-    test_ogr_interlis2_4,
-    test_ogr_interlis_arc1,
-    test_ogr_interlis_arc2,
-    test_ogr_interlis_cleanup]
 
 if __name__ == '__main__':
 

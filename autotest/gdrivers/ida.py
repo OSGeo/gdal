@@ -172,15 +172,6 @@ def test_ida_7():
     return gdaltest.ida_tst.testSetProjection(prj=prj)
 
 
-gdaltest_list = [
-    test_ida_1,
-    test_ida_2,
-    test_ida_3,
-    test_ida_4,
-    test_ida_5,
-    test_ida_6,
-    test_ida_7
-]
 
 
 if __name__ == '__main__':

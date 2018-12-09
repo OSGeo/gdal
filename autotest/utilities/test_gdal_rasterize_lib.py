@@ -322,14 +322,6 @@ def test_gdal_rasterize_lib_4():
 
     
 
-gdaltest_list = [
-    test_gdal_rasterize_lib_1,
-    test_gdal_rasterize_lib_3,
-    test_gdal_rasterize_lib_100,
-    test_gdal_rasterize_lib_101,
-    test_gdal_rasterize_lib_102,
-    test_gdal_rasterize_lib_4
-]
 
 if __name__ == '__main__':
 

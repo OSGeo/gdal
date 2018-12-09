@@ -250,10 +250,6 @@ def test_virtualmem_4():
 
     
 
-gdaltest_list = [test_virtualmem_1,
-                 test_virtualmem_2,
-                 test_virtualmem_3,
-                 test_virtualmem_4]
 
 
 if __name__ == '__main__':

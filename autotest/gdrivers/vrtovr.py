@@ -178,12 +178,6 @@ def test_vrtovr_errors():
 def test_vrtovr_cleanup():
     pass
 
-gdaltest_list = [
-    test_vrtovr_1,
-    test_vrtovr_2,
-    test_vrtovr_none,
-    test_vrtovr_errors,
-    test_vrtovr_cleanup]
 
 if __name__ == '__main__':
 

@@ -1230,34 +1230,6 @@ def test_osr_basic_setgeogcs():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_osr_basic_1,
-    test_osr_basic_2,
-    test_osr_basic_3,
-    test_osr_basic_4,
-    test_osr_basic_5,
-    test_osr_basic_6,
-    test_osr_basic_7,
-    test_osr_basic_8,
-    test_osr_basic_9,
-    test_osr_basic_10,
-    test_osr_basic_11,
-    test_osr_basic_12,
-    test_osr_basic_13,
-    test_osr_basic_14,
-    test_osr_basic_15,
-    test_osr_basic_16,
-    test_osr_basic_17,
-    test_osr_basic_18,
-    test_osr_basic_19,
-    test_osr_basic_20,
-    test_osr_basic_21,
-    test_osr_basic_22,
-    test_osr_basic_23,
-    test_osr_basic_24,
-    test_osr_basic_25,
-    test_osr_basic_setgeogcs,
-    None]
 
 if __name__ == '__main__':
 

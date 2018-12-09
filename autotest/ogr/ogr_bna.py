@@ -222,14 +222,6 @@ def test_ogr_bna_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogr_bna_1,
-    test_ogr_bna_2,
-    test_ogr_bna_3,
-    test_ogr_bna_4,
-    test_ogr_bna_5,
-    test_ogr_bna_6,
-    test_ogr_bna_cleanup]
 
 if __name__ == '__main__':
 

@@ -600,26 +600,6 @@ def test_mbtiles_cleanup():
 
     
 
-gdaltest_list = [
-    test_mbtiles_1,
-    test_mbtiles_2,
-    test_mbtiles_3,
-    test_mbtiles_start_webserver,
-    test_mbtiles_http_jpeg_three_bands,
-    test_mbtiles_http_jpeg_single_band,
-    test_mbtiles_http_png,
-    test_mbtiles_stop_webserver,
-    test_mbtiles_4,
-    test_mbtiles_5,
-    test_mbtiles_6,
-    test_mbtiles_7,
-    test_mbtiles_8,
-    test_mbtiles_9,
-    test_mbtiles_10,
-    test_mbtiles_11,
-    test_mbtiles_raster_open_in_vector_mode,
-    test_mbtiles_create,
-    test_mbtiles_cleanup]
 
 # gdaltest_list = [ mbtiles_1, mbtiles_create ]
 

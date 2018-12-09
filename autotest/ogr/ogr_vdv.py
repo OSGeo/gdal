@@ -525,20 +525,6 @@ def test_ogr_vdv_cleanup():
     gdal.Rmdir('tmp/test_x10')
 
 
-gdaltest_list = [
-    test_ogr_idf_1,
-    test_ogr_idf_1_with_temp_sqlite_db,
-    test_ogr_idf_3d,
-    test_ogr_idf_2,
-    test_ogr_vdv_1,
-    test_ogr_vdv_2,
-    test_ogr_vdv_3,
-    test_ogr_vdv_4,
-    test_ogr_vdv_5,
-    test_ogr_vdv_6,
-    test_ogr_vdv_7,
-    test_ogr_vdv_8,
-    test_ogr_vdv_cleanup]
 
 
 if __name__ == '__main__':

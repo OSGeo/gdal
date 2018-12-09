@@ -566,27 +566,6 @@ def test_ogr_georss_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogr_georss_init,
-    test_ogr_georss_1,
-    test_ogr_georss_1_atom_ns,
-    test_ogr_georss_1bis,
-    test_ogr_georss_1ter,
-    test_ogr_georss_2,
-    test_ogr_georss_3,
-    test_ogr_georss_4,
-    test_ogr_georss_5,
-    test_ogr_georss_6,
-    test_ogr_georss_7,
-    test_ogr_georss_8,
-    test_ogr_georss_9,
-    test_ogr_georss_10,
-    test_ogr_georss_11,
-    test_ogr_georss_12,
-    test_ogr_georss_13,
-    test_ogr_georss_14,
-    test_ogr_georss_15,
-    test_ogr_georss_cleanup]
 
 if __name__ == '__main__':
 

@@ -234,12 +234,6 @@ def test_ogrtindex_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogrtindex_1,
-    test_ogrtindex_2,
-    test_ogrtindex_3,
-    test_ogrtindex_cleanup
-]
 
 
 if __name__ == '__main__':

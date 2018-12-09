@@ -92,12 +92,6 @@ def test_isce_4():
     return tst.testCreateCopy(check_gt=0, new_filename='isce.tst.slc', vsimem=1)
 
 
-gdaltest_list = [
-    test_isce_1,
-    test_isce_2,
-    test_isce_3,
-    test_isce_4,
-]
 
 
 if __name__ == '__main__':

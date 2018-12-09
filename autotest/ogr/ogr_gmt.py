@@ -224,13 +224,6 @@ def test_ogr_gmt_cleanup():
     gdaltest.clean_tmp()
 
 
-gdaltest_list = [
-    test_ogr_gmt_1,
-    test_ogr_gmt_2,
-    test_ogr_gmt_3,
-    test_ogr_gmt_4,
-    test_ogr_gmt_5,
-    test_ogr_gmt_cleanup]
 
 if __name__ == '__main__':
 

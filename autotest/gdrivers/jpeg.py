@@ -1054,36 +1054,6 @@ def test_jpeg_cleanup():
     gdal.Unlink('tmp/albania.jpg.ovr')
 
 
-gdaltest_list = [
-    test_jpeg_1,
-    test_jpeg_2,
-    test_jpeg_3,
-    test_jpeg_4,
-    test_jpeg_5,
-    test_jpeg_6,
-    test_jpeg_7,
-    test_jpeg_8,
-    test_jpeg_9,
-    test_jpeg_10,
-    test_jpeg_11,
-    test_jpeg_12,
-    test_jpeg_13,
-    test_jpeg_14,
-    test_jpeg_15,
-    test_jpeg_16,
-    test_jpeg_17,
-    test_jpeg_18,
-    test_jpeg_19,
-    test_jpeg_20,
-    test_jpeg_21,
-    test_jpeg_22,
-    test_jpeg_23,
-    test_jpeg_24,
-    test_jpeg_25,
-    test_jpeg_26,
-    test_jpeg_27,
-    test_jpeg_28,
-    test_jpeg_cleanup]
 
 # gdaltest_list = [ jpeg_28 ]
 

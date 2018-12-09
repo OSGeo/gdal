@@ -194,13 +194,6 @@ def test_polygonize_4():
     assert tr
 
 
-gdaltest_list = [
-    test_polygonize_1,
-    test_polygonize_1_float,
-    test_polygonize_2,
-    test_polygonize_3,
-    test_polygonize_4
-]
 
 if __name__ == '__main__':
 

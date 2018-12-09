@@ -106,10 +106,6 @@ def test_osr_micoordsys_3():
     assert proj == 'Earth Projection 10, 157, "m", 0'
 
 
-gdaltest_list = [
-    test_osr_micoordsys_1,
-    test_osr_micoordsys_2,
-    test_osr_micoordsys_3]
 
 if __name__ == '__main__':
 

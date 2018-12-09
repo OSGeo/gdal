@@ -331,14 +331,6 @@ def test_rasterize_6():
     gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1], options=["ALL_TOUCHED"])
 
 
-gdaltest_list = [
-    test_rasterize_1,
-    test_rasterize_2,
-    test_rasterize_3,
-    test_rasterize_4,
-    test_rasterize_5,
-    test_rasterize_6
-]
 
 if __name__ == '__main__':
 

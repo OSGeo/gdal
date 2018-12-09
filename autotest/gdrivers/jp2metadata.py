@@ -195,13 +195,6 @@ def test_jp2metadata_5():
     ds = None
 
 
-gdaltest_list = [
-    test_jp2metadata_1,
-    test_jp2metadata_2,
-    test_jp2metadata_3,
-    test_jp2metadata_4,
-    test_jp2metadata_5
-]
 
 
 if __name__ == '__main__':

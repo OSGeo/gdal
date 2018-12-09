@@ -459,32 +459,6 @@ def test_gdal_translate_lib_cleanup():
 
     
 
-gdaltest_list = [
-    test_gdal_translate_lib_1,
-    test_gdal_translate_lib_2,
-    test_gdal_translate_lib_3,
-    test_gdal_translate_lib_4,
-    test_gdal_translate_lib_5,
-    test_gdal_translate_lib_6,
-    test_gdal_translate_lib_7,
-    test_gdal_translate_lib_8,
-    test_gdal_translate_lib_9,
-    test_gdal_translate_lib_10,
-    test_gdal_translate_lib_11,
-    test_gdal_translate_lib_12,
-    test_gdal_translate_lib_13,
-    test_gdal_translate_lib_14,
-    test_gdal_translate_lib_100,
-    test_gdal_translate_lib_101,
-    test_gdal_translate_lib_102,
-    test_gdal_translate_lib_103,
-    test_gdal_translate_lib_104,
-    test_gdal_translate_lib_gcp_vrt_path,
-    test_gdal_translate_lib_rcp_vrt_path,
-    test_gdal_translate_lib_geolocation_vrt_path,
-    test_gdal_translate_lib_colorinterp,
-    test_gdal_translate_lib_cleanup
-]
 
 
 if __name__ == '__main__':

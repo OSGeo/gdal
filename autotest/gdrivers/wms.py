@@ -830,27 +830,6 @@ def test_wms_cleanup():
 
     
 
-gdaltest_list = [
-    test_wms_1,
-    # wms_2,
-    # wms_3,
-    # wms_4,
-    test_wms_5,
-    test_wms_6,
-    test_wms_7,
-    test_wms_8,
-    # wms_9,
-    # wms_10,
-    test_wms_11,
-    test_wms_12,
-    test_wms_13,
-    test_wms_14,
-    test_wms_15,
-    test_wms_16,
-    # wms_17,
-    test_wms_18,
-    test_wms_19,
-    test_wms_cleanup]
 
 
 if __name__ == '__main__':

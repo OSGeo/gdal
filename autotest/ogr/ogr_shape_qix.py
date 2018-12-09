@@ -261,12 +261,6 @@ def test_ogr_shape_qix_4():
     return ret
 
 
-gdaltest_list = [
-    test_ogr_shape_qix_1,
-    test_ogr_shape_qix_2,
-    test_ogr_shape_qix_3,
-    test_ogr_shape_qix_4,
-]
 
 if __name__ == '__main__':
 

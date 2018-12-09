@@ -79,10 +79,6 @@ def test_isis2_3():
     return tst.testCreateCopy(vsimem=1)
 
 
-gdaltest_list = [
-    test_isis2_1,
-    test_isis2_2,
-    test_isis2_3]
 
 if __name__ == '__main__':
 

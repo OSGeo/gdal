@@ -2418,29 +2418,6 @@ def test_vsis3_cleanup():
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', None)
 
 
-gdaltest_list = [test_vsis3_init,
-                 test_vsis3_no_sign_request,
-                 test_vsis3_1,
-                 test_vsis3_start_webserver,
-                 test_vsis3_2,
-                 test_vsis3_readdir,
-                 test_vsis3_opendir,
-                 test_vsis3_4,
-                 test_vsis3_5,
-                 test_vsis3_6,
-                 test_vsis3_7,
-                 test_vsis3_8,
-                 test_vsis3_sync_etag,
-                 test_vsis3_sync_timestamp,
-                 test_vsis3_read_credentials_file,
-                 test_vsis3_read_config_file,
-                 test_vsis3_read_credentials_config_file,
-                 test_vsis3_read_credentials_config_file_non_default,
-                 test_vsis3_read_credentials_config_file_inconsistent,
-                 test_vsis3_read_credentials_ec2,
-                 test_vsis3_read_credentials_ec2_expiration,
-                 test_vsis3_stop_webserver,
-                 test_vsis3_cleanup]
 
 # gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_opendir, vsis3_stop_webserver, vsis3_cleanup ]
 

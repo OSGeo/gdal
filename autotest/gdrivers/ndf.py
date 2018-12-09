@@ -70,8 +70,6 @@ def test_ndf_1():
                         check_prj=wkt)
 
 
-gdaltest_list = [
-    test_ndf_1]
 
 if __name__ == '__main__':
 

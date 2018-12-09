@@ -378,16 +378,6 @@ def test_validate_jp2_cleanup():
 
     
 
-gdaltest_list = [
-    test_validate_jp2_1,
-    test_validate_jp2_2,
-    test_validate_jp2_3,
-    test_validate_jp2_4,
-    test_validate_jp2_5,
-    test_validate_jp2_6,
-    test_validate_jp2_7,
-    test_validate_jp2_cleanup,
-]
 
 if __name__ == '__main__':
 

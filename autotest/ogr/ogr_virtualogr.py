@@ -305,13 +305,6 @@ def test_ogr_virtualogr_5():
     gdal.Unlink('/vsimem/ogr_virtualogr_5.csv')
 
 
-gdaltest_list = [
-    test_ogr_virtualogr_1,
-    test_ogr_virtualogr_2,
-    test_ogr_virtualogr_3,
-    test_ogr_virtualogr_4,
-    test_ogr_virtualogr_5,
-]
 
 if __name__ == '__main__':
 

@@ -133,14 +133,6 @@ def test_ogrlineref_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogrlineref_1,
-    test_ogrlineref_2,
-    test_ogrlineref_3,
-    test_ogrlineref_4,
-    test_ogrlineref_5,
-    test_ogrlineref_cleanup
-]
 
 if __name__ == '__main__':
 

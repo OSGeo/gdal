@@ -306,24 +306,6 @@ def test_dted_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_dted_1,
-    test_dted_2,
-    test_dted_3,
-    test_dted_4,
-    test_dted_5,
-    test_dted_6,
-    test_dted_7,
-    test_dted_8,
-    test_dted_9,
-    test_dted_10,
-    test_dted_11,
-    test_dted_12,
-    test_dted_13,
-    test_dted_14,
-    test_dted_15,
-    test_dted_cleanup
-]
 
 
 if __name__ == '__main__':

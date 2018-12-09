@@ -232,16 +232,6 @@ def test_gnm_delete():
 
     
 
-gdaltest_list = [
-    test_gnm_filenetwork_create,
-    test_gnm_filenetwork_open,
-    test_gnm_import,
-    test_gnm_autoconnect,
-    test_gnm_graph_dijkstra,
-    test_gnm_graph_kshortest,
-    test_gnm_graph_connectedcomponents,
-    test_gnm_delete
-]
 
 if __name__ == '__main__':
 

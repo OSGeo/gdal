@@ -179,15 +179,6 @@ def test_adrg_zna_18():
 
 
 ###############################################################################
-gdaltest_list = [
-    test_adrg_read_gen,
-    test_adrg_read_transh,
-    test_adrg_read_subdataset_img,
-    test_adrg_copy,
-    test_adrg_2subdatasets,
-    test_adrg_copy_vsimem,
-    test_adrg_zna_9,
-    test_adrg_zna_18]
 
 if __name__ == '__main__':
 

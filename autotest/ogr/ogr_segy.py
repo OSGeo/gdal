@@ -96,10 +96,6 @@ def test_ogr_segy_2():
     assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
 
-gdaltest_list = [
-    test_ogr_segy_1,
-    test_ogr_segy_2,
-]
 
 
 if __name__ == '__main__':

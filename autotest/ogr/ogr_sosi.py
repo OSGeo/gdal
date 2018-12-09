@@ -56,8 +56,6 @@ def test_ogr_sosi_1():
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 
-gdaltest_list = [
-    test_ogr_sosi_1]
 
 if __name__ == '__main__':
 

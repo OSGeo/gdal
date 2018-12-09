@@ -629,48 +629,6 @@ def test_gdalinfo_40():
     assert ret['wgs84Extent']['coordinates'] == [[[-180.0, 90.0], [-180.0, -90.0], [180.0, -90.0], [180.0, 90.0], [-180.0, 90.0]]]
 
 
-gdaltest_list = [
-    test_gdalinfo_1,
-    test_gdalinfo_2,
-    test_gdalinfo_3,
-    test_gdalinfo_4,
-    test_gdalinfo_5,
-    test_gdalinfo_6,
-    test_gdalinfo_7,
-    test_gdalinfo_8,
-    test_gdalinfo_9,
-    test_gdalinfo_10,
-    test_gdalinfo_11,
-    test_gdalinfo_12,
-    test_gdalinfo_13,
-    test_gdalinfo_14,
-    test_gdalinfo_15,
-    test_gdalinfo_16,
-    test_gdalinfo_17,
-    test_gdalinfo_18,
-    test_gdalinfo_19,
-    test_gdalinfo_20,
-    test_gdalinfo_21,
-    test_gdalinfo_22,
-    test_gdalinfo_23,
-    test_gdalinfo_24,
-    test_gdalinfo_25,
-    test_gdalinfo_26,
-    test_gdalinfo_27,
-    test_gdalinfo_28,
-    test_gdalinfo_29,
-    test_gdalinfo_30,
-    test_gdalinfo_31,
-    test_gdalinfo_32,
-    test_gdalinfo_33,
-    test_gdalinfo_34,
-    test_gdalinfo_35,
-    test_gdalinfo_36,
-    test_gdalinfo_37,
-    test_gdalinfo_38,
-    test_gdalinfo_39,
-    test_gdalinfo_40,
-]
 
 
 if __name__ == '__main__':

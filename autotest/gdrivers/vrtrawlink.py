@@ -327,18 +327,6 @@ def test_vrtrawlink_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_vrtrawlink_1,
-    test_vrtrawlink_2,
-    test_vrtrawlink_3,
-    test_vrtrawlink_4,
-    test_vrtrawlink_5,
-    test_vrtrawlink_6,
-    test_vrtrawlink_7,
-    test_vrtrawlink_8,
-    test_vrtrawlink_9,
-    test_vrtrawlink_10,
-    test_vrtrawlink_cleanup]
 
 if __name__ == '__main__':
 

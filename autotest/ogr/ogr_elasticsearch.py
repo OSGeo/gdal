@@ -2283,23 +2283,6 @@ def test_ogr_elasticsearch_cleanup():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
 
 
-gdaltest_list = [
-    test_ogr_elasticsearch_init,
-    test_ogr_elasticsearch_nonexistent_server,
-    test_ogr_elasticsearch_1,
-    test_ogr_elasticsearch_2,
-    test_ogr_elasticsearch_3,
-    test_ogr_elasticsearch_4,
-    test_ogr_elasticsearch_5,
-    test_ogr_elasticsearch_6,
-    test_ogr_elasticsearch_7,
-    test_ogr_elasticsearch_8,
-    test_ogr_elasticsearch_9,
-    test_ogr_elasticsearch_10,
-    test_ogr_elasticsearch_11,
-    test_ogr_elasticsearch_authentication,
-    test_ogr_elasticsearch_cleanup,
-]
 
 # gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]
 

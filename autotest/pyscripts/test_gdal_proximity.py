@@ -135,12 +135,6 @@ def test_gdal_proximity_cleanup():
 
     
 
-gdaltest_list = [
-    test_gdal_proximity_1,
-    test_gdal_proximity_2,
-    test_gdal_proximity_3,
-    test_gdal_proximity_cleanup,
-]
 
 if __name__ == '__main__':
 

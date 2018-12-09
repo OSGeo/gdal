@@ -532,16 +532,6 @@ def test_ogr_factory_8():
 
     
 
-gdaltest_list = [
-    test_ogr_factory_1,
-    test_ogr_factory_2,
-    test_ogr_factory_3,
-    test_ogr_factory_4,
-    test_ogr_factory_5,
-    test_ogr_factory_6,
-    test_ogr_factory_7,
-    test_ogr_factory_8,
-]
 
 if __name__ == '__main__':
 

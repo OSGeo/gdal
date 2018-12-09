@@ -47,7 +47,6 @@ def test_bmp_vsimem():
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = [test_bmp_vsimem]
 
 
 init_list = [

@@ -380,23 +380,6 @@ def test_ehdr_approx_stats_flag():
     gdal.GetDriverByName('EHDR').Delete(tmpfile)
 
 
-gdaltest_list = [
-    test_ehdr_1,
-    test_ehdr_2,
-    test_ehdr_3,
-    test_ehdr_4,
-    test_ehdr_5,
-    test_ehdr_6,
-    test_ehdr_7,
-    test_ehdr_8,
-    test_ehdr_9,
-    test_ehdr_10,
-    test_ehdr_11,
-    test_ehdr_12,
-    test_ehdr_13,
-    test_ehdr_14,
-    test_ehdr_rat,
-    test_ehdr_approx_stats_flag]
 
 if __name__ == '__main__':
 

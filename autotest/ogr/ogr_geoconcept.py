@@ -282,16 +282,6 @@ def test_ogr_gxt_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_ogr_gxt_1,
-    test_ogr_gxt_2,
-    test_ogr_gxt_3,
-    test_ogr_gxt_multipolygon_singlepart_nohole,
-    test_ogr_gxt_multipolygon_singlepart_hole,
-    test_ogr_gxt_multipolygon_twoparts_second_with_hole,
-    test_ogr_gxt_line,
-    test_ogr_gxt_cleanup,
-    None]
 
 if __name__ == '__main__':
 

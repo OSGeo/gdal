@@ -250,13 +250,6 @@ def test_osr_validate_6():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_osr_validate_1,
-    test_osr_validate_2,
-    test_osr_validate_3,
-    test_osr_validate_4,
-    test_osr_validate_5,
-    test_osr_validate_6]
 
 if __name__ == '__main__':
 

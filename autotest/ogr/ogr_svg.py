@@ -106,10 +106,6 @@ def test_ogr_svg_cleanup():
     gdaltest.svg_ds = None
 
 
-gdaltest_list = [
-    test_ogr_svg_init,
-    test_ogr_svg_1,
-    test_ogr_svg_cleanup]
 
 if __name__ == '__main__':
 

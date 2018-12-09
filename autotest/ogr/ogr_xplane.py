@@ -190,12 +190,6 @@ def test_ogr_xplane_fix_dat():
 #
 
 
-gdaltest_list = [
-    test_ogr_xplane_apt_dat,
-    test_ogr_xplane_apt_v810_dat,
-    test_ogr_xplane_nav_dat,
-    test_ogr_xplane_awy_dat,
-    test_ogr_xplane_fix_dat]
 
 if __name__ == '__main__':
 

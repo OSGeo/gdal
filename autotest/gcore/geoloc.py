@@ -44,8 +44,6 @@ def test_geoloc_1():
     return tst.testOpen(check_filelist=False)
 
 
-gdaltest_list = [
-    test_geoloc_1]
 
 if __name__ == '__main__':
 

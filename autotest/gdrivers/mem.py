@@ -610,23 +610,6 @@ def test_mem_cleanup():
     gdaltest.mem_ds = None
 
 
-gdaltest_list = [
-    test_mem_1,
-    test_mem_2,
-    test_mem_3,
-    test_mem_4,
-    test_mem_5,
-    test_mem_6,
-    test_mem_7,
-    test_mem_8,
-    test_mem_9,
-    test_mem_10,
-    test_mem_11,
-    test_mem_12,
-    test_mem_rat,
-    test_mem_categorynames,
-    test_mem_colortable,
-    test_mem_cleanup]
 
 if __name__ == '__main__':
 

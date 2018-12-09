@@ -495,26 +495,6 @@ def test_pcidsk_cleanup():
     gdaltest.clean_tmp()
 
 
-gdaltest_list = [
-    test_pcidsk_1,
-    test_pcidsk_2,
-    test_pcidsk_3,
-    test_pcidsk_4,
-    test_pcidsk_5,
-    test_pcidsk_6,
-    test_pcidsk_7,
-    test_pcidsk_8,
-    # pcidsk_9,
-    test_pcidsk_10,
-    test_pcidsk_11,
-    test_pcidsk_12,
-    test_pcidsk_13,
-    test_pcidsk_14,
-    test_pcidsk_15,
-    test_pcidsk_external_ovr,
-    test_pcidsk_external_ovr_rrd,
-    test_pcidsk_online_1,
-    test_pcidsk_cleanup]
 
 if __name__ == '__main__':
 

@@ -319,18 +319,6 @@ def test_ogr_sde_cleanup():
     ds.Destroy()
 
 
-gdaltest_list = [
-    test_ogr_sde_1,
-    test_ogr_sde_2,
-    test_ogr_sde_3,
-    test_ogr_sde_4,
-    test_ogr_sde_5,
-    test_ogr_sde_6,
-    test_ogr_sde_7,
-    test_ogr_sde_8,
-
-    test_ogr_sde_cleanup
-]
 
 if __name__ == '__main__':
 

@@ -592,18 +592,6 @@ def test_algebra_cleanup():
     ds = None
 
 
-gdaltest_list = [
-    test_algebra_setup,
-    test_algebra_intersection,
-    test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES,
-    test_algebra_union,
-    test_algebra_symdifference,
-    test_algebra_identify,
-    test_algebra_update,
-    test_algebra_clip,
-    test_algebra_erase,
-    test_algebra_cleanup,
-]
 
 if __name__ == '__main__':
 

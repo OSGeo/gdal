@@ -340,13 +340,6 @@ def test_ogr_gtm_cleanup():
     os.remove('tmp/gtm.gtm')
 
 
-gdaltest_list = [
-    test_ogr_gtm_init,
-    test_ogr_gtm_read_1,
-    test_ogr_gtm_read_2,
-    test_ogr_gtm_write_1,
-    test_ogr_gtm_check_write_1,
-    test_ogr_gtm_cleanup]
 
 if __name__ == '__main__':
 

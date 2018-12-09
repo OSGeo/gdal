@@ -135,16 +135,6 @@ def test_gdalinfo_lib_nodatavalues():
     assert ret.find('PER_DATASET NODATA') >= 0, 'wrong value for mask flags.'
 
 
-gdaltest_list = [
-    test_gdalinfo_lib_1,
-    test_gdalinfo_lib_2,
-    test_gdalinfo_lib_3,
-    test_gdalinfo_lib_4,
-    test_gdalinfo_lib_5,
-    test_gdalinfo_lib_6,
-    test_gdalinfo_lib_7,
-    test_gdalinfo_lib_nodatavalues,
-]
 
 if __name__ == '__main__':
 

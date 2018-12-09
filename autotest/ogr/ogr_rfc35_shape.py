@@ -459,13 +459,6 @@ def test_ogr_rfc35_shape_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/rfc35_test.dbf')
 
 
-gdaltest_list = [
-    test_ogr_rfc35_shape_1,
-    test_ogr_rfc35_shape_2,
-    test_ogr_rfc35_shape_3,
-    test_ogr_rfc35_shape_4,
-    test_ogr_rfc35_shape_5,
-    test_ogr_rfc35_shape_cleanup]
 
 
 if __name__ == '__main__':

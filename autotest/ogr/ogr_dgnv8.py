@@ -193,13 +193,6 @@ def test_ogr_dgnv8_cleanup():
 
     pass
 
-gdaltest_list = [
-    test_ogr_dgnv8_1,
-    test_ogr_dgnv8_2,
-    test_ogr_dgnv8_3,
-    test_ogr_dgnv8_4,
-    test_ogr_dgnv8_5,
-    test_ogr_dgnv8_cleanup]
 
 if __name__ == '__main__':
 

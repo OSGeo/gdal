@@ -140,7 +140,6 @@ def test_ogr_wktempty_test_partial_empty_geoms():
         ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
 
-gdaltest_list = [test_ogr_wktempty_test_partial_empty_geoms]
 
 if __name__ == '__main__':
 

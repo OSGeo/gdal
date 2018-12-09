@@ -154,11 +154,6 @@ def test_ogr_odbc_cleanup():
     gdal.Unlink('tmp/odbc.mdb')
 
 
-gdaltest_list = [
-    test_ogr_odbc_1,
-    test_ogr_odbc_2,
-    test_ogr_odbc_cleanup
-]
 
 if __name__ == '__main__':
 

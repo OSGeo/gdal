@@ -267,16 +267,6 @@ def test_fast_9():
 #
 
 
-gdaltest_list = [
-    test_fast_1,
-    test_fast_2,
-    test_fast_3,
-    test_fast_4,
-    test_fast_5,
-    test_fast_6,
-    test_fast_7,
-    test_fast_8,
-    test_fast_9]
 
 if __name__ == '__main__':
 

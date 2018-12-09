@@ -98,13 +98,6 @@ def test_blx_5():
     assert cs == 12058, ('wrong overview checksum (%d)' % cs)
 
 
-gdaltest_list = [
-    test_blx_1,
-    test_blx_2,
-    test_blx_3,
-    test_blx_4,
-    test_blx_5
-]
 
 
 if __name__ == '__main__':

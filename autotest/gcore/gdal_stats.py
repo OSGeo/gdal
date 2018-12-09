@@ -706,35 +706,6 @@ def test_stats_float32_with_nodata_slightly_above_float_max():
 # Run tests
 
 
-gdaltest_list = [
-    test_stats_nan_1,
-    test_stats_nan_2,
-    test_stats_signedbyte,
-    test_stats_dont_force,
-    test_stats_approx_nodata,
-    test_stats_nan_3,
-    test_stats_nan_4,
-    test_stats_nan_5,
-    test_stats_nan_6,
-    test_stats_nan_7,
-    test_stats_nan_8,
-    test_stats_nodata_inf,
-    test_stats_nodata_neginf_linux,
-    test_stats_nodata_neginf_msvc,
-    test_stats_nodata_posinf_linux,
-    test_stats_nodata_posinf_msvc,
-    test_stats_stddev_huge_values,
-    test_stats_square_shape,
-    test_stats_flt_min,
-    test_stats_dbl_min,
-    test_stats_byte_partial_tiles,
-    test_stats_uint16,
-    test_stats_nodata_almost_max_float32,
-    test_stats_approx_stats_flag,
-    test_stats_approx_stats_flag_float,
-    test_stats_all_nodata,
-    test_stats_float32_with_nodata_slightly_above_float_max,
-]
 
 if __name__ == '__main__':
 

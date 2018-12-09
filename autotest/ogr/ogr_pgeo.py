@@ -271,9 +271,6 @@ def test_ogr_pgeo_main():
     gdaltest.run_tests(gdaltest_list_internal)
 
 
-gdaltest_list = [
-    test_ogr_pgeo_main
-]
 
 if __name__ == '__main__':
 

@@ -283,13 +283,6 @@ def test_contour_cleanup():
 
     
 
-gdaltest_list = [
-    test_contour_1,
-    test_contour_2,
-    test_contour_real_world_case,
-    test_contour_3,
-    test_contour_cleanup
-]
 
 
 if __name__ == '__main__':

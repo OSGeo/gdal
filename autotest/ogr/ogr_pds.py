@@ -83,10 +83,6 @@ def test_ogr_pds_2():
 
     
 
-gdaltest_list = [
-    test_ogr_pds_1,
-    test_ogr_pds_2,
-]
 
 if __name__ == '__main__':
 

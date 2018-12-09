@@ -78,10 +78,6 @@ def test_osr_url_2():
     return osr_url_test('http://spatialreference.org/ref/epsg/4326/ogcwkt/', expected_wkt)
 
 
-gdaltest_list = [
-    test_osr_url_1,
-    test_osr_url_2,
-    None]
 
 if __name__ == '__main__':
 

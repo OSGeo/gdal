@@ -58,9 +58,6 @@ def test_jpegls_2():
     return tst.testCreateCopy(vsimem=1)
 
 
-gdaltest_list = [
-    test_jpegls_1,
-    test_jpegls_2]
 
 
 if __name__ == '__main__':

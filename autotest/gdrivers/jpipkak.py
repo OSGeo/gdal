@@ -152,13 +152,6 @@ def test_jpipkak_5():
         'did not get expected mean/stddev'
 
 
-gdaltest_list = [
-    test_jpipkak_1,
-    test_jpipkak_2,
-    test_jpipkak_3,
-    test_jpipkak_4,
-    test_jpipkak_5
-]
 
 if __name__ == '__main__':
 

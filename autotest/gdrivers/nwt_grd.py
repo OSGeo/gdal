@@ -67,8 +67,6 @@ def test_nwt_grd_2():
     return ret
 
 
-gdaltest_list = [
-    test_nwt_grd_1, test_nwt_grd_2]
 
 if __name__ == '__main__':
 

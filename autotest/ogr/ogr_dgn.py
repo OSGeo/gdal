@@ -264,17 +264,6 @@ def test_ogr_dgn_cleanup():
     gdaltest.clean_tmp()
 
 
-gdaltest_list = [
-    test_ogr_dgn_1,
-    test_ogr_dgn_2,
-    test_ogr_dgn_3,
-    test_ogr_dgn_4,
-    test_ogr_dgn_5,
-    test_ogr_dgn_6,
-    test_ogr_dgn_7,
-    test_ogr_dgn_8,
-    test_ogr_dgn_online_1,
-    test_ogr_dgn_cleanup]
 
 if __name__ == '__main__':
 

@@ -468,28 +468,6 @@ def test_jp2kak_cleanup():
     gdaltest.reregister_all_jpeg2000_drivers()
 
 
-gdaltest_list = [
-    test_jp2kak_1,
-    test_jp2kak_2,
-    test_jp2kak_3,
-    test_jp2kak_4,
-    test_jp2kak_5,
-    test_jp2kak_8,
-    test_jp2kak_9,
-    test_jp2kak_10,
-    test_jp2kak_11,
-    test_jp2kak_12,
-    test_jp2kak_13,
-    test_jp2kak_14,
-    test_jp2kak_15,
-    test_jp2kak_16,
-    test_jp2kak_17,
-    test_jp2kak_18,
-    test_jp2kak_19,
-    test_jp2kak_20,
-    test_jp2kak_21,
-    test_jp2kak_22,
-    test_jp2kak_cleanup]
 
 if __name__ == '__main__':
 

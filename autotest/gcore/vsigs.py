@@ -1190,22 +1190,6 @@ def test_vsigs_cleanup():
 
     
 
-gdaltest_list = [test_vsigs_init,
-                 test_vsigs_1,
-                 test_vsigs_start_webserver,
-                 test_vsigs_2,
-                 test_vsigs_readdir,
-                 test_vsigs_write,
-                 test_vsigs_read_credentials_refresh_token_default_gdal_app,
-                 test_vsigs_read_credentials_refresh_token_custom_app,
-                 test_vsigs_read_credentials_oauth2_service_account,
-                 test_vsigs_read_credentials_oauth2_service_account_json_file,
-                 test_vsigs_read_credentials_file,
-                 test_vsigs_read_credentials_file_refresh_token,
-                 test_vsigs_read_credentials_gce,
-                 test_vsigs_read_credentials_gce_expiration,
-                 test_vsigs_stop_webserver,
-                 test_vsigs_cleanup]
 
 # gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_write, vsigs_stop_webserver, vsigs_cleanup ]
 

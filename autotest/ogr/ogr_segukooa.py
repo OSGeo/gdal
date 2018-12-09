@@ -186,12 +186,6 @@ def test_ogr_ukooa_lines():
 
     
 
-gdaltest_list = [
-    test_ogr_segp1_points,
-    test_ogr_segp1_lines,
-    test_ogr_ukooa_points,
-    test_ogr_ukooa_lines,
-]
 
 
 if __name__ == '__main__':

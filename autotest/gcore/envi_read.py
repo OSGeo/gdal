@@ -77,7 +77,6 @@ def test_envi_open(filename, checksum):
     ut.testOpen()
 
 
-gdaltest_list = [test_envi_1]
 
 if __name__ == '__main__':
 

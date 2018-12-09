@@ -144,12 +144,6 @@ def test_gdal_grid_lib_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp')
 
 
-gdaltest_list = [
-    test_gdal_grid_lib_1,
-    test_gdal_grid_lib_2,
-    test_gdal_grid_lib_3,
-    test_gdal_grid_lib_cleanup,
-]
 
 
 if __name__ == '__main__':

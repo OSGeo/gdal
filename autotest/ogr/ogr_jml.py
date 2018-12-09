@@ -612,14 +612,6 @@ def test_ogr_jml_cleanup():
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
 
-gdaltest_list = [
-    test_ogr_jml_init,
-    test_ogr_jml_1,
-    test_ogr_jml_2,
-    test_ogr_jml_3,
-    test_ogr_jml_4,
-    test_ogr_jml_read_srs,
-    test_ogr_jml_cleanup]
 
 if __name__ == '__main__':
 

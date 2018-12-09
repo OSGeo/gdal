@@ -146,12 +146,6 @@ def test_ogr_xls_4():
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 
-gdaltest_list = [
-    test_ogr_xls_1,
-    test_ogr_xls_2,
-    test_ogr_xls_3,
-    test_ogr_xls_4
-]
 
 if __name__ == '__main__':
 

@@ -272,17 +272,6 @@ def ogr_db2_listdrivers():
 
     
 
-gdaltest_list = [
-    test_ogr_db2_check_driver,
-    test_ogr_db2_init,
-    # ogr_db2_listdrivers,
-    test_ogr_db2_GetSpatialRef,
-    test_ogr_db2_GetExtent,
-    test_ogr_db2_GetFeature,
-    test_ogr_db2_SetSpatialFilter,
-    test_ogr_db2_capabilities,
-    test_ogr_db2_GetFeatureCount
-]
 
 if __name__ == '__main__':
 

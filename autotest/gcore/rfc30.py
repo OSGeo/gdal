@@ -116,7 +116,6 @@ def test_rfc30_2():
     assert fd is None, 'did unlink fail on utf8 filename?'
 
 
-gdaltest_list = [test_rfc30_1, test_rfc30_2]
 
 if __name__ == '__main__':
 

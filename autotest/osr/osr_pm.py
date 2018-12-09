@@ -85,11 +85,6 @@ def test_osr_pm_3():
 
 ###############################################################################
 
-gdaltest_list = [
-    test_osr_pm_1,
-    test_osr_pm_2,
-    test_osr_pm_3,
-    None]
 
 if __name__ == '__main__':
 

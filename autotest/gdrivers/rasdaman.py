@@ -89,10 +89,6 @@ def test_rasdaman_3():
     assert ds is None
 
 
-gdaltest_list = [
-    test_rasdaman_1,
-    test_rasdaman_2,
-    test_rasdaman_3]
 
 if __name__ == '__main__':
 

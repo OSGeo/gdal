@@ -319,16 +319,6 @@ def test_arg_destroy():
 
     
 
-gdaltest_list = [
-    test_arg_init,
-    test_arg_unsupported,
-    test_arg_getrastercount,
-    test_arg_getgeotransform,
-    test_arg_blocksize,
-    test_arg_layername,
-    test_arg_nodata,
-    test_arg_byteorder,
-    test_arg_destroy]
 
 if __name__ == '__main__':
 

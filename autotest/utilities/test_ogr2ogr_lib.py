@@ -451,30 +451,6 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
 
     gdal.Unlink(tmpfilename)
 
-gdaltest_list = [
-    test_ogr2ogr_lib_1,
-    test_ogr2ogr_lib_2,
-    test_ogr2ogr_lib_3,
-    test_ogr2ogr_lib_4,
-    test_ogr2ogr_lib_5,
-    test_ogr2ogr_lib_6,
-    test_ogr2ogr_lib_7,
-    test_ogr2ogr_lib_8,
-    test_ogr2ogr_lib_9,
-    test_ogr2ogr_lib_10,
-    test_ogr2ogr_lib_11,
-    test_ogr2ogr_lib_12,
-    test_ogr2ogr_lib_13,
-    test_ogr2ogr_lib_14,
-    test_ogr2ogr_lib_15,
-    test_ogr2ogr_lib_16,
-    test_ogr2ogr_lib_17,
-    test_ogr2ogr_lib_18,
-    test_ogr2ogr_lib_19,
-    test_ogr2ogr_lib_20,
-    test_ogr2ogr_lib_21,
-    test_ogr2ogr_clipsrc_no_dst_geom,
-]
 
 if __name__ == '__main__':
 

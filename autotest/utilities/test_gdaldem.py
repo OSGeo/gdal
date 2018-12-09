@@ -634,28 +634,6 @@ def test_gdaldem_cleanup():
         pass
     
 
-gdaltest_list = [
-    test_gdaldem_hillshade,
-    test_gdaldem_hillshade_compressed_tiled_output,
-    test_gdaldem_hillshade_combined,
-    test_gdaldem_hillshade_compute_edges,
-    test_gdaldem_hillshade_azimuth,
-    test_gdaldem_hillshade_png,
-    test_gdaldem_hillshade_png_compute_edges,
-    test_gdaldem_slope,
-    test_gdaldem_aspect,
-    test_gdaldem_color_relief,
-    test_gdaldem_color_relief_cpt,
-    test_gdaldem_color_relief_vrt,
-    test_gdaldem_color_relief_from_float32,
-    test_gdaldem_color_relief_png,
-    test_gdaldem_color_relief_from_float32_to_png,
-    test_gdaldem_color_relief_nearest_color_entry,
-    test_gdaldem_color_relief_nearest_color_entry_vrt,
-    test_gdaldem_color_relief_nodata_nan,
-    test_gdaldem_color_relief_repeated_entry,
-    test_gdaldem_cleanup
-]
 
 
 if __name__ == '__main__':

@@ -116,12 +116,6 @@ def test_ogr_refcount_cleanup():
     gdaltest.ds_2.Release()
 
 
-gdaltest_list = [
-    test_ogr_refcount_1,
-    test_ogr_refcount_2,
-    test_ogr_refcount_3,
-    test_ogr_refcount_4,
-    test_ogr_refcount_cleanup]
 
 if __name__ == '__main__':
 

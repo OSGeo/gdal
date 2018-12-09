@@ -699,18 +699,6 @@ def test_vsiswift_cleanup():
 
     
 
-gdaltest_list = [test_vsiswift_init,
-                 test_vsiswift_real_server_errors,
-                 test_vsiswift_start_webserver,
-                 test_vsiswift_fake_auth_v1_url,
-                 test_vsiswift_fake_auth_storage_url_and_auth_token,
-                 test_vsiswift_stat,
-                 test_vsiswift_fake_readdir,
-                 test_vsiswift_fake_write,
-                 test_vsiswift_fake_unlink,
-                 test_vsiswift_fake_mkdir_rmdir,
-                 test_vsiswift_stop_webserver,
-                 test_vsiswift_cleanup]
 
 # gdaltest_list = [ vsiswift_init, vsiswift_start_webserver, vsiswift_fake_mkdir_rmdir, vsiswift_stop_webserver, vsiswift_cleanup ]
 

@@ -241,16 +241,6 @@ def test_gdal_ls_py_8():
     assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') != -1
 
 
-gdaltest_list = [
-    test_gdal_ls_py_1,
-    test_gdal_ls_py_2,
-    test_gdal_ls_py_3,
-    test_gdal_ls_py_4,
-    test_gdal_ls_py_5,
-    test_gdal_ls_py_6,
-    test_gdal_ls_py_7,
-    test_gdal_ls_py_8,
-]
 
 if __name__ == '__main__':
 

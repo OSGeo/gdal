@@ -1777,20 +1777,6 @@ def test_vrtpansharpen_cleanup():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/ms.tif')
 
 
-gdaltest_list = [
-    test_vrtpansharpen_1,
-    test_vrtpansharpen_2,
-    test_vrtpansharpen_3,
-    test_vrtpansharpen_4,
-    test_vrtpansharpen_5,
-    test_vrtpansharpen_6,
-    test_vrtpansharpen_7,
-    test_vrtpansharpen_8,
-    test_vrtpansharpen_9,
-    test_vrtpansharpen_10,
-    test_vrtpansharpen_11,
-    test_vrtpansharpen_cleanup,
-]
 
 # gdaltest_list= [ vrtpansharpen_1, vrtpansharpen_8 ]
 

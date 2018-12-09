@@ -310,13 +310,6 @@ def test_png_sRGB():
 ############################################################################
 
 
-gdaltest_list = [
-    test_png_copy_icc,
-    test_png_copy_options_icc,
-    test_png_copy_options_colorimetric_data,
-    test_png_copy_colorimetric_data,
-    test_png_sRGB,
-]
 
 if __name__ == '__main__':
 

@@ -183,17 +183,6 @@ def test_ogr_geojsonseq_test_ogrsf():
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 
-gdaltest_list = [
-    test_ogr_geojsonseq_lf,
-    test_ogr_geojsonseq_rs,
-    test_ogr_geojsonseq_rs_auto,
-    test_ogr_geojsonseq_inline,
-    test_ogr_geojsonseq_prefix,
-    test_ogr_geojsonseq_seq_geometries,
-    test_ogr_geojsonseq_reprojection,
-    test_ogr_geojsonseq_read_rs_json_pretty,
-    test_ogr_geojsonseq_test_ogrsf,
-]
 
 if __name__ == '__main__':
 

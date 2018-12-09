@@ -445,15 +445,6 @@ def test_tiff_update_colorimetric():
 ############################################################################
 
 
-gdaltest_list = [
-    test_tiff_write_icc,
-    test_tiff_copy_icc,
-    test_tiff_copy_options_icc,
-    test_tiff_copy_options_colorimetric_data,
-    test_tiff_copy_colorimetric_data,
-    test_tiff_update_icc,
-    test_tiff_update_colorimetric,
-]
 
 if __name__ == '__main__':
 

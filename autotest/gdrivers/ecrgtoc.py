@@ -299,12 +299,6 @@ def test_ecrgtoc_online_1():
     assert len(filelist) == 7, 'did not get expected filelist'
 
 
-gdaltest_list = [
-    test_ecrgtoc_1,
-    test_ecrgtoc_2,
-    test_ecrgtoc_3,
-    test_ecrgtoc_4,
-    test_ecrgtoc_online_1]
 
 if __name__ == '__main__':
 

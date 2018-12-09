@@ -89,12 +89,6 @@ def test_prf_4():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_prf_1,
-    test_prf_2,
-    test_prf_3,
-    test_prf_4
-]
 
 if __name__ == '__main__':
 

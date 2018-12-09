@@ -428,12 +428,6 @@ def test_eeda_cleanup():
     gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?filter=raw%5Ffilter')
 
 
-gdaltest_list = [
-    test_eeda_1,
-    test_eeda_2,
-    test_eeda_3,
-    test_eeda_4,
-    test_eeda_cleanup]
 
 if __name__ == '__main__':
 

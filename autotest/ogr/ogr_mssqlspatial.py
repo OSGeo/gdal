@@ -333,15 +333,6 @@ def test_ogr_mssqlspatial_cleanup():
     gdaltest.mssqlspatial_ds = None
 
 
-gdaltest_list = [
-    test_ogr_mssqlspatial_1,
-    test_ogr_mssqlspatial_2,
-    test_ogr_mssqlspatial_3,
-    test_ogr_mssqlspatial_4,
-    test_ogr_mssqlspatial_test_ogrsf,
-    test_ogr_mssqlspatial_create_feature_in_unregistered_table,
-    test_ogr_mssqlspatial_cleanup
-]
 
 if __name__ == '__main__':
 

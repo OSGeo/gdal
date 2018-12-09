@@ -934,38 +934,6 @@ def test_mask_27():
 ###############################################################################
 # Extensive test of real NODATA_VALUES mask for all complex types
 
-gdaltest_list = [
-    test_mask_1,
-    test_mask_2,
-    test_mask_3,
-    test_mask_4,
-    test_mask_5,
-    test_mask_6,
-    test_mask_7,
-    test_mask_8,
-    test_mask_9,
-    test_mask_10,
-    test_mask_11,
-    test_mask_12,
-    test_mask_13,
-    test_mask_14,
-    test_mask_15,
-    test_mask_16,
-    test_mask_17,
-    test_mask_18,
-    test_mask_15_avg,
-    test_mask_16_avg,
-    test_mask_17_avg,
-    test_mask_18_avg,
-    test_mask_19,
-    test_mask_20,
-    test_mask_21,
-    test_mask_22,
-    test_mask_23,
-    test_mask_24,
-    test_mask_25,
-    test_mask_26,
-    test_mask_27]
 
 if __name__ == '__main__':
 

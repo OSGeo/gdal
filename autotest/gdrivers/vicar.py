@@ -75,8 +75,6 @@ def test_vicar_1():
 
     
 
-gdaltest_list = [
-    test_vicar_1]
 
 if __name__ == '__main__':
 

@@ -95,11 +95,6 @@ def test_colortable_cleanup():
     gdaltest.test_ct = None
 
 
-gdaltest_list = [
-    test_colortable_1,
-    test_colortable_2,
-    test_colortable_3,
-    test_colortable_cleanup]
 
 if __name__ == '__main__':
 

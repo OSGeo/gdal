@@ -93,9 +93,6 @@ def test_nodatamaskband_1():
 
     
 
-gdaltest_list = [
-    test_nodatamaskband_1,
-]
 
 if __name__ == '__main__':
 

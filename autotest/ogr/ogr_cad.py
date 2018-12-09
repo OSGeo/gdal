@@ -371,17 +371,6 @@ def test_ogr_cad_cleanup():
     gdaltest.cad_ds = None
 
 
-gdaltest_list = [
-    test_ogr_cad_1,
-    test_ogr_cad_2,
-    test_ogr_cad_3,
-    test_ogr_cad_4,
-    test_ogr_cad_5,
-    test_ogr_cad_6,
-    test_ogr_cad_7,
-    test_ogr_cad_8,
-    test_ogr_cad_9,
-    test_ogr_cad_cleanup]
 
 if __name__ == '__main__':
 

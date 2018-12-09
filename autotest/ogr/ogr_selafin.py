@@ -183,13 +183,6 @@ def test_ogr_selafin_cleanup():
     selafin_drv.DeleteDataSource('tmp/tmp.slf')
 
 
-gdaltest_list = [
-    test_ogr_selafin_create_ds,
-    test_ogr_selafin_create_nodes,
-    test_ogr_selafin_create_elements,
-    test_ogr_selafin_set_field,
-    test_ogr_selafin_cleanup
-]
 
 if __name__ == '__main__':
     gdal.PushErrorHandler('CPLQuietErrorHandler')

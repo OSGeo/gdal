@@ -200,12 +200,6 @@ def test_gdal_polygonize_4():
     assert content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') >= 0
 
 
-gdaltest_list = [
-    test_gdal_polygonize_1,
-    test_gdal_polygonize_2,
-    test_gdal_polygonize_3,
-    test_gdal_polygonize_4
-]
 
 if __name__ == '__main__':
 

@@ -179,13 +179,6 @@ def test_gdaladdo_5():
     os.remove('tmp/test_gdaladdo_5.tif')
 
 
-gdaltest_list = [
-    test_gdaladdo_1,
-    test_gdaladdo_2,
-    test_gdaladdo_3,
-    test_gdaladdo_4,
-    test_gdaladdo_5
-]
 
 
 if __name__ == '__main__':

@@ -202,18 +202,6 @@ def test_gdalinfo_py_10():
     assert ret.find('Computed Min/Max=74.000,255.000') != -1
 
 
-gdaltest_list = [
-    test_gdalinfo_py_1,
-    test_gdalinfo_py_2,
-    test_gdalinfo_py_3,
-    test_gdalinfo_py_4,
-    test_gdalinfo_py_5,
-    test_gdalinfo_py_6,
-    test_gdalinfo_py_7,
-    test_gdalinfo_py_8,
-    test_gdalinfo_py_9,
-    test_gdalinfo_py_10
-]
 
 
 if __name__ == '__main__':

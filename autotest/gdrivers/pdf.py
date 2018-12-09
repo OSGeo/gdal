@@ -1922,7 +1922,6 @@ def test_pdf_run_all():
 
     
 
-gdaltest_list = [test_pdf_run_all]
 # gdaltest_list = [ pdf_init, pdf_metadata ]
 
 if __name__ == '__main__':

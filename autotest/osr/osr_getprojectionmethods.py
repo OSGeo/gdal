@@ -44,9 +44,6 @@ def test_osr_getprojectionmethods_1():
     assert methods[0][0] == 'Transverse_Mercator'
 
 
-gdaltest_list = [
-    test_osr_getprojectionmethods_1,
-    None]
 
 if __name__ == '__main__':
 

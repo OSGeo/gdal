@@ -447,21 +447,6 @@ def test_pam_cleanup():
 
     
 
-gdaltest_list = [
-    test_pam_1,
-    test_pam_2,
-    test_pam_3,
-    test_pam_4,
-    test_pam_5,
-    test_pam_6,
-    test_pam_7,
-    test_pam_8,
-    test_pam_9,
-    test_pam_10,
-    test_pam_11,
-    test_pam_12,
-    test_pam_13,
-    test_pam_cleanup]
 
 if __name__ == '__main__':
 

@@ -224,12 +224,6 @@ def test_ogr_tiger_cleanup():
     ogrtest.tiger_ds = None
 
 
-gdaltest_list = [
-    test_ogr_tiger_1,
-    test_ogr_tiger_2,
-    test_ogr_tiger_3,
-    test_ogr_tiger_4,
-    test_ogr_tiger_cleanup]
 
 if __name__ == '__main__':
 

@@ -121,13 +121,6 @@ def test_ilwis_cleanup():
     gdaltest.clean_tmp()
 
 
-gdaltest_list = [
-    test_ilwis_1,
-    test_ilwis_2,
-    test_ilwis_3,
-    test_ilwis_4,
-    test_ilwis_5,
-    test_ilwis_cleanup]
 
 if __name__ == '__main__':
 

@@ -52,9 +52,6 @@ def test_lan_2():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_lan_1,
-    test_lan_2]
 
 if __name__ == '__main__':
 

@@ -83,7 +83,6 @@ def test_thread_test_1():
     return ret
 
 
-gdaltest_list = [test_thread_test_1]
 
 
 if __name__ == '__main__':

@@ -136,12 +136,6 @@ def test_webp_5():
     assert cs4 == 10807, 'did not get expected checksum on band 4'
 
 
-gdaltest_list = [
-    test_webp_1,
-    test_webp_2,
-    test_webp_3,
-    test_webp_4,
-    test_webp_5]
 
 if __name__ == '__main__':
 

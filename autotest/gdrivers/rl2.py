@@ -539,33 +539,6 @@ def test_rl2_error_create():
         assert gdaltest.rl2_drv.Create('/vsimem/out.db', 1, 1) is None
     
 
-gdaltest_list = [
-    test_rl2_1,
-    test_rl2_2,
-    test_rl2_3,
-    test_rl2_4,
-    test_rl2_5,
-    test_rl2_6,
-    test_rl2_7,
-    test_rl2_8,
-    test_rl2_9,
-    test_rl2_10,
-    test_rl2_11,
-    test_rl2_12,
-    test_rl2_13,
-    test_rl2_14,
-    test_rl2_15,
-    test_rl2_16,
-    test_rl2_17,
-    test_rl2_18,
-    test_rl2_19,
-    test_rl2_20,
-    test_rl2_21,
-    test_rl2_22,
-    test_rl2_23,
-    test_rl2_24,
-    test_rl2_error_create,
-]
 
 if __name__ == '__main__':
 

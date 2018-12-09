@@ -83,10 +83,6 @@ def test_rik_online_2():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_rik_online_1,
-    test_rik_online_2
-]
 
 
 if __name__ == '__main__':

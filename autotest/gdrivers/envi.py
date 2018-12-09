@@ -348,24 +348,6 @@ def test_envi_truncated():
     assert cs == 2315
 
 
-gdaltest_list = [
-    test_envi_1,
-    test_envi_2,
-    test_envi_3,
-    test_envi_4,
-    test_envi_5,
-    test_envi_6,
-    test_envi_7,
-    test_envi_8,
-    test_envi_9,
-    test_envi_10,
-    test_envi_11,
-    test_envi_12,
-    test_envi_13,
-    test_envi_14,
-    test_envi_15,
-    test_envi_truncated,
-]
 
 
 if __name__ == '__main__':

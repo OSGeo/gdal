@@ -1117,19 +1117,6 @@ def test_visoss_cleanup():
 
     
 
-gdaltest_list = [test_visoss_init,
-                 test_visoss_1,
-                 test_visoss_real_test,
-                 test_visoss_start_webserver,
-                 test_visoss_2,
-                 test_visoss_3,
-                 test_visoss_4,
-                 test_visoss_5,
-                 test_visoss_6,
-                 test_visoss_7,
-                 test_visoss_8,
-                 test_visoss_stop_webserver,
-                 test_visoss_cleanup]
 
 # gdaltest_list = [ visoss_init, visoss_start_webserver, visoss_8, visoss_stop_webserver, visoss_cleanup ]
 

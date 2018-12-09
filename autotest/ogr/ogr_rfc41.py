@@ -767,16 +767,6 @@ def test_ogr_rfc41_8():
     ds.ReleaseResultSet(sql_lyr)
 
 
-gdaltest_list = [
-    test_ogr_rfc41_1,
-    test_ogr_rfc41_2,
-    test_ogr_rfc41_3,
-    test_ogr_rfc41_4,
-    test_ogr_rfc41_5,
-    test_ogr_rfc41_6,
-    test_ogr_rfc41_7,
-    test_ogr_rfc41_8,
-]
 
 if __name__ == '__main__':
 

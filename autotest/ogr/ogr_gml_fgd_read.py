@@ -115,10 +115,6 @@ def test_ogr_gml_fgd_2():
 # List test cases
 
 
-gdaltest_list = [
-    test_ogr_gml_fgd_1,
-    test_ogr_gml_fgd_2
-]
 
 
 if __name__ == '__main__':

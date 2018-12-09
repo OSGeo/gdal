@@ -565,17 +565,6 @@ def test_ogr_wfs3_cleanup():
 
     
 
-gdaltest_list = [
-    test_ogr_wfs3_init,
-    test_ogr_wfs3_errors,
-    test_ogr_wfs3_empty_layer,
-    test_ogr_wfs3_fc_links_next_geojson,
-    test_ogr_wfs3_fc_links_next_headers,
-    test_ogr_wfs3_spatial_filter,
-    test_ogr_wfs3_get_feature_count,
-    test_ogr_wfs3_attribute_filter,
-    test_ogr_wfs3_cleanup,
-]
 
 if __name__ == '__main__':
 

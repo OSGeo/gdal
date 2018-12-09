@@ -77,12 +77,6 @@ def test_safe_5():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_safe_1,
-    test_safe_2,
-    test_safe_3,
-    test_safe_4,
-    test_safe_5]
 
 if __name__ == '__main__':
 

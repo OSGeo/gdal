@@ -934,26 +934,6 @@ nodata_value 0
 
     gdal.Unlink('/vsimem/in.asc')
 
-gdaltest_list = [
-    test_rasterio_1,
-    test_rasterio_2,
-    test_rasterio_3,
-    test_rasterio_4,
-    test_rasterio_5,
-    test_rasterio_6,
-    test_rasterio_7,
-    test_rasterio_8,
-    test_rasterio_9,
-    test_rasterio_10,
-    test_rasterio_11,
-    test_rasterio_12,
-    test_rasterio_13,
-    test_rasterio_14,
-    test_rasterio_15,
-    test_rasterio_16,
-    test_rasterio_lanczos_nodata,
-    test_rasterio_resampled_value_is_nodata,
-]
 
 # gdaltest_list = [ rasterio_16 ]
 

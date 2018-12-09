@@ -885,17 +885,6 @@ def test_vsiaz_cleanup():
 
     
 
-gdaltest_list = [test_vsiaz_init,
-                 test_vsiaz_real_server_errors,
-                 test_vsiaz_start_webserver,
-                 test_vsiaz_fake_basic,
-                 test_vsiaz_fake_readdir,
-                 test_vsiaz_fake_write,
-                 test_vsiaz_fake_unlink,
-                 test_vsiaz_fake_mkdir_rmdir,
-                 test_vsiaz_fake_test_BlobEndpointInConnectionString,
-                 test_vsiaz_stop_webserver,
-                 test_vsiaz_cleanup]
 
 # gdaltest_list = [ vsiaz_init, vsiaz_start_webserver, vsiaz_fake_mkdir_rmdir, vsiaz_stop_webserver, vsiaz_cleanup ]
 

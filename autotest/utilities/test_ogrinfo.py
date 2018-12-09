@@ -648,34 +648,6 @@ def test_ogrinfo_sql_filename():
         'wrong output'
 
 
-gdaltest_list = [
-    test_ogrinfo_1,
-    test_ogrinfo_2,
-    test_ogrinfo_3,
-    test_ogrinfo_4,
-    test_ogrinfo_5,
-    test_ogrinfo_6,
-    test_ogrinfo_7,
-    test_ogrinfo_8,
-    test_ogrinfo_9,
-    test_ogrinfo_10,
-    test_ogrinfo_11,
-    test_ogrinfo_12,
-    test_ogrinfo_13,
-    test_ogrinfo_14,
-    test_ogrinfo_15,
-    test_ogrinfo_16,
-    test_ogrinfo_17,
-    test_ogrinfo_18,
-    test_ogrinfo_19,
-    test_ogrinfo_20,
-    test_ogrinfo_21,
-    test_ogrinfo_22,
-    test_ogrinfo_23,
-    test_ogrinfo_24,
-    test_ogrinfo_25,
-    test_ogrinfo_sql_filename,
-]
 
 
 if __name__ == '__main__':

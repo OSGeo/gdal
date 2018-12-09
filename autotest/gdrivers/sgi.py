@@ -64,11 +64,6 @@ def test_sgi_3():
     return tst.testCreate()
 
 
-gdaltest_list = [
-    test_sgi_1,
-    test_sgi_2,
-    test_sgi_3,
-]
 
 
 if __name__ == '__main__':

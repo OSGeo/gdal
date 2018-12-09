@@ -65,10 +65,6 @@ def test_osr_erm_2():
     assert srs2.IsSame(srs), 'EPSG:n import does not match.'
 
 
-gdaltest_list = [
-    test_osr_erm_1,
-    test_osr_erm_2,
-    None]
 
 if __name__ == '__main__':
 

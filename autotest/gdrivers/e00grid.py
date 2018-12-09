@@ -121,9 +121,6 @@ def test_e00grid_2():
     return ret
 
 
-gdaltest_list = [
-    test_e00grid_1,
-    test_e00grid_2]
 
 if __name__ == '__main__':
 

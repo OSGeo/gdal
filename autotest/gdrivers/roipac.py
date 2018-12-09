@@ -112,14 +112,6 @@ def test_roipac_6():
     return ret
 
 
-gdaltest_list = [
-    test_roipac_1,
-    test_roipac_2,
-    test_roipac_3,
-    test_roipac_4,
-    test_roipac_5,
-    test_roipac_6,
-]
 
 
 if __name__ == '__main__':

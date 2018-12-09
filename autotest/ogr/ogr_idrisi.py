@@ -198,11 +198,6 @@ def test_ogr_idrisi_3():
     ds = None
 
 
-gdaltest_list = [
-    test_ogr_idrisi_1,
-    test_ogr_idrisi_2,
-    test_ogr_idrisi_3,
-]
 
 if __name__ == '__main__':
 

@@ -129,14 +129,6 @@ def test_histogram_6():
     os.unlink('tmp/albania.jpg')
 
 
-gdaltest_list = [
-    test_histogram_1,
-    test_histogram_2,
-    test_histogram_3,
-    test_histogram_4,
-    test_histogram_5,
-    test_histogram_6
-]
 
 if __name__ == '__main__':
 

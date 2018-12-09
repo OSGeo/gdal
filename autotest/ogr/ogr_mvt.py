@@ -1546,48 +1546,6 @@ def test_ogr_mvt_write_reuse_temp_db():
 ###############################################################################
 #
 
-gdaltest_list = [
-    test_ogr_mvt_datatypes,
-    test_ogr_mvt_datatype_promotion,
-    test_ogr_mvt_limit_cases,
-    test_ogr_mvt_with_extension_fields,
-    test_ogr_mvt_mixed,
-    test_ogr_mvt_linestring,
-    test_ogr_mvt_multilinestring,
-    test_ogr_mvt_polygon,
-    test_ogr_mvt_point_polygon,
-    test_ogr_mvt_point_polygon_clip,
-    test_ogr_mvt_tileset_without_readdir,
-    test_ogr_mvt_tileset_without_metadata_file,
-    test_ogr_mvt_tileset_json_field,
-    test_ogr_mvt_tileset_tilegl,
-    test_ogr_mvt_open_variants,
-    test_ogr_mvt_xyz_options,
-    test_ogr_mvt_test_ogrsf_pbf,
-    test_ogr_mvt_test_ogrsf_directory,
-    test_ogr_mvt_mbtiles,
-    test_ogr_mvt_mbtiles_json_field,
-    test_ogr_mvt_mbtiles_json_field_auto,
-    test_ogr_mvt_mbtiles_open_vector_in_raster_mode,
-    test_ogr_mvt_mbtiles_test_ogrsf,
-    test_ogr_mvt_x_y_z_filename_scheme,
-    test_ogr_mvt_polygon_larger_than_header,
-    test_ogr_mvt_errors,
-    test_ogr_mvt_http_start,
-    test_ogr_mvt_http,
-    test_ogr_mvt_http_stop,
-    test_ogr_mvt_write_one_layer,
-    test_ogr_mvt_write_conf,
-    test_ogr_mvt_write_mbtiles,
-    test_ogr_mvt_write_polygon_repaired,
-    test_ogr_mvt_write_conflicting_innner_ring,
-    test_ogr_mvt_write_limitations_max_size,
-    test_ogr_mvt_write_limitations_max_size_polygon,
-    test_ogr_mvt_write_limitations_max_features,
-    test_ogr_mvt_write_custom_tiling_scheme,
-    test_ogr_mvt_write_errors,
-    test_ogr_mvt_write_reuse_temp_db,
-]
 
 # gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]
 

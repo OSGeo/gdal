@@ -765,35 +765,6 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
 # Build tests runner
 
 
-gdaltest_list = [
-    test_ogr_kml_datastore,
-    test_ogr_kml_attributes_1,
-    test_ogr_kml_attributes_2,
-    test_ogr_kml_attributes_3,
-    test_ogr_kml_attributes_4,
-    test_ogr_kml_point_read,
-    test_ogr_kml_linestring_read,
-    test_ogr_kml_polygon_read,
-    test_ogr_kml_write_1,
-    test_ogr_kml_check_write_1,
-    test_ogr_kml_xml_attributes,
-    test_ogr_kml_read_geometries,
-    test_ogr_kml_test_ogrsf,
-    test_ogr_kml_interleaved_writing,
-    test_ogr_kml_read_placemark,
-    test_ogr_kml_read_empty,
-    test_ogr_kml_read_emptylayers,
-    test_ogr_kml_write_schema,
-    test_ogr_kml_empty_layer,
-    test_ogr_kml_two_layers,
-    test_ogr_kml_read_folder_with_subfolder_placemark,
-    test_ogr_kml_read_truncated,
-    test_ogr_kml_read_weird_empty_folders,
-    test_ogr_kml_read_junk_content_after_valid_doc,
-    test_ogr_kml_read_placemark_with_kml_prefix,
-    test_ogr_kml_read_duplicate_folder_name,
-    test_ogr_kml_read_placemark_in_root_and_subfolder,
-    test_ogr_kml_cleanup]
 
 if __name__ == '__main__':
 

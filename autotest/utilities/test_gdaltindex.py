@@ -270,15 +270,6 @@ def test_gdaltindex_cleanup():
     drv.Delete('tmp/gdaltindex6.tif')
 
 
-gdaltest_list = [
-    test_gdaltindex_1,
-    test_gdaltindex_2,
-    test_gdaltindex_3,
-    test_gdaltindex_4,
-    test_gdaltindex_5,
-    test_gdaltindex_6,
-    test_gdaltindex_cleanup
-]
 
 
 if __name__ == '__main__':

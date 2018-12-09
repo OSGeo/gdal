@@ -563,16 +563,6 @@ def test_vsiwebhdfs_cleanup():
 
     
 
-gdaltest_list = [test_vsiwebhdfs_init,
-                 test_vsiwebhdfs_start_webserver,
-                 test_vsiwebhdfs_open,
-                 test_vsiwebhdfs_stat,
-                 test_vsiwebhdfs_readdir,
-                 test_vsiwebhdfs_write,
-                 test_vsiwebhdfs_unlink,
-                 test_vsiwebhdfs_mkdir_rmdir,
-                 test_vsiwebhdfs_stop_webserver,
-                 test_vsiwebhdfs_cleanup]
 
 gdaltest_list_extra = [vsiwebhdfs_extra_1]
 

@@ -96,7 +96,6 @@ def test_gxf(downloadURL, fileName, checksum, download_size):
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
 
-gdaltest_list = [test_gxf_1, test_gxf_2]
 
 
 if __name__ == '__main__':

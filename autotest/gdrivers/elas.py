@@ -52,9 +52,6 @@ def test_elas_2():
     return tst.testCreate()
 
 
-gdaltest_list = [
-    test_elas_1,
-    test_elas_2]
 
 if __name__ == '__main__':
 

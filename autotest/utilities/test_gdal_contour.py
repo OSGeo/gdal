@@ -387,14 +387,6 @@ def test_gdal_contour_cleanup():
 
     
 
-gdaltest_list = [
-    test_gdal_contour_1,
-    test_gdal_contour_2,
-    test_gdal_contour_3,
-    test_gdal_contour_4,
-    test_gdal_contour_5,
-    test_gdal_contour_cleanup
-]
 
 
 if __name__ == '__main__':

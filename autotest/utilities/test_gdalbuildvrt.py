@@ -525,25 +525,6 @@ def test_gdalbuildvrt_cleanup():
 
     
 
-gdaltest_list = [
-    test_gdalbuildvrt_1,
-    test_gdalbuildvrt_2,
-    test_gdalbuildvrt_3,
-    test_gdalbuildvrt_4,
-    #    test_gdalbuildvrt_5,
-    test_gdalbuildvrt_6,
-    test_gdalbuildvrt_7,
-    test_gdalbuildvrt_8,
-    test_gdalbuildvrt_9,
-    test_gdalbuildvrt_10,
-    test_gdalbuildvrt_11,
-    test_gdalbuildvrt_12,
-    test_gdalbuildvrt_13,
-    test_gdalbuildvrt_14,
-    test_gdalbuildvrt_15,
-    test_gdalbuildvrt_16,
-    test_gdalbuildvrt_cleanup
-]
 
 
 if __name__ == '__main__':

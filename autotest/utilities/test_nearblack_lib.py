@@ -153,15 +153,6 @@ def test_nearblack_lib_8():
     assert ds.GetRasterBand(3).Checksum() == 21309, 'Bad checksum band 3'
 
 
-gdaltest_list = [
-    test_nearblack_lib_1,
-    test_nearblack_lib_2,
-    test_nearblack_lib_3,
-    test_nearblack_lib_4,
-    test_nearblack_lib_5,
-    test_nearblack_lib_7,
-    test_nearblack_lib_8,
-]
 
 
 if __name__ == '__main__':

@@ -44,8 +44,6 @@ def test_gtx_1():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-gdaltest_list = [
-    test_gtx_1]
 
 if __name__ == '__main__':
 

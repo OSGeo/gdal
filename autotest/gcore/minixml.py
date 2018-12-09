@@ -243,16 +243,6 @@ def test_minixml_8():
 def test_minixml_cleanup():
     pass
 
-gdaltest_list = [
-    test_minixml_1,
-    test_minixml_2,
-    test_minixml_3,
-    test_minixml_4,
-    test_minixml_5,
-    test_minixml_6,
-    test_minixml_7,
-    test_minixml_8,
-    test_minixml_cleanup]
 
 if __name__ == '__main__':
 

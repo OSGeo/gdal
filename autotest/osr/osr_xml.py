@@ -203,9 +203,6 @@ def test_osr_xml_2():
     assert got == expected
 
 
-gdaltest_list = [
-    test_osr_xml_1,
-    test_osr_xml_2]
 
 if __name__ == '__main__':
 

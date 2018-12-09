@@ -1799,38 +1799,6 @@ def test_wmts_cleanup():
 
     
 
-gdaltest_list = [
-    test_wmts_1,
-    test_wmts_2,
-    test_wmts_3,
-    test_wmts_4,
-    test_wmts_5,
-    test_wmts_6,
-    test_wmts_7,
-    test_wmts_8,
-    test_wmts_9,
-    test_wmts_10,
-    test_wmts_11,
-    test_wmts_12,
-    test_wmts_12bis,
-    test_wmts_13,
-    test_wmts_14,
-    test_wmts_15,
-    test_wmts_16,
-    test_wmts_17,
-    test_wmts_18,
-    test_wmts_19,
-    test_wmts_20,
-    test_wmts_21,
-    test_wmts_22,
-    test_wmts_23_gray,
-    test_wmts_23_grayalpha,
-    test_wmts_23_pal,
-    test_wmts_23_rgb,
-    test_wmts_23_rgba,
-    test_wmts_invalid_global_to_tm_reprojection,
-    test_wmts_check_no_overflow_zoom_level,
-    test_wmts_cleanup]
 
 if __name__ == '__main__':
 

@@ -565,31 +565,6 @@ def test_postgisraster_cleanup():
     gdal.Unlink('data/utm.tif.aux.xml')
 
 
-gdaltest_list = [
-    test_postgisraster_init,
-    test_postgisraster_test_open_error1,
-    test_postgisraster_test_open_error2,
-    test_postgisraster_compare_utm,
-    test_postgisraster_compare_small_world,
-    test_postgisraster_test_utm_open,
-    test_postgisraster_test_small_world_open_b1,
-    test_postgisraster_test_small_world_open_b2,
-    test_postgisraster_test_small_world_open_b3,
-    test_postgisraster_test_create_copy_bad_conn_string,
-    test_postgisraster_test_create_copy_no_dbname,
-    test_postgisraster_test_create_copy_no_tablename,
-    test_postgisraster_test_create_copy_and_delete,
-    test_postgisraster_test_create_copy_and_delete_phases,
-    test_postgisraster_test_norid,
-    test_postgisraster_test_serial,
-    test_postgisraster_test_unique,
-    test_postgisraster_test_constraint,
-    test_postgisraster_test_constraint_with_spi,
-    test_postgisraster_test_outdb,
-    test_postgisraster_test_outdb_client_side,
-    test_postgisraster_test_outdb_client_side_force_ireadblock,
-    test_postgisraster_test_outdb_client_side_if_possible,
-    test_postgisraster_cleanup]
 
 if __name__ == '__main__':
 

@@ -120,7 +120,6 @@ def test_vsicurl_streaming_1():
     gdal.VSIFCloseL(fp)
 
 
-gdaltest_list = [test_vsicurl_streaming_1]
 
 if __name__ == '__main__':
 

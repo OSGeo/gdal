@@ -440,26 +440,6 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
 
-gdaltest_list = [
-    test_hdf5_2,
-    test_hdf5_3,
-    test_hdf5_4,
-    test_hdf5_5,
-    test_hdf5_6,
-    test_hdf5_7,
-    test_hdf5_8,
-    test_hdf5_9,
-    test_hdf5_10,
-    test_hdf5_11,
-    test_hdf5_12,
-    test_hdf5_13,
-    test_hdf5_14,
-    test_hdf5_15,
-    test_hdf5_16,
-    test_hdf5_17,
-    test_hdf5_single_char_varname,
-    test_hdf5_virtual_file,
-]
 
 
 if __name__ == '__main__':

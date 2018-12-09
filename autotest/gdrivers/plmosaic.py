@@ -902,32 +902,6 @@ def test_plmosaic_cleanup():
 
     
 
-gdaltest_list = [
-    test_plmosaic_1,
-    test_plmosaic_2,
-    test_plmosaic_3,
-    test_plmosaic_4,
-    test_plmosaic_5,
-    test_plmosaic_6,
-    test_plmosaic_7,
-    test_plmosaic_8,
-    test_plmosaic_9,
-    test_plmosaic_9bis,
-    test_plmosaic_9ter,
-    test_plmosaic_10,
-    test_plmosaic_11,
-    test_plmosaic_12,
-    test_plmosaic_13,
-    test_plmosaic_14,
-    test_plmosaic_15,
-    test_plmosaic_16,
-    test_plmosaic_17,
-    test_plmosaic_18,
-    test_plmosaic_19,
-    test_plmosaic_20,
-    test_plmosaic_21,
-    test_plmosaic_with_bbox,
-    test_plmosaic_cleanup]
 
 if __name__ == '__main__':
 

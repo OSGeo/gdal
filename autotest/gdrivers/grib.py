@@ -1349,40 +1349,6 @@ def test_grib_online_grib2_jpeg2000_single_line():
 
     
 
-gdaltest_list = [
-    test_grib_1,
-    test_grib_2,
-    test_grib_read_different_sizes_messages,
-    test_grib_grib2_read_nodata,
-    test_grib_read_units,
-    test_grib_read_geotransform_one_n_or_n_one,
-    test_grib_read_vsizip,
-    test_grib_grib2_test_grib_pds_all_bands,
-    test_grib_grib2_read_template_4_15,
-    test_grib_grib2_read_png,
-    test_grib_grib2_read_template_4_32,
-    test_grib_grib2_read_all_zero_data,
-    test_grib_grib2_read_rotated_pole_lonlat,
-    test_grib_grib2_read_template_4_40,
-    test_grib_grib2_read_template_4_unhandled,
-    test_grib_grib2_read_transverse_mercator,
-    test_grib_grib2_read_mercator,
-    test_grib_grib2_read_mercator_2sp,
-    test_grib_grib2_read_lcc,
-    test_grib_grib2_read_polar_stereo,
-    test_grib_grib2_read_aea,
-    test_grib_grib2_read_laea,
-    test_grib_grib2_read_template_5_4_grid_point_ieee_floating_point,
-    test_grib_grib2_read_section_5_nbits_zero_decimal_scaled,
-    test_grib_grib2_read_spatial_differencing_order_1,
-    test_grib_grib2_write_creation_options,
-    test_grib_grib2_write_projections,
-    test_grib_grib2_write_data_encodings,
-    test_grib_grib2_write_data_encodings_warnings_and_errors,
-    test_grib_grib2_write_temperatures,
-    test_grib_grib2_write_nodata,
-    test_grib_online_grib2_jpeg2000_single_line
-]
 
 if __name__ == '__main__':
 

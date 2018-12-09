@@ -83,12 +83,6 @@ def test_hf2_cleanup():
 
     pass
 
-gdaltest_list = [
-    test_hf2_1,
-    test_hf2_2,
-    test_hf2_3,
-    test_hf2_4,
-    test_hf2_cleanup]
 
 if __name__ == '__main__':
 

@@ -473,20 +473,6 @@ def test_tiff_srs_proj4(proj4):
     _test_tiff_srs(sr, False)
 
 
-gdaltest_list = [
-    test_tiff_srs_without_linear_units,
-    test_tiff_srs_compd_cs,
-    test_tiff_srs_weird_mercator_2sp,
-    test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere,
-    test_tiff_srs_angular_units,
-    test_tiff_custom_datum_known_ellipsoid,
-    test_tiff_srs_epsg_2853_with_us_feet,
-    test_tiff_srs_PCSCitationGeoKey_LUnits,
-    test_tiff_srs_projection_3856,
-    test_tiff_srs_imagine_localcs_citation,
-    test_tiff_srs_towgs84_override,
-    test_tiff_srs_pcscitation,
-]
 
 if __name__ == '__main__':
 

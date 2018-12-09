@@ -550,24 +550,6 @@ def test_basic_test_17():
 
     
 
-gdaltest_list = [test_basic_test_1,
-                 test_basic_test_strace_non_existing_file,
-                 test_basic_test_2,
-                 test_basic_test_3,
-                 test_basic_test_4,
-                 test_basic_test_5,
-                 test_basic_test_6,
-                 test_basic_test_7,
-                 test_basic_test_8,
-                 test_basic_test_9,
-                 test_basic_test_10,
-                 test_basic_test_11,
-                 test_basic_test_12,
-                 test_basic_test_13,
-                 test_basic_test_14,
-                 test_basic_test_15,
-                 test_basic_test_16,
-                 test_basic_test_17]
 
 
 if __name__ == '__main__':

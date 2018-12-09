@@ -220,18 +220,6 @@ def test_gif_cleanup():
     gdaltest.clean_tmp()
 
 
-gdaltest_list = [
-    test_gif_1,
-    test_gif_2,
-    test_gif_3,
-    test_gif_4,
-    test_gif_5,
-    test_gif_6,
-    test_gif_7,
-    test_gif_8,
-    test_gif_9,
-    test_gif_10,
-    test_gif_cleanup]
 
 if __name__ == '__main__':
 

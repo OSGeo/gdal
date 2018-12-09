@@ -300,17 +300,6 @@ def test_osr_ct_cleanup():
     gdaltest.ct = None
 
 
-gdaltest_list = [
-    test_osr_ct_1,
-    test_osr_ct_2,
-    test_osr_ct_3,
-    test_osr_ct_4,
-    test_osr_ct_5,
-    test_osr_ct_6,
-    test_osr_ct_7,
-    test_osr_ct_8,
-    test_osr_ct_cleanup,
-    None]
 
 if __name__ == '__main__':
 

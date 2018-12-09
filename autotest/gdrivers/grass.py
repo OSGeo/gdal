@@ -78,10 +78,6 @@ def test_grass_2():
     return ret
 
 
-gdaltest_list = [
-    test_grass_1,
-    test_grass_2
-]
 
 
 if __name__ == '__main__':

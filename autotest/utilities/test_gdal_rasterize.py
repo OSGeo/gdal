@@ -404,17 +404,6 @@ def test_gdal_rasterize_cleanup():
     os.unlink('tmp/test_gdal_rasterize_8.csv')
 
 
-gdaltest_list = [
-    test_gdal_rasterize_1,
-    test_gdal_rasterize_2,
-    test_gdal_rasterize_3,
-    test_gdal_rasterize_4,
-    test_gdal_rasterize_5,
-    test_gdal_rasterize_6,
-    test_gdal_rasterize_7,
-    test_gdal_rasterize_8,
-    test_gdal_rasterize_cleanup
-]
 
 if __name__ == '__main__':
 

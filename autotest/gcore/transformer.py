@@ -714,25 +714,6 @@ def test_transformer_17():
     assert tr is None
 
 
-gdaltest_list = [
-    test_transformer_1,
-    test_transformer_2,
-    test_transformer_3,
-    test_transformer_4,
-    test_transformer_5,
-    test_transformer_6,
-    test_transformer_7,
-    test_transformer_8,
-    test_transformer_9,
-    test_transformer_10,
-    test_transformer_11,
-    test_transformer_12,
-    test_transformer_13,
-    test_transformer_14,
-    test_transformer_15,
-    test_transformer_16,
-    test_transformer_17
-]
 
 disabled_gdaltest_list = [
     test_transformer_11

@@ -315,19 +315,6 @@ def test_exclude_transparent_tiles():
         shutil.rmtree(output_folder)
 
 
-gdaltest_list = [
-    test_gdal2tiles_py_simple,
-    test_gdal2tiles_py_zoom_option,
-    test_does_not_error_when_source_bounds_close_to_tiles_bound,
-    test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile,
-    test_python3_handle_utf8_by_default,
-    test_python2_handles_utf8_by_default,
-    test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars,
-    test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars,
-    test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder,
-    test_gdal2tiles_py_cleanup,
-    test_exclude_transparent_tiles,
-]
 
 
 if __name__ == '__main__':

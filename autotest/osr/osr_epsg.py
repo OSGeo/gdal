@@ -369,23 +369,6 @@ def test_osr_epsg_geoccs_deprecated():
 ###############################################################################
 
 
-gdaltest_list = [
-    test_osr_epsg_1,
-    test_osr_epsg_2,
-    test_osr_epsg_3,
-    test_osr_epsg_4,
-    test_osr_epsg_5,
-    test_osr_epsg_6,
-    test_osr_epsg_7,
-    test_osr_epsg_8,
-    test_osr_epsg_9,
-    test_osr_epsg_10,
-    test_osr_epsg_11,
-    test_osr_epsg_12,
-    test_osr_epsg_13,
-    test_osr_epsg_gcs_deprecated,
-    test_osr_epsg_geoccs_deprecated,
-    None]
 
 if __name__ == '__main__':
 

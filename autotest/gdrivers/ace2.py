@@ -65,8 +65,6 @@ def test_ace2_1():
     return ret
 
 
-gdaltest_list = [
-    test_ace2_1]
 
 if __name__ == '__main__':
 

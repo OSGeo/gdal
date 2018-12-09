@@ -176,17 +176,6 @@ def test_gdaltransform_9():
     assert len(text_split) == 2, ret
 
 
-gdaltest_list = [
-    test_gdaltransform_1,
-    test_gdaltransform_2,
-    test_gdaltransform_3,
-    test_gdaltransform_4,
-    test_gdaltransform_5,
-    test_gdaltransform_6,
-    test_gdaltransform_7,
-    test_gdaltransform_8,
-    test_gdaltransform_9
-]
 
 
 if __name__ == '__main__':

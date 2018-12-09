@@ -224,13 +224,6 @@ def test_ogr_ogdi_cleanup():
     ogrtest.ogdi_ds = None
 
 
-gdaltest_list = [
-    test_ogr_ogdi_1,
-    test_ogr_ogdi_2,
-    test_ogr_ogdi_3,
-    test_ogr_ogdi_4,
-    test_ogr_ogdi_5,
-    test_ogr_ogdi_cleanup]
 
 if __name__ == '__main__':
 

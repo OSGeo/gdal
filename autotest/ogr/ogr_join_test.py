@@ -503,31 +503,6 @@ def test_ogr_join_cleanup():
     gdaltest.ds = None
 
 
-gdaltest_list = [
-    test_ogr_join_1,
-    test_ogr_join_2,
-    test_ogr_join_3,
-    test_ogr_join_4,
-    test_ogr_join_5,
-    test_ogr_join_6,
-    test_ogr_join_7,
-    test_ogr_join_8,
-    test_ogr_join_9,
-    test_ogr_join_10,
-    test_ogr_join_11,
-    test_ogr_join_12,
-    test_ogr_join_13,
-    test_ogr_join_14,
-    test_ogr_join_15,
-    test_ogr_join_16,
-    test_ogr_join_17,
-    test_ogr_join_18,
-    test_ogr_join_19,
-    test_ogr_join_20,
-    test_ogr_join_21,
-    test_ogr_join_22,
-    test_ogr_join_23,
-    test_ogr_join_cleanup]
 
 if __name__ == '__main__':
 

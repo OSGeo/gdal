@@ -43,8 +43,6 @@ def test_cpg_1():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    test_cpg_1]
 
 if __name__ == '__main__':
 

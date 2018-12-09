@@ -145,12 +145,6 @@ def test_reproject_4():
 
     
 
-gdaltest_list = [
-    test_reproject_1,
-    test_reproject_2,
-    test_reproject_3,
-    test_reproject_4
-]
 
 if __name__ == '__main__':
 

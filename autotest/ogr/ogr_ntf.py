@@ -172,9 +172,6 @@ def test_ogr_ntf_2():
     ds.Destroy()
 
 
-gdaltest_list = [
-    test_ogr_ntf_1,
-    test_ogr_ntf_2]
 
 if __name__ == '__main__':
 

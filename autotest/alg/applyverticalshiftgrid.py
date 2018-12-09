@@ -322,15 +322,6 @@ def test_applyverticalshiftgrid_7():
     gdal.Unlink('/vsimem/applyverticalshiftgrid_7.gtx')
 
 
-gdaltest_list = [
-    test_applyverticalshiftgrid_1,
-    test_applyverticalshiftgrid_2,
-    test_applyverticalshiftgrid_3,
-    test_applyverticalshiftgrid_4,
-    test_applyverticalshiftgrid_5,
-    test_applyverticalshiftgrid_6,
-    test_applyverticalshiftgrid_7
-]
 
 if __name__ == '__main__':
 

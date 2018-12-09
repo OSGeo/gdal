@@ -398,16 +398,6 @@ def test_kmlsuperoverlay_cleanup():
     gdal.Unlink('/vsimem/kmlout.kmz')
 
 
-gdaltest_list = [
-    test_kmlsuperoverlay_1,
-    test_kmlsuperoverlay_2,
-    test_kmlsuperoverlay_3,
-    test_kmlsuperoverlay_4,
-    test_kmlsuperoverlay_5,
-    test_kmlsuperoverlay_6,
-    test_kmlsuperoverlay_7,
-    test_kmlsuperoverlay_8,
-    test_kmlsuperoverlay_cleanup]
 
 if __name__ == '__main__':
 

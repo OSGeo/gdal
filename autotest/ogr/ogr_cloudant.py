@@ -174,14 +174,6 @@ def test_ogr_cloudant_SetSpatialFilter():
 
     
 
-gdaltest_list = [
-    test_ogr_cloudant_init,
-    test_ogr_cloudant_GetFeatureCount,
-    test_ogr_cloudant_GetNextFeature,
-    test_ogr_cloudant_GetSpatialRef,
-    test_ogr_cloudant_GetExtent,
-    test_ogr_cloudant_SetSpatialFilter
-]
 
 if __name__ == '__main__':
 

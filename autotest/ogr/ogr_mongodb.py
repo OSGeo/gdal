@@ -809,13 +809,6 @@ def test_ogr_mongodb_cleanup():
     ogrtest.mongodb_ds = None
 
 
-gdaltest_list = [
-    test_ogr_mongodb_init,
-    test_ogr_mongodb_1,
-    test_ogr_mongodb_2,
-    test_ogr_mongodb_3,
-    test_ogr_mongodb_cleanup,
-]
 
 if __name__ == '__main__':
 
