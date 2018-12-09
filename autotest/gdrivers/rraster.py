@@ -30,7 +30,6 @@
 ###############################################################################
 
 import pprint
-import sys
 from osgeo import gdal
 from osgeo import osr
 

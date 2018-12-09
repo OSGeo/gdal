@@ -34,7 +34,6 @@ try:
 except ImportError:
     from http.server import BaseHTTPRequestHandler
 
-import sys
 
 
 from osgeo import ogr
@@ -472,11 +471,11 @@ def test_ogr_sql_sqlite_6():
 
     gdal.SetConfigOption('OGR_SQLITE_DIALECT_USE_SPATIALITE', 'NO')
 
-    ret = test_ogr_sql_sqlite_1()
+    test_ogr_sql_sqlite_1()
 
-    ret = test_ogr_sql_sqlite_2()
+    test_ogr_sql_sqlite_2()
 
-    ret = test_ogr_sql_sqlite_4()
+    test_ogr_sql_sqlite_4()
 
     gdal.SetConfigOption('OGR_SQLITE_DIALECT_USE_SPATIALITE', None)
 

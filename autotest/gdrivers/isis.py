@@ -31,7 +31,6 @@
 
 import json
 import struct
-import sys
 
 
 from osgeo import gdal

@@ -3275,7 +3275,7 @@ def test_nitf_online_25():
 
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5', 1, 7099, filename_absolute=1)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5')
     xml_tre = ds.GetMetadata('xml:TRE')[0]

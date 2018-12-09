@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
 
 from osgeo import gdal

@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import array
 from osgeo import gdal
 

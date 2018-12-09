@@ -29,12 +29,10 @@
 ###############################################################################
 
 import os
-import sys
 import math
 
 
 import gdaltest
-import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr

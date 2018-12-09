@@ -29,7 +29,6 @@
 ###############################################################################
 
 import os
-import sys
 
 
 import gdaltest
@@ -80,12 +79,12 @@ def test_rmf_5():
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 1, 40503)
     with gdaltest.error_handler():
-        ret = tst.testOpen()
+        tst.testOpen()
 
     
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 2, 41429)
     with gdaltest.error_handler():
-        ret = tst.testOpen()
+        tst.testOpen()
 
     
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 3, 40238)
@@ -97,11 +96,11 @@ def test_rmf_6():
 
     tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 1, 7782)
     with gdaltest.error_handler():
-        ret = tst.testOpen()
+        tst.testOpen()
     
     tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 2, 8480)
     with gdaltest.error_handler():
-        ret = tst.testOpen()
+        tst.testOpen()
     
     tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 3, 4195)
     with gdaltest.error_handler():

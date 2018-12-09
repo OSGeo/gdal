@@ -30,7 +30,6 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 from difflib import unified_diff
 

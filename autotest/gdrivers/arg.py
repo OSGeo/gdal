@@ -29,7 +29,6 @@
 ###############################################################################
 
 import os
-import sys
 import struct
 from copy import copy
 from osgeo import gdal

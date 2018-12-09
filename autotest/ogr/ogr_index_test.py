@@ -27,7 +27,6 @@
 ###############################################################################
 
 import os
-import sys
 
 
 import gdaltest
@@ -395,19 +394,19 @@ def test_ogr_index_11():
     ds.ExecuteSQL('CREATE INDEX ON ogr_index_11 USING strfield')
 
     lyr.SetAttributeFilter("intfield = 1 OR strfield = 'bar'")
-    ret = ogr_index_11_check(lyr, [0, 1, 3])
+    ogr_index_11_check(lyr, [0, 1, 3])
 
     lyr.SetAttributeFilter("intfield = 1 AND strfield = 'bar'")
-    ret = ogr_index_11_check(lyr, [1])
+    ogr_index_11_check(lyr, [1])
 
     lyr.SetAttributeFilter("intfield = 1 AND strfield = 'foo'")
-    ret = ogr_index_11_check(lyr, [0])
+    ogr_index_11_check(lyr, [0])
 
     lyr.SetAttributeFilter("intfield = 3 AND strfield = 'foo'")
-    ret = ogr_index_11_check(lyr, [])
+    ogr_index_11_check(lyr, [])
 
     lyr.SetAttributeFilter("intfield IN (1, 2, 3)")
-    ret = ogr_index_11_check(lyr, [0, 1, 2, 3, 4])
+    ogr_index_11_check(lyr, [0, 1, 2, 3, 4])
 
     ds = None
 

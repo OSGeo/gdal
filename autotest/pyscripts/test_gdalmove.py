@@ -30,7 +30,6 @@
 
 import os
 import shutil
-import sys
 
 
 from osgeo import gdal

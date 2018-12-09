@@ -32,7 +32,6 @@
 
 import array
 import struct
-import sys
 
 from osgeo import gdal
 

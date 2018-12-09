@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import struct
 from osgeo import gdal
 

@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import glob
 
 import pytest

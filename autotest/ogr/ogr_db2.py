@@ -39,7 +39,6 @@
 # These tests currently only run on Windows
 
 import os
-import sys
 
 
 import gdaltest

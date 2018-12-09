@@ -31,7 +31,6 @@
 import json
 import math
 import os
-import sys
 
 
 from osgeo import osr

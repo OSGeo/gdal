@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from sys import version_info
 import time
 from osgeo import gdal

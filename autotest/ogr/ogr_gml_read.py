@@ -1048,7 +1048,7 @@ def test_ogr_gml_31():
         pytest.skip()
 
     gdal.SetConfigOption('GML_READ_MODE', 'SEQUENTIAL_LAYERS')
-    ret = test_ogr_gml_29()
+    test_ogr_gml_29()
     gdal.SetConfigOption('GML_READ_MODE', None)
 
     # Test reading second layer and then first layer

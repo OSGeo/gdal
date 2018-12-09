@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
 
 import gdaltest
@@ -148,16 +147,16 @@ def CheckColumnOrder(lyr, expected_order):
 
 def Check(lyr, expected_order):
 
-    ret = CheckColumnOrder(lyr, expected_order)
+    CheckColumnOrder(lyr, expected_order)
 
-    ret = CheckFeatures(lyr)
+    CheckFeatures(lyr)
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr_reopen = ds.GetLayer(0)
 
-    ret = CheckColumnOrder(lyr_reopen, expected_order)
+    CheckColumnOrder(lyr_reopen, expected_order)
 
-    ret = CheckFeatures(lyr_reopen)
+    CheckFeatures(lyr_reopen)
 
 
 def test_ogr_rfc35_shape_2():

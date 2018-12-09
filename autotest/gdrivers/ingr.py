@@ -31,7 +31,6 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
 
@@ -62,7 +61,7 @@ def test_ingr_2():
 def test_ingr_3():
 
     tst = gdaltest.GDALTest('INGR', '8bit_pal.cot', 1, 4855)
-    result = tst.testOpen()
+    tst.testOpen()
 
     ds = gdal.Open('data/8bit_pal.cot')
     ct = ds.GetRasterBand(1).GetRasterColorTable()

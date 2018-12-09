@@ -30,7 +30,6 @@
 ###############################################################################
 
 import os
-import sys
 import array
 from osgeo import gdal
 

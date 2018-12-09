@@ -30,7 +30,6 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
 
@@ -152,7 +151,7 @@ def test_aigrid_online_1():
             pytest.skip()
 
     tst = gdaltest.GDALTest('AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute=1)
-    ret = tst.testOpen()
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/nzdem/nzdem500/hdr.adf')
 

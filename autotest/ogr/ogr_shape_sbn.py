@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
 
@@ -122,7 +121,7 @@ def test_ogr_shape_sbn_1():
     ds = ogr.Open('tmp/cache/CochitiDamShapeFiles')
     for i in range(ds.GetLayerCount()):
         lyr = ds.GetLayer(i)
-        ret = search_all_features(lyr)
+        search_all_features(lyr)
 
     
 ###############################################################################

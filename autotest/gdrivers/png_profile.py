@@ -31,7 +31,6 @@
 # http://sourceforge.net/projects/openicc/files/OpenICC-Profiles/
 
 import os
-import sys
 import base64
 
 

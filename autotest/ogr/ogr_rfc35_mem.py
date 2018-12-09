@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
 
 import gdaltest
@@ -132,9 +131,9 @@ def CheckColumnOrder(lyr, expected_order):
 
 def Check(lyr, expected_order):
 
-    ret = CheckColumnOrder(lyr, expected_order)
+    CheckColumnOrder(lyr, expected_order)
 
-    ret = CheckFeatures(lyr)
+    CheckFeatures(lyr)
 
 
 def test_ogr_rfc35_mem_2():

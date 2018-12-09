@@ -31,7 +31,6 @@
 import contextlib
 import os
 import struct
-import sys
 
 
 from osgeo import gdal

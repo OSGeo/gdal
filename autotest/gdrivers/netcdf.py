@@ -907,7 +907,7 @@ def test_netcdf_25():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    result = netcdf_test_copy('data/nc_vars.nc', 1, None, 'tmp/netcdf_25.nc')
+    netcdf_test_copy('data/nc_vars.nc', 1, None, 'tmp/netcdf_25.nc')
 
     vals_global = {'NC_GLOBAL#test': 'testval',
                    'NC_GLOBAL#valid_range_i': '0,255',
@@ -1082,7 +1082,7 @@ def test_netcdf_28():
     ofile = 'tmp/netcdf_28.nc'
 
     # copy file
-    result = netcdf_test_copy(ifile, 0, None, ofile)
+    netcdf_test_copy(ifile, 0, None, ofile)
 
     # test file
     return netcdf_test_4dfile(ofile)
@@ -1268,7 +1268,7 @@ def test_netcdf_35():
     ofile = 'tmp/netcdf_35.nc'
 
     # copy file
-    result = netcdf_test_copy(ifile, 0, None, ofile)
+    netcdf_test_copy(ifile, 0, None, ofile)
 
     # test long metadata is copied correctly
     ds = gdal.Open(ofile)
@@ -1786,7 +1786,7 @@ def test_netcdf_51():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc', 'auto', False)
+        netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc', 'auto', False)
 
     gdal.Unlink('tmp/netcdf_51.nc')
     gdal.Unlink('tmp/netcdf_51.csv')
@@ -1896,7 +1896,7 @@ def test_netcdf_52():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc', 'auto', False)
+        netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc', 'auto', False)
 
     gdal.Unlink('tmp/netcdf_52.nc')
     gdal.Unlink('tmp/netcdf_52.csv')
@@ -2273,7 +2273,7 @@ def test_netcdf_62_cf_check():
     import netcdf_cf
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc', 'auto', False)
+        netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc', 'auto', False)
 
     gdal.Unlink('/vsimem/netcdf_62.nc')
 

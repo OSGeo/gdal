@@ -30,8 +30,6 @@
 ###############################################################################
 
 import sys
-import subprocess
-import time
 from osgeo import gdal
 
 

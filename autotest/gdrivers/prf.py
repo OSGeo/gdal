@@ -24,7 +24,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
 
 import gdaltest
