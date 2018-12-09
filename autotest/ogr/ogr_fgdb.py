@@ -401,11 +401,9 @@ def test_ogr_fgdb_5():
     assert ogrtest.fgdb_drv.DeleteDataSource("tmp/test.gdb") == 0, \
         'DeleteDataSource() failed'
 
-    try:
+    with pytest.raises(OSError, message="tmp/test.gdb still existing"):
         os.stat("tmp/test.gdb")
-        pytest.fail("tmp/test.gdb still existing")
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1104,11 +1102,9 @@ def test_ogr_fgdb_19():
         os.stat('tmp/test.gdb.ogredited')
     except OSError:
         pytest.fail()
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/test.gdb.ogrtmp')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     ret = lyr.CreateField(ogr.FieldDefn('foobar', ogr.OFTString))
     assert ret == 0
@@ -1172,17 +1168,13 @@ def test_ogr_fgdb_19():
     # Test that CommitTransaction() works
     assert ds.CommitTransaction() == 0
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/test.gdb.ogredited')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/test.gdb.ogrtmp')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     lst = gdal.ReadDir('tmp/test.gdb')
     for filename in lst:
@@ -1225,17 +1217,13 @@ def test_ogr_fgdb_19():
 
     assert ds.RollbackTransaction() == 0
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/test.gdb.ogredited')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/test.gdb.ogrtmp')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert lyr.GetFeatureCount() == old_count
 
@@ -1434,11 +1422,9 @@ def test_ogr_fgdb_19():
             ds = None
 
             if case == 'CASE4':
-                try:
+                with pytest.raises(OSError, message=case):
                     os.stat('tmp/test.gdb.ogredited')
-                    pytest.fail(case)
-                except OSError:
-                    pass
+                
             else:
                 shutil.rmtree('tmp/test.gdb.ogredited')
 

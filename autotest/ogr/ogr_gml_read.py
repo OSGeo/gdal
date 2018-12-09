@@ -1206,11 +1206,9 @@ def test_ogr_gml_35():
     ds = ogr.Open('tmp/GmlTopo-sample.xml')
     gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
 
-    try:
+    with pytest.raises(OSError, message='did not expect tmp/GmlTopo-sample.sqlite'):
         os.stat('tmp/GmlTopo-sample.sqlite')
-        pytest.fail('did not expect tmp/GmlTopo-sample.sqlite')
-    except OSError:
-        pass
+    
 
     assert gdal.GetLastErrorMsg() == '', 'did not expect error'
     assert ds.GetLayerCount() == 3, ('expected 3 layers, got %d' % ds.GetLayerCount())
@@ -1323,11 +1321,9 @@ def test_ogr_gml_38(resolver='HUGE'):
     gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
 
     if resolver == 'HUGE':
-        try:
+        with pytest.raises(OSError, message='did not expect tmp/sample_gml_face_hole_negative_no.sqlite'):
             os.stat('tmp/sample_gml_face_hole_negative_no.sqlite')
-            pytest.fail('did not expect tmp/sample_gml_face_hole_negative_no.sqlite')
-        except OSError:
-            pass
+        
 
     assert gdal.GetLastErrorMsg() == '', 'did not expect error'
 
@@ -1949,11 +1945,9 @@ def test_ogr_gml_55():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.unlink('data/ogr_gml_55.gfs')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1995,11 +1989,9 @@ def test_ogr_gml_56():
     assert feat.GetField('gml_id') == 'subFeatureRepeated.1'
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.unlink('data/ogr_gml_56.gfs')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -3095,11 +3087,9 @@ def test_ogr_gml_71():
     ogr_gml_71_helper(ds)
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.unlink('data/wfsjointlayer.gfs')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     # With .xsd but that is only partially understood
     ds = gdal.OpenEx('data/wfsjointlayer.gml', open_options=['XSD=data/wfsjointlayer_not_understood.xsd'])

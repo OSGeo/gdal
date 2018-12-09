@@ -152,11 +152,9 @@ def test_jpeg_3():
 
     gdal.GetDriverByName('JPEG').Delete('tmp/byte.jpg')
 
-    try:
+    with pytest.raises(OSError, message='did not expect to find .wld file at that point'):
         os.stat('tmp/byte.wld')
-        pytest.fail('did not expect to find .wld file at that point')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################

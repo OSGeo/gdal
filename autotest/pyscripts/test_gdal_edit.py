@@ -168,11 +168,9 @@ def test_gdal_edit_py_4():
             band.GetMetadataItem('FOO') is None))
     ds = band = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/test_gdal_edit_py.tif.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     
 ###############################################################################

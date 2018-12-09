@@ -344,23 +344,17 @@ def test_ogr_rfc41_5():
     assert f['geomfield'] is None
     assert f.geomfield is None
 
-    try:
+    with pytest.raises(KeyError):
         f['nonexistent_field']
-        pytest.fail()
-    except KeyError:
-        pass
+    
 
-    try:
+    with pytest.raises(AttributeError):
         f.nonexistent_field
-        pytest.fail()
-    except AttributeError:
-        pass
+    
 
-    try:
+    with pytest.raises(KeyError):
         f['nonexistent_field'] = 'foo'
-        pytest.fail()
-    except KeyError:
-        pass
+    
 
     # This works.  Default Python behaviour. Stored in a dictionary
     f.nonexistent_field = 'bar'

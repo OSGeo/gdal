@@ -502,11 +502,9 @@ def test_gdal_translate_23():
 
     assert md['STATISTICS_MINIMUM'] == '74', 'STATISTICS_MINIMUM is wrong.'
 
-    try:
+    with pytest.raises(OSError, message='did not expect .aux.xml file presence'):
         os.stat('tmp/test_gdal_translate_23.tif.aux.xml')
-        pytest.fail('did not expect .aux.xml file presence')
-    except OSError:
-        pass
+    
 
     gdal.Unlink('../gcore/data/byte.tif.aux.xml')
 

@@ -738,11 +738,9 @@ Definition Table
 
     gdal.GetDriverByName('GTiff').Delete('tmp/tiff_read_from_tab.tif')
 
-    try:
+    with pytest.raises(OSError, message='did not expect to find .tab file at that point'):
         os.stat('tmp/tiff_read_from_tab.tab')
-        pytest.fail('did not expect to find .tab file at that point')
-    except OSError:
-        pass
+    
 
     assert gt == (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0), \
         'did not get expected geotransform'
@@ -1555,11 +1553,9 @@ def test_tiff_read_md1():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_dg.tif.aux.xml'):
         os.stat('data/md_dg.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_dg.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1593,11 +1589,9 @@ def test_tiff_read_md2():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_dg_2.tif.aux.xml'):
         os.stat('data/md_dg_2.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_dg_2.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1631,11 +1625,9 @@ def test_tiff_read_md3():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_ge_rgb_0010000.tif.aux.xml'):
         os.stat('data/md_ge_rgb_0010000.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_ge_rgb_0010000.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1669,11 +1661,9 @@ def test_tiff_read_md4():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_ov.tif.aux.xml'):
         os.stat('data/md_ov.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_ov.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1707,11 +1697,9 @@ def test_tiff_read_md5():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_rdk1.tif.aux.xml'):
         os.stat('data/md_rdk1.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_rdk1.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1745,11 +1733,9 @@ def test_tiff_read_md6():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_ls_b1.tif.aux.xml'):
         os.stat('data/md_ls_b1.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_ls_b1.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1783,11 +1769,9 @@ def test_tiff_read_md7():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/spot/md_spot.tif.aux.xml'):
         os.stat('data/spot/md_spot.tif.aux.xml')
-        pytest.fail('Expected not generation of data/spot/md_spot.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1821,11 +1805,9 @@ def test_tiff_read_md8():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_re.tif.aux.xml'):
         os.stat('data/md_re.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_re.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1858,11 +1840,9 @@ def test_tiff_read_md9():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/alos/IMG-md_alos.tif.aux.xml'):
         os.stat('data/alos/IMG-md_alos.tif.aux.xml')
-        pytest.fail('Expected not generation of data/alos/IMG-md_alos.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1896,11 +1876,9 @@ def test_tiff_read_md10():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_eros.tif.aux.xml'):
         os.stat('data/md_eros.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_eros.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1934,11 +1912,9 @@ def test_tiff_read_md11():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_kompsat.tif.aux.xml'):
         os.stat('data/md_kompsat.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_kompsat.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1971,11 +1947,9 @@ def test_tiff_read_md12():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/md_kompsat.tif.aux.xml'):
         os.stat('data/md_kompsat.tif.aux.xml')
-        pytest.fail('Expected not generation of data/md_kompsat.tif.aux.xml')
-    except OSError:
-        pass
+    
 
     # Test not valid DIMAP product [https://github.com/OSGeo/gdal/issues/431]
     shutil.copy('../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', 'tmp/IMG_foo_temp.TIF')

@@ -139,11 +139,9 @@ def test_gnm_cleanup():
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' delete tmp/test_gnm')
     assert (err is None or err == ''), 'got error/warning'
 
-    try:
+    with pytest.raises(OSError, message='Expected delete tmp/test_gnm'):
         os.stat('tmp/test_gnm')
-        pytest.fail('Expected delete tmp/test_gnm')
-    except OSError:
-        pass
+    
 
     
 

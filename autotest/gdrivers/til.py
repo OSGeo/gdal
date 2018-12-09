@@ -69,11 +69,9 @@ def test_til_2():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
         os.stat('data/testtil.til.aux.xml')
-        pytest.fail('Expected not generation of data/testtil.til.aux.xml')
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -100,11 +98,9 @@ def test_til_3():
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
         os.stat('data/testtil.til.aux.xml')
-        pytest.fail('Expected not generation of data/testtil.til.aux.xml')
-    except OSError:
-        pass
+    
 
     
 

@@ -695,11 +695,9 @@ def test_ecw_24():
     ds.SetGeoTransform(gt)
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_gt = ds.GetGeoTransform()
@@ -746,11 +744,9 @@ def test_ecw_25():
     ds.SetProjection(wkt)
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_proj = ds.GetMetadataItem("PROJ", "ECW")
@@ -802,11 +798,9 @@ def test_ecw_26():
     ds.SetMetadataItem("UNITS", units, "ECW")
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_proj = ds.GetMetadataItem("PROJ", "ECW")
@@ -1407,11 +1401,9 @@ def test_ecw_41():
     ds = None
 
     # Check that there's no .aux.xml file
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
     assert ds.GetRasterBand(1).GetMinimum() == 0
@@ -1443,11 +1435,9 @@ def test_ecw_41():
     ds = None
 
     # Check that there's no .aux.xml file
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     
 ###############################################################################
@@ -1481,11 +1471,9 @@ def test_ecw_42():
     ds = None
 
     # Check that there's no .aux.xml file
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     # Check item values
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1511,11 +1499,9 @@ def test_ecw_42():
     ds = None
 
     # Check that there's no .aux.xml file
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     # Check item values
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')

@@ -257,11 +257,9 @@ def test_vrtmask_7():
     ds = None
 
     os.remove('tmp/vrtmask_7_rgba.tif')
-    try:
+    with pytest.raises(OSError, message='did not expect tmp/vrtmask_7_rgba.tif.msk'):
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
-        pytest.fail('did not expect tmp/vrtmask_7_rgba.tif.msk')
-    except OSError:
-        pass
+    
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
 
     assert alpha_cs == expected_msk_cs, 'did not get expected alpha band checksum'

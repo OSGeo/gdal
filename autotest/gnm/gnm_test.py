@@ -224,11 +224,9 @@ def test_gnm_delete():
 
     gdal.GetDriverByName('GNMFile').Delete('tmp/test_gnm')
 
-    try:
+    with pytest.raises(OSError, message='Expected delete tmp/test_gnm'):
         os.stat('tmp/test_gnm')
-        pytest.fail('Expected delete tmp/test_gnm')
-    except OSError:
-        pass
+    
 
     
 

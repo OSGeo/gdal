@@ -671,11 +671,9 @@ def test_tiff_write_rpc_txt():
         pass
 
     # confirm there is no .RPB file created by default.
-    try:
+    with pytest.raises(IOError, message='unexpectedly found .RPB file'):
         open('tmp/tiff_write_rpc_txt.RPB').read()
-        pytest.fail('unexpectedly found .RPB file')
-    except IOError:
-        pass
+    
 
     try:
         open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
@@ -693,11 +691,9 @@ def test_tiff_write_rpc_txt():
 
     # Confirm _RPC.TXT file is cleaned up.  If not likely the
     # file list functionality is not working properly.
-    try:
+    with pytest.raises(IOError, message='_RPC.TXT did not get cleaned up.'):
         open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
-        pytest.fail('_RPC.TXT did not get cleaned up.')
-    except IOError:
-        pass
+    
 
     
 ###############################################################################
@@ -722,11 +718,9 @@ def test_tiff_write_rpc_in_pam():
         pytest.fail('missing .aux.xml file.')
 
     # confirm there is no .RPB file created.
-    try:
+    with pytest.raises(IOError, message='unexpectedly found .RPB file'):
         open('tmp/tiff_write_rpc_txt.RPB').read()
-        pytest.fail('unexpectedly found .RPB file')
-    except IOError:
-        pass
+    
 
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open('tmp/tiff_write_rpc_in_pam.tif')
@@ -793,11 +787,9 @@ def test_tiff_write_20():
 
     # hopefully it's closed now!
 
-    try:
+    with pytest.raises(OSError, message='did not expected .aux.xml file'):
         os.stat('tmp/tags.tif.aux.xml')
-        pytest.fail('did not expected .aux.xml file')
-    except OSError:
-        pass
+    
 
     new_ds = gdal.Open('tmp/tags.tif')
     md = new_ds.GetMetadata()
@@ -814,11 +806,9 @@ def test_tiff_write_20():
     ds.SetMetadataItem('TIFFTAG_SOFTWARE', None)
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='did not expected .aux.xml file'):
         os.stat('tmp/tags.tif.aux.xml')
-        pytest.fail('did not expected .aux.xml file')
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/tags.tif')
     assert ds.GetMetadataItem('TIFFTAG_SOFTWARE') is None, \
@@ -1960,11 +1950,9 @@ def test_tiff_write_60():
         ds = None
         gdaltest.tiff_drv.Delete('tmp/tiff_write_60.tif')
 
-        try:
+        with pytest.raises(OSError, message='%s should have been deleted' % options_tuple[1]):
             os.stat(options_tuple[1])
-            pytest.fail('%s should have been deleted' % options_tuple[1])
-        except OSError:
-            pass
+        
 
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
@@ -1982,11 +1970,9 @@ def test_tiff_write_60():
         ds = None
         gdaltest.tiff_drv.Delete('tmp/tiff_write_60.tif')
 
-        try:
+        with pytest.raises(OSError, message='%s should have been deleted' % options_tuple[1]):
             os.stat(options_tuple[1])
-            pytest.fail('%s should have been deleted' % options_tuple[1])
-        except OSError:
-            pass
+        
 
     
 ###############################################################################
@@ -2228,11 +2214,9 @@ def test_tiff_write_70():
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/tiff_write_70.tif.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/tiff_write_70.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() is None
@@ -2607,12 +2591,10 @@ def test_tiff_write_79():
                 ds.GetProjectionRef()
             ds.SetMetadataItem('AREA_OR_POINT', 'Point')
             ds = None
-            try:
+            with pytest.raises(OSError, message='got to PAM'):
                 # check that it doesn't go to PAM
                 os.stat('tmp/tiff_write_79.tif.aux.xml')
-                pytest.fail('got to PAM')
-            except OSError:
-                pass
+            
 
             # So should get 'Area'
             ds = gdal.Open('tmp/tiff_write_79.tif')
@@ -2633,12 +2615,10 @@ def test_tiff_write_79():
                 assert mdi == 'Point', \
                     ('(3) did not get expected value. do_projection_ref = %d, check_just_after = %d' % (do_projection_ref, check_just_after))
             ds = None
-            try:
+            with pytest.raises(OSError, message='got to PAM'):
                 # check that it doesn't go to PAM
                 os.stat('tmp/tiff_write_79.tif.aux.xml')
-                pytest.fail('got to PAM')
-            except OSError:
-                pass
+            
 
             # Now should get 'Point'
             ds = gdal.Open('tmp/tiff_write_79.tif')
@@ -2684,12 +2664,10 @@ def test_tiff_write_80():
     ds.GetRasterBand(1).SetOffset(1000)
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='got to PAM, but not expected...'):
         # check that it doesn't go to PAM
         os.stat('tmp/tiff_write_80.tif.aux.xml')
-        pytest.fail('got to PAM, but not expected...')
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/tiff_write_80.tif')
     scale = ds.GetRasterBand(1).GetScale()
@@ -2755,12 +2733,10 @@ def test_tiff_write_80():
     ds.GetRasterBand(1).SetOffset(0)
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='PAM file should be deleted'):
         # check that there is no more any PAM file
         os.stat('tmp/tiff_write_80_bis.tif.aux.xml')
-        pytest.fail('PAM file should be deleted')
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/tiff_write_80_bis.tif')
     scale = ds.GetRasterBand(1).GetScale()
@@ -2903,12 +2879,10 @@ def test_tiff_write_85():
     ds.GetRasterBand(1).SetUnitType('ft')
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='got to PAM, but not expected...'):
         # check that it doesn't go to PAM
         os.stat('tmp/tiff_write_85.tif.aux.xml')
-        pytest.fail('got to PAM, but not expected...')
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/tiff_write_85.tif')
     unittype = ds.GetRasterBand(1).GetUnitType()
@@ -2963,12 +2937,10 @@ def test_tiff_write_85():
     ds.GetRasterBand(1).SetUnitType(None)
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='PAM file should be deleted'):
         # check that there is no more any PAM file
         os.stat('tmp/tiff_write_85_bis.tif.aux.xml')
-        pytest.fail('PAM file should be deleted')
-    except OSError:
-        pass
+    
 
     ds = gdal.Open('tmp/tiff_write_85_bis.tif')
     unittype = ds.GetRasterBand(1).GetUnitType()

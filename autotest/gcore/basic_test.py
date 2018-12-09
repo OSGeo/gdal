@@ -393,41 +393,31 @@ def test_basic_test_14():
     ds.SetMetadata('foo')
     assert ds.GetMetadata_List() == ['foo']
 
-    try:
+    with pytest.raises(Exception):
         ds.SetMetadata(5)
-        pytest.fail()
-    except:
-        pass
+    
 
     ds.SetMetadata(['foo=bar'])
     assert ds.GetMetadata_List() == ['foo=bar']
 
-    try:
+    with pytest.raises(Exception):
         ds.SetMetadata([5])
-        pytest.fail()
-    except:
-        pass
+    
 
     ds.SetMetadata({'foo': 'baz'})
     assert ds.GetMetadata_List() == ['foo=baz']
 
-    try:
+    with pytest.raises(Exception):
         ds.SetMetadata({'foo': 5})
-        pytest.fail()
-    except:
-        pass
+    
 
-    try:
+    with pytest.raises(Exception):
         ds.SetMetadata({5: 'baz'})
-        pytest.fail()
-    except:
-        pass
+    
 
-    try:
+    with pytest.raises(Exception):
         ds.SetMetadata({5: 6})
-        pytest.fail()
-    except:
-        pass
+    
 
     if sys.version_info >= (3, 0, 0):
         val = '\u00e9ven'
@@ -440,17 +430,13 @@ def test_basic_test_14():
     ds.SetMetadata({val: 'baz'})
     assert ds.GetMetadata()[val] == 'baz'
 
-    try:
+    with pytest.raises(Exception):
         ds.SetMetadata({val: 5})
-        pytest.fail()
-    except:
-        pass
+    
 
-    try:
+    with pytest.raises(Exception):
         ds.SetMetadata({5: val})
-        pytest.fail()
-    except:
-        pass
+    
 
     
 ###############################################################################
@@ -473,12 +459,10 @@ def basic_test_15_cbk_bad_ret(a, b, c):
 
 def test_basic_test_15():
 
-    try:
+    with pytest.raises(Exception):
         with gdaltest.error_handler():
             gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback='foo')
-        pytest.fail()
-    except:
-        pass
+            
 
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_no_argument)

@@ -144,11 +144,9 @@ def test_jpeg_copy_icc_64K():
     comment = ds2.GetMetadataItem('COMMENT')
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.jpg.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert comment == 'foo'
 
@@ -159,11 +157,9 @@ def test_jpeg_copy_icc_64K():
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.jpg.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert md['SOURCE_ICC_PROFILE'] == icc
 
@@ -172,11 +168,9 @@ def test_jpeg_copy_icc_64K():
     source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.jpg.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert source_icc_profile == icc
 

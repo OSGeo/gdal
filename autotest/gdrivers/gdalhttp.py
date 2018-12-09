@@ -191,11 +191,9 @@ def test_http_5():
     filename = ds.GetDescription()
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='file %s should have been removed' % filename):
         os.stat(filename)
-        pytest.fail('file %s should have been removed' % filename)
-    except OSError:
-        pass
+    
 
     
 ###############################################################################

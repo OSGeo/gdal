@@ -434,12 +434,10 @@ def test_gdal_translate_lib_colorinterp():
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
 
     # Test invalid colorinterp_
-    try:
+    with pytest.raises(Exception):
         with gdaltest.error_handler():
             gdal.Translate('', src_ds, options='-f MEM -colorinterp_0 alpha')
-        pytest.fail()
-    except:
-        pass
+            
 
     
 ###############################################################################

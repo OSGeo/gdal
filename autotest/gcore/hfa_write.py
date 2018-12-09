@@ -162,11 +162,9 @@ def test_hfa_clean_external_overviews():
     assert ds.GetRasterBand(1).GetOverviewCount() == 0, 'Overviews still exist.'
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='small.rrd still present.'):
         os.stat('tmp/small.rrd')
-        pytest.fail('small.rrd still present.')
-    except OSError:
-        pass
+    
 
     gdal.GetDriverByName('HFA').Delete('tmp/small.img')
 

@@ -65,22 +65,18 @@ def test_png_copy_icc():
 
     assert md['SOURCE_ICC_PROFILE'] == icc
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.png.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.png.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert md['SOURCE_ICC_PROFILE'] == icc
 
@@ -89,11 +85,9 @@ def test_png_copy_icc():
     source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.png.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert source_icc_profile == icc
 

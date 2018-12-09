@@ -2771,11 +2771,9 @@ def test_ogr_shape_67():
     ds.ExecuteSQL('DROP SPATIAL INDEX ON emptyshapefilewithsbn')
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/emptyshapefilewithsbn.sbn')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     os.unlink('tmp/emptyshapefilewithsbn.shp')
     os.unlink('tmp/emptyshapefilewithsbn.shx')

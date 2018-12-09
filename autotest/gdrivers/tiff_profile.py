@@ -60,11 +60,9 @@ def test_tiff_write_icc():
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.tiff.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert md['SOURCE_ICC_PROFILE'] == icc
 
@@ -73,11 +71,9 @@ def test_tiff_write_icc():
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.tiff.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert md['SOURCE_ICC_PROFILE'] == icc
 
@@ -86,11 +82,9 @@ def test_tiff_write_icc():
     source_icc_profile = ds.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.tiff.aux.xml')
-        pytest.fail()
-    except OSError:
-        pass
+    
 
     assert source_icc_profile == icc
 
