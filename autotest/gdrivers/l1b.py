@@ -80,7 +80,7 @@ def test_l1b_geoloc():
     try:
         os.stat('tmp/cache/n12gac8bit.l1b')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/n12gac8bit.l1b')
     md = ds.GetMetadata('GEOLOCATION')
@@ -113,7 +113,7 @@ def test_l1b_solar_zenith_angles_before_noaa_15():
     try:
         os.stat('tmp/cache/n12gac10bit.l1b')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/n12gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
@@ -139,7 +139,7 @@ def test_l1b_metadata_before_noaa_15():
     try:
         os.stat('tmp/cache/n12gac10bit.l1b')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('L1B_FETCH_METADATA', 'YES')
     gdal.SetConfigOption('L1B_METADATA_DIRECTORY', 'tmp')
@@ -167,7 +167,7 @@ def test_l1b_angles_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/n16gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
@@ -197,7 +197,7 @@ def test_l1b_clouds_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/n16gac10bit.l1b')
     md = ds.GetMetadata('SUBDATASETS')
@@ -223,7 +223,7 @@ def test_l1b_metadata_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('L1B_FETCH_METADATA', 'YES')
     gdal.SetConfigOption('L1B_METADATA_DIRECTORY', 'tmp')

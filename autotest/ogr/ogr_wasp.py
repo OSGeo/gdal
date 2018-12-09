@@ -38,6 +38,7 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Create wasp datasource
@@ -52,7 +53,7 @@ def test_ogr_wasp_create_ds():
 
     if gdaltest.wasp_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Create elevation .map from linestrings z
@@ -150,11 +151,9 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
             [h, n] = line.split()
             if int(n) != 2:
                 if ogrtest.have_geos():
-                    gdaltest.post_reason('number of points should be 2 and is %s' % n)
-                    return 'fail'
+                    pytest.fail('number of points should be 2 and is %s' % n)
                 elif int(n) != 3:
-                    gdaltest.post_reason('number of points should be 3 and is %s' % n)
-                    return 'fail'
+                    pytest.fail('number of points should be 3 and is %s' % n)
 
             assert float(h) == j, ('altitude should be %d and is %s' % (j, h))
 

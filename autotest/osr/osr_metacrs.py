@@ -65,19 +65,15 @@ class TestMetaCRS(object):
             ct = osr.CoordinateTransformation(self.src_srs, self.dst_srs)
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-                return 'skip'
+                pytest.skip('PROJ.4 missing, transforms not available.')
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-                return 'skip'
-            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-            return 'fail'
+                pytest.skip('PROJ.4 missing, transforms not available.')
+            pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
         except:
             gdal.PopErrorHandler()
-            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-            return 'fail'
+            pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
 
         ######################################################################
         # Transform source point to destination SRS, swapping EPSG GEOGCS
@@ -104,13 +100,11 @@ class TestMetaCRS(object):
                          result[0], result[1], result[2],
                          self.dst_xyz[0], self.dst_xyz[1], self.dst_xyz[2])
 
-            gdaltest.post_reason(err_msg)
-
             gdal.Debug('OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n'
                        % (self.src_srs.ExportToPrettyWkt(),
                           self.dst_srs.ExportToPrettyWkt()))
 
-            return 'fail'
+            pytest.fail(err_msg)
 
     def parse_line(self):
         test_line = self.test_line

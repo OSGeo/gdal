@@ -37,6 +37,7 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 
 def has_read_support():
@@ -59,7 +60,7 @@ def has_read_support():
 def test_ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
     if ogr.GetDriverByName('PDF') is None:
-        return 'skip'
+        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -131,7 +132,7 @@ def test_ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(name)
     assert ds is not None
@@ -158,41 +159,39 @@ def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING(2 48,3 50)')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     if has_attributes:
         if feat.GetField('strfield') != 'str':
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         if feat.GetField('intfield') != 1:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         if abs(feat.GetFieldAsDouble('realfield') - 2.34) > 1e-10:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48),(2.25 48.25,2.25 48.75,2.75 48.75,2.75 48.25,2.25 48.25))')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     for i in range(10):
         feat = lyr.GetNextFeature()
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(%f 49.1)' % (2 + i * 0.05))) != 0:
             feat.DumpReadable()
-            gdaltest.post_reason('fail with ogr-sym-%d' % i)
-            return 'fail'
+            pytest.fail('fail with ogr-sym-%d' % i)
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(2.5 49.1)')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail with raster icon')
-        return 'fail'
+        pytest.fail('fail with raster icon')
 
     ds = None
 
@@ -220,7 +219,7 @@ def test_ogr_pdf_4_podofo():
 
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
     if gdal_pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     md = gdal_pdf_drv.GetMetadata()
     if 'HAVE_POPPLER' in md and 'HAVE_PODOFO' in md:
@@ -229,7 +228,7 @@ def test_ogr_pdf_4_podofo():
         ret = test_ogr_pdf_4()
         gdal.SetConfigOption("GDAL_PDF_LIB", None)
         return ret
-    return 'skip'
+    pytest.skip()
 
 ###############################################################################
 # Test read support with OGR_PDF_READ_NON_STRUCTURED=YES
@@ -238,7 +237,7 @@ def test_ogr_pdf_4_podofo():
 def test_ogr_pdf_5():
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
         ds = ogr.Open('data/drawing.pdf')
@@ -257,10 +256,10 @@ def test_ogr_pdf_5():
 def test_ogr_pdf_online_1():
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.terragotech.com/images/pdf/webmap_urbansample.pdf', 'webmap_urbansample.pdf'):
-        return 'skip'
+        pytest.skip()
 
     expected_layers = [
         ["Cadastral Boundaries", ogr.wkbPolygon],
@@ -292,7 +291,7 @@ def test_ogr_pdf_online_1():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (724431.316665166523308 7672947.212302438914776)')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     assert feat.GetField('ID') == 'VL46'
 
     return 'success'
@@ -304,10 +303,10 @@ def test_ogr_pdf_online_1():
 def test_ogr_pdf_online_2():
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('https://download.osgeo.org/gdal/data/pdf/340711752_Azusa_FSTopo.pdf', '340711752_Azusa_FSTopo.pdf'):
-        return 'skip'
+        pytest.skip()
 
     expected_layers = [
         ['Other_5', 0],
@@ -350,10 +349,9 @@ def test_ogr_pdf_online_2():
     assert ds is not None
 
     if ds.GetLayerCount() != len(expected_layers):
-        print(ds.GetLayerCount())
         for lyr in ds:
             print(lyr.GetName(), lyr.GetGeomType())
-        return 'fail'
+        pytest.fail(ds.GetLayerCount())
 
     for i in range(ds.GetLayerCount()):
         assert ds.GetLayer(i).GetName() == expected_layers[i][0], \
@@ -371,7 +369,7 @@ def test_ogr_pdf_online_2():
 def test_ogr_pdf_cleanup():
 
     if ogr.GetDriverByName('PDF') is None:
-        return 'skip'
+        pytest.skip()
 
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_1.pdf')
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_2.pdf')

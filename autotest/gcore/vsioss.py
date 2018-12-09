@@ -66,7 +66,7 @@ def test_visoss_init():
 def test_visoss_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     # Missing OSS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
@@ -95,10 +95,10 @@ def test_visoss_1():
 def test_visoss_real_test():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.skip_on_travis():
-        return 'skip'
+        pytest.skip()
 
     # ERROR 1: The OSS Access Key Id you provided does not exist in our records.
     gdal.ErrorReset()
@@ -109,8 +109,7 @@ def test_visoss_real_test():
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
             return 'success'
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+        pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -128,11 +127,11 @@ def test_visoss_start_webserver():
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OSS_SECRET_ACCESS_KEY', 'OSS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('OSS_ACCESS_KEY_ID', 'OSS_ACCESS_KEY_ID')
@@ -173,7 +172,7 @@ def get_oss_fake_bucket_resource_method(request):
 def test_visoss_2():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     signed_url = gdal.GetSignedURL('/vsioss/oss_fake_bucket/resource',
                                    ['START_DATE=20180212T123456Z'])
@@ -248,11 +247,9 @@ def test_visoss_2():
     if data != 'foo':
 
         if gdaltest.is_travis_branch('trusty'):
-            print('Skipped on trusty branch, but should be investigated')
-            return 'skip'
+            pytest.skip('Skipped on trusty branch, but should be investigated')
 
-        print(data)
-        return 'fail'
+        pytest.fail(data)
 
     # Test region and endpoint 'redirects'
     handler.req_count = 0
@@ -364,7 +361,7 @@ def test_visoss_2():
 def test_visoss_3():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
 
@@ -417,10 +414,9 @@ def test_visoss_3():
     if f is None:
 
         if gdaltest.is_travis_branch('trusty'):
-            print('Skipped on trusty branch, but should be investigated')
-            return 'skip'
+            pytest.skip('Skipped on trusty branch, but should be investigated')
 
-        return 'fail'
+        pytest.fail()
     gdal.VSIFCloseL(f)
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -558,7 +554,7 @@ def test_visoss_3():
 def test_visoss_4():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
@@ -679,7 +675,7 @@ def test_visoss_4():
 def test_visoss_5():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
@@ -723,7 +719,7 @@ def test_visoss_5():
 def test_visoss_6():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -904,7 +900,7 @@ def test_visoss_6():
 def test_visoss_7():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/dir/', 404, {'Connection': 'close'})
@@ -963,7 +959,7 @@ def test_visoss_7():
 def test_visoss_8():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/visoss_8/?delimiter=%2F', 200,
@@ -1002,7 +998,7 @@ def test_visoss_8():
 def test_visoss_stop_webserver():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
@@ -1019,20 +1015,17 @@ def test_visoss_stop_webserver():
 def visoss_extra_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     # Either a bucket name or bucket/filename
     OSS_RESOURCE = gdal.GetConfigOption('OSS_RESOURCE')
 
     if gdal.GetConfigOption('OSS_SECRET_ACCESS_KEY') is None:
-        print('Missing OSS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing OSS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
     elif gdal.GetConfigOption('OSS_ACCESS_KEY_ID') is None:
-        print('Missing OSS_ACCESS_KEY_ID for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing OSS_ACCESS_KEY_ID for running gdaltest_list_extra')
     elif OSS_RESOURCE is None:
-        print('Missing OSS_RESOURCE for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing OSS_RESOURCE for running gdaltest_list_extra')
 
     if OSS_RESOURCE.find('/') < 0:
         path = '/vsioss/' + OSS_RESOURCE

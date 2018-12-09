@@ -35,6 +35,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Create a raster attribute table.
@@ -47,7 +48,7 @@ def test_rat_1():
     try:
         rat = gdal.RasterAttributeTable()
     except:
-        return 'skip'
+        pytest.skip()
 
     rat.CreateColumn('Value', gdal.GFT_Integer, gdal.GFU_MinMax)
     rat.CreateColumn('Count', gdal.GFT_Integer, gdal.GFU_PixelCount)
@@ -87,7 +88,7 @@ def test_rat_1():
 def test_rat_2():
 
     if gdaltest.saved_rat is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('PNM').Create('tmp/rat_2.pnm', 100, 90, 1,
                                             gdal.GDT_Byte)

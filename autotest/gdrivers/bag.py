@@ -59,7 +59,7 @@ def check_no_file_leaks():
 def test_bag_2():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/true_n_nominal.bag')
 
@@ -105,7 +105,7 @@ def test_bag_2():
 def test_bag_3():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/southern_hemi_false_northing.bag')
 
@@ -132,7 +132,7 @@ def test_bag_3():
 def test_bag_vr_normal():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/test_vr.bag')
     assert ds is not None
@@ -175,11 +175,10 @@ def test_bag_vr_normal():
 
     for key in expected_md:
         if key not in got_md or got_md[key] != expected_md[key]:
-            print(key)
             import pprint
             pp = pprint.PrettyPrinter()
             pp.pprint(got_md)
-            return 'fail'
+            pytest.fail(key)
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('data/test_vr.bag',
@@ -198,7 +197,7 @@ def test_bag_vr_normal():
 def test_bag_vr_list_supergrids():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/test_vr.bag', open_options=['MODE=LIST_SUPERGRIDS'])
     assert ds is not None
@@ -257,7 +256,7 @@ def test_bag_vr_list_supergrids():
 def test_bag_vr_open_supergrids():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('BAG:"data/test_vr.bag":supergrid:0:0')
     assert ds is not None
@@ -297,11 +296,10 @@ def test_bag_vr_open_supergrids():
 
     for key in expected_md:
         if key not in got_md or got_md[key] != expected_md[key]:
-            print(key)
             import pprint
             pp = pprint.PrettyPrinter()
             pp.pprint(got_md)
-            return 'fail'
+            pytest.fail(key)
 
     with gdaltest.error_handler():
         ds = gdal.Open('BAG:"/vsimem/unexisting.bag":supergrid:0:0')
@@ -329,7 +327,7 @@ def test_bag_vr_open_supergrids():
 def test_bag_vr_resampled():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/test_vr.bag', open_options=['MODE=RESAMPLED_GRID'])
     assert ds is not None
@@ -373,11 +371,10 @@ def test_bag_vr_resampled():
 
     for key in expected_md:
         if key not in got_md or got_md[key] != expected_md[key]:
-            print(key)
             import pprint
             pp = pprint.PrettyPrinter()
             pp.pprint(got_md)
-            return 'fail'
+            pytest.fail(key)
 
     data_ref = ds.ReadRaster()
 
@@ -573,7 +570,7 @@ def test_bag_vr_resampled():
 def test_bag_vr_resampled_mask():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
@@ -594,7 +591,7 @@ def test_bag_vr_resampled_mask():
 def test_bag_vr_resampled_interpolated():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
@@ -625,7 +622,7 @@ def test_bag_vr_resampled_interpolated():
 def test_bag_write_single_band():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BAG', 'byte.tif', 1, 4672)
     ret = tst.testCreateCopy(quiet_error_handler=False,
@@ -639,7 +636,7 @@ def test_bag_write_single_band():
 def test_bag_write_two_bands():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BAG', 'test_vr.bag', 2, 60,
                             options=['BLOCK_SIZE=2',
@@ -665,7 +662,7 @@ def test_bag_write_two_bands():
 def test_bag_write_south_up():
 
     if gdaltest.bag_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Generate a south-up dataset
     src_ds = gdal.Warp('', 'data/byte.tif',

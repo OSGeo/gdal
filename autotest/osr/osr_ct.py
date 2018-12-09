@@ -60,15 +60,12 @@ def test_osr_ct_1():
         ct = osr.CoordinateTransformation(ll_srs, utm_srs)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-            return 'skip'
+            pytest.skip('PROJ.4 missing, transforms not available.')
     except ValueError:
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-            return 'skip'
-        gdaltest.post_reason(gdal.GetLastErrorMsg())
-        return 'fail'
+            pytest.skip('PROJ.4 missing, transforms not available.')
+        pytest.fail(gdal.GetLastErrorMsg())
 
     assert not (ct is None or ct.this is None), \
         'Unable to create simple CoordinateTransformat.'
@@ -84,7 +81,7 @@ def test_osr_ct_1():
 def test_osr_ct_2():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -109,7 +106,7 @@ def test_osr_ct_2():
 def test_osr_ct_3():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -143,7 +140,7 @@ def test_osr_ct_3():
 def test_osr_ct_4():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -170,7 +167,7 @@ def test_osr_ct_4():
 def test_osr_ct_5():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -196,7 +193,7 @@ def test_osr_ct_5():
 def test_osr_ct_6():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     ct = osr.CreateCoordinateTransformation(None, None)
     assert ct is None
@@ -226,7 +223,7 @@ def test_osr_ct_6():
 def test_osr_ct_7():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     pm_srs = osr.SpatialReference()
     pm_srs.ImportFromEPSG(3857)
@@ -267,7 +264,7 @@ def test_osr_ct_7():
 def test_osr_ct_8():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     src_srs = osr.SpatialReference()
     src_srs.ImportFromEPSG(3857)
@@ -308,7 +305,7 @@ def test_osr_ct_8():
 def test_osr_ct_cleanup():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.ct = None
 

@@ -34,6 +34,7 @@ import sys
 import gdaltest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Initiate the test file
@@ -117,7 +118,7 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
            (field3 is not None and feat.GetField(field3) != Truncate(expected_values[i][2], lyr_defn, field3)) or \
            (field4 is not None and feat.GetField(field4) != Truncate(expected_values[i][3], lyr_defn, field4)):
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = lyr.GetNextFeature()
         i = i + 1
 

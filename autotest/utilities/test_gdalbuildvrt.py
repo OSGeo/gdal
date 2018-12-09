@@ -38,6 +38,7 @@ from osgeo import ogr
 from osgeo import osr
 import gdaltest
 import test_cli_utilities
+import pytest
 
 
 ###############################################################################
@@ -68,7 +69,7 @@ def test_gdalbuildvrt_check():
 
 def test_gdalbuildvrt_1():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
@@ -110,9 +111,9 @@ def test_gdalbuildvrt_1():
 
 def test_gdalbuildvrt_2():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/tileindex.shp')
@@ -143,7 +144,7 @@ def test_gdalbuildvrt_2():
 
 def test_gdalbuildvrt_3():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     open('tmp/filelist.txt', 'wt').write('tmp/gdalbuildvrt1.tif\ntmp/gdalbuildvrt2.tif\ntmp/gdalbuildvrt3.tif\ntmp/gdalbuildvrt4.tif')
 
@@ -157,7 +158,7 @@ def test_gdalbuildvrt_3():
 
 def test_gdalbuildvrt_4():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
@@ -177,7 +178,7 @@ def test_gdalbuildvrt_4():
 
 def test_gdalbuildvrt_5():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
@@ -199,7 +200,7 @@ def test_gdalbuildvrt_5():
 
 def test_gdalbuildvrt_6():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -separate tmp/stacked.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
@@ -228,7 +229,7 @@ def test_gdalbuildvrt_6():
 
 def test_gdalbuildvrt_7():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtnull1.tif', 20, 10, 3, gdal.GDT_UInt16)
     out_ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
@@ -285,7 +286,7 @@ def test_gdalbuildvrt_7():
 
 def test_gdalbuildvrt_8():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.05 0.05 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
@@ -310,7 +311,7 @@ def test_gdalbuildvrt_8():
 
 def test_gdalbuildvrt_9():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 1 46 5 50 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
@@ -335,7 +336,7 @@ def test_gdalbuildvrt_9():
 
 def test_gdalbuildvrt_10():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_10_1.tif', 10, 10, 1, gdal.GDT_Byte, options=['NBITS=1', 'PHOTOMETRIC=MINISWHITE'])
     out_ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
@@ -371,7 +372,7 @@ def test_gdalbuildvrt_10():
 
 def test_gdalbuildvrt_11():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     out_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalbuildvrt_11_1.tif', 10, 10, 1)
     out_ds.GetRasterBand(1).Fill(255)
@@ -401,7 +402,7 @@ def test_gdalbuildvrt_11():
 
 def test_gdalbuildvrt_12():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif',
                                                 check_memleak=False)
@@ -429,7 +430,7 @@ def test_gdalbuildvrt_12():
 
 def test_gdalbuildvrt_13():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/gdalbuildvrt13.vrt ../gcore/data/byte.tif -a_srs EPSG:4326')
 
@@ -445,9 +446,9 @@ def test_gdalbuildvrt_13():
 
 def test_gdalbuildvrt_14():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/test_gdalbuildvrt_14.vrt ../gcore/data/byte.tif -r cubic -tr 30 30')
 
@@ -470,7 +471,7 @@ def test_gdalbuildvrt_14():
 
 def test_gdalbuildvrt_15():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/test_gdalbuildvrt_15.vrt ../gcore/data/byte.tif -b 1')
 
@@ -488,7 +489,7 @@ def test_gdalbuildvrt_15():
 
 def test_gdalbuildvrt_16():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' /non_existing_dir/non_existing_subdir/out.vrt ../gcore/data/byte.tif')
 
@@ -507,7 +508,7 @@ def test_gdalbuildvrt_16():
 def test_gdalbuildvrt_cleanup():
 
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/tileindex.shp')
 

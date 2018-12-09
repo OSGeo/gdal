@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test with a global dataset mask band
@@ -126,7 +127,7 @@ def test_vrtmask_3():
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
     ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/vrtmask_3.vrt', src_ds)
@@ -155,12 +156,12 @@ def test_vrtmask_3():
 def test_vrtmask_4():
     import test_cli_utilities
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/vrtmask_4.vrt ../gcore/data/ycbcr_with_mask.tif')
 
@@ -187,7 +188,7 @@ def test_vrtmask_5():
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/vrtmask_5.vrt', '../gcore/data/ycbcr_with_mask.tif', options='-of VRT -outsize 100% 100%')
 
@@ -214,7 +215,7 @@ def test_vrtmask_6():
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/vrtmask_6.vrt', '../gcore/data/ycbcr_with_mask.tif',
                    options='-of VRT -b 1 -b 2 -b 3 -mask mask,1')
@@ -242,7 +243,7 @@ def test_vrtmask_7():
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
     try:
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
     except OSError:
@@ -270,8 +271,7 @@ def test_vrtmask_7():
     os.remove('tmp/vrtmask_7_rgba.tif')
     try:
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
-        gdaltest.post_reason('did not expect tmp/vrtmask_7_rgba.tif.msk')
-        return 'fail'
+        pytest.fail('did not expect tmp/vrtmask_7_rgba.tif.msk')
     except OSError:
         pass
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
@@ -291,7 +291,7 @@ def test_vrtmask_8():
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/vrtmask_8.vrt', '../gcore/data/ycbcr_with_mask.tif',
                    options='-of VRT -mask none')
@@ -313,7 +313,7 @@ def test_vrtmask_8():
 def test_vrtmask_9():
     import test_cli_utilities
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtmask_9_src.tif', 10, 10, 4)
     del src_ds

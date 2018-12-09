@@ -375,7 +375,7 @@ def test_ogr_geom_tin():
 def test_ogr_geom_boundary_point():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     geom_wkt = 'POINT(1 1)'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -397,7 +397,7 @@ def test_ogr_geom_boundary_point():
 def test_ogr_geom_boundary_multipoint():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     geom_wkt = 'MULTIPOINT((0 0),(1 1))'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -415,7 +415,7 @@ def test_ogr_geom_boundary_multipoint():
 def test_ogr_geom_boundary_linestring():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     geom_wkt = 'LINESTRING(0 0, 1 1, 2 2, 3 2, 4 2)'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -445,7 +445,7 @@ def test_ogr_geom_boundary_linestring():
 def test_ogr_geom_boundary_polygon():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     geom_wkt = 'POLYGON((0 0,1 1,1 0,0 0))'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -463,7 +463,7 @@ def test_ogr_geom_boundary_polygon():
 def test_ogr_geom_build_from_edges_1():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
 
@@ -484,7 +484,7 @@ def test_ogr_geom_build_from_edges_1():
         poly = ogr.BuildPolygonFromEdges(link_coll)
         assert poly is not None
     except:
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -495,7 +495,7 @@ def test_ogr_geom_build_from_edges_1():
 def test_ogr_geom_build_from_edges_2():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     link_coll = ogr.Geometry(type=ogr.wkbMultiLineString)
 
@@ -515,7 +515,7 @@ def test_ogr_geom_build_from_edges_2():
         poly = ogr.BuildPolygonFromEdges(link_coll)
         assert poly is not None
     except:
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -526,7 +526,7 @@ def test_ogr_geom_build_from_edges_2():
 def test_ogr_geom_build_from_edges_3():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     src_geom = ogr.CreateGeometryFromWkt('POINT (0 1)')
     try:
@@ -555,11 +555,10 @@ def test_ogr_geom_build_from_edges_3():
 def test_ogr_geom_build_from_edges_4():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would crash')
-        return 'skip'
+        pytest.skip('would crash')
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
 
@@ -587,7 +586,7 @@ def test_ogr_geom_build_from_edges_4():
         wkt = poly.ExportToWkt()
         assert wkt == 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1))'
     except:
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -1207,7 +1206,7 @@ def test_ogr_geom_triangle_invalid_wkt():
 def test_ogr_geom_triangle_sfcgal():
 
     if not ogrtest.have_sfcgal():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('TRIANGLE ((0 0,100 0 100,0 100 100,0 0))')
     g2 = ogr.CreateGeometryFromWkt('TRIANGLE ((-1 -1,100 0 100,0 100 100,-1 -1))')
@@ -3176,7 +3175,7 @@ def test_ogr_geom_polygon_empty_ring():
 def test_ogr_geom_polygon_intersects_point():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     poly = ogr.CreateGeometryFromWkt('POLYGON((0 0,5 5,10 0,0 0))')
     point = ogr.Geometry(ogr.wkbPoint)
@@ -3305,7 +3304,7 @@ def test_ogr_geom_remove_geometry():
 def test_ogr_geom_sfcgal():
 
     if not ogrtest.have_sfcgal():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('TIN EMPTY')
 

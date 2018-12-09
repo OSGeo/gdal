@@ -35,6 +35,7 @@ import sys
 import gdaltest
 from osgeo import ogr
 import webserver
+import pytest
 
 ###############################################################################
 # Init
@@ -45,12 +46,12 @@ def test_ogr_wfs3_init():
 
     gdaltest.wfs3_drv = ogr.GetDriverByName('WFS3')
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = \
         webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -59,10 +60,10 @@ def test_ogr_wfs3_init():
 
 def test_ogr_wfs3_errors():
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 404)
@@ -134,10 +135,10 @@ def test_ogr_wfs3_errors():
 
 def test_ogr_wfs3_empty_layer():
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200,
@@ -164,10 +165,10 @@ def test_ogr_wfs3_empty_layer():
 
 def test_ogr_wfs3_fc_links_next_geojson():
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
@@ -209,7 +210,7 @@ def test_ogr_wfs3_fc_links_next_geojson():
         f = lyr.GetNextFeature()
     if f['foo'] != 'bar':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/foo_next', 200,
@@ -227,7 +228,7 @@ def test_ogr_wfs3_fc_links_next_geojson():
         f = lyr.GetNextFeature()
     if f['foo'] != 'baz':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -236,10 +237,10 @@ def test_ogr_wfs3_fc_links_next_geojson():
 
 def test_ogr_wfs3_fc_links_next_headers():
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
@@ -280,7 +281,7 @@ def test_ogr_wfs3_fc_links_next_headers():
         f = lyr.GetNextFeature()
     if f['foo'] != 'bar':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/foo_next', 200,
@@ -298,7 +299,7 @@ def test_ogr_wfs3_fc_links_next_headers():
         f = lyr.GetNextFeature()
     if f['foo'] != 'baz':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -307,10 +308,10 @@ def test_ogr_wfs3_fc_links_next_headers():
 
 def test_ogr_wfs3_spatial_filter():
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
@@ -382,10 +383,10 @@ def test_ogr_wfs3_spatial_filter():
 
 def test_ogr_wfs3_get_feature_count():
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
@@ -448,10 +449,10 @@ def test_ogr_wfs3_get_feature_count():
 
 def test_ogr_wfs3_attribute_filter():
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
@@ -568,7 +569,7 @@ def test_ogr_wfs3_attribute_filter():
 def test_ogr_wfs3_cleanup():
 
     if gdaltest.wfs3_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)

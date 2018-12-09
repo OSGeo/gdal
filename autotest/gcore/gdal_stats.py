@@ -45,7 +45,7 @@ def test_stats_nan_1():
 
     gdaltest.gtiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.gtiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
@@ -65,7 +65,7 @@ def test_stats_nan_1():
 def test_stats_nan_2():
 
     if gdaltest.gtiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
@@ -85,7 +85,7 @@ def test_stats_nan_2():
 def test_stats_signedbyte():
 
     if gdaltest.gtiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     stats = (-128.0, 127.0, -0.2, 80.64)
 

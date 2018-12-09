@@ -219,8 +219,7 @@ def test_gdalwarp_lib_11():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
 
@@ -240,8 +239,7 @@ def test_gdalwarp_lib_12():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
 
@@ -261,8 +259,7 @@ def test_gdalwarp_lib_13():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
 
@@ -282,8 +279,7 @@ def test_gdalwarp_lib_14():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
 
@@ -905,7 +901,7 @@ def test_gdalwarp_lib_125():
 def test_gdalwarp_lib_126():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
     lyr = ds.CreateLayer('cutline')
@@ -1014,7 +1010,7 @@ def test_gdalwarp_lib_128():
 
 def test_gdalwarp_lib_129():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1000, 2000)
     rpc = ["HEIGHT_OFF=1767",
@@ -1577,7 +1573,7 @@ def test_gdalwarp_lib_override_default_output_nodata():
 
     drv = gdal.GetDriverByName('netCDF')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     creationoptionlist = drv.GetMetadataItem('DMD_CREATIONOPTIONLIST')
     formats = ['NC']

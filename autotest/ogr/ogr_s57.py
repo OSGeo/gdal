@@ -39,6 +39,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Verify we can open the test file.
@@ -64,7 +65,7 @@ def test_ogr_s57_1():
 
 def test_ogr_s57_2():
     if gdaltest.s57_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer_list = [('DSID', ogr.wkbNone, 1),
                   ('COALNE', ogr.wkbUnknown, 1),
@@ -105,7 +106,7 @@ def test_ogr_s57_2():
 
 def test_ogr_s57_3():
     if gdaltest.s57_ds is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.s57_ds.GetLayerByName('COALNE').GetNextFeature()
 
@@ -126,7 +127,7 @@ def test_ogr_s57_3():
 
 def test_ogr_s57_4():
     if gdaltest.s57_ds is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.s57_ds.GetLayerByName('M_QUAL').GetNextFeature()
 
@@ -147,7 +148,7 @@ def test_ogr_s57_4():
 
 def test_ogr_s57_5():
     if gdaltest.s57_ds is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.s57_ds.GetLayerByName('SOUNDG').GetNextFeature()
 
@@ -207,7 +208,7 @@ def test_ogr_s57_8():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/1B5X02NE.000')
 
@@ -301,7 +302,7 @@ def test_ogr_s57_11():
 def test_ogr_s57_online_1():
 
     if not gdaltest.download_file('ftp://sdg.ivs90.nl/ENC/1R5MK050.000', '1R5MK050.000'):
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/cache/1R5MK050.000')
     assert ds is not None
@@ -328,7 +329,7 @@ def test_ogr_s57_online_1():
 def test_ogr_s57_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000', 'GB5X01SW.000'):
-        return 'skip'
+        pytest.skip()
 
     gdaltest.clean_tmp()
     shutil.copy('tmp/cache/GB5X01SW.000', 'tmp/GB5X01SW.000')
@@ -359,7 +360,7 @@ def test_ogr_s57_online_2():
 def test_ogr_s57_online_3():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.001', 'GB5X01SW.001'):
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('tmp/cache/GB5X01SW.001', 'tmp/GB5X01SW.001')
     ds = ogr.Open('tmp/GB5X01SW.000')
@@ -392,7 +393,7 @@ def test_ogr_s57_online_3():
 def test_ogr_s57_online_4():
 
     if not gdaltest.download_file('http://www1.kaiho.mlit.go.jp/KOKAI/ENC/images/sample/sample.zip', 'sample.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
@@ -402,9 +403,9 @@ def test_ogr_s57_online_4():
             try:
                 os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON,RECODE_BY_DSSI=ON')
     ds = ogr.Open('tmp/cache/ENC_ROOT/JP34NC94.000')

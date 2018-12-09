@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read test of simple byte reference data.
@@ -40,12 +41,12 @@ import gdaltest
 
 def test_jpipkak_1():
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     gdaltest.jpipkak_drv = gdal.GetDriverByName('JPIPKAK')
     if gdaltest.jpipkak_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_msi_uint')
     assert ds is not None, 'failed to open jpip stream.'
@@ -65,11 +66,11 @@ def test_jpipkak_1():
 
 def test_jpipkak_2():
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_byte')
     assert ds is not None, 'failed to open jpip stream.'
@@ -94,11 +95,11 @@ def test_jpipkak_2():
 
 def test_jpipkak_3():
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_11bit')
     assert ds is not None, 'failed to open jpip stream.'
@@ -118,11 +119,11 @@ def test_jpipkak_3():
 
 def test_jpipkak_4():
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_20bit')
     assert ds is not None, 'failed to open jpip stream.'
@@ -142,11 +143,11 @@ def test_jpipkak_4():
 
 def test_jpipkak_5():
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     if gdaltest.jpipkak_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_byte')
     assert ds is not None, 'failed to open jpip stream.'

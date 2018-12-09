@@ -199,7 +199,7 @@ def test_sieve_6():
     try:
         import numpy
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     # Try 3002. Should run in less than 10 seconds
     # size = 3002

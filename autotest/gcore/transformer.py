@@ -380,13 +380,11 @@ def test_transformer_10():
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +datum=WGS84 +geoidgrids=./tmp/fake.gtx +vunits=m +foo=bar +no_defs')
     if sr.ExportToProj4().find('foo=bar') >= 0:
-        print('Missing proj.4')
         gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
-        return 'skip'
+        pytest.skip('Missing proj.4')
     if sr.ExportToProj4().find('geoidgrids') < 0:
-        print('Missing geoidgrids in %s. Outdated proj.4 version' % sr.ExportToProj4())
         gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
-        return 'skip'
+        pytest.skip('Missing geoidgrids in %s. Outdated proj.4 version' % sr.ExportToProj4())
 
     # Create a fake DEM
     ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1, gdal.GDT_Byte)

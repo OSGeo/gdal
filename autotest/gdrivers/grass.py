@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
@@ -42,7 +43,7 @@ def test_grass_1():
 
     gdaltest.grass_drv = gdal.GetDriverByName('GRASS')
     if gdaltest.grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -53,7 +54,7 @@ def test_grass_1():
 def test_grass_2():
 
     if gdaltest.grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('GRASS', 'small_grass_dataset/demomapset/cellhd/elevation', 1, 41487)
 

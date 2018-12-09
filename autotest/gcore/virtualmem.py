@@ -34,6 +34,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test linear and tiled virtual mem interfaces in read-only mode
@@ -42,13 +43,13 @@ from osgeo import gdal
 def test_virtualmem_1():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
 
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('../gdrivers/data/small_world.tif')
     bufxsize = 400
@@ -67,7 +68,7 @@ def test_virtualmem_1():
                 ar_tiled_band1 = ds.GetRasterBand(1).GetTiledVirtualMemArray(gdal.GF_Read, 0, 0, bufxsize, bufysize, tilexsize, tileysize, gdal.GDT_Int16, 1024 * 1024)
             except:
                 pass
-            return 'skip'
+            pytest.skip()
 
     ar_flat_band1 = ds.GetRasterBand(1).GetVirtualMemArray(gdal.GF_Read, 0, 0, bufxsize, bufysize, bufxsize, bufysize, gdal.GDT_Int16, 1024 * 1024, 0)
     ar_flat_bip = ds.GetVirtualMemArray(gdal.GF_Read, 0, 0, bufxsize, bufysize, bufxsize, bufysize, gdal.GDT_Int16, [1, 2, 3], 0, 1024 * 1024, 0)
@@ -116,15 +117,15 @@ def test_virtualmem_1():
 def test_virtualmem_2():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
     ar = ds.GetVirtualMemArray(gdal.GF_Write)
@@ -146,14 +147,14 @@ def test_virtualmem_2():
 def test_virtualmem_3():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
     try:
         from osgeo import gdalnumeric
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     for tmpfile in ['tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img']:
         ds = gdal.GetDriverByName('EHdr').Create(tmpfile, 400, 300, 2)
@@ -193,14 +194,14 @@ def test_virtualmem_3():
 def test_virtualmem_4():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
     try:
         from osgeo import gdalnumeric
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     tmpfile = 'tmp/virtualmem_4.tif'
     for option in ['INTERLEAVE=PIXEL', 'INTERLEAVE=BAND']:
@@ -210,7 +211,7 @@ def test_virtualmem_4():
         if gdal.GetLastErrorMsg().find('mmap() failed') >= 0:
             ar1 = None
             ds = None
-            return 'skip'
+            pytest.skip()
         ar1 = None
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
         ar1_bis = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
@@ -239,12 +240,12 @@ def test_virtualmem_4():
                 ar1 = None
                 ar2 = None
                 ds = None
-                return 'fail'
+                pytest.fail()
             if not gdalnumeric.array_equal(ar2[y], ar_255):
                 ar1 = None
                 ar2 = None
                 ds = None
-                return 'fail'
+                pytest.fail()
         # We need to destroy the array before dataset destruction
         ar1 = None
         ar2 = None

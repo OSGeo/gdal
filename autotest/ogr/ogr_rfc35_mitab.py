@@ -35,6 +35,7 @@ import sys
 import gdaltest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 #
@@ -45,7 +46,7 @@ def CheckFileSize(src_filename):
     import test_py_scripts
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f "MapInfo File" /vsimem/CheckFileSize.tab ' + src_filename)
     statBufSrc = gdal.VSIStatL(src_filename[0:-3] + "dat", gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
@@ -135,7 +136,7 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
            (field3 is not None and feat.GetField(field3) != Truncate(expected_values[i][2], lyr_defn, field3)) or \
            (field4 is not None and feat.GetField(field4) != Truncate(expected_values[i][3], lyr_defn, field4)):
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = lyr.GetNextFeature()
         i = i + 1
 

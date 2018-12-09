@@ -35,6 +35,7 @@ from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 
 def open_for_read(uri):
@@ -65,12 +66,12 @@ def test_vsiwebhdfs_start_webserver():
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
         handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.webhdfs_base_connection = '/vsiwebhdfs/http://localhost:' + \
         str(gdaltest.webserver_port) + '/webhdfs/v1'
@@ -86,7 +87,7 @@ def test_vsiwebhdfs_start_webserver():
 def test_vsiwebhdfs_open():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -145,7 +146,7 @@ def test_vsiwebhdfs_open():
 def test_vsiwebhdfs_stat():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -159,7 +160,7 @@ def test_vsiwebhdfs_stat():
             print(stat_res.size)
         else:
             print(stat_res)
-        return 'fail'
+        pytest.fail()
 
     # Test caching
     stat_res = gdal.VSIStatL(gdaltest.webhdfs_base_connection + '/foo/bar')
@@ -183,7 +184,7 @@ def test_vsiwebhdfs_stat():
 def test_vsiwebhdfs_readdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -219,7 +220,7 @@ def test_vsiwebhdfs_readdir():
 def test_vsiwebhdfs_write():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -348,7 +349,7 @@ def test_vsiwebhdfs_write():
 def test_vsiwebhdfs_unlink():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -405,7 +406,7 @@ def test_vsiwebhdfs_unlink():
 def test_vsiwebhdfs_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -472,7 +473,7 @@ def test_vsiwebhdfs_mkdir_rmdir():
 def test_vsiwebhdfs_stop_webserver():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
@@ -489,12 +490,11 @@ def test_vsiwebhdfs_stop_webserver():
 def vsiwebhdfs_extra_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     webhdfs_url = gdal.GetConfigOption('WEBHDFS_URL')
     if webhdfs_url is None:
-        print('Missing WEBHDFS_URL for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing WEBHDFS_URL for running gdaltest_list_extra')
 
     if webhdfs_url.endswith('/webhdfs/v1') or webhdfs_url.endswith('/webhdfs/v1/'):
         path = '/vsiwebhdfs/' + webhdfs_url

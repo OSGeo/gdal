@@ -36,6 +36,7 @@ import gdaltest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test driver availability
@@ -50,7 +51,7 @@ def test_ogr_elasticsearch_init():
 
     ogrtest.elasticsearch_drv = ogr.GetDriverByName('ElasticSearch')
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -62,7 +63,7 @@ def test_ogr_elasticsearch_init():
 
 def test_ogr_elasticsearch_nonexistent_server():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.CreateDataSource(
@@ -106,7 +107,7 @@ def test_ogr_elasticsearch_nonexistent_server():
 
 def test_ogr_elasticsearch_1():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
                            """{"version":{"number":"2.0.0"}}""")
@@ -346,7 +347,7 @@ def test_ogr_elasticsearch_1():
 
 def test_ogr_elasticsearch_2():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
@@ -391,7 +392,7 @@ def test_ogr_elasticsearch_2():
 
 def test_ogr_elasticsearch_3():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
@@ -435,7 +436,7 @@ def test_ogr_elasticsearch_3():
 
 def test_ogr_elasticsearch_4():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
@@ -726,7 +727,7 @@ def test_ogr_elasticsearch_4():
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()
     lyr.GetNextFeature()
@@ -885,7 +886,7 @@ def test_ogr_elasticsearch_4():
     f = sql_lyr.GetNextFeature()
     if f['some_field'] != '5':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Invalid index
@@ -978,7 +979,7 @@ def test_ogr_elasticsearch_4():
 
 def test_ogr_elasticsearch_5():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1121,7 +1122,7 @@ def test_ogr_elasticsearch_5():
        f['superobject.another_geoshape'].ExportToWkt() != 'POINT (3 50)' or \
        f['superobject.another_geoshape2'].ExportToWkt() != 'POINT (2 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f['_id'] = 'my_id'
     gdal.FileFromMemBuffer(
@@ -1132,18 +1133,18 @@ def test_ogr_elasticsearch_5():
     f = lyr.GetNextFeature()
     if f['another_geopoint'].ExportToWkt() != 'POINT (2.1 49.1)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f['another_geopoint'].ExportToWkt() != 'POINT (2.2 49.2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test geohash
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f['another_geopoint'], 'POINT (2 49)') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = None
     lyr.CreateField(ogr.FieldDefn('superobject.subfield2', ogr.OFTString))
@@ -1171,7 +1172,7 @@ def test_ogr_elasticsearch_5():
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)' or \
        f['superobject.another_geoshape'].ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", open_options=[
                      'FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0', 'FLATTEN_NESTED_ATTRIBUTES=FALSE'])
@@ -1184,7 +1185,7 @@ def test_ogr_elasticsearch_5():
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch",
                      gdal.OF_UPDATE, open_options=['JSON_FIELD=YES'])
@@ -1197,7 +1198,7 @@ def test_ogr_elasticsearch_5():
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)' or \
        f['superobject.another_geoshape'].ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f['_id'] = 'my_id'
     f['_json'] = '{ "foo": "bar" }'
@@ -1214,7 +1215,7 @@ def test_ogr_elasticsearch_5():
 
 def test_ogr_elasticsearch_6():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'non_standard_geometries\n')
@@ -1285,23 +1286,23 @@ def test_ogr_elasticsearch_6():
     f = lyr.GetNextFeature()
     if f['geometry'].ExportToWkt() != 'POLYGON ((2 49,3 49,3 50,2 50,2 49))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     ref_txt = f['geometry'].ExportToWkt()
     if ref_txt.find('POLYGON ((') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f['geometry'].ExportToWkt() != ref_txt:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f['geometry'].ExportToWkt() != ref_txt:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -1311,7 +1312,7 @@ def test_ogr_elasticsearch_6():
 
 def test_ogr_elasticsearch_7():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1344,7 +1345,7 @@ def test_ogr_elasticsearch_7():
 
 def test_ogr_elasticsearch_8():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1400,7 +1401,7 @@ def test_ogr_elasticsearch_8():
 
 def test_ogr_elasticsearch_9():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -1508,7 +1509,7 @@ def test_ogr_elasticsearch_9():
 
 def test_ogr_elasticsearch_10():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2101,7 +2102,7 @@ def test_ogr_elasticsearch_10():
 
 def test_ogr_elasticsearch_11():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2185,17 +2186,17 @@ def test_ogr_elasticsearch_11():
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f['str_field'] is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.IsFieldSet('str_field'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_count?pretty""", """{
     "hits":
@@ -2232,7 +2233,7 @@ def test_ogr_elasticsearch_11():
 
 def test_ogr_elasticsearch_authentication():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2302,7 +2303,7 @@ def ogr_elasticsearch_delete_files():
 
 def test_ogr_elasticsearch_cleanup():
     if ogrtest.elasticsearch_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 

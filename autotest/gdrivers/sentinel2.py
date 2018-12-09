@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test opening a L1C product
@@ -79,7 +80,7 @@ def test_sentinel2_l1c_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution, UTM 32N',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:10m:EPSG_32632',
@@ -93,7 +94,7 @@ def test_sentinel2_l1c_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening a zip file as distributed from https://scihub.esa.int/
     if not sys.platform.startswith('win'):
@@ -168,7 +169,7 @@ def test_sentinel2_l1c_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 20984 and ds.RasterYSize == 20980
 
@@ -210,7 +211,7 @@ def test_sentinel2_l1c_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
@@ -233,7 +234,7 @@ def test_sentinel2_l1c_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -278,7 +279,7 @@ def test_sentinel2_l1c_4():
     if len(fl) != 1 + 2 + 2:
         import pprint
         pprint.pprint(fl)
-        return 'fail'
+        pytest.fail()
 
     band = ds.GetRasterBand(1)
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
@@ -467,7 +468,7 @@ def test_sentinel2_l1c_5():
 def test_sentinel2_l1c_6():
 
     if sys.platform != 'win32':
-        return 'skip'
+        pytest.skip()
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     filename_xml = filename_xml.replace('/', '\\')
@@ -601,7 +602,7 @@ def test_sentinel2_l1c_tile_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
@@ -615,7 +616,7 @@ def test_sentinel2_l1c_tile_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(4):
@@ -658,7 +659,7 @@ def test_sentinel2_l1c_tile_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
@@ -672,7 +673,7 @@ def test_sentinel2_l1c_tile_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -722,7 +723,7 @@ def test_sentinel2_l1c_tile_3():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
@@ -757,7 +758,7 @@ def test_sentinel2_l1c_tile_3():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
@@ -780,7 +781,7 @@ def test_sentinel2_l1c_tile_3():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -807,7 +808,7 @@ def test_sentinel2_l1c_tile_4():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
@@ -840,7 +841,7 @@ def test_sentinel2_l1c_tile_4():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
@@ -982,7 +983,7 @@ def test_sentinel2_l1b_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 of granule S2B_OPER_MTD_L1B.xml with 10m resolution',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
@@ -994,7 +995,7 @@ def test_sentinel2_l1b_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 3 subdatasets
     for i in range(3):
@@ -1064,7 +1065,7 @@ def test_sentinel2_l1b_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     subdatasets_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
                       'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
@@ -1076,7 +1077,7 @@ def test_sentinel2_l1b_2():
     if got_md != subdatasets_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     cwd = os.getcwd()
     gdal.ErrorReset()
@@ -1090,7 +1091,7 @@ def test_sentinel2_l1b_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -1142,7 +1143,7 @@ def test_sentinel2_l1b_3():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 1276 and ds.RasterYSize == 384
 
@@ -1205,7 +1206,7 @@ def test_sentinel2_l1b_3():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.DataType == gdal.GDT_UInt16
 
@@ -1305,7 +1306,7 @@ def test_sentinel2_l1b_4():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ds = gdal.OpenEx('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m', open_options=['ALPHA=YES'])
@@ -1554,7 +1555,7 @@ def test_sentinel2_l2a_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B1, B2, B3, B4, B5, B6, B7, B9, B10, B11, B12, B8A, AOT, CLD, SCL, SNW, WVP with 60m resolution, UTM 32N',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L2A:data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml:60m:EPSG_32632',
@@ -1564,7 +1565,7 @@ def test_sentinel2_l2a_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(2):
@@ -1653,7 +1654,7 @@ def test_sentinel2_l2a_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
 
@@ -1688,7 +1689,7 @@ def test_sentinel2_l2a_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.DataType == gdal.GDT_UInt16
 
@@ -1701,7 +1702,7 @@ def test_sentinel2_l2a_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     scl_band = 0
     for i in range(ds.RasterCount):
@@ -1725,7 +1726,7 @@ def test_sentinel2_l2a_2():
     if got_categories != expected_categories:
         import pprint
         pprint.pprint(got_categories)
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -1865,7 +1866,7 @@ def test_sentinel2_l2a_4():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {
                     'SUBDATASET_1_DESC':
@@ -1888,7 +1889,7 @@ def test_sentinel2_l2a_4():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(2):
@@ -1977,7 +1978,7 @@ def test_sentinel2_l2a_5():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
 
@@ -2012,7 +2013,7 @@ def test_sentinel2_l2a_5():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.DataType == gdal.GDT_UInt16
 
@@ -2087,7 +2088,7 @@ def test_sentinel2_l2a_6():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {
                     'SUBDATASET_1_DESC':
@@ -2110,7 +2111,7 @@ def test_sentinel2_l2a_6():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(2):
@@ -2204,7 +2205,7 @@ def test_sentinel2_l2a_7():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
 
@@ -2239,7 +2240,7 @@ def test_sentinel2_l2a_7():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.DataType == gdal.GDT_UInt16
 
@@ -2289,7 +2290,7 @@ def test_sentinel2_l1c_safe_compact_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution, UTM 32N',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:10m:EPSG_32632',
@@ -2303,7 +2304,7 @@ def test_sentinel2_l1c_safe_compact_1():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(4):
@@ -2378,7 +2379,7 @@ def test_sentinel2_l1c_safe_compact_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
@@ -2414,7 +2415,7 @@ def test_sentinel2_l1c_safe_compact_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
@@ -2437,7 +2438,7 @@ def test_sentinel2_l1c_safe_compact_2():
     if got_md != expected_md:
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -2458,7 +2459,7 @@ def test_sentinel2_l1c_safe_compact_3():
     if len(fl) != 1 + 1 + 1:
         import pprint
         pprint.pprint(fl)
-        return 'fail'
+        pytest.fail()
 
     band = ds.GetRasterBand(1)
     assert band.GetColorInterpretation() == gdal.GCI_RedBand

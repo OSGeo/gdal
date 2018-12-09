@@ -37,6 +37,7 @@ import shutil
 from osgeo import gdal
 import gdaltest
 import test_py_scripts
+import pytest
 
 # Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
 #                 [-tr xres yres] [-a_nodata value]
@@ -52,7 +53,7 @@ def test_gdal_edit_py_1():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -100,7 +101,7 @@ def test_gdal_edit_py_2():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -125,7 +126,7 @@ def test_gdal_edit_py_3():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -150,7 +151,7 @@ def test_gdal_edit_py_4():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
@@ -175,7 +176,7 @@ def test_gdal_edit_py_4():
 
     try:
         os.stat('tmp/test_gdal_edit_py.tif.aux.xml')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
@@ -189,13 +190,13 @@ def test_gdal_edit_py_5():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
     except:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
@@ -245,7 +246,7 @@ def test_gdal_edit_py_6():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -286,7 +287,7 @@ def test_gdal_edit_py_7():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -306,7 +307,7 @@ def test_gdal_edit_py_8():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/test_gdal_edit_py.tif',
                    '../gcore/data/byte.tif',
@@ -331,7 +332,7 @@ def test_gdal_edit_py_unsetrpc():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/test_gdal_edit_py.tif', '../gcore/data/byte_rpc.tif')
 

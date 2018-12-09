@@ -36,6 +36,7 @@ import sys
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 
 def test_ogr_gtm_init():
@@ -49,7 +50,7 @@ def test_ogr_gtm_init():
         gdaltest.have_gtm = 1
 
     if not gdaltest.have_gtm:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gtm_ds.GetLayerCount() == 2, 'wrong number of layers'
 
@@ -61,7 +62,7 @@ def test_ogr_gtm_init():
 
 def test_ogr_gtm_read_1():
     if not gdaltest.have_gtm:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gtm_ds is not None
 
@@ -120,7 +121,7 @@ def test_ogr_gtm_read_1():
 
 def test_ogr_gtm_read_2():
     if not gdaltest.have_gtm:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gtm_ds is not None
 
@@ -251,7 +252,7 @@ def test_ogr_gtm_write_1():
 
 def test_ogr_gtm_check_write_1():
     if not gdaltest.have_gtm:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/gtm.gtm')
     lyr = ds.GetLayerByName('gtm_waypoints')

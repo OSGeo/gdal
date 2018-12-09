@@ -260,8 +260,7 @@ def test_rasterio_6():
     for obj in [ds, ds.GetRasterBand(1)]:
         try:
             obj.WriteRaster(0, 0, 2, 2, None)
-            gdaltest.post_reason('expected exception')
-            return 'fail'
+            pytest.fail('expected exception')
         except:
             pass
 
@@ -346,7 +345,7 @@ def test_rasterio_8():
     # Progress not implemented yet
     if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
-        return 'skip'
+        pytest.skip()
 
     # Test RasterBand.ReadRaster
     tab = [0, True]
@@ -679,7 +678,7 @@ def test_rasterio_11():
         gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
     mem_ds.GetRasterBand(1).WriteArray(numpy.array([[80, 125, 125, 80], [80, 125, 125, 80], [80, 125, 125, 80]]))
@@ -716,7 +715,7 @@ def test_rasterio_12():
         gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
     for i in range(3):
@@ -759,7 +758,7 @@ def test_rasterio_13():
         gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
 

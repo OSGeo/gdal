@@ -36,6 +36,7 @@ from osgeo import gdal
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Basic testing
@@ -45,16 +46,16 @@ def test_ogr_odbc_1():
 
     ogrtest.odbc_drv = None
     if sys.platform != 'win32':
-        return 'skip'
+        pytest.skip()
 
     ogrtest.odbc_drv = ogr.GetDriverByName('ODBC')
     if ogrtest.odbc_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogrtest.odbc_drv.Open('data/empty.mdb')
     if ds is None:
         ogrtest.odbc_drv = None
-        return 'skip'
+        pytest.skip()
 
     ds = None
 
@@ -97,7 +98,7 @@ def test_ogr_odbc_1():
     feat = lyr.GetNextFeature()
     if feat.GetField('intfield') != 1 or feat.GetField('doublefield') != 2.34 or feat.GetField('stringfield') != 'foo':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayerByName('test_with_pk')
     # Test GetFeatureCount()
@@ -107,21 +108,21 @@ def test_ogr_odbc_1():
     feat = lyr.GetFeature(4)
     if feat.GetField('intfield') != 5:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test SetAttributeFilter()
     lyr.SetAttributeFilter('intfield = 6')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 5:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test ExecuteSQL()
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('intfield') != 1 or feat.GetField('doublefield') != 2.34 or feat.GetField('stringfield') != 'foo':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
@@ -134,11 +135,11 @@ def test_ogr_odbc_1():
 
 def test_ogr_odbc_2():
     if ogrtest.odbc_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/odbc.mdb')
 
@@ -152,7 +153,7 @@ def test_ogr_odbc_2():
 
 def test_ogr_odbc_cleanup():
     if ogrtest.odbc_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/odbc.mdb')
 

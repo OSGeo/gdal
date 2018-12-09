@@ -34,6 +34,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fake TIL dataset
@@ -70,8 +71,7 @@ def test_til_2():
 
     try:
         os.stat('data/testtil.til.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/testtil.til.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/testtil.til.aux.xml')
     except OSError:
         pass
 
@@ -103,8 +103,7 @@ def test_til_3():
 
     try:
         os.stat('data/testtil.til.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/testtil.til.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/testtil.til.aux.xml')
     except OSError:
         pass
 

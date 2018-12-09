@@ -189,10 +189,9 @@ def test_ers_9():
 
     f = gdal.VSIFOpenL('/vsimem/ers_9.ers.aux.xml', 'rb')
     if f is not None:
-        gdaltest.post_reason('/vsimem/ers_9.ers.aux.xml should not exist')
         gdal.VSIFCloseL(f)
         drv.Delete('/vsimem/ers_9.ers')
-        return 'fail'
+        pytest.fail('/vsimem/ers_9.ers.aux.xml should not exist')
 
     ds = gdal.Open('/vsimem/ers_9.ers')
     val = ds.GetRasterBand(1).GetNoDataValue()
@@ -240,10 +239,9 @@ def test_ers_10():
 
     f = gdal.VSIFOpenL('/vsimem/ers_10.ers.aux.xml', 'rb')
     if f is not None:
-        gdaltest.post_reason('/vsimem/ers_10.ers.aux.xml should not exist')
         gdal.VSIFCloseL(f)
         drv.Delete('/vsimem/ers_10.ers')
-        return 'fail'
+        pytest.fail('/vsimem/ers_10.ers.aux.xml should not exist')
 
     ds = gdal.Open('/vsimem/ers_10.ers')
     wkt = ds.GetProjectionRef()

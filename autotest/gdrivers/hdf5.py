@@ -173,8 +173,7 @@ def test_hdf5_7():
         try:
             metadata.pop(key)
         except KeyError:
-            gdaltest.post_reason('unable to find "%s" key' % key)
-            return 'fail'
+            pytest.fail('unable to find "%s" key' % key)
     return 'success'
 
 ###############################################################################
@@ -238,8 +237,7 @@ def test_hdf5_8():
 def test_hdf5_9():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would crash')
-        return 'skip'
+        pytest.skip('would crash')
 
     ds = gdal.Open('data/vlstr_metadata.h5')
     metadata = ds.GetRasterBand(1).GetMetadata()
@@ -330,7 +328,7 @@ def test_hdf5_11():
 def test_hdf5_12():
 
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/5032/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf', 'norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf')
     got_projection = ds.GetProjection()
@@ -353,7 +351,7 @@ def test_hdf5_12():
 def test_hdf5_13():
 
     if not gdaltest.download_file('http://oceandata.sci.gsfc.nasa.gov/cgi/getfile/A2016273115000.L2_LAC_OC.nc', 'A2016273115000.L2_LAC_OC.nc'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('HDF5:"tmp/cache/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490')
 

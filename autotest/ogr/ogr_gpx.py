@@ -36,6 +36,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 
 def test_ogr_gpx_init():
@@ -48,7 +49,7 @@ def test_ogr_gpx_init():
         gdaltest.have_gpx = 1
 
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gpx_ds.GetLayerCount() == 5, 'wrong number of layers'
 
@@ -60,7 +61,7 @@ def test_ogr_gpx_init():
 
 def test_ogr_gpx_1():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gpx_ds is not None
 
@@ -145,7 +146,7 @@ def test_ogr_gpx_1():
 
 def test_ogr_gpx_2():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gpx_ds is not None
 
@@ -166,7 +167,7 @@ def test_ogr_gpx_2():
 
 def test_ogr_gpx_3():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gpx_ds is not None
 
@@ -189,7 +190,7 @@ def test_ogr_gpx_3():
 
 def test_ogr_gpx_4():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gpx_ds is not None
 
@@ -214,7 +215,7 @@ def test_ogr_gpx_4():
 
 def test_ogr_gpx_5():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.gpx_ds is not None
 
@@ -237,10 +238,10 @@ def test_ogr_gpx_5():
 
 def test_ogr_gpx_6():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.gpx_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -318,7 +319,7 @@ def test_ogr_gpx_6():
 
 def test_ogr_gpx_7():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.gpx_ds = None
 
@@ -387,7 +388,7 @@ def test_ogr_gpx_7():
 
 def test_ogr_gpx_8():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.gpx_ds = None
 
@@ -479,15 +480,14 @@ def test_ogr_gpx_8():
 
 def test_ogr_gpx_9():
     if not gdaltest.have_gpx:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/track_with_time_extension.gpx')
     lyr = ds.GetLayerByName('tracks')
     f = lyr.GetNextFeature()
     if f['time'] != '2015-10-11T15:06:33Z':
-        gdaltest.post_reason('did not get expected result')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected result')
 
     return 'success'
 

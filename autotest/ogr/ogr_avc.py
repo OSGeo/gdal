@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 #
@@ -68,7 +69,7 @@ def test_ogr_avc_1():
 
     if avc_ds is not None:
         return check_content(avc_ds)
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Open AVCBin datasource.
@@ -81,7 +82,7 @@ def test_ogr_avc_2():
 
     if avc_ds is not None:
         return check_content(avc_ds)
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Try opening a compressed E00 (which is not supported)
@@ -118,17 +119,15 @@ def test_ogr_avc_4():
         count = lyr.GetFeatureCount()
         assert count == 80, filename
         if last_feature.GetFieldCount() != 7:
-            print(filename)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(filename)
         if filename == 'data/testpointavc/testpointavc':
             fld_name = 'TESTPOINTAVC-ID'
         else:
             fld_name = 'WELLS-ID'
         if last_feature.GetField('ValueId') != 80 or last_feature.GetField(fld_name) != 80:
-            print(filename)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(filename)
 
     return 'success'
 
@@ -150,22 +149,19 @@ def test_ogr_avc_5():
         count = lyr.GetFeatureCount()
         assert count == 3, filename
         if last_feature.GetFieldCount() != 5:
-            print(filename)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(filename)
         if last_feature.GetField('ArcIds') != [-4, -5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
-            print(filename)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(filename)
         if filename == 'data/testpolyavc/testpolyavc':
             expected_wkt = 'POLYGON ((340700.03125 4100199.5,340500.0 4100199.75,340599.96875 4100100.25,340700.03125 4100199.5))'
         else:
             # Likely a bug in AVCE00 driver
             expected_wkt = 'POLYGON ((340299.94 4100199.8,340099.88 4100200.0,340299.94 4100199.8))'
         if last_feature.GetGeometryRef().ExportToWkt() != expected_wkt:
-            print(filename)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(filename)
 
     return 'success'
 

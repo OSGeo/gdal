@@ -36,6 +36,7 @@ from osgeo import osr
 from osgeo import ogr
 
 import gdaltest
+import pytest
 
 
 def _ogr_geojsonseq_create(filename, lco, expect_rs):
@@ -77,11 +78,11 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     if f['foo'] != 'bar"d' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     assert lyr.GetNextFeature() is None
     ds = None
 
@@ -129,7 +130,7 @@ def test_ogr_geojsonseq_seq_geometries():
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
             f.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -153,7 +154,7 @@ def test_ogr_geojsonseq_reprojection():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ogr.GetDriverByName('GeoJSONSeq').DeleteDataSource(filename)
@@ -169,11 +170,11 @@ def test_ogr_geojsonseq_read_rs_json_pretty():
     if f['foo'] != 'bar' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     assert lyr.GetNextFeature() is None
     return 'success'
 
@@ -182,7 +183,7 @@ def test_ogr_geojsonseq_test_ogrsf():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.geojsonl')

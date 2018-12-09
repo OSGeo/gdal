@@ -36,6 +36,7 @@ import os
 from osgeo import gdal
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Dummy test : there is no nodata value in the source dataset !
@@ -45,7 +46,7 @@ def test_gdal_fillnodata_1():
 
     script_path = test_py_scripts.get_py_script('gdal_fillnodata')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/byte.tif tmp/test_gdal_fillnodata_1.tif')
 
@@ -64,7 +65,7 @@ def test_gdal_fillnodata_2():
 
     script_path = test_py_scripts.get_py_script('gdal_fillnodata')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
 

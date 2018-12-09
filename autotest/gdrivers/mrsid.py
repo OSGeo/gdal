@@ -46,7 +46,7 @@ def test_mrsid_1():
 
     gdaltest.mrsid_drv = gdal.GetDriverByName('MrSID')
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('MrSID', 'mercator.sid', 1, None)
 
@@ -139,15 +139,14 @@ def test_mrsid_1():
 def test_mrsid_2():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/mercator.sid')
 
     try:
         data = ds.ReadRaster(0, 0, 515, 515, buf_xsize=10, buf_ysize=10)
     except:
-        gdaltest.post_reason('Small overview read failed: ' + gdal.GetLastErrorMsg())
-        return 'fail'
+        pytest.fail('Small overview read failed: ' + gdal.GetLastErrorMsg())
 
     ds = None
 
@@ -174,7 +173,7 @@ def test_mrsid_2():
 def test_mrsid_3():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/mercator.sid')
 
@@ -202,7 +201,7 @@ def test_mrsid_3():
 def test_mrsid_4():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('data/mercator_new.sid.aux.xml')
@@ -248,7 +247,7 @@ def test_mrsid_4():
 def test_mrsid_5():
     gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
 
@@ -261,7 +260,7 @@ def test_mrsid_5():
 def test_mrsid_6():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -294,7 +293,7 @@ def test_mrsid_6():
 def test_mrsid_7():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
@@ -302,13 +301,12 @@ def test_mrsid_7():
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
 
     if maxdiff > 5:
-        gdaltest.post_reason('Image too different from reference')
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
 
         ds = None
         ds_ref = None
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
     ds_ref = None
@@ -322,7 +320,7 @@ def test_mrsid_7():
 def test_mrsid_8():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     new_gt = (10000, 50, 0, 20000, 0, -50)
     new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],AUTHORITY["EPSG","27700"],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
@@ -361,7 +359,7 @@ def test_mrsid_8():
 def test_mrsid_9():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('data/mercator.sid', 'rb')
     data = f.read()
@@ -385,7 +383,7 @@ def test_mrsid_9():
 def test_mrsid_10():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('data/int16.jp2', 'rb')
     data = f.read()
@@ -409,7 +407,7 @@ def test_mrsid_10():
 def test_mrsid_11():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
@@ -427,10 +425,10 @@ def test_mrsid_11():
 def test_mrsid_online_1():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 29473 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
@@ -449,10 +447,10 @@ def test_mrsid_online_1():
 def test_mrsid_online_2():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 209 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
@@ -481,12 +479,12 @@ def test_mrsid_online_2():
 def test_mrsid_online_3():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
-        return 'skip'
+        pytest.skip()
 
     # checksum = 14443 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
@@ -506,8 +504,7 @@ def test_mrsid_online_3():
         print(ds_ref.GetRasterBand(1).Checksum())
 
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     return 'success'
 
@@ -517,12 +514,12 @@ def test_mrsid_online_3():
 def test_mrsid_online_4():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 53186 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)

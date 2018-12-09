@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 
 def test_derived_test1():
@@ -61,7 +62,7 @@ def test_derived_test1():
     if got_dsds != expected_dsds:
         import pprint
         pprint.pprint(got_dsds)
-        return 'fail'
+        pytest.fail()
 
     for key in expected_dsds:
         val = expected_dsds[key]
@@ -72,12 +73,12 @@ def test_derived_test1():
             if gt != expected_gt:
                 import pprint
                 pprint.pprint("Expected geotransform: " + str(expected_gt) + ", got " + str(gt))
-                return 'fail'
+                pytest.fail()
             prj = ds.GetProjection()
             if prj != expected_prj:
                 import pprint
                 pprint.pprint("Expected projection: " + str(expected_prj) + ", got: " + str(gt))
-                return 'fail'
+                pytest.fail()
     return 'success'
 
 
@@ -113,7 +114,7 @@ def test_derived_test2():
     if got_dsds != expected_dsds:
         import pprint
         pprint.pprint(got_dsds)
-        return 'fail'
+        pytest.fail()
 
     for key in expected_dsds:
         val = expected_dsds[key]
@@ -124,7 +125,7 @@ def test_derived_test2():
             if expected_cs[key] != cs:
                 import pprint
                 pprint.pprint("Expected checksum " + str(expected_cs[key]) + ", got " + str(cs))
-                return 'fail'
+                pytest.fail()
 
     return 'success'
 

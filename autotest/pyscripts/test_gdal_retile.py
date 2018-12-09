@@ -37,6 +37,7 @@ from osgeo import gdal
 from osgeo import osr
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Test gdal_retile.py
@@ -46,7 +47,7 @@ def test_gdal_retile_1():
 
     script_path = test_py_scripts.get_py_script('gdal_retile')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.mkdir('tmp/outretile')
@@ -83,7 +84,7 @@ def test_gdal_retile_2():
 
     script_path = test_py_scripts.get_py_script('gdal_retile')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.mkdir('tmp/outretile2')
@@ -107,7 +108,7 @@ def test_gdal_retile_3():
 
     script_path = test_py_scripts.get_py_script('gdal_retile')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
@@ -183,7 +184,7 @@ def test_gdal_retile_4():
 
     script_path = test_py_scripts.get_py_script('gdal_retile')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.mkdir('tmp/outretile4')

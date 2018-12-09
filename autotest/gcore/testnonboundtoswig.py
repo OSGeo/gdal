@@ -32,6 +32,7 @@
 import sys
 from sys import version_info
 from osgeo import gdal
+import pytest
 
 
 try:
@@ -62,7 +63,7 @@ def test_testnonboundtoswig_init():
 
     if gdal_handle_init:
         if gdal_handle is None:
-            return 'skip'
+            pytest.skip()
         return 'success'
 
     gdal_handle_init = True
@@ -70,12 +71,11 @@ def test_testnonboundtoswig_init():
     try:
         ctypes.cdll
     except ImportError:
-        print('cannot find ctypes')
-        return 'skip'
+        pytest.skip('cannot find ctypes')
 
     name = find_libgdal()
     if name is None:
-        return 'skip'
+        pytest.skip()
 
     print('Found libgdal we are running against : %s' % name)
 
@@ -97,15 +97,13 @@ def test_testnonboundtoswig_init():
             dynamic_version = str(dynamic_version, 'utf-8')
 
         if dynamic_version != static_version:
-            gdaltest.post_reason('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
             gdal_handle = None
             gdal_handle_stdcall = None
-            return 'skip'
+            pytest.skip('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
 
         return 'success'
     except:
-        print('cannot find gdal shared object')
-        return 'skip'
+        pytest.skip('cannot find gdal shared object')
 
 ###############################################################################
 # Call GDALDestroyDriverManager()
@@ -117,7 +115,7 @@ def GDALDestroyDriverManager():
         test_testnonboundtoswig_init()
 
     if gdal_handle is None:
-        return 'skip'
+        pytest.skip()
 
     gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = []
     gdal_handle_stdcall.GDALDestroyDriverManager.restype = None
@@ -136,7 +134,7 @@ def OGRCleanupAll():
         test_testnonboundtoswig_init()
 
     if gdal_handle is None:
-        return 'skip'
+        pytest.skip()
 
     gdal_handle_stdcall.OGRCleanupAll.argtypes = []
     gdal_handle_stdcall.OGRCleanupAll.restype = None
@@ -155,7 +153,7 @@ def OSRCleanup():
         test_testnonboundtoswig_init()
 
     if gdal_handle is None:
-        return 'skip'
+        pytest.skip()
 
     gdal_handle.OSRCleanup.argtypes = []
     gdal_handle.OSRCleanup.restype = None
@@ -171,7 +169,7 @@ def OSRCleanup():
 def test_testnonboundtoswig_GDALSimpleImageWarp():
 
     if gdal_handle is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     gt = src_ds.GetGeoTransform()
@@ -298,7 +296,7 @@ def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eS
 def test_testnonboundtoswig_VRTDerivedBands():
 
     if gdal_handle is None:
-        return 'skip'
+        pytest.skip()
 
     DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int,  # ret CPLErr
                                             ctypes.POINTER(ctypes.c_void_p),  # void **papoSources

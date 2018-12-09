@@ -53,7 +53,7 @@ def test_ogr_shape_1():
 
     if gdaltest.shape_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -62,7 +62,7 @@ def test_ogr_shape_1():
 def test_ogr_shape_2():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Create memory Layer
@@ -107,7 +107,7 @@ def test_ogr_shape_2():
 
 def test_ogr_shape_3():
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -138,7 +138,7 @@ def test_ogr_shape_3():
 def test_ogr_shape_4():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################################
     # Create feature without geometry.
@@ -167,7 +167,7 @@ def test_ogr_shape_4():
 def test_ogr_shape_5():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
@@ -186,7 +186,7 @@ def test_ogr_shape_5():
 def test_ogr_shape_6():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.shape_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'")
@@ -209,7 +209,7 @@ def test_ogr_shape_6():
 def test_ogr_shape_7():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_lyr.SetAttributeFilter(None)
 
@@ -232,7 +232,7 @@ def test_ogr_shape_7():
 def test_ogr_shape_8():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_ds.ExecuteSQL('CREATE SPATIAL INDEX ON tpoly')
@@ -267,7 +267,7 @@ def test_ogr_shape_8():
 def test_ogr_shape_9():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_ds = None
     gdaltest.shape_ds = ogr.Open('data/testpoly.shp')
@@ -279,7 +279,7 @@ def test_ogr_shape_9():
         return 'success'
     if not ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 1:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Do a fair size query that should pull in a few shapes.
@@ -288,7 +288,7 @@ def test_ogr_shape_9():
 def test_ogr_shape_10():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
@@ -304,7 +304,7 @@ def test_ogr_shape_10():
 def test_ogr_shape_11():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_lyr.SetAttributeFilter('FID = 5')
     gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
@@ -332,7 +332,7 @@ def test_ogr_shape_11():
 def test_ogr_shape_12():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     asm_ds = ogr.Open('data/asm.shp')
     asm_lyr = asm_ds.GetLayer(0)
@@ -367,7 +367,7 @@ def test_ogr_shape_12():
 def test_ogr_shape_13():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_ds = None
     gdaltest.shape_ds = ogr.Open('tmp/tpoly.shp', update=1)
@@ -406,7 +406,7 @@ def test_ogr_shape_13():
 def test_ogr_shape_14():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_ds = None
     gdaltest.shape_ds = ogr.Open('tmp/tpoly.shp', update=1)
@@ -441,7 +441,7 @@ def test_ogr_shape_14():
 def test_ogr_shape_15():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################################
     # Delete FID 9.
@@ -470,7 +470,7 @@ def test_ogr_shape_15():
 def test_ogr_shape_16():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_ds.ExecuteSQL('REPACK tpoly')
 
@@ -503,7 +503,7 @@ def test_ogr_shape_16():
 def test_ogr_shape_16_1():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################################
     # Add a new field.
@@ -531,7 +531,7 @@ def test_ogr_shape_16_1():
 def test_ogr_shape_17():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('data/can_caps.shp', 'tmp/can_caps.shp')
     shutil.copy('data/can_caps.shx', 'tmp/can_caps.shx')
@@ -622,7 +622,7 @@ def test_ogr_shape_19():
 def test_ogr_shape_20():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/emptymultipoint.shp')
     lyr = ds.GetLayer(0)
@@ -657,7 +657,7 @@ def test_ogr_shape_20():
 def test_ogr_shape_21():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     files = ['data/buggypoint.shp',
              'data/buggymultipoint.shp',
@@ -693,7 +693,7 @@ def test_ogr_shape_21():
 def test_ogr_shape_22():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Create memory Layer
@@ -822,7 +822,7 @@ def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
 def test_ogr_shape_23():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     test_geom_array = [
         ('points', 'POINT(0 1)', 'LINESTRING(0 1)', ogr.wkbPoint),
@@ -971,7 +971,7 @@ def test_ogr_shape_23():
 def test_ogr_shape_24():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer_name = 'touchingrings'
     wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0), (0 0,1 1,0 1,0 0)), ((100 100,100 200,200 200,200 100,100 100)))'
@@ -1054,7 +1054,7 @@ def test_ogr_shape_28():
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
-        return 'skip'
+        pytest.skip()
 
     for filename in ('tmp/hugedbf.dbf', 'tmp/hugedbf.shp', 'tmp/hugedbf.shx'):
         try:
@@ -1208,7 +1208,7 @@ def test_ogr_shape_30():
 def test_ogr_shape_31():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     fields = [('a', ogr.OFTReal),
               ('A', ogr.OFTInteger),
@@ -1284,7 +1284,7 @@ def test_ogr_shape_32():
     # 4.5 GB space available or give a new directory that does and delete the
     # directory afterwards.
 
-    return 'skip'  # pylint: disable=unreachable
+    pytest.skip()  # pylint: disable=unreachable
 
     # pylint: disable=unreachable
     from decimal import Decimal
@@ -1531,7 +1531,7 @@ def test_ogr_shape_39():
 def test_ogr_shape_40():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     datafiles = ('gjpoint.dbf', 'gjpoint.shp', 'gjpoint.shx')
     indexfiles = ('gjpoint.sbn', 'gjpoint.sbx', 'gjpoint.qix')
@@ -1600,7 +1600,7 @@ def test_ogr_shape_41():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('data/poly.shp', 'tmp/poly.shp')
     shutil.copy('data/poly.shx', 'tmp/poly.shx')
@@ -1624,7 +1624,7 @@ def test_ogr_shape_42():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('data/poly.shp', 'tmp/poly.shp')
     shutil.copy('data/poly.shx', 'tmp/poly.shx')
@@ -1648,12 +1648,11 @@ def test_ogr_shape_43():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
     if conn is None:
-        print('cannot open URL')
-        return 'skip'
+        pytest.skip('cannot open URL')
     conn.close()
 
     ds = ogr.Open('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
@@ -1678,12 +1677,11 @@ def ogr_shape_44_DISABLED():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
     if conn is None:
-        print('cannot open URL')
-        return 'skip'
+        pytest.skip('cannot open URL')
     conn.close()
 
     ds = ogr.Open('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/testshp')
@@ -1781,7 +1779,7 @@ def test_ogr_shape_46():
 def test_ogr_shape_47():
 
     if not gdaltest.support_symlink():
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/poly.zip')
     os.symlink('/vsizip/data/poly.zip', 'tmp/poly.zip')
@@ -1896,7 +1894,7 @@ def test_ogr_shape_50():
 
     ds = ogr.Open('data/chinese.dbf')
     if ds is None:
-        return 'skip'
+        pytest.skip()
     lyr = ds.GetLayer(0)
 
     reconv_possible = lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
@@ -1905,8 +1903,7 @@ def test_ogr_shape_50():
         assert not reconv_possible, \
             'Recode failed, but TestCapability(OLCStringsAsUTF8) returns TRUE'
 
-        gdaltest.post_reason('skipping test: iconv support needed')
-        return 'skip'
+        pytest.skip('skipping test: iconv support needed')
 
     # Setup the utf-8 string.
     if sys.version_info >= (3, 0, 0):
@@ -1929,8 +1926,7 @@ def test_ogr_shape_50():
 def test_ogr_shape_51():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would crash')
-        return 'skip'
+        pytest.skip('would crash')
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_51.shp')
     lyr = ds.CreateLayer('ogr_shape_51')
@@ -2546,11 +2542,11 @@ def test_ogr_shape_58():
 def test_ogr_shape_59():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     shp_ds = ogr.Open('data/testpointm.shp')
     if shp_ds is None:
-        return 'skip'
+        pytest.skip()
     shp_lyr = shp_ds.GetLayer(0)
 
     feat = shp_lyr.GetNextFeature()
@@ -2595,11 +2591,11 @@ def test_ogr_shape_59():
 def test_ogr_shape_60():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     shp_ds = ogr.Open('data/testpointzm.shp')
     if shp_ds is None:
-        return 'skip'
+        pytest.skip()
     shp_lyr = shp_ds.GetLayer(0)
 
     feat = shp_lyr.GetNextFeature()
@@ -2891,7 +2887,7 @@ def test_ogr_shape_67():
 
     try:
         os.stat('tmp/emptyshapefilewithsbn.sbn')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
@@ -2907,8 +2903,7 @@ def test_ogr_shape_67():
 def test_ogr_shape_68():
 
     if sys.platform == 'darwin':
-        print("Fails on MacOSX. Not sure why.")
-        return 'skip'
+        pytest.skip("Fails on MacOSX. Not sure why.")
 
     for i in range(2):
         if i == 1 and sys.platform != 'win32':
@@ -3015,7 +3010,7 @@ def test_ogr_shape_69():
 def test_ogr_shape_70():
 
     if sys.platform != 'win32':
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_70.shp')
     lyr = ds.CreateLayer('ogr_shape_70')
@@ -3055,11 +3050,10 @@ def test_ogr_shape_70():
 def test_ogr_shape_71():
 
     if sys.platform.find('linux') != 0:
-        return 'skip'
+        pytest.skip()
 
     if os.getuid() == 0:
-        print('running as root... skipping')
-        return 'skip'
+        pytest.skip('running as root... skipping')
 
     import stat
     shutil.copy('data/poly.shp', 'tmp/ogr_shape_71.shp')
@@ -3088,7 +3082,7 @@ def test_ogr_shape_72():
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
     if gdaltest.filesystem_supports_sparse_files('tmp') is False:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_72.shp')
     lyr = ds.CreateLayer('2gb', geom_type=ogr.wkbPoint)
@@ -3180,7 +3174,7 @@ def test_ogr_shape_73():
     got_geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != got_geom.ExportToWkt():
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -3207,7 +3201,7 @@ def test_ogr_shape_74():
     got_geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != got_geom.ExportToWkt():
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()
     gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', 'DEFAULT')
@@ -3216,7 +3210,7 @@ def test_ogr_shape_74():
     got_geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != got_geom.ExportToWkt():
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -3324,9 +3318,8 @@ def test_ogr_shape_78():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetField('dblfield') != 9007199254740992.:
-        gdaltest.post_reason('did not get expected value')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value')
     ds = None
 
     return 'success'
@@ -3453,7 +3446,7 @@ def test_ogr_shape_81():
 def test_ogr_shape_82():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # create ogrlayer to test cut long strings with UTF-8 encoding
     gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer('test_utf_cut', geom_type=ogr.wkbPoint, options=['ENCODING=UTF-8'])
@@ -3877,8 +3870,7 @@ def test_ogr_shape_94():
                 if expected_fail:
                     print('FIXME!:', i, shpt, geom_type, wkt, f.GetGeometryRef().ExportToIsoWkt())
                 else:
-                    print(i, shpt, geom_type, wkt, f.GetGeometryRef().ExportToIsoWkt())
-                    return 'fail'
+                    pytest.fail(i, shpt, geom_type, wkt, f.GetGeometryRef().ExportToIsoWkt())
             ds = None
             ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_94.shp')
 
@@ -3983,7 +3975,7 @@ def test_ogr_shape_97():
 def test_ogr_shape_98():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('SHAPE_RESTORE_SHX', 'TRUE')
     shutil.copy('data/can_caps.shp', 'tmp/can_caps.shp')
@@ -4103,9 +4095,8 @@ def test_ogr_shape_100():
 
         f = lyr.GetFeature(0)
         if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            print(variant)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(variant)
         with gdaltest.error_handler():
             f = lyr.GetFeature(1)
         assert f is None, variant
@@ -4113,9 +4104,8 @@ def test_ogr_shape_100():
         assert lyr.GetFeatureCount() == 1, variant
         f = lyr.GetNextFeature()
         if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            print(variant)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(variant)
         f = lyr.GetNextFeature()
         assert f is None, variant
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -4130,14 +4120,12 @@ def test_ogr_shape_100():
         assert lyr.GetFeatureCount() == 2, variant
         f = lyr.GetNextFeature()
         if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            print(variant)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(variant)
         f = lyr.GetNextFeature()
         if f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
-            print(variant)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(variant)
         f = lyr.GetNextFeature()
         assert f is None, variant
         ds = None
@@ -4182,9 +4170,8 @@ def test_ogr_shape_101():
         assert lyr.GetFeatureCount() == 1, i
         f = lyr.GetNextFeature()
         if f.GetFID() != 0 or f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
         f = lyr.GetNextFeature()
         assert f is None, i
 
@@ -4210,9 +4197,8 @@ def test_ogr_shape_101():
             assert lyr.GetFeatureCount() == 1, i
             f = lyr.GetNextFeature()
             if f.GetFID() != 0 or f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
-                print(i)
                 f.DumpReadable()
-                return 'fail'
+                pytest.fail(i)
             f = lyr.GetNextFeature()
             assert f is None, i
             ds = None
@@ -4233,9 +4219,8 @@ def test_ogr_shape_101():
             assert lyr.GetFeatureCount() == 2, i
             f = lyr.GetNextFeature()
             if f.GetFID() != 1 or f['foo'] != '4':
-                print(i)
                 f.DumpReadable()
-                return 'fail'
+                pytest.fail(i)
 
             ds = None
 
@@ -4479,9 +4464,8 @@ def test_ogr_shape_104():
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToIsoWkt() != expected_wkt:
-            print(wkt, lyr_type, options)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(wkt, lyr_type, options)
         ds = None
 
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
@@ -4608,11 +4592,11 @@ def test_ogr_shape_107():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
         f.DumpReadable()
-        return'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 6)':
         f.DumpReadable()
-        return'fail'
+        pytest.fail()
     ds = None
 
     gdal.VectorTranslate(copy_filename, filename)
@@ -4640,7 +4624,7 @@ def test_ogr_shape_107():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
         f.DumpReadable()
-        return'fail'
+        pytest.fail()
     ds = None
 
     gdal.VectorTranslate(copy_filename, filename)
@@ -4746,7 +4730,7 @@ def test_ogr_shape_111_delete_field_no_record():
 def test_ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.shape_ds = None
 

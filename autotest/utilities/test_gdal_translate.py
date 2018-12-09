@@ -36,6 +36,7 @@ import os
 from osgeo import gdal
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -43,7 +44,7 @@ import test_cli_utilities
 
 def test_gdal_translate_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif')
     assert (err is None or err == ''), 'got error/warning'
@@ -63,7 +64,7 @@ def test_gdal_translate_1():
 
 def test_gdal_translate_2():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of GTiff ../gcore/data/byte.tif tmp/test2.tif')
 
@@ -82,7 +83,7 @@ def test_gdal_translate_2():
 
 def test_gdal_translate_3():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/test3.tif')
 
@@ -103,7 +104,7 @@ def test_gdal_translate_3():
 
 def test_gdal_translate_4():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -b 3 -b 2 -b 1 ../gcore/data/rgbsmall.tif tmp/test4.tif')
 
@@ -126,7 +127,7 @@ def test_gdal_translate_4():
 
 def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/bug407.gif tmp/test5.tif')
 
@@ -158,7 +159,7 @@ def test_gdal_translate_5():
 
 def test_gdal_translate_6():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 40 40 ../gcore/data/byte.tif tmp/test6.tif')
 
@@ -177,7 +178,7 @@ def test_gdal_translate_6():
 
 def test_gdal_translate_7():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 200% 200% ../gcore/data/byte.tif tmp/test7.tif')
 
@@ -196,7 +197,7 @@ def test_gdal_translate_7():
 
 def test_gdal_translate_8():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/test8.tif')
 
@@ -220,7 +221,7 @@ def test_gdal_translate_8():
 
 def test_gdal_translate_9():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata 1 ../gcore/data/byte.tif tmp/test9.tif')
 
@@ -239,7 +240,7 @@ def test_gdal_translate_9():
 
 def test_gdal_translate_10():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -srcwin 0 0 1 1 ../gcore/data/byte.tif tmp/test10.tif')
 
@@ -258,7 +259,7 @@ def test_gdal_translate_10():
 
 def test_gdal_translate_11():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -projwin 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test11.tif')
 
@@ -280,7 +281,7 @@ def test_gdal_translate_11():
 
 def test_gdal_translate_12():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_ullr 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test12.tif')
 
@@ -302,7 +303,7 @@ def test_gdal_translate_12():
 
 def test_gdal_translate_13():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -mo TIFFTAG_DOCUMENTNAME=test13 ../gcore/data/byte.tif tmp/test13.tif')
 
@@ -322,7 +323,7 @@ def test_gdal_translate_13():
 
 def test_gdal_translate_14():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -co COMPRESS=LZW ../gcore/data/byte.tif tmp/test14.tif')
 
@@ -342,7 +343,7 @@ def test_gdal_translate_14():
 
 def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/A.TOC tmp/test15.tif')
 
@@ -359,7 +360,7 @@ def test_gdal_translate_15():
 
 def test_gdal_translate_16():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/test16.vrt')
 
@@ -378,7 +379,7 @@ def test_gdal_translate_16():
 
 def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/bug407.gif tmp/test17.vrt')
 
@@ -415,7 +416,7 @@ def test_gdal_translate_17():
 
 def test_gdal_translate_18():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/8bit_pal.bmp -of VRT tmp/test18_1.vrt')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_1.vrt -expand rgb -of VRT tmp/test18_2.vrt')
@@ -439,7 +440,7 @@ def test_gdal_translate_18():
 
 def test_gdal_translate_19():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif', 1, 1, 2)
     ct = gdal.ColorTable()
@@ -469,7 +470,7 @@ def test_gdal_translate_19():
 
 def test_gdal_translate_20():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata 255 ../gcore/data/byte.tif tmp/test_gdal_translate_20_src.tif')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata None tmp/test_gdal_translate_20_src.tif tmp/test_gdal_translate_20_dst.tif')
@@ -491,7 +492,7 @@ def test_gdal_translate_20():
 
 def test_gdal_translate_21():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of HFA ../gcore/data/utmsmall.img tmp/test_gdal_translate_21.img')
 
@@ -513,7 +514,7 @@ def test_gdal_translate_21():
 
 def test_gdal_translate_22():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of HFA -scale 0 255 0 128 ../gcore/data/utmsmall.img tmp/test_gdal_translate_22.img')
 
@@ -535,7 +536,7 @@ def test_gdal_translate_22():
 
 def test_gdal_translate_23():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -stats ../gcore/data/byte.tif tmp/test_gdal_translate_23.tif')
 
@@ -547,8 +548,7 @@ def test_gdal_translate_23():
 
     try:
         os.stat('tmp/test_gdal_translate_23.tif.aux.xml')
-        gdaltest.post_reason('did not expect .aux.xml file presence')
-        return 'fail'
+        pytest.fail('did not expect .aux.xml file presence')
     except OSError:
         pass
 
@@ -562,7 +562,7 @@ def test_gdal_translate_23():
 
 def test_gdal_translate_24():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q -srcwin -10 -10 40 40 ../gcore/data/byte.tif tmp/test_gdal_translate_24.tif')
 
@@ -582,7 +582,7 @@ def test_gdal_translate_24():
 
 def test_gdal_translate_25():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q ../gdrivers/data/int.img tmp/test_gdal_translate_25.tif -norat')
 
@@ -599,7 +599,7 @@ def test_gdal_translate_25():
 
 def test_gdal_translate_26():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_translate_26.xyz', 'wb')
     f.write("""X Y Z
@@ -624,9 +624,9 @@ def test_gdal_translate_26():
 
 def test_gdal_translate_27():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdalinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_translate_27.asc', 'wb')
     f.write("""ncols        2
@@ -669,7 +669,7 @@ cellsize     60.000000000000
 
 def test_gdal_translate_28():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/float64.asc tmp/test_gdal_translate_28.tif -oo datatype=float64')
 
@@ -685,7 +685,7 @@ def test_gdal_translate_28():
 
 def test_gdal_translate_29():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.tif -outsize 50% 50% -r cubic')
     assert (err is None or err == ''), 'got error/warning'
@@ -719,7 +719,7 @@ def test_gdal_translate_29():
 
 def test_gdal_translate_30():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -tr 30 30 ../gcore/data/byte.tif tmp/test_gdal_translate_30.tif')
 
@@ -739,7 +739,7 @@ def test_gdal_translate_30():
 
 def test_gdal_translate_31():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -projwin_srs EPSG:4267 -projwin -117.641168620797 33.9023526904262 -117.628110837847 33.8915970129613 ../gcore/data/byte.tif tmp/test_gdal_translate_31.tif')
 
@@ -761,7 +761,7 @@ def test_gdal_translate_31():
 
 def test_gdal_translate_32():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin 1 2 13 14 -outsize 150% 300%')
     ds = gdal.Open('tmp/test_gdal_translate_32.tif')
@@ -787,7 +787,7 @@ def test_gdal_translate_32():
 
 def test_gdal_translate_33():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 100 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
 
@@ -814,7 +814,7 @@ def test_gdal_translate_33():
 
 def test_gdal_translate_34():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/oddsize1bit.tif tmp/test_gdal_translate_34.vrt -of VRT -mo FOO=BAR')
 
@@ -832,7 +832,7 @@ def test_gdal_translate_34():
 
 def test_gdal_translate_35():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path())
     assert err.find('No source dataset specified') >= 0
@@ -853,7 +853,7 @@ def test_gdal_translate_35():
 
 def test_gdal_translate_36():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of gtiff data/onepixelcontinuous.img tmp/test_gdal_translate_36.tif')
 
@@ -876,7 +876,7 @@ def test_gdal_translate_36():
 
 def test_gdal_translate_37():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q -of gtiff data/onepixelthematic.img tmp/test_gdal_translate_37.tif')
 
@@ -898,7 +898,7 @@ def test_gdal_translate_37():
 
 def test_gdal_translate_38():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q -of hfa tmp/test_gdal_translate_37.tif tmp/test_gdal_translate_38.img')
 

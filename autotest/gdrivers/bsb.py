@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test driver availability
@@ -41,7 +42,7 @@ import gdaltest
 def test_bsb_0():
     gdaltest.bsb_dr = gdal.GetDriverByName('BSB')
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -51,7 +52,7 @@ def test_bsb_0():
 
 def test_bsb_1():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
 
@@ -63,11 +64,11 @@ def test_bsb_1():
 
 def test_bsb_2():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     md = gdaltest.bsb_dr.GetMetadata()
     if 'DMD_CREATIONDATATYPES' not in md:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
 
@@ -82,7 +83,7 @@ def test_bsb_2():
 
 def test_bsb_3():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_index.kap', 1, 30321)
 
@@ -96,7 +97,7 @@ def test_bsb_3():
 
 def test_bsb_4():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_with_line_break.kap', 1, 30321)
 
@@ -108,7 +109,7 @@ def test_bsb_4():
 
 def test_bsb_5():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated.kap', 1, 29696)
 
@@ -124,7 +125,7 @@ def test_bsb_5():
 
 def test_bsb_6():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated2.kap', 1, 29696)
 

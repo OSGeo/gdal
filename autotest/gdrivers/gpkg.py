@@ -31,6 +31,7 @@
 
 import os
 import sys
+import pytest
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
@@ -85,7 +86,7 @@ def test_gpkg_init():
 
     gdaltest.gpkg_dr = gdal.GetDriverByName('GPKG')
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.png_dr = gdal.GetDriverByName('PNG')
     gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
@@ -174,7 +175,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
     if expected_format is None:
         if mime_type is None:
             return 'success'
-        return 'fail'
+        pytest.fail()
 
     if expected_format == 'PNG':
         expected_mime_type = 'image/png'
@@ -195,9 +196,9 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 def test_gpkg_1():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -285,9 +286,9 @@ def test_gpkg_1():
 def test_gpkg_2():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.jpeg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -370,9 +371,9 @@ def test_gpkg_2():
 def test_gpkg_3():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webp_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -435,7 +436,7 @@ def test_gpkg_3():
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.webp_dr.Register()
-        return 'fail'
+        pytest.fail()
 
     # And at pixel reading time as well
     gdal.ErrorReset()
@@ -444,7 +445,7 @@ def test_gpkg_3():
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.webp_dr.Register()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     # Re-register driver
@@ -474,7 +475,7 @@ def test_gpkg_3():
 def test_gpkg_4(tile_drv_name='PNG'):
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if tile_drv_name == 'PNG':
         tile_drv = gdaltest.png_dr
         working_bands = 4
@@ -488,7 +489,7 @@ def test_gpkg_4(tile_drv_name='PNG'):
         else:
             working_bands = 3
     if tile_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -571,7 +572,7 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent=False, alpha_fully_opaque=
 def test_gpkg_7(tile_drv_name='PNG'):
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if tile_drv_name == 'PNG':
         tile_drv = gdaltest.png_dr
         working_bands = 4
@@ -585,7 +586,7 @@ def test_gpkg_7(tile_drv_name='PNG'):
         else:
             working_bands = 3
     if tile_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -678,9 +679,9 @@ def get_georeferenced_ds_with_pct32():
 def test_gpkg_10():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -773,7 +774,7 @@ def test_gpkg_10():
 def test_gpkg_11(tile_drv_name='JPEG'):
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if tile_drv_name == 'JPEG':
         tile_drv = gdaltest.jpeg_dr
         working_bands = 3
@@ -784,7 +785,7 @@ def test_gpkg_11(tile_drv_name='JPEG'):
         else:
             working_bands = 3
     if tile_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -833,9 +834,9 @@ def test_gpkg_12():
 def test_gpkg_13():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -889,9 +890,9 @@ def test_gpkg_13():
 def test_gpkg_14():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1144,10 +1145,9 @@ def test_gpkg_14():
     expected_cs = [0, 56451, 0, 0]
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         ds.GetRasterBand(4).Fill(255)
         # sys.exit(0)
-        return 'fail'
+        pytest.fail('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
     ds = None
 
     # Overflow occurred in ComputeTileAndPixelShifts()
@@ -1179,7 +1179,7 @@ def test_gpkg_14():
 def test_gpkg_15():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1298,9 +1298,9 @@ def test_gpkg_15():
 def test_gpkg_16():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.jpeg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1335,9 +1335,9 @@ def test_gpkg_16():
 def test_gpkg_17():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1470,9 +1470,9 @@ def test_gpkg_17():
 def test_gpkg_18():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
     gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, immediately after create copy
@@ -1573,9 +1573,9 @@ def test_gpkg_18():
 def test_gpkg_19():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1614,9 +1614,9 @@ def test_gpkg_19():
 def test_gpkg_20():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1694,9 +1694,9 @@ def test_gpkg_20():
 def test_gpkg_21():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1726,15 +1726,13 @@ def test_gpkg_21():
 
         assert not out_ds.GetMetadata('GEOPACKAGE')
         if out_ds.GetMetadataItem('foo') != foo_value:
-            print(out_ds.GetMetadataItem('foo'))
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail(out_ds.GetMetadataItem('foo'))
         md = out_ds.GetMetadata()
         if len(md) != 3 or md['foo'] != foo_value or \
                 md['IDENTIFIER'] != 'tmp' or md['ZOOM_LEVEL'] != '0':
-            print(md)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail(md)
 
         sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
         feat = sql_lyr.GetNextFeature()
@@ -1747,9 +1745,8 @@ def test_gpkg_21():
   </Metadata>
 </GDALMultiDomainMetadata>
 """ % foo_value:
-            print(i)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
         out_ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
@@ -1761,9 +1758,8 @@ def test_gpkg_21():
                 not feat.IsFieldSet('timestamp') or \
                 feat.GetField('md_file_id') != 1 or \
                 not feat.IsFieldNull('md_parent_id'):
-            print(i)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
         out_ds.ReleaseResultSet(sql_lyr)
 
         if i == 1:
@@ -1786,14 +1782,14 @@ def test_gpkg_21():
     if feat is not None:
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
     sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
     feat = sql_lyr.GetNextFeature()
     if feat is not None:
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
 
     out_ds.SetMetadataItem('IDENTIFIER', 'my_identifier')
@@ -1809,14 +1805,14 @@ def test_gpkg_21():
     if feat is not None:
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
     sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
     feat = sql_lyr.GetNextFeature()
     if feat is not None:
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
 
     # Write metadata in global scope
@@ -1841,7 +1837,7 @@ def test_gpkg_21():
 """:
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
@@ -1855,7 +1851,7 @@ def test_gpkg_21():
             not feat.IsFieldNull('md_parent_id'):
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
 
     out_ds.SetMetadataItem('bar', 'baz', 'GEOPACKAGE')
@@ -1914,14 +1910,14 @@ def test_gpkg_21():
     if feat is not None:
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
     sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference WHERE md_file_id < 10')
     feat = sql_lyr.GetNextFeature()
     if feat is not None:
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     out_ds.ReleaseResultSet(sql_lyr)
     out_ds = None
 
@@ -1946,11 +1942,11 @@ def get_georeferenced_greyalpha_ds():
 def test_gpkg_22(tile_drv_name='PNG'):
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if tile_drv_name is None:
         tile_drv = gdaltest.png_dr
         if gdaltest.jpeg_dr is None:
-            return 'skip'
+            pytest.skip()
         expected_cs = [2466, 10807]
         clamped_expected_cs = [1989, 1989, 1989, 11580]
     if tile_drv_name == 'PNG':
@@ -1970,7 +1966,7 @@ def test_gpkg_22(tile_drv_name='PNG'):
             expected_cs = [13112, 32706]
             clamped_expected_cs = [13380, 13380, 13380, 32744]
     if tile_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2036,9 +2032,9 @@ def test_gpkg_25():
 def test_gpkg_26():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2151,9 +2147,9 @@ def test_gpkg_26():
 def test_gpkg_27():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2177,9 +2173,9 @@ def test_gpkg_27():
 def test_gpkg_28():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2217,9 +2213,9 @@ def test_gpkg_28():
 def test_gpkg_29(x=0):
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2267,9 +2263,9 @@ def test_gpkg_30():
 def test_gpkg_31():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2294,9 +2290,9 @@ def test_gpkg_31():
 def test_gpkg_32():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2326,9 +2322,9 @@ def test_gpkg_32():
 def test_gpkg_33():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2355,9 +2351,9 @@ def test_gpkg_33():
 def test_gpkg_34():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2383,9 +2379,9 @@ def test_gpkg_34():
 def test_gpkg_35():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2433,9 +2429,9 @@ def test_gpkg_35():
 def test_gpkg_36():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/small_world_pct.tif')
     out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/gpkg_36.gpkg', src_ds, options=['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible', 'RESAMPLING=NEAREST'])
@@ -2462,7 +2458,7 @@ def test_gpkg_36():
 def test_gpkg_37():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('GPKG').Create('/vsimem/gpkg_37.gpkg', 205000, 200000)
     ds.SetGeoTransform([100, 0.000001, 0, 100, 0, -0.000001])
@@ -2483,7 +2479,7 @@ def test_gpkg_37():
 def test_gpkg_38():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     # Without padding, immediately after create copy
     src_ds = gdal.Open('data/small_world.tif')
@@ -2520,7 +2516,7 @@ def test_gpkg_38():
 def test_gpkg_39():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/int16.tif')
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format='GPKG')
@@ -2542,17 +2538,17 @@ def test_gpkg_39():
     f = sql_lyr.GetNextFeature()
     if f['scale'] != 1.0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if f['offset'] != 0.0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL('SELECT grid_cell_encoding FROM gpkg_2d_gridded_coverage_ancillary')
     f = sql_lyr.GetNextFeature()
     if f['grid_cell_encoding'] != 'grid-value-is-area':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # No metadata for now
@@ -2566,13 +2562,13 @@ def test_gpkg_39():
     f = sql_lyr.GetNextFeature()
     if f['application_id'] != 1196444487:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
     f = sql_lyr.GetNextFeature()
     if f['user_version'] != 10200:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Statistics not available on partial tile without nodata
@@ -2876,7 +2872,7 @@ cellsize     60
 def test_gpkg_40():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     # Should default to 1.2
@@ -2886,13 +2882,13 @@ def test_gpkg_40():
     f = sql_lyr.GetNextFeature()
     if f['application_id'] != 1196444487:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
     f = sql_lyr.GetNextFeature()
     if f['user_version'] != 10200:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
@@ -2904,13 +2900,13 @@ def test_gpkg_40():
     f = sql_lyr.GetNextFeature()
     if f['application_id'] != 1196437808:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
     f = sql_lyr.GetNextFeature()
     if f['user_version'] != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
@@ -2921,13 +2917,13 @@ def test_gpkg_40():
     f = sql_lyr.GetNextFeature()
     if f['application_id'] != 1196437809:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
     f = sql_lyr.GetNextFeature()
     if f['user_version'] != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
@@ -2938,13 +2934,13 @@ def test_gpkg_40():
     f = sql_lyr.GetNextFeature()
     if f['application_id'] != 1196444487:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
     f = sql_lyr.GetNextFeature()
     if f['user_version'] != 10200:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
@@ -2960,7 +2956,7 @@ def test_gpkg_41():
 
     if gdaltest.gpkg_dr is None or gdal.GetConfigOption('TRAVIS') is not None or \
        gdal.GetConfigOption('APPVEYOR') is not None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', 'YES')
     with gdaltest.error_handler():
@@ -2980,7 +2976,7 @@ def test_gpkg_41():
 def test_gpkg_42():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CREATE_GEOMETRY_COLUMNS', 'NO')
     gdal.Translate('/vsimem/gpkg_42.gpkg', 'data/byte.tif', format='GPKG')
@@ -3008,7 +3004,7 @@ def test_gpkg_42():
 def test_gpkg_43():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CREATE_RASTER_TABLES', 'NO')
     ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_43.gpkg', 0, 0, 0, gdal.GDT_Unknown)
@@ -3043,10 +3039,10 @@ def test_gpkg_43():
 def test_gpkg_44():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.gpkg.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
@@ -3059,7 +3055,7 @@ def test_gpkg_44():
 def test_gpkg_45():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.gpkg')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
@@ -3072,7 +3068,7 @@ def test_gpkg_45():
 def test_gpkg_46():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_46.gpkg', 6698, 6698,
                                  options=['TILING_SCHEME=GoogleMapsCompatible'])
@@ -3096,7 +3092,7 @@ def test_gpkg_46():
             f.DumpReadable()
             ds.ReleaseResultSet(sql_lyr)
             gdal.Unlink('/vsimem/gpkg_46.gpkg')
-            return 'fail'
+            pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
@@ -3113,7 +3109,7 @@ def test_gpkg_46():
 def test_gpkg_47():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tmpfile = '/vsimem/gpkg_47.gpkg'
     ds = gdaltest.gpkg_dr.CreateCopy(tmpfile,
@@ -3137,7 +3133,7 @@ def test_gpkg_47():
 def test_gpkg_48():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform == 'win32':
         filename = os.path.join(os.getcwd(), 'tmp', 'byte.gpkg')
@@ -3150,12 +3146,12 @@ def test_gpkg_48():
     ds = gdal.Open('GPKG:' + filename + ':foo')
     if ds is None:
         gdal.Unlink(filename)
-        return 'fail'
+        pytest.fail()
     ds = None
     ds = gdal.Open('GPKG:' + filename + ':bar')
     if ds is None:
         gdal.Unlink(filename)
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink(filename)
@@ -3168,7 +3164,7 @@ def test_gpkg_48():
 def test_gpkg_delete_raster_layer():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsimem/byte.gpkg'
     gdal.Translate(filename, 'data/byte.tif', format='GPKG',
@@ -3201,7 +3197,7 @@ def test_gpkg_delete_raster_layer():
 def test_gpkg_delete_gridded_coverage_raster_layer():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsimem/float32.gpkg'
     gdal.Translate(filename, 'data/float32.tif', format='GPKG',
@@ -3227,7 +3223,7 @@ def test_gpkg_delete_gridded_coverage_raster_layer():
 def test_gpkg_open_old_gpkg_elevation_tiles_extension():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.ErrorReset()
     ds = gdal.Open('data/uint16-old-elevation-extension.gpkg')
@@ -3243,7 +3239,7 @@ def test_gpkg_open_old_gpkg_elevation_tiles_extension():
 def test_gpkg_GeneralCmdLineProcessor():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_gdalinfo_path() is not None and test_cli_utilities.get_ogrinfo_path() is not None:
@@ -3262,7 +3258,7 @@ def test_gpkg_GeneralCmdLineProcessor():
 def test_gpkg_match_overview_factor():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/gpkg_match_overview_factor.gpkg',
                            open('data/test_match_overview_factor.gpkg', 'rb').read())
@@ -3282,7 +3278,7 @@ def test_gpkg_match_overview_factor():
 def test_gpkg_cleanup():
 
     if gdaltest.gpkg_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
     gdal.Unlink('/vsimem/tmp.gpkg.aux.xml')

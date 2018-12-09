@@ -34,6 +34,7 @@ from osgeo import gdal
 from osgeo import ogr
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Test a simple query with a where clause.
@@ -130,19 +131,19 @@ def test_ogr_sql_5():
     feat = sql_lyr.GetNextFeature()
     if feat['max_eas_id'] != 179:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat['min_eas_id'] != 158:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if abs(feat['avg_eas_id'] - 168.142857142857) > 1e-12:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat['count_eas_id'] != 7:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat['sum_eas_id'] != 1177:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -382,7 +383,7 @@ def test_ogr_sql_17():
 def test_ogr_sql_18():
 
     if sys.version_info >= (3, 0, 0):
-        return 'skip'
+        pytest.skip()
 
     name = 'data/departs.vrt'
 
@@ -393,7 +394,7 @@ def test_ogr_sql_18():
     sql_lyr = ds.ExecuteSQL(sql)
     if sql_lyr is None:
         ds = None
-        return 'fail'
+        pytest.fail()
     feat = sql_lyr.GetNextFeature()
     assert feat is not None
     feat = None
@@ -405,7 +406,7 @@ def test_ogr_sql_18():
     sql_lyr = ds.ExecuteSQL(sql)
     if sql_lyr is None:
         ds = None
-        return 'fail'
+        pytest.fail()
     feat = sql_lyr.GetNextFeature()
     assert feat is not None
     feat = None
@@ -648,8 +649,7 @@ def test_ogr_sql_28():
 
     try:
         sql_lyr = ds.ExecuteSQL(None)
-        gdaltest.post_reason('expected error on NULL query')
-        return 'fail'
+        pytest.fail('expected error on NULL query')
     except:
         pass
 
@@ -790,9 +790,8 @@ def test_ogr_sql_28():
         sql_lyr = ds.ExecuteSQL(query)
         gdal.PopErrorHandler()
         if sql_lyr is not None:
-            gdaltest.post_reason('expected None result on "%s"' % query)
             ds.ReleaseResultSet(sql_lyr)
-            return 'fail'
+            pytest.fail('expected None result on "%s"' % query)
         assert gdal.GetLastErrorType() != 0, ('expected error on "%s"' % query)
 
     ds = None
@@ -1003,28 +1002,24 @@ def test_ogr_sql_36():
         sql_lyr = ds.ExecuteSQL("select distinct %s from layer order by %s asc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) != 0:
-            print('field %s' % fieldname)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('field %s' % fieldname)
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) == 0:
-            print('field %s' % fieldname)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('field %s' % fieldname)
         ds.ReleaseResultSet(sql_lyr)
 
     for fieldname in ['intfield', 'int64field', 'floatfield', 'strfield']:
         sql_lyr = ds.ExecuteSQL("select distinct %s from layer order by %s desc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) == 0:
-            print('field %s' % fieldname)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('field %s' % fieldname)
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) != 0:
-            print('field %s' % fieldname)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('field %s' % fieldname)
         ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -1064,19 +1059,16 @@ def test_ogr_sql_37():
         sql_lyr = ds.ExecuteSQL("select count(%s), count(distinct %s), count(*) from layer" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.GetFieldAsInteger(0) != 2:
-            print('field %s' % fieldname)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('field %s' % fieldname)
 
         if feat.GetFieldAsInteger(1) != 1:
-            print('field %s' % fieldname)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('field %s' % fieldname)
 
         if feat.GetFieldAsInteger(2) != 4:
-            print('field %s' % fieldname)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('field %s' % fieldname)
 
         ds.ReleaseResultSet(sql_lyr)
 
@@ -1084,7 +1076,7 @@ def test_ogr_sql_37():
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull(0) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Fix crash when first values is null (#4509)
@@ -1092,25 +1084,25 @@ def test_ogr_sql_37():
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull('strfield_first_null'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = sql_lyr.GetNextFeature()
     if feat.GetFieldAsString('strfield_first_null') != 'foo':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL("select distinct strfield_never_set from layer")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull('strfield_never_set'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL("select min(intfield_never_set), max(intfield_never_set), avg(intfield_never_set), sum(intfield_never_set), count(intfield_never_set) from layer")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull(0) or feat.IsFieldSetAndNotNull(1) or feat.IsFieldSetAndNotNull(2) or feat.IsFieldSetAndNotNull(3) or feat.GetField(4) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -1130,8 +1122,7 @@ def test_ogr_sql_38():
 
     if abs(val - 1634833.39062) < 1e-5:
         return 'success'
-    print(val)
-    return 'fail'
+    pytest.fail(val)
 
 ###############################################################################
 # Test ORDER BY on a float special field
@@ -1148,8 +1139,7 @@ def test_ogr_sql_39():
 
     if abs(val - 5268.813) < 1e-5:
         return 'success'
-    print(val)
-    return 'fail'
+    pytest.fail(val)
 
 ###############################################################################
 # Test ORDER BY on a int special field
@@ -1248,9 +1238,8 @@ def test_ogr_sql_44():
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         f = sql_lyr.GetNextFeature()
         if f.IsFieldSetAndNotNull(0):
-            print(sql)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(sql)
         gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     # Valid hstore syntax
@@ -1266,9 +1255,8 @@ def test_ogr_sql_44():
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         f = sql_lyr.GetNextFeature()
         if f.GetField(0) != expected:
-            print(sql)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(sql)
         gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -1333,7 +1321,7 @@ def test_ogr_sql_46():
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 3 or feat.GetField(1) != 'id' or feat.GetField(2) != 3 or feat.GetField(3) != 3 or feat.GetField(4) != 'from':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = sql_lyr.GetNextFeature()
     assert feat is None
     ds.ReleaseResultSet(sql_lyr)
@@ -1342,7 +1330,7 @@ def test_ogr_sql_46():
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 3 or feat.GetField(1) != 3 or feat.GetField(2) != 2 or feat.GetField(3) != 2:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Not accepted
@@ -1412,7 +1400,7 @@ def test_ogr_sql_48():
     for f in sql_lyr:
         if f['int_field'] != i:
             f.DumpReadable()
-            return 'fail'
+            pytest.fail()
         i = i + 1
     ds.ReleaseResultSet(sql_lyr)
     assert i == 1001

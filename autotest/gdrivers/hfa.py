@@ -413,8 +413,7 @@ def test_hfa_clean_ige():
     try:
         open('tmp/igetest.ige')
     except IOError:
-        gdaltest.post_reason('ige file not created with USE_SPILL=YES')
-        return 'fail'
+        pytest.fail('ige file not created with USE_SPILL=YES')
 
     # confirm ige shows up in file list.
     ds = gdal.Open('tmp/igetest.img')
@@ -437,8 +436,7 @@ def test_hfa_clean_ige():
 
     try:
         open('tmp/igetest.ige')
-        gdaltest.post_reason('ige file not cleaned up properly.')
-        return 'fail'
+        pytest.fail('ige file not cleaned up properly.')
     except IOError:
         pass
 
@@ -486,7 +484,7 @@ def test_hfa_mapinformation_units():
 
     if gdaltest.equal_srs_from_wkt(expected_wkt, wkt):
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Write nodata value.
@@ -731,7 +729,7 @@ def test_hfa_unique_values_hist():
     try:
         gdal.RasterAttributeTable()
     except:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/i8u_c_i.img')
 
@@ -782,8 +780,7 @@ def test_hfa_xforms_3rd():
         try:
             value = float(xform_md[check_item[0]])
         except (TypeError, ValueError):
-            gdaltest.post_reason('metadata item %d missing' % check_item[0])
-            return 'fail'
+            pytest.fail('metadata item %d missing' % check_item[0])
 
         assert abs(value - check_item[1]) <= abs(value / 100000.0), \
             ('metadata item %s has wrong value: %.15g' %
@@ -823,7 +820,7 @@ def test_hfa_delete_colortable():
         # value for them
         ds = None
         gdal.GetDriverByName('HFA').Delete('tmp/i8u.img')
-        return 'skip'
+        pytest.skip()
 
     ds.GetRasterBand(1).SetColorTable(None)
     ds = None
@@ -861,7 +858,7 @@ def test_hfa_delete_colortable2():
         # value for them
         ds = None
         gdal.GetDriverByName('HFA').Delete('tmp/hfa_delete_colortable2.img')
-        return 'skip'
+        pytest.skip()
 
     ds.GetRasterBand(1).SetColorTable(None)
     ds = None
@@ -979,8 +976,7 @@ def test_hfa_write_bit2grayscale():
     # as an aside, confirm the .rrd file was deleted.
     try:
         open('tmp/small1bit.rrd')
-        gdaltest.post_reason('tmp/small1bit.rrd not deleted!')
-        return 'fail'
+        pytest.fail('tmp/small1bit.rrd not deleted!')
     except IOError:
         pass
 
@@ -1005,8 +1001,7 @@ def test_hfa_camera_md():
         try:
             value = md[check_item[0]]
         except IndexError:
-            gdaltest.post_reason('metadata item %d missing' % check_item[0])
-            return 'fail'
+            pytest.fail('metadata item %d missing' % check_item[0])
 
         assert value == check_item[1], ('metadata item %s has wrong value: %s' %
                                  (check_item[0], value))

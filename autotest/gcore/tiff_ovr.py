@@ -67,24 +67,20 @@ def tiff_ovr_check(src_ds):
         ovr_band = src_ds.GetRasterBand(i).GetOverview(0)
         if ovr_band.XSize != 10 or ovr_band.YSize != 10:
             msg = 'overview wrong size: band %d, overview 0, size = %d * %d,' % (i, ovr_band.XSize, ovr_band.YSize)
-            gdaltest.post_reason(msg)
-            return 'fail'
+            pytest.fail(msg)
 
         if ovr_band.Checksum() != 1087:
             msg = 'overview wrong checksum: band %d, overview 0, checksum = %d,' % (i, ovr_band.Checksum())
-            gdaltest.post_reason(msg)
-            return 'fail'
+            pytest.fail(msg)
 
         ovr_band = src_ds.GetRasterBand(i).GetOverview(1)
         if ovr_band.XSize != 5 or ovr_band.YSize != 5:
             msg = 'overview wrong size: band %d, overview 1, size = %d * %d,' % (i, ovr_band.XSize, ovr_band.YSize)
-            gdaltest.post_reason(msg)
-            return 'fail'
+            pytest.fail(msg)
 
         if ovr_band.Checksum() != 328:
             msg = 'overview wrong checksum: band %d, overview 1, checksum = %d,' % (i, ovr_band.Checksum())
-            gdaltest.post_reason(msg)
-            return 'fail'
+            pytest.fail(msg)
     return 'success'
 
 ###############################################################################
@@ -271,8 +267,7 @@ def test_tiff_ovr_6(both_endian):
     try:
         os.stat('tmp/ovr6.aux')
     except OSError:
-        gdaltest.post_reason('no external overview.')
-        return 'fail'
+        pytest.fail('no external overview.')
 
     cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1130
@@ -342,7 +337,7 @@ def test_tiff_ovr_9(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     shutil.copyfile('data/rgbsmall.tif', 'tmp/ovr9.tif')
 
@@ -672,7 +667,7 @@ def test_tiff_ovr_19(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif', 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
@@ -705,7 +700,7 @@ def test_tiff_ovr_20(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr20.tif', 100, 100, 1)
     ds = None
@@ -740,7 +735,7 @@ def test_tiff_ovr_21(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr21.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
@@ -775,7 +770,7 @@ def test_tiff_ovr_22(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr22.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
@@ -796,7 +791,7 @@ def test_tiff_ovr_22(both_endian):
 
     if err != 0:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Same as before, but BigTIFF might be not needed as we use a compression
@@ -808,7 +803,7 @@ def test_tiff_ovr_23(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr23.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
@@ -845,7 +840,7 @@ def test_tiff_ovr_24(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr24.tif', 85000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
@@ -996,8 +991,7 @@ def test_tiff_ovr_29(both_endian):
 
     try:
         os.stat('tmp/ovr29.png.ovr')
-        gdaltest.post_reason('.ovr file still present')
-        return 'fail'
+        pytest.fail('.ovr file still present')
     except OSError:
         pass
 
@@ -1063,7 +1057,7 @@ def test_tiff_ovr_32(both_endian):
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     # 4 regular band
     shutil.copyfile('data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif')
@@ -1330,7 +1324,7 @@ def test_tiff_ovr_38(both_endian):
     # Skip with old libtiff (crash with 3.8.2)
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr38.tif', src_ds, options=['COMPRESS=LZW', 'PREDICTOR=2'])
@@ -1524,7 +1518,7 @@ def test_tiff_ovr_43(both_endian):
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     old_accum = gdal.GetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
@@ -1543,7 +1537,7 @@ def test_tiff_ovr_43(both_endian):
     if gdal.GetLastErrorMsg().find(
             'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr43.tif', 16, 16, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(4000)
@@ -1636,10 +1630,10 @@ def test_tiff_ovr_46():
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     # Test NEAREST
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
@@ -1835,7 +1829,7 @@ def test_tiff_ovr_51():
 
     src_ds = gdal.Open('data/stefan_full_rgba_pct32.png')
     if src_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tiff_ovr_51.png', src_ds)
     ds.BuildOverviews('AVERAGE', [2])
@@ -1858,7 +1852,7 @@ def test_tiff_ovr_52():
 
     src_ds = gdal.Open('data/byte.tif')
     if src_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_52.tif', src_ds)
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
@@ -1909,7 +1903,7 @@ def test_tiff_ovr_53():
 
     src_ds = gdal.Open('data/byte.tif')
     if src_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_53.tif', src_ds)
     ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
@@ -1965,7 +1959,7 @@ def test_tiff_ovr_54():
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gdrivers/data/small_world.tif')
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_54.tif', src_ds)

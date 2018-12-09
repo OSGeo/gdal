@@ -38,6 +38,7 @@ import stat
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
@@ -346,7 +347,7 @@ def test_pam_11():
         f = open('tmpdirreadonly/test', 'w')
         if f is not None:
             f.close()
-            return 'skip'
+            pytest.skip()
     except IOError:
         pass
 

@@ -35,6 +35,7 @@ import os
 
 from osgeo import gdal
 import gdaltest
+import pytest
 
 ###############################################################################
 # Simple test
@@ -476,7 +477,7 @@ def test_gdal_translate_lib_colorinterp():
     try:
         with gdaltest.error_handler():
             gdal.Translate('', src_ds, options='-f MEM -colorinterp_0 alpha')
-        return 'fail'
+        pytest.fail()
     except:
         pass
 

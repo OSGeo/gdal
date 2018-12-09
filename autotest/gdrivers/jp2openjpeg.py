@@ -50,7 +50,7 @@ def test_jp2openjpeg_1():
 
     gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
@@ -63,7 +63,7 @@ def test_jp2openjpeg_1():
 def test_jp2openjpeg_2():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -96,7 +96,7 @@ def test_jp2openjpeg_2():
 def test_jp2openjpeg_3():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
@@ -123,7 +123,7 @@ def test_jp2openjpeg_3():
 def test_jp2openjpeg_4(out_filename='tmp/jp2openjpeg_4.jp2'):
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.jp2')
     src_wkt = src_ds.GetProjectionRef()
@@ -186,7 +186,7 @@ def test_jp2openjpeg_4_vsimem():
 def test_jp2openjpeg_5():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'int16.jp2', 1, None, options=['REVERSIBLE=YES', 'QUALITY=100', 'CODEC=J2K'])
     return tst.testCreateCopy()
@@ -198,7 +198,7 @@ def test_jp2openjpeg_5():
 def test_jp2openjpeg_6():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'll.jp2', 1, None)
 
@@ -217,7 +217,7 @@ def test_jp2openjpeg_6():
 def test_jp2openjpeg_7():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
     return tst.testOpen()
@@ -229,7 +229,7 @@ def test_jp2openjpeg_7():
 def test_jp2openjpeg_8():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
 
@@ -250,7 +250,7 @@ def test_jp2openjpeg_8():
 def test_jp2openjpeg_9():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
@@ -269,7 +269,7 @@ def test_jp2openjpeg_9():
 def test_jp2openjpeg_10():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_10.jp2', src_ds, options=['YCBCR420=YES', 'RESOLUTIONS=3'])
@@ -293,7 +293,7 @@ def test_jp2openjpeg_10():
 def test_jp2openjpeg_11():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
@@ -331,7 +331,7 @@ def test_jp2openjpeg_11():
 def test_jp2openjpeg_12():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Override projection
     shutil.copy('data/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
@@ -374,7 +374,7 @@ def test_jp2openjpeg_12():
 def test_jp2openjpeg_13():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Create a dataset with GCPs
     src_ds = gdal.Open('data/rgb_gcp.vrt')
@@ -422,7 +422,7 @@ def test_jp2openjpeg_13():
 def test_jp2openjpeg_14():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_2gcps.jp2')
     assert ds.GetGCPCount() == 2
@@ -436,7 +436,7 @@ def test_jp2openjpeg_14():
 def test_jp2openjpeg_15():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 256, 256)
     src_ds.GetRasterBand(1).Fill(255)
@@ -457,7 +457,7 @@ def test_jp2openjpeg_15():
 def test_jp2openjpeg_16():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_point.jp2')
     gt = ds.GetGeoTransform()
@@ -491,7 +491,7 @@ def test_jp2openjpeg_16():
 def test_jp2openjpeg_17():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte_point.jp2')
     ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_17.jp2', src_ds)
@@ -522,7 +522,7 @@ def test_jp2openjpeg_17():
 def test_jp2openjpeg_18():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Mem').Create('', 2000, 2000)
     ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_18.jp2', src_ds, options=['BLOCKXSIZE=2000', 'BLOCKYSIZE=2000'])
@@ -545,7 +545,7 @@ def test_jp2openjpeg_18():
 def test_jp2openjpeg_19():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
     assert ds.GetProjectionRef() != ''
@@ -560,15 +560,14 @@ def test_jp2openjpeg_19():
 def test_jp2openjpeg_20():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         import xmlvalidate
     except ImportError:
-        print('Cannot import xmlvalidate')
         import traceback
         traceback.print_exc(file=sys.stdout)
-        return 'skip'
+        pytest.skip('Cannot import xmlvalidate')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET.zip')
@@ -579,8 +578,7 @@ def test_jp2openjpeg_20():
         except OSError:
             url = 'http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip'
             if not gdaltest.download_file(url, 'SCHEMAS_OPENGIS_NET.zip', force_download=True, max_download_duration=20):
-                print('Cannot get SCHEMAS_OPENGIS_NET.zip')
-                return 'skip'
+                pytest.skip('Cannot get SCHEMAS_OPENGIS_NET.zip')
 
     try:
         os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
@@ -599,8 +597,7 @@ def test_jp2openjpeg_20():
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download=True, max_download_duration=10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xlink.xsd'
             if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download=True, max_download_duration=10):
-                print('Cannot get xlink.xsd')
-                return 'skip'
+                pytest.skip('Cannot get xlink.xsd')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd')
@@ -609,8 +606,7 @@ def test_jp2openjpeg_20():
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download=True, max_download_duration=10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xml.xsd'
             if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download=True, max_download_duration=10):
-                print('Cannot get xml.xsd')
-                return 'skip'
+                pytest.skip('Cannot get xml.xsd')
 
     xmlvalidate.transform_abs_links_to_ref_links('tmp/cache/SCHEMAS_OPENGIS_NET')
 
@@ -631,7 +627,7 @@ def test_jp2openjpeg_20():
 def test_jp2openjpeg_21():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_21.jp2', src_ds, options=['QUALITY=100', 'REVERSIBLE=YES', 'YCC=NO'])
@@ -652,7 +648,7 @@ def test_jp2openjpeg_21():
 def test_jp2openjpeg_22():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # RGBA
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
@@ -756,7 +752,7 @@ def test_jp2openjpeg_22():
 def test_jp2openjpeg_23():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/uint16.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_23.jp2', src_ds, options=['NBITS=9', 'QUALITY=100', 'REVERSIBLE=YES'])
@@ -786,7 +782,7 @@ def test_jp2openjpeg_23():
 def test_jp2openjpeg_24():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     #  Grey+alpha
     src_ds = gdal.Open('../gcore/data/stefan_full_greyalpha.tif')
@@ -829,7 +825,7 @@ def test_jp2openjpeg_24():
 def test_jp2openjpeg_25():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 5)
     src_ds.GetRasterBand(1).Fill(255)
@@ -861,8 +857,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     try:
         import validate_jp2
     except ImportError:
-        print('Cannot run validate_jp2')
-        return 'skip'
+        pytest.skip('Cannot run validate_jp2')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
@@ -884,7 +879,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
         return (res.error_count, res.warning_count)
     if res.error_count == 0 and res.warning_count == 0:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test INSPIRE_TG support
@@ -893,7 +888,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
 def test_jp2openjpeg_26():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 2048, 2048, 1)
     sr = osr.SpatialReference()
@@ -1039,7 +1034,7 @@ def test_jp2openjpeg_26():
 def test_jp2openjpeg_27():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Test optimization in GDALCopyWholeRasterGetSwathSize()
     # Not sure how we can check that except looking at logs with CPL_DEBUG=GDAL
@@ -1125,7 +1120,7 @@ def jp2openjpeg_test_codeblock(filename, codeblock_width, codeblock_height):
 def test_jp2openjpeg_28():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
 
@@ -1162,7 +1157,7 @@ def test_jp2openjpeg_28():
 def test_jp2openjpeg_29():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 128, 128, 1)
 
@@ -1199,7 +1194,7 @@ def test_jp2openjpeg_29():
 def test_jp2openjpeg_30():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
     ct = gdal.ColorTable()
@@ -1290,7 +1285,7 @@ def test_jp2openjpeg_30():
 def test_jp2openjpeg_31():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 3)
     src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GreenBand)
@@ -1332,7 +1327,7 @@ def test_jp2openjpeg_31():
 def test_jp2openjpeg_32():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
     gdal.PushErrorHandler()
@@ -1351,7 +1346,7 @@ def test_jp2openjpeg_32():
 def test_jp2openjpeg_33():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="100000" rasterYSize="100000">
   <VRTRasterBand dataType="Byte" band="1">
@@ -1375,7 +1370,7 @@ def test_jp2openjpeg_33():
 def test_jp2openjpeg_34():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler()
     ds = gdal.Open('data/dimensions_above_31bit.jp2')
@@ -1391,7 +1386,7 @@ def test_jp2openjpeg_34():
 def test_jp2openjpeg_35():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler()
     ds = gdal.Open('data/truncated.jp2')
@@ -1407,7 +1402,7 @@ def test_jp2openjpeg_35():
 def test_jp2openjpeg_36():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 16385)
     gdal.PushErrorHandler()
@@ -1424,7 +1419,7 @@ def test_jp2openjpeg_36():
 def test_jp2openjpeg_37():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
@@ -1520,7 +1515,7 @@ def test_jp2openjpeg_37():
 def test_jp2openjpeg_38():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
@@ -1558,7 +1553,7 @@ def test_jp2openjpeg_38():
 def test_jp2openjpeg_39():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
@@ -1629,7 +1624,7 @@ def test_jp2openjpeg_39():
 def test_jp2openjpeg_40():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # No metadata
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
@@ -1707,7 +1702,7 @@ def test_jp2openjpeg_40():
 def test_jp2openjpeg_41():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.jp2')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds,
@@ -1749,7 +1744,7 @@ def test_jp2openjpeg_41():
 def test_jp2openjpeg_42():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     gdal.PushErrorHandler()
@@ -1897,7 +1892,7 @@ def test_jp2openjpeg_43():
 def test_jp2openjpeg_44():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/utm.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_44.jp2', src_ds, options=['INSPIRE_TG=YES'])
@@ -1915,16 +1910,14 @@ def test_jp2openjpeg_44():
 def test_jp2openjpeg_45():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         if ogr.Open('../ogr/data/ionic_wfs.gml') is None:
-            print('GML read support missing')
-            return 'skip'
+            pytest.skip('GML read support missing')
 
     if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:
-        print('KML support missing')
-        return 'skip'
+        pytest.skip('KML support missing')
 
     # Test GMLJP2V2_DEF=YES
     src_ds = gdal.Open('data/byte.tif')
@@ -2537,7 +2530,7 @@ def test_jp2openjpeg_45():
         if ds.GetLayer(j).GetName() != expected_layers[j]:
             for i in range(ds.GetLayerCount()):
                 print(ds.GetLayer(i).GetName())
-            return 'fail'
+            pytest.fail()
     ds = None
 
     ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg=False)
@@ -2577,7 +2570,7 @@ def test_jp2openjpeg_45():
             data = gdal.VSIFReadL(1, 100000, fp).decode('ascii')
             gdal.VSIFCloseL(fp)
             print(data)
-        return 'fail'
+        pytest.fail()
 
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     assert ds.GetMetadata() == {'FOO': 'BAR'}
@@ -2601,8 +2594,8 @@ def test_jp2openjpeg_45():
 
     if ds is None:
         if gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml') is None:
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail()
     assert ds.GetLayerCount() == 1
     ds = None
 
@@ -2617,7 +2610,7 @@ def test_jp2openjpeg_45():
 def test_jp2openjpeg_46():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import json
 
@@ -2648,21 +2641,20 @@ def test_jp2openjpeg_46():
     del out_ds
     if gdal.GetLastErrorMsg().find('dynamic_metadata not supported') >= 0:
         gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
-        return 'skip'
+        pytest.skip()
     # Maybe a conflict with FileGDB libxml2
     if gdal.GetLastErrorMsg().find('An error occurred in libxml2') >= 0:
         gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     if gmljp2.find("""<gmljp2:metadata>1 str trueX
         <B>my_value</B>
 yeah: """) < 0:
-        print(gmljp2)
         if gmljp2.find("""<gmljp2:metadata>1 str true""") >= 0:
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail(gmljp2)
     ds = None
 
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
@@ -2782,7 +2774,7 @@ yeah: """) < 0:
 def test_jp2openjpeg_47():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/byte_rpc.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_47.jp2', src_ds)
@@ -2804,7 +2796,7 @@ def test_jp2openjpeg_47():
 def test_jp2openjpeg_48():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
@@ -2820,10 +2812,10 @@ def test_jp2openjpeg_48():
 def test_jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 32669 on my PC
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
@@ -2842,10 +2834,10 @@ def test_jp2openjpeg_online_1():
 def test_jp2openjpeg_online_2():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 15621 on my PC
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
@@ -2869,12 +2861,12 @@ def test_jp2openjpeg_online_2():
 def test_jp2openjpeg_online_3():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
@@ -2900,12 +2892,12 @@ def test_jp2openjpeg_online_3():
 def test_jp2openjpeg_online_4():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
@@ -2932,10 +2924,10 @@ def test_jp2openjpeg_online_4():
 def test_jp2openjpeg_online_5():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9.jp2', 'file9.jp2'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/file9.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()
@@ -2953,10 +2945,10 @@ def test_jp2openjpeg_online_5():
 def test_jp2openjpeg_online_6():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_03/file3.jp2', 'file3.jp2'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/file3.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()
@@ -2976,7 +2968,7 @@ def test_jp2openjpeg_online_6():
 def test_jp2openjpeg_49():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tests = [(None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
@@ -3099,7 +3091,7 @@ def test_jp2openjpeg_49():
 def test_jp2openjpeg_50():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/fake_sent2_preview.jp2')
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
@@ -3117,10 +3109,10 @@ def test_jp2openjpeg_50():
 def test_jp2openjpeg_codeblock_style():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.jp2openjpeg_drv.GetMetadataItem('DMD_CREATIONOPTIONLIST').find('CODEBLOCK_STYLE') < 0:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsimem/jp2openjpeg_codeblock_style.jp2'
     for options in [['CODEBLOCK_STYLE=63', 'REVERSIBLE=YES', 'QUALITY=100'],
@@ -3155,7 +3147,7 @@ def test_jp2openjpeg_codeblock_style():
 def test_jp2openjpeg_external_overviews_single_band():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsimem/jp2openjpeg_external_overviews_single_band.jp2'
     gdaltest.jp2openjpeg_drv.CreateCopy(filename,
@@ -3182,7 +3174,7 @@ def test_jp2openjpeg_external_overviews_single_band():
 def test_jp2openjpeg_external_overviews_multiple_band():
 
     if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsimem/jp2openjpeg_external_overviews_multiple_band.jp2'
     gdaltest.jp2openjpeg_drv.CreateCopy(filename,

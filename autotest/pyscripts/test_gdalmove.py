@@ -36,6 +36,7 @@ import sys
 from osgeo import gdal
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 #
@@ -45,7 +46,7 @@ def test_gdalmove_1():
 
     script_path = test_py_scripts.get_py_script('gdalmove')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdalmove_1.tif')
 

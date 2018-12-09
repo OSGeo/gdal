@@ -34,6 +34,7 @@ import sys
 
 from osgeo import gdal
 import gdaltest
+import pytest
 
 ###############################################################################
 # Open a little-endian NTv2 grid
@@ -131,12 +132,12 @@ def test_ntv2_7():
 def test_ntv2_online_1():
 
     if not gdaltest.download_file('http://download.osgeo.org/proj/nzgd2kgrid0005.gsb', 'nzgd2kgrid0005.gsb'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute=1)
     gt = (165.95, 0.1, 0.0, -33.95, 0.0, -0.1)
@@ -150,7 +151,7 @@ def test_ntv2_online_2():
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute=1)
     return tst.testCreateCopy(vsimem=1)
@@ -163,7 +164,7 @@ def test_ntv2_online_3():
     try:
         os.stat('tmp/cache/nzgd2kgrid0005.gsb')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute=1)
     return tst.testCreate(vsimem=1, out_bands=4)

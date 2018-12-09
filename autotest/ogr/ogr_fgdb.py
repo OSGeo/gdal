@@ -51,7 +51,7 @@ def test_ogr_fgdb_init():
 
     ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
     if ogrtest.openfilegdb_drv is not None:
@@ -99,7 +99,7 @@ def ogr_fgdb_is_sdk_1_4_or_later():
 
 def test_ogr_fgdb_1():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -184,13 +184,11 @@ def test_ogr_fgdb_1():
                 expected_wkt = data[2]
             if expected_wkt is None:
                 if feat.GetGeometryRef() is not None:
-                    print(data)
                     feat.DumpReadable()
-                    return 'fail'
+                    pytest.fail(data)
             elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
-                print(data)
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail(data)
 
         if feat.GetField('id') != 1 or \
            feat.GetField('smallint') != -13 or \
@@ -204,7 +202,7 @@ def test_ogr_fgdb_1():
            feat.GetField('binary2') != "123456" or \
            feat.GetField('smallint2') != -32768:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
         sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
         assert sql_lyr is not None
@@ -238,7 +236,7 @@ def test_ogr_fgdb_1():
 
 def test_ogr_fgdb_DeleteField():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open("tmp/test.gdb", update=1)
     lyr = ds.GetLayerByIndex(0)
@@ -292,11 +290,11 @@ def test_ogr_fgdb_DeleteField():
 
 def test_ogr_fgdb_2():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.gdb --config OGR_SKIP OpenFileGDB')
 
@@ -310,11 +308,11 @@ def test_ogr_fgdb_2():
 
 def test_ogr_fgdb_3():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/poly.gdb")
@@ -328,7 +326,7 @@ def test_ogr_fgdb_3():
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb')
     # print ret
@@ -343,11 +341,11 @@ def test_ogr_fgdb_3():
 
 def test_ogr_fgdb_sql():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/poly.gdb')
 
@@ -370,7 +368,7 @@ def test_ogr_fgdb_sql():
 
 def test_ogr_fgdb_4():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     for j in range(2):
 
@@ -410,15 +408,14 @@ def test_ogr_fgdb_4():
 
 def test_ogr_fgdb_5():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     assert ogrtest.fgdb_drv.DeleteDataSource("tmp/test.gdb") == 0, \
         'DeleteDataSource() failed'
 
     try:
         os.stat("tmp/test.gdb")
-        gdaltest.post_reason("tmp/test.gdb still existing")
-        return 'fail'
+        pytest.fail("tmp/test.gdb still existing")
     except OSError:
         pass
 
@@ -430,7 +427,7 @@ def test_ogr_fgdb_5():
 
 def test_ogr_fgdb_6():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -452,7 +449,7 @@ def test_ogr_fgdb_6():
 
 def test_ogr_fgdb_7():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -489,7 +486,7 @@ def test_ogr_fgdb_7():
 
 def test_ogr_fgdb_8():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -527,7 +524,7 @@ def test_ogr_fgdb_8():
 
 def test_ogr_fgdb_9():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -573,7 +570,7 @@ def test_ogr_fgdb_9():
 
 def test_ogr_fgdb_10():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -666,7 +663,7 @@ def test_ogr_fgdb_10():
 
 def test_ogr_fgdb_11():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -716,18 +713,18 @@ def test_ogr_fgdb_11():
        feat.GetField('esriFieldTypeGUID') != '{12345678-9ABC-DEF0-1234-567890ABCDEF}' or \
        (not feat.IsFieldSet('esriFieldTypeGlobalID')):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if not feat.IsFieldSet('esriFieldTypeGlobalID'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayerByName('test2')
     feat = lyr.GetNextFeature()
     if not feat.IsFieldSet('global_id'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -739,7 +736,7 @@ def test_ogr_fgdb_11():
 
 def test_ogr_fgdb_12():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/non_existing.gdb')
     assert ds is None
@@ -775,7 +772,7 @@ def test_ogr_fgdb_12():
 
 def test_ogr_fgdb_13():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/foo')
@@ -817,7 +814,7 @@ def test_ogr_fgdb_13():
 
 def test_ogr_fgdb_14():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     for _ in range(3):
         ds1 = ogr.Open("tmp/test.gdb")
@@ -835,7 +832,7 @@ def test_ogr_fgdb_14():
 
 def test_ogr_fgdb_15():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree('tmp/test3005.gdb')
@@ -859,7 +856,7 @@ def test_ogr_fgdb_15():
 
 def test_ogr_fgdb_16():
     if ogrtest.fgdb_drv is None or ogrtest.openfilegdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         gdaltest.unzip('tmp/cache', 'data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
@@ -868,7 +865,7 @@ def test_ogr_fgdb_16():
     try:
         os.stat('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.fgdb_drv.Deregister()
 
@@ -896,7 +893,7 @@ def test_ogr_fgdb_16():
 def test_ogr_fgdb_17():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -958,7 +955,7 @@ def test_ogr_fgdb_17():
 def test_ogr_fgdb_18():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -1028,7 +1025,7 @@ def ogr_fgdb_18_test_results():
        not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime') or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -1063,14 +1060,14 @@ def ogr_fgdb_19_open_update(filename):
 def test_ogr_fgdb_19():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # FIXME likely due to too old FileGDB SDK on those targets
     # fails with ERROR 1: Failed to open Geodatabase (The system cannot find the file specified.)
     # File "ogr_fgdb.py", line 1664, in ogr_fgdb_19
     # if ds.StartTransaction(force=True) != 0:
     if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb.ogrtmp")
@@ -1140,10 +1137,10 @@ def test_ogr_fgdb_19():
     try:
         os.stat('tmp/test.gdb.ogredited')
     except OSError:
-        return 'fail'
+        pytest.fail()
     try:
         os.stat('tmp/test.gdb.ogrtmp')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
@@ -1211,13 +1208,13 @@ def test_ogr_fgdb_19():
 
     try:
         os.stat('tmp/test.gdb.ogredited')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
     try:
         os.stat('tmp/test.gdb.ogrtmp')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
@@ -1264,13 +1261,13 @@ def test_ogr_fgdb_19():
 
     try:
         os.stat('tmp/test.gdb.ogredited')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
     try:
         os.stat('tmp/test.gdb.ogrtmp')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
@@ -1473,8 +1470,7 @@ def test_ogr_fgdb_19():
             if case == 'CASE4':
                 try:
                     os.stat('tmp/test.gdb.ogredited')
-                    print(case)
-                    return 'fail'
+                    pytest.fail(case)
                 except OSError:
                     pass
             else:
@@ -1602,15 +1598,15 @@ def test_ogr_fgdb_19():
 def test_ogr_fgdb_19bis():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
-        return 'skip'
+        pytest.skip()
 
     (bPerLayerCopyingForTransaction, ds) = ogr_fgdb_19_open_update('tmp/test.gdb')
     del ds
     if not bPerLayerCopyingForTransaction:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('FGDB_PER_LAYER_COPYING_TRANSACTION', 'FALSE')
     ret = test_ogr_fgdb_19()
@@ -1624,13 +1620,13 @@ def test_ogr_fgdb_19bis():
 def test_ogr_fgdb_20():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if ogrtest.openfilegdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
-        return 'skip'
+        pytest.skip()
 
     if not os.path.exists('tmp/test.gdb'):
         ds = ogrtest.fgdb_drv.CreateDataSource("tmp/test.gdb")
@@ -1676,7 +1672,7 @@ def test_ogr_fgdb_20():
     ret = lyr.CreateFeature(f)
     if ret != 0 or f.GetFID() != 2 or lyr.GetMetadataItem('2', 'MAP_OGR_FID_TO_FGDB_FID') is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # OGR FID = 4, FileGDB FID = 3
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1694,8 +1690,7 @@ def test_ogr_fgdb_20():
     ret = lyr.CreateFeature(f)
     if ret != 0 or f.GetFID() != 4 or lyr.GetMetadataItem('4', 'MAP_OGR_FID_TO_FGDB_FID') != '3':
         f.DumpReadable()
-        print(lyr.GetMetadataItem('4', 'MAP_OGR_FID_TO_FGDB_FID'))
-        return 'fail'
+        pytest.fail(lyr.GetMetadataItem('4', 'MAP_OGR_FID_TO_FGDB_FID'))
 
     #  Cannot open geodatabase at the moment since it is in 'FID hack mode'
     gdal.PushErrorHandler()
@@ -1727,7 +1722,7 @@ def test_ogr_fgdb_20():
     ret = lyr.CreateFeature(f)
     if ret != 0 or f.GetFID() != 3 or lyr.GetMetadataItem('3', 'MAP_OGR_FID_TO_FGDB_FID') != '4':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()
     expected = [(1, None), (2, None), (4, 3), (3, 4)]
@@ -1740,21 +1735,19 @@ def test_ogr_fgdb_20():
             assert f is not None
             if f.GetFID() != fid or f.GetField('id') != fid:
                 f.DumpReadable()
-                print(fid)
-                return 'fail'
+                pytest.fail(fid)
             got_fgdb_fid = lyr.GetMetadataItem(str(f.GetFID()), 'MAP_OGR_FID_TO_FGDB_FID')
             if got_fgdb_fid is None:
                 assert fgdb_fid is None
             elif int(got_fgdb_fid) != fgdb_fid:
-                print(got_fgdb_fid)
                 print(fgdb_fid)
-                return 'fail'
+                pytest.fail(got_fgdb_fid)
 
     for fid in [-9876543210, 0, 100]:
         f = lyr.GetFeature(fid)
         if f is not None:
             f.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     for invalid_fid in [-2, 0, 9876543210]:
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -1785,16 +1778,15 @@ def test_ogr_fgdb_20():
         ret = lyr.CreateFeature(f)
         if ret != 0 or f.GetFID() != fid or str(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID')) != str(fgdb_fid):
             f.DumpReadable()
-            print(fid)
             print(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID'))
-            return 'fail'
+            pytest.fail(fid)
 
     # Normally 12 should be attributed, but it has already been reserved
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
     if ret != 0 or f.GetFID() != 13:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f.SetField('id', f.GetFID())
     lyr.SetFeature(f)
 
@@ -1805,16 +1797,15 @@ def test_ogr_fgdb_20():
         assert f is not None
         if f.GetFID() != fid or f.GetField('id') != fid or str(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID')) != str(fgdb_fid):
             f.DumpReadable()
-            print(fid)
             print(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID'))
-            return 'fail'
+            pytest.fail(fid)
 
     lyr.SetAttributeFilter('id = 3')
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 3:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # This will cause a resync of indexes
     lyr.SetAttributeFilter('OBJECTID = 3')
@@ -1822,7 +1813,7 @@ def test_ogr_fgdb_20():
     f = lyr.GetNextFeature()
     if f.GetFID() != 3:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # No sparse pages
     lyr = ds.CreateLayer('ogr_fgdb_20_simple', geom_type=ogr.wkbNone)
@@ -1838,7 +1829,7 @@ def test_ogr_fgdb_20():
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Do not allow user set FID while a select layer is in progress
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1894,8 +1885,7 @@ def test_ogr_fgdb_20():
             assert f is not None, fid
             if f.GetFID() != fid or f.GetField('id') != fid:
                 f.DumpReadable()
-                print(fid)
-                return 'fail'
+                pytest.fail(fid)
 
         for fid in expected:
             lyr.SetAttributeFilter('id = %d' % fid)
@@ -1903,8 +1893,7 @@ def test_ogr_fgdb_20():
             f = lyr.GetNextFeature()
             if f.GetFID() != fid or f.GetField('id') != fid:
                 f.DumpReadable()
-                print(fid)
-                return 'fail'
+                pytest.fail(fid)
 
         lyr = ds.GetLayerByName('ogr_fgdb_20_simple')
         f = lyr.GetNextFeature()
@@ -1941,8 +1930,7 @@ def test_ogr_fgdb_20():
         ret = lyr.CreateFeature(f)
         if ret != 0 or f.GetFID() != fid or str(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID')) != str(fgdb_fid):
             f.DumpReadable()
-            print(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID'))
-            return 'fail'
+            pytest.fail(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID'))
 
     ds = None
 
@@ -1957,8 +1945,7 @@ def test_ogr_fgdb_20():
         ret = lyr.CreateFeature(f)
         if ret != 0 or f.GetFID() != fid or lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID') != str(fgdb_fid):
             f.DumpReadable()
-            print(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID'))
-            return 'fail'
+            pytest.fail(lyr.GetMetadataItem(str(fid), 'MAP_OGR_FID_TO_FGDB_FID'))
         ds = None
 
     # Check consistency after re-opening
@@ -1975,8 +1962,7 @@ def test_ogr_fgdb_20():
             assert f is not None, fid
             if f.GetFID() != fid or f.GetField('id') != fid:
                 f.DumpReadable()
-                print(fid)
-                return 'fail'
+                pytest.fail(fid)
 
     # Simulate different errors when database reopening is done
     # to sync ids
@@ -2033,15 +2019,14 @@ def test_ogr_fgdb_20():
 def test_ogr_fgdb_21():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogr_fgdb_is_sdk_1_4_or_later():
-        print('SDK 1.4 required')
-        return 'skip'
+        pytest.skip('SDK 1.4 required')
 
     # Fails on MULTIPOINT ZM
     if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604'):
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -2099,13 +2084,11 @@ def test_ogr_fgdb_21():
             expected_wkt = data[2]
         if expected_wkt is None:
             if feat.GetGeometryRef() is not None:
-                print(data)
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail(data)
         elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
-            print(data)
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail(data)
 
     return 'success'
 
@@ -2116,7 +2099,7 @@ def test_ogr_fgdb_21():
 def test_ogr_fgdb_22():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/curves.gdb')
     lyr = ds.GetLayerByName('line')
@@ -2156,7 +2139,7 @@ def test_ogr_fgdb_22():
 def test_ogr_fgdb_23():
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     os.chdir('data/curves.gdb')
     ds = ogr.Open('.')
@@ -2206,7 +2189,7 @@ def test_ogr_fgdb_25():
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     assert f is None
     ds.ReleaseResultSet(sql_lyr)
@@ -2216,7 +2199,7 @@ def test_ogr_fgdb_25():
     f = lyr.GetNextFeature()
     if f.GetFID() != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -2226,7 +2209,7 @@ def test_ogr_fgdb_25():
 
 def test_ogr_fgdb_cleanup():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")

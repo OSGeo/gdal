@@ -37,6 +37,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
@@ -216,7 +217,7 @@ def test_aaigrid_9():
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test AAIGRID_DATATYPE configuration option and DATATYPE open options
@@ -275,7 +276,7 @@ def test_aaigrid_11():
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test no data is written to correct precision with DECIMAL_PRECISION.

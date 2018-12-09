@@ -33,6 +33,7 @@ import sys
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
@@ -41,7 +42,7 @@ def test_ogr_rec_1():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.rec')
 

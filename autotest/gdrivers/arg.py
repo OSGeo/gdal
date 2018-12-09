@@ -36,6 +36,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 # given fmt and nodata, encodes a value as bytes
 
@@ -59,7 +60,7 @@ def encode(fmt, nodata, values):
 def test_arg_init():
     gdaltest.argDriver = gdal.GetDriverByName('ARG')
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.argJsontpl = """{
     "layer": "%(fmt)s",
@@ -119,14 +120,14 @@ def test_arg_init():
         gdaltest.argDriver = None
 
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
 
 def test_arg_unsupported():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # int8 is unsupported
     for d in gdaltest.argTests:
@@ -144,7 +145,7 @@ def test_arg_unsupported():
 
 def test_arg_getrastercount():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:
@@ -160,7 +161,7 @@ def test_arg_getrastercount():
 
 def test_arg_getgeotransform():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:
@@ -183,7 +184,7 @@ def test_arg_getgeotransform():
 
 def test_arg_blocksize():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     tifDriver = gdal.GetDriverByName('GTiff')
     assert tifDriver is not None
@@ -219,7 +220,7 @@ def test_arg_layername():
     behavior was wrong. See ticket #4609
     """
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/arg-int16.arg')
 
@@ -259,7 +260,7 @@ def test_arg_nodata():
     ARG spec. See ticket #4610
     """
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/arg-int8.arg')
 
@@ -277,7 +278,7 @@ def test_arg_byteorder():
     when the binary data is the same. Compare them byte-by-byte.
     """
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     tifDriver = gdal.GetDriverByName('GTiff')
     assert tifDriver is not None
@@ -320,7 +321,7 @@ def test_arg_byteorder():
 
 def test_arg_destroy():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:

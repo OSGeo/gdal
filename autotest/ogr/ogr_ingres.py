@@ -34,6 +34,7 @@ import sys
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Open INGRES test datasource.
@@ -45,11 +46,11 @@ def test_ogr_ingres_1():
 
     drv = ogr.GetDriverByName('Ingres')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.ingres_ds = ogr.Open('@driver=ingres,dbname=test', update=1)
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -60,7 +61,7 @@ def test_ogr_ingres_1():
 def test_ogr_ingres_2():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Create Layer
@@ -104,7 +105,7 @@ def test_ogr_ingres_2():
 
 def test_ogr_ingres_3():
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -140,7 +141,7 @@ def test_ogr_ingres_3():
 def test_ogr_ingres_4():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
@@ -163,9 +164,9 @@ def test_ogr_ingres_4():
 def test_ogr_ingres_5():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     sql_lyr = gdaltest.ingres_ds.ExecuteSQL(
@@ -191,7 +192,7 @@ def test_ogr_ingres_5():
 def test_ogr_ingres_6():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
@@ -214,7 +215,7 @@ def test_ogr_ingres_6():
 def test_ogr_ingres_7():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ####################################################################
     # Add new string field.
@@ -257,7 +258,7 @@ def test_ogr_ingres_7():
 def test_ogr_ingres_8():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.ingres_lyr.TestCapability('DeleteFeature'), \
         'DeleteFeature capability test failed.'
@@ -290,7 +291,7 @@ def test_ogr_ingres_8():
 def test_ogr_ingres_cleanup():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.ingres_ds.Destroy()
     gdaltest.ingres_ds = None

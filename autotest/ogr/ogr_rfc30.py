@@ -34,6 +34,7 @@ from osgeo import ogr
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Try ogr.Open(), Driver.CreateDataSource(), Driver.DeleteDataSource()
@@ -72,7 +73,7 @@ def test_ogr_rfc30_1():
 def test_ogr_rfc30_1_bis():
 
     if version_info >= (3, 0, 0):
-        return 'skip'
+        pytest.skip()
 
     filename = None
     layer_name = None

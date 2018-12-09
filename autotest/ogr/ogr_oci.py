@@ -48,16 +48,16 @@ def test_ogr_oci_1():
     try:
         ogr.GetDriverByName('OCI')
     except:
-        return 'skip'
+        pytest.skip()
 
     if 'OCI_DSNAME' not in os.environ:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_ds = ogr.Open(os.environ['OCI_DSNAME'])
 
     if gdaltest.oci_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Create Oracle table from data/poly.shp
@@ -66,7 +66,7 @@ def test_ogr_oci_1():
 def test_ogr_oci_2():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:tpoly')
@@ -141,7 +141,7 @@ def reverse_rings(poly):
 
 def test_ogr_oci_3():
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -185,7 +185,7 @@ def test_ogr_oci_3():
 def test_ogr_oci_4():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
 
@@ -222,7 +222,7 @@ def test_ogr_oci_4():
 def test_ogr_oci_5():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
@@ -242,7 +242,7 @@ def test_ogr_oci_5():
 def test_ogr_oci_6():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.oci_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
     assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 1
@@ -266,7 +266,7 @@ def test_ogr_oci_6():
 def test_ogr_oci_7():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_lyr.SetAttributeFilter(None)
 
@@ -290,7 +290,7 @@ def test_ogr_oci_7():
 def test_ogr_oci_8():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Preclean.
@@ -335,7 +335,7 @@ def test_ogr_oci_8():
 def test_ogr_oci_9():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Preclean.
@@ -377,7 +377,7 @@ def test_ogr_oci_9():
 def test_ogr_oci_10():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Create a test table.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -425,7 +425,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
 def test_ogr_oci_11():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -464,7 +464,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
 def test_ogr_oci_12():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -502,7 +502,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
 def test_ogr_oci_13():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -541,7 +541,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
 def test_ogr_oci_14():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -580,7 +580,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
 def test_ogr_oci_15():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -619,7 +619,7 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
 def test_ogr_oci_16():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     target_index = -1
     lc = gdaltest.oci_ds.GetLayerCount()
@@ -649,7 +649,7 @@ def test_ogr_oci_16():
 def test_ogr_oci_17():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:xpoly')
 
@@ -717,7 +717,7 @@ def test_ogr_oci_17():
 def test_ogr_oci_18():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     wkts = ['POINT (0 1)', 'LINESTRING (0 1,2 3)', 'POLYGON ((0 0,1 0,1 1,0 1,0 0))',
             'MULTIPOINT (0 1)', 'MULTILINESTRING ((0 1,2 3))', 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))',
@@ -777,7 +777,7 @@ def test_ogr_oci_18():
 def test_ogr_oci_19():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.oci_ds.CreateLayer('testdate', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('MYDATE', ogr.OFTDate))
@@ -794,7 +794,7 @@ def test_ogr_oci_19():
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != '2015/02/03' or f.GetField(1) != '2015/02/03 11:33:44':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -806,7 +806,7 @@ def test_ogr_oci_19():
 def test_ogr_oci_20():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
     lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_20', geom_type=ogr.wkbPoint, options=['GEOMETRY_NULLABLE=NO', 'DIM=2'])
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() == 0
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
@@ -879,7 +879,7 @@ def test_ogr_oci_20():
 def test_ogr_oci_21():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_21', geom_type=ogr.wkbPoint, options=['DIM=2'])
 
@@ -952,7 +952,7 @@ def test_ogr_oci_21():
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'c':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
@@ -960,7 +960,7 @@ def test_ogr_oci_21():
        not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime') or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
 
@@ -973,7 +973,7 @@ def test_ogr_oci_21():
 def test_ogr_oci_cleanup():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:tpoly')
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:xpoly')

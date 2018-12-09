@@ -34,6 +34,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Verify simple 3x3 averaging filter.
@@ -84,7 +85,7 @@ def test_vrtfilt_3():
     try:
         vrt_ds.GetRasterBand(1).SetMetadataItem
     except:
-        return 'skip'
+        pytest.skip()
 
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'vrt_sources')
     assert vrt_ds.GetRasterBand(1).Checksum() == 21890
@@ -113,7 +114,7 @@ def test_vrtfilt_4():
     try:
         vrt_ds.GetRasterBand(1).SetMetadataItem
     except:
-        return 'skip'
+        pytest.skip()
 
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'new_vrt_sources')
     assert vrt_ds.GetRasterBand(1).Checksum() == 21890

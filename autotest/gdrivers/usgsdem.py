@@ -95,12 +95,11 @@ def test_usgsdem_5():
                                                      options=['RESAMPLE=Nearest'])
 
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('Bad checksum.')
         print(ds2.GetRasterBand(1).Checksum())
         print(ds.GetRasterBand(1).Checksum())
         ds2 = None
         print(open('tmp/n43.dem', 'rb').read())
-        return 'fail'
+        pytest.fail('Bad checksum.')
 
     gt1 = ds.GetGeoTransform()
     gt2 = ds2.GetGeoTransform()

@@ -774,7 +774,7 @@ def test_lcp_21():
         import random
         import struct
     except ImportError:
-        return 'skip'
+        pytest.skip()
     mem_drv = gdal.GetDriverByName('MEM')
     assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
@@ -816,7 +816,7 @@ def test_lcp_22():
         import struct
         import numpy
     except ImportError:
-        return 'skip'
+        pytest.skip()
     mem_drv = gdal.GetDriverByName('MEM')
     assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')

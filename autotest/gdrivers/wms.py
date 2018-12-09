@@ -49,7 +49,7 @@ def test_wms_1():
 
     gdaltest.wms_drv = gdal.GetDriverByName('WMS')
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
     return 'success'
 
 ###############################################################################
@@ -59,7 +59,7 @@ def test_wms_1():
 def wms_2():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WMS service is online.
@@ -70,14 +70,13 @@ def wms_2():
     gdaltest.wms_ds = None
 
     if not gdaltest.wms_srv1_ok:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.wms_ds = gdal.Open('data/pop_wms.xml')
 
     if gdaltest.wms_ds is not None:
         return 'success'
-    gdaltest.post_reason('open failed.')
-    return 'fail'
+    pytest.fail('open failed.')
 
 ###############################################################################
 # Check various things about the configuration.
@@ -86,10 +85,10 @@ def wms_2():
 def wms_3():
 
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.wms_srv1_ok:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.wms_ds.RasterXSize == 36000 and gdaltest.wms_ds.RasterYSize == 14500 and gdaltest.wms_ds.RasterCount == 3, \
         'wrong size or bands'
@@ -115,10 +114,10 @@ def wms_3():
 def wms_4():
 
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.wms_srv1_ok:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -131,8 +130,7 @@ def wms_4():
     gdal.ErrorReset()
 
     if msg is not None and msg.find('Service denied due to system overload') != -1:
-        print(msg)
-        return 'skip'
+        pytest.skip(msg)
 
     assert cs == 57182, ('Wrong checksum: ' + str(cs))
 
@@ -145,7 +143,7 @@ def wms_4():
 def test_wms_5():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test
@@ -170,7 +168,7 @@ def test_wms_5():
 def test_wms_6():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test
@@ -195,12 +193,12 @@ def test_wms_6():
 def test_wms_7():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srv = 'http://tilecache.osgeo.org/wms-c/Basic.py'
     gdaltest.metacarta_tms = False
     if gdaltest.gdalurlopen(srv) is None:
-        return 'skip'
+        pytest.skip()
     gdaltest.metacarta_tms = True
 
     tms = """<GDAL_WMS>
@@ -246,7 +244,7 @@ def test_wms_7():
 def test_wms_8():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # server_url = 'http://tilecache.osgeo.org/wms-c/Basic.py'
     # wmstms_version = '/1.0.0/basic'
@@ -345,7 +343,7 @@ def test_wms_8():
 </GDAL_WMS>""" % server_url_mask
 
     if gdaltest.gdalurlopen(server_url) is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree('tmp/gdalwmscache')
@@ -366,7 +364,7 @@ def test_wms_8():
     data = ds.GetRasterBand(1).GetOverview(ovr_upper_level).ReadRaster(0, 0, 512, 512)
     if gdal.GetLastErrorMsg() != '':
         if gdaltest.gdalurlopen(server_url + zero_tile) is None:
-            return 'skip'
+            pytest.skip()
 
     ds = None
 
@@ -383,8 +381,7 @@ def test_wms_8():
         try:
             os.stat(expected_file)
         except OSError:
-            gdaltest.post_reason('%s should exist' % expected_file)
-            return 'fail'
+            pytest.fail('%s should exist' % expected_file)
 
     # Now, we should read from the cache
     ds = gdal.Open(tms)
@@ -463,7 +460,7 @@ def test_wms_8():
 def wms_9():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tms = """<GDAL_WMS>
     <Service name="TiledWMS">
@@ -478,9 +475,8 @@ def wms_9():
     if ds is None:
         srv = 'http://onearth.jpl.nasa.gov/wms.cgi?'
         if gdaltest.gdalurlopen(srv) is None:
-            return 'skip'
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+            pytest.skip()
+        pytest.fail('open failed.')
 
     expected_cs = 5478
     cs = ds.GetRasterBand(1).GetOverview(9).Checksum()
@@ -498,10 +494,10 @@ def wms_9():
 def wms_10():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.wms_srv1_ok:
-        return 'skip'
+        pytest.skip()
 
     name = "WMS:http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?"
     ds = gdal.Open(name)
@@ -527,14 +523,14 @@ def wms_10():
 def test_wms_11():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.skip_on_travis():
-        return 'skip'
+        pytest.skip()
 
     srv = 'http://onearth.jpl.nasa.gov/wms.cgi'
     if gdaltest.gdalurlopen(srv) is None:
-        return 'skip'
+        pytest.skip()
 
     name = "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"
     ds = gdal.Open(name)
@@ -560,18 +556,17 @@ def test_wms_11():
 def test_wms_12():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.metacarta_tms is not True:
-        return 'skip'
+        pytest.skip()
 
     name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
     ds = gdal.Open(name)
     if ds is None:
         if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
-            return 'skip'
-        gdaltest.post_reason('open of %s failed.' % name)
-        return 'fail'
+            pytest.skip()
+        pytest.fail('open of %s failed.' % name)
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
     assert subdatasets, 'did not get expected subdataset count'
@@ -585,9 +580,8 @@ def test_wms_12():
             ds = gdal.Open(name)
             if ds is None:
                 if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
-                    return 'skip'
-                gdaltest.post_reason('open of %s failed.' % name)
-                return 'fail'
+                    pytest.skip()
+                pytest.fail('open of %s failed.' % name)
             ds = None
 
     return 'success'
@@ -599,14 +593,14 @@ def test_wms_12():
 def test_wms_13():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open("data/DNEC_250K.vrt")
     if ds.ReadRaster(0, 0, 1024, 682) is None:
         srv = 'http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GeCapabilities'
         if gdaltest.gdalurlopen(srv) is None:
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -618,7 +612,7 @@ def test_wms_13():
 def test_wms_14():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open("""<GDAL_WMS>
   <Service name="VirtualEarth">
     <ServerUrl>http://a${server_num}.ortho.tiles.virtualearth.net/tiles/a${quadkey}.jpeg?g=90</ServerUrl>
@@ -654,13 +648,13 @@ def test_wms_14():
 def test_wms_15():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
     src_ds = gdal.Open("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true")
     if src_ds is None:
         srv = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true'
         if gdaltest.gdalurlopen(srv) is None:
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail()
     ds = gdal.GetDriverByName("WMS").CreateCopy("/vsimem/wms.xml", src_ds)
     src_ds = None
 
@@ -696,16 +690,15 @@ def test_wms_15():
 def test_wms_16():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     name = "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?tiled=TRUE"
     ds = gdal.Open(name)
     if ds is None:
         srv = 'http://demo.opengeo.org/geoserver/gwc/service/wms?'
         if gdaltest.gdalurlopen(srv) is None:
-            return 'skip'
-        gdaltest.post_reason('open of %s failed.' % name)
-        return 'fail'
+            pytest.skip()
+        pytest.fail('open of %s failed.' % name)
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
     assert subdatasets, 'did not get expected subdataset count'
@@ -735,21 +728,18 @@ def test_wms_16():
 
     # Some bug in GeoServer ?
     if val is not None and val.find('java.lang.NoSuchMethodError: org.geoserver.wms.WMS.pixelToWorld') >= 0:
-        print(val)
-        return 'skip'
+        pytest.skip(val)
 
     if val is not None and (val.find('Gateway Time-out') >= 0 or
                             val.find('HTTP error code : 5') >= 0):
-        return 'skip'
+        pytest.skip()
 
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
         if val.find('java.lang.NullPointerException') >= 0 or val.find('504 Gateway Time-out') >= 0 or val.find('java.lang.OutOfMemoryError') >= 0:
-            print(val)
-            return 'skip'
+            pytest.skip(val)
 
-        gdaltest.post_reason('expected a value')
         print(val)
-        return 'fail'
+        pytest.fail('expected a value')
 
     # Ask again. Should be cached
     val_again = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
@@ -763,12 +753,10 @@ def test_wms_16():
     val2 = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
         if val2.find('java.lang.NullPointerException') >= 0 or val2.find('504 Gateway Time-out') >= 0 or val2.find('java.lang.OutOfMemoryError') >= 0:
-            print(val2)
-            return 'skip'
+            pytest.skip(val2)
 
-        gdaltest.post_reason('expected a value')
         print(val2)
-        return 'fail'
+        pytest.fail('expected a value')
 
     ds = None
 
@@ -781,11 +769,11 @@ def test_wms_16():
 def wms_17():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srv = 'http://onmoon.lmmp.nasa.gov/sites/wms.cgi?'
     if gdaltest.gdalurlopen(srv) is None:
-        return 'skip'
+        pytest.skip()
 
     name = '<GDAL_WMS><Service name="TiledWMS"><ServerUrl>http://onmoon.lmmp.nasa.gov/sites/wms.cgi?</ServerUrl><TiledGroupName>King Crater DEM Color Confidence, LMMP</TiledGroupName></Service></GDAL_WMS>'
     ds = gdal.Open(name)
@@ -805,7 +793,7 @@ def wms_17():
 def test_wms_18():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test.
@@ -823,7 +811,7 @@ def test_wms_18():
 
     # add getting image test
     if gdaltest.gdalurlopen('http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer') is None:
-        return 'skip'
+        pytest.skip()
 
     expected_cs = 12824
     cs = ds.GetRasterBand(1).Checksum()
@@ -840,15 +828,14 @@ def test_wms_18():
 def test_wms_19():
 
     if gdaltest.wms_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('IIP:http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif')
 
     if ds is None:
         if gdaltest.gdalurlopen('http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif&obj=Basic-Info') is None:
-            return 'skip'
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+            pytest.skip()
+        pytest.fail('open failed.')
 
     assert ds.RasterXSize == 86400 and ds.RasterYSize == 43200 and ds.RasterCount == 3, \
         'wrong size or bands'

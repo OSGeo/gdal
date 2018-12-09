@@ -119,8 +119,7 @@ def test_reproject_3():
     expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
         import struct
-        print(struct.unpack('B' * 18, got_data))
-        return 'fail'
+        pytest.fail(struct.unpack('B' * 18, got_data))
 
     return 'success'
 
@@ -145,8 +144,7 @@ def test_reproject_4():
     expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
         import struct
-        print(struct.unpack('B' * 18, got_data))
-        return 'fail'
+        pytest.fail(struct.unpack('B' * 18, got_data))
 
     return 'success'
 

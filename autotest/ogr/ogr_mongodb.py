@@ -39,6 +39,7 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test if driver is available
@@ -50,7 +51,7 @@ def test_ogr_mongodb_init():
 
     ogrtest.mongodb_drv = ogr.GetDriverByName('MongoDB')
     if ogrtest.mongodb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if 'MONGODB_TEST_HOST' in os.environ:
         ogrtest.mongodb_test_host = os.environ['MONGODB_TEST_HOST']
@@ -90,9 +91,8 @@ def test_ogr_mongodb_init():
 
     ds = ogr.Open(ogrtest.mongodb_test_uri)
     if ds is None:
-        print('cannot open %s' % ogrtest.mongodb_test_uri)
         ogrtest.mongodb_drv = None
-        return 'skip'
+        pytest.skip('cannot open %s' % ogrtest.mongodb_test_uri)
 
     return 'success'
 
@@ -102,7 +102,7 @@ def test_ogr_mongodb_init():
 
 def test_ogr_mongodb_1():
     if ogrtest.mongodb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # The below options must be used the very first time mongoDB is initialized
     # otherwise they will get ignored
@@ -252,7 +252,7 @@ def test_ogr_mongodb_1():
 
 def test_ogr_mongodb_2():
     if ogrtest.mongodb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.mongodb_ds = ogr.Open(ogrtest.mongodb_test_uri, update=1)
     assert ogrtest.mongodb_ds.GetLayerByName('not_existing') is None
@@ -333,17 +333,17 @@ def test_ogr_mongodb_2():
     f = lyr.GetNextFeature()
     if not f.Equal(f_ref):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test GetFeature()
     f = lyr.GetFeature(1)
     if not f.Equal(f_ref):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test SetFeature()
     f['bool'] = 0
@@ -352,7 +352,7 @@ def test_ogr_mongodb_2():
     f = lyr.GetFeature(1)
     if f['bool'] != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test (not working) DeleteFeature()
     gdal.PushErrorHandler()
@@ -366,14 +366,14 @@ def test_ogr_mongodb_2():
     f = lyr.GetNextFeature()
     if not f.Equal(f_ref):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetAttributeFilter('{ "int": 2 }')
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test OGR filter
     lyr.SetAttributeFilter('int = 1')
@@ -381,14 +381,14 @@ def test_ogr_mongodb_2():
     f = lyr.GetNextFeature()
     if not f.Equal(f_ref):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetAttributeFilter('int = 2')
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test geometry filter
     lyr.SetAttributeFilter(None)
@@ -397,14 +397,14 @@ def test_ogr_mongodb_2():
     f = lyr.GetNextFeature()
     if not f.Equal(f_ref):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetSpatialFilterRect(1.1, 49.1, 1.9, 49.9)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = f_ref.Clone()
     f.SetFID(-1)
@@ -478,20 +478,20 @@ def test_ogr_mongodb_2():
            f.GetFieldDefnRef(i).GetSubType() != f_ref.GetFieldDefnRef(i).GetSubType():
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
     for i in range(f_ref.GetDefnRef().GetGeomFieldCount()):
         if not f.GetGeomFieldRef(i).Equals(f_ref.GetGeomFieldRef(i)) or \
                 f.GetGeomFieldDefnRef(i).GetName() != f_ref.GetGeomFieldDefnRef(i).GetName() or \
                 f.GetGeomFieldDefnRef(i).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     lyr.SetSpatialFilterRect(2.1, 49.1, 2.9, 49.9)
     lyr.ResetReading()
     if f is None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Create a feature only from its _json content and do not store any ogr metadata related to the layer
     ogrtest.mongodb_layer_name_no_ogr_metadata = ogrtest.mongodb_layer_name + "_no_ogr_metadata"
@@ -635,7 +635,7 @@ def test_ogr_mongodb_2():
                 f.GetFieldDefnRef(j).GetSubType() != f_ref.GetFieldDefnRef(i).GetSubType():
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
     for i in range(f_ref.GetDefnRef().GetGeomFieldCount()):
         # Order might be a bit different...
         j = f.GetDefnRef().GetGeomFieldIndex(f_ref.GetGeomFieldDefnRef(i).GetNameRef())
@@ -644,15 +644,14 @@ def test_ogr_mongodb_2():
                 f.GetGeomFieldDefnRef(j).GetType() != f_ref.GetGeomFieldDefnRef(i).GetType():
             f.DumpReadable()
             f_ref.DumpReadable()
-            print(f.GetGeomFieldDefnRef(j).GetType())
             print(f_ref.GetGeomFieldDefnRef(i).GetType())
-            return 'fail'
+            pytest.fail(f.GetGeomFieldDefnRef(j).GetType())
 
     lyr.SetSpatialFilterRect(2.1, 49.1, 2.9, 49.9)
     lyr.ResetReading()
     if f is None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ogrtest.mongodb_ds.GetLayerByName(ogrtest.mongodb_layer_name_guess_types)
 
@@ -701,11 +700,11 @@ def test_ogr_mongodb_2():
        f['int64list'] != [1, 1234567890123456, 1, -9223372036854775808, 9223372036854775807, -9223372036854775808, 9223372036854775807, 1] or \
        f['int'] != -2147483648 or f['int64'] != -9223372036854775808 or f['real'] - 1 != f['real']:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f['int'] != 2147483647 or f['int64'] != 9223372036854775807 or f['real'] + 1 != f['real']:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ogrtest.mongodb_ds.GetLayerByName(ogrtest.mongodb_layer_name_with_2d_index)
     assert lyr.TestCapability(ogr.OLCFastSpatialFilter) != 0
@@ -778,11 +777,11 @@ def test_ogr_mongodb_2():
 
 def test_ogr_mongodb_3():
     if ogrtest.mongodb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + ogrtest.mongodb_test_uri)
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
@@ -795,7 +794,7 @@ def test_ogr_mongodb_3():
 
 def test_ogr_mongodb_cleanup():
     if ogrtest.mongodb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.mongodb_ds = None
 

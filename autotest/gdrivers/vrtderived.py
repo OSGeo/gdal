@@ -203,7 +203,7 @@ def test_vrtderived_5():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'YES')
     ds = gdal.Open('data/n43_hillshade.vrt')
@@ -223,7 +223,7 @@ def test_vrtderived_6():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'YES')
     ds = gdal.Open('data/python_ones.vrt')
@@ -241,7 +241,7 @@ def test_vrtderived_7():
 
     import test_cli_utilities
     if test_cli_utilities.get_gdalinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
@@ -250,9 +250,8 @@ def test_vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        print(ret)
         print(err)
-        return 'fail'
+        pytest.fail(ret)
 
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_PATH NO')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
@@ -261,9 +260,8 @@ def test_vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        print(ret)
         print(err)
-        return 'fail'
+        pytest.fail(ret)
 
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_SYMLINK NO')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
@@ -272,9 +270,8 @@ def test_vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        print(ret)
         print(err)
-        return 'fail'
+        pytest.fail(ret)
 
     # Invalid shared object name
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO foo')
@@ -302,7 +299,7 @@ def test_vrtderived_8():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'NO')
     ds = gdal.Open('data/n43_hillshade.vrt')
@@ -328,7 +325,7 @@ def test_vrtderived_9():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     # Missing PixelFunctionType
     with gdaltest.error_handler():
@@ -616,7 +613,7 @@ def test_vrtderived_10():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     content = """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -684,7 +681,7 @@ def test_vrtderived_11():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('data/n43_hillshade.vrt', 'tmp/n43_hillshade.vrt')
     shutil.copy('data/n43.dt0', 'tmp/n43.dt0')
@@ -714,7 +711,7 @@ def test_vrtderived_12():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     for dt in ["Byte", "UInt16", "Int16", "UInt32", "Int32",
                "Float32", "Float64",
@@ -773,7 +770,7 @@ def test_vrtderived_13():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
     # Will test the VRTDerivedRasterBand::IGetDataCoverageStatus() interface
@@ -797,7 +794,7 @@ def test_vrtderived_14():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
     ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtderived_14.vrt', gdal.Open('data/python_ones.vrt'))
@@ -847,7 +844,7 @@ def test_vrtderived_15():
         import numpy
         numpy.ones
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
 

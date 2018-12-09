@@ -35,6 +35,7 @@ from osgeo import gdal
 from osgeo import ogr
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Test -single
@@ -43,7 +44,7 @@ import test_py_scripts
 def test_ogrmerge_1():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-single -o /vsimem/out.shp ../ogr/data/poly.shp ../ogr/data/poly.shp')
@@ -64,7 +65,7 @@ def test_ogrmerge_1():
 def test_ogrmerge_2():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-single -o /vsimem/out.shp ../ogr/data/poly.shp')
@@ -87,7 +88,7 @@ def test_ogrmerge_2():
 def test_ogrmerge_3():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-overwrite_ds -o /vsimem/out.shp ../ogr/data/poly.shp')
@@ -110,7 +111,7 @@ def test_ogrmerge_3():
 def test_ogrmerge_4():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp')
@@ -132,7 +133,7 @@ def test_ogrmerge_4():
 def test_ogrmerge_5():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp ../ogr/data/testpoly.shp -nln '
@@ -158,7 +159,7 @@ def test_ogrmerge_5():
 def test_ogrmerge_6():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
@@ -170,7 +171,7 @@ def test_ogrmerge_6():
     f = lyr.GetNextFeature()
     if f['source'] != 'foo_../ogr/data/poly.shp_poly_0_poly_0':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
@@ -184,7 +185,7 @@ def test_ogrmerge_6():
 def test_ogrmerge_7():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     # No match in -single mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
@@ -239,7 +240,7 @@ def test_ogrmerge_7():
 def test_ogrmerge_8():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
@@ -269,7 +270,7 @@ def test_ogrmerge_8():
 def test_ogrmerge_9():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
@@ -299,7 +300,7 @@ def test_ogrmerge_9():
 def test_ogrmerge_10():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-single -f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
@@ -327,7 +328,7 @@ def test_ogrmerge_10():
 def test_ogrmerge_11():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-f VRT -o /vsimem/out.vrt ../ogr/data/poly.shp '
@@ -355,7 +356,7 @@ def test_ogrmerge_11():
 def test_ogrmerge_12():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     with open('tmp/tmp.json', 'wt') as f:
         f.write("""{ "type": "FeatureCollection", "name": "\xc3\xa9ven", "features": [ { "type": "Feature", "properties": {}, "geometry": null} ]}""")

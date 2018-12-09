@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 #
 # The rasdaman DB must be created like this :
@@ -48,7 +49,7 @@ import gdaltest
 def test_rasdaman_1():
     gdaltest.rasdamanDriver = gdal.GetDriverByName('RASDAMAN')
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from rgb as a'")
@@ -59,7 +60,7 @@ def test_rasdaman_1():
         gdaltest.rasdamanDriver = None
 
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 61774, 'did not get expected checksum'
@@ -72,7 +73,7 @@ def test_rasdaman_1():
 
 def test_rasdaman_2():
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'")
     return 'success' if ds is None else 'fail'
@@ -83,7 +84,7 @@ def test_rasdaman_2():
 
 def test_rasdaman_3():
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open("rasdaman:query='select'")
 

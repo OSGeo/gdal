@@ -35,6 +35,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Create a color table.
@@ -80,7 +81,7 @@ def test_colortable_3():
     try:
         ct.CreateColorRamp
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     ct.CreateColorRamp(0, (255, 0, 0), 255, (0, 0, 255))
 

@@ -33,6 +33,7 @@ from osgeo import ogr
 
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
@@ -42,7 +43,7 @@ def test_ogr_grass_1():
 
     gdaltest.ogr_grass_drv = ogr.GetDriverByName('GRASS')
     if gdaltest.ogr_grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -53,7 +54,7 @@ def test_ogr_grass_1():
 def test_ogr_grass_2():
 
     if gdaltest.ogr_grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('./data/PERMANENT/vector/point/head')
     assert ds is not None, 'Cannot open datasource'

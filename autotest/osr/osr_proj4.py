@@ -143,8 +143,7 @@ def test_osr_proj4_3():
     if gdal.GetLastErrorMsg().find('No translation') != -1:
         return 'success'
 
-    gdaltest.post_reason('empty srs not handled properly')
-    return 'fail'
+    pytest.fail('empty srs not handled properly')
 
 ###############################################################################
 # Verify that unrecognized projections return an error, not those
@@ -169,8 +168,7 @@ def test_osr_proj4_4():
     if gdal.GetLastErrorMsg().find('No translation') != -1:
         return 'success'
 
-    gdaltest.post_reason('unknown srs not handled properly')
-    return 'fail'
+    pytest.fail('unknown srs not handled properly')
 
 ###############################################################################
 # Verify that prime meridians are preserved when round tripping. (#1940)
@@ -522,7 +520,7 @@ def test_osr_proj4_13():
         gdal.ErrorReset()
         if srs.ImportFromProj4(proj4str) == 0 and gdal.GetLastErrorMsg() == '':
             gdal.PopErrorHandler()
-            return 'fail'
+            pytest.fail()
 
     gdal.PopErrorHandler()
 
@@ -607,7 +605,7 @@ def test_osr_proj4_15():
 
     srs = osr.SpatialReference()
     if srs.ImportFromProj4("+init=IGNF:LAMB93") != 0:
-        return 'skip'
+        pytest.skip()
 
     assert srs.GetAuthorityName(None) == 'IGNF' and srs.GetAuthorityCode(None) == 'LAMB93'
 
@@ -843,7 +841,7 @@ def test_osr_proj4_24():
 def test_osr_proj4_25():
 
     if not have_proj480():
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vto_meter=1.0")
@@ -881,7 +879,7 @@ def test_osr_proj4_25():
 def test_osr_proj4_26():
 
     if not have_proj480():
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vunits=m")
@@ -912,7 +910,7 @@ def test_osr_proj4_26():
 def test_osr_proj4_27():
 
     if not have_proj480():
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m")

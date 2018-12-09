@@ -36,6 +36,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test CreateCopy() to a KMZ file
@@ -83,8 +84,7 @@ def test_kmlsuperoverlay_3():
         try:
             os.remove(filename)
         except OSError:
-            gdaltest.post_reason("Missing file: %s" % filename)
-            return 'fail'
+            pytest.fail("Missing file: %s" % filename)
 
     shutil.rmtree('tmp/0')
     shutil.rmtree('tmp/1')
@@ -152,19 +152,19 @@ def test_kmlsuperoverlay_4():
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
         gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
-        return 'fail'
+        pytest.fail()
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 30111:
         ds = None
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
         gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
-        return 'fail'
+        pytest.fail()
     if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
         ds = None
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
         gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
-        return 'fail'
+        pytest.fail()
 
     # Test fix for #6311
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
@@ -176,7 +176,7 @@ def test_kmlsuperoverlay_4():
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
         gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
-        return 'fail'
+        pytest.fail()
 
     ds = None
     src_ds = None
@@ -195,7 +195,7 @@ def test_kmlsuperoverlay_5():
     try:
         from xml.etree import ElementTree
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="512">
   <SRS>PROJCS["WGS 84 / Mercator 41",

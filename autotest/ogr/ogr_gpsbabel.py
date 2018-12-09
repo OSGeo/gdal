@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Check that dependencies are met
@@ -50,8 +51,7 @@ def test_ogr_gpsbabel_init():
     except OSError:
         ret = ''
     if ret.find('GPSBabel') == -1:
-        print('Cannot access GPSBabel utility')
-        return 'skip'
+        pytest.skip('Cannot access GPSBabel utility')
 
     ds = ogr.Open('data/test.gpx')
 
@@ -71,7 +71,7 @@ def test_ogr_gpsbabel_init():
 def test_ogr_gpsbabel_1():
 
     if not ogrtest.have_read_gpsbabel:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('GPSBabel:nmea:data/nmea.txt')
     assert ds is not None
@@ -87,7 +87,7 @@ def test_ogr_gpsbabel_1():
 def test_ogr_gpsbabel_2():
 
     if not ogrtest.have_read_gpsbabel:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/nmea.txt')
     assert ds is not None
@@ -103,7 +103,7 @@ def test_ogr_gpsbabel_2():
 def test_ogr_gpsbabel_3():
 
     if not ogrtest.have_gpsbabel:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('GPSBabel').CreateDataSource('GPSBabel:nmea:tmp/nmea.txt')
     lyr = ds.CreateLayer('track_points', geom_type=ogr.wkbPoint)

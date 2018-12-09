@@ -34,6 +34,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Create 3-band byte
@@ -84,7 +85,7 @@ def test_kro_5():
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('KRO').Create('tmp/kro_5.kro', 100000, 10000, 4)
     ds = None

@@ -40,6 +40,7 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test if driver is available
@@ -56,11 +57,11 @@ def ogr_fgdb_stress_test_init():
     ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
 
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
     if ogrtest.reference_drv is None:
-        return 'skip'
+        pytest.skip()
     if ogrtest.openfilegdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -77,7 +78,7 @@ def ogr_fgdb_stress_test_init():
 
 def ogr_fgdb_stress_test_1():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     verbose = False
 
@@ -168,7 +169,7 @@ def ogr_fgdb_stress_test_1():
 
 def ogr_fgdb_stress_test_2():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds_test = ogr.Open('tmp/test.gdb')
     ds_ref = ogr.Open('tmp/test.' + ogrtest.reference_ext)
@@ -187,7 +188,7 @@ def ogr_fgdb_stress_test_2():
            ogrtest.check_feature_geometry(f_test, f_ref.GetGeometryRef()) != 0:
             f_test.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     for val in range(1000):
         lyr_test.SetAttributeFilter("str = '%d'" % val)
@@ -204,7 +205,7 @@ def ogr_fgdb_stress_test_2():
 
 def ogr_fgdb_stress_test_cleanup():
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")

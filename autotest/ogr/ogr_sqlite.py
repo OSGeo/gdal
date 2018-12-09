@@ -33,6 +33,7 @@
 import os
 import sys
 import shutil
+import pytest
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
@@ -59,7 +60,7 @@ def test_ogr_sqlite_1():
 
     sqlite_dr = ogr.GetDriverByName('SQLite')
     if sqlite_dr is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/sqlite_test.db')
@@ -75,7 +76,7 @@ def test_ogr_sqlite_1():
 
     if gdaltest.sl_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -84,7 +85,7 @@ def test_ogr_sqlite_1():
 def test_ogr_sqlite_2():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.sl_ds.ExecuteSQL('DELLAYER:tpoly')
@@ -184,7 +185,7 @@ def test_ogr_sqlite_2():
 
 def test_ogr_sqlite_3():
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.sl_lyr.GetFeatureCount() == 10
 
@@ -212,7 +213,7 @@ def test_ogr_sqlite_3():
                 ('Attribute %d does not match' % fld)
         if read_feat.GetField('int64') != 1234567890123:
             read_feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
@@ -227,7 +228,7 @@ def test_ogr_sqlite_3():
 def test_ogr_sqlite_4():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     dst_feat = ogr.Feature(feature_def=gdaltest.sl_lyr.GetLayerDefn())
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
@@ -264,7 +265,7 @@ def test_ogr_sqlite_4():
 def test_ogr_sqlite_5():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
@@ -285,7 +286,7 @@ def test_ogr_sqlite_5():
 def test_ogr_sqlite_6():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
 
@@ -307,7 +308,7 @@ def test_ogr_sqlite_6():
 def test_ogr_sqlite_7():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.sl_lyr.SetAttributeFilter(None)
 
@@ -338,7 +339,7 @@ def test_ogr_sqlite_7():
 def test_ogr_sqlite_8():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################################
     # Prepare working feature.
@@ -392,7 +393,7 @@ def test_ogr_sqlite_8():
 def test_ogr_sqlite_9():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################################
     # Read feature with EAS_ID 158.
@@ -421,8 +422,7 @@ def test_ogr_sqlite_9():
 
     if feat_read_2.GetField('PRFEDEA') != 'SetWorked':
         feat_read_2.DumpReadable()
-        gdaltest.post_reason('PRFEDEA apparently not reset as expected.')
-        return 'fail'
+        pytest.fail('PRFEDEA apparently not reset as expected.')
 
     # Test updating non-existing feature
     feat_read.SetFID(-10)
@@ -445,7 +445,7 @@ def test_ogr_sqlite_9():
 def test_ogr_sqlite_10():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################################
     # Read feature with EAS_ID 158.
@@ -466,8 +466,7 @@ def test_ogr_sqlite_10():
     if feat_read_2.GetField('PRFEDEA') != feat_read.GetField('PRFEDEA'):
         feat_read.DumpReadable()
         feat_read_2.DumpReadable()
-        gdaltest.post_reason('GetFeature() result seems to not match expected.')
-        return 'fail'
+        pytest.fail('GetFeature() result seems to not match expected.')
 
     return 'success'
 
@@ -478,7 +477,7 @@ def test_ogr_sqlite_10():
 def test_ogr_sqlite_11():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################
     # Create Layer with WKB geometry
@@ -513,7 +512,7 @@ def test_ogr_sqlite_11():
 def test_ogr_sqlite_12():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################
     # Create Layer with WKT geometry
@@ -561,7 +560,7 @@ def test_ogr_sqlite_12():
 def test_ogr_sqlite_13():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################
     # Create Layer with EPSG:4326
@@ -598,7 +597,7 @@ def test_ogr_sqlite_13():
 def test_ogr_sqlite_14():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('testtypes')
     ogrtest.quick_create_layer_def(gdaltest.sl_lyr,
@@ -649,7 +648,7 @@ def test_ogr_sqlite_14():
 def test_ogr_sqlite_15():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################
     # Create Layer with SPATIALITE geometry
@@ -719,7 +718,7 @@ def test_ogr_sqlite_15():
 def test_ogr_sqlite_16():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################
     # Reopen DB in update
@@ -798,7 +797,7 @@ def test_ogr_sqlite_16():
 def test_ogr_sqlite_17():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################
     # Create dataset with SPATIALITE geometry
@@ -847,10 +846,10 @@ def test_ogr_sqlite_17():
 def test_ogr_sqlite_18():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
     srs = osr.SpatialReference()
@@ -872,7 +871,7 @@ def test_ogr_sqlite_18():
     if feat.GetField('auth_name') != 'OGR' or \
        feat.GetField('proj4text').find('+proj=vandg') != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -884,16 +883,16 @@ def test_ogr_sqlite_18():
 def test_ogr_sqlite_19():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.spatialite_version != '2.3.1':
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test_with_epsg.db', options=['SPATIALITE=YES', 'INIT_WITH_EPSG=YES'])
 
@@ -922,13 +921,13 @@ def test_ogr_sqlite_19():
 def test_ogr_sqlite_19_bis():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) < 4:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/spatialite_test_without_epsg.db', options=['SPATIALITE=YES', 'INIT_WITH_EPSG=NO'])
 
@@ -958,7 +957,7 @@ def test_ogr_sqlite_19_bis():
 def test_ogr_sqlite_20():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/non_spatialite_test_with_epsg.db')
 
@@ -989,7 +988,7 @@ def test_ogr_sqlite_20():
 def test_ogr_sqlite_21():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     src_lyr = gdaltest.sl_ds.GetLayerByName('tpoly')
     copy_lyr = gdaltest.sl_ds.CopyLayer(src_lyr, 'tpoly_2')
@@ -1007,7 +1006,7 @@ def test_ogr_sqlite_21():
 def test_ogr_sqlite_22():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     src_lyr = gdaltest.sl_ds.ExecuteSQL('select * from tpoly')
     copy_lyr = gdaltest.sl_ds.CopyLayer(src_lyr, 'tpoly_3')
@@ -1027,7 +1026,7 @@ def test_ogr_sqlite_22():
 def test_ogr_sqlite_23():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     shp_layer = gdaltest.sl_ds.GetLayerByName('tpoly')
     shp_layer.SetIgnoredFields(['AREA'])
@@ -1074,7 +1073,7 @@ def test_ogr_sqlite_23():
 def test_ogr_sqlite_24():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/test24.sqlite')
@@ -1099,9 +1098,8 @@ def test_ogr_sqlite_24():
     lyr = ds.ExecuteSQL('select OGR_GEOMETRY from test')
     gdal.PopErrorHandler()
     if lyr is not None:
-        gdaltest.post_reason('this should not work (1)')
         ds.ReleaseResultSet(lyr)
-        return 'fail'
+        pytest.fail('this should not work (1)')
 
     lyr = ds.ExecuteSQL('select * from test')
     lyr.SetAttributeFilter("OGR_GEOMETRY = 'POLYGON'")
@@ -1138,7 +1136,7 @@ def test_ogr_sqlite_24():
 def test_ogr_sqlite_25():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT sqlite_version()")
     feat = sql_lyr.GetNextFeature()
@@ -1150,14 +1148,14 @@ def test_ogr_sqlite_25():
     drv = gdal.GetDriverByName('HTTP')
 
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Check that we have SQLite VFS support
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_25.db')
     gdal.PopErrorHandler()
     if ds is None:
-        return 'skip'
+        pytest.skip()
     ds = None
     gdal.Unlink('/vsimem/ogr_sqlite_25.db')
 
@@ -1166,9 +1164,8 @@ def test_ogr_sqlite_25():
     gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', None)
     if ds is None:
         if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/sqlite3/polygon.db', timeout=4) is None:
-            print('cannot open URL')
-            return 'skip'
-        return 'fail'
+            pytest.skip('cannot open URL')
+        pytest.fail()
 
     lyr = ds.GetLayerByName('polygon')
     assert lyr is not None
@@ -1184,7 +1181,7 @@ def test_ogr_sqlite_25():
 def test_ogr_sqlite_26():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
     sql_lyr = ds.ExecuteSQL('select count(*) from geometry_columns')
@@ -1205,13 +1202,13 @@ def test_ogr_sqlite_26():
 def test_ogr_sqlite_27():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f SQLite tmp/ogr_sqlite_27.sqlite data/poly.shp --config OGR_SQLITE_SYNCHRONOUS OFF')
 
@@ -1250,11 +1247,11 @@ def test_ogr_sqlite_27():
 def test_ogr_sqlite_28():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Test with a Spatialite 3.0 DB
     shutil.copy('data/poly_spatialite.sqlite', 'tmp/poly_spatialite.sqlite')
@@ -1289,7 +1286,7 @@ def test_ogr_sqlite_28():
 def test_ogr_sqlite_29():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_sqlite_29.sqlite')
@@ -1312,11 +1309,11 @@ def test_ogr_sqlite_29():
 def test_ogr_sqlite_30():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL('SELECT * FROM tpoly WHERE eas_id = 12345')
     if sql_lyr is None:
-        return 'skip'
+        pytest.skip()
 
     # Test fix added in r24768
     feat = sql_lyr.GetNextFeature()
@@ -1333,7 +1330,7 @@ def test_ogr_sqlite_30():
 def test_ogr_spatialite_1():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT spatialite_version()")
@@ -1357,7 +1354,7 @@ def test_ogr_spatialite_1():
 def test_ogr_spatialite_2():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
     srs = osr.SpatialReference()
@@ -1511,7 +1508,7 @@ def test_ogr_spatialite_2():
 def test_ogr_spatialite_3():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
     ds.ExecuteSQL('CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
@@ -1537,7 +1534,7 @@ def test_ogr_spatialite_3():
 def test_ogr_spatialite_4():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
 
@@ -1591,7 +1588,7 @@ def test_ogr_spatialite_4():
 def test_ogr_spatialite_5(bUseComprGeom=False):
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_spatialite_5.sqlite')
@@ -1685,8 +1682,7 @@ def test_ogr_spatialite_5(bUseComprGeom=False):
             expected_wkt = geom.ExportToIsoWkt()
             assert got_wkt == expected_wkt
         elif got_wkt != wkt:
-            gdaltest.post_reason('got %s, expected %s' % (got_wkt, wkt))
-            return 'fail'
+            pytest.fail('got %s, expected %s' % (got_wkt, wkt))
 
         num_layer = num_layer + 1
 
@@ -1699,17 +1695,15 @@ def test_ogr_spatialite_5(bUseComprGeom=False):
                 val = feat.GetFieldAsInteger(0)
                 if wkt != 'LINESTRING (1 2)':
                     if val != 1:
-                        gdaltest.post_reason('did not get expected compressed geometry')
                         print(wkt)
                         print(val)
                         ds.ReleaseResultSet(sql_lyr)
-                        return 'fail'
+                        pytest.fail('did not get expected compressed geometry')
                 else:
                     if val != 0:
-                        print(wkt)
                         print(val)
                         ds.ReleaseResultSet(sql_lyr)
-                        return 'fail'
+                        pytest.fail(wkt)
                 feat = None
                 ds.ReleaseResultSet(sql_lyr)
             num_layer = num_layer + 1
@@ -1725,10 +1719,10 @@ def test_ogr_spatialite_5(bUseComprGeom=False):
 def test_ogr_spatialite_compressed_geom_5():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.spatialite_version == '2.3.1':
-        return 'skip'
+        pytest.skip()
 
     return test_ogr_spatialite_5(bUseComprGeom=True)
 
@@ -1739,10 +1733,10 @@ def test_ogr_spatialite_compressed_geom_5():
 def test_ogr_spatialite_6():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.spatialite_version.find('2.3') == 0:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_spatialite_6.sqlite')
@@ -1824,19 +1818,19 @@ def test_ogr_spatialite_6():
     feat = view_lyr.GetFeature(3)
     if feat.GetFieldAsInteger(0) != 34:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetFieldAsDouble(1) != 56.78:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     view_lyr.SetAttributeFilter('"int\'col" = 34')
     view_lyr.SetSpatialFilterRect(2.5, 49.5, 3.5, 50.5)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 3:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     # Remove spatial index
@@ -1854,7 +1848,7 @@ def test_ogr_spatialite_6():
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 3:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -1866,7 +1860,7 @@ def test_ogr_spatialite_6():
 def test_ogr_spatialite_7():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('VirtualShape:data/poly.shp')
     assert ds is not None
@@ -1888,10 +1882,10 @@ def test_ogr_spatialite_7():
 def test_ogr_spatialite_8():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.spatialite_version.find('2.3') == 0:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_spatialite_8.sqlite')
@@ -1918,7 +1912,7 @@ def test_ogr_spatialite_8():
     if f.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (0 -1)' or \
        f.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (0 -1,2 3)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 1)'))
     f.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING(0 1,2 3)'))
     lyr.SetFeature(f)
@@ -1953,16 +1947,16 @@ def test_ogr_spatialite_8():
     feat = view_lyr.GetFeature(1)
     if feat.GetFieldAsString(0) != 'bar':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
     view_lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 1:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     lyr = ds.GetLayerByName('test(geom2)')
@@ -1977,16 +1971,16 @@ def test_ogr_spatialite_8():
     feat = view_lyr.GetFeature(1)
     if feat.GetFieldAsString(0) != 'bar':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
     view_lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 1:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     sql_lyr = ds.ExecuteSQL('SELECT foo, geom2 FROM test')
@@ -1994,7 +1988,7 @@ def test_ogr_spatialite_8():
     feat = sql_lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -2013,20 +2007,20 @@ def test_ogr_spatialite_8():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeomFieldRef(1).ExportToWkt() != 'LINESTRING (0 1,2 3)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     lyr.SetSpatialFilterRect(1, -1, -1, 10, 10)
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     ds = None
@@ -2040,7 +2034,7 @@ def test_ogr_spatialite_8():
 def test_ogr_sqlite_31():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_sqlite_31.sqlite')
@@ -2075,10 +2069,10 @@ def test_ogr_sqlite_31():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     lyr = ds.GetLayerByName('test(geom2)')
@@ -2089,10 +2083,10 @@ def test_ogr_sqlite_31():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     ds = None
@@ -2106,7 +2100,7 @@ def test_ogr_sqlite_31():
 def test_ogr_sqlite_32():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_sqlite_32.sqlite')
@@ -2142,7 +2136,7 @@ def test_ogr_sqlite_32():
             feat.GetField('datefield') != '2012/08/23' or \
             feat.GetField('timefield') != '21:24:00':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     ds = None
@@ -2156,7 +2150,7 @@ def test_ogr_sqlite_32():
 def test_ogr_sqlite_33():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     for i in range(2):
         try:
@@ -2223,13 +2217,13 @@ def test_ogr_sqlite_33():
 def test_ogr_sqlite_34():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP 'a'")
     gdal.PopErrorHandler()
     if sql_lyr is None:
-        return 'skip'
+        pytest.skip()
     feat = sql_lyr.GetNextFeature()
     val = feat.GetField(0)
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
@@ -2287,7 +2281,7 @@ def test_ogr_sqlite_34():
 def test_ogr_sqlite_35():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite and gdaltest.spatialite_version.find('2.3') < 0:
         options = ['SPATIALITE=YES']
@@ -2372,7 +2366,7 @@ def test_ogr_sqlite_35():
 def test_ogr_sqlite_36():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_sqlite_36.sqlite')
@@ -2407,7 +2401,7 @@ def test_ogr_sqlite_36():
 def test_ogr_sqlite_37():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_sqlite_37.sqlite')
@@ -2494,7 +2488,7 @@ def test_ogr_sqlite_37():
 def test_ogr_sqlite_38():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/ogr_sqlite_38.sqlite')
@@ -2568,7 +2562,7 @@ def test_ogr_sqlite_38():
        not f.IsFieldSet('field_datetime3') or \
        not f.IsFieldSet('field_date') or not f.IsFieldSet('field_time'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Change DEFAULT value
     src_fd = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string'))
@@ -2602,7 +2596,7 @@ def test_ogr_sqlite_38():
 def test_ogr_spatialite_9():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_9.sqlite', options=['SPATIALITE=YES'])
     lyr = ds.CreateLayer('point', geom_type=ogr.wkbPoint)
@@ -2625,7 +2619,7 @@ def test_ogr_spatialite_9():
 def test_ogr_spatialite_10():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
     try:
         os.remove('tmp/ogr_spatialite_10.sqlite')
     except OSError:
@@ -2667,7 +2661,7 @@ def test_ogr_spatialite_10():
 def test_ogr_sqlite_39():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_39.sqlite')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['FID=myfid'])
@@ -2696,10 +2690,10 @@ def test_ogr_sqlite_39():
     assert ret == 0
     if feat.GetFID() < 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetField('myfid') != feat.GetFID():
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat.SetField('str', 'foo')
     ret = lyr.SetFeature(feat)
@@ -2728,7 +2722,7 @@ def test_ogr_sqlite_39():
     f = lyr.GetNextFeature()
     if f.GetFID() != 10 or f.GetField('str') != 'first string' or f.GetField('str2') != 'second string' or f.GetField('myfid') != 10:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = None
 
     ds = None
@@ -2744,7 +2738,7 @@ def test_ogr_sqlite_39():
 def test_ogr_sqlite_40():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite:
         options = ['SPATIALITE=YES']
@@ -2866,7 +2860,7 @@ def test_ogr_sqlite_40():
 def test_ogr_sqlite_41():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_41.sqlite', options=['METADATA=NO'])
     ds.ExecuteSQL('CREATE TABLE test(a_date DATETIME);')
     ds.ExecuteSQL("INSERT INTO test(a_date) VALUES (strftime('%J', '2015-04-30 12:34:56'))")
@@ -2890,7 +2884,7 @@ def test_ogr_sqlite_41():
 def test_ogr_sqlite_42():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_42.sqlite')
     lyr = ds.CreateLayer("aab")
@@ -2945,12 +2939,12 @@ def test_ogr_sqlite_42():
 def test_ogr_sqlite_43():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Only available since sqlite 3.8.0
     version = ogrtest.sqlite_version.split('.')
     if not (len(version) >= 3 and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30800):
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('file:foo?mode=memory&cache=shared')
     assert ds is not None
@@ -2964,7 +2958,7 @@ def test_ogr_sqlite_43():
 def test_ogr_sqlite_44():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList,WKT')
     gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csv',
@@ -3003,12 +2997,12 @@ def test_ogr_sqlite_44():
 def test_ogr_sqlite_45():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Only available since sqlite 3.7.0
     version = ogrtest.sqlite_version.split('.')
     if not (len(version) >= 3 and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30700):
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_45.db')
     sql_lyr = ds.ExecuteSQL('PRAGMA journal_mode = WAL')
@@ -3038,7 +3032,7 @@ def test_ogr_sqlite_45():
 def test_ogr_spatialite_11():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_11.sqlite', options=['SPATIALITE=YES'])
 
@@ -3066,10 +3060,10 @@ def test_ogr_spatialite_11():
 def test_ogr_spatialite_12():
 
     if not gdaltest.has_spatialite:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/poly_spatialite.sqlite.sql')
     lyr = ds.GetLayer(0)
@@ -3084,7 +3078,7 @@ def test_ogr_spatialite_12():
 def test_ogr_sqlite_iterate_and_update():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     filename = "/vsimem/ogr_sqlite_iterate_and_update.db"
     ds = ogr.GetDriverByName('SQLite').CreateDataSource(filename)
@@ -3115,7 +3109,7 @@ def test_ogr_sqlite_iterate_and_update():
 def test_ogr_sqlite_cleanup():
 
     if gdaltest.sl_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.sl_ds.ExecuteSQL('DELLAYER:tpoly')
     gdaltest.sl_ds.ExecuteSQL('DELLAYER:tpoly_2')
@@ -3228,7 +3222,7 @@ def test_ogr_sqlite_cleanup():
 def test_ogr_sqlite_without_spatialite():
 
     if not gdaltest.has_spatialite or not run_without_spatialite:
-        return 'skip'
+        pytest.skip()
 
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'ogr_sqlite', ' -without_spatialite', display_live_on_parent_stdout=True)

@@ -31,6 +31,7 @@ import sys
 
 import gdaltest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Open SXF datasource.
@@ -45,7 +46,7 @@ def test_ogr_sxf_1():
 
     if gdaltest.sxf_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 
 ###############################################################################
@@ -55,7 +56,7 @@ def test_ogr_sxf_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' data/100_test.sxf')
 
@@ -70,7 +71,7 @@ def test_ogr_sxf_2():
 def test_ogr_sxf_cleanup():
 
     if gdaltest.sxf_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.sxf_ds = None
 

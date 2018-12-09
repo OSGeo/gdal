@@ -32,6 +32,7 @@
 
 import sys
 import os
+import pytest
 
 sys.path.append('../gcore')
 
@@ -48,7 +49,7 @@ import test_cli_utilities
 def test_gdal_rasterize_1():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Setup working spatial reference
     # sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -124,7 +125,7 @@ def test_gdal_rasterize_1():
 def test_gdal_rasterize_2():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Create a raster to rasterize into.
 
@@ -156,10 +157,10 @@ def test_gdal_rasterize_2():
 def test_gdal_rasterize_3():
 
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
 
@@ -191,10 +192,10 @@ def test_gdal_rasterize_3():
 def test_gdal_rasterize_4():
 
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GTiff').Delete('tmp/n43dt0.tif')
 
@@ -232,7 +233,7 @@ def test_gdal_rasterize_4():
 def test_gdal_rasterize_5():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_rasterize_5.csv', 'wb')
     f.write("""x,y,Value
@@ -280,7 +281,7 @@ def test_gdal_rasterize_5():
 def test_gdal_rasterize_6():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_rasterize_6.csv', 'wb')
     f.write("""WKT,Value
@@ -318,18 +319,18 @@ def test_gdal_rasterize_7():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = ogr.GetDriverByName('SQLite')
     if drv is None:
-        return 'skip'
+        pytest.skip()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = drv.CreateDataSource('/vsimem/foo.db', options=['SPATIALITE=YES'])
     if ds is None:
-        return 'skip'
+        pytest.skip()
     ds = None
     gdal.Unlink('/vsimem/foo.db')
     gdal.PopErrorHandler()
@@ -368,7 +369,7 @@ def test_gdal_rasterize_7():
 def test_gdal_rasterize_8():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_rasterize_8.csv', 'wb')
     f.write('WKT,Value\n'.encode('ascii'))
@@ -392,7 +393,7 @@ def test_gdal_rasterize_8():
 def test_gdal_rasterize_cleanup():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GTiff').Delete('tmp/rast1.tif')
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/rast1.tab')

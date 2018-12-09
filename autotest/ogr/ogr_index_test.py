@@ -33,6 +33,7 @@ import sys
 import gdaltest
 from osgeo import ogr
 import ogrtest
+import pytest
 
 ###############################################################################
 # Create a MIF file to be our primary table.
@@ -230,8 +231,7 @@ def test_ogr_index_9():
     for filename in ['join_t.idm', 'join_t.ind']:
         try:
             os.stat(filename)
-            gdaltest.post_reason("%s should not exist" % filename)
-            return 'fail'
+            pytest.fail("%s should not exist" % filename)
         except OSError:
             pass
 
@@ -244,8 +244,7 @@ def test_ogr_index_9():
         try:
             os.stat(filename)
         except OSError:
-            gdaltest.post_reason("%s should exist" % filename)
-            return 'fail'
+            pytest.fail("%s should exist" % filename)
 
     f = open('join_t.idm', 'rt')
     xml = f.read()
@@ -448,8 +447,7 @@ def test_ogr_index_cleanup():
     for filename in ['join_t.idm', 'join_t.ind']:
         try:
             os.stat(filename)
-            gdaltest.post_reason("%s should not exist" % filename)
-            return 'fail'
+            pytest.fail("%s should not exist" % filename)
         except OSError:
             pass
 

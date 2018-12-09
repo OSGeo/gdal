@@ -46,7 +46,7 @@ def test_gdal_sieve_1():
 
     script_path = test_py_scripts.get_py_script('gdal_sieve')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte)

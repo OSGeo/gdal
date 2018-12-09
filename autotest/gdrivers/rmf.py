@@ -35,6 +35,7 @@ import sys
 import gdaltest
 from osgeo import gdal
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Perform simple read tests.
@@ -168,14 +169,12 @@ def test_rmf_11():
         if ovr_band.XSize != ovr_size[i] or ovr_band.YSize != ovr_size[i]:
             msg = 'overview wrong size: overview %d, size = %d * %d,' % \
                   (i, ovr_band.XSize, ovr_band.YSize)
-            gdaltest.post_reason(msg)
-            return 'fail'
+            pytest.fail(msg)
 
         if ovr_band.Checksum() != ovr_checksum[i]:
             msg = 'overview wrong checksum: overview %d, checksum = %d,' % \
                   (i, ovr_band.Checksum())
-            gdaltest.post_reason(msg)
-            return 'fail'
+            pytest.fail(msg)
 
     return 'success'
 
@@ -260,14 +259,12 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
                    ovr_band.YSize != ov_sizes[iOverview][1]:
                     msg = 'overview wrong size: band %d, overview %d, size = %d * %d,' % \
                           (iBand, iOverview, ovr_band.XSize, ovr_band.YSize)
-                    gdaltest.post_reason(msg)
-                    return 'fail'
+                    pytest.fail(msg)
 
                 if ovr_band.Checksum() != crs[iOverview][iBand]:
                     msg = 'overview wrong checksum: band %d, overview %d, checksum = %d,' % \
                           (iBand, iOverview, ovr_band.Checksum())
-                    gdaltest.post_reason(msg)
-                    return 'fail'
+                    pytest.fail(msg)
 
     src_ds = None
     os.remove(test_ds_name)
@@ -508,7 +505,7 @@ def test_rmf_26():
 def test_rmf_27():
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     cs1 = [50553, 27604, 36652] #
     cs2 = [51009, 27640, 37765] # osx, clang
@@ -667,11 +664,11 @@ def test_rmf_31e():
     try:
         import numpy
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('Gtiff')
     if drv is None:
-        return 'skip'
+        pytest.skip()
     # Create test data
     stripeSize = 32;
     sx = 256

@@ -36,6 +36,7 @@ import gdaltest
 import ogrtest
 
 from osgeo import gdal, ogr, osr
+import pytest
 
 ###############################################################################
 # Simple polygon rasterization.
@@ -91,10 +92,8 @@ def test_rasterize_1():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
     return 'success'
 
@@ -134,10 +133,8 @@ def test_rasterize_2():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
     return 'success'
 
@@ -188,9 +185,8 @@ def test_rasterize_3():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_3.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
     return 'success'
 
@@ -244,9 +240,8 @@ def test_rasterize_4():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_4.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
     return 'success'
 
@@ -311,10 +306,8 @@ def test_rasterize_5():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
     return 'success'
 

@@ -174,8 +174,7 @@ def test_hfa_clean_external_overviews():
 
     try:
         os.stat('tmp/small.rrd')
-        gdaltest.post_reason('small.rrd still present.')
-        return 'fail'
+        pytest.fail('small.rrd still present.')
     except OSError:
         pass
 
@@ -220,8 +219,7 @@ def test_hfa_use_rrd():
     try:
         os.stat('tmp/small.rrd')
     except OSError:
-        gdaltest.post_reason('small.rrd not present.')
-        return 'fail'
+        pytest.fail('small.rrd not present.')
 
     ds = gdal.Open('tmp/small.img')
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 26148, \
@@ -265,10 +263,10 @@ def test_hfa_update_existing_aux_overviews():
     new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs_ovr0 != new_cs_ovr0:
         gdal.SetConfigOption('USE_RRD', None)
-        return 'fail'
+        pytest.fail()
     if cs_ovr1 != new_cs_ovr1:
         gdal.SetConfigOption('USE_RRD', None)
-        return 'fail'
+        pytest.fail()
 
     # and regenerate them twice in a row
     ds.BuildOverviews('NEAR', overviewlist=[2, 4])
@@ -281,10 +279,10 @@ def test_hfa_update_existing_aux_overviews():
     new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs_ovr0 != new_cs_ovr0:
         gdal.SetConfigOption('USE_RRD', None)
-        return 'fail'
+        pytest.fail()
     if cs_ovr1 != new_cs_ovr1:
         gdal.SetConfigOption('USE_RRD', None)
-        return 'fail'
+        pytest.fail()
 
     # and regenerate them with an extra overview level
     ds.BuildOverviews('NEAR', overviewlist=[8])
@@ -296,10 +294,10 @@ def test_hfa_update_existing_aux_overviews():
     new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs_ovr0 != new_cs_ovr0:
         gdal.SetConfigOption('USE_RRD', None)
-        return 'fail'
+        pytest.fail()
     if cs_ovr1 != new_cs_ovr1:
         gdal.SetConfigOption('USE_RRD', None)
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.GetDriverByName('BMP').Delete('tmp/hfa_update_existing_aux_overviews.bmp')

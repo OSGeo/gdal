@@ -73,7 +73,7 @@ def test_vsis3_init():
 def test_vsis3_no_sign_request():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.config_option('AWS_NO_SIGN_REQUEST', 'YES'):
         actual_url = gdal.GetActualURL('/vsis3/landsat-pds/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF')
@@ -86,9 +86,8 @@ def test_vsis3_no_sign_request():
 
     if f is None:
         if gdaltest.gdalurlopen('https://landsat-pds.s3.amazonaws.com/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF') is None:
-            print('cannot open URL')
-            return 'skip'
-        return 'fail'
+            pytest.skip('cannot open URL')
+        pytest.fail()
     gdal.VSIFCloseL(f)
     return 'success'
 
@@ -99,7 +98,7 @@ def test_vsis3_no_sign_request():
 def test_vsis3_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     # Missing AWS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
@@ -131,8 +130,7 @@ def test_vsis3_1():
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
             return 'success'
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+        pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -150,11 +148,11 @@ def test_vsis3_start_webserver():
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID')
@@ -194,7 +192,7 @@ def get_s3_fake_bucket_resource_method(request):
 def test_vsis3_2():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     signed_url = gdal.GetSignedURL('/vsis3/s3_fake_bucket/resource')
     expected_url_8080 = 'http://127.0.0.1:8080/s3_fake_bucket/resource?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-Expires=3600&X-Amz-Signature=dca239dd95f72ff8c37c15c840afc54cd19bdb07f7aaee2223108b5b0ad35da8&X-Amz-SignedHeaders=host'
@@ -290,7 +288,7 @@ def test_vsis3_2():
                 print(stat_res.size)
             else:
                 print(stat_res)
-            return 'fail'
+            pytest.fail()
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/s3_fake_bucket/resource2.bin', 200,
@@ -304,7 +302,7 @@ def test_vsis3_2():
             print(stat_res.size)
         else:
             print(stat_res)
-        return 'fail'
+        pytest.fail()
 
     handler = webserver.SequentialHandler()
 
@@ -367,11 +365,9 @@ def test_vsis3_2():
     if data != 'foo':
 
         if gdaltest.is_travis_branch('trusty'):
-            print('Skipped on trusty branch, but should be investigated')
-            return 'skip'
+            pytest.skip('Skipped on trusty branch, but should be investigated')
 
-        print(data)
-        return 'fail'
+        pytest.fail(data)
 
     # Test region and endpoint 'redirects'
     handler.req_count = 0
@@ -588,7 +584,7 @@ def test_vsis3_2():
 def test_vsis3_readdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
 
@@ -679,10 +675,9 @@ def test_vsis3_readdir():
     if f is None:
 
         if gdaltest.is_travis_branch('trusty'):
-            print('Skipped on trusty branch, but should be investigated')
-            return 'skip'
+            pytest.skip('Skipped on trusty branch, but should be investigated')
 
-        return 'fail'
+        pytest.fail()
     gdal.VSIFCloseL(f)
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -959,7 +954,7 @@ def test_vsis3_readdir():
 def test_vsis3_opendir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Unlimited depth
     handler = webserver.SequentialHandler()
@@ -1107,7 +1102,7 @@ def test_vsis3_opendir():
 def test_vsis3_4():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
@@ -1278,7 +1273,7 @@ def test_vsis3_4():
 def test_vsis3_5():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
@@ -1354,7 +1349,7 @@ def test_vsis3_5():
 def test_vsis3_6():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -1550,7 +1545,7 @@ def test_vsis3_6():
 def test_vsis3_7():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404, {'Connection': 'close'})
@@ -1684,7 +1679,7 @@ def test_vsis3_7():
 def test_vsis3_8():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/vsis3_8/?delimiter=%2F', 200,
@@ -1724,7 +1719,7 @@ def test_vsis3_8():
 def test_vsis3_sync_etag():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -1870,7 +1865,7 @@ def test_vsis3_sync_etag():
 def test_vsis3_sync_timestamp():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     options = ['SYNC_STRATEGY=TIMESTAMP']
 
@@ -1937,7 +1932,7 @@ def test_vsis3_sync_timestamp():
 def test_vsis3_read_credentials_file():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
@@ -1980,7 +1975,7 @@ aws_secret_access_key = bar
 def test_vsis3_read_config_file():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
@@ -2024,7 +2019,7 @@ aws_secret_access_key = bar
 def test_vsis3_read_credentials_config_file():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
@@ -2084,7 +2079,7 @@ aws_secret_access_key = bar
 def test_vsis3_read_credentials_config_file_non_default():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
@@ -2143,7 +2138,7 @@ aws_secret_access_key = bar
 def test_vsis3_read_credentials_config_file_inconsistent():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
@@ -2205,10 +2200,10 @@ aws_secret_access_key = bar
 def test_vsis3_read_credentials_ec2():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform not in ('linux', 'linux2', 'win32'):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
@@ -2265,10 +2260,10 @@ def test_vsis3_read_credentials_ec2():
 def test_vsis3_read_credentials_ec2_expiration():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform not in ('linux', 'linux2', 'win32'):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
@@ -2317,7 +2312,7 @@ def test_vsis3_read_credentials_ec2_expiration():
 def test_vsis3_stop_webserver():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
@@ -2334,7 +2329,7 @@ def test_vsis3_stop_webserver():
 def vsis3_extra_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     credentials_filename = gdal.GetConfigOption('HOME',
                                                 gdal.GetConfigOption('USERPROFILE', '')) + '/.aws/credentials'
@@ -2344,14 +2339,11 @@ def vsis3_extra_1():
 
     if not os.path.exists(credentials_filename):
         if gdal.GetConfigOption('AWS_SECRET_ACCESS_KEY') is None:
-            print('Missing AWS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
-            return 'skip'
+            pytest.skip('Missing AWS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
         elif gdal.GetConfigOption('AWS_ACCESS_KEY_ID') is None:
-            print('Missing AWS_ACCESS_KEY_ID for running gdaltest_list_extra')
-            return 'skip'
+            pytest.skip('Missing AWS_ACCESS_KEY_ID for running gdaltest_list_extra')
     elif s3_resource is None:
-        print('Missing S3_RESOURCE for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing S3_RESOURCE for running gdaltest_list_extra')
 
     if s3_resource.find('/') < 0:
         path = '/vsis3/' + s3_resource

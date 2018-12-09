@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
@@ -44,13 +45,13 @@ def dods_1():
 
     gdaltest.dods_dr = gdal.GetDriverByName('DODS')
     if gdaltest.dods_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_grid_ds = gdal.Open('http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]')
 
     if gdaltest.dods_grid_ds is None:
         gdaltest.dods_dr = None
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -60,7 +61,7 @@ def dods_1():
 
 def dods_2():
     if gdaltest.dods_dr is None:
-        return 'skip'
+        pytest.skip()
     tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11', 1, 3391, filename_absolute=1)
     return tst.testOpen()
 
@@ -70,7 +71,7 @@ def dods_2():
 
 def dods_3():
     if gdaltest.dods_dr is None:
-        return 'skip'
+        pytest.skip()
     tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z', 12, 43208, filename_absolute=1)
     return tst.testOpen()
 
@@ -80,7 +81,7 @@ def dods_3():
 
 def dods_4():
     if gdaltest.dods_dr is None:
-        return 'skip'
+        pytest.skip()
     tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]', 1, 3391, filename_absolute=1)
     return tst.testOpen()
 
@@ -90,7 +91,7 @@ def dods_4():
 
 def dods_5():
     if gdaltest.dods_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][-x]', 1, 2436, filename_absolute=1)
     return tst.testOpen()
@@ -101,11 +102,11 @@ def dods_5():
 
 def dods_6():
     if gdaltest.dods_dr is None:
-        return 'skip'
+        pytest.skip()
 
     # This server seems to no longer be online, skipping test.
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     gdaltest.dods_grid_ds = gdal.Open('http://g0dup05u.ecs.nasa.gov/opendap/AIRS/AIRX3STD.003/2004.12.28/AIRS.2004.12.28.L3.RetStd001.v4.0.9.0.G05253115303.hdf?TotH2OVap_A[y][x]')
@@ -119,7 +120,7 @@ def dods_6():
 
 def dods_cleanup():
     if gdaltest.dods_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_dr = None
     gdaltest.dods_grid_ds = None

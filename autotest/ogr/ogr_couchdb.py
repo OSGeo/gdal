@@ -38,6 +38,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test if driver is available
@@ -49,7 +50,7 @@ def test_ogr_couchdb_init():
 
     ogrtest.couchdb_drv = ogr.GetDriverByName('CouchDB')
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if 'COUCHDB_TEST_SERVER' in os.environ:
         ogrtest.couchdb_test_server = os.environ['COUCHDB_TEST_SERVER']
@@ -58,9 +59,8 @@ def test_ogr_couchdb_init():
     ogrtest.couchdb_temp_layer_name = 'layer_' + str(uuid.uuid1()).replace('-', '_')
 
     if gdaltest.gdalurlopen(ogrtest.couchdb_test_server) is None:
-        print('cannot open %s' % ogrtest.couchdb_test_server)
         ogrtest.couchdb_drv = None
-        return 'skip'
+        pytest.skip('cannot open %s' % ogrtest.couchdb_test_server)
 
     return 'success'
 
@@ -70,7 +70,7 @@ def test_ogr_couchdb_init():
 
 def test_ogr_couchdb_1():
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.VectorTranslate('CouchDB:' + ogrtest.couchdb_test_server, 'data/poly.shp',
                          format='CouchDB',
@@ -82,7 +82,7 @@ def test_ogr_couchdb_1():
     f = lyr.GetNextFeature()
     if f['AREA'] != 215229.266 or f['EAS_ID'] != '168' or f.GetGeometryRef() is None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
 
     return 'success'
@@ -93,7 +93,7 @@ def test_ogr_couchdb_1():
 
 def test_ogr_couchdb_2():
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
     assert ds is not None
@@ -114,17 +114,17 @@ def test_ogr_couchdb_2():
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f['str_field'] is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.IsFieldSet('str_field'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -134,7 +134,7 @@ def test_ogr_couchdb_2():
 
 def test_ogr_couchdb_cleanup():
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
     assert ds is not None

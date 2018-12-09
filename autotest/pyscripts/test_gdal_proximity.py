@@ -47,7 +47,7 @@ def test_gdal_proximity_1():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     dst_ds = drv.Create('tmp/proximity_1.tif', 25, 25, 1, gdal.GDT_Byte)
@@ -77,7 +77,7 @@ def test_gdal_proximity_2():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata -1 -fixed-buf-val 255 ../alg/data/pat.tif tmp/proximity_2.tif')
 
@@ -103,7 +103,7 @@ def test_gdal_proximity_3():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata 0 -use_input_nodata yes ../alg/data/pat.tif tmp/proximity_3.tif')
 

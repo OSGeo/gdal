@@ -38,6 +38,7 @@ from osgeo import osr
 import ogrtest
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -45,7 +46,7 @@ import test_cli_utilities
 
 def test_ogrtindex_1(srs=None):
     if test_cli_utilities.get_ogrtindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
 
@@ -129,7 +130,7 @@ def test_ogrtindex_2():
 def test_ogrtindex_3():
 
     if test_cli_utilities.get_ogrtindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
 
@@ -202,9 +203,8 @@ def test_ogrtindex_3():
         feat = ds.GetLayer(0).GetNextFeature()
         while feat is not None:
             if feat.GetField('src_srs') != expected_srss[i]:
-                print(i, src_srs_format)
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail(i, src_srs_format)
             assert ogrtest.check_feature_geometry(feat, expected_wkts[i]) == 0, \
                 ('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
             i = i + 1
@@ -224,7 +224,7 @@ def test_ogrtindex_3():
 
 def test_ogrtindex_cleanup():
     if test_cli_utilities.get_ogrtindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     shape_drv.DeleteDataSource('tmp/tileindex.shp')

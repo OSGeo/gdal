@@ -47,7 +47,7 @@ def test_numpy_rw_1():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.AllRegister()
 
@@ -63,7 +63,7 @@ def test_numpy_rw_1():
 def test_numpy_rw_2():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     from osgeo import gdalnumeric
 
@@ -86,7 +86,7 @@ def test_numpy_rw_2():
 def test_numpy_rw_3():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/cint_sar.tif')
     array = ds.ReadAsArray()
@@ -102,7 +102,7 @@ def test_numpy_rw_3():
 def test_numpy_rw_4():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.tif')
     array = ds.GetRasterBand(1).ReadAsArray(0, 0, 20, 20, 5, 5)
@@ -119,7 +119,7 @@ def test_numpy_rw_4():
 def test_numpy_rw_5():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     from osgeo import gdalnumeric
 
@@ -153,7 +153,7 @@ def test_numpy_rw_5():
 def test_numpy_rw_6():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdalnumeric
@@ -176,7 +176,7 @@ def test_numpy_rw_6():
 def test_numpy_rw_7():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdalnumeric
@@ -218,7 +218,7 @@ def test_numpy_rw_7():
 def test_numpy_rw_8():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdalnumeric
@@ -240,7 +240,7 @@ def test_numpy_rw_8():
 def test_numpy_rw_9():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.tif')
     array = ds.ReadAsArray()
@@ -262,7 +262,7 @@ def test_numpy_rw_9():
 def test_numpy_rw_10():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -294,7 +294,7 @@ def test_numpy_rw_10():
 def test_numpy_rw_11():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -357,7 +357,7 @@ def test_numpy_rw_11():
 def test_numpy_rw_12():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -388,7 +388,7 @@ def test_numpy_rw_12():
 def test_numpy_rw_13():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -403,9 +403,8 @@ def test_numpy_rw_13():
     ar = numpy.empty([1, 2], dtype=numpy.int64)
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "ValueError: array does not have '
+        pytest.fail('expected "ValueError: array does not have '
                              'corresponding GDAL data type"')
-        return 'fail'
     except:
         pass
 
@@ -414,9 +413,8 @@ def test_numpy_rw_13():
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-        gdaltest.post_reason('expected "Specified buf_ysize not consistent '
+        pytest.fail('expected "Specified buf_ysize not consistent '
                              'with buffer shape"')
-        return 'fail'
     except:
         pass
 
@@ -425,9 +423,8 @@ def test_numpy_rw_13():
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-        gdaltest.post_reason('expected "Specified buf_ysize not consistent '
+        pytest.fail('expected "Specified buf_ysize not consistent '
                              'with buffer shape"')
-        return 'fail'
     except:
         pass
 
@@ -436,9 +433,8 @@ def test_numpy_rw_13():
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=1,
                                         buf_ysize=1)
-        gdaltest.post_reason('expected "Specified buf_xsize not consistent '
+        pytest.fail('expected "Specified buf_xsize not consistent '
                              'with buffer shape"')
-        return 'fail'
     except:
         pass
 
@@ -447,9 +443,8 @@ def test_numpy_rw_13():
     try:
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar,
                                         buf_type=gdal.GDT_Int16)
-        gdaltest.post_reason('expected "Specified buf_type not consistent '
+        pytest.fail('expected "Specified buf_type not consistent '
                              'with array type"')
-        return 'fail'
     except:
         pass
 
@@ -490,9 +485,8 @@ def test_numpy_rw_13():
     ar = numpy.empty([3, 1, 2], dtype=numpy.int64)
     try:
         ds.ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "ValueError: array does not have '
+        pytest.fail('expected "ValueError: array does not have '
                              'corresponding GDAL data type"')
-        return 'fail'
     except:
         pass
 
@@ -500,9 +494,8 @@ def test_numpy_rw_13():
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
     try:
         ds.ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=2)
-        gdaltest.post_reason('expected "Specified buf_ysize not consistent '
+        pytest.fail('expected "Specified buf_ysize not consistent '
                              'with buffer shape"')
-        return 'fail'
     except:
         pass
 
@@ -510,9 +503,8 @@ def test_numpy_rw_13():
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
     try:
         ds.ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "ValueError: Array should have 3 '
+        pytest.fail('expected "ValueError: Array should have 3 '
                              'dimensions"')
-        return 'fail'
     except:
         pass
 
@@ -520,9 +512,8 @@ def test_numpy_rw_13():
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
     try:
         ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1)
-        gdaltest.post_reason('expected "Specified buf_xsize not consistent '
+        pytest.fail('expected "Specified buf_xsize not consistent '
                              'with buffer shape"')
-        return 'fail'
     except:
         pass
 
@@ -530,8 +521,7 @@ def test_numpy_rw_13():
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
     try:
         ds.ReadAsArray(buf_obj=ar, buf_type=gdal.GDT_Int16)
-        gdaltest.post_reason('expected "Specified buf_type not consistent with array type"')
-        return 'fail'
+        pytest.fail('expected "Specified buf_type not consistent with array type"')
     except:
         pass
 
@@ -539,8 +529,7 @@ def test_numpy_rw_13():
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
     try:
         ds.ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "Array should have space for 3 bands"')
-        return 'fail'
+        pytest.fail('expected "Array should have space for 3 bands"')
     except:
         pass
 
@@ -598,12 +587,12 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
 def test_numpy_rw_14():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Progress not implemented yet
     if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -664,7 +653,7 @@ def test_numpy_rw_14():
 def test_numpy_rw_15():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -686,7 +675,7 @@ def test_numpy_rw_15():
 def test_numpy_rw_16():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -718,7 +707,7 @@ def test_numpy_rw_16():
 def test_numpy_rw_17():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -748,7 +737,7 @@ def test_numpy_rw_17():
 def test_numpy_rw_18():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     import numpy.random

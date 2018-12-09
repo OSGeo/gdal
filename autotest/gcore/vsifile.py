@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Generic test
@@ -121,7 +122,7 @@ def test_vsifile_2():
         # FIXME
         # Fails on Travis with 17592186044423 (which is 0x10 00 00 00 00 07 instead of 7) at line 63
         # Looks like a 32/64bit issue with Python bindings of VSIStatL()
-        return 'skip'
+        pytest.skip()
     return ret
 
 ###############################################################################
@@ -131,7 +132,7 @@ def test_vsifile_2():
 def test_vsifile_3():
 
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
-        return 'skip'
+        pytest.skip()
 
     filename = 'tmp/vsifile_3'
 
@@ -142,16 +143,14 @@ def test_vsifile_3():
     if pos != 10 * 1024 * 1024 * 1024:
         gdal.VSIFCloseL(fp)
         gdal.Unlink(filename)
-        print(pos)
-        return 'fail'
+        pytest.fail(pos)
     gdal.VSIFSeekL(fp, 0, 0)
     gdal.VSIFSeekL(fp, pos, 0)
     pos = gdal.VSIFTellL(fp)
     if pos != 10 * 1024 * 1024 * 1024:
         gdal.VSIFCloseL(fp)
         gdal.Unlink(filename)
-        print(pos)
-        return 'fail'
+        pytest.fail(pos)
 
     gdal.VSIFCloseL(fp)
 
@@ -205,19 +204,19 @@ def test_vsifile_5():
         if gdal.VSIFTellL(fp) != 50000:
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
             gdal.SetConfigOption('VSI_CACHE', None)
-            return 'fail'
+            pytest.fail()
 
         gdal.VSIFSeekL(fp, 50000, 1)
         if gdal.VSIFTellL(fp) != 100000:
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
             gdal.SetConfigOption('VSI_CACHE', None)
-            return 'fail'
+            pytest.fail()
 
         gdal.VSIFSeekL(fp, 0, 2)
         if gdal.VSIFTellL(fp) != 5 * 32768 * 8:
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
             gdal.SetConfigOption('VSI_CACHE', None)
-            return 'fail'
+            pytest.fail()
         gdal.VSIFReadL(1, 1, fp)
 
         gdal.VSIFSeekL(fp, 0, 0)
@@ -225,20 +224,20 @@ def test_vsifile_5():
         if data.decode('ascii') != ref_data[0:3 * 32768]:
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
             gdal.SetConfigOption('VSI_CACHE', None)
-            return 'fail'
+            pytest.fail()
 
         gdal.VSIFSeekL(fp, 16384, 0)
         data = gdal.VSIFReadL(1, 5 * 32768, fp)
         if data.decode('ascii') != ref_data[16384:16384 + 5 * 32768]:
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
             gdal.SetConfigOption('VSI_CACHE', None)
-            return 'fail'
+            pytest.fail()
 
         data = gdal.VSIFReadL(1, 50 * 32768, fp)
         if data[0:1130496].decode('ascii') != ref_data[16384 + 5 * 32768:]:
             gdal.SetConfigOption('VSI_CACHE_SIZE', None)
             gdal.SetConfigOption('VSI_CACHE', None)
-            return 'fail'
+            pytest.fail()
 
         gdal.VSIFCloseL(fp)
 
@@ -255,7 +254,7 @@ def test_vsifile_5():
 def test_vsifile_6():
 
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
-        return 'skip'
+        pytest.skip()
 
     offset = 4 * 1024 * 1024 * 1024
 
@@ -294,7 +293,7 @@ def test_vsifile_6():
 def test_vsifile_7():
 
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
-        return 'skip'
+        pytest.skip()
 
     # Test extending file beyond reasonable limits in write mode
     fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'wb')
@@ -430,7 +429,7 @@ a""")
     contents = gdal.ReadDir('/vsitar//vsimem/vsifile_10.tar')
     if contents is None:
         gdal.Unlink('/vsimem/vsifile_10.tar')
-        return 'skip'
+        pytest.skip()
     assert contents == ['test.txt', 'huge.txt', 'small.txt']
     assert gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/test.txt').size == 3
     assert gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/huge.txt').size == 3888
@@ -489,7 +488,7 @@ def test_vsifile_12():
     target_dir = 'tmp'
 
     if gdal.VSISupportsSparseFiles(target_dir) == 0:
-        return 'skip'
+        pytest.skip()
 
     # Minimum value to make it work on NTFS
     block_size = 65536
@@ -653,7 +652,7 @@ def test_vsifile_20():
     except ValueError:
         return 'success'
 
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test gdal.VSIGetMemFileBuffer_unsafe() and gdal.VSIFWriteL() reading buffers
@@ -748,7 +747,7 @@ def test_vsigzip_multi_thread():
                 print(i*5, data[i*5:i*5+5], data[i*5-5:i*5+5-5])
                 break
 
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 

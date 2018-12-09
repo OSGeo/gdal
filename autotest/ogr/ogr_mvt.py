@@ -38,6 +38,7 @@ import webserver
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 
@@ -64,7 +65,7 @@ def test_ogr_mvt_datatypes():
        f['real_value'] != 1.23456789 or \
        f['string_value'] != 'str':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Without metadata.json
     ds = gdal.OpenEx('data/mvt/datatypes/0/0/0.pbf',
@@ -116,7 +117,7 @@ def test_ogr_mvt_datatypes():
        f['real_value'] != 1.23456789 or \
        f['string_value'] != 'str':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -187,7 +188,7 @@ def test_ogr_mvt_with_extension_fields():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'LINESTRING (2070 2690,2082 2707)') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -201,11 +202,11 @@ def test_ogr_mvt_mixed():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTIPOINT ((215246.671651058 6281289.23636264),(332653.947097085 6447616.20991119))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -219,14 +220,14 @@ def test_ogr_mvt_linestring():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', open_options=['METADATA_FILE='])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -240,14 +241,14 @@ def test_ogr_mvt_multilinestring():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = gdal.OpenEx('data/mvt/multilinestring/0/0/0.pbf', open_options=['METADATA_FILE='])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -261,14 +262,14 @@ def test_ogr_mvt_polygon():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119)))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = gdal.OpenEx('data/mvt/polygon/0/0/0.pbf', open_options=['METADATA_FILE='])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POLYGON ((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -282,12 +283,12 @@ def test_ogr_mvt_point_polygon():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTIPOINT ((215246.671651058 6281289.23636264))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((440277.282922614 450061.222543117,440277.282922614 -440277.282922614,0.0 -440277.282922614,0.0 -215246.671651058,215246.671651058 -215246.671651058,215246.671651058 225030.61127156,0.0 225030.61127156,0.0 450061.222543117,440277.282922614 450061.222543117)),((0.0 117407.275446031,0.0 -107623.335825529,-117407.275446031 -107623.335825529,-117407.275446031 117407.275446031,0.0 117407.275446031)),((107623.335825529 58703.6377230138,107623.335825529 -48919.6981025115,48919.6981025115 -48919.6981025115,48919.6981025115 58703.6377230138,107623.335825529 58703.6377230138)))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -297,12 +298,12 @@ def test_ogr_mvt_point_polygon():
 def test_ogr_mvt_point_polygon_clip():
 
     if not ogrtest.have_geos() or gdal.GetConfigOption('OGR_MVT_CLIP') is not None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetConfigOption('APPVEYOR') is not None:
-        return 'skip'
+        pytest.skip()
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/mvt/point_polygon/1')
     lyr = ds.GetLayer(1)
@@ -310,7 +311,7 @@ def test_ogr_mvt_point_polygon_clip():
     if ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((445169.252732867 450061.222543117,445169.252732867 0.0,220138.641461308 0.0,220138.641461308 225030.61127156,0.0 225030.61127156,0.0 450061.222543117,445169.252732867 450061.222543117)),((107623.335825528 58703.6377230138,107623.335825528 0.0,53811.6679127641 0.0,53811.6679127641 58703.6377230138,107623.335825528 58703.6377230138)))') != 0 and \
        ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((445169.252732867 0.0,445169.252732867 -445169.252732867,0.0 -445169.252732867,0.0 -220138.641461308,220138.641461308 -220138.641461308,220138.641461308 0.0,445169.252732867 0.0)),((107623.335825528 0.0,107623.335825528 -53811.6679127641,53811.6679127641 -53811.6679127641,53811.6679127641 0.0,107623.335825528 0.0)))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -399,28 +400,28 @@ def test_ogr_mvt_open_variants():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, expected_geom) != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = ogr.Open('MVT:data/mvt/linestring/0')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, expected_geom) != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = ogr.Open('/vsigzip/data/mvt/linestring/0/0/0.pbf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, expected_geom) != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = ogr.Open('MVT:/vsigzip/data/mvt/linestring/0/0/0.pbf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, expected_geom) != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -435,7 +436,7 @@ def test_ogr_mvt_xyz_options():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POINT (-12496536.8802869 8299226.7830913)') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -446,7 +447,7 @@ def test_ogr_mvt_test_ogrsf_pbf():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() +
                                ' -ro data/mvt/datatypes/0/0/0.pbf')
@@ -462,7 +463,7 @@ def test_ogr_mvt_test_ogrsf_directory():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() +
                                ' -ro data/mvt/datatypes/0')
@@ -477,21 +478,21 @@ def test_ogr_mvt_test_ogrsf_directory():
 def test_ogr_mvt_mbtiles():
 
     if ogr.GetDriverByName('MBTILES') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/mvt/point_polygon.mbtiles')
     lyr = ds.GetLayerByName('point')
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTIPOINT ((220138.641461308 6276397.26655239))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetSpatialFilterRect(0, 0, 10000000, 10000000)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'MULTIPOINT ((220138.641461308 6276397.26655239))') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -501,7 +502,7 @@ def test_ogr_mvt_mbtiles():
 def test_ogr_mvt_mbtiles_json_field():
 
     if ogr.GetDriverByName('MBTILES') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/mvt/datatypes.mbtiles',
                      open_options=['JSON_FIELD=YES', 'CLIP=NO'])
@@ -527,7 +528,7 @@ def test_ogr_mvt_mbtiles_json_field():
 def test_ogr_mvt_mbtiles_json_field_auto():
 
     if ogr.GetDriverByName('MBTILES') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/mvt/datatypes_json_field_auto.mbtiles',
                      open_options=['CLIP=NO'])
@@ -554,10 +555,10 @@ def test_ogr_mvt_mbtiles_test_ogrsf():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if ogr.GetDriverByName('MBTILES') is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() +
                                ' -ro data/mvt/point_polygon.mbtiles polygon2')
@@ -572,7 +573,7 @@ def test_ogr_mvt_mbtiles_test_ogrsf():
 def test_ogr_mvt_mbtiles_open_vector_in_raster_mode():
 
     if ogr.GetDriverByName('MBTILES') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/mvt/datatypes.mbtiles', gdal.OF_RASTER)
     assert ds is None
@@ -592,7 +593,7 @@ def test_ogr_mvt_x_y_z_filename_scheme():
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)') != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
     gdal.Unlink(tmpfilename)
 
@@ -675,11 +676,11 @@ def test_ogr_mvt_http_start():
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -689,7 +690,7 @@ def test_ogr_mvt_http_start():
 def test_ogr_mvt_http():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/linestring/metadata.json', 200, {},
@@ -771,7 +772,7 @@ def test_ogr_mvt_http():
 def test_ogr_mvt_http_stop():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
@@ -783,7 +784,7 @@ def test_ogr_mvt_http_stop():
 def test_ogr_mvt_write_one_layer():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -887,7 +888,7 @@ def test_ogr_mvt_write_one_layer():
        out_f['boolfield'] is False or \
        ogrtest.check_feature_geometry(out_f, 'POINT (498980.920645632 997961.84129126)') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_f = out_lyr.GetNextFeature()
     if out_f['strfield'] != 'foo' or \
@@ -899,7 +900,7 @@ def test_ogr_mvt_write_one_layer():
        out_f['boolfield'] is False or \
        ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_f = out_lyr.GetNextFeature()
     if out_f['strfield'] != 'foobarbazbaw' or \
@@ -911,36 +912,36 @@ def test_ogr_mvt_write_one_layer():
        out_f.IsFieldSet('boolfield') or \
        ogrtest.check_feature_geometry(out_f, 'POLYGON ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOINT ((498980.920645632 997961.84129126),(508764.860266134 1007745.78091176))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176),(508764.860266134 1007745.78091176,508764.860266134 997961.84129126))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126)))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_f = out_lyr.GetNextFeature()
     if (out_f.GetGeometryRef().GetGeometryType() == ogr.wkbPoint and ogrtest.check_feature_geometry(out_f, 'POINT (498980.920645632 997961.84129126)') != 0) or \
        (out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString and ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))') != 0) or \
        out_f.GetGeometryRef().GetGeometryType() not in (ogr.wkbPoint, ogr.wkbMultiLineString):
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_f = out_lyr.GetNextFeature()
     if (out_f.GetGeometryRef().GetGeometryType() == ogr.wkbPoint and ogrtest.check_feature_geometry(out_f, 'POINT (498980.920645632 997961.84129126)') != 0) or \
        (out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString and ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))') != 0) or \
        out_f.GetGeometryRef().GetGeometryType() not in (ogr.wkbPoint, ogr.wkbMultiLineString):
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     out_ds = ogr.Open('/vsimem/outmvt/5')
     assert out_ds is not None
@@ -1077,7 +1078,7 @@ def test_ogr_mvt_write_one_layer():
 def test_ogr_mvt_write_conf():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -1101,7 +1102,7 @@ def test_ogr_mvt_write_conf():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOINT (498980.920645632 997961.84129126)') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = gdal.VSIFOpenL('/vsimem/outmvt/metadata.json', 'rb')
     assert f is not None
@@ -1147,7 +1148,7 @@ def test_ogr_mvt_write_conf():
 def test_ogr_mvt_write_mbtiles():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -1166,7 +1167,7 @@ def test_ogr_mvt_write_mbtiles():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOINT ((499898.164985053 1000102.07808325))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
@@ -1179,7 +1180,7 @@ def test_ogr_mvt_write_mbtiles():
 def test_ogr_mvt_write_limitations_max_size():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -1207,11 +1208,11 @@ def test_ogr_mvt_write_limitations_max_size():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((498980.920645631 1007745.78091176,508764.860266133 1007745.78091176))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'POINT (498980.920645631 1007745.78091176)') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
@@ -1224,7 +1225,7 @@ def test_ogr_mvt_write_limitations_max_size():
 def test_ogr_mvt_write_polygon_repaired():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -1253,15 +1254,15 @@ def test_ogr_mvt_write_polygon_repaired():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)),((997961.84129126 0.0,997961.84129126 997961.84129126,1995923.68258252 997961.84129126,997961.84129126 0.0)))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_f = out_lyr.GetNextFeature()
     if out_f is not None:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
@@ -1274,7 +1275,7 @@ def test_ogr_mvt_write_polygon_repaired():
 def test_ogr_mvt_write_conflicting_innner_ring():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -1295,7 +1296,7 @@ def test_ogr_mvt_write_conflicting_innner_ring():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
@@ -1308,7 +1309,7 @@ def test_ogr_mvt_write_conflicting_innner_ring():
 def test_ogr_mvt_write_limitations_max_size_polygon():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -1330,7 +1331,7 @@ def test_ogr_mvt_write_limitations_max_size_polygon():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((498980.920645631 1007745.78091176,508764.860266133 1017529.72053227,508764.860266133 1007745.78091176,498980.920645631 1007745.78091176)))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
@@ -1343,7 +1344,7 @@ def test_ogr_mvt_write_limitations_max_size_polygon():
 def test_ogr_mvt_write_limitations_max_features():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')
@@ -1367,11 +1368,11 @@ def test_ogr_mvt_write_limitations_max_features():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'POLYGON ((499898.164985053 1000102.07808325,509987.852718696 1100081.71108026,509987.852718696 1000102.07808325,499898.164985053 1000102.07808325))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_f = out_lyr.GetNextFeature()
     if out_f is not None:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
@@ -1384,7 +1385,7 @@ def test_ogr_mvt_write_limitations_max_features():
 def test_ogr_mvt_write_custom_tiling_scheme():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
@@ -1407,7 +1408,7 @@ def test_ogr_mvt_write_custom_tiling_scheme():
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((-40160 7944704,21024 8044800))') != 0:
         out_f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     out_ds = None
 
     gdal.RmdirRecursive('/vsimem/out')
@@ -1420,7 +1421,7 @@ def test_ogr_mvt_write_custom_tiling_scheme():
 def test_ogr_mvt_write_errors():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     # Raster creation attempt
     gdal.RmdirRecursive('/vsimem/foo')
@@ -1576,7 +1577,7 @@ def test_ogr_mvt_write_errors():
 def test_ogr_mvt_write_reuse_temp_db():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer('mylayer')

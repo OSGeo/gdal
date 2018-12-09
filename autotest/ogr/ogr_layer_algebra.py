@@ -36,6 +36,7 @@ import gdaltest
 import ogrtest
 
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Common usage tests.
@@ -89,7 +90,7 @@ def test_algebra_setup():
     global ds, A, B, C, pointInB, D1, D2, empty
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     # Create three memory layers for intersection.
 
@@ -161,7 +162,7 @@ def test_algebra_setup():
 
 def test_algebra_intersection():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -196,8 +197,7 @@ def test_algebra_intersection():
             assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
                 'Did not get expected field values.'
         else:
-            gdaltest.post_reason('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
-            return 'fail'
+            pytest.fail('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
 
     # This time we test with PROMOTE_TO_MULTI and pre-created output fields.
     recreate_layer_C()
@@ -229,8 +229,7 @@ def test_algebra_intersection():
             assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
                 'Did not get expected field values. (2)'
         else:
-            gdaltest.post_reason('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
-            return 'fail'
+            pytest.fail('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
 
     recreate_layer_C()
 
@@ -248,7 +247,7 @@ def test_algebra_intersection():
 
 def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     driver = ogr.GetDriverByName('MEMORY')
     ds = driver.CreateDataSource('ds')
@@ -313,7 +312,7 @@ def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
 
 def test_algebra_union():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -365,7 +364,7 @@ def test_algebra_union():
 
 def test_algebra_symdifference():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -406,7 +405,7 @@ def test_algebra_symdifference():
 
 def test_algebra_identify():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -446,7 +445,7 @@ def test_algebra_identify():
 
 def test_algebra_update():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -486,7 +485,7 @@ def test_algebra_update():
 
 def test_algebra_clip():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -526,7 +525,7 @@ def test_algebra_clip():
 
 def test_algebra_erase():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -575,10 +574,9 @@ def test_algebra_erase():
     feat_a = A.GetNextFeature()
     feat_c = C.GetNextFeature()
     if feat_a.Equal(feat_c) != 0:
-        gdaltest.post_reason('features not identical')
         feat_a.DumpReadable()
         feat_c.DumpReadable()
-        return 'fail'
+        pytest.fail('features not identical')
 
     recreate_layer_C()
 
@@ -594,7 +592,7 @@ def test_algebra_erase():
 
 def test_algebra_cleanup():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     global ds, A, B, C, pointInB, D1, D2, empty
 

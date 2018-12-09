@@ -87,7 +87,7 @@ def test_ogr_georss_init():
 def ogr_georss_test_atom(filename):
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayerByName('georss')
@@ -165,7 +165,7 @@ def test_ogr_georss_1ter():
 def ogr_georss_test_rss(filename, only_first_feature):
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(filename)
     assert ds is not None
@@ -180,8 +180,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
 
     if lyr.GetSpatialRef().ExportToWkt().find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') != -1:
         lyr.GetSpatialRef().ExportToWkt()
-        gdaltest.post_reason('AXIS definition found with latitude/longitude order!')
-        return 'fail'
+        pytest.fail('AXIS definition found with latitude/longitude order!')
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POINT (2 49)'
@@ -231,7 +230,7 @@ def test_ogr_georss_2():
 def test_ogr_georss_3():
 
     if not gdaltest.have_gml_reader:
-        return 'skip'
+        pytest.skip()
 
     return ogr_georss_test_rss('data/test_georss_gml.xml', False)
 
@@ -343,7 +342,7 @@ def test_ogr_georss_6():
 
 def test_ogr_georss_7():
     if not gdaltest.have_gml_reader:
-        return 'skip'
+        pytest.skip()
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', False)
 
@@ -421,9 +420,9 @@ def test_ogr_georss_10():
 def test_ogr_georss_11():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
     if not gdaltest.have_gml_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/test32631.rss')
     lyr = ds.GetLayer(0)
@@ -452,7 +451,7 @@ def test_ogr_georss_11():
 def test_ogr_georss_12():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     open('tmp/broken.rss', 'wt').write('<?xml version="1.0"?><rss><item><a></item></rss>')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -515,7 +514,7 @@ def test_ogr_georss_13():
 def test_ogr_georss_14():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/nonstandard.rss')
     lyr = ds.GetLayer(0)
@@ -538,12 +537,12 @@ def test_ogr_georss_14():
 def test_ogr_georss_15():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     try:
         gdal.FileFromMemBuffer
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     content = """<?xml version="1.0" encoding="UTF-8"?>
     <rss version="2.0" xmlns:georss="http://www.georss.org/georss" xmlns:gml="http://www.opengis.net/gml">

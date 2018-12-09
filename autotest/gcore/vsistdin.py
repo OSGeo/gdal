@@ -35,6 +35,7 @@ import sys
 import gdaltest
 from osgeo import gdal
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Test on a small file
@@ -42,7 +43,7 @@ import test_cli_utilities
 
 def test_vsistdin_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vsistdin_1_src.tif', src_ds)
@@ -69,7 +70,7 @@ def test_vsistdin_1():
 
 def test_vsistdin_2():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/vsistdin_2_src.tif', 2048, 2048)
     ds = None
@@ -106,7 +107,7 @@ def test_vsistdin_3():
 
 def test_vsistdin_4():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/vsistdin_4_src.vrt', 'wt')
     f.write("""<VRTDataset rasterXSize="20" rasterYSize="20">

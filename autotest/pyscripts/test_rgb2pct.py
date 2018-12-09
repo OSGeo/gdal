@@ -37,6 +37,7 @@ import struct
 from osgeo import gdal
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Test rgb2pct
@@ -46,7 +47,7 @@ def test_rgb2pct_1():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'rgb2pct', '../gcore/data/rgbsmall.tif tmp/test_rgb2pct_1.tif')
 
@@ -65,11 +66,11 @@ def test_pct2rgb_1():
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
     except:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('pct2rgb')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'pct2rgb', 'tmp/test_rgb2pct_1.tif tmp/test_pct2rgb_1.tif')
 
@@ -93,7 +94,7 @@ def test_rgb2pct_2():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'rgb2pct', '-n 16 ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_2.tif')
 
@@ -118,7 +119,7 @@ def test_rgb2pct_3():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'rgb2pct', '-pct tmp/test_rgb2pct_2.tif ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_3.tif')
 
@@ -144,11 +145,11 @@ def test_pct2rgb_4():
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('pct2rgb')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'pct2rgb', '-rgba ../gcore/data/rat.img tmp/test_pct2rgb_4.tif')
 

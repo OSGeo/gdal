@@ -40,6 +40,7 @@ import ogrtest
 import test_py_scripts
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Basic test without snapshoting
@@ -56,19 +57,18 @@ def test_ograpispy_1():
         ogrtest.has_apispy = True
     except OSError:
         ogrtest.has_apispy = False
-        return 'skip'
+        pytest.skip()
 
     ref_data = open('data/testograpispy.py', 'rt').read()
     got_data = open('tmp/ograpispy_1.py', 'rt').read()
 
     if ref_data != got_data:
-        gdaltest.post_reason('did not get expected script')
         print()
         for line in unified_diff(ref_data.splitlines(), got_data.splitlines(),
                                  fromfile='expected', tofile='got',
                                  lineterm=""):
             print(line)
-        return 'fail'
+        pytest.fail('did not get expected script')
 
     return 'success'
 
@@ -79,7 +79,7 @@ def test_ograpispy_1():
 def test_ograpispy_2():
 
     if not ogrtest.has_apispy:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree('tmp/snapshot_1')

@@ -37,6 +37,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Check driver existence.
@@ -49,7 +50,7 @@ def test_ogr_cad_1():
 
     gdaltest.cad_dr = ogr.GetDriverByName('CAD')
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -59,7 +60,7 @@ def test_ogr_cad_1():
 
 def test_ogr_cad_2():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/ellipse_r2000.dwg', allowed_drivers=['CAD'])
 
@@ -118,7 +119,7 @@ def test_ogr_cad_2():
 
 def test_ogr_cad_3():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/triple_circles_r2000.dwg', allowed_drivers=['CAD'])
 
@@ -247,7 +248,7 @@ def test_ogr_cad_3():
 
 def test_ogr_cad_4():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/point2d_r2000.dwg', allowed_drivers=['CAD'])
 
@@ -271,7 +272,7 @@ def test_ogr_cad_4():
 
 def test_ogr_cad_5():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/line_r2000.dwg', allowed_drivers=['CAD'])
 
@@ -296,7 +297,7 @@ def test_ogr_cad_5():
 
 def test_ogr_cad_6():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers=['CAD'])
 
@@ -325,7 +326,7 @@ def test_ogr_cad_6():
 
 def test_ogr_cad_7():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
@@ -344,7 +345,7 @@ def test_ogr_cad_7():
 
 def test_ogr_cad_8():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
@@ -363,7 +364,7 @@ def test_ogr_cad_8():
 
 def test_ogr_cad_9():
     if gdaltest.cad_dr is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('data/AC1018_signature.dwg', allowed_drivers=['CAD'])

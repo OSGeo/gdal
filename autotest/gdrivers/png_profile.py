@@ -37,6 +37,7 @@ import base64
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 
 ###############################################################################
@@ -66,7 +67,7 @@ def test_png_copy_icc():
 
     try:
         os.stat('tmp/icc_test.png.aux.xml')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
@@ -77,7 +78,7 @@ def test_png_copy_icc():
 
     try:
         os.stat('tmp/icc_test.png.aux.xml')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 
@@ -90,7 +91,7 @@ def test_png_copy_icc():
 
     try:
         os.stat('tmp/icc_test.png.aux.xml')
-        return 'fail'
+        pytest.fail()
     except OSError:
         pass
 

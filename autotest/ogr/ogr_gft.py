@@ -37,6 +37,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test if driver is available
@@ -49,12 +50,11 @@ def test_ogr_gft_init():
     ogrtest.gft_drv = ogr.GetDriverByName('GFT')
 
     if ogrtest.gft_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.gdalurlopen('http://www.google.com') is None:
-        print('cannot open http://www.google.com')
         ogrtest.gft_drv = None
-        return 'skip'
+        pytest.skip('cannot open http://www.google.com')
 
     ogrtest.gft_refresh = '1/woRTxgfN8dLUpRhnOL-BXG-f7VxzXKy_3D5eizH8bS8'
 
@@ -66,7 +66,7 @@ def test_ogr_gft_init():
 
 def test_ogr_gft_read():
     if ogrtest.gft_drv is None:
-        return 'skip'
+        pytest.skip()
 
     table_id = '15eIgEVTUNlC649ODphJVHXeb4nsOb49WJUlnhw'
 
@@ -90,12 +90,11 @@ def test_ogr_gft_read():
 
     count = lyr.GetFeatureCount()
     if count == 0:
-        gdaltest.post_reason('did not get expected feature count')
         print(count)
         if gdaltest.skip_on_travis() or gdal.GetConfigOption('APPVEYOR') is not None:
             ogrtest.gft_drv = None
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail('did not get expected feature count')
 
     sql_lyr = ds.ExecuteSQL("SELECT Latitude, Longitude FROM " + table_id + " WHERE ST_INTERSECTS('Latitude', RECTANGLE(LATLNG(31.5,67.0), LATLNG(32.0,67.5))) AND 'Attack on' = 'ENEMY'")
     assert sql_lyr is not None, 'SQL request failed'
@@ -113,16 +112,16 @@ def test_ogr_gft_read():
 
 def test_ogr_gft_write():
     if ogrtest.gft_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if ogrtest.gft_refresh is None:
         ogrtest.gft_can_write = False
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update=1)
     if ds is None:
         ogrtest.gft_can_write = False
-        return 'skip'
+        pytest.skip()
     ogrtest.gft_can_write = True
 
     import random
@@ -149,15 +148,13 @@ def test_ogr_gft_write():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('strcol') != 'bar':
-        gdaltest.post_reason('GetNextFeature() did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('GetNextFeature() did not get expected feature')
 
     feat = lyr.GetFeature(fid)
     if feat.GetFieldAsString('strcol') != 'bar':
-        gdaltest.post_reason('GetFeature() did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('GetFeature() did not get expected feature')
     got_wkt = feat.GetGeometryRef().ExportToWkt()
     assert got_wkt == expected_wkt, 'did not get expected geometry'
 
@@ -178,14 +175,14 @@ def test_ogr_gft_write():
 
 def test_ogr_gft_ogr2ogr_non_spatial():
     if ogrtest.gft_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.gft_can_write:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     layer_name = 'no_geometry_table_%d' % ogrtest.gft_rand_val
 
@@ -202,19 +199,16 @@ def test_ogr_gft_ogr2ogr_non_spatial():
     ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update=1)
     lyr = ds.GetLayerByName(layer_name)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
-        gdaltest.post_reason('did not get expected field count')
         ds.ExecuteSQL('DELLAYER:' + layer_name)
-        return 'fail'
+        pytest.fail('did not get expected field count')
 
     if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('did not get expected layer geometry type')
         ds.ExecuteSQL('DELLAYER:' + layer_name)
-        return 'fail'
+        pytest.fail('did not get expected layer geometry type')
 
     if lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason('did not get expected feature count')
         ds.ExecuteSQL('DELLAYER:' + layer_name)
-        return 'fail'
+        pytest.fail('did not get expected feature count')
 
     ds.ExecuteSQL('DELLAYER:' + layer_name)
 
@@ -228,14 +222,14 @@ def test_ogr_gft_ogr2ogr_non_spatial():
 
 def test_ogr_gft_ogr2ogr_spatial():
     if ogrtest.gft_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.gft_can_write:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     layer_name = 'geometry_table_%d' % ogrtest.gft_rand_val
     copied_layer_name = 'copied_geometry_table_%d' % ogrtest.gft_rand_val
@@ -265,41 +259,35 @@ def test_ogr_gft_ogr2ogr_spatial():
         lyr = ds.GetLayerByName(name)
 
         if lyr.GetGeometryColumn() != 'geometry':
-            gdaltest.post_reason('layer %s: did not get expected geometry column' % name)
             ds.ExecuteSQL('DELLAYER:' + layer_name)
             ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
-            return 'fail'
+            pytest.fail('layer %s: did not get expected geometry column' % name)
 
         if lyr.GetLayerDefn().GetFieldCount() != 3:
-            gdaltest.post_reason('layer %s: did not get expected field count' % name)
             ds.ExecuteSQL('DELLAYER:' + layer_name)
             ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
-            return 'fail'
+            pytest.fail('layer %s: did not get expected field count' % name)
 
         if lyr.GetGeomType() != ogr.wkbUnknown:
-            gdaltest.post_reason('layer %s: did not get expected layer geometry type' % name)
             ds.ExecuteSQL('DELLAYER:' + layer_name)
             ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
-            return 'fail'
+            pytest.fail('layer %s: did not get expected layer geometry type' % name)
 
         if lyr.GetFeatureCount() != 3:
-            gdaltest.post_reason('layer %s: did not get expected feature count' % name)
             ds.ExecuteSQL('DELLAYER:' + layer_name)
             ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
-            return 'fail'
+            pytest.fail('layer %s: did not get expected feature count' % name)
 
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != "POINT (0 1)":
-            gdaltest.post_reason('layer %s: did not get expected geometry' % name)
             ds.ExecuteSQL('DELLAYER:' + layer_name)
             ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
-            return 'fail'
+            pytest.fail('layer %s: did not get expected geometry' % name)
 
         if feat.GetFieldAsInteger('bar') != 2:
-            gdaltest.post_reason('layer %s: did not get expected field value' % name)
             ds.ExecuteSQL('DELLAYER:' + layer_name)
             ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
-            return 'fail'
+            pytest.fail('layer %s: did not get expected field value' % name)
 
     ds.ExecuteSQL('DELLAYER:' + layer_name)
     ds.ExecuteSQL('DELLAYER:' + copied_layer_name)

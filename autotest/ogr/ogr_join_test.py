@@ -34,6 +34,7 @@ import gdaltest
 from osgeo import gdal
 from osgeo import ogr
 import ogrtest
+import pytest
 
 ###############################################################################
 # Test a join.
@@ -351,7 +352,7 @@ def test_ogr_join_16():
 
     if sql_lyr is None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test non-support of a secondarytable.fieldname in a order by clause
@@ -371,7 +372,7 @@ def test_ogr_join_17():
 
     if sql_lyr is None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test inverted order of fields in ON
@@ -406,7 +407,7 @@ def test_ogr_join_19():
 
     if sql_lyr is None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test unrecognized secondary field
@@ -424,7 +425,7 @@ def test_ogr_join_20():
 
     if sql_lyr is None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test unexpected secondary table
@@ -444,7 +445,7 @@ def test_ogr_join_21():
 
     if sql_lyr is None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test join with a complex expression as ON
@@ -495,11 +496,11 @@ def test_ogr_join_23():
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull('second.f'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = sql_lyr.GetNextFeature()
     if feat['f'] != 'key1' or feat['second.f'] != 'key1':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None

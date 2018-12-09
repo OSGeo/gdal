@@ -36,6 +36,7 @@ from osgeo import ogr
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 
@@ -57,13 +58,13 @@ def test_ogr_edigeo_1():
 
     for filename in filelist:
         if not gdaltest.download_file(base_url + filename, filename):
-            return 'skip'
+            pytest.skip()
 
     try:
         for filename in filelist:
             os.stat('tmp/cache/' + filename)
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/cache/E000AB01.THF')
     assert ds.GetLayerCount() == 24
@@ -98,19 +99,19 @@ def test_ogr_edigeo_1():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (877171.28 72489.22)'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayerByName('BATIMENT_id')
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POLYGON ((877206.16 71888.82,877193.14 71865.51,877202.95 71860.07,877215.83 71883.5,877206.16 71888.82))'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayerByName('ZONCOMMUNI_id')
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (877929.8 71656.39,877922.38 71663.72,877911.48 71669.51,877884.23 71675.64,877783.07 71694.04,877716.31 71706.98,877707.45 71709.71,877702.0 71713.79,877696.89 71719.58,877671.69 71761.82,877607.99 71865.03,877545.32 71959.04,877499.22 72026.82)'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds.Destroy()
 

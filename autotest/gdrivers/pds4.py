@@ -38,6 +38,7 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import gdaltest
+import pytest
 
 ###############################################################################
 # Validate XML file against schemas
@@ -46,27 +47,27 @@ import gdaltest
 def validate_xml(filename):
 
     if ogr.GetDriverByName('GMLAS') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd',
                                   'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1800.xsd',
                                   force_download=True):
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1800.xsd',
                                   'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1800.xsd',
                                   force_download=True):
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1700.xsd',
                                   'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1700.xsd',
                                   force_download=True):
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd',
                                   'pds.nasa.gov_pds4_cart_v1_PDS4_CART_1700.xsd',
                                   force_download=True):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:' + filename, open_options=[
         'VALIDATE=YES',

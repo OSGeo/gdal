@@ -35,6 +35,7 @@ import os
 
 import gdaltest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 #
@@ -106,7 +107,7 @@ def search_all_features(lyr):
 def test_ogr_shape_sbn_1():
 
     if not gdaltest.download_file('http://pubs.usgs.gov/sim/3194/contents/Cochiti_shapefiles.zip', 'Cochiti_shapefiles.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
@@ -116,9 +117,9 @@ def test_ogr_shape_sbn_1():
             try:
                 os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = ogr.Open('tmp/cache/CochitiDamShapeFiles')
     for i in range(ds.GetLayerCount()):

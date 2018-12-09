@@ -259,11 +259,9 @@ def test_contour_3():
     feat = lyr.GetNextFeature()
     while feat is not None:
         if i < 3 and feat.GetField('elevMax') != expected_height[i]:
-            print('Got %f as z. Expected %f' % (feat.GetField('elevMax'), expected_height[i]))
-            return 'fail'
+            pytest.fail('Got %f as z. Expected %f' % (feat.GetField('elevMax'), expected_height[i]))
         elif i > 0 and i < 3 and feat.GetField('elevMin') != expected_height[i-1]:
-            print('Got %f as z. Expected %f' % (feat.GetField('elevMin'), expected_height[i-1]))
-            return 'fail'
+            pytest.fail('Got %f as z. Expected %f' % (feat.GetField('elevMin'), expected_height[i-1]))
 
         envelope = feat.GetGeometryRef().GetEnvelope()
         for j in range(4):

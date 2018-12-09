@@ -37,6 +37,7 @@ import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -488,10 +489,10 @@ def test_ogr_pgdump_7():
     assert ret == 0
     if feat.GetFID() < 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetField('myfid') != feat.GetFID():
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # feat.SetField('str', 'foo')
     # ret = lyr.SetFeature(feat)
@@ -583,10 +584,10 @@ def test_ogr_pgdump_8():
     assert ret == 0
     if feat.GetFID() < 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetField('myfid') != feat.GetFID():
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # feat.SetField('str', 'foo')
     # ret = lyr.SetFeature(feat)

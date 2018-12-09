@@ -36,6 +36,7 @@ from osgeo import ogr
 from osgeo import gdal
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Find PLScenes driver
@@ -47,7 +48,7 @@ def test_ogr_plscenes_init():
 
     if gdaltest.plscenes_drv is not None:
         return 'success'
-    return 'skip'
+    pytest.skip()
 
 ###############################################################################
 # Test Data V1 API catalog listing with a single catalog
@@ -56,7 +57,7 @@ def test_ogr_plscenes_init():
 def test_ogr_plscenes_data_v1_catalog_no_paging():
 
     if gdaltest.plscenes_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types', '{ "item_types": [ { "id": "PSScene3Band" } ] }')
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
@@ -81,7 +82,7 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
 def test_ogr_plscenes_data_v1_catalog_paging():
 
     if gdaltest.plscenes_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types', '{"_links": { "_next" : "/vsimem/data_v1/item-types/page_2"}, "item_types": [ { "id": "PSScene3Band" } ] }')
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/page_2', '{ "item_types": [ { "id": "PSScene4Band" } ] }')
@@ -112,7 +113,7 @@ def test_ogr_plscenes_data_v1_catalog_paging():
 def test_ogr_plscenes_data_v1_nominal():
 
     if gdaltest.plscenes_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types',
                            """{ "item_types": [
@@ -211,13 +212,13 @@ def test_ogr_plscenes_data_v1_nominal():
        f['asset_analytic_status'] != 'active' or \
        f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.0 49.1,2.1 49.1,2.1 49.0,2 49)))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 1:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/quick-search?page=2',
                            """{
@@ -231,18 +232,18 @@ def test_ogr_plscenes_data_v1_nominal():
     f = lyr.GetNextFeature()
     if f.GetFID() != 2 or f['id'] != 'id2':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 1:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.GetFID() != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     assert f is None
@@ -258,7 +259,7 @@ def test_ogr_plscenes_data_v1_nominal():
     f = lyr.GetNextFeature()
     if f['id'] != 'id3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Cannot find /vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"GeometryFilter","field_name":"geometry","config":{"type":"Point","coordinates":[2.0,49.0]}}]}}
     with gdaltest.error_handler():
@@ -269,7 +270,7 @@ def test_ogr_plscenes_data_v1_nominal():
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test attribute filter on id
     lyr.SetAttributeFilter("id = 'filtered_id'")
@@ -282,7 +283,7 @@ def test_ogr_plscenes_data_v1_nominal():
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_id':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test attribute filter fully evaluated on server side.
     lyr.SetAttributeFilter("id != 'a' AND acquired >= '2016/02/11' AND acquired <= '2016/02/12' AND acquired > '1970/01/01 01:23:45' AND acquired < '2100/01/01 01:23:45' AND anomalous_pixels = 1.234567 AND (NOT id = 'b') AND columns > 0 AND columns < 2 AND columns = 1 AND columns IN (1, 2) AND (id IN ('filtered_2') OR id = 'foo') AND permissions = 'download' AND permissions IN ('download')")
@@ -314,7 +315,7 @@ def test_ogr_plscenes_data_v1_nominal():
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_2':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Partly server / partly client
     lyr.SetAttributeFilter("id = 'filtered_3' AND id > 'a'")
@@ -331,34 +332,34 @@ def test_ogr_plscenes_data_v1_nominal():
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetAttributeFilter("id > 'a' AND id = 'filtered_3'")
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Completely client side
     lyr.SetAttributeFilter("id > 'a' OR id = 'id'")
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Completely client side
     lyr.SetAttributeFilter("NOT id > 'z'")
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Reset attribute filter
     lyr.SetAttributeFilter(None)
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Try raster access
 
@@ -530,7 +531,7 @@ def test_ogr_plscenes_data_v1_nominal():
 def test_ogr_plscenes_data_v1_errors():
 
     if gdaltest.plscenes_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # No PL_API_KEY
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
@@ -632,12 +633,11 @@ def test_ogr_plscenes_data_v1_errors():
 def test_ogr_plscenes_data_v1_live():
 
     if gdaltest.plscenes_drv is None:
-        return 'skip'
+        pytest.skip()
 
     api_key = gdal.GetConfigOption('PL_API_KEY')
     if api_key is None:
-        print('Skipping test as PL_API_KEY not defined')
-        return 'skip'
+        pytest.skip('Skipping test as PL_API_KEY not defined')
 
     gdal.SetConfigOption('PLSCENES_PAGE_SIZE', '10')
     ds = ogr.Open('PLScenes:version=data_v1,FOLLOW_LINKS=YES')
@@ -672,7 +672,7 @@ def test_ogr_plscenes_data_v1_live():
 
     if not f.IsFieldSet(acquired_field):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     int_field = -1
     float_field = -1

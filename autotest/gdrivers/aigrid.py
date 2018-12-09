@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read test of simple byte reference data.
@@ -156,7 +157,7 @@ def test_aigrid_online_1():
 
     for filename in list_files:
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/nzdem/' + filename, 'nzdem/' + filename):
-            return 'skip'
+            pytest.skip()
 
     tst = gdaltest.GDALTest('AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute=1)
     ret = tst.testOpen()
@@ -202,7 +203,7 @@ def test_aigrid_online_1():
 def test_aigrid_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/ai_bug_6886.zip', 'ai_bug_6886.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/ai_bug')
@@ -212,9 +213,9 @@ def test_aigrid_online_2():
             try:
                 os.stat('tmp/cache/ai_bug')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except:
-            return 'skip'
+            pytest.skip()
 
     tst = gdaltest.GDALTest('AIG', 'tmp/cache/ai_bug/ai_bug/hdr.adf', 1, 16018, filename_absolute=1)
     return tst.testOpen()

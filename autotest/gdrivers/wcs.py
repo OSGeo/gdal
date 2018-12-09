@@ -36,6 +36,7 @@ import numbers
 import re
 import shutil
 import urlparse
+import pytest
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler
 except ImportError:
@@ -65,7 +66,7 @@ def test_wcs_1():
 
     gdaltest.wcs_ds = None
     if gdaltest.wcs_drv is None:
-        return 'skip'
+        pytest.skip()
     return 'success'
 
 ###############################################################################
@@ -75,7 +76,7 @@ def test_wcs_1():
 def wcs_2():
 
     if gdaltest.wcs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # first, copy to tmp directory.
     open('tmp/geoserver.wcs', 'w').write(open('data/geoserver.wcs').read())
@@ -85,8 +86,7 @@ def wcs_2():
 
     if gdaltest.wcs_ds is not None:
         return 'success'
-    gdaltest.post_reason('open failed.')
-    return 'fail'
+    pytest.fail('open failed.')
 
 ###############################################################################
 # Check various things about the configuration.
@@ -95,7 +95,7 @@ def wcs_2():
 def test_wcs_3():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.wcs_ds.RasterXSize == 983 and gdaltest.wcs_ds.RasterYSize == 598 and gdaltest.wcs_ds.RasterCount == 3, \
         'wrong size or bands'
@@ -122,7 +122,7 @@ def test_wcs_3():
 def test_wcs_4():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        return 'skip'
+        pytest.skip()
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum()
     assert cs == 58765, ('Wrong checksum: ' + str(cs))
@@ -136,7 +136,7 @@ def test_wcs_4():
 def wcs_5():
 
     if gdaltest.wcs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     fn = """<WCS_GDAL>
   <ServiceURL>http://demo.opengeo.org/geoserver/wcs?</ServiceURL>
@@ -161,7 +161,7 @@ def wcs_5():
 def old_wcs_2():
 
     if gdaltest.wcs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # first, copy to tmp directory.
     open('tmp/srtmplus.wcs', 'w').write(open('data/srtmplus.wcs').read())
@@ -171,8 +171,7 @@ def old_wcs_2():
 
     if gdaltest.wcs_ds is not None:
         return 'success'
-    gdaltest.post_reason('open failed.')
-    return 'fail'
+    pytest.fail('open failed.')
 
 ###############################################################################
 # Check various things about the configuration.
@@ -181,7 +180,7 @@ def old_wcs_2():
 def old_wcs_3():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.wcs_ds.RasterXSize == 43200 and gdaltest.wcs_ds.RasterYSize == 21600 and gdaltest.wcs_ds.RasterCount == 1, \
         'wrong size or bands'
@@ -207,7 +206,7 @@ def old_wcs_3():
 def old_wcs_4():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        return 'skip'
+        pytest.skip()
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
     assert cs == 10469, ('Wrong checksum: ' + str(cs))
@@ -221,7 +220,7 @@ def old_wcs_4():
 def old_wcs_5():
 
     if gdaltest.wcs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     fn = '<WCS_GDAL><ServiceURL>http://geodata.telascience.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
 
@@ -435,7 +434,7 @@ def setupFct():
 def test_wcs_6():
     driver = gdal.GetDriverByName('WCS')
     if driver is None:
-        return 'skip'
+        pytest.skip()
     # Generating various URLs from the driver and comparing them to ones
     # that have worked.
     first_call = True

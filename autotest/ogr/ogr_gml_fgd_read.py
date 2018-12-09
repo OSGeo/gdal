@@ -37,6 +37,7 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 
 ###############################################################################
@@ -58,9 +59,8 @@ def test_ogr_gml_fgd_1():
 
     if ds is None:
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
-            return 'skip'
-        gdaltest.post_reason('failed to open test file.')
-        return 'fail'
+            pytest.skip()
+        pytest.fail('failed to open test file.')
 
     # we have gml reader for fgd
     gdaltest.have_gml_fgd_reader = 1
@@ -90,7 +90,7 @@ def test_ogr_gml_fgd_1():
 
 def test_ogr_gml_fgd_2():
     if not gdaltest.have_gml_fgd_reader:
-        return 'skip'
+        pytest.skip()
 
     # open FGD GML file
     ds = ogr.Open(_fgd_dir + 'BldA.xml')

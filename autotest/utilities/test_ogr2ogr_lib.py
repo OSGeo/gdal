@@ -397,11 +397,11 @@ def test_ogr2ogr_lib_19():
     f = lyr.GetNextFeature()
     if f['foo'] != 'bar' or f.IsFieldSet('bar'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f['bar'] != 'foo' or f.IsFieldSet('foo'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -413,7 +413,7 @@ def test_ogr2ogr_lib_19():
 def test_ogr2ogr_lib_20():
 
     if ogr.GetDriverByName('GPKG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     lyr = src_ds.CreateLayer('layer', geom_type=ogr.wkbNone)
@@ -474,7 +474,7 @@ def test_ogr2ogr_lib_21():
 def test_ogr2ogr_clipsrc_no_dst_geom():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     tmpfilename = '/vsimem/out.csv'
     wkt = 'POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))'

@@ -46,7 +46,7 @@ import pytest
 
 def test_gdaltindex_1():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/tileindex.shp')
@@ -123,7 +123,7 @@ def test_gdaltindex_1():
 
 def test_gdaltindex_2():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
@@ -146,7 +146,7 @@ def test_gdaltindex_2():
 
 def test_gdaltindex_3():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
@@ -175,7 +175,7 @@ def test_gdaltindex_3():
 
 def test_gdaltindex_4():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
@@ -200,7 +200,7 @@ def test_gdaltindex_4():
 
 def test_gdaltindex_5():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -226,15 +226,15 @@ def test_gdaltindex_5():
         if src_srs_format == '-src_srs_format PROJ':
             if feat.GetField('src_srs').find('+proj=longlat +ellps=WGS72') != 0:
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail()
         elif src_srs_format == '-src_srs_format WKT':
             if feat.GetField('src_srs').find('GEOGCS["WGS 72"') != 0:
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail()
         else:
             if feat.GetField('src_srs') != 'EPSG:4322':
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail()
         ds = None
 
     return 'success'
@@ -245,7 +245,7 @@ def test_gdaltindex_5():
 
 def test_gdaltindex_6():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     for option in ['', '-lyr_name tileindex']:
         gdal.PushErrorHandler('CPLQuietErrorHandler')

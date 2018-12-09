@@ -144,19 +144,19 @@ def test_proj(src_srs, src_xyz, src_error,
     import osr_ct
     osr_ct.osr_ct_1()
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     if requirements is not None and requirements[:5] == 'GRID:':
         proj_lib = os.getenv('PROJ_LIB')
         if proj_lib is None:
             # print( 'PROJ_LIB unset, skipping test.' )
-            return 'skip'
+            pytest.skip()
 
         try:
             open(proj_lib + '/' + requirements[5:])
         except IOError:
             # print( 'Did not find GRID:%s' % requirements[5:] )
-            return 'skip'
+            pytest.skip()
 
     src = osr.SpatialReference()
     assert src.SetFromUserInput(src_srs) == 0, \
@@ -176,19 +176,15 @@ def test_proj(src_srs, src_xyz, src_error,
         ct = osr.CoordinateTransformation(src, dst)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-            return 'skip'
+            pytest.skip('PROJ.4 missing, transforms not available.')
     except ValueError:
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-            return 'skip'
-        gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+            pytest.skip('PROJ.4 missing, transforms not available.')
+        pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
     except:
         gdal.PopErrorHandler()
-        gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-        return 'fail'
+        pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
 
     ######################################################################
     # Transform source point to destination SRS.

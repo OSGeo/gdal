@@ -36,6 +36,7 @@ from osgeo import ogr
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Get the rasterlite driver
@@ -60,7 +61,7 @@ def test_rasterlite_1():
 def test_rasterlite_2():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Test if SQLite3 supports rtrees
     try:
@@ -77,17 +78,15 @@ def test_rasterlite_2():
         pass
     if gdal.GetLastErrorMsg().find('rtree') != -1:
         gdaltest.rasterlite_drv = None
-        gdaltest.post_reason('Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!')
-        return 'skip'
+        pytest.skip('Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!')
 
     gdal.ErrorReset()
     ds = gdal.Open('data/rasterlite.sqlite')
     if ds is None:
         if gdal.GetLastErrorMsg().find('unsupported file format') != -1:
             gdaltest.rasterlite_drv = None
-            gdaltest.post_reason('Please upgrade your sqlite3 library to be able to read Rasterlite DBs!')
-            return 'skip'
-        return 'fail'
+            pytest.skip('Please upgrade your sqlite3 library to be able to read Rasterlite DBs!')
+        pytest.fail()
 
     assert ds.RasterCount == 3, 'expected 3 bands'
 
@@ -127,7 +126,7 @@ def test_rasterlite_2():
 def test_rasterlite_3():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pyramids.sqlite,table=test')
 
@@ -161,7 +160,7 @@ def test_rasterlite_3():
 def test_rasterlite_4():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,minx=0,miny=0,maxx=180,maxy=90')
 
@@ -188,7 +187,7 @@ def test_rasterlite_4():
 def test_rasterlite_5():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,bands=3')
 
@@ -223,7 +222,7 @@ def test_rasterlite_5():
 def test_rasterlite_6():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Test first if spatialite is available
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -236,7 +235,7 @@ def test_rasterlite_6():
     if sql_lyr is None:
         gdaltest.has_spatialite = False
         ogr_ds = None
-        return 'skip'
+        pytest.skip()
 
     gdaltest.has_spatialite = True
     ogr_ds.ReleaseResultSet(sql_lyr)
@@ -270,10 +269,10 @@ def test_rasterlite_6():
 def test_rasterlite_7():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
@@ -305,10 +304,10 @@ def test_rasterlite_7():
 def test_rasterlite_8():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
@@ -325,13 +324,13 @@ def test_rasterlite_8():
 def test_rasterlite_9():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.epsilon_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('RASTERLITE', 'byte.tif', 1, 4866, options=['DRIVER=EPSILON'])
 
@@ -344,13 +343,13 @@ def test_rasterlite_9():
 def test_rasterlite_10():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.epsilon_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('RASTERLITE', 'rgbsmall.tif', 1, 23189, options=['DRIVER=EPSILON'])
 
@@ -363,10 +362,10 @@ def test_rasterlite_10():
 def test_rasterlite_11():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
@@ -394,10 +393,10 @@ def test_rasterlite_11():
 def test_rasterlite_12():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.rasterlite')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
@@ -410,13 +409,13 @@ def test_rasterlite_12():
 def test_rasterlite_13():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.rasterlite_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.rasterlite.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
@@ -429,7 +428,7 @@ def test_rasterlite_13():
 def test_rasterlite_cleanup():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/spatialite_test.db')

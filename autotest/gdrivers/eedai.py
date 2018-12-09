@@ -38,6 +38,7 @@ from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 
 ###############################################################################
@@ -49,7 +50,7 @@ def test_eedai_1():
     gdaltest.eedai_drv = gdal.GetDriverByName('EEDAI')
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -69,7 +70,7 @@ def test_eedai_1():
 def test_eedai_2():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
@@ -285,7 +286,6 @@ def test_eedai_2():
     info = gdal.Info(ds, format='json')
     for key in expected_info:
         if not (key in info and info[key] == expected_info[key]):
-            print('Got difference for key %s' % key)
             if key in info:
                 print('Got: ' + str(info[key]))
             else:
@@ -293,7 +293,7 @@ def test_eedai_2():
             print('Expected: ' + str(expected_info[key]))
             print('Whole info:')
             print(json.dumps(info, indent=4))
-            return 'fail'
+            pytest.fail('Got difference for key %s' % key)
 
     assert ds.GetProjectionRef().find('32610') >= 0
 
@@ -346,10 +346,10 @@ def test_eedai_2():
 def test_eedai_3():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.is_travis_branch('gcc52_stdcpp14_sanitize'):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
     # Generated with 'openssl genrsa -out rsa-openssl.pem 1024' and
@@ -385,7 +385,7 @@ gwE6fxOLyJDxuWRf
     gdal.SetConfigOption('EEDA_CLIENT_EMAIL', None)
 
     if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
-        return 'skip'
+        pytest.skip()
 
     assert ds is not None
 
@@ -398,10 +398,10 @@ gwE6fxOLyJDxuWRf
 def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.is_travis_branch('gcc52_stdcpp14_sanitize'):
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/my.json', """{
 "private_key":"-----BEGIN PRIVATE KEY-----
@@ -442,7 +442,7 @@ gwE6fxOLyJDxuWRf\n
     gdal.SetConfigOption('EEDA_CLIENT_EMAIL', None)
 
     if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
-        return 'skip'
+        pytest.skip()
 
     assert ds is not None
 
@@ -455,20 +455,20 @@ gwE6fxOLyJDxuWRf\n
 def test_eedai_gce_credentials():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform not in ('linux', 'linux2', 'win32'):
-        return 'skip'
+        pytest.skip()
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL',
                          'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % gdaltest.webserver_port)
@@ -523,7 +523,7 @@ def test_eedai_gce_credentials():
 def test_eedai_4():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
@@ -657,7 +657,7 @@ def test_eedai_4():
 def test_eedai_geotiff():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
@@ -720,17 +720,15 @@ def test_eedai_geotiff():
 def test_eedai_real_service():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS') is None:
 
         if gdal.GetConfigOption('EEDA_PRIVATE_KEY_FILE') is None and gdal.GetConfigOption('EEDA_PRIVATE_KEY') is None:
-            print('Missing EEDA_PRIVATE_KEY_FILE/EEDA_PRIVATE_KEY or GOOGLE_APPLICATION_CREDENTIALS')
-            return 'skip'
+            pytest.skip('Missing EEDA_PRIVATE_KEY_FILE/EEDA_PRIVATE_KEY or GOOGLE_APPLICATION_CREDENTIALS')
 
         if gdal.GetConfigOption('EEDA_CLIENT_EMAIL') is None:
-            print('Missing EEDA_CLIENT_EMAIL')
-            return 'skip'
+            pytest.skip('Missing EEDA_CLIENT_EMAIL')
 
     ds = gdal.Open('EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725')
     assert ds is not None
@@ -755,7 +753,7 @@ def test_eedai_real_service():
 def test_eedai_cleanup():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
     gdal.SetConfigOption('EEDA_BEARER', gdaltest.EEDA_BEARER)

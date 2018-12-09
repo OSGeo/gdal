@@ -244,16 +244,15 @@ def test_tiff_read_ojpeg():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/zackthecat.tif')
     gdal.PopErrorHandler()
     if ds is None:
         if gdal.GetLastErrorMsg().find('Cannot open TIFF file due to missing codec') == 0:
-            return 'skip'
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+            pytest.skip()
+        pytest.fail(gdal.GetLastErrorMsg())
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     got_cs = ds.GetRasterBand(1).Checksum()
@@ -290,8 +289,7 @@ def test_tiff_read_gzip():
 
     try:
         os.stat('data/byte.tif.gz.properties')
-        gdaltest.post_reason('did not expect data/byte.tif.gz.properties')
-        return 'fail'
+        pytest.fail('did not expect data/byte.tif.gz.properties')
     except OSError:
         return 'success'
 
@@ -438,7 +436,7 @@ def test_tiff_citation():
 
     build_info = gdal.VersionInfo('BUILD_INFO')
     if build_info.find('ESRI_BUILD=YES') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/citation_mixedcase.tif')
     wkt = ds.GetProjectionRef()
@@ -544,7 +542,7 @@ def test_tiff_linearparmunits2():
 def test_tiff_g4_split():
 
     if 'GetBlockSize' not in dir(gdal.Band):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/slim_g4.tif')
 
@@ -597,7 +595,7 @@ def test_tiff_vsimem():
     try:
         gdal.FileFromMemBuffer
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     content = open('data/byte.tif', mode='rb').read()
 
@@ -635,7 +633,7 @@ def test_tiff_vsizip_and_mem():
     try:
         gdal.FileFromMemBuffer
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     content = open('data/byte.tif.zip', mode='rb').read()
 
@@ -700,10 +698,9 @@ def test_tiff_12bitjpeg():
     if gdal.GetLastErrorMsg().find(
             'Unsupported JPEG data precision 12') != -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
-        return 'skip'
+        pytest.skip()
     elif ds is None:
-        gdaltest.post_reason('failed to open 12bit jpeg file with unexpected error')
-        return 'fail'
+        pytest.fail('failed to open 12bit jpeg file with unexpected error')
 
     try:
         stats = ds.GetRasterBand(1).GetStatistics(0, 1)
@@ -741,8 +738,7 @@ def test_tiff_read_stats_from_pam():
     try:
         os.stat('data/byte.tif.aux.xml')
     except OSError:
-        gdaltest.post_reason('Expected generation of data/byte.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected generation of data/byte.tif.aux.xml')
 
     ds = gdal.Open('data/byte.tif')
     # Just read statistics (from PAM) without forcing their computation
@@ -792,8 +788,7 @@ Definition Table
 
     try:
         os.stat('tmp/tiff_read_from_tab.tab')
-        gdaltest.post_reason('did not expect to find .tab file at that point')
-        return 'fail'
+        pytest.fail('did not expect to find .tab file at that point')
     except OSError:
         pass
 
@@ -1042,7 +1037,7 @@ def test_tiff_read_exif_and_gps():
 def test_tiff_jpeg_rgba_pixel_interleaved():
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/stefan_full_rgba_jpeg_contig.tif')
     md = ds.GetMetadata('IMAGE_STRUCTURE')
@@ -1066,7 +1061,7 @@ def test_tiff_jpeg_rgba_pixel_interleaved():
 def test_tiff_jpeg_rgba_band_interleaved():
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/stefan_full_rgba_jpeg_separate.tif')
     md = ds.GetMetadata('IMAGE_STRUCTURE')
@@ -1090,10 +1085,10 @@ def test_tiff_jpeg_rgba_band_interleaved():
 def test_tiff_read_online_1():
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/3259/imgpb17.tif', 'imgpb17.tif'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/imgpb17.tif')
     gdal.ErrorReset()
@@ -1114,11 +1109,10 @@ def test_tiff_read_online_1():
 def test_tiff_read_online_2():
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/gtiff/utm.tif') is None:
-        print('cannot open URL')
-        return 'skip'
+        pytest.skip('cannot open URL')
 
     old_val = gdal.GetConfigOption('GTIFF_DIRECT_IO')
     gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
@@ -1153,7 +1147,7 @@ def test_tiff_read_huge4GB():
     # Need libtiff 4.X anyway
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
         ds = gdal.Open('data/huge4GB.tif')
@@ -1167,7 +1161,7 @@ def test_tiff_read_huge4GB():
         ds = gdal.Open('tmp/huge4GB.tif')
         if ds is None:
             os.remove('tmp/huge4GB.tif')
-            return 'fail'
+            pytest.fail()
         ds = None
         os.remove('tmp/huge4GB.tif')
 
@@ -1181,7 +1175,7 @@ def test_tiff_read_bigtiff():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_bigtiff_strip5lines.tif')
     cs = ds.GetRasterBand(1).Checksum()
@@ -1199,7 +1193,7 @@ def test_tiff_read_tiff_metadata():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/stefan_full_rgba_jpeg_contig.tif')
     assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') == '254'
@@ -1224,7 +1218,7 @@ def test_tiff_read_irregular_tile_size_jpeg_in_tiff():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/irregular_tile_size_jpeg_in_tiff.tif')
     gdal.ErrorReset()
@@ -1477,9 +1471,8 @@ def test_tiff_direct_and_virtual_mem_io():
                             print(i)
                             pytest.fail(gdal.GetDataTypeName(dt))
                     elif ref_data_native_type_whole != got_data_native_type_whole:
-                        print(option)
                         print(i)
-                        return 'fail'
+                        pytest.fail(option)
 
                     if ref_data_native_type_downsampled != got_data_native_type_downsampled:
                         print(option)
@@ -1530,19 +1523,17 @@ def test_tiff_direct_and_virtual_mem_io():
                             print(option)
                             pytest.fail(i)
                     elif ref_nbands_data_native_type_whole != got_nbands_data_native_type_whole:
-                        print(gdal.GetDataTypeName(dt))
                         print(option)
                         print(i)
-                        return 'fail'
+                        pytest.fail(gdal.GetDataTypeName(dt))
 
                     if truncated:
                         if got_nbands_data_native_type_pixel_interleaved_whole is not None:
                             print(option)
                             pytest.fail(i)
                     elif ref_nbands_data_native_type_pixel_interleaved_whole != got_nbands_data_native_type_pixel_interleaved_whole:
-                        print(option)
                         print(i)
-                        return 'fail'
+                        pytest.fail(option)
 
                     if truncated and got_nbands_data_native_type_bottom_right_downsampled is not None:
                         print(gdal.GetDataTypeName(dt))
@@ -1652,8 +1643,7 @@ def test_tiff_read_md1():
 
     try:
         os.stat('data/md_dg.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_dg.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_dg.tif.aux.xml')
     except OSError:
         pass
 
@@ -1692,8 +1682,7 @@ def test_tiff_read_md2():
 
     try:
         os.stat('data/md_dg_2.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_dg_2.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_dg_2.tif.aux.xml')
     except OSError:
         pass
 
@@ -1732,8 +1721,7 @@ def test_tiff_read_md3():
 
     try:
         os.stat('data/md_ge_rgb_0010000.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_ge_rgb_0010000.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_ge_rgb_0010000.tif.aux.xml')
     except OSError:
         pass
 
@@ -1772,8 +1760,7 @@ def test_tiff_read_md4():
 
     try:
         os.stat('data/md_ov.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_ov.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_ov.tif.aux.xml')
     except OSError:
         pass
 
@@ -1812,8 +1799,7 @@ def test_tiff_read_md5():
 
     try:
         os.stat('data/md_rdk1.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_rdk1.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_rdk1.tif.aux.xml')
     except OSError:
         pass
 
@@ -1852,8 +1838,7 @@ def test_tiff_read_md6():
 
     try:
         os.stat('data/md_ls_b1.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_ls_b1.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_ls_b1.tif.aux.xml')
     except OSError:
         pass
 
@@ -1892,8 +1877,7 @@ def test_tiff_read_md7():
 
     try:
         os.stat('data/spot/md_spot.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/spot/md_spot.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/spot/md_spot.tif.aux.xml')
     except OSError:
         pass
 
@@ -1932,8 +1916,7 @@ def test_tiff_read_md8():
 
     try:
         os.stat('data/md_re.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_re.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_re.tif.aux.xml')
     except OSError:
         pass
 
@@ -1971,8 +1954,7 @@ def test_tiff_read_md9():
 
     try:
         os.stat('data/alos/IMG-md_alos.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/alos/IMG-md_alos.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/alos/IMG-md_alos.tif.aux.xml')
     except OSError:
         pass
 
@@ -2011,8 +1993,7 @@ def test_tiff_read_md10():
 
     try:
         os.stat('data/md_eros.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_eros.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_eros.tif.aux.xml')
     except OSError:
         pass
 
@@ -2051,8 +2032,7 @@ def test_tiff_read_md11():
 
     try:
         os.stat('data/md_kompsat.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_kompsat.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_kompsat.tif.aux.xml')
     except OSError:
         pass
 
@@ -2090,8 +2070,7 @@ def test_tiff_read_md12():
 
     try:
         os.stat('data/md_kompsat.tif.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/md_kompsat.tif.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/md_kompsat.tif.aux.xml')
     except OSError:
         pass
 
@@ -2129,7 +2108,7 @@ def test_tiff_read_empty_nodata_tag():
 def test_tiff_read_strace_check():
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     python_exe = sys.executable
     cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
@@ -2143,7 +2122,7 @@ def test_tiff_read_strace_check():
         (_, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
         # strace not available
-        return 'skip'
+        pytest.skip()
 
     lines_with_dotdot_gcore = []
     for line in err.split('\n'):
@@ -2178,7 +2157,7 @@ def test_tiff_read_readdir_limit_on_open():
 def test_tiff_read_minisblack_as_rgba():
 
     if not gdaltest.supports_force_rgba:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('data/byte.tif')
@@ -2196,7 +2175,7 @@ def test_tiff_read_minisblack_as_rgba():
 def test_tiff_read_colortable_as_rgba():
 
     if not gdaltest.supports_force_rgba:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('data/test_average_palette.tif')
@@ -2214,7 +2193,7 @@ def test_tiff_read_colortable_as_rgba():
 def test_tiff_read_logl_as_rgba():
 
     if not gdaltest.supports_force_rgba:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
     ds = gdal.Open('data/uint16_sgilog.tif')
@@ -2233,7 +2212,7 @@ def test_tiff_read_logl_as_rgba():
 def test_tiff_read_strip_separate_as_rgba():
 
     if not gdaltest.supports_force_rgba:
-        return 'skip'
+        pytest.skip()
 
     # 3 band
     gdal.Translate('/vsimem/tiff_read_strip_separate_as_rgba.tif',
@@ -2271,7 +2250,7 @@ def test_tiff_read_strip_separate_as_rgba():
 def test_tiff_read_tiled_separate_as_rgba():
 
     if not gdaltest.supports_force_rgba:
-        return 'skip'
+        pytest.skip()
 
     # 3 band
     gdal.Translate('/vsimem/tiff_read_tiled_separate_as_rgba.tif',
@@ -2586,8 +2565,7 @@ def test_tiff_read_corrupted_jpeg_cloud_optimized():
     if cs1 == 0:
         print('Expected error while writing overview with libjpeg-6b')
     elif cs1 != 1133:
-        print(cs1)
-        return 'fail'
+        pytest.fail(cs1)
 
     return 'success'
 
@@ -2785,7 +2763,7 @@ def test_tiff_read_unknown_compression():
 def test_tiff_read_leak_ZIPSetupDecode():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/leak-ZIPSetupDecode.tif')
@@ -2800,7 +2778,7 @@ def test_tiff_read_leak_ZIPSetupDecode():
 def test_tiff_read_excessive_memory_TIFFFillStrip():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/excessive-memory-TIFFFillStrip.tif')
@@ -2815,7 +2793,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip():
 def test_tiff_read_excessive_memory_TIFFFillStrip2():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/excessive-memory-TIFFFillStrip2.tif')
@@ -2829,7 +2807,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip2():
 def test_tiff_read_excessive_memory_TIFFFillTile():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/excessive-memory-TIFFFillTile.tif')
@@ -2843,11 +2821,11 @@ def test_tiff_read_excessive_memory_TIFFFillTile():
 def test_tiff_read_big_strip():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 10000 2000  -co blockysize=2000 -r bilinear -ot float32')
     if gdal.GetLastErrorMsg().find('cannot allocate') >= 0:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open('/vsimem/test.tif')
     assert ds.GetRasterBand(1).Checksum() == 2676
     ds = None
@@ -2876,11 +2854,11 @@ def test_tiff_read_big_strip_chunky_way():
 def test_tiff_read_big_tile():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 10000 2000 -co tiled=yes -co blockxsize=10000 -co blockysize=2000 -r bilinear -ot float32')
     if gdal.GetLastErrorMsg().find('cannot allocate') >= 0:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open('/vsimem/test.tif')
     assert ds.GetRasterBand(1).Checksum() == 2676
     ds = None
@@ -2906,7 +2884,7 @@ def test_tiff_read_huge_number_strips():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/huge-number-strips.tif')
@@ -2920,7 +2898,7 @@ def test_tiff_read_huge_number_strips():
 def test_tiff_read_huge_implied_number_strips():
 
     if not check_libtiff_internal_or_at_least(4, 0, 10):
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         gdal.Open('data/huge-implied-number-strips.tif')
@@ -2934,11 +2912,11 @@ def test_tiff_read_many_blocks():
 
     # Runs super slow on some Windows configs
     if sys.platform == 'win32':
-        return 'skip'
+        pytest.skip()
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test.tif', 1, 2000000, options=['BLOCKYSIZE=1'])
     ds = None
@@ -2956,7 +2934,7 @@ def test_tiff_read_many_blocks_truncated():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/many_blocks_truncated.tif')
     with gdaltest.error_handler():
@@ -2985,7 +2963,7 @@ def test_tiff_read_uint33():
 def test_tiff_read_corrupted_deflate_singlestrip():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/corrupted_deflate_singlestrip.tif')
@@ -3000,7 +2978,7 @@ def test_tiff_read_corrupted_deflate_singlestrip():
 def test_tiff_read_packbits_not_enough_data():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/packbits-not-enough-data.tif')
@@ -3112,7 +3090,7 @@ def test_tiff_read_stripoffset_types():
 def test_tiff_read_progressive_jpeg_denial_of_service():
 
     if not check_libtiff_internal_or_at_least(4, 0, 9):
-        return 'skip'
+        pytest.skip()
 
     # Should error out with 'JPEGPreDecode:Reading this strip would require
     # libjpeg to allocate at least...'
@@ -3142,7 +3120,7 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
 def test_tiff_read_old_style_lzw():
 
     if not check_libtiff_internal_or_at_least(4, 0, 8):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/quad-lzw-old-style.tif')
     # Shut down warning about old style LZW
@@ -3199,7 +3177,7 @@ def test_tiff_read_mmap_interface():
 def test_tiff_read_jpeg_too_big_last_stripe():
 
     if not check_libtiff_internal_or_at_least(4, 0, 9):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/tif_jpeg_too_big_last_stripe.tif')
     with gdaltest.error_handler():
@@ -3241,7 +3219,7 @@ def test_tiff_read_zstd():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
-        return 'skip'
+        pytest.skip()
 
     ut = gdaltest.GDALTest('GTiff', 'byte_zstd.tif', 1, 4672)
     return ut.testOpen()
@@ -3254,7 +3232,7 @@ def test_tiff_read_zstd_corrupted():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
-        return 'skip'
+        pytest.skip()
 
     ut = gdaltest.GDALTest('GTiff', 'byte_zstd_corrupted.tif', 1, 0)
     with gdaltest.error_handler():
@@ -3268,7 +3246,7 @@ def test_tiff_read_zstd_corrupted2():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
-        return 'skip'
+        pytest.skip()
 
     ut = gdaltest.GDALTest('GTiff', 'byte_zstd_corrupted2.tif', 1, 0)
     with gdaltest.error_handler():
@@ -3283,7 +3261,7 @@ def test_tiff_read_webp():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
-        return 'skip'
+        pytest.skip()
     stats = (0, 215, 66.38, 47.186)
     ut = gdaltest.GDALTest('GTiff', 'tif_webp.tif', 1, None)
     success = ut.testOpen(check_approx_stat=stats, stat_epsilon=1)
@@ -3298,7 +3276,7 @@ def test_tiff_read_webp_huge_single_strip():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open('data/tif_webp_huge_single_strip.tif')
     assert ds.GetRasterBand(1).Checksum() != 0
 
@@ -3321,7 +3299,7 @@ def test_tiff_read_lerc():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
-        return 'skip'
+        pytest.skip()
 
     ut = gdaltest.GDALTest('GTiff', 'byte_lerc.tif', 1, 4672)
     return ut.testOpen()

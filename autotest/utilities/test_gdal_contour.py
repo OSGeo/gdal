@@ -48,7 +48,7 @@ import pytest
 
 def test_gdal_contour_1():
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/contour.shp')
@@ -134,7 +134,7 @@ def test_gdal_contour_1():
 
 def test_gdal_contour_2():
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/contour.shp')
@@ -191,7 +191,7 @@ def test_gdal_contour_2():
 
 def test_gdal_contour_3():
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/contour.shp')
@@ -234,7 +234,7 @@ def test_gdal_contour_3():
 
 def test_gdal_contour_4():
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/contour_orientation.shp')
@@ -335,7 +335,7 @@ def test_gdal_contour_4():
 
 def test_gdal_contour_5():
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ds = None
 
@@ -380,7 +380,7 @@ def test_gdal_contour_5():
 
 def test_gdal_contour_cleanup():
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/contour_orientation1.shp')

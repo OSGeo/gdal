@@ -532,10 +532,9 @@ def test_ogr_factory_8():
         if exp_wkt is None:
             exp_wkt = src_wkt
         elif target_type != ogr.wkbUnknown and dst_geom.GetGeometryType() != target_type:
-            print(src_wkt)
             print(target_type)
             print(dst_geom.ExportToWkt())
-            return 'fail'
+            pytest.fail(src_wkt)
 
         if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
             print(src_wkt)

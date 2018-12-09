@@ -35,6 +35,7 @@ import sys
 from osgeo import gdal
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Simple test
@@ -44,7 +45,7 @@ def test_gdal_pansharpen_1():
 
     script_path = test_py_scripts.get_py_script('gdal_pansharpen')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gdrivers/data/small_world.tif')
     src_data = src_ds.GetRasterBand(1).ReadRaster()
@@ -79,7 +80,7 @@ def test_gdal_pansharpen_2():
 
     script_path = test_py_scripts.get_py_script('gdal_pansharpen')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' -q -b 3 -b 1 -bitdepth 8 -threads ALL_CPUS -spat_adjust union -w 0.33333333333333333 -w 0.33333333333333333 -w 0.33333333333333333 -of VRT -r cubic tmp/small_world_pan.tif ../gdrivers/data/small_world.tif,band=1 ../gdrivers/data/small_world.tif,band=2 ../gdrivers/data/small_world.tif,band=3 tmp/out.vrt')
 
@@ -100,7 +101,7 @@ def test_gdal_pansharpen_cleanup():
 
     script_path = test_py_scripts.get_py_script('gdal_pansharpen')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world_pan.tif')
 

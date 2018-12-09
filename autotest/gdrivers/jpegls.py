@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
@@ -40,7 +41,7 @@ import gdaltest
 def test_jpegls_1():
 
     if gdal.GetDriverByName('JPEGLS') is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEGLS', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -51,7 +52,7 @@ def test_jpegls_1():
 def test_jpegls_2():
 
     if gdal.GetDriverByName('JPEGLS') is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEGLS', 'int16.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)

@@ -36,6 +36,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 # Read test
 def test_vsihdfs_1():
@@ -43,7 +44,7 @@ def test_vsihdfs_1():
     fp = gdal.VSIFOpenL(filename, 'rb')
     if fp is None:
         gdaltest.have_vsihdfs = False
-        return 'skip'
+        pytest.skip()
 
     gdaltest.have_vsihdfs = True
 
@@ -59,7 +60,7 @@ def test_vsihdfs_1():
 # Seek test
 def test_vsihdfs_2():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
@@ -84,7 +85,7 @@ def test_vsihdfs_2():
 # Tell test
 def test_vsihdfs_3():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
@@ -101,12 +102,12 @@ def test_vsihdfs_3():
 
 # Write test
 def test_vsihdfs_4():
-    return 'skip'
+    pytest.skip()
 
 # EOF test
 def test_vsihdfs_5():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
@@ -134,7 +135,7 @@ def test_vsihdfs_5():
 # Stat test
 def test_vsihdfs_6():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     statBuf = gdal.VSIStatL(filename, 0)
@@ -149,7 +150,7 @@ def test_vsihdfs_6():
 # ReadDir test
 def test_vsihdfs_7():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     dirname = '/vsihdfs/file:' + os.getcwd() + '/data/'
     lst = gdal.ReadDir(dirname)

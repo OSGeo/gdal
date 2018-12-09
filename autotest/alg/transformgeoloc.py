@@ -36,6 +36,7 @@ import sys
 import gdaltest
 from osgeo import gdal
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test a fairly default case.
@@ -46,7 +47,7 @@ def test_transformgeoloc_1():
     try:
         import numpy
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
 

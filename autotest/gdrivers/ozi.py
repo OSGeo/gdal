@@ -34,6 +34,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test reading OZF2 file
@@ -42,7 +43,7 @@ import gdaltest
 def test_ozi_online_1():
 
     if not gdaltest.download_file('http://www.oziexplorer2.com/maps/Europe2001_setup.exe', 'Europe2001_setup.exe'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/Europe 2001_OZF.map')
@@ -52,9 +53,9 @@ def test_ozi_online_1():
             try:
                 os.stat('tmp/cache/Europe 2001_OZF.map')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except:
-            return 'skip'
+            pytest.skip()
 
     ds = gdal.Open('tmp/cache/Europe 2001_OZF.map')
     assert ds is not None

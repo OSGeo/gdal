@@ -36,6 +36,7 @@ import shutil
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Error cases
@@ -174,10 +175,9 @@ def test_overviewds_4():
         if key == 'LINE_SCALE' or key == 'SAMP_SCALE' or key == 'LINE_OFF' or key == 'SAMP_OFF':
             assert float(got_md[key]) == myfloat(rpc_md[key]) / 2
         elif got_md[key] != rpc_md[key]:
-            print(key)
             print(got_md[key])
             print(rpc_md[key])
-            return 'fail'
+            pytest.fail(key)
 
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ['METHOD=RPC'])
@@ -223,10 +223,9 @@ def test_overviewds_5():
         elif key == 'PIXEL_STEP' or key == 'LINE_STEP':
             assert abs(float(got_md[key]) - myfloat(geoloc_md[key]) / 2) <= 1e-1
         elif got_md[key] != geoloc_md[key]:
-            print(key)
             print(got_md[key])
             print(geoloc_md[key])
-            return 'fail'
+            pytest.fail(key)
 
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ['METHOD=GEOLOC_ARRAY'])

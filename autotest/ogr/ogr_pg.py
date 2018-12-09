@@ -74,7 +74,7 @@ def ogr_pg_check_layer_in_list(ds, layer_name):
 def with_and_without_postgis(request):
     test_ogr_pg_1()
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     with_postgis = request.param == 'postgis'
 
@@ -116,7 +116,7 @@ def test_ogr_pg_1():
         gdal.PopErrorHandler()
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT version()')
     feat = sql_lyr.GetNextFeature()
@@ -168,7 +168,7 @@ def test_ogr_pg_1():
 def test_ogr_pg_2(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:tpoly')
@@ -251,7 +251,7 @@ def test_ogr_pg_2(with_and_without_postgis):
 def test_ogr_pg_19(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.pg_ds.GetLayerByName('tpoly')
     assert layer is not None, 'did not get tpoly layer'
@@ -289,7 +289,7 @@ def test_ogr_pg_19(with_and_without_postgis):
 def test_ogr_pg_19_2(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('select * from tpoly')
 
@@ -312,7 +312,7 @@ def test_ogr_pg_19_2(with_and_without_postgis):
 
 def test_ogr_pg_3(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.pg_lyr.GetFeatureCount() == 10
 
@@ -352,7 +352,7 @@ def test_ogr_pg_3(with_and_without_postgis):
 def test_ogr_pg_4(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     dst_feat = ogr.Feature(feature_def=gdaltest.pg_lyr.GetLayerDefn())
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
@@ -396,7 +396,7 @@ def test_ogr_pg_4(with_and_without_postgis):
 def test_ogr_pg_5(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
@@ -417,7 +417,7 @@ def test_ogr_pg_5(with_and_without_postgis):
 def test_ogr_pg_6(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
 
@@ -451,7 +451,7 @@ def test_ogr_pg_6(with_and_without_postgis):
 def test_ogr_pg_7(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_lyr.SetAttributeFilter(None)
 
@@ -487,7 +487,7 @@ def test_ogr_pg_7(with_and_without_postgis):
 def test_ogr_pg_8(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     dst_feat = ogr.Feature(feature_def=gdaltest.pg_lyr.GetLayerDefn())
 
@@ -516,7 +516,7 @@ def test_ogr_pg_8(with_and_without_postgis):
 def test_ogr_pg_9(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat = gdaltest.pg_lyr.GetNextFeature()
@@ -530,8 +530,7 @@ def test_ogr_pg_9(with_and_without_postgis):
 
     if gdaltest.pg_lyr.SetFeature(feat) != 0:
         feat.Destroy()
-        gdaltest.post_reason('SetFeature() method failed.')
-        return 'fail'
+        pytest.fail('SetFeature() method failed.')
 
     fid = feat.GetFID()
     feat.Destroy()
@@ -551,8 +550,7 @@ def test_ogr_pg_9(with_and_without_postgis):
 
     if gdaltest.pg_lyr.SetFeature(feat) != 0:
         feat.Destroy()
-        gdaltest.post_reason('SetFeature() method failed.')
-        return 'fail'
+        pytest.fail('SetFeature() method failed.')
 
     feat.Destroy()
 
@@ -569,8 +567,7 @@ def test_ogr_pg_9(with_and_without_postgis):
     feat.SetFID(-10)
     if gdaltest.pg_lyr.SetFeature(feat) != ogr.OGRERR_NON_EXISTING_FEATURE:
         feat.Destroy()
-        gdaltest.post_reason('Expected failure of SetFeature().')
-        return 'fail'
+        pytest.fail('Expected failure of SetFeature().')
 
     feat.Destroy()
 
@@ -583,7 +580,7 @@ def test_ogr_pg_9(with_and_without_postgis):
 def test_ogr_pg_10(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat = gdaltest.pg_lyr.GetNextFeature()
@@ -600,8 +597,7 @@ def test_ogr_pg_10(with_and_without_postgis):
 
     if feat is not None:
         feat.Destroy()
-        gdaltest.post_reason('DeleteFeature() seems to have had no effect.')
-        return 'fail'
+        pytest.fail('DeleteFeature() seems to have had no effect.')
 
     # Test deleting non-existing feature
     assert gdaltest.pg_lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
@@ -616,7 +612,7 @@ def test_ogr_pg_10(with_and_without_postgis):
 def test_ogr_pg_11(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:tpolycopy')
@@ -669,7 +665,7 @@ def test_ogr_pg_11(with_and_without_postgis):
 
 def test_ogr_pg_12(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pgc_lyr.ResetReading()
     gdaltest.pgc_lyr.SetAttributeFilter(None)
@@ -700,7 +696,7 @@ def test_ogr_pg_12(with_and_without_postgis):
 def test_ogr_pg_13(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:datetest')
@@ -736,7 +732,7 @@ def test_ogr_pg_13(with_and_without_postgis):
 
 def test_ogr_pg_14(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
@@ -752,9 +748,8 @@ def test_ogr_pg_14(with_and_without_postgis):
        or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
        or feat.GetFieldAsString('dt') != '2005/10/12' \
        or feat.GetFieldAsString('tm') != '10:41:33':
-        gdaltest.post_reason('UTC value wrong')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('UTC value wrong')
 
     sql_lyr = ds.ExecuteSQL("select * from pg_timezone_names where name = 'Canada/Newfoundland'")
     if sql_lyr is None:
@@ -775,9 +770,8 @@ def test_ogr_pg_14(with_and_without_postgis):
                 or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
                 or feat.GetFieldAsString('dt') != '2005/10/12' \
                 or feat.GetFieldAsString('tm') != '10:41:33':
-            gdaltest.post_reason('Newfoundland value wrong')
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('Newfoundland value wrong')
 
     ds.ExecuteSQL('set timezone to "+5"')
 
@@ -786,9 +780,8 @@ def test_ogr_pg_14(with_and_without_postgis):
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('ogrdatetime') != '2005/10/12 20:41:33+05' \
        or feat.GetFieldAsString('tsz') != '2005/10/12 20:41:33+05':
-        gdaltest.post_reason('+5 value wrong')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('+5 value wrong')
 
     feat = None
     ds.Destroy()
@@ -802,7 +795,7 @@ def test_ogr_pg_14(with_and_without_postgis):
 def test_ogr_pg_15(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [169]
 
@@ -825,7 +818,7 @@ def test_ogr_pg_15(with_and_without_postgis):
 def test_ogr_pg_16(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [169]
 
@@ -851,7 +844,7 @@ def test_ogr_pg_16(with_and_without_postgis):
 def test_ogr_pg_17(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     count = gdaltest.pg_ds.GetLayerCount()
     try:
@@ -872,7 +865,7 @@ def test_ogr_pg_17(with_and_without_postgis):
 def test_ogr_pg_18(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     count = gdaltest.pg_ds.GetLayerCount()
     layer = gdaltest.pg_ds.GetLayerByName('geometry_columns')
@@ -891,7 +884,7 @@ def test_ogr_pg_18(with_and_without_postgis):
 def test_ogr_pg_20(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     #
     # Prepare test layer with 4-dim geometries.
@@ -972,7 +965,7 @@ def test_ogr_pg_20(with_and_without_postgis):
 def test_ogr_pg_21(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.pg_ds.ExecuteSQL("SELECT wkb_geometry FROM testgeom")
     assert layer is not None, 'did not get testgeom layer'
@@ -981,12 +974,11 @@ def test_ogr_pg_21(with_and_without_postgis):
     while feat is not None:
         geom = feat.GetGeometryRef()
         if ogr.GT_HasZ(geom.GetGeometryType()) == 0 or ogr.GT_HasM(geom.GetGeometryType()) == 0:
-            gdaltest.post_reason('expected feature with type >3000')
             feat.Destroy()
             feat = None
             gdaltest.pg_ds.ReleaseResultSet(layer)
             layer = None
-            return 'fail'
+            pytest.fail('expected feature with type >3000')
 
         feat.Destroy()
         feat = layer.GetNextFeature()
@@ -1004,7 +996,7 @@ def test_ogr_pg_21(with_and_without_postgis):
 def test_ogr_pg_21_subgeoms(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     subgeom_PS = ['POLYGON ZM ((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0))',
                   'POLYGON ZM ((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0))',
@@ -1045,7 +1037,7 @@ def test_ogr_pg_21_subgeoms(with_and_without_postgis):
 def test_ogr_pg_21_3d_geometries():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
@@ -1092,7 +1084,7 @@ def test_ogr_pg_21_3d_geometries():
 def test_ogr_pg_22(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ######################################################
     # Create Schema
@@ -1149,7 +1141,7 @@ def test_ogr_pg_22(with_and_without_postgis):
 def test_ogr_pg_23(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:datatypetest')
@@ -1307,9 +1299,8 @@ def check_value_23(layer_defn, feat):
         abs(feat.my_numericarray[0] - 100.12) > 1e-8 or \
         abs(feat.my_numeric5array[0] - 10) > 1e-8 or \
             abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8:
-        gdaltest.post_reason('Wrong values')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('Wrong values')
 
     geom = feat.GetGeometryRef()
     assert geom is not None, 'geom is none'
@@ -1326,7 +1317,7 @@ def check_value_23(layer_defn, feat):
 def test_ogr_pg_24(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
@@ -1350,7 +1341,7 @@ def test_ogr_pg_24(with_and_without_postgis):
 def test_ogr_pg_25(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
@@ -1376,7 +1367,7 @@ def test_ogr_pg_25(with_and_without_postgis):
 def test_ogr_pg_28(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('PG_USE_COPY', "NO")
 
@@ -1424,7 +1415,7 @@ def test_ogr_pg_28(with_and_without_postgis):
 def test_ogr_pg_29(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
@@ -1453,7 +1444,7 @@ def test_ogr_pg_29(with_and_without_postgis):
 def test_ogr_pg_30(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('PG_USE_COPY', 'YES')
 
@@ -1498,7 +1489,7 @@ def test_ogr_pg_30(with_and_without_postgis):
 def test_ogr_pg_31(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -1535,7 +1526,7 @@ def test_ogr_pg_31(with_and_without_postgis):
 def test_ogr_pg_32(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys")
 
@@ -1549,9 +1540,8 @@ def test_ogr_pg_32(with_and_without_postgis):
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if feat.count != 1:
-        gdaltest.post_reason('did not get expected count after step (1)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected count after step (1)')
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     ######################################################
@@ -1565,9 +1555,8 @@ def test_ogr_pg_32(with_and_without_postgis):
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if feat.count != 1:
-        gdaltest.post_reason('did not get expected count after step (2)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected count after step (2)')
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     ######################################################
@@ -1581,9 +1570,8 @@ def test_ogr_pg_32(with_and_without_postgis):
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if feat.count != 1:
-        gdaltest.post_reason('did not get expected count after step (3)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected count after step (3)')
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     ######################################################
@@ -1604,9 +1592,8 @@ def test_ogr_pg_32(with_and_without_postgis):
     feat = sql_lyr.GetNextFeature()
     # Must be 2 now
     if feat.count != 2:
-        gdaltest.post_reason('did not get expected count after step (4)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected count after step (4)')
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     ######################################################
@@ -1654,9 +1641,8 @@ def test_ogr_pg_32(with_and_without_postgis):
     feat = sql_lyr.GetNextFeature()
     # Must be 3 now
     if feat.count != 3:
-        gdaltest.post_reason('did not get expected count after step (5)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected count after step (5)')
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -1668,7 +1654,7 @@ def test_ogr_pg_32(with_and_without_postgis):
 def test_ogr_pg_33(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_lyr = gdaltest.pg_ds.GetLayerByName('tpoly')
     assert gdaltest.pg_lyr is not None, 'did not get tpoly layer'
@@ -1688,7 +1674,7 @@ def test_ogr_pg_33(with_and_without_postgis):
 def test_ogr_pg_34(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # We only test that on Linux since setting os.environ['XXX']
     # is not guaranteed to have effects on system not supporting putenv
@@ -1724,7 +1710,7 @@ def test_ogr_pg_34(with_and_without_postgis):
 def test_ogr_pg_35(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler()
     try:
@@ -1756,7 +1742,7 @@ def test_ogr_pg_35(with_and_without_postgis):
 def test_ogr_pg_36(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.pg_has_postgis:
         lyr = gdaltest.pg_ds.CreateLayer('table36_base', geom_type=ogr.wkbPoint)
@@ -1802,7 +1788,7 @@ def test_ogr_pg_36(with_and_without_postgis):
 def test_ogr_pg_36_bis(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string + ' TABLES=table36_base', update=1)
 
@@ -1824,7 +1810,7 @@ def test_ogr_pg_36_bis(with_and_without_postgis):
 def test_ogr_pg_37(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table37_base ( col1 CHAR(1) )')
     gdaltest.pg_ds.ExecuteSQL('CREATE TABLE table37_inherited ( col2 CHAR(1) ) INHERITS ( table37_base )')
@@ -1850,7 +1836,7 @@ def test_ogr_pg_37(with_and_without_postgis):
 
 def test_ogr_pg_38(with_and_without_postgis):
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT AddGeometryColumn('public','table37_base','pointBase',-1,'POINT',2)")
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
@@ -1870,10 +1856,9 @@ def test_ogr_pg_38(with_and_without_postgis):
     assert gfld_defn is not None
     assert gfld_defn.GetType() == ogr.wkbPoint
     if lyr.GetLayerDefn().GetGeomFieldCount() != 3:
-        print(lyr.GetLayerDefn().GetGeomFieldCount())
         for i in range(lyr.GetLayerDefn().GetGeomFieldCount()):
             print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName())
-        return 'fail'
+        pytest.fail(lyr.GetLayerDefn().GetGeomFieldCount())
 
     # Explicit query to 'table37_inherited(wkb_geometry)' should also work
     lyr = ds.GetLayerByName('table37_inherited(wkb_geometry)')
@@ -1909,7 +1894,7 @@ def test_ogr_pg_38(with_and_without_postgis):
 
 def test_ogr_pg_39(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
         gdaltest.pg_ds.ExecuteSQL("CREATE VIEW testview AS SELECT * FROM table36_base")
@@ -1979,7 +1964,7 @@ def test_ogr_pg_39(with_and_without_postgis):
 
 def test_ogr_pg_40(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.pg_ds.GetLayerByName('tpoly')
     assert layer.GetFeature(0) is None
@@ -1992,7 +1977,7 @@ def test_ogr_pg_40(with_and_without_postgis):
 
 def test_ogr_pg_41(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string + ' active_schema=AutoTest-schema', update=1)
 
@@ -2040,7 +2025,7 @@ def test_ogr_pg_41(with_and_without_postgis):
 
 def test_ogr_pg_42(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string + ' schemas=AutoTest-schema', update=1)
 
@@ -2082,7 +2067,7 @@ def test_ogr_pg_42(with_and_without_postgis):
 
 def test_ogr_pg_43(with_and_without_postgis):
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string + ' schemas=public,AutoTest-schema', update=1)
 
@@ -2110,7 +2095,7 @@ def test_ogr_pg_43(with_and_without_postgis):
 def test_ogr_pg_44(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer('select', options=['OVERWRITE=YES', 'GEOMETRY_NAME=where', 'DIM=3'])
     ogrtest.quick_create_layer_def(gdaltest.pg_lyr, [('from', ogr.OFTReal)])
@@ -2153,7 +2138,7 @@ def test_ogr_pg_44(with_and_without_postgis):
 def test_ogr_pg_45(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.GetLayerByName('tpoly')
 
@@ -2183,7 +2168,7 @@ def test_ogr_pg_45(with_and_without_postgis):
 def test_ogr_pg_46(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     nFeatures = 1000
 
@@ -2241,18 +2226,17 @@ def test_ogr_pg_46(with_and_without_postgis):
 def test_ogr_pg_47(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     # Create table with geography column
     gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys")
     gdaltest.pg_ds.ExecuteSQL("""INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (4326,'EPSG',4326,'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]','+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ')""")
 
     if gdaltest.pg_ds.GetLayerByName('geography_columns') is None:
-        gdaltest.post_reason('autotest database must be created with PostGIS >= 1.5')
-        return 'skip'
+        pytest.skip('autotest database must be created with PostGIS >= 1.5')
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
@@ -2295,7 +2279,7 @@ def test_ogr_pg_47(with_and_without_postgis):
     feat = geography_columns_lyr.GetNextFeature()
     if feat.GetFieldAsString('f_geography_column') != 'my_geog':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.pg_ds.ReleaseResultSet(geography_columns_lyr)
 
     # Get the layer by name
@@ -2348,7 +2332,7 @@ def test_ogr_pg_47(with_and_without_postgis):
 def test_ogr_pg_48(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ExecuteSQL("CREATE TABLE no_pk_table (gid serial NOT NULL, other_id INTEGER)")
     gdaltest.pg_ds.ExecuteSQL("INSERT INTO no_pk_table (gid, other_id) VALUES (1, 10)")
@@ -2393,19 +2377,16 @@ def test_ogr_pg_48(with_and_without_postgis):
     assert lyr.GetFIDColumn() == '', 'got a non NULL FID column'
 
     if feat.GetFID() != 0:
-        gdaltest.post_reason('did not get expected FID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected FID')
 
     if feat.GetFieldAsInteger('gid') != 1:
-        gdaltest.post_reason('did not get expected gid')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected gid')
 
     if feat.GetFieldAsInteger('other_id') != 10:
-        gdaltest.post_reason('did not get expected other_id')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected other_id')
 
     return 'success'
 
@@ -2416,7 +2397,7 @@ def test_ogr_pg_48(with_and_without_postgis):
 def test_ogr_pg_49(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('PGSQL_OGR_FID', 'other_id')
     gdaltest.pg_ds = None
@@ -2430,9 +2411,8 @@ def test_ogr_pg_49(with_and_without_postgis):
     assert lyr.GetFIDColumn() == 'other_id', 'did not get expected FID column'
 
     if feat.GetFID() != 10:
-        gdaltest.post_reason('did not get expected FID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected FID')
 
     return 'success'
 
@@ -2444,7 +2424,7 @@ def test_ogr_pg_49(with_and_without_postgis):
 def test_ogr_pg_50(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_lyr = gdaltest.pg_ds.GetLayerByName('tpoly')
     assert gdaltest.pg_lyr is not None, 'did not get tpoly layer'
@@ -2480,25 +2460,21 @@ def test_ogr_pg_50(with_and_without_postgis):
             got_val = feat.GetField('AREA')
             if value == 'NaN':
                 if not gdaltest.isnan(got_val):
-                    print(feat.GetFieldAsString('AREA') + ' returned for AREA instead of ' + value)
                     gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
-                    return 'fail'
+                    pytest.fail(feat.GetFieldAsString('AREA') + ' returned for AREA instead of ' + value)
             elif got_val != float(value):
-                print(feat.GetFieldAsString('AREA') + ' returned for AREA instead of ' + value)
                 gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
-                return 'fail'
+                pytest.fail(feat.GetFieldAsString('AREA') + ' returned for AREA instead of ' + value)
 
             if bHasSetFieldDoubleList:
                 got_val = feat.GetFieldAsDoubleList(feature_def.GetFieldIndex('REALLIST'))
                 if value == 'NaN':
                     if not gdaltest.isnan(got_val[0]) or not gdaltest.isnan(got_val[1]):
-                        print(feat.GetFieldAsString('REALLIST') + ' returned for REALLIST instead of ' + value)
                         gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
-                        return 'fail'
+                        pytest.fail(feat.GetFieldAsString('REALLIST') + ' returned for REALLIST instead of ' + value)
                 elif got_val[0] != float(value) or got_val[1] != float(value):
-                    print(feat.GetFieldAsString('REALLIST') + ' returned for REALLIST instead of ' + value)
                     gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
-                    return 'fail'
+                    pytest.fail(feat.GetFieldAsString('REALLIST') + ' returned for REALLIST instead of ' + value)
 
     gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
 
@@ -2511,11 +2487,11 @@ def test_ogr_pg_50(with_and_without_postgis):
 def test_ogr_pg_51(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" tpoly testview')
 
@@ -2530,11 +2506,11 @@ def test_ogr_pg_51(with_and_without_postgis):
 def test_ogr_pg_52(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" -sql "SELECT * FROM tpoly"')
 
@@ -2549,7 +2525,7 @@ def test_ogr_pg_52(with_and_without_postgis):
 def test_ogr_pg_53(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('no_geometry_table', geom_type=ogr.wkbNone)
     field_defn = ogr.FieldDefn('foo')
@@ -2604,7 +2580,7 @@ def test_ogr_pg_53(with_and_without_postgis):
 def test_ogr_pg_53_bis(with_and_without_postgis):
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/no_geometry_table.csv', 'wt')
     f.write('foo,bar\n')
@@ -2628,10 +2604,10 @@ def test_ogr_pg_53_bis(with_and_without_postgis):
 def test_ogr_pg_54(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.pg_has_postgis_2:
         sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT ST_AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
@@ -2652,10 +2628,10 @@ def test_ogr_pg_54(with_and_without_postgis):
 def test_ogr_pg_55(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.pg_ds.CreateLayer('ogr_pg_55', options=['DIM=3'])
     feat = ogr.Feature(layer.GetLayerDefn())
@@ -2684,7 +2660,7 @@ def test_ogr_pg_55(with_and_without_postgis):
 def test_ogr_pg_56(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ExecuteSQL('CREATE TABLE ogr_pg_56 ( bar varchar, baz varchar ) WITH (OIDS=FALSE)')
 
@@ -2728,39 +2704,33 @@ def test_ogr_pg_56(with_and_without_postgis):
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) is not None or feat.GetField(1) is not None:
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != '' or feat.GetField(1) is not None:
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) is not None or feat.GetField(1) != '':
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != '' or feat.GetField(1) != '':
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 'bar' or feat.GetField(1) != '':
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != '' or feat.GetField(1) != 'baz':
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     ds = None
 
@@ -2773,7 +2743,7 @@ def test_ogr_pg_56(with_and_without_postgis):
 def test_ogr_pg_57(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_57')
     lyr.CreateField(ogr.FieldDefn('acolumn', ogr.OFTString))
@@ -2792,7 +2762,7 @@ def test_ogr_pg_57(with_and_without_postgis):
 def test_ogr_pg_58(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_58')
     lyr.CreateField(ogr.FieldDefn('strcolumn', ogr.OFTString))
@@ -2843,11 +2813,11 @@ def test_ogr_pg_58(with_and_without_postgis):
 def test_ogr_pg_59(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(
         test_cli_utilities.get_ogr2ogr_path() +
@@ -2871,7 +2841,7 @@ def test_ogr_pg_59(with_and_without_postgis):
 def test_ogr_pg_60(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_60(id integer,"
                                         "name varchar(50),primary key (id)) "
@@ -2902,7 +2872,7 @@ def test_ogr_pg_60(with_and_without_postgis):
 def test_ogr_pg_61(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ExecuteSQL('CREATE TABLE ogr_pg_61 ( id integer NOT NULL PRIMARY KEY, bar varchar )')
 
@@ -2929,15 +2899,13 @@ def test_ogr_pg_61(with_and_without_postgis):
 
     feat = lyr.GetFeature(10)
     if not feat.IsFieldNull(0):
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     feat = lyr.GetFeature(20)
     if feat.GetField(0) != 'baz':
-        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for feat %d' % feat.GetFID())
 
     ds = None
 
@@ -2950,10 +2918,10 @@ def test_ogr_pg_61(with_and_without_postgis):
 def test_ogr_pg_62(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     # Test on a regular request in a table
     srs = osr.SpatialReference()
@@ -2981,11 +2949,11 @@ def test_ogr_pg_62(with_and_without_postgis):
 def test_ogr_pg_63(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # No need to test it in the non PostGIS case
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_63', options=['COLUMN_TYPES=foo=int8,bar=numeric(10,5),baz=hstore,baw=numeric(20,0)'])
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
@@ -3018,11 +2986,11 @@ def test_ogr_pg_63(with_and_without_postgis):
 def test_ogr_pg_64(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # No need to test it in the non PostGIS case
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
     lyr = ds.GetLayerByName('ogr_pg_63')
@@ -3055,10 +3023,10 @@ def test_ogr_pg_64(with_and_without_postgis):
 def test_ogr_pg_65(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
     assert ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 0
@@ -3094,12 +3062,12 @@ def test_ogr_pg_65(with_and_without_postgis):
        feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (1 2)' or \
        feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (3 4 5,6 7 8)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef('geom1') is not None or \
        feat.GetGeomFieldRef('geom2') is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
     for i in range(2):
@@ -3120,12 +3088,12 @@ def test_ogr_pg_65(with_and_without_postgis):
                 feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (1 2)' or \
                 feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (3 4 5,6 7 8)':
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = lyr.GetNextFeature()
         if feat.GetGeomFieldRef('geom1') is not None or \
            feat.GetGeomFieldRef('geom2') is not None:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         if i == 1:
             ds.ReleaseResultSet(lyr)
 
@@ -3148,12 +3116,12 @@ def test_ogr_pg_65(with_and_without_postgis):
     if feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (3 4)' or \
        feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (4 5 6,7 8 9)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef('geom1') is not None or \
             feat.GetGeomFieldRef('geom2') is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is not None:
@@ -3173,14 +3141,14 @@ def test_ogr_pg_65(with_and_without_postgis):
 def test_ogr_pg_66(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" ogr_pg_65')
 
@@ -3195,10 +3163,10 @@ def test_ogr_pg_66(with_and_without_postgis):
 def test_ogr_pg_67(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_67')
     lyr.ResetReading()  # to trigger layer creation
@@ -3238,10 +3206,10 @@ def test_ogr_pg_67(with_and_without_postgis):
 def test_ogr_pg_68(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -3292,7 +3260,7 @@ def has_run_load_tables(ds):
 def test_ogr_pg_69(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
@@ -3323,7 +3291,7 @@ def test_ogr_pg_69(with_and_without_postgis):
 def test_ogr_pg_70(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_PG_DEFERRED_CREATION', 'NO')
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_70')
@@ -3375,10 +3343,10 @@ def test_ogr_pg_70(with_and_without_postgis):
 def test_ogr_pg_71(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     curve_lyr = gdaltest.pg_ds.CreateLayer('test_curve')
     curve_lyr2 = gdaltest.pg_ds.CreateLayer('test_curve_3d', geom_type=ogr.wkbUnknown | ogr.wkb25DBit)
@@ -3497,7 +3465,7 @@ def test_ogr_pg_71(with_and_without_postgis):
 def test_ogr_pg_72(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Regular layer with 32 bit IDs
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_72')
@@ -3538,7 +3506,7 @@ def test_ogr_pg_72(with_and_without_postgis):
     f = lyr.GetNextFeature()
     if f.GetFID() != 123456789012345:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()  # to close implicit transaction
 
@@ -3551,10 +3519,10 @@ def test_ogr_pg_72(with_and_without_postgis):
 def test_ogr_pg_73(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('PG_USE_COPY', 'NO')
 
@@ -3636,10 +3604,10 @@ def test_ogr_pg_73(with_and_without_postgis):
 def test_ogr_pg_74(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_74', geom_type=ogr.wkbNone)
 
@@ -3726,7 +3694,7 @@ def test_ogr_pg_74(with_and_without_postgis):
     f = lyr.GetNextFeature()
     if not f.IsFieldNull('field_string'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
@@ -3736,12 +3704,12 @@ def test_ogr_pg_74(with_and_without_postgis):
        f.GetField('field_datetime3') != '2015/06/30 12:34:56.123+00' or \
        not f.IsFieldSet('field_date') or not f.IsFieldSet('field_time'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'b':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()  # to close implicit transaction
 
@@ -3775,10 +3743,10 @@ def test_ogr_pg_74(with_and_without_postgis):
 def test_ogr_pg_75(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_75', geom_type=ogr.wkbNone, options=['FID=myfid'])
 
@@ -3806,10 +3774,10 @@ def test_ogr_pg_75(with_and_without_postgis):
     assert ret == 0
     if feat.GetFID() < 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetField('myfid') != feat.GetFID():
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat.SetField('str', 'foo')
     ret = lyr.SetFeature(feat)
@@ -3846,11 +3814,11 @@ def test_ogr_pg_75(with_and_without_postgis):
     f = lyr.GetNextFeature()
     if f.GetFID() != 10 or f.GetField('str') != 'first string' or f.GetField('str2') != 'second string' or f.GetField('myfid') != 10:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetFeature(f.GetFID())
     if f.GetFID() != 10 or f.GetField('str') != 'first string' or f.GetField('str2') != 'second string' or f.GetField('myfid') != 10:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = None
     lyr.ResetReading()  # to close implicit transaction
 
@@ -3870,7 +3838,7 @@ def ogr_pg_76_get_transaction_state(ds):
 def test_ogr_pg_76(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.pg_ds.TestCapability(ogr.ODsCTransactions) == 1
 
@@ -4155,7 +4123,7 @@ def ogr_pg_76_scenario4(lyr1, lyr2with_and_without_postgis):
 def test_ogr_pg_77(with_and_without_postgis):
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_77_1')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_77_2')
@@ -4210,7 +4178,7 @@ def test_ogr_pg_77(with_and_without_postgis):
 def test_ogr_pg_78(with_and_without_postgis):
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis_2:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_78 (ID INTEGER PRIMARY KEY)")
     gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD COLUMN my_geom GEOMETRY")
@@ -4262,13 +4230,13 @@ def test_ogr_pg_78(with_and_without_postgis):
                 if val is not None:
                     print('Fails on Travis. geom_type = %d' % lyr.GetGeomType())
                 else:
-                    return 'fail'
+                    pytest.fail()
             if lyr.GetSpatialRef() is None or lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
                 val = gdal.GetConfigOption('TRAVIS', None)
                 if val is not None:
                     print('Fails on Travis. GetSpatialRef() = %s' % str(lyr.GetSpatialRef()))
                 else:
-                    return 'fail'
+                    pytest.fail()
         if lyr.GetName() == 'ogr_pg_78_2':
             ogr_pg_78_2_found = True
             # No logic in geography_columns to get type/coordim/srid from constraints
@@ -4290,7 +4258,7 @@ def test_ogr_pg_78(with_and_without_postgis):
 def test_ogr_pg_79(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # PRELUDE_STATEMENTS starting with BEGIN (use case: pg_bouncer in transaction pooling)
     ds = gdal.OpenEx('PG:' + gdaltest.pg_connection_string,
@@ -4301,7 +4269,7 @@ def test_ogr_pg_79(with_and_without_postgis):
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != '1h':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ret = ds.StartTransaction()
     assert ret == 0
@@ -4319,7 +4287,7 @@ def test_ogr_pg_79(with_and_without_postgis):
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != '1h':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ret = ds.StartTransaction()
     assert ret == 0
@@ -4356,7 +4324,7 @@ def test_ogr_pg_79(with_and_without_postgis):
 def test_ogr_pg_80():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -4373,7 +4341,7 @@ def test_ogr_pg_80():
 def test_ogr_pg_81():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.ReleaseResultSet(gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_1(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_1','dummy',-1,'POINT',2);"))
     gdaltest.pg_ds.ReleaseResultSet(gdaltest.pg_ds.ExecuteSQL("create table ogr_pg_81_2(id varchar unique, foo varchar); SELECT AddGeometryColumn('ogr_pg_81_2','dummy',-1,'POINT',2);"))
@@ -4406,7 +4374,7 @@ def test_ogr_pg_81():
     f = lyr.GetNextFeature()
     if f['id'] != '2':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     lyr.ResetReading()  # flushes implicit transaction
 
     return 'success'
@@ -4421,7 +4389,7 @@ def test_ogr_pg_81():
 def test_ogr_pg_82():
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_82', geom_type=ogr.wkbNone, options=['GEOMETRY_NAME=another_name'])
     lyr.CreateGeomField(ogr.GeomFieldDefn('my_geom', ogr.wkbPoint))
@@ -4436,7 +4404,7 @@ def test_ogr_pg_82():
 def test_ogr_pg_83():
 
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
-        return 'skip'
+        pytest.skip()
 
     tests = [[ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', 'POINT (1 2)'],
              [ogr.wkbUnknown, ['DIM=XYZM'], 'POINT ZM (1 2 3 4)', 'POINT ZM (1 2 3 4)'],
@@ -4499,7 +4467,7 @@ def test_ogr_pg_83():
 def test_ogr_pg_84():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
     lyr = ds.CreateLayer('ogr_pg_84', geom_type=ogr.wkbPoint, options=['OVERWRITE=YES', 'DESCRIPTION=foo'])
@@ -4556,7 +4524,7 @@ def test_ogr_pg_84():
 def test_ogr_pg_85():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds.CreateLayer('ogr_pg_85_1')
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_85_2')
@@ -4610,7 +4578,7 @@ def test_ogr_pg_85():
 def test_ogr_pg_86():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     old_val = gdal.GetConfigOption('PG_USE_COPY')
 
@@ -4625,7 +4593,7 @@ def test_ogr_pg_86():
     f = lyr.GetNextFeature()
     if f.GetField(0) != '3020':
         gdal.SetConfigOption('PG_USE_COPY', old_val)
-        return 'fail'
+        pytest.fail()
 
     gdal.SetConfigOption('PG_USE_COPY', 'NO')
 
@@ -4638,7 +4606,7 @@ def test_ogr_pg_86():
     f = lyr.GetNextFeature()
     if f.GetField(0) != '3020':
         gdal.SetConfigOption('PG_USE_COPY', old_val)
-        return 'fail'
+        pytest.fail()
 
     gdal.SetConfigOption('PG_USE_COPY', old_val)
 
@@ -4651,7 +4619,7 @@ def test_ogr_pg_86():
 def test_ogr_pg_87():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_87')
     lyr.CreateField(ogr.FieldDefn('test', ogr.OFTString))
@@ -4682,7 +4650,7 @@ def test_ogr_pg_87():
 def test_ogr_pg_json():
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_json')
     fld_defn = ogr.FieldDefn('test_json', ogr.OFTString)
@@ -4698,7 +4666,7 @@ def test_ogr_pg_json():
     f = lyr.GetNextFeature()
     if f.GetField(0) != '{"a": "b"}':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM ogr_pg_json')
     assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
@@ -4713,7 +4681,7 @@ def test_ogr_pg_json():
 def test_ogr_pg_table_cleanup(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:tpoly')
@@ -4792,7 +4760,7 @@ def test_ogr_pg_table_cleanup(with_and_without_postgis):
 def test_ogr_pg_cleanup(with_and_without_postgis):
 
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
     test_ogr_pg_table_cleanup()

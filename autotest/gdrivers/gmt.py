@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
@@ -43,7 +44,7 @@ def test_gmt_1():
     gdaltest.gmt_drv = gdal.GetDriverByName('GMT')
 
     if gdaltest.gmt_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('GMT', 'gmt_1.grd', 1, 34762)
 
@@ -59,7 +60,7 @@ def test_gmt_1():
 def test_gmt_2():
 
     if gdaltest.gmt_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('GMT', 'int16.tif', 1, 4672)
     return tst.testCreateCopy(check_gt=1)

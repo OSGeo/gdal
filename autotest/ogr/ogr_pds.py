@@ -54,7 +54,7 @@ def test_ogr_pds_1():
         feat = lyr.GetNextFeature()
     if feat.GetField('NOISE_COUNTS_1') != 96:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat, 'POINT (146.1325 -55.648)',
                                       max_error=0.000000001) != 0:
@@ -65,7 +65,7 @@ def test_ogr_pds_1():
         feat = lyr.GetFeature(1)
     if feat.GetField('MARS_RADIUS') != 3385310.2:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -80,7 +80,7 @@ def test_ogr_pds_2():
     f = lyr.GetNextFeature()
     if abs(f['INCIDENCE_ANGLE'] - 3.56775538) > 1e-7 or abs(f['TEMP_2'] - 28.1240005493164) > 1e-7:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 

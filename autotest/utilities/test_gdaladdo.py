@@ -32,6 +32,7 @@
 import sys
 import os
 import shutil
+import pytest
 
 sys.path.append('../gcore')
 
@@ -46,7 +47,7 @@ import tiff_ovr
 
 def test_gdaladdo_1():
     if test_cli_utilities.get_gdaladdo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/mfloat32.vrt', 'tmp/mfloat32.vrt')
     shutil.copy('../gcore/data/float32.tif', 'tmp/float32.tif')
@@ -70,7 +71,7 @@ def test_gdaladdo_1():
 
 def test_gdaladdo_2():
     if test_cli_utilities.get_gdaladdo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copyfile('../gcore/data/nodata_byte.tif', 'tmp/ovr5.tif')
 
@@ -94,7 +95,7 @@ def test_gdaladdo_2():
 
 def test_gdaladdo_3():
     if test_cli_utilities.get_gdaladdo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/test_gdaladdo_3.tif', '../gcore/data/nodata_byte.tif', options='-outsize 1024 1024')
 
@@ -111,8 +112,7 @@ def test_gdaladdo_3():
     try:
         os.stat('tmp/test_gdaladdo_3.tif.ovr')
     except OSError:
-        gdaltest.post_reason('no external overview.')
-        return 'fail'
+        pytest.fail('no external overview.')
 
     return 'success'
 
@@ -122,7 +122,7 @@ def test_gdaladdo_3():
 
 def test_gdaladdo_4():
     if test_cli_utilities.get_gdaladdo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -clean tmp/test_gdaladdo_3.tif')
 
@@ -134,8 +134,7 @@ def test_gdaladdo_4():
 
     try:
         os.stat('tmp/test_gdaladdo_3.tif.ovr')
-        gdaltest.post_reason('.ovr file still exists')
-        return 'fail'
+        pytest.fail('.ovr file still exists')
     except OSError:
         pass
 
@@ -149,7 +148,7 @@ def test_gdaladdo_4():
 
 def test_gdaladdo_5():
     if test_cli_utilities.get_gdaladdo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copyfile('../gcore/data/nodata_byte.tif', 'tmp/test_gdaladdo_5.tif')
 

@@ -36,6 +36,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test forked gdalserver
@@ -62,7 +63,7 @@ def test_gdal_api_proxy_1():
 def test_gdal_api_proxy_2():
 
     if sys.version_info < (2, 6, 0):
-        return 'skip'
+        pytest.skip()
 
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -2' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
@@ -78,14 +79,13 @@ def test_gdal_api_proxy_2():
 def test_gdal_api_proxy_3():
 
     if sys.version_info < (2, 6, 0):
-        return 'skip'
+        pytest.skip()
 
     if sys.platform == 'win32':
-        return 'skip'
+        pytest.skip()
 
     if sys.platform == 'darwin':
-        print("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
-        return 'skip'
+        pytest.skip("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
 
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -3' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
@@ -101,14 +101,13 @@ def test_gdal_api_proxy_3():
 def test_gdal_api_proxy_4():
 
     if sys.version_info < (2, 6, 0):
-        return 'skip'
+        pytest.skip()
 
     if sys.platform == 'win32':
-        return 'skip'
+        pytest.skip()
 
     if sys.platform == 'darwin':
-        print("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
-        return 'skip'
+        pytest.skip("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
 
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -4' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)

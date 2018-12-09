@@ -35,6 +35,7 @@ from osgeo import gdal
 
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 
@@ -113,13 +114,12 @@ def test_gdal_ls_py_4():
     ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
 
     if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/../ogr/data/poly.zip/poly.PRJ') == -1:
-        print(ret_str)
         if gdaltest.skip_on_travis():
             # FIXME
             # Fails on Travis with dates at 1970-01-01 00:00
             # Looks like a 32/64bit issue with Python bindings of VSIStatL()
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail(ret_str)
 
     return 'success'
 
@@ -131,19 +131,18 @@ def test_gdal_ls_py_5():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would stall for a long time')
-        return 'skip'
+        pytest.skip('would stall for a long time')
 
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
-        return 'skip'
+        pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if not d:
-        return 'skip'
+        pytest.skip()
 
     # ret, ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
     #
@@ -164,26 +163,25 @@ def test_gdal_ls_py_6():
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
-        return 'skip'
+        pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if not d:
-        return 'skip'
+        pytest.skip()
 
     ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'])
 
     if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
-        print(ret_str)
         if gdaltest.skip_on_travis():
             # FIXME
             # Fails on Travis with dates at 1970-01-01 00:00
             # Looks like a 32/64bit issue with Python bindings of VSIStatL()
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail(ret_str)
 
     return 'success'
 
@@ -195,24 +193,22 @@ def test_gdal_ls_py_7():
 
     # Super slow on AppVeyor since a few weeks (Apr 2016)
     if gdal.GetConfigOption('APPVEYOR') is not None:
-        print('Slow on AppVeyor')
-        return 'skip'
+        pytest.skip('Slow on AppVeyor')
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would stall for a long time')
-        return 'skip'
+        pytest.skip('would stall for a long time')
 
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
-        return 'skip'
+        pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if not d:
-        return 'skip'
+        pytest.skip()
 
     # ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
 
@@ -231,23 +227,22 @@ def test_gdal_ls_py_7():
 
 def test_gdal_ls_py_8():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would stall for a long time')
-        return 'skip'
+        pytest.skip('would stall for a long time')
 
     f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
-        return 'skip'
+        pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if not d:
-        return 'skip'
+        pytest.skip()
 
     ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])
 

@@ -81,11 +81,10 @@ def test_dither_1():
         for j in range(4):
 
             if ct_data[j] != ref_data[j]:
-                gdaltest.post_reason('color table mismatch')
                 for k in range(nColors):
                     print(ct.GetColorEntry(k))
                     print(ref_ct[k])
-                return 'fail'
+                pytest.fail('color table mismatch')
 
     if cs == cs_expected or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
         drv.Delete('tmp/rgbsmall.tif')

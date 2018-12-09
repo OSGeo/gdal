@@ -38,6 +38,7 @@ import shutil
 from osgeo import gdal
 import gdaltest
 import test_py_scripts
+import pytest
 
 # test that gdalnumeric is available, if not skip all tests
 gdalnumeric_not_available = False
@@ -56,12 +57,11 @@ except (ImportError, AttributeError):
 def test_gdal_calc_py_1():
 
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/stefan_full_rgba.tif', 'tmp/test_gdal_calc_py.tif')
 
@@ -94,11 +94,11 @@ def test_gdal_calc_py_1():
 def test_gdal_calc_py_2():
 
     if gdalnumeric_not_available:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A+B --overwrite --outfile tmp/test_gdal_calc_py_2_1.tif')
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A*B --overwrite --outfile tmp/test_gdal_calc_py_2_2.tif')
@@ -127,11 +127,11 @@ def test_gdal_calc_py_2():
 def test_gdal_calc_py_3():
 
     if gdalnumeric_not_available:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --allBands A --calc=A --overwrite --outfile tmp/test_gdal_calc_py_3.tif')
 
@@ -154,11 +154,11 @@ def test_gdal_calc_py_3():
 def test_gdal_calc_py_4():
 
     if gdalnumeric_not_available:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     # some values are clipped to 255, but this doesn't matter... small values were visually checked
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --calc=1 --overwrite --outfile tmp/test_gdal_calc_py_4_1.tif')
@@ -194,12 +194,11 @@ def test_gdal_calc_py_4():
 def test_gdal_calc_py_5():
 
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     backup_sys_path = sys.path
     sys.path.insert(0, script_path)
@@ -238,12 +237,11 @@ def test_gdal_calc_py_5():
 def test_gdal_calc_py_6():
 
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     backup_sys_path = sys.path
     sys.path.insert(0, script_path)
@@ -268,12 +266,11 @@ def test_gdal_calc_py_6():
 
 def test_gdal_calc_py_7():
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/stefan_full_rgba.tif', 'tmp/test_gdal_calc_py.tif')
 

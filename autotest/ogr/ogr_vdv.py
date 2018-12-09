@@ -37,6 +37,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Basic test of .idf file
@@ -49,25 +50,25 @@ def test_ogr_idf_1():
     f = lyr.GetNextFeature()
     if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49,2.5 49.5,2.7 49.7,3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(2)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2.5 49.5)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(3)
     f = lyr.GetNextFeature()
     if f['FOO'] != 1:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -77,7 +78,7 @@ def test_ogr_idf_1():
 
 def test_ogr_idf_1_with_temp_sqlite_db():
     if ogr.GetDriverByName('SQLite') is None:
-        return 'skip'
+        pytest.skip()
     with gdaltest.config_option('OGR_IDF_TEMP_DB_THRESHOLD', '0'):
         return test_ogr_idf_1()
 
@@ -92,25 +93,25 @@ def test_ogr_idf_3d():
     f = lyr.GetNextFeature()
     if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49 10)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49 10,2.5 49.5 10,2.7 49.7 20,3 50 20)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(2)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2.5 49.5 10)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(3)
     f = lyr.GetNextFeature()
     if f['FOO'] != 1:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -122,7 +123,7 @@ def test_ogr_idf_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.idf')
 
@@ -263,7 +264,7 @@ def test_ogr_vdv_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.x10')
 
@@ -293,7 +294,7 @@ def test_ogr_vdv_6():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test_x10')
 
@@ -332,7 +333,7 @@ def test_ogr_vdv_7():
            f[latname] != -234556789 or \
            ogrtest.check_feature_geometry(f, 'POINT (-123.765774722222 -23.7657747222222)') != 0:
             f.DumpReadable()
-            return 'fail'
+            pytest.fail()
         ds = None
 
         gdal.Unlink('/vsimem/vdv/ogr_vdv_7.x10')
@@ -348,9 +349,9 @@ def test_ogr_vdv_7():
         gdal.PopErrorHandler()
         assert gdal.GetLastErrorMsg() != ''
         if strict and lyr is not None:
-            return 'fail'
+            pytest.fail()
         elif not strict and lyr is None:
-            return 'fail'
+            pytest.fail()
 
         if profile == 'VDV-452-GERMAN':
             lyr_name = 'REC_ORT'
@@ -363,9 +364,9 @@ def test_ogr_vdv_7():
         gdal.PopErrorHandler()
         assert gdal.GetLastErrorMsg() != ''
         if strict and ret == 0:
-            return 'fail'
+            pytest.fail()
         elif not strict and ret != 0:
-            return 'fail'
+            pytest.fail()
 
         ds = None
 

@@ -34,6 +34,7 @@ import sys
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Read SEG-Y
@@ -60,9 +61,8 @@ def test_ogr_segy_1():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (500000 4500000)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     feat = lyr.GetNextFeature()
     assert feat is None

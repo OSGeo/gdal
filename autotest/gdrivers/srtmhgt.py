@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
@@ -127,7 +128,7 @@ def test_srtmhgt_4():
 
     f = gdal.VSIFOpenL('/vsizip//vsimem/N43W080.SRTMSWBD.raw.zip/N43W080.raw', 'wb')
     if f is None:
-        return 'skip'
+        pytest.skip()
     gdal.VSIFWriteL(' ' * (3601 * 3601), 1, 3601 * 3601, f)
     gdal.VSIFCloseL(f)
 

@@ -45,7 +45,7 @@ def test_jp2metadata_1():
 
     ds = gdal.Open('data/erdas_foo.jp2')
     if ds is None:
-        return 'skip'
+        pytest.skip()
 
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
@@ -69,7 +69,7 @@ def test_jp2metadata_2():
 
     ds = gdal.Open('data/IMG_md_ple_R1C1.jp2', gdal.GA_ReadOnly)
     if ds is None:
-        return 'skip'
+        pytest.skip()
 
     filelist = ds.GetFileList()
 
@@ -89,8 +89,7 @@ def test_jp2metadata_2():
 
     try:
         os.stat('data/IMG_md_ple_R1C1.jp2.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/IMG_md_ple_R1C1.jp2.aux.xml')
-        return 'fail'
+        pytest.fail('Expected not generation of data/IMG_md_ple_R1C1.jp2.aux.xml')
     except OSError:
         pass
 
@@ -111,7 +110,7 @@ def test_jp2metadata_3():
     ds = gdal.Open('data/ll.jp2')
     if ds is None:
         gdal.SetConfigOption('GDAL_IGNORE_AXIS_ORIENTATION', 'NO')
-        return 'skip'
+        pytest.skip()
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
@@ -145,7 +144,7 @@ def test_jp2metadata_4():
 
     ds = gdal.Open('data/gmljp2_dtedsm_epsg_4326_axes.jp2')
     if ds is None:
-        return 'skip'
+        pytest.skip()
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
@@ -180,7 +179,7 @@ def test_jp2metadata_5():
 
     ds = gdal.Open('data/gmljp2_epsg3035_easting_northing.jp2')
     if ds is None:
-        return 'skip'
+        pytest.skip()
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:

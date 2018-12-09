@@ -37,6 +37,7 @@ from osgeo import gdal
 from osgeo import ogr
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Test an expression with a left side value and right side column and an \
@@ -505,17 +506,17 @@ def test_ogr_rfc28_24():
     if feat.IsFieldSet('FIELD_4'):
         feat.DumpReadable()
         gdaltest.ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     if feat.IsFieldSet('nullstrfield'):
         feat.DumpReadable()
         gdaltest.ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     if feat.IsFieldSet('nullintfield'):
         feat.DumpReadable()
         gdaltest.ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     count = sql_lyr.GetFeatureCount()
 
@@ -954,11 +955,11 @@ def test_ogr_rfc28_42():
        f.GetField(3) != 1 or f.GetField(4) != 1 or \
        f.GetField(5) != 32000 or f.GetField(6) != 32001 or f.GetField(7) != 32001:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetField('b') != 1 or f.GetField(1) != 0 or f.GetField(2) != 2 or f.GetField(3) != 1 or f.GetField(4) != 1:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = ds.ExecuteSQL("SELECT MIN(b), MAX(b), SUM(b) FROM test")
@@ -996,31 +997,31 @@ def test_ogr_rfc28_43():
     assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTInteger64
     if f.GetField(0) != 1000000000000 or f.GetField(1) != -1000000000000 or f.GetField(2) != 1 or f.GetField(3) != 100000000000 or f.GetField(4) != 1.0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = ds.ExecuteSQL("SELECT MIN(myint64), MAX(myint64), SUM(myint64) FROM test")
     f = lyr.GetNextFeature()
     if f.GetField('MIN_myint64') != -1000000000000:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if f.GetField('MAX_myint64') != 100000000000:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if f.GetField('SUM_myint64') != -1000000000000 + 100000000000:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = ds.ExecuteSQL("SELECT DISTINCT myint64 FROM test ORDER BY myint64")
     f = lyr.GetNextFeature()
     if f.GetField('myint64') != -1000000000000:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetField('myint64') != 100000000000:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
     return 'success'
 
@@ -1139,15 +1140,15 @@ def test_ogr_rfc28_46():
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2500000000 or f['outfid'] != 2500000000 or f['val'] != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 3000000000 or f['outfid'] != 3000000000 or f['val'] != 1:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Explicit cast of fid to bigint no longer needed if the layer is declared OLMD_FID64=YES
@@ -1156,7 +1157,7 @@ def test_ogr_rfc28_46():
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2500000000 or f['outfid'] != 2500000000 or f['val'] != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None

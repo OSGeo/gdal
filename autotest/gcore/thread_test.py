@@ -35,6 +35,7 @@ import threading
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 
 def my_error_handler(err_type, err_no, err_msg):
@@ -62,7 +63,7 @@ def test_thread_test_1():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     threads = []
     args_array = []

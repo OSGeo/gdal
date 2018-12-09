@@ -109,7 +109,7 @@ def test_gdal_rasterize_lib_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
 

@@ -38,6 +38,7 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test if driver is available
@@ -49,7 +50,7 @@ def test_ogr_carto_init():
 
     ogrtest.carto_drv = ogr.GetDriverByName('Carto')
     if ogrtest.carto_drv is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -59,7 +60,7 @@ def test_ogr_carto_init():
 
 def test_ogr_carto_vsimem():
     if ogrtest.carto_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.carto_api_key_ori = gdal.GetConfigOption('CARTO_API_KEY')
     gdal.SetConfigOption('CARTO_API_URL', '/vsimem/carto')
@@ -189,7 +190,7 @@ Error""")
     f = lyr.GetNextFeature()
     if f.GetFID() != 0:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Layer without geometry or primary key
     gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 0',
@@ -214,7 +215,7 @@ Error""")
     if f['strfield'] != 'foo' or f['realfield'] != 1.23 or f['boolfield'] != 1 or \
        f['datefield'] != '2015/04/24 12:34:56.123+00':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.SetConfigOption('CARTO_API_KEY', 'foo')
     gdal.FileFromMemBuffer('/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0&api_key=foo',
@@ -658,7 +659,7 @@ Error""")
         ds = None
     if ret != 0 or f.GetFID() != 12:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
     lyr = ds.GetLayer(0)
@@ -672,7 +673,7 @@ Error""")
 
     if ret != 0 or f.GetFID() != 11:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Now remove default value to strfield
     gdal.FileFromMemBuffer(get_full_details_fields_url,
@@ -824,7 +825,7 @@ Error""")
 
 def test_ogr_carto_vsimem_cleanup():
     if ogrtest.carto_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CARTO_API_URL', None)
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
@@ -843,21 +844,20 @@ def test_ogr_carto_vsimem_cleanup():
 
 def test_ogr_carto_test_ogrsf():
     if ogrtest.carto_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.skip_on_travis():
-        return 'skip'
+        pytest.skip()
 
     ogrtest.carto_test_server = 'https://gdalautotest2.carto.com'
 
     if gdaltest.gdalurlopen(ogrtest.carto_test_server) is None:
-        print('cannot open %s' % ogrtest.carto_test_server)
         ogrtest.carto_drv = None
-        return 'skip'
+        pytest.skip('cannot open %s' % ogrtest.carto_test_server)
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config CARTO_HTTPS NO --config CARTO_PAGE_SIZE 300 -ro "CARTO:gdalautotest2 tables=tm_world_borders_simpl_0_3"')
 
@@ -875,15 +875,13 @@ def ogr_carto_rw_init():
 
     ogrtest.carto_connection = gdal.GetConfigOption('CARTO_CONNECTION')
     if ogrtest.carto_connection is None:
-        print('CARTO_CONNECTION missing')
-        return 'skip'
+        pytest.skip('CARTO_CONNECTION missing')
     if gdal.GetConfigOption('CARTO_API_KEY') is None:
-        print('CARTO_API_KEY missing')
-        return 'skip'
+        pytest.skip('CARTO_API_KEY missing')
 
     ogrtest.carto_drv = ogr.GetDriverByName('Carto')
     if ogrtest.carto_drv is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -894,7 +892,7 @@ def ogr_carto_rw_init():
 def ogr_carto_rw_1():
 
     if ogrtest.carto_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.carto_connection, update=1)
     assert ds is not None
@@ -967,13 +965,13 @@ def ogr_carto_rw_1():
        f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
         f.DumpReadable()
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
-        return 'fail'
+        pytest.fail()
 
     lyr.DeleteFeature(fid)
     f = lyr.GetFeature(fid)
     if f is not None:
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
-        return 'fail'
+        pytest.fail()
 
     # Non-differed field creation
     lyr.CreateField(ogr.FieldDefn("otherstrfield", ogr.OFTString))
@@ -1001,7 +999,7 @@ def ogr_carto_rw_1():
     if not f.GetField(0).startswith('POINT'):
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
@@ -1034,20 +1032,20 @@ def ogr_carto_rw_1():
     lyr = ds.GetLayerByName(lyr_name)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('nullable')).IsNullable() != 1:
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
-        return 'fail'
+        pytest.fail()
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('not_nullable')).IsNullable() != 0:
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
-        return 'fail'
+        pytest.fail()
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
-        return 'fail'
+        pytest.fail()
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime_with_default')).GetDefault() != 'CURRENT_TIMESTAMP':
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f is None or f.GetField('field_string') != 'a\'b' or not f.IsFieldSet('field_datetime_with_default'):
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
-        return 'fail'
+        pytest.fail()
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
 
     return 'success'

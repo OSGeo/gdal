@@ -34,6 +34,7 @@ import os
 
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Simple test
@@ -43,7 +44,7 @@ def test_gdalinfo_py_1():
 
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
     assert ret.find('Driver: GTiff/GeoTIFF') != -1
@@ -57,7 +58,7 @@ def test_gdalinfo_py_1():
 def test_gdalinfo_py_2():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-checksum ../gcore/data/byte.tif')
     assert ret.find('Checksum=4672') != -1
@@ -71,7 +72,7 @@ def test_gdalinfo_py_2():
 def test_gdalinfo_py_3():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
     assert ret.find('Metadata') != -1
@@ -88,7 +89,7 @@ def test_gdalinfo_py_3():
 def test_gdalinfo_py_4():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/bug407.gif')
     assert ret.find('0: 255,255,255,255') != -1
@@ -105,7 +106,7 @@ def test_gdalinfo_py_4():
 def test_gdalinfo_py_5():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('../gcore/data/byte.tif.aux.xml')
@@ -130,7 +131,7 @@ def test_gdalinfo_py_5():
 def test_gdalinfo_py_6():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/int.img')
     assert ret.find('Overviews') != -1
@@ -146,7 +147,7 @@ def test_gdalinfo_py_6():
 def test_gdalinfo_py_7():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/gcps.vrt')
     assert ret.find('GCP Projection =') != -1
@@ -168,7 +169,7 @@ def test_gdalinfo_py_7():
 def test_gdalinfo_py_8():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('../gcore/data/byte.tif.aux.xml')
@@ -195,7 +196,7 @@ def test_gdalinfo_py_8():
 def test_gdalinfo_py_9():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') == -1, 'Got unexpected extra MD.'
@@ -212,7 +213,7 @@ def test_gdalinfo_py_9():
 def test_gdalinfo_py_10():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
     assert ret.find('Computed Min/Max=74.000,255.000') == -1

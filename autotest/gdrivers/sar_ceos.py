@@ -32,6 +32,7 @@ import sys
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
@@ -45,7 +46,7 @@ def test_sar_ceos_online_1():
 
     for filename in list_files:
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ceos/' + filename, filename):
-            return 'skip'
+            pytest.skip()
 
     tst = gdaltest.GDALTest('SAR_CEOS', 'tmp/cache/ottawa_patch.img', 1, 23026, filename_absolute=1)
     return tst.testOpen()

@@ -33,6 +33,7 @@ import sys
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
@@ -40,12 +41,12 @@ import gdaltest
 def test_loslas_online_1():
 
     if not gdaltest.download_file('http://www.ngs.noaa.gov/PC_PROD/NADCON/NADCON.zip', 'NADCON.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/NADCON.zip')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     try:
         gdaltest.unzip('tmp/cache/NADCON', 'tmp/cache/NADCON.zip')
@@ -53,7 +54,7 @@ def test_loslas_online_1():
         gdaltest.unzip('tmp/cache/NADCON', 'tmp/cache/NADCON/nadcon.jar')
         os.stat('tmp/cache/NADCON/grids/wyhpgn.los')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('LOSLAS', 'tmp/cache/NADCON/grids/wyhpgn.los', 1, 0, filename_absolute=1)
     gt = (-111.625, 0.25, 0.0, 45.625, 0.0, -0.25)

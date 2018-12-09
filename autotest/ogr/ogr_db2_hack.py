@@ -32,6 +32,7 @@ import sys
 
 import gdaltest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Create a point in DB2 format, and verify the byte order flag.
@@ -40,7 +41,7 @@ from osgeo import ogr
 def test_ogr_db2_hack_1():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER(1) != 0:
-        return 'skip'
+        pytest.skip()
 
     # XDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
@@ -90,7 +91,7 @@ def test_ogr_db2_hack_2():
 def test_ogr_db2_hack_3():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER(1) != 0:
-        return 'skip'
+        pytest.skip()
 
     wkt = 'MULTIPOLYGON (((10.00121344 2.99853145,10.00121344 1.99853145,11.00121343 1.99853148,11.00121343 2.99853148)),((10.00121344 2.99853145,10.00121344 3.99853145,9.00121345 3.99853143,9.00121345 2.99853143)))'
 

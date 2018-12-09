@@ -311,8 +311,7 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
                 geom = geom.ExportToWkt()
             if geom != expected_wkt and ogrtest.check_feature_geometry(feat, expected_wkt) == 1:
                 feat.DumpReadable()
-                print(expected_wkt)
-                return 'fail'
+                pytest.fail(expected_wkt)
 
         if feat.GetField('id') != 1 or \
            feat.GetField('smallint') != -13 or \
@@ -325,7 +324,7 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
            feat.GetField('binary') != "00FF7F" or \
            feat.GetField('binary2') != "123456":
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
         if version10:
             sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
@@ -372,13 +371,11 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
                 expected_wkt = data[2]
             if expected_wkt is None:
                 if feat.GetGeometryRef() is not None:
-                    print(data)
                     feat.DumpReadable()
-                    return 'fail'
+                    pytest.fail(data)
             elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
-                print(data)
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail(data)
 
     ds = None
 
@@ -400,7 +397,7 @@ def test_ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + filename)
 
@@ -639,11 +636,11 @@ def test_ogr_openfilegdb_5():
     try:
         gdaltest.unzip('tmp/', 'data/testopenfilegdb.gdb.zip')
     except OSError:
-        return 'skip'
+        pytest.skip()
     try:
         os.stat('tmp/testopenfilegdb.gdb')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/testopenfilegdb.gdb')
     assert ds is not None
@@ -682,7 +679,7 @@ def test_ogr_openfilegdb_6():
        feat.IsFieldSet('AVG_nullint'):
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # No index
@@ -692,7 +689,7 @@ def test_ogr_openfilegdb_6():
        feat.GetField('AVG_id') != 3.0:
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -737,21 +734,18 @@ def test_ogr_openfilegdb_7():
         if expected_optimized is None:
             if sql_lyr is not None:
                 ds.ReleaseResultSet(sql_lyr)
-                print(sql, feat_count, first_fid)
-                return 'fail'
+                pytest.fail(sql, feat_count, first_fid)
             continue
         assert sql_lyr is not None, (sql, feat_count, first_fid)
         if expected_optimized:
             if sql_lyr.GetFeatureCount() != feat_count:
-                print(sql, feat_count, first_fid)
                 ds.ReleaseResultSet(sql_lyr)
-                return 'fail'
+                pytest.fail(sql, feat_count, first_fid)
             feat = sql_lyr.GetNextFeature()
             if feat.GetFID() != first_fid:
-                print(sql, feat_count, first_fid)
                 ds.ReleaseResultSet(sql_lyr)
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail(sql, feat_count, first_fid)
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL('GetLastSQLUsedOptimizedImplementation')
@@ -800,7 +794,7 @@ def test_ogr_openfilegdb_8():
     while feat is not None:
         if feat.GetField('str') != expected_str[i]:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         i = i + 1
         feat = lyr.GetNextFeature()
 
@@ -815,7 +809,7 @@ def test_ogr_openfilegdb_9():
     try:
         os.stat('tmp/testopenfilegdb.gdb')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('tmp/testopenfilegdb.gdb/a00000009.gdbtable', 'tmp/a00000009.gdbtable')
     shutil.copy('tmp/testopenfilegdb.gdb/a00000009.gdbtablx', 'tmp/a00000009.gdbtablx')
@@ -860,7 +854,7 @@ def test_ogr_openfilegdb_10():
     try:
         os.stat('tmp/testopenfilegdb.gdb')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     shutil.copytree('tmp/testopenfilegdb.gdb', 'tmp/testopenfilegdb_fuzzed.gdb')
 
@@ -1178,7 +1172,7 @@ def test_ogr_openfilegdb_13():
     f = lyr.GetNextFeature()
     if f.GetField('GEOCODE') != '-673985,22+745574,77':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -1344,7 +1338,7 @@ def test_ogr_openfilegdb_21():
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     assert f is None
     ds.ReleaseResultSet(sql_lyr)
@@ -1354,7 +1348,7 @@ def test_ogr_openfilegdb_21():
     f = lyr.GetNextFeature()
     if f.GetFID() != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 

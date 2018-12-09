@@ -37,6 +37,7 @@ from osgeo import ogr
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 
@@ -46,7 +47,7 @@ def test_ogr_tiger_1():
     ogrtest.tiger_ds = None
 
     if not gdaltest.download_file('http://www2.census.gov/geo/tiger/tiger2006se/AL/TGR01001.ZIP', 'TGR01001.ZIP'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/TGR01001/TGR01001.MET')
@@ -60,9 +61,9 @@ def test_ogr_tiger_1():
             try:
                 os.stat('tmp/cache/TGR01001/TGR01001.MET')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except:
-            return 'skip'
+            pytest.skip()
 
     ogrtest.tiger_ds = ogr.Open('tmp/cache/TGR01001')
     assert ogrtest.tiger_ds is not None
@@ -98,11 +99,11 @@ def test_ogr_tiger_1():
 def test_ogr_tiger_2():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/cache/TGR01001')
 
@@ -117,11 +118,11 @@ def test_ogr_tiger_2():
 def test_ogr_tiger_3():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree('tmp/outtiger')
@@ -167,7 +168,7 @@ def test_ogr_tiger_3():
 def test_ogr_tiger_4():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # load all the files into memory.
     for filename in gdal.ReadDir('tmp/cache/TGR01001'):
@@ -223,7 +224,7 @@ def test_ogr_tiger_4():
 def test_ogr_tiger_cleanup():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.tiger_ds = None
     return 'success'

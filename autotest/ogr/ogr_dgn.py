@@ -31,6 +31,7 @@ import sys
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Verify we can open the test file.
@@ -51,7 +52,7 @@ def test_ogr_dgn_1():
 
 def test_ogr_dgn_2():
     if gdaltest.dgn_ds is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.dgn_lyr.GetNextFeature()
     assert feat.GetField('Type') == 17 and feat.GetField('Level') == 1, \
@@ -72,7 +73,7 @@ def test_ogr_dgn_2():
 
 def test_ogr_dgn_3():
     if gdaltest.dgn_ds is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.dgn_lyr.GetNextFeature()
     assert feat.GetField('Type') == 15 and feat.GetField('Level') == 2, \
@@ -99,7 +100,7 @@ def test_ogr_dgn_3():
 
 def test_ogr_dgn_4():
     if gdaltest.dgn_ds is None:
-        return 'skip'
+        pytest.skip()
 
     feat = gdaltest.dgn_lyr.GetNextFeature()
     assert feat.GetField('Type') == 6 and feat.GetField('Level') == 2 and feat.GetField('ColorIndex') == 83, \
@@ -123,7 +124,7 @@ def test_ogr_dgn_4():
 def test_ogr_dgn_5():
 
     if gdaltest.dgn_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dgn_lyr.SetAttributeFilter('Type = 15 and Level = 2')
     tr = ogrtest.check_features_against_list(gdaltest.dgn_lyr, 'Type', [15])
@@ -138,7 +139,7 @@ def test_ogr_dgn_5():
 def test_ogr_dgn_6():
 
     if gdaltest.dgn_ds is None:
-        return 'skip'
+        pytest.skip()
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING(1.0 8.55, 2.5 6.86)')
     gdaltest.dgn_lyr.SetSpatialFilter(geom)
@@ -156,7 +157,7 @@ def test_ogr_dgn_6():
 def test_ogr_dgn_7():
 
     if gdaltest.dgn_ds is None:
-        return 'skip'
+        pytest.skip()
 
     co_opts = ['UOR_PER_SUB_UNIT=100', 'SUB_UNITS_PER_MASTER_UNIT=100',
                'ORIGIN=-50,-50,0']
@@ -193,7 +194,7 @@ def test_ogr_dgn_7():
 def test_ogr_dgn_8():
 
     if gdaltest.dgn_ds is None:
-        return 'skip'
+        pytest.skip()
 
     dgn2_ds = ogr.Open('tmp/dgn7.dgn')
 
@@ -252,7 +253,7 @@ def test_ogr_dgn_8():
 def test_ogr_dgn_online_1():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/dgn/DGNSample_v7.dgn', 'DGNSample_v7.dgn'):
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/cache/DGNSample_v7.dgn')
     assert ds is not None

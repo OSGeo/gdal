@@ -37,6 +37,7 @@ import shutil
 from osgeo import gdal
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Basic test
@@ -44,7 +45,7 @@ import test_cli_utilities
 
 def test_nearblack_1():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
     assert (err is None or err == ''), 'got error/warning'
@@ -78,7 +79,7 @@ def test_nearblack_1():
 
 def test_nearblack_2():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -setalpha -nb 0 -of GTiff -o tmp/nearblack2.tif -co TILED=YES')
 
@@ -97,7 +98,7 @@ def test_nearblack_2():
 
 def test_nearblack_3():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('tmp/nearblack2.tif', 'tmp/nearblack3.tif')
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setalpha -nb 0 -of GTiff tmp/nearblack3.tif')
@@ -117,9 +118,9 @@ def test_nearblack_3():
 
 def test_nearblack_4():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -wo "INIT_DEST=255" ../gdrivers/data/rgbsmall.tif  tmp/nearblack4_src.tif -srcnodata 0')
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -q -setalpha -white -nb 0 -of GTiff tmp/nearblack4_src.tif -o tmp/nearblack4.tif')
@@ -139,7 +140,7 @@ def test_nearblack_4():
 
 def test_nearblack_5():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif --config GDAL_TIFF_INTERNAL_MASK NO -setmask -nb 0 -of GTiff -o tmp/nearblack5.tif -co TILED=YES')
 
@@ -159,7 +160,7 @@ def test_nearblack_5():
 
 def test_nearblack_6():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('tmp/nearblack5.tif', 'tmp/nearblack6.tif')
     shutil.copy('tmp/nearblack5.tif.msk', 'tmp/nearblack6.tif.msk')
@@ -182,7 +183,7 @@ def test_nearblack_6():
 
 def test_nearblack_7():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' data/whiteblackred.tif -o tmp/nearblack7.tif -color 0,0,0 -color 255,255,255 -of GTiff')
 
@@ -203,7 +204,7 @@ def test_nearblack_7():
 
 def test_nearblack_8():
     if test_cli_utilities.get_nearblack_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
     gdal.GetDriverByName('GTiff').CreateCopy('tmp/nearblack8.tif', src_ds)

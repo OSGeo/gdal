@@ -30,6 +30,7 @@
 ###############################################################################
 
 import sys
+import pytest
 
 sys.path.append('../gcore')
 
@@ -43,7 +44,7 @@ import test_cli_utilities
 
 def test_gdallocationinfo_1():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdallocationinfo_path() + ' ../gcore/data/byte.tif 0 0')
     assert (err is None or err == ''), 'got error/warning'
@@ -63,7 +64,7 @@ def test_gdallocationinfo_1():
 
 def test_gdallocationinfo_2():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -xml ../gcore/data/byte.tif 0 0')
     ret = ret.replace('\r\n', '\n')
@@ -82,7 +83,7 @@ def test_gdallocationinfo_2():
 
 def test_gdallocationinfo_3():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -b 1 -valonly ../gcore/data/byte.tif 0 0')
     expected_ret = """107"""
@@ -96,7 +97,7 @@ def test_gdallocationinfo_3():
 
 def test_gdallocationinfo_4():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -geoloc ../gcore/data/byte.tif 440720.000 3751320.000')
     ret = ret.replace('\r\n', '\n')
@@ -114,7 +115,7 @@ def test_gdallocationinfo_4():
 
 def test_gdallocationinfo_5():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -lifonly ../gcore/data/byte.vrt 0 0')
     expected_ret1 = """../gcore/data/byte.tif"""
@@ -129,7 +130,7 @@ def test_gdallocationinfo_5():
 
 def test_gdallocationinfo_6():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/test_gdallocationinfo_6.tif', src_ds)

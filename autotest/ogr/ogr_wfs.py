@@ -83,16 +83,14 @@ def with_and_without_streaming(request):
 @pytest.mark.skip()
 def test_ogr_wfs_mapserver():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.gdalurlopen('http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap') is None:
-        print('cannot open URL')
-        return 'skip'
+        pytest.skip('cannot open URL')
 
     ds = ogr.Open('WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap')
     if ds is None:
-        gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'skip'
+        pytest.skip('did not managed to open WFS datastore')
 
     assert ds.GetLayerCount() == 2, 'did not get expected layer count'
 
@@ -111,9 +109,8 @@ def test_ogr_wfs_mapserver():
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
     if geom_wkt.find("POLYGON ((389366.84375 3791519.75") == -1:
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
     return 'success'
 
@@ -124,12 +121,11 @@ def test_ogr_wfs_mapserver():
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType') is None:
-        print('cannot open URL')
         gdaltest.geoserver_wfs = False
-        return 'skip'
+        pytest.skip('cannot open URL')
     gdaltest.geoserver_wfs = True
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points')
@@ -148,57 +144,47 @@ def test_ogr_wfs_geoserver():
     feat_count = lyr.GetFeatureCount()
     if feat_count < 14000:
         if gdal.GetLastErrorMsg().find('The connection attempt failed') != -1:
-            print('server probably in a broken state')
-            # Disable it for wfs-t test
             gdaltest.geoserver_wfs = False
-            return 'skip'
-        gdaltest.post_reason('did not get expected feature count')
+            pytest.skip('server probably in a broken state')
         print(feat_count)
-        return 'fail'
+        pytest.fail('did not get expected feature count')
 
     assert lyr.TestCapability(ogr.OLCFastFeatureCount), 'did not get OLCFastFeatureCount'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi&MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
-        print('server perhaps overloaded')
-        return 'skip'
+        pytest.skip('server perhaps overloaded')
     lyr = ds.GetLayer(0)
     gdal.ErrorReset()
     feat = lyr.GetNextFeature()
 
     # This error message is generally the sign of a server in a broken state
     if feat is None and gdal.GetLastErrorMsg().find('<ows:ExceptionText>org.geoserver.platform.ServiceException') != -1:
-        print('server probably in a broken state')
-        # Disable it for wfs-t test
         gdaltest.geoserver_wfs = False
-        return 'skip'
+        pytest.skip('server probably in a broken state')
 
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat, 'POINT (-74.0104611 40.70758763)',
                                       max_error=0.000001) != 0:
-        gdaltest.post_reason('did not get expected feature (1)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature (1)')
 
     # Same with VERSION=1.0.0
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi&MAXFEATURES=10&VERSION=1.0.0')
     if ds is None:
-        print('server perhaps overloaded')
-        return 'skip'
+        pytest.skip('server perhaps overloaded')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat, 'POINT (-74.0104611 40.70758763)',
                                       max_error=0.000001) != 0:
-        gdaltest.post_reason('did not get expected feature (2)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature (2)')
 
     # Test attribute filter
     ds = ogr.Open("WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi")
     if ds is None:
-        print('server perhaps overloaded')
-        return 'skip'
+        pytest.skip('server perhaps overloaded')
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("MAINPAGE is not null and NAME >= 'a' and NAME LIKE 'mu%%eam'")
     feat_count = lyr.GetFeatureCount()
@@ -206,9 +192,8 @@ def test_ogr_wfs_geoserver():
         'did not get expected feature count after SetAttributeFilter (1)'
     feat = lyr.GetNextFeature()
     if feat.GetField('gml_id') != 'poi.1':
-        gdaltest.post_reason('did not get expected feature (3)')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature (3)')
 
     if False:  # pylint: disable=using-constant-test
         # This GeoServer version doesn't understand <GmlObjectId>
@@ -218,9 +203,8 @@ def test_ogr_wfs_geoserver():
             'did not get expected feature count after SetAttributeFilter (2)'
         feat = lyr.GetNextFeature()
         if feat.GetField('gml_id') != 'poi.1':
-            gdaltest.post_reason('did not get expected feature (4)')
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('did not get expected feature (4)')
 
     return 'success'
 
@@ -231,10 +215,10 @@ def test_ogr_wfs_geoserver():
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_json():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.geoserver_wfs:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=json')
     assert ds is not None, 'did not managed to open WFS datastore'
@@ -254,9 +238,8 @@ def test_ogr_wfs_geoserver_json():
     # if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat, 'POINT (16.4827778 -28.5947222)',
                                       max_error=0.000000001) != 0:
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
     return 'success'
 
@@ -267,10 +250,10 @@ def test_ogr_wfs_geoserver_json():
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_shapezip():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.geoserver_wfs:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=SHAPE-ZIP')
     assert ds is not None, 'did not managed to open WFS datastore'
@@ -290,9 +273,8 @@ def test_ogr_wfs_geoserver_shapezip():
     # if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat, 'POINT (16.4827778 -28.5947222)',
                                       max_error=0.000000001) != 0:
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
     return 'success'
 
@@ -303,10 +285,10 @@ def test_ogr_wfs_geoserver_shapezip():
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_paging():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.geoserver_wfs:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.1.0')
     lyr = ds.GetLayer(0)
@@ -359,21 +341,19 @@ def test_ogr_wfs_geoserver_paging():
 @pytest.mark.skip()
 def test_ogr_wfs_deegree():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace') is None:
         gdaltest.deegree_wfs = False
-        print('cannot open URL')
-        return 'skip'
+        pytest.skip('cannot open URL')
     gdaltest.deegree_wfs = True
 
     ds = ogr.Open("WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10")
     if ds is None:
         if gdal.GetLastErrorMsg().find('Error returned by server') < 0:
             gdaltest.deegree_wfs = False
-            return 'skip'
-        gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'fail'
+            pytest.skip()
+        pytest.fail('did not managed to open WFS datastore')
 
     lyr = ds.GetLayerByName('app:SGID024_Springs')
     assert lyr.GetName() == 'app:SGID024_Springs', 'did not get expected layer name'
@@ -387,9 +367,8 @@ def test_ogr_wfs_deegree():
     if feat.GetField('OBJECTID') != 1 or \
        ogrtest.check_feature_geometry(feat, 'POINT (558750.703 4402882.05)',
                                       max_error=0.000000001) != 0:
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
     # Test attribute filter
     ds = ogr.Open("WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0")
@@ -418,14 +397,14 @@ def test_ogr_wfs_deegree():
 @pytest.mark.skip()
 def test_ogr_wfs_test_ogrsf():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.deegree_wfs:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro "WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10" app:SGID024_Springs')
 
@@ -496,44 +475,40 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
 
 def test_ogr_wfs_fake_wfs_server():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     (process, port) = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN', 'NO')
     ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
     gdal.SetConfigOption('OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN', None)
     if ds is None:
-        gdaltest.post_reason('did not managed to open WFS datastore')
         webserver.server_stop(process, port)
-        return 'fail'
+        pytest.fail('did not managed to open WFS datastore')
 
     lyr = ds.GetLayerByName('rijkswegen')
     if lyr.GetName() != 'rijkswegen':
-        gdaltest.post_reason('did not get expected layer name')
         print(lyr.GetName())
         webserver.server_stop(process, port)
-        return 'fail'
+        pytest.fail('did not get expected layer name')
 
     sr = lyr.GetSpatialRef()
     sr2 = osr.SpatialReference()
     sr2.ImportFromEPSG(28992)
     if not sr.IsSame(sr2):
-        gdaltest.post_reason('did not get expected SRS')
         print(sr)
         webserver.server_stop(process, port)
-        return 'fail'
+        pytest.fail('did not get expected SRS')
 
     feat = lyr.GetNextFeature()
     if feat.GetField('MPLength') != '33513.' or \
        ogrtest.check_feature_geometry(feat, 'MULTICURVE ((154898.65286 568054.62753,160108.36082 566076.78094,164239.254332 563024.70188,170523.31535 561231.219583,172676.42256 559253.37299,175912.80562 557459.89069,180043.699132 553508.779495,183294.491306 552250.182732))',
                                       max_error=0.00001) != 0:
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         webserver.server_stop(process, port)
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
     webserver.server_stop(process, port)
 
@@ -546,10 +521,10 @@ def test_ogr_wfs_fake_wfs_server():
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_wfst():
     if gdaltest.wfs_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.geoserver_wfs:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?VERSION=1.1.0', update=1)
     assert ds is not None
@@ -563,10 +538,9 @@ def test_ogr_wfs_geoserver_wfst():
     if lyr.CreateFeature(feat) != 0:
         # Likely a bug in the current GeoServer version ??
         if gdal.GetLastErrorMsg().find("No such property 'typeName'") >= 0:
-            return 'skip'
+            pytest.skip()
 
-        gdaltest.post_reason('cannot create feature')
-        return 'fail'
+        pytest.fail('cannot create feature')
 
     print('Feature %d created !' % feat.GetFID())
 
@@ -626,8 +600,7 @@ def test_ogr_wfs_geoserver_wfst():
 def test_ogr_wfs_deegree_wfst():
 
     if gdaltest.gdalurlopen('http://testing.deegree.org/deegree-wfs/services') is None:
-        print('cannot open URL')
-        return 'skip'
+        pytest.skip('cannot open URL')
 
     ds = ogr.Open('WFS:http://testing.deegree.org/deegree-wfs/services', update=1)
     assert ds is not None
@@ -666,17 +639,16 @@ def test_ogr_wfs_deegree_wfst():
 def test_ogr_wfs_ionic_wfst():
 
     if gdaltest.gdalurlopen('http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA') is None:
-        print('cannot open URL')
         gdaltest.ionic_wfs = False
-        return 'skip'
+        pytest.skip('cannot open URL')
     gdaltest.ionic_wfs = True
 
     ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA', update=1)
     if ds is None:
         if gdal.GetLastErrorMsg().find('HTTP error code : 403') != -1:
             gdaltest.ionic_wfs = False
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail()
 
     lyr = ds.GetLayerByName('wfs:BUSINESS')
     geom = ogr.CreateGeometryFromWkt('POINT(234000 890000)')
@@ -705,7 +677,7 @@ def test_ogr_wfs_ionic_wfst():
 def test_ogr_wfs_ionic_sql():
 
     if not gdaltest.ionic_wfs:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA')
     assert ds is not None
@@ -759,7 +731,7 @@ def test_ogr_wfs_xmldescriptionfile():
 def test_ogr_wfs_xmldescriptionfile_to_be_updated():
 
     if not gdaltest.geoserver_wfs:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'wt')
     f.write('<OGRWFSDataSource>\n')
@@ -807,7 +779,7 @@ def test_ogr_wfs_getcapabilitiesfile():
 
     if ds is None:
         gdal.Unlink('data/getcapabilities_wfs.gfs')
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -825,11 +797,10 @@ def test_ogr_wfs_deegree_gml321():
     ds = ogr.Open('WFS:http://demo.deegree.org:80/inspire-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10')
     if ds is None:
         if gdaltest.gdalurlopen('http://demo.deegree.org:80/inspire-workspace/services/wfs?ACCEPTVERSIONS=1.1.0') is None:
-            print('cannot open URL')
-            return 'skip'
+            pytest.skip('cannot open URL')
         if gdal.GetLastErrorMsg().find("Unable to determine the subcontroller for request type 'GetCapabilities' and service type 'WFS'") != -1:
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail()
 
     lyr = ds.GetLayerByName("ad:Address")
     gdal.ErrorReset()
@@ -848,9 +819,8 @@ def test_ogr_wfs_deegree_wfs200():
     ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=2.0.0')
     if ds is None:
         if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=2.0.0') is None:
-            print('cannot open URL')
-            return 'skip'
-        return 'fail'
+            pytest.skip('cannot open URL')
+        pytest.fail()
 
     lyr = ds.GetLayerByName("app:SGID024_Municipalities2004_edited")
     lyr.SetAttributeFilter('OBJECTID = 5')
@@ -862,9 +832,8 @@ def test_ogr_wfs_deegree_wfs200():
     else:
         feat = lyr.GetNextFeature()
         if feat.GetFieldAsInteger('OBJECTID') != 5:
-            gdaltest.post_reason("OBJECTID = 5 filter failed")
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail("OBJECTID = 5 filter failed")
 
     lyr.SetAttributeFilter("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5'")
     count = lyr.GetFeatureCount()
@@ -877,9 +846,8 @@ def test_ogr_wfs_deegree_wfs200():
     else:
         feat = lyr.GetNextFeature()
         if feat.GetFieldAsInteger('OBJECTID') != 6:
-            gdaltest.post_reason("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
 
     lyr.SetAttributeFilter(None)
     lyr.SetSpatialFilterRect(-1e8, -1e8, 1e8, 1e8)
@@ -901,21 +869,20 @@ def test_ogr_wfs_deegree_sortby():
     ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
         if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace/services/wfs') is None:
-            print('cannot open URL')
-            return 'skip'
-        return 'fail'
+            pytest.skip('cannot open URL')
+        pytest.fail()
 
     lyr = ds.ExecuteSQL("SELECT * FROM \"app:SGID024_Municipalities2004_edited\" ORDER BY OBJECTID DESC")
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsInteger('OBJECTID') != 240:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsInteger('OBJECTID') != 239:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds.ReleaseResultSet(lyr)
 
@@ -927,14 +894,13 @@ def test_ogr_wfs_deegree_sortby():
 def ogr_wfs_get_multiple_layer_defn(url):
 
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('WFS:' + url)
     if ds is None:
         if gdaltest.gdalurlopen(url) is None:
-            print('cannot open URL')
-            return 'skip'
-        return 'fail'
+            pytest.skip('cannot open URL')
+        pytest.fail()
 
     # This should be slow only for the first layer
     for i in range(0, ds.GetLayerCount()):
@@ -1788,13 +1754,13 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
        f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015-04-17T12:34:56Z' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM my_layer')
     f = sql_lyr.GetNextFeature()
     if f.gml_id != 'my_layer.1':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -2014,7 +1980,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     f = lyr.GetFeature(100)
     if f.gml_id != 'my_layer.100':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -3226,7 +3192,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
        f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015-04-17T12:34:56Z' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -3643,24 +3609,24 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     assert f is not None
     if f.gml_id != 'my_layer.1':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     assert f is not None
     if f.gml_id != 'my_layer.2':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     assert f is not None
     if f.gml_id != 'my_layer.3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # if lyr.GetFeatureCount() != 3:
     #    gdaltest.post_reason('fail')
@@ -3794,12 +3760,12 @@ def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
     # We currently invert... A bit weird. See comment in code. Probably inappropriate
     if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -3872,7 +3838,7 @@ Content-Disposition: attachment; filename=my.json
     # We currently invert... A bit weird. See comment in code. Probably inappropriate
     if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart')
     lyr = ds.GetLayer(0)
@@ -3924,7 +3890,7 @@ str,"POINT(2 49)"
     # We currently invert... A bit weird. See comment in code. Probably inappropriate
     if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -4144,25 +4110,25 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
        f['lyr1.shape'].ExportToWkt() != 'POINT (2.5 48.5)' or \
        f['lyr2.another_shape'].ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     if f['lyr1.gml_id'] != 'lyr1-101' or f['lyr1.str'] != 'foo' or \
        f['lyr2.gml_id'] != 'lyr2-102' or f['lyr2.str2'] != 'foo' or \
        f['lyr1.shape'].ExportToWkt() != 'POINT (2.5 48.5)' or \
        f['lyr2.another_shape'].ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     sql_lyr.ResetReading()
     sql_lyr.ResetReading()
     f = sql_lyr.GetNextFeature()
     if f['lyr1.gml_id'] != 'lyr1-100':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
@@ -4253,7 +4219,7 @@ xsi:schemaLocation="http://foo blabla
        f['lyr1.shape'].ExportToWkt() != 'POINT (2.5 48.5)' or \
        f['lyr2.another_shape'].ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_join')
@@ -4264,7 +4230,7 @@ xsi:schemaLocation="http://foo blabla
        f['my_alias1.shape'].ExportToWkt() != 'POINT (2.5 48.5)' or \
        f['lyr2.another_shape'].ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_join')
@@ -4281,7 +4247,7 @@ xsi:schemaLocation="http://foo blabla
        f['str_float'] != 123.4 or \
        f['myshape'].ExportToWkt() != 'POINT (2.5 48.5)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_join')
@@ -4325,7 +4291,7 @@ xsi:schemaLocation="http://foo blabla
        f['lyr1.shape'].ExportToWkt() != 'POINT (2.5 48.5)' or \
        f['lyr2.another_shape'].ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -4335,7 +4301,7 @@ xsi:schemaLocation="http://foo blabla
     f = sql_lyr.GetNextFeature()
     if f['lyr1.gml_id'] != 'lyr1-100':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&SORTBY=str%20DESC',
@@ -4344,7 +4310,7 @@ xsi:schemaLocation="http://foo blabla
     f = sql_lyr.GetNextFeature()
     if f['lyr1.gml_id'] != 'lyr1-100':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     gdal.PushErrorHandler()
@@ -4476,7 +4442,7 @@ def test_ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix(with_and_without
        f['lyr1.shape'].ExportToWkt() != 'POINT (2.5 48.5)' or \
        f['lyr2.another_shape'].ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds.ReleaseResultSet(sql_lyr)
 

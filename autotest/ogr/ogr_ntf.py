@@ -82,6 +82,7 @@ from osgeo import ogr
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
@@ -89,7 +90,7 @@ import gdaltest
 def test_ogr_ntf_1():
 
     if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/strategi/sampledata/stratntf.exe', 'stratntf.exe'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/SS.ntf')
@@ -99,9 +100,9 @@ def test_ogr_ntf_1():
             try:
                 os.stat('tmp/cache/SS.ntf')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = ogr.Open('tmp/cache/SS.ntf')
     assert ds.GetLayerCount() == 5
@@ -132,7 +133,7 @@ def test_ogr_ntf_1():
 def test_ogr_ntf_2():
 
     if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/meridian2/sampledata/meridian2ntf.exe', 'meridian2ntf.exe'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
@@ -142,9 +143,9 @@ def test_ogr_ntf_2():
             try:
                 os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = ogr.Open('tmp/cache/Port_Talbot_NTF/SS78.ntf')
     assert ds.GetLayerCount() == 5

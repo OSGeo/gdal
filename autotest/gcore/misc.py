@@ -36,6 +36,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
@@ -209,8 +210,7 @@ def test_misc_5():
             os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
         except OSError:
-            gdaltest.post_reason('Cannot create tmp/tmp')
-            return 'fail'
+            pytest.fail('Cannot create tmp/tmp')
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
@@ -299,8 +299,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                         # Hum the directory already exists... Not expected, but let's try to go on
                     except OSError:
                         reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                        gdaltest.post_reason(reason)
-                        return 'fail'
+                        pytest.fail(reason)
 
                 filename = get_filename(drv, dirname)
 
@@ -317,8 +316,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     shutil.rmtree(dirname)
                 except OSError:
                     reason = 'Cannot remove %s after drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                    gdaltest.post_reason(reason)
-                    return 'fail'
+                    pytest.fail(reason)
 
                 if has_succeeded and drv.ShortName not in setDriversDone and nBands > 0:
                     setDriversDone.add(drv.ShortName)
@@ -358,7 +356,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     if drv.ShortName not in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
                         dst_ds = drv.CreateCopy(filename, ds, callback=misc_6_interrupt_callback_class().cbk)
                         if dst_ds is not None:
-                            gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
                             dst_ds = None
 
                             try:
@@ -366,7 +363,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                             except OSError:
                                 pass
 
-                            return 'fail'
+                            pytest.fail('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
                         dst_ds = None
 
@@ -378,8 +375,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                             os.mkdir(dirname)
                         except OSError:
                             reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                            gdaltest.post_reason(reason)
-                            return 'fail'
+                            pytest.fail(reason)
     ds = None
 
     return 'success'
@@ -401,8 +397,7 @@ def test_misc_6():
             os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
         except OSError:
-            gdaltest.post_reason('Cannot create tmp/tmp')
-            return 'fail'
+            pytest.fail('Cannot create tmp/tmp')
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
@@ -446,7 +441,7 @@ def test_misc_7():
     try:
         gdal.InvGeoTransform
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.InvGeoTransform(gt)
@@ -465,7 +460,7 @@ def test_misc_8():
     try:
         gdal.ApplyGeoTransform
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.ApplyGeoTransform(gt, 10, 1)
@@ -525,7 +520,7 @@ def test_misc_10():
 def test_misc_11():
 
     if not gdaltest.support_symlink():
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/symlink.tif')
     os.symlink('GTIFF_DIR:1:data/byte.tif', 'tmp/symlink.tif')
@@ -533,7 +528,7 @@ def test_misc_11():
     ds = gdal.Open('tmp/symlink.tif')
     if ds is None:
         os.remove('tmp/symlink.tif')
-        return 'fail'
+        pytest.fail()
     desc = ds.GetDescription()
     ds = None
 
@@ -550,8 +545,7 @@ def test_misc_11():
 def test_misc_12():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would crash')
-        return 'skip'
+        pytest.skip('would crash')
 
     import test_cli_utilities
     gdal_translate_path = test_cli_utilities.get_gdal_translate_path()
@@ -585,9 +579,8 @@ def test_misc_12():
             ds = drv.CreateCopy('/nonexistingpath' + get_filename(drv, ''), src_ds)
             gdal.PopErrorHandler()
             if ds is None and gdal.GetLastErrorMsg() == '':
-                print('CreateCopy() into non existing dir fails without error message for driver %s' % drv.ShortName)
                 gdal.Unlink('/vsimem/misc_12_src.tif')
-                return 'fail'
+                pytest.fail('CreateCopy() into non existing dir fails without error message for driver %s' % drv.ShortName)
             ds = None
 
             if gdal_translate_path is not None:

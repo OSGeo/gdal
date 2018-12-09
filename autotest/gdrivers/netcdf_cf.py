@@ -57,12 +57,11 @@ def netcdf_cf_setup():
 
     # if netcdf is not supported, skip detection
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # skip if on windows
     if os.name != 'posix':
-        print('NOTICE: will skip CF checks because OS is not posix!')
-        return 'skip'
+        pytest.skip('NOTICE: will skip CF checks because OS is not posix!')
 
     # try local method
     cdms2_installed = False
@@ -166,22 +165,20 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
     gdaltest.netcdf_cf_check_error = ''
 
     if not os.path.exists(ifile):
-        return 'skip'
+        pytest.skip()
 
     output_all = ''
 
     command = netcdf_cf_get_command(ifile, version='auto')
     if command is None or command == '':
-        gdaltest.post_reason('no suitable method found, skipping')
-        return 'skip'
+        pytest.skip('no suitable method found, skipping')
 
     try:
         if gdaltest.netcdf_cf_method == 'http':
             print('calling ' + command)
         (ret, err) = gdaltest.runexternal_out_and_err(command)
     except OSError:
-        gdaltest.post_reason('ERROR with command - ' + command)
-        return 'fail'
+        pytest.fail('ERROR with command - ' + command)
 
     # There should be a ERRORS detected summary
     if 'ERRORS detected' not in ret:
@@ -372,14 +369,12 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         (_, err) = gdaltest.runexternal_out_and_err('ncdump -h')
     except OSError:
         # nothing is supported as ncdump not found
-        print('NOTICE: netcdf version not found')
-        return 'skip'
+        pytest.skip('NOTICE: netcdf version not found')
 
     i = err.find('netcdf library version ')
     # version not found
     if i == -1:
-        print('NOTICE: netcdf version not found')
-        return 'skip'
+        pytest.skip('NOTICE: netcdf version not found')
 
     if not os.path.exists(outPath):
         os.makedirs(outPath)
@@ -562,7 +557,7 @@ def test_netcdf_cf_1():
     netcdf_cf_setup()
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
     # result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
@@ -578,7 +573,7 @@ def test_netcdf_cf_1():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 
 ###############################################################################
@@ -586,7 +581,7 @@ def test_netcdf_cf_1():
 def test_netcdf_cf_2():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     result = netcdf_test_copy('data/trmm.nc', 1, 14, 'tmp/netcdf_cf_2.nc')
 
@@ -596,7 +591,7 @@ def test_netcdf_cf_2():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 
 ###############################################################################
@@ -605,7 +600,7 @@ def test_netcdf_cf_2():
 def test_netcdf_cf_3():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     result = 'success'
     result_cf = 'success'
@@ -623,7 +618,7 @@ def test_netcdf_cf_3():
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # test support for various CF projections
@@ -632,7 +627,7 @@ def test_netcdf_cf_3():
 def test_netcdf_cf_4():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif',
                                     netcdf_cfproj_int_fmt_maps,
@@ -649,7 +644,7 @@ def test_netcdf_cf_4():
 def test_netcdf_cf_5():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ifiles = ['NETCDF:data/orog_CRCM1.nc:orog', 'NETCDF:data/orog_CRCM2.nc:orog']
     for ifile in ifiles:

@@ -36,6 +36,7 @@ import gdaltest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test OGRGeomFieldDefn class
@@ -353,19 +354,19 @@ def test_ogr_rfc41_5():
 
     try:
         f['nonexistent_field']
-        return 'fail'
+        pytest.fail()
     except KeyError:
         pass
 
     try:
         f.nonexistent_field
-        return 'fail'
+        pytest.fail()
     except AttributeError:
         pass
 
     try:
         f['nonexistent_field'] = 'foo'
-        return 'fail'
+        pytest.fail()
     except KeyError:
         pass
 
@@ -706,7 +707,7 @@ def test_ogr_rfc41_7():
        feat.geom4.GetGeometryType() != ogr.wkbPolygon or \
        feat['_ogr_geometry_'].GetGeometryType() != ogr.wkbPolygon:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
@@ -721,7 +722,7 @@ def test_ogr_rfc41_8():
 
     import ogr_sql_sqlite
     if not ogr_sql_sqlite.ogr_sql_sqlite_available():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
     lyr = ds.CreateLayer('mytable', geom_type=ogr.wkbPolygon)
@@ -753,11 +754,11 @@ def test_ogr_rfc41_8():
     geom = feat.GetGeomFieldRef('geomfield')
     if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     geom = feat.GetGeomFieldRef('geomfield2')
     if geom.ExportToWkt() != 'POINT (0 1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -771,11 +772,11 @@ def test_ogr_rfc41_8():
     geom = feat.GetGeomFieldRef('geomfield')
     if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     geom = feat.GetGeomFieldRef('geomfield2')
     if geom.ExportToWkt() != 'POINT (3 4 5)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 

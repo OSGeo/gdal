@@ -35,6 +35,7 @@ import sys
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 # Other test data :
 # http://www.lv-bw.de/alkis.info/nas-bsp.html
@@ -50,10 +51,10 @@ def test_ogr_nas_1():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.geodatenzentrum.de/gdz1/abgabe/testdaten/vektor/nas_testdaten_peine.zip', 'nas_testdaten_peine.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/BKG_NAS_Peine.xml')
@@ -63,9 +64,9 @@ def test_ogr_nas_1():
             try:
                 os.stat('tmp/cache/BKG_NAS_Peine.xml')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     try:
         os.remove('tmp/cache/BKG_NAS_Peine.gfs')
@@ -83,7 +84,7 @@ def test_ogr_nas_1():
 
     if feat.GetField('name') != 'Ziegelei' or geom.ExportToWkt() != 'POINT (3575300 5805100)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     relation_lyr = ds.GetLayerByName('ALKIS_beziehungen')
     feat = relation_lyr.GetNextFeature()
@@ -91,7 +92,7 @@ def test_ogr_nas_1():
        feat.GetField('beziehungsart') != 'istTeilVon' or \
        feat.GetField('beziehung_zu') != 'DENIBKG1000000T6':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -106,10 +107,10 @@ def test_ogr_nas_2():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://trac.wheregroup.com/PostNAS/browser/trunk/demodaten/lverm_geo_rlp/gid-6.0/gm2566-testdaten-gid60-2008-11-11.xml.zip?format=raw', 'gm2566-testdaten-gid60-2008-11-11.xml.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
@@ -119,9 +120,9 @@ def test_ogr_nas_2():
             try:
                 os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     try:
         os.remove('tmp/cache/gm2566-testdaten-gid60-2008-11-11.gfs')
@@ -145,8 +146,7 @@ def test_ogr_nas_2():
     expected_geom = 'CURVEPOLYGON (COMPOUNDCURVE ((350821.045 5532031.37,350924.309 5532029.513,350938.493 5532026.622,350951.435 5532021.471,350978.7 5532007.18,351026.406 5531971.088,351032.251 5531951.16199999955),(351032.251 5531951.16199999955,351080.623 5531942.67,351154.886 5531963.718),(351154.886 5531963.718,351207.689 5532019.797),(351207.689 5532019.797,351211.063 5532044.06699999981,351203.83 5532074.034,351165.959 5532114.315,351152.85 5532135.774),(351152.85 5532135.774,351141.396 5532140.355),CIRCULARSTRING (351141.396 5532140.355,351110.659 5532137.542,351080.17 5532132.74199999962),CIRCULARSTRING (351080.17 5532132.74199999962,351002.887 5532120.75,350925.682 5532108.264),CIRCULARSTRING (350925.682 5532108.264,350848.556 5532095.285,350771.515 5532081.814),(350771.515 5532081.814,350769.548 5532071.196,350812.194 5532034.716,350821.045 5532031.37)))'
     if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
         geom = feat.GetGeometryRef()
-        print(geom)
-        return 'fail'
+        pytest.fail(geom)
 
     ds = None
 
@@ -161,7 +161,7 @@ def test_ogr_nas_3():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/empty_nas.xml')
     assert ds is not None, 'could not open dataset'
@@ -181,7 +181,7 @@ def test_ogr_nas_4():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('data/delete_nas.gfs')
@@ -227,7 +227,7 @@ def test_ogr_nas_5():
 
     drv = ogr.GetDriverByName('NAS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('data/replace_nas.gfs')

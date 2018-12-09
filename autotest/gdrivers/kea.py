@@ -50,7 +50,7 @@ def test_kea_init():
 
 def test_kea_1():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('KEA', 'byte.tif', 1, 4672, options=['IMAGEBLOCKSIZE=15', 'THEMATIC=YES'])
     return tst.testCreateCopy(check_srs=True, check_gt=1)
@@ -61,7 +61,7 @@ def test_kea_1():
 
 def test_kea_2():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     src_files = ['byte.tif',
                  'int16.tif',
@@ -83,7 +83,7 @@ def test_kea_2():
 
 def test_kea_3():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     src_files = ['byte.tif',
                  'int16.tif',
@@ -105,7 +105,7 @@ def test_kea_3():
 
 def test_kea_4():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
@@ -189,7 +189,7 @@ def test_kea_4():
 
 def test_kea_5():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     options = ['IMAGEBLOCKSIZE=15', 'ATTBLOCKSIZE=100', 'MDC_NELMTS=10',
                'RDCC_NELMTS=256', 'RDCC_NBYTES=500000', 'RDCC_W0=0.5',
@@ -214,7 +214,7 @@ def test_kea_5():
 
 def test_kea_6():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 5)
     ds.SetMetadata({'foo': 'bar'})
@@ -267,7 +267,7 @@ def test_kea_6():
 
 def test_kea_7():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     # Geotransform
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
@@ -322,7 +322,7 @@ def test_kea_7():
 
 def test_kea_8():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     for i in range(2):
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
@@ -359,7 +359,7 @@ def test_kea_8():
 
 def test_kea_9():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, gdal.GCI_YCbCr_CrBand - gdal.GCI_GrayIndex + 1)
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
@@ -387,7 +387,7 @@ def test_kea_9():
 
 def test_kea_10():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     for (dt, nd, expected_nd) in [(gdal.GDT_Byte, 0, 0),
                                   (gdal.GDT_Byte, 1.1, 1.0),
@@ -444,7 +444,7 @@ def test_kea_10():
 
 def test_kea_11():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     ds = None
@@ -470,7 +470,7 @@ def test_kea_11():
 
 def test_kea_12():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     assert ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() == 0
@@ -578,7 +578,7 @@ def test_kea_12():
 
 def test_kea_13():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.kea_driver.CreateCopy("tmp/out.kea", src_ds)
@@ -607,7 +607,7 @@ def test_kea_13():
 
 def test_kea_14():
     if gdaltest.kea_driver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID

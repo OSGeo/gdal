@@ -79,7 +79,7 @@ def test_ogr_sql_sqlite_1():
     if ret == 'fail':
         return ret
     if not ret:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     for geom in [ogr.wkbNone, ogr.wkbUnknown]:
@@ -139,7 +139,7 @@ def test_ogr_sql_sqlite_1():
            feat.GetField('timefield') != '21:24:00' or \
            feat.GetField('from') != 'from_val':
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = None
 
         # Test UPDATE
@@ -156,7 +156,7 @@ def test_ogr_sql_sqlite_1():
            feat.GetField('datefield') != '2012/08/23' or \
            feat.GetField('timefield') != '12:34:00':
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
         feat.SetStyleString('cool_style')
         lyr.SetFeature(feat)
@@ -188,7 +188,7 @@ def test_ogr_sql_sqlite_1():
            feat.GetField('doublelistfield') != [1.23] or \
            feat.GetField('strlistfield') != ['a']:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = None
         ds.ReleaseResultSet(sql_lyr)
 
@@ -201,7 +201,7 @@ def test_ogr_sql_sqlite_1():
            feat.GetField('strfield') != 'bar' or \
            feat.GetStyleString() != 'cool_style':
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = None
         ds.ReleaseResultSet(sql_lyr)
 
@@ -249,7 +249,7 @@ def test_ogr_sql_sqlite_1():
         feat = lyr.GetFeature(1000)
         if feat.GetField('intfield') != 100:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = None
 
         # Test DELETE
@@ -262,7 +262,7 @@ def test_ogr_sql_sqlite_1():
         feat = lyr.GetNextFeature()
         if feat is not None:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = None
 
         ds.DeleteLayer(0)
@@ -278,7 +278,7 @@ def test_ogr_sql_sqlite_1():
 def test_ogr_sql_sqlite_2():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
@@ -313,7 +313,7 @@ def test_ogr_sql_sqlite_2():
        feat.GetField('strfield') != 'bar' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     # Test SELECT
@@ -324,7 +324,7 @@ def test_ogr_sql_sqlite_2():
        feat.GetField('strfield') != 'bar' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     got_srs = feat.GetGeometryRef().GetSpatialReference()
     assert not (got_srs is None or srs.IsSame(got_srs) == 0)
     feat = None
@@ -339,7 +339,7 @@ def test_ogr_sql_sqlite_2():
        feat.GetStyleString() != 'cool_style' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     got_srs = feat.GetGeometryRef().GetSpatialReference()
     assert not (got_srs is None or srs.IsSame(got_srs) == 0)
     feat = None
@@ -370,7 +370,7 @@ def test_ogr_sql_sqlite_2():
         feat = sql_lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         got_srs = feat.GetGeometryRef().GetSpatialReference()
         assert not (got_srs is None or srs.IsSame(got_srs) == 0)
         feat = None
@@ -386,7 +386,7 @@ def test_ogr_sql_sqlite_2():
 def test_ogr_sql_sqlite_3():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data')
 
@@ -396,12 +396,12 @@ def test_ogr_sql_sqlite_3():
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('NAME') != '_158_':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     geom = feat.GetGeometryRef()
     p = geom.GetGeometryRef(0).GetPoint_2D(0)
     if p != (480701.0625, 4764738.0):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     assert count == 10
@@ -417,7 +417,7 @@ def test_ogr_sql_sqlite_3():
 def test_ogr_sql_sqlite_4():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data')
 
@@ -438,7 +438,7 @@ def test_ogr_sql_sqlite_4():
 def test_ogr_sql_sqlite_5():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/foo.db', options=['SPATIALITE=YES'])
@@ -453,8 +453,7 @@ def test_ogr_sql_sqlite_5():
     gdal.PopErrorHandler()
 
     if ogrtest.has_spatialite is False:
-        print('Spatialite not available')
-        return 'skip'
+        pytest.skip('Spatialite not available')
 
     ds = ogr.Open('data')
 
@@ -476,10 +475,10 @@ def test_ogr_sql_sqlite_5():
 def test_ogr_sql_sqlite_6():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     if ogrtest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_SQLITE_DIALECT_USE_SPATIALITE', 'NO')
 
@@ -500,7 +499,7 @@ def test_ogr_sql_sqlite_6():
 def test_ogr_sql_sqlite_7():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
@@ -527,7 +526,7 @@ def test_ogr_sql_sqlite_7():
        feat.GetField('geometry') != 'BLA' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -536,7 +535,7 @@ def test_ogr_sql_sqlite_7():
     feat = sql_lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -549,7 +548,7 @@ def test_ogr_sql_sqlite_7():
 def test_ogr_sql_sqlite_8():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data')
 
@@ -573,7 +572,7 @@ def test_ogr_sql_sqlite_8():
 def test_ogr_sql_sqlite_9():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data')
 
@@ -597,7 +596,7 @@ def test_ogr_sql_sqlite_9():
 def test_ogr_sql_sqlite_10():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data')
 
@@ -621,7 +620,7 @@ def test_ogr_sql_sqlite_10():
 def test_ogr_sql_sqlite_11():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
@@ -651,7 +650,7 @@ def test_ogr_sql_sqlite_11():
 def test_ogr_sql_sqlite_12():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
@@ -684,7 +683,7 @@ def test_ogr_sql_sqlite_12():
 def test_ogr_sql_sqlite_13():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
@@ -878,10 +877,10 @@ def ogr_sql_sqlite_14_and_15(sql):
 def test_ogr_sql_sqlite_14():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     if ogrtest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     sql = "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE " + \
         "my_layer2.rowid IN (SELECT pkid FROM idx_my_layer2_geometry WHERE " + \
@@ -897,13 +896,13 @@ def test_ogr_sql_sqlite_14():
 def test_ogr_sql_sqlite_15():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     if ogrtest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) < 3:
-        return 'skip'
+        pytest.skip()
 
     sql = "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE " + \
         "my_layer2.rowid IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = 'my_layer2' AND search_frame = my_layer.geometry)"
@@ -1184,14 +1183,14 @@ def test_ogr_sql_sqlite_start_webserver():
     ogrtest.webserver_port = 0
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch(handler=GeocodingHTTPHandler)
     if ogrtest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -1202,10 +1201,10 @@ def test_ogr_sql_sqlite_start_webserver():
 def test_ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding?q=%%s'):
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     if ogrtest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_GEOCODE_APPLICATION', 'GDAL/OGR autotest suite')
     gdal.SetConfigOption('OGR_GEOCODE_EMAIL', 'foo@bar')
@@ -1324,10 +1323,10 @@ def test_ogr_sql_sqlite_16(service=None, template='http://127.0.0.1:%d/geocoding
 def test_ogr_sql_sqlite_17(service=None, template='http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}'):
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     if ogrtest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_GEOCODE_APPLICATION', 'GDAL/OGR autotest suite')
     gdal.SetConfigOption('OGR_GEOCODE_EMAIL', 'foo@bar')
@@ -1488,7 +1487,7 @@ def test_ogr_sql_sqlite_23():
 def test_ogr_sql_sqlite_24():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
@@ -1498,7 +1497,7 @@ def test_ogr_sql_sqlite_24():
     if feat.GetField(0) != 'ab':
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Big very compressible string
@@ -1508,7 +1507,7 @@ def test_ogr_sql_sqlite_24():
     if feat.GetField(0) != bigstr:
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Blob
@@ -1517,7 +1516,7 @@ def test_ogr_sql_sqlite_24():
     if feat.GetField(0) != '0203':
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Test inflating a random binary blob
@@ -1526,7 +1525,7 @@ def test_ogr_sql_sqlite_24():
     if not feat.IsFieldNull(0):
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case
@@ -1535,7 +1534,7 @@ def test_ogr_sql_sqlite_24():
     gdal.PopErrorHandler()
     if sql_lyr is not None:
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     # Error case
     sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate('a', 'b')", dialect='SQLite')
@@ -1543,7 +1542,7 @@ def test_ogr_sql_sqlite_24():
     if not feat.IsFieldNull(0):
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case
@@ -1552,7 +1551,7 @@ def test_ogr_sql_sqlite_24():
     gdal.PopErrorHandler()
     if sql_lyr is not None:
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     # Error case
     sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate('a')", dialect='SQLite')
@@ -1560,7 +1559,7 @@ def test_ogr_sql_sqlite_24():
     if not feat.IsFieldNull(0):
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -1571,7 +1570,7 @@ def test_ogr_sql_sqlite_24():
 def test_ogr_sql_sqlite_stop_webserver():
 
     if ogrtest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     webserver.server_stop(ogrtest.webserver_process, ogrtest.webserver_port)
 
@@ -1599,7 +1598,7 @@ def ogr_sql_sqlite_25_test_errors(ds, fct):
 def test_ogr_sql_sqlite_25():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     # if ogrtest.has_spatialite is True:
     #    return 'skip'
@@ -1612,7 +1611,7 @@ def test_ogr_sql_sqlite_25():
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     for fct in ["ST_AsText", "ST_GeomFromText", "ST_AsBinary", "ST_GeomFromWKB"]:
@@ -1649,10 +1648,10 @@ def test_ogr_sql_sqlite_25():
 def test_ogr_sql_sqlite_26():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     # if ogrtest.has_spatialite is True:
     #    return 'skip'
@@ -1691,11 +1690,10 @@ def test_ogr_sql_sqlite_26():
                 if ogrtest.has_sqlite_dialect and wkt == 'POLYGON EMPTY':
                     print('difference wit op = %s and wkt = POLYGON EMPTY' % op_str)
                 else:
-                    gdaltest.post_reason('fail with %s' % op_str)
                     print(wkt)
                     print(b_sql)
                     print(b_geos)
-                    return 'fail'
+                    pytest.fail('fail with %s' % op_str)
 
     for op_str in ["Intersects", "Equals", "Disjoint",
                    "Touches", "Crosses", "Within",
@@ -1777,7 +1775,7 @@ def test_ogr_sql_sqlite_26():
 def test_ogr_sql_sqlite_27():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -1810,7 +1808,7 @@ def test_ogr_sql_sqlite_27():
 def test_ogr_sql_sqlite_28():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
 
@@ -1830,9 +1828,8 @@ def test_ogr_sql_sqlite_28():
         sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
         f = sql_lyr.GetNextFeature()
         if not f.IsFieldNull(0):
-            print(sql)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(sql)
         ds.ReleaseResultSet(sql_lyr)
 
     # Valid hstore syntax
@@ -1840,9 +1837,8 @@ def test_ogr_sql_sqlite_28():
         sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
         f = sql_lyr.GetNextFeature()
         if f.GetField(0) != expected:
-            print(sql)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(sql)
         ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -1854,7 +1850,7 @@ def test_ogr_sql_sqlite_28():
 def test_ogr_sql_sqlite_29():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbCircularString)
@@ -1882,7 +1878,7 @@ def test_ogr_sql_sqlite_29():
 def test_ogr_sql_sqlite_30():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('testm', geom_type=ogr.wkbLineStringM)
@@ -1924,7 +1920,7 @@ def test_ogr_sql_sqlite_30():
 def test_ogr_sql_sqlite_31():
 
     if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')

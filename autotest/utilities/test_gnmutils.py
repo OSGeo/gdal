@@ -37,6 +37,7 @@ import os
 
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Test create
@@ -45,7 +46,7 @@ import test_cli_utilities
 
 def test_gnmmanage_1():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" tmp')
     assert (err is None or err == ''), 'got error/warning'
@@ -53,8 +54,7 @@ def test_gnmmanage_1():
     try:
         os.stat('tmp/test_gnm')
     except OSError:
-        gdaltest.post_reason('Expected create tmp/test_gnm')
-        return 'fail'
+        pytest.fail('Expected create tmp/test_gnm')
 
     return 'success'
 
@@ -66,7 +66,7 @@ def test_gnmmanage_1():
 
 def test_gnmmanage_2():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/pipes.shp tmp/test_gnm')
     assert (err is None or err == ''), 'got error/warning'
@@ -83,7 +83,7 @@ def test_gnmmanage_2():
 
 def test_gnmmanage_3():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' info tmp/test_gnm')
 
@@ -100,7 +100,7 @@ def test_gnmmanage_3():
 
 def test_gnmmanage_4():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' autoconnect 0.000001 tmp/test_gnm')
     assert ret.find('success') != -1
@@ -114,9 +114,9 @@ def test_gnmmanage_4():
 
 def test_gnmanalyse_1():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gnmanalyse_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' dijkstra 61 50 tmp/test_gnm')
     assert ret.find('Feature Count: 19') != -1
@@ -130,9 +130,9 @@ def test_gnmanalyse_1():
 
 def test_gnmanalyse_2():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gnmanalyse_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' kpaths 61 50 3 tmp/test_gnm')
     assert ret.find('Feature Count: 61') != -1
@@ -145,15 +145,14 @@ def test_gnmanalyse_2():
 
 def test_gnm_cleanup():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' delete tmp/test_gnm')
     assert (err is None or err == ''), 'got error/warning'
 
     try:
         os.stat('tmp/test_gnm')
-        gdaltest.post_reason('Expected delete tmp/test_gnm')
-        return 'fail'
+        pytest.fail('Expected delete tmp/test_gnm')
     except OSError:
         pass
 

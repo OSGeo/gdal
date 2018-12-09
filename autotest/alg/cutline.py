@@ -36,6 +36,7 @@ import sys
 from osgeo import gdal
 import ogrtest
 import gdaltest
+import pytest
 
 ###############################################################################
 
@@ -51,7 +52,7 @@ def test_cutline_1():
 def test_cutline_2():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'cutline_blend.vrt', 1, 21395)
     return tst.testOpen()
@@ -62,7 +63,7 @@ def test_cutline_2():
 def test_cutline_3():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'cutline_multipolygon.vrt', 1, 20827)
     return tst.testOpen()
@@ -73,7 +74,7 @@ def test_cutline_3():
 def test_cutline_4():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Translate('/vsimem/utmsmall.tif', '../gcore/data/utmsmall.tif')
     ds.BuildOverviews('NEAR', [2])

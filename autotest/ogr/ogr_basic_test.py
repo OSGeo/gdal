@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 
@@ -182,7 +183,7 @@ def test_ogr_basic_7():
     try:
         feat.SetFieldIntegerList
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     feat_clone = feat.Clone()
     assert feat.Equal(feat_clone)
@@ -232,7 +233,7 @@ def test_ogr_basic_7():
     feat_clone = feat.Clone()
     if not feat.Equal(feat_clone):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
@@ -240,7 +241,7 @@ def test_ogr_basic_7():
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
@@ -248,83 +249,83 @@ def test_ogr_basic_7():
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_clone = feat.Clone()
     if not feat.Equal(feat_clone):
         feat.DumpReadable()
         feat_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFID(99)
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(0, 2)
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(1, 2.2)
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(2, "B")
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldIntegerList(3, [1, 2, 3])
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldIntegerList(3, [1, 3])
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.4, 5.6])
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldDoubleList(4, [1.2, 3.5])
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldStringList(5, ["A", "B", "C"])
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldStringList(5, ["A", "D"])
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     for num_field in [6, 7, 8]:
         for i in range(7):
@@ -335,28 +336,28 @@ def test_ogr_basic_7():
             if feat.Equal(feat_almost_clone):
                 feat.DumpReadable()
                 feat_almost_clone.DumpReadable()
-                return 'fail'
+                pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetFieldBinaryFromHexString(9, '00')
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(10, 2)
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat_almost_clone = feat.Clone()
     feat_almost_clone.SetField(10, 2)
     if feat.Equal(feat_almost_clone):
         feat.DumpReadable()
         feat_almost_clone.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -411,7 +412,7 @@ def test_ogr_basic_10():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -all_drivers')
 
@@ -426,7 +427,7 @@ def test_ogr_basic_10():
 def test_ogr_basic_11():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     used_exceptions_before = ogr.GetUseExceptions()
     for _ in range(2):
@@ -548,7 +549,7 @@ def test_ogr_basic_12():
         assert gdal.GetLastErrorMsg() != ''
         if abs(f.GetField('fld') - 1.23) < 1e-8:
             f.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -637,8 +638,7 @@ def test_ogr_basic_15():
         if used_exceptions_before == 0:
             ogr.DontUseExceptions()
 
-    print('Expected exception')
-    return 'fail'
+    pytest.fail('Expected exception')
 
 
 ###############################################################################

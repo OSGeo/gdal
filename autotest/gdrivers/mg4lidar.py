@@ -34,6 +34,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test reading a MG4Lidar file
@@ -44,10 +45,10 @@ def test_mg4lidar_1():
 
     drv = gdal.GetDriverByName('MG4Lidar')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://home.gdal.org/tmp/GDAL_MG4Lidar_Src.zip', 'GDAL_MG4Lidar_Src.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/GDAL_MG4Lidar_Src')
@@ -57,9 +58,9 @@ def test_mg4lidar_1():
             try:
                 os.stat('tmp/cache/GDAL_MG4Lidar_Src')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = gdal.Open('tmp/cache/GDAL_MG4Lidar_Src/Tetons_200k.view')
     assert ds is not None, 'could not open dataset'

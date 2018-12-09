@@ -45,6 +45,7 @@ import sys
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test if driver is available
@@ -57,7 +58,7 @@ def test_ogr_db2_check_driver():
     ogrtest.db2_drv = ogr.GetDriverByName('DB2ODBC')
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -68,14 +69,13 @@ def test_ogr_db2_check_driver():
 def test_ogr_db2_init():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if 'DB2_TEST_SERVER' in os.environ:
         ogrtest.db2_test_server = "DB2ODBC:" + os.environ['DB2_TEST_SERVER']
     else:
-        gdaltest.post_reason('Environment variable DB2_TEST_SERVER not found')
         ogrtest.db2_drv = None
-        return 'skip'
+        pytest.skip('Environment variable DB2_TEST_SERVER not found')
 
     return 'success'
 ###############################################################################
@@ -85,7 +85,7 @@ def test_ogr_db2_init():
 def test_ogr_db2_GetFeatureCount():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -107,7 +107,7 @@ def test_ogr_db2_GetFeatureCount():
 def test_ogr_db2_GetSpatialRef():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -133,7 +133,7 @@ def test_ogr_db2_GetSpatialRef():
 def test_ogr_db2_GetExtent():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -158,7 +158,7 @@ def test_ogr_db2_GetExtent():
 def test_ogr_db2_GetFeature():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -172,9 +172,8 @@ def test_ogr_db2_GetFeature():
     assert feat is not None, 'did not get a feature'
 
     if feat.GetField('ZIP') != '95008':
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
     return 'success'
 
@@ -185,7 +184,7 @@ def test_ogr_db2_GetFeature():
 def test_ogr_db2_SetSpatialFilter():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -206,9 +205,8 @@ def test_ogr_db2_SetSpatialFilter():
     assert feat is not None, 'did not get a feature'
 
     if feat.GetField('ZIP') != '94089':
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
 # start over with a larger envelope to get 3 out of 5 of the points
     lyr.ResetReading()
@@ -237,7 +235,7 @@ def test_ogr_db2_SetSpatialFilter():
 def test_ogr_db2_capabilities():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 

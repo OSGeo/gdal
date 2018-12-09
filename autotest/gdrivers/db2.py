@@ -31,6 +31,7 @@
 
 import os
 import sys
+import pytest
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
@@ -51,7 +52,7 @@ def test_gpkg_init():
 
     gdaltest.db2_drv = gdal.GetDriverByName('DB2ODBC')
     if gdaltest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.png_dr = gdal.GetDriverByName('PNG')
     gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
@@ -65,9 +66,8 @@ def test_gpkg_init():
     if 'DB2_TEST_SERVER' in os.environ:
         gdaltest.db2_test_server = "DB2ODBC:" + os.environ['DB2_TEST_SERVER']
     else:
-        gdaltest.post_reason('Environment variable DB2_TEST_SERVER not found')
         gdaltest.db2_drv = None
-        return 'skip'
+        pytest.skip('Environment variable DB2_TEST_SERVER not found')
 
     print("\ntest server: " + gdaltest.db2_test_server + "\n")
 
@@ -142,7 +142,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
     if expected_format is None:
         if mime_type is None:
             return 'success'
-        return 'fail'
+        pytest.fail()
 
     if expected_format == 'PNG':
         expected_mime_type = 'image/png'
@@ -163,9 +163,9 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 def test_gpkg_1():
 
     if gdaltest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     # With padding
     ds = gdal.Open('data/byte.tif')

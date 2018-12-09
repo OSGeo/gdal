@@ -280,7 +280,7 @@ def test_osr_basic_8():
     assert fe == 1000.0, 'false easting was unexpectedly updated.'
 
     if 'SetLinearUnitsAndUpdateParameters' not in dir(srs):
-        return 'skip'
+        pytest.skip()
 
     srs.SetFromUserInput('+proj=tmerc +x_0=1000 +datum=WGS84 +units=m')
     srs.SetLinearUnitsAndUpdateParameters('Foot', 0.3048)
@@ -393,7 +393,7 @@ def test_osr_basic_11():
     if srs1.IsSame(srs2):
         return 'success'
 
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test URN support for OGC:CRS84.

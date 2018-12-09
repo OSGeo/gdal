@@ -37,6 +37,7 @@ import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Open ArcSDE datasource.
@@ -58,14 +59,13 @@ def test_ogr_sde_1():
     "Test basic opening of a database"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base)
     if ds is None:
-        print("Could not open %s" % base)
         gdaltest.sde_dr = None
-        return 'skip'
+        pytest.skip("Could not open %s" % base)
     ds.Destroy()
 
     ds = ogr.Open(base, update=1)
@@ -77,7 +77,7 @@ def test_ogr_sde_1():
 def test_ogr_sde_2():
     "Test creation of a layer"
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
 
     shp_ds = ogr.Open('data/poly.shp')
@@ -118,7 +118,7 @@ def test_ogr_sde_2():
 def test_ogr_sde_3():
     "Test basic version locking"
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
@@ -135,7 +135,7 @@ def test_ogr_sde_4():
     "Test basic version creation"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     version_name = 'TESTING'
     gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'TRUE')
 
@@ -156,7 +156,7 @@ def test_ogr_sde_5():
     "Test versioned editing"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     version_name = 'TESTING'
     gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'TRUE')
 
@@ -218,7 +218,7 @@ def test_ogr_sde_6():
     "Extent fetching"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (
         sde_server, sde_port, sde_db, sde_user, sde_password)
@@ -239,7 +239,7 @@ def test_ogr_sde_7():
     "Bad layer test"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (
         sde_server, sde_port, sde_db, sde_user, sde_password)
@@ -281,7 +281,7 @@ def test_ogr_sde_7():
 def test_ogr_sde_8():
     "Test spatial references"
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
 
     shp_ds = ogr.Open('data/poly.shp')
@@ -324,7 +324,7 @@ def test_ogr_sde_8():
 
 def test_ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
     ds.DeleteLayer('%s.%s' % (sde_user.upper(), 'TPOLY'))

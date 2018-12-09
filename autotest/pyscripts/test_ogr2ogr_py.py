@@ -32,6 +32,7 @@
 import sys
 import os
 import shutil
+import pytest
 
 sys.path.append('../ogr')
 
@@ -50,7 +51,7 @@ import test_py_scripts
 def test_ogr2ogr_py_1():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -81,7 +82,7 @@ def test_ogr2ogr_py_1():
 def test_ogr2ogr_py_2():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -106,7 +107,7 @@ def test_ogr2ogr_py_2():
 def test_ogr2ogr_py_3():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -134,7 +135,7 @@ def test_ogr2ogr_py_3():
 def test_ogr2ogr_py_4():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -159,7 +160,7 @@ def test_ogr2ogr_py_4():
 def test_ogr2ogr_py_5():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -195,13 +196,13 @@ def test_ogr2ogr_py_6():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ogr_pg.ogr_pg_1()
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
     gdaltest.pg_ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
@@ -227,13 +228,13 @@ def test_ogr2ogr_py_7():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ogr_pg.ogr_pg_1()
     if gdaltest.pg_ds is None:
-        return 'skip'
+        pytest.skip()
     gdaltest.pg_ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
@@ -255,7 +256,7 @@ def test_ogr2ogr_py_7():
 def test_ogr2ogr_py_8():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -280,7 +281,7 @@ def test_ogr2ogr_py_8():
 def test_ogr2ogr_py_9():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -305,7 +306,7 @@ def test_ogr2ogr_py_9():
 def test_ogr2ogr_py_10():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -344,7 +345,7 @@ def test_ogr2ogr_py_11():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -370,7 +371,7 @@ def test_ogr2ogr_py_12():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -395,7 +396,7 @@ def test_ogr2ogr_py_12():
 def test_ogr2ogr_py_13():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -420,7 +421,7 @@ def test_ogr2ogr_py_13():
 def test_ogr2ogr_py_14():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -448,7 +449,7 @@ def test_ogr2ogr_py_15():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -479,7 +480,7 @@ def test_ogr2ogr_py_15():
 def test_ogr2ogr_py_16():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -508,7 +509,7 @@ def test_ogr2ogr_py_16():
 def test_ogr2ogr_py_17():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -533,10 +534,10 @@ def test_ogr2ogr_py_17():
 def test_ogr2ogr_py_18():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/wrapdateline_src.shp')
@@ -585,10 +586,10 @@ def test_ogr2ogr_py_18():
 def test_ogr2ogr_py_19():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -619,7 +620,7 @@ def test_ogr2ogr_py_19():
 def test_ogr2ogr_py_20():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/Fields.dbf')
@@ -664,10 +665,9 @@ def test_ogr2ogr_py_20():
     assert ds is not None
     layer_defn = ds.GetLayer(0).GetLayerDefn()
     if layer_defn.GetFieldCount() != 15:
-        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()))
         ds.Destroy()
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
-        return 'fail'
+        pytest.fail('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()))
 
     error_occurred = False
     feat = ds.GetLayer(0).GetNextFeature()
@@ -694,7 +694,7 @@ def test_ogr2ogr_py_20():
 def test_ogr2ogr_py_21():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/testogr2ogr21.gtm')
@@ -712,11 +712,10 @@ def test_ogr2ogr_py_21():
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('name') != 'NAME' or \
        feat.GetFieldAsString('comment') != 'COMMENT':
-        print(feat.GetFieldAsString('name'))
         print(feat.GetFieldAsString('comment'))
         ds.Destroy()
         os.remove('tmp/testogr2ogr21.gtm')
-        return 'fail'
+        pytest.fail(feat.GetFieldAsString('name'))
 
     ds.Destroy()
     os.remove('tmp/testogr2ogr21.gtm')
@@ -730,7 +729,7 @@ def test_ogr2ogr_py_21():
 def test_ogr2ogr_py_22():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr',
                                   '-f "MapInfo File" tmp/testogr2ogr22.mif ../utilities/data/dataforogr2ogr21.csv ' +
@@ -743,11 +742,10 @@ def test_ogr2ogr_py_22():
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('name') != 'NAME' or \
        feat.GetFieldAsString('comment') != 'COMMENT':
-        print(feat.GetFieldAsString('name'))
         print(feat.GetFieldAsString('comment'))
         ds.Destroy()
         ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr22.mif')
-        return 'fail'
+        pytest.fail(feat.GetFieldAsString('name'))
 
     ds.Destroy()
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr22.mif')
@@ -761,9 +759,9 @@ def test_ogr2ogr_py_22():
 def test_ogr2ogr_py_23():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
                          ' -f "MapInfo File" tmp/testogr2ogr23.mif ../utilities/data/dataforogr2ogr21.csv ' +
@@ -776,11 +774,10 @@ def test_ogr2ogr_py_23():
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('name') != 'NAME' or \
        feat.GetFieldAsString('comment') != 'COMMENT':
-        print(feat.GetFieldAsString('name'))
         print(feat.GetFieldAsString('comment'))
         ds.Destroy()
         ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr23.mif')
-        return 'fail'
+        pytest.fail(feat.GetFieldAsString('name'))
 
     ds.Destroy()
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr23.mif')
@@ -794,10 +791,10 @@ def test_ogr2ogr_py_23():
 def test_ogr2ogr_py_24():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -826,10 +823,10 @@ def test_ogr2ogr_py_24():
 def test_ogr2ogr_py_25():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -864,10 +861,10 @@ def test_ogr2ogr_py_25():
 def test_ogr2ogr_py_26():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -896,10 +893,10 @@ def test_ogr2ogr_py_26():
 def test_ogr2ogr_py_27():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -935,7 +932,7 @@ def test_ogr2ogr_py_31():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/poly.shp')
@@ -960,7 +957,7 @@ def test_ogr2ogr_py_32():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_32.shp')
@@ -993,7 +990,7 @@ def test_ogr2ogr_py_33():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_33_src.csv')
@@ -1022,26 +1019,26 @@ def test_ogr2ogr_py_33():
     feat = lyr.GetFeature(0)
     if feat.GetField("foo") != 'bar':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((10 10,10 11,11 11,11 10,10 10))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetFeature(1)
     if feat.GetField("foo") != 'bar':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((100 100,100 200,200 200,200 100,100 100),(125 125,175 125,175 175,125 175,125 125))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetFeature(2)
     if feat.GetField("foo") != 'baz':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -1059,7 +1056,7 @@ def test_ogr2ogr_py_34():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_34_dir')
@@ -1098,7 +1095,7 @@ def test_ogr2ogr_py_35():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_35_dir')
@@ -1137,7 +1134,7 @@ def test_ogr2ogr_py_36():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_36.shp')
@@ -1166,7 +1163,7 @@ def test_ogr2ogr_py_37():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_37_dir.shp')
@@ -1205,7 +1202,7 @@ def test_ogr2ogr_py_38():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_38.shp')
@@ -1233,7 +1230,7 @@ def test_ogr2ogr_py_39():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_39_dir.shp')
@@ -1271,7 +1268,7 @@ def test_ogr2ogr_py_43():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_43_3d.shp')
@@ -1312,7 +1309,7 @@ def test_ogr2ogr_py_44():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_44_src.shp')
@@ -1361,7 +1358,7 @@ def test_ogr2ogr_py_45():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_44_src.shp')
@@ -1410,7 +1407,7 @@ def test_ogr2ogr_py_46():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/test_ogr2ogr_45_src.shp')

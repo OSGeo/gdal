@@ -86,8 +86,7 @@ def test_jpeg_2():
                 md['EXIF_XResolution'] != '(96)')), 'Exif metadata wrong.'
     except KeyError:
         print(md)
-        gdaltest.post_reason('Exit metadata apparently missing.')
-        return 'fail'
+        pytest.fail('Exit metadata apparently missing.')
 
     assert ds.GetRasterBand(3).GetRasterColorInterpretation() == gdal.GCI_BlueBand, \
         'Did not get expected color interpretation.'
@@ -139,8 +138,7 @@ def test_jpeg_3():
     try:
         os.stat('tmp/byte.wld')
     except OSError:
-        gdaltest.post_reason('should have .wld file at that point')
-        return 'fail'
+        pytest.fail('should have .wld file at that point')
 
     ds = gdal.Open('tmp/byte.jpg')
     expected_gt = [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
@@ -158,8 +156,7 @@ def test_jpeg_3():
 
     try:
         os.stat('tmp/byte.wld')
-        gdaltest.post_reason('did not expect to find .wld file at that point')
-        return 'fail'
+        pytest.fail('did not expect to find .wld file at that point')
     except OSError:
         pass
 
@@ -174,7 +171,7 @@ def test_jpeg_4():
     try:
         gdalconst.GMF_ALL_VALID
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/masked.jpg')
 
@@ -196,7 +193,7 @@ def test_jpeg_5():
     try:
         gdalconst.GMF_ALL_VALID
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/masked.jpg')
 
@@ -360,14 +357,14 @@ def test_jpeg_9():
 def test_jpeg_10():
 
     if gdaltest.jpeg_version == '9b':  # Fails for some reason
-        return 'skip'
+        pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('data/12bit_rose_extract.jpg.aux.xml')
@@ -394,14 +391,14 @@ def test_jpeg_10():
 def test_jpeg_11():
 
     if gdaltest.jpeg_version == '9b':  # Fails for some reason
-        return 'skip'
+        pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/12bit_rose_extract.jpg')
     out_ds = gdal.GetDriverByName('JPEG').CreateCopy('tmp/jpeg11.jpg', ds)
@@ -466,14 +463,14 @@ def test_jpeg_13():
 def test_jpeg_14():
 
     if gdaltest.jpeg_version == '9b':  # Fails for some reason
-        return 'skip'
+        pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
         sys.stdout.write('(12bit jpeg not available) ... ')
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/12bit_rose_extract.jpg')
     ds = drv.CreateCopy('/vsistdout_redirect//vsimem/tmp.jpg', src_ds)
@@ -882,7 +879,7 @@ def test_jpeg_24():
         if gdal.GetLastErrorMsg().find('Requested feature was omitted at compile time') >= 0:
             ds = None
             gdal.Unlink('/vsimem/byte.jpg')
-            return 'skip'
+            pytest.skip()
 
         expected_cs = 4743
 

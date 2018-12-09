@@ -39,6 +39,7 @@ from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 ###############################################################################
 # Find RDA driver
@@ -52,11 +53,11 @@ def test_rda_test_presence():
     gdal.SetConfigOption('GDBX_CONFIG_FILE', '')
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -66,7 +67,7 @@ def test_rda_test_presence():
 def test_rda_bad_connection_string():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Bad json
     with gdaltest.error_handler():
@@ -91,7 +92,7 @@ def test_rda_bad_connection_string():
 def test_rda_missing_credentials():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
@@ -105,9 +106,9 @@ def test_rda_missing_credentials():
 def test_rda_failed_authentication():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # invalid characters in env variable
     with gdaltest.config_options({'GBDX_AUTH_URL': '\\',
@@ -167,9 +168,9 @@ def test_rda_failed_authentication():
 def test_rda_error_metadata():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # 404
     handler = webserver.SequentialHandler()
@@ -338,9 +339,9 @@ def test_rda_error_metadata():
 def test_rda_graph_nominal():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     metadata_json = {"imageMetadata": {
@@ -659,9 +660,9 @@ def test_rda_graph_nominal():
 def test_rda_template_nominal():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     metadata_json = {"imageMetadata": {
@@ -857,9 +858,9 @@ def test_rda_template_nominal():
 def test_rda_template_image_reference_nominal():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     metadata_json = {"imageMetadata": {
@@ -1022,9 +1023,9 @@ def test_rda_template_image_reference_nominal():
 def test_rda_read_gbdx_config():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1080,9 +1081,9 @@ idaho_api_url = 127.0.0.1:%d/rda_api
 def test_rda_download_queue():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1157,9 +1158,9 @@ def test_rda_download_queue():
 def test_rda_rpc():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1253,13 +1254,13 @@ def test_rda_rpc():
 def test_rda_real_cache_dir():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     home = gdal.GetConfigOption('HOME', gdal.GetConfigOption('USERPROFILE', None))
     if home is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1344,9 +1345,9 @@ def test_rda_real_cache_dir():
 def test_rda_real_expired_authentication():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1405,9 +1406,9 @@ def test_rda_real_expired_authentication():
 def test_rda_bad_tile():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1515,7 +1516,7 @@ def test_rda_bad_tile():
 def test_rda_cleanup():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)

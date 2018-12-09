@@ -56,7 +56,7 @@ gdal_grid = test_cli_utilities.get_gdal_grid_path()
 
 def test_gdal_grid_1():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     outfiles.append('tmp/n43.tif')
@@ -124,7 +124,7 @@ def test_gdal_grid_1():
 
 def test_gdal_grid_2():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     # Open reference dataset
     ds_ref = gdal.Open('../gcore/data/byte.tif')
@@ -250,7 +250,7 @@ def test_gdal_grid_2():
 
 def test_gdal_grid_3():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     # Test generic implementation (no AVX, no SSE)
@@ -275,8 +275,7 @@ def test_gdal_grid_3():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -303,8 +302,7 @@ def test_gdal_grid_3():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -331,8 +329,7 @@ def test_gdal_grid_3():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -354,8 +351,7 @@ def test_gdal_grid_3():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -377,8 +373,7 @@ def test_gdal_grid_3():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -399,8 +394,7 @@ def test_gdal_grid_3():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -412,7 +406,7 @@ def test_gdal_grid_3():
 
 def test_gdal_grid_4():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_average.tif')
@@ -433,8 +427,7 @@ def test_gdal_grid_4():
     ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds = None
 
     #################
@@ -455,8 +448,7 @@ def test_gdal_grid_4():
     ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds = None
 
     #################
@@ -477,8 +469,7 @@ def test_gdal_grid_4():
     ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds = None
 
     #################
@@ -499,8 +490,7 @@ def test_gdal_grid_4():
     ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds = None
 
     return 'success'
@@ -511,7 +501,7 @@ def test_gdal_grid_4():
 
 def test_gdal_grid_5():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_minimum.tif')
@@ -561,7 +551,7 @@ def test_gdal_grid_5():
 
 def test_gdal_grid_6():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_maximum.tif')
@@ -611,7 +601,7 @@ def test_gdal_grid_6():
 
 def test_gdal_grid_7():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_range.tif')
@@ -662,7 +652,7 @@ def test_gdal_grid_7():
 
 def test_gdal_grid_8():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_count_70_70.tif')
@@ -710,7 +700,7 @@ def test_gdal_grid_8():
 
 def test_gdal_grid_9():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_avdist.tif')
@@ -731,8 +721,7 @@ def test_gdal_grid_9():
     ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds = None
 
     #################
@@ -754,8 +743,7 @@ def test_gdal_grid_9():
     ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds = None
 
     return 'success'
@@ -766,7 +754,7 @@ def test_gdal_grid_9():
 
 def test_gdal_grid_10():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_avdist_150_50_-15.tif')
@@ -787,8 +775,7 @@ def test_gdal_grid_10():
     ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds = None
 
     return 'success'
@@ -799,7 +786,7 @@ def test_gdal_grid_10():
 
 def test_gdal_grid_11():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     outfiles.append('tmp/n43_linear.tif')
 
@@ -824,7 +811,7 @@ def test_gdal_grid_11():
 
 def test_gdal_grid_12():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     #################
     # Test generic implementation (no AVX, no SSE)
@@ -843,8 +830,7 @@ def test_gdal_grid_12():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 0.00001:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -865,8 +851,7 @@ def test_gdal_grid_12():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 0.00001:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -887,8 +872,7 @@ def test_gdal_grid_12():
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
     if maxdiff > 0.00001:
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from the reference')
-        return 'fail'
+        pytest.fail('Image too different from the reference')
     ds_ref = None
     ds = None
 
@@ -900,10 +884,10 @@ def test_gdal_grid_12():
 
 def test_gdal_grid_clipsrc():
     if gdal_grid is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     #################
     outfiles.append('tmp/grid_clipsrc.tif')

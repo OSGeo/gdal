@@ -35,6 +35,7 @@ from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 
 def open_for_read(uri):
@@ -66,7 +67,7 @@ def test_vsiaz_init():
 def test_vsiaz_real_server_errors():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     # Missing AZURE_STORAGE_ACCOUNT
     gdal.ErrorReset()
@@ -105,8 +106,7 @@ def test_vsiaz_real_server_errors():
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
             return 'success'
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+        pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -124,11 +124,11 @@ def test_vsiaz_start_webserver():
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING',
                          'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;EndpointSuffix=127.0.0.1:%d' % gdaltest.webserver_port)
@@ -145,7 +145,7 @@ def test_vsiaz_start_webserver():
 def test_vsiaz_fake_basic():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource', ['START_DATE=20180213T123456'])
     assert (signed_url in ('http://127.0.0.1:8080/azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=9Jc4yBFlSRZSSxf059OohN6pYRrjuHWJWSEuryczN%2FM%3D&sp=r&sr=c&st=2018-02-13T12%3A34%3A56Z&sv=2012-02-12',
@@ -216,7 +216,7 @@ def test_vsiaz_fake_basic():
                 print(stat_res.size)
             else:
                 print(stat_res)
-            return 'fail'
+            pytest.fail()
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_fake_bucket/resource2.bin', 200,
@@ -228,7 +228,7 @@ def test_vsiaz_fake_basic():
                 print(stat_res.size)
             else:
                 print(stat_res)
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -239,7 +239,7 @@ def test_vsiaz_fake_basic():
 def test_vsiaz_fake_readdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%2F&restype=container', 200,
@@ -284,10 +284,9 @@ def test_vsiaz_fake_readdir():
     if f is None:
 
         if gdaltest.is_travis_branch('trusty'):
-            print('Skipped on trusty branch, but should be investigated')
-            return 'skip'
+            pytest.skip('Skipped on trusty branch, but should be investigated')
 
-        return 'fail'
+        pytest.fail()
     gdal.VSIFCloseL(f)
 
     dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/a_dir')
@@ -356,7 +355,7 @@ def test_vsiaz_fake_readdir():
 def test_vsiaz_fake_write():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -396,9 +395,8 @@ def test_vsiaz_fake_write():
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
         if ret != 40000:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
     # Simulate illegal read
@@ -433,36 +431,35 @@ def test_vsiaz_fake_write():
 
     if gdal.VSIFSeekL(f, 0, 0) != 0:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
 
     gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
 
     if gdal.VSIFTellL(f) != 35000:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
 
     if gdal.VSIFSeekL(f, 35000, 0) != 0:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
 
     if gdal.VSIFSeekL(f, 0, 1) != 0:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
     if gdal.VSIFSeekL(f, 0, 2) != 0:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
 
     if gdal.VSIFEofL(f) != 0:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
 
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.VSIFCloseL(f)
         if ret == 0:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
 
     # Simulate creation of BlockBob over an existing blob of incompatible type
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
@@ -550,9 +547,8 @@ def test_vsiaz_fake_write():
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
         if ret != 16:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
     # Test failed creation of AppendBlob
@@ -575,9 +571,8 @@ def test_vsiaz_fake_write():
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
         if ret != 0:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
     # Test failed writing of a block of an AppendBlob
@@ -593,9 +588,8 @@ def test_vsiaz_fake_write():
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
         if ret != 0:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
     return 'success'
@@ -607,7 +601,7 @@ def test_vsiaz_fake_write():
 def test_vsiaz_fake_unlink():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Success
     handler = webserver.SequentialHandler()
@@ -635,7 +629,7 @@ def test_vsiaz_fake_unlink():
 def test_vsiaz_fake_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Invalid name
     ret = gdal.Mkdir('/vsiaz', 0)
@@ -757,7 +751,7 @@ def test_vsiaz_fake_mkdir_rmdir():
 def test_vsiaz_fake_test_BlobEndpointInConnectionString():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING',
                          'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount' % gdaltest.webserver_port)
@@ -774,7 +768,7 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
 def test_vsiaz_stop_webserver():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
@@ -791,12 +785,11 @@ def test_vsiaz_stop_webserver():
 def vsiaz_extra_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     az_resource = gdal.GetConfigOption('AZ_RESOURCE')
     if az_resource is None:
-        print('Missing AZ_RESOURCE for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing AZ_RESOURCE for running gdaltest_list_extra')
 
     if az_resource.find('/') < 0:
         path = '/vsiaz/' + az_resource

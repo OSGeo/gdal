@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 gdaltest.buggy_jasper = None
 
@@ -78,7 +79,7 @@ def test_jpeg2000_1():
 def test_jpeg2000_2():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -111,7 +112,7 @@ def test_jpeg2000_2():
 def test_jpeg2000_3():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
@@ -135,7 +136,7 @@ def test_jpeg2000_3():
 def test_jpeg2000_4():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'byte.jp2', 1, 50054)
     tst.testCreateCopy()
@@ -154,7 +155,7 @@ def test_jpeg2000_4():
 def test_jpeg2000_5():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'int16.jp2', 1, None)
     return tst.testCreateCopy()
@@ -166,7 +167,7 @@ def test_jpeg2000_5():
 def test_jpeg2000_6():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'll.jp2', 1, None)
 
@@ -185,7 +186,7 @@ def test_jpeg2000_6():
 def test_jpeg2000_7():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
     return tst.testOpen()
@@ -197,7 +198,7 @@ def test_jpeg2000_7():
 def test_jpeg2000_8():
 
     if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
 
@@ -218,7 +219,7 @@ def test_jpeg2000_8():
 def test_jpeg2000_9():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
@@ -237,7 +238,7 @@ def test_jpeg2000_9():
 def test_jpeg2000_10():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg2000_10_src.tif', 128, 128, 5)
     for i in range(src_ds.RasterCount):
@@ -266,7 +267,7 @@ def test_jpeg2000_10():
 def test_jpeg2000_11():
 
     if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
@@ -303,10 +304,10 @@ def test_jpeg2000_11():
 def test_jpeg2000_online_1():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 32669 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
@@ -325,10 +326,10 @@ def test_jpeg2000_online_1():
 def test_jpeg2000_online_2():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 15621 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
@@ -352,12 +353,12 @@ def test_jpeg2000_online_2():
 def test_jpeg2000_online_3():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 14443 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
@@ -384,12 +385,12 @@ def test_jpeg2000_online_3():
 def test_jpeg2000_online_4():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
@@ -420,10 +421,10 @@ def test_jpeg2000_online_4():
 def test_jpeg2000_online_5():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9.jp2', 'file9.jp2'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/file9.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()
@@ -443,10 +444,10 @@ def test_jpeg2000_online_5():
 def test_jpeg2000_online_6():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_03/file3.jp2', 'file3.jp2'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/file3.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()

@@ -279,7 +279,7 @@ class GDALTest(object):
         check_stat - band statistics (tuple), stat_epsilon - statistics
         tolerance."""
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         if self.filename_absolute:
             wrk_filename = self.filename
@@ -446,9 +446,8 @@ class GDALTest(object):
             return 'success'
         if self.chksum is None or chksum == self.chksum:
             return 'success'
-        post_reason('Checksum for band %d in "%s" is %d, but expected %d.'
+        pytest.fail('Checksum for band %d in "%s" is %d, but expected %d.'
                     % (self.band, self.filename, chksum, self.chksum))
-        return 'fail'
 
     def testCreateCopy(self, check_minmax=1, check_gt=0, check_srs=None,
                        vsimem=0, new_filename=None, strict_in=0,
@@ -457,7 +456,7 @@ class GDALTest(object):
                        dest_open_options=None, quiet_error_handler=True):
 
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         if self.filename_absolute:
             wrk_filename = self.filename
@@ -501,10 +500,9 @@ class GDALTest(object):
                 self.driver.Delete(new_filename)
                 gdal.PopErrorHandler()
                 return 'success'
-            post_reason('CreateCopy() should have failed due to interruption')
             new_ds = None
             self.driver.Delete(new_filename)
-            return 'fail'
+            pytest.fail('CreateCopy() should have failed due to interruption')
 
         assert new_ds is not None, ('Failed to create test file using CreateCopy method.' +
                         '\n' + gdal.GetLastErrorMsg())
@@ -517,10 +515,9 @@ class GDALTest(object):
             if check_checksum_not_null is True:
                 assert bnd.Checksum() != 0, 'Got null checksum on still-open file.'
             elif self.chksum is not None and bnd.Checksum() != self.chksum:
-                post_reason(
+                pytest.fail(
                     'Did not get expected checksum on still-open file.\n'
                     '    Got %d instead of %d.' % (bnd.Checksum(), self.chksum))
-                return 'fail'
             if check_minmax:
                 got_minmax = bnd.ComputeRasterMinMax()
                 assert got_minmax == minmax, \
@@ -544,10 +541,9 @@ class GDALTest(object):
             if check_checksum_not_null is True:
                 assert bnd.Checksum() != 0, 'Got null checksum on reopened file.'
             elif self.chksum_after_reopening is not None and bnd.Checksum() not in self.chksum_after_reopening:
-                post_reason('Did not get expected checksum on reopened file.\n'
+                pytest.fail('Did not get expected checksum on reopened file.\n'
                             '    Got %d instead of %s.'
                             % (bnd.Checksum(), str(self.chksum_after_reopening)))
-                return 'fail'
 
             if check_minmax:
                 got_minmax = bnd.ComputeRasterMinMax()
@@ -597,7 +593,7 @@ class GDALTest(object):
     def testCreate(self, vsimem=0, new_filename=None, out_bands=1,
                    check_minmax=1, dest_open_options=None):
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         if self.filename_absolute:
             wrk_filename = self.filename
@@ -631,8 +627,7 @@ class GDALTest(object):
             for band in range(1, out_bands + 1):
                 new_ds.GetRasterBand(band).WriteRaster(0, 0, xsize, ysize, src_img)
         except:
-            post_reason('Failed to write raster bands to test file.')
-            return 'fail'
+            pytest.fail('Failed to write raster bands to test file.')
 
         for band in range(1, out_bands + 1):
             assert self.chksum is None or new_ds.GetRasterBand(band).Checksum() == self.chksum, \
@@ -670,7 +665,7 @@ class GDALTest(object):
 
     def testSetGeoTransform(self):
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -717,7 +712,7 @@ class GDALTest(object):
 
     def testSetProjection(self, prj=None, expected_prj=None):
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -774,7 +769,7 @@ class GDALTest(object):
 
     def testSetMetadata(self):
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -817,7 +812,7 @@ class GDALTest(object):
 
     def testSetNoDataValue(self, delete=False):
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -874,7 +869,7 @@ class GDALTest(object):
 
     def testSetDescription(self):
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:
@@ -910,7 +905,7 @@ class GDALTest(object):
 
     def testSetUnitType(self):
         if self.testDriver() == 'fail':
-            return 'skip'
+            pytest.skip()
 
         wrk_filename = 'data/' + self.filename
         if self.open_options:

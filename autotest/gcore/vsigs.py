@@ -35,6 +35,7 @@ from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 
 def open_for_read(uri):
@@ -78,7 +79,7 @@ def test_vsigs_init():
 def test_vsigs_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     # Invalid header filename
     gdal.ErrorReset()
@@ -88,7 +89,7 @@ def test_vsigs_1():
                 f = open_for_read('/vsigs/foo/bar')
     if f is not None:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
     last_err = gdal.GetLastErrorMsg()
     assert last_err.find('Cannot read') >= 0
 
@@ -98,7 +99,7 @@ def test_vsigs_1():
             f = open_for_read('/vsigs/foo/bar')
     if f is not None:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
 
     # Missing GS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
@@ -132,8 +133,7 @@ def test_vsigs_1():
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
             return 'success'
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+        pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -151,11 +151,11 @@ def test_vsigs_start_webserver():
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
@@ -170,7 +170,7 @@ def test_vsigs_start_webserver():
 def test_vsigs_2():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # header file
     gdal.FileFromMemBuffer('/vsimem/my_headers.txt', 'foo: bar')
@@ -231,7 +231,7 @@ def test_vsigs_2():
                 print(stat_res.size)
             else:
                 print(stat_res)
-            return 'fail'
+            pytest.fail()
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/gs_fake_bucket/resource2.bin', 200,
@@ -243,7 +243,7 @@ def test_vsigs_2():
                 print(stat_res.size)
             else:
                 print(stat_res)
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -254,7 +254,7 @@ def test_vsigs_2():
 def test_vsigs_readdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200,
@@ -291,10 +291,9 @@ def test_vsigs_readdir():
     if f is None:
 
         if gdaltest.is_travis_branch('trusty'):
-            print('Skipped on trusty branch, but should be investigated')
-            return 'skip'
+            pytest.skip('Skipped on trusty branch, but should be investigated')
 
-        return 'fail'
+        pytest.fail()
     gdal.VSIFCloseL(f)
 
     dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir')
@@ -331,7 +330,7 @@ def test_vsigs_readdir():
 def test_vsigs_write():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -365,9 +364,8 @@ def test_vsigs_write():
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
         if ret != 40000:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
     # Simulate failure while transmitting
@@ -387,9 +385,8 @@ def test_vsigs_write():
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         if ret != 0:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
     gdal.VSIFCloseL(f)
 
     # Simulate failure at end of transfer
@@ -416,9 +413,8 @@ def test_vsigs_write():
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         if ret != 35000:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
         with gdaltest.error_handler():
             ret = gdal.VSIFCloseL(f)
         assert ret != 0
@@ -432,7 +428,7 @@ def test_vsigs_write():
 def test_vsigs_read_credentials_refresh_token_default_gdal_app():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
@@ -507,7 +503,7 @@ def test_vsigs_read_credentials_refresh_token_default_gdal_app():
 def test_vsigs_read_credentials_refresh_token_custom_app():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
@@ -583,7 +579,7 @@ def test_vsigs_read_credentials_refresh_token_custom_app():
 def test_vsigs_read_credentials_oauth2_service_account():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
@@ -675,7 +671,7 @@ gwE6fxOLyJDxuWRf
                 gdal.VSIFCloseL(f)
         except:
             if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
-                return 'skip'
+                pytest.skip()
         finally:
             gdal.SetConfigOption('GO2A_AUD', None)
             gdal.SetConfigOption('GO2A_NOW', None)
@@ -696,7 +692,7 @@ gwE6fxOLyJDxuWRf
 def test_vsigs_read_credentials_oauth2_service_account_json_file():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
@@ -761,7 +757,7 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file():
             f = open_for_read('/vsigs/gs_fake_bucket/resource')
             if f is None:
                 gdal.Unlink('/vsimem/service_account.json')
-                return 'fail'
+                pytest.fail()
             data = gdal.VSIFReadL(1, 4, f).decode('ascii')
             gdal.VSIFCloseL(f)
 
@@ -769,13 +765,12 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file():
                                            ['START_DATE=20180212T123456Z'])
             if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D',
                                   'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
-                print(signed_url)
                 gdal.Unlink('/vsimem/service_account.json')
-                return 'fail'
+                pytest.fail(signed_url)
 
     except:
         if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
-            return 'skip'
+            pytest.skip()
     finally:
         gdal.SetConfigOption('GO2A_AUD', None)
         gdal.SetConfigOption('GO2A_NOW', None)
@@ -794,7 +789,7 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file():
 def test_vsigs_read_credentials_file():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
@@ -854,7 +849,7 @@ gs_secret_access_key = bar
 def test_vsigs_read_credentials_file_refresh_token():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
@@ -934,10 +929,10 @@ client_secret = CLIENT_SECRET
 def test_vsigs_read_credentials_gce():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform not in ('linux', 'linux2', 'win32'):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
@@ -1012,10 +1007,10 @@ def test_vsigs_read_credentials_gce():
 def test_vsigs_read_credentials_gce_expiration():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform not in ('linux', 'linux2', 'win32'):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
@@ -1080,7 +1075,7 @@ def test_vsigs_read_credentials_gce_expiration():
 def test_vsigs_stop_webserver():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
@@ -1097,7 +1092,7 @@ def test_vsigs_stop_webserver():
 def vsigs_extra_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     # if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
     #    print('Missing GS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
@@ -1108,8 +1103,7 @@ def vsigs_extra_1():
 
     gs_resource = gdal.GetConfigOption('GS_RESOURCE')
     if gs_resource is None:
-        print('Missing GS_RESOURCE for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing GS_RESOURCE for running gdaltest_list_extra')
 
     if gs_resource.find('/') < 0:
         path = '/vsigs/' + gs_resource

@@ -35,6 +35,7 @@ import sys
 import gdaltest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Basic tests
@@ -44,7 +45,7 @@ def test_ogr_xls_1():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     assert drv.TestCapability("foo") == 0
 
@@ -81,7 +82,7 @@ def test_ogr_xls_1():
        feat.GetFieldAsString(3) != '1980/01/01' or \
        feat.GetFieldAsString(4) != '1980/01/01 00:00:00':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
@@ -98,7 +99,7 @@ def test_ogr_xls_2():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_XLS_HEADERS', 'DISABLE')
     ds = ogr.Open('data/test972000xp.xls')
@@ -119,7 +120,7 @@ def test_ogr_xls_3():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_XLS_FIELD_TYPES', 'STRING')
     ds = ogr.Open('data/test972000xp.xls')
@@ -140,11 +141,11 @@ def test_ogr_xls_4():
 
     drv = ogr.GetDriverByName('XLS')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test972000xp.xls')
 

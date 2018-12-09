@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Try opening a file with a Chinese name using the Python UTF-8 string.
@@ -50,7 +51,7 @@ def test_rfc30_1():
         filename_escaped = gdaltest.urlescape(filename.encode('utf-8'))
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename_escaped, filename):
-        return 'skip'
+        pytest.skip()
 
     filename = 'tmp/cache/' + filename
 

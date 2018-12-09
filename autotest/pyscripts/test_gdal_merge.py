@@ -37,6 +37,7 @@ from osgeo import gdal
 from osgeo import osr
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Basic test
@@ -46,7 +47,7 @@ def test_gdal_merge_1():
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_merge', '-o tmp/test_gdal_merge_1.tif ../gcore/data/byte.tif')
 
@@ -64,7 +65,7 @@ def test_gdal_merge_2():
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
@@ -124,7 +125,7 @@ def test_gdal_merge_3():
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_merge', '-separate -v -o tmp/test_gdal_merge_3.tif tmp/in1.tif tmp/in2.tif tmp/in3.tif tmp/in4.tif')
 
@@ -155,7 +156,7 @@ def test_gdal_merge_4():
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_merge', '-init 255 -o tmp/test_gdal_merge_4.tif tmp/in2.tif tmp/in3.tif')
 
@@ -174,11 +175,11 @@ def test_gdal_merge_5():
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()

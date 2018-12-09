@@ -90,7 +90,7 @@ def test_vrt_read_1():
     if ds is None:
         return 'success'
 
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
@@ -153,7 +153,7 @@ def test_vrt_read_4():
     try:
         import numpy as np
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     data = np.zeros((1, 1), np.complex64)
     data[0, 0] = 1. + 3.j
@@ -434,7 +434,7 @@ def test_vrt_read_10():
 def test_vrt_read_11():
 
     if not gdaltest.support_symlink():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/byte.vrt')
@@ -460,7 +460,7 @@ def test_vrt_read_11():
 def test_vrt_read_12():
 
     if not gdaltest.support_symlink():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/byte.vrt')
@@ -485,7 +485,7 @@ def test_vrt_read_12():
 def test_vrt_read_13():
 
     if not gdaltest.support_symlink():
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/byte.vrt')
@@ -679,7 +679,7 @@ def test_vrt_read_19():
 def test_vrt_read_20():
 
     if test_cli_utilities.get_gdalinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('data/byte.tif', 'tmp')
     for i in range(3):
@@ -910,7 +910,7 @@ def test_vrt_read_23():
         gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrt_read_23.tif', 2, 1)
     mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0, 10]]))
@@ -982,7 +982,7 @@ def test_vrt_read_25():
 
     import ogrtest
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open("""<VRTDataset rasterXSize="2000" rasterYSize="200">
   <VRTRasterBand dataType="Byte" band="1">
@@ -1081,7 +1081,7 @@ def test_vrt_read_29():
     f = open('data/byte.tif')
     lst_before = gdaltest.get_opened_files()
     if not lst_before:
-        return 'skip'
+        pytest.skip()
     f.close()
     lst_before = gdaltest.get_opened_files()
 

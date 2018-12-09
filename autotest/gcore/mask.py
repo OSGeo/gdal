@@ -35,6 +35,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Verify the checksum and flags for "all valid" case.
@@ -159,7 +160,7 @@ def test_mask_5():
     # This crashes with libtiff 3.8.2, so skip it
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/mask_4.pnm', gdal.GA_Update)
 
@@ -425,8 +426,7 @@ def test_mask_13():
     try:
         os.stat('tmp/byte_with_mask.tif.msk')
     except OSError:
-        gdaltest.post_reason('tmp/byte_with_mask.tif.msk is absent')
-        return 'fail'
+        pytest.fail('tmp/byte_with_mask.tif.msk is absent')
 
     ds = gdal.Open('tmp/byte_with_mask.tif')
 
@@ -442,8 +442,7 @@ def test_mask_13():
 
     try:
         os.stat('tmp/byte_with_mask.tif.msk')
-        gdaltest.post_reason('tmp/byte_with_mask.tif.msk is still there')
-        return 'fail'
+        pytest.fail('tmp/byte_with_mask.tif.msk is still there')
     except OSError:
         pass
 
@@ -499,8 +498,7 @@ def test_mask_14():
 
     try:
         os.stat('tmp/byte_with_mask.tif.msk')
-        gdaltest.post_reason('tmp/byte_with_mask.tif.msk should not exist')
-        return 'fail'
+        pytest.fail('tmp/byte_with_mask.tif.msk should not exist')
     except OSError:
         pass
 
@@ -590,8 +588,7 @@ def mask_and_ovr(order, method):
 
     try:
         os.stat('tmp/byte_with_ovr_and_mask.tif.msk')
-        gdaltest.post_reason('tmp/byte_with_mask.tif.msk should not exist')
-        return 'fail'
+        pytest.fail('tmp/byte_with_mask.tif.msk should not exist')
     except OSError:
         pass
 
@@ -763,8 +760,7 @@ def test_mask_22():
     try:
         os.stat('tmp/mask_22.tif.msk')
     except OSError:
-        gdaltest.post_reason('tmp/mask_22.tif.msk is absent')
-        return 'fail'
+        pytest.fail('tmp/mask_22.tif.msk is absent')
 
     ds = gdal.Open('tmp/mask_22.tif')
 
@@ -780,8 +776,7 @@ def test_mask_22():
 
     try:
         os.stat('tmp/mask_22.tif.msk')
-        gdaltest.post_reason('tmp/mask_22.tif.msk is still there')
-        return 'fail'
+        pytest.fail('tmp/mask_22.tif.msk is still there')
     except OSError:
         pass
 
@@ -797,7 +792,7 @@ def test_mask_23():
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     src_ds = drv.Create('tmp/mask_23_src.tif', 3000, 2000, 3, options=['TILED=YES', 'SPARSE_OK=YES'])
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)

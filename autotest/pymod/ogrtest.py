@@ -25,6 +25,7 @@
 ###############################################################################
 
 import sys
+import pytest
 
 sys.path.append('../pymod')
 
@@ -171,15 +172,15 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
         f = lyr.GetNextFeature()
         if f is None:
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
         if check_feature(f, f_ref, excluded_fields=excluded_fields) != 0:
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     return 'success'
 
 ###############################################################################

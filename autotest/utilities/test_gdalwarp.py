@@ -37,6 +37,7 @@ import stat
 from osgeo import gdal
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -44,7 +45,7 @@ import test_cli_utilities
 
 def test_gdalwarp_1():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif')
     assert (err is None or err == ''), 'got error/warning'
@@ -64,7 +65,7 @@ def test_gdalwarp_1():
 
 def test_gdalwarp_2():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of GTiff ../gcore/data/byte.tif tmp/testgdalwarp2.tif')
 
@@ -83,7 +84,7 @@ def test_gdalwarp_2():
 
 def test_gdalwarp_3():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/testgdalwarp3.tif')
 
@@ -104,7 +105,7 @@ def test_gdalwarp_3():
 
 def test_gdalwarp_4():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/testgdalwarp4.tif')
 
@@ -123,10 +124,10 @@ def test_gdalwarp_4():
 
 def test_gdalwarp_5():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/testgdalwarp_gcp.tif')
 
@@ -150,7 +151,7 @@ def test_gdalwarp_5():
 
 def test_gdalwarp_6():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tps tmp/testgdalwarp_gcp.tif tmp/testgdalwarp6.tif')
 
@@ -172,7 +173,7 @@ def test_gdalwarp_6():
 
 def test_gdalwarp_7():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tr 120 120 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp7.tif')
 
@@ -193,7 +194,7 @@ def test_gdalwarp_7():
 
 def test_gdalwarp_8():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 10 10 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp8.tif')
 
@@ -214,7 +215,7 @@ def test_gdalwarp_8():
 
 def test_gdalwarp_9():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -te 440720.000 3750120.000 441920.000 3751320.000 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp9.tif')
 
@@ -234,7 +235,7 @@ def test_gdalwarp_9():
 
 def test_gdalwarp_10():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rn tmp/testgdalwarp_gcp.tif tmp/testgdalwarp10.tif')
 
@@ -253,7 +254,7 @@ def test_gdalwarp_10():
 
 def test_gdalwarp_11():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rb tmp/testgdalwarp_gcp.tif tmp/testgdalwarp11.tif')
 
@@ -266,8 +267,7 @@ def test_gdalwarp_11():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
 
@@ -279,7 +279,7 @@ def test_gdalwarp_11():
 
 def test_gdalwarp_12():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rc tmp/testgdalwarp_gcp.tif tmp/testgdalwarp12.tif')
 
@@ -292,8 +292,7 @@ def test_gdalwarp_12():
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
         ref_ds = None
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
     ref_ds = None
@@ -306,7 +305,7 @@ def test_gdalwarp_12():
 
 def test_gdalwarp_13():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rcs tmp/testgdalwarp_gcp.tif tmp/testgdalwarp13.tif')
 
@@ -329,7 +328,7 @@ def test_gdalwarp_13():
 
 def test_gdalwarp_14():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -r lanczos tmp/testgdalwarp_gcp.tif tmp/testgdalwarp14.tif')
 
@@ -352,7 +351,7 @@ def test_gdalwarp_14():
 
 def test_gdalwarp_15():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -dstnodata 1 -t_srs EPSG:32610 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp15.tif')
 
@@ -373,7 +372,7 @@ def test_gdalwarp_15():
 
 def test_gdalwarp_16():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of VRT tmp/testgdalwarp_gcp.tif tmp/testgdalwarp16.vrt')
 
@@ -392,7 +391,7 @@ def test_gdalwarp_16():
 
 def test_gdalwarp_17():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -dstalpha ../gcore/data/rgbsmall.tif tmp/testgdalwarp17.tif')
 
@@ -411,14 +410,13 @@ def test_gdalwarp_17():
 
 def test_gdalwarp_18():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif')
 
     # This error will be returned if GDAL is not compiled with thread support
     if ret_stderr.find('CPLCreateThread() failed in ChunkAndWarpMulti()') != -1:
-        print('GDAL not compiled with thread support')
-        return 'skip'
+        pytest.skip('GDAL not compiled with thread support')
 
     ds = gdal.Open('tmp/testgdalwarp18.tif')
     assert ds is not None
@@ -435,7 +433,7 @@ def test_gdalwarp_18():
 
 def test_gdalwarp_19():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp19.tif')
 
@@ -454,7 +452,7 @@ def test_gdalwarp_19():
 
 def test_gdalwarp_20():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -of VRT -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp20.vrt')
 
@@ -473,7 +471,7 @@ def test_gdalwarp_20():
 
 def test_gdalwarp_21():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/testgdalwarp21.tif -cutline data/cutline.vrt -cl cutline')
 
@@ -492,7 +490,7 @@ def test_gdalwarp_21():
 
 def test_gdalwarp_22():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/testgdalwarp22.tif -cutline data/cutline.vrt -cl cutline -tr 30 30')
 
@@ -511,7 +509,7 @@ def test_gdalwarp_22():
 
 def test_gdalwarp_23():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -wo CUTLINE_ALL_TOUCHED=TRUE ../gcore/data/utmsmall.tif tmp/testgdalwarp23.tif -cutline data/cutline.vrt -cl cutline')
 
@@ -530,7 +528,7 @@ def test_gdalwarp_23():
 
 def test_gdalwarp_24():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/testgdalwarp24src.tif', 100, 100)
     ds.SetGeoTransform([179.5, 0.01, 0, 45, 0, -0.01])
@@ -555,7 +553,7 @@ def test_gdalwarp_24():
 
 def test_gdalwarp_25():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=sinu" data/w_jpeg.tiff tmp/testgdalwarp25.tif')
 
@@ -580,7 +578,7 @@ def test_gdalwarp_25():
 
 def test_gdalwarp_26():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=eck4" data/w_jpeg.tiff tmp/testgdalwarp26.tif')
 
@@ -605,7 +603,7 @@ def test_gdalwarp_26():
 
 def test_gdalwarp_27():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif')
 
@@ -630,7 +628,7 @@ def test_gdalwarp_27():
 
 def test_gdalwarp_28():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs "+proj=aeqd +lat_0=45 +lon_0=90" data/w_jpeg.tiff tmp/testgdalwarp28.tif')
 
@@ -665,7 +663,7 @@ def test_gdalwarp_28():
 
 def test_gdalwarp_29():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:3785 data/w_jpeg.tiff tmp/testgdalwarp29.tif')
 
@@ -690,7 +688,7 @@ def test_gdalwarp_29():
 
 def test_gdalwarp_30():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # First run : no parameter
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_1.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
@@ -743,7 +741,7 @@ def test_gdalwarp_30():
 
 def test_gdalwarp_31():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif")
 
@@ -773,7 +771,7 @@ def test_gdalwarp_31():
 
 def test_gdalwarp_32():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif',
                                                 check_memleak=False)
@@ -802,9 +800,9 @@ def test_gdalwarp_32():
 
 def test_gdalwarp_33():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -dstalpha ../gcore/data/ycbcr_with_mask.tif tmp/testgdalwarp33.tif')
 
@@ -839,9 +837,9 @@ def test_gdalwarp_33():
 
 def test_gdalwarp_34():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/testgdalwarp34.tif')
@@ -879,7 +877,7 @@ def test_gdalwarp_34():
 
 def test_gdalwarp_35():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 20 20 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif tmp/testgdalwarp35.tif')
 
@@ -899,7 +897,7 @@ def test_gdalwarp_35():
 
 def test_gdalwarp_36():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tr 60 60 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif tmp/testgdalwarp36.tif')
 
@@ -919,7 +917,7 @@ def test_gdalwarp_36():
 
 def test_gdalwarp_37():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tr 60 60 ./data/utmsmall.tif tmp/testgdalwarp37.tif')
 
@@ -947,7 +945,7 @@ def test_gdalwarp_37():
 
 def test_gdalwarp_38():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' data/withnodata.asc tmp/testgdalwarp38.tif')
 
@@ -964,7 +962,7 @@ def test_gdalwarp_38():
 
 def test_gdalwarp_39():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gdrivers/data/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite')
 
@@ -980,7 +978,7 @@ def test_gdalwarp_39():
 
 def test_gdalwarp_40():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     out_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/test_gdalwarp_40_src.tif', src_ds)
@@ -1107,7 +1105,7 @@ def test_gdalwarp_40():
 
 def test_gdalwarp_41():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalwarp_41_src.tif', 666, 666)
     src_ds.SetGeoTransform([-3333500, 10010.510510510510358, 0, 3333500.000000000000000, 0, -10010.510510510510358])
@@ -1153,9 +1151,9 @@ def test_gdalwarp_41():
 
 def test_gdalwarp_42():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_left.tif -srcwin 0 0 200 200 -a_nodata 255')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_right.tif -srcwin 200 0 200 200  -a_nodata 255')
@@ -1205,9 +1203,9 @@ def test_gdalwarp_42():
 
 def test_gdalwarp_43():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world.tif -mo "FOO=BAR" -mo "NODATA_VALUES=62 93 23"')
 
@@ -1228,7 +1226,7 @@ def test_gdalwarp_43():
 
 def test_gdalwarp_44():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Without  -wo SRC_COORD_PRECISION
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 10 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326')
@@ -1265,7 +1263,7 @@ def test_gdalwarp_44():
 
 def test_gdalwarp_45():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -te_srs EPSG:4267 -te -117.641087629972 33.8915301685897 -117.628190189534 33.9024195619201 ../gcore/data/byte.tif tmp/test_gdalwarp_45.tif -overwrite')
 
@@ -1289,9 +1287,9 @@ def test_gdalwarp_45():
 
 def test_gdalwarp_46():
     if test_cli_utilities.get_gdalwarp_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/test_gdalwarp_46.tif -cutline data/cutline.vrt -crop_to_cutline -overwrite')
 

@@ -226,7 +226,7 @@ def test_osr_compd_5():
     wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
-        return 'fail'
+        pytest.fail()
     elif exp_wkt != wkt:
         print('warning they are equivalent, but not completely the same')
         print(wkt)
@@ -246,7 +246,7 @@ def test_osr_compd_5():
 def test_osr_compd_6():
 
     if not osr_proj4.have_proj480():
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs ')
@@ -277,7 +277,7 @@ def test_osr_compd_6():
     wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
-        return 'fail'
+        pytest.fail()
     elif exp_wkt != wkt:
         print('warning they are equivalent, but not completely the same')
         print(wkt)
@@ -330,7 +330,7 @@ def test_osr_compd_7():
     wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
-        return 'fail'
+        pytest.fail()
     elif exp_wkt != wkt:
         print('warning they are equivalent, but not completely the same')
         print(wkt)

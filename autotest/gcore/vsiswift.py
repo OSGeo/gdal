@@ -35,6 +35,7 @@ from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 
 def open_for_read(uri):
@@ -64,7 +65,7 @@ def test_vsiswift_init():
 def test_vsiswift_real_server_errors():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     # Nothing set
     gdal.ErrorReset()
@@ -93,8 +94,7 @@ def test_vsiswift_real_server_errors():
     if f is not None:
         if f is not None:
             gdal.VSIFCloseL(f)
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+        pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -112,11 +112,11 @@ def test_vsiswift_start_webserver():
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -127,7 +127,7 @@ def test_vsiswift_start_webserver():
 def test_vsiswift_fake_auth_v1_url():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
     gdal.SetConfigOption('SWIFT_AUTH_V1_URL', 'http://127.0.0.1:%d/auth/1.0' % gdaltest.webserver_port)
@@ -219,7 +219,7 @@ def test_vsiswift_fake_auth_v1_url():
 def test_vsiswift_fake_auth_storage_url_and_auth_token():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
     gdal.SetConfigOption('SWIFT_AUTH_V1_URL', '')
@@ -275,7 +275,7 @@ def test_vsiswift_fake_auth_storage_url_and_auth_token():
 def test_vsiswift_stat():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -289,7 +289,7 @@ def test_vsiswift_stat():
                 print(stat_res.size)
             else:
                 print(stat_res)
-            return 'fail'
+            pytest.fail()
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/v1/AUTH_something/foo/bar', 200, {'Content-Length': '1000000'})
@@ -300,7 +300,7 @@ def test_vsiswift_stat():
                 print(stat_res.size)
             else:
                 print(stat_res)
-            return 'fail'
+            pytest.fail()
 
     # Test stat on container
     handler = webserver.SequentialHandler()
@@ -320,7 +320,7 @@ def test_vsiswift_stat():
 def test_vsiswift_fake_readdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -423,7 +423,7 @@ def test_vsiswift_fake_readdir():
 def test_vsiswift_fake_write():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -466,9 +466,8 @@ def test_vsiswift_fake_write():
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
         if ret != 40000:
-            print(ret)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
     return 'success'
@@ -480,7 +479,7 @@ def test_vsiswift_fake_write():
 def test_vsiswift_fake_unlink():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -512,7 +511,7 @@ def test_vsiswift_fake_unlink():
 def test_vsiswift_fake_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -602,7 +601,7 @@ def test_vsiswift_fake_mkdir_rmdir():
 def test_vsiswift_stop_webserver():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
@@ -619,12 +618,11 @@ def test_vsiswift_stop_webserver():
 def vsiswift_extra_1():
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     swift_resource = gdal.GetConfigOption('SWIFT_RESOURCE')
     if swift_resource is None:
-        print('Missing SWIFT_RESOURCE for running gdaltest_list_extra')
-        return 'skip'
+        pytest.skip('Missing SWIFT_RESOURCE for running gdaltest_list_extra')
 
     if swift_resource.find('/') < 0:
         path = '/vsiswift/' + swift_resource

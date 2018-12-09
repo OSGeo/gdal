@@ -52,9 +52,8 @@ def ogr_csw_init():
     if gml_ds is None:
         gdaltest.csw_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
-            return 'skip'
-        gdaltest.post_reason('failed to open test file.')
-        return 'skip'
+            pytest.skip()
+        pytest.skip('failed to open test file.')
 
     return 'success'
 
@@ -67,10 +66,8 @@ def test_ogr_csw_pycsw():
     ds = ogr.Open('CSW:http://catalog.data.gov/csw')
     if ds is None:
         if gdaltest.gdalurlopen('http://catalog.data.gov/csw') is None:
-            print('cannot open URL')
-            return 'skip'
-        gdaltest.post_reason('did not managed to open CSW datastore')
-        return 'skip'
+            pytest.skip('cannot open URL')
+        pytest.skip('did not managed to open CSW datastore')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None, 'did not get expected layer name'
@@ -289,7 +286,7 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
        f['format'] != 'a_format' or f['other_formats'] != ['another_format'] or \
        f['boundingbox'].ExportToWkt() != 'POLYGON ((-180 -90,-180 90,180 90,180 -90,-180 -90))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     assert f is not None
     gdal.PushErrorHandler()
@@ -496,7 +493,7 @@ def test_ogr_csw_vsimem_csw_output_schema_csw():
     if f['raw_xml'].find('<csw:Record') != 0 or \
        f['boundingbox'].ExportToWkt() != 'POLYGON ((-180 -90,-180 90,180 90,180 -90,-180 -90))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -537,7 +534,7 @@ def test_ogr_csw_vsimem_csw_output_schema_gmd():
     if f['raw_xml'].find('<gmd:MD_Metadata') != 0 or \
        f['boundingbox'].ExportToWkt() != 'POLYGON ((-180 -90,-180 90,180 90,180 -90,-180 -90))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -580,7 +577,7 @@ def test_ogr_csw_vsimem_csw_output_schema_fgdc():
     if f['raw_xml'].find('<metadata') != 0 or \
        f['boundingbox'].ExportToWkt() != 'POLYGON ((-180 -90,-180 90,180 90,180 -90,-180 -90))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 

@@ -34,6 +34,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Establish whether we have GEOS support integrated, testing simple Union.
@@ -42,7 +43,7 @@ from osgeo import gdal
 def test_ogr_geos_union():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     pnt1 = ogr.CreateGeometryFromWkt('POINT(10 20)')
     pnt2 = ogr.CreateGeometryFromWkt('POINT(30 20)')
@@ -60,7 +61,7 @@ def test_ogr_geos_union():
 def test_ogr_geos_intersection():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
     g2 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 0 10, 10 0, 0 0))')
@@ -79,7 +80,7 @@ def test_ogr_geos_intersection():
 def test_ogr_geos_difference():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
     g2 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 0 10, 10 0, 0 0))')
@@ -99,7 +100,7 @@ def test_ogr_geos_difference():
 def test_ogr_geos_symmetric_difference():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
     g2 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 0 10, 10 0, 0 0))')
@@ -119,7 +120,7 @@ def test_ogr_geos_symmetric_difference():
 def test_ogr_geos_sym_difference():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
     g2 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 0 10, 10 0, 0 0))')
@@ -139,7 +140,7 @@ def test_ogr_geos_sym_difference():
 def test_ogr_geos_intersect():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0, 10 10)')
     g2 = ogr.CreateGeometryFromWkt('LINESTRING(10 0, 0 10)')
@@ -164,7 +165,7 @@ def test_ogr_geos_intersect():
 def test_ogr_geos_disjoint():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0, 10 10)')
     g2 = ogr.CreateGeometryFromWkt('LINESTRING(10 0, 0 10)')
@@ -189,7 +190,7 @@ def test_ogr_geos_disjoint():
 def test_ogr_geos_touches():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0, 10 10)')
     g2 = ogr.CreateGeometryFromWkt('LINESTRING(0 0, 0 10)')
@@ -214,7 +215,7 @@ def test_ogr_geos_touches():
 def test_ogr_geos_crosses():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0, 10 10)')
     g2 = ogr.CreateGeometryFromWkt('LINESTRING(10 0, 0 10)')
@@ -238,7 +239,7 @@ def test_ogr_geos_crosses():
 def test_ogr_geos_within():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
     g2 = ogr.CreateGeometryFromWkt('POLYGON((-90 -90, -90 90, 190 -90, -90 -90))')
@@ -259,7 +260,7 @@ def test_ogr_geos_within():
 def test_ogr_geos_contains():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
     g2 = ogr.CreateGeometryFromWkt('POLYGON((-90 -90, -90 90, 190 -90, -90 -90))')
@@ -280,7 +281,7 @@ def test_ogr_geos_contains():
 def test_ogr_geos_overlaps():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
     g2 = ogr.CreateGeometryFromWkt('POLYGON((-90 -90, -90 90, 190 -90, -90 -90))')
@@ -305,7 +306,7 @@ def test_ogr_geos_overlaps():
 def test_ogr_geos_buffer():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
 
@@ -323,7 +324,7 @@ def test_ogr_geos_buffer():
 def test_ogr_geos_centroid():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
 
@@ -349,7 +350,7 @@ def test_ogr_geos_centroid():
 def test_ogr_geos_centroid_multipolygon():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)),((2 0,2 1,3 1,3 0,2 0)))')
 
@@ -367,7 +368,7 @@ def test_ogr_geos_centroid_multipolygon():
 def test_ogr_geos_centroid_point_empty():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POINT EMPTY')
 
@@ -383,7 +384,7 @@ def test_ogr_geos_centroid_point_empty():
 def test_ogr_geos_simplify_linestring():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 0,10 0)')
 
@@ -401,7 +402,7 @@ def test_ogr_geos_simplify_linestring():
 def test_ogr_geos_simplifypreservetopology_linestring():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 0,10 0)')
 
@@ -419,7 +420,7 @@ def test_ogr_geos_simplifypreservetopology_linestring():
 def test_ogr_geos_unioncascaded():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)),((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5)))')
 
@@ -437,7 +438,7 @@ def test_ogr_geos_unioncascaded():
 def test_ogr_geos_convexhull():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 1), POINT(0 0), POINT(1 0), POINT(1 1))')
 
@@ -454,7 +455,7 @@ def test_ogr_geos_convexhull():
 def test_ogr_geos_distance():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POINT(0 0)')
     g2 = ogr.CreateGeometryFromWkt('POINT(1 0)')
@@ -472,7 +473,7 @@ def test_ogr_geos_distance():
 def test_ogr_geos_isring():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 1,1 1,0 0)')
 
@@ -488,7 +489,7 @@ def test_ogr_geos_isring():
 def test_ogr_geos_issimple_true():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,1 0,0 0))')
 
@@ -504,7 +505,7 @@ def test_ogr_geos_issimple_true():
 def test_ogr_geos_issimple_false():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(1 1,2 2,2 3.5,1 3,1 2,2 1)')
 
@@ -520,7 +521,7 @@ def test_ogr_geos_issimple_false():
 def test_ogr_geos_isvalid_true():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING(0 0, 1 1)')
 
@@ -536,7 +537,7 @@ def test_ogr_geos_isvalid_true():
 def test_ogr_geos_isvalid_true_linestringM():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('LINESTRING M(0 0 10, 1 1 20)')
 
@@ -552,7 +553,7 @@ def test_ogr_geos_isvalid_true_linestringM():
 def test_ogr_geos_isvalid_true_circularStringM():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING M(0 0 10, 1 1 20,2 0 30)')
 
@@ -568,7 +569,7 @@ def test_ogr_geos_isvalid_true_circularStringM():
 def test_ogr_geos_isvalid_true_triangle():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('TRIANGLE ((0 0,0 1,1 1,0 0))')
 
@@ -584,7 +585,7 @@ def test_ogr_geos_isvalid_true_triangle():
 def test_ogr_geos_isvalid_false():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,1 2,1 1,0 0))')
 
@@ -601,7 +602,7 @@ def test_ogr_geos_isvalid_false():
 def test_ogr_geos_pointonsurface():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('POLYGON((0 0, 10 10, 10 0, 0 0))')
 
@@ -617,7 +618,7 @@ def test_ogr_geos_pointonsurface():
 def test_ogr_geos_DelaunayTriangulation():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g1 = ogr.CreateGeometryFromWkt('MULTIPOINT(0 0,0 1,1 1,1 0)')
 
@@ -625,7 +626,7 @@ def test_ogr_geos_DelaunayTriangulation():
     triangulation = g1.DelaunayTriangulation()
     if triangulation is None:
         assert gdal.GetLastErrorMsg() != ''
-        return 'skip'
+        pytest.skip()
 
     assert triangulation.ExportToWkt() == 'GEOMETRYCOLLECTION (POLYGON ((0 1,0 0,1 0,0 1)),POLYGON ((0 1,1 0,1 1,0 1)))', \
         ('Got: %s' % triangulation.ExportToWkt())
@@ -638,7 +639,7 @@ def test_ogr_geos_DelaunayTriangulation():
 def test_ogr_geos_polygonize():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     g = ogr.CreateGeometryFromWkt('MULTILINESTRING((0 0,0 1,1 1),(1 1,0 0))')
     got = g.Polygonize()

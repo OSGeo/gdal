@@ -53,7 +53,7 @@ def test_ogr_interlis1_1():
     gdaltest.have_ili_reader = 0
     driver = ogr.GetDriverByName('Interlis 1')
     if driver is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.have_ili_reader = 1
 
@@ -66,10 +66,10 @@ def test_ogr_interlis1_1():
 def test_ogr_interlis1_2():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
     layers = ['Bodenbedeckung__BoFlaechen',
@@ -97,8 +97,7 @@ def test_ogr_interlis1_2():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     geom = feat.GetGeomFieldRef(0)
     assert geom.GetCoordinateDimension() == 2, 'dimension wrong.'
@@ -117,7 +116,7 @@ def test_ogr_interlis1_2():
 def test_ogr_interlis1_3():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/format-default.itf,data/ili/format-default.imd')
 
@@ -141,8 +140,7 @@ def test_ogr_interlis1_3():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     return 'success'
 
@@ -153,7 +151,7 @@ def test_ogr_interlis1_3():
 def test_ogr_interlis1_4():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/format-test.itf,data/ili/format-test.imd')
 
@@ -177,8 +175,7 @@ def test_ogr_interlis1_4():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     return 'success'
 
@@ -189,7 +186,7 @@ def test_ogr_interlis1_4():
 def test_ogr_interlis1_5():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/format-default.itf,data/ili/format-default.imd')
 
@@ -236,7 +233,7 @@ ENDE"""
 def test_ogr_interlis1_6():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/format-default.itf,data/ili/format-default.imd')
     lyr = ds.GetLayerByName('FormatTests__FormatTable')
@@ -279,7 +276,7 @@ ENDE"""
 def test_ogr_interlis1_7():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/encoding-test.itf,data/ili/format-default.imd')
 
@@ -305,8 +302,7 @@ def test_ogr_interlis1_7():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     # Write back
     driver = ogr.GetDriverByName('Interlis 1')
@@ -354,7 +350,7 @@ ENDE"""
 def test_ogr_interlis1_9():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/Beispiel-rename.vrt')
     layers = ['BoGebaeude']
@@ -380,8 +376,7 @@ def test_ogr_interlis1_9():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     return 'success'
 
@@ -392,10 +387,10 @@ def test_ogr_interlis1_9():
 def test_ogr_interlis1_10():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
 
@@ -412,7 +407,7 @@ def test_ogr_interlis1_10():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -423,7 +418,7 @@ def test_ogr_interlis1_10():
 def test_ogr_interlis1_11():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/multigeom.itf,data/ili/multigeom.imd')
 
@@ -466,7 +461,7 @@ def test_ogr_interlis1_11():
 def test_ogr_interlis1_12():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/multicoord.itf,data/ili/multicoord.imd')
 
@@ -484,8 +479,7 @@ def test_ogr_interlis1_12():
 
     if feat.GetFieldCount() != 6:
         feat.DumpReadable()
-        gdaltest.post_reason('field count wrong.')
-        return 'fail'
+        pytest.fail('field count wrong.')
 
     geom_columns = ['coordPoint1', 'coordPoint2']
 
@@ -504,7 +498,7 @@ def test_ogr_interlis1_12():
 def test_ogr_interlis1_13():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/surface.itf,data/ili/surface.imd')
 
@@ -540,8 +534,7 @@ def test_ogr_interlis1_13():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174)))']
 
@@ -551,7 +544,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     # --- test curved polygon
 
@@ -564,7 +557,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     # --- test multi-ring polygon
 
@@ -578,8 +571,7 @@ def test_ogr_interlis1_13():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     # FIXME: note this is an invalid curve polygon. The two rings are completely disjoint, so this should be a multisurface instead.
     geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326)),COMPOUNDCURVE ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606)))']
@@ -590,7 +582,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     # --- same with text IDENT field
     # TODO: Surface with text IDENT field not supported yet
@@ -678,7 +670,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
 
@@ -688,7 +680,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     lyr = ds.GetLayerByName('SURFC_TOP__Flaechenelement')
     assert lyr.GetFeatureCount() == 2, 'feature count wrong.'
@@ -701,7 +693,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
 
@@ -711,7 +703,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     # Test assembling curves not in "right" order
     ds = ogr.Open('data/ili/surface_complex.itf,data/ili/surface.imd')
@@ -724,7 +716,7 @@ def test_ogr_interlis1_13():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -735,7 +727,7 @@ def test_ogr_interlis1_13():
 def test_ogr_interlis1_13_linear():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', 'YES')
 
@@ -773,8 +765,7 @@ def test_ogr_interlis1_13_linear():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     geom_field_values = ['POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))']
 
@@ -784,7 +775,7 @@ def test_ogr_interlis1_13_linear():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     # --- test curved polygon
 
@@ -796,7 +787,7 @@ def test_ogr_interlis1_13_linear():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     # --- test multi-ring polygon
 
@@ -811,8 +802,7 @@ def test_ogr_interlis1_13_linear():
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     geom_field_values = ['POLYGON ((598330.204 249028.397,598344.756 249057.501,598390.838 249074.479,598422.367 249081.755,598459.96 249093.882,598493.915 249101.158,598523.019 249106.008,598563.038 249084.18,598589.716 249042.949,598603.056 249011.42,598607.907 248966.551,598577.59 248960.487,598493.915 248983.528,598424.793 248996.868,598359.308 249010.207,598330.204 249028.397))']
 
@@ -822,7 +812,7 @@ def test_ogr_interlis1_13_linear():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     lyr = ds.GetLayerByName('SURFC_TOP__Flaechenelement_Geometrie')
     assert lyr.GetFeatureCount() == 3, 'feature count wrong.'
@@ -835,7 +825,7 @@ def test_ogr_interlis1_13_linear():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
 
@@ -845,7 +835,7 @@ def test_ogr_interlis1_13_linear():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     lyr = ds.GetLayerByName('SURFC_TOP__Flaechenelement')
     assert lyr.GetFeatureCount() == 2, 'feature count wrong.'
@@ -858,7 +848,7 @@ def test_ogr_interlis1_13_linear():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
 
@@ -868,7 +858,7 @@ def test_ogr_interlis1_13_linear():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', None)
 
@@ -881,7 +871,7 @@ def test_ogr_interlis1_13_linear():
 def test_ogr_interlis1_14():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
     lyr = ds.GetLayerByName('Bodenbedeckung__Strasse')
@@ -930,7 +920,7 @@ ENDE
 def test_ogr_interlis2_1():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/RoadsExdm2ien.xml')
     assert ds is not None
@@ -955,7 +945,7 @@ def test_ogr_interlis2_1():
 def test_ogr_interlis2_2():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/RoadsExdm2ien.xml,data/ili/RoadsExdm2ien.imd')
     assert ds is not None
@@ -981,15 +971,13 @@ def test_ogr_interlis2_2():
 
     if feat.GetFieldCount() != len(field_values):
         feat.DumpReadable()
-        gdaltest.post_reason('field count wrong.')
-        return 'fail'
+        pytest.fail('field count wrong.')
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     geom = feat.GetGeometryRef()
     assert geom.GetCoordinateDimension() == 2, 'dimension wrong.'
@@ -1002,7 +990,7 @@ def test_ogr_interlis2_2():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     lyr = ds.GetLayerByName('RoadsExdm2ien.RoadsExtended.StreetAxis')
     assert lyr.GetFeatureCount() == 7, 'feature count wrong.'
@@ -1017,7 +1005,7 @@ def test_ogr_interlis2_2():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     lyr = ds.GetLayerByName('RoadsExdm2ben.Roads.LandCover')
     assert lyr.GetFeatureCount() == 12, 'feature count wrong.'
@@ -1032,7 +1020,7 @@ def test_ogr_interlis2_2():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -1043,7 +1031,7 @@ def test_ogr_interlis2_2():
 def test_ogr_interlis2_3():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/RoadsExdm2ien.xml,data/ili/RoadsExdm2ien.imd')
 
@@ -1135,7 +1123,7 @@ def test_ogr_interlis2_3():
 def test_ogr_interlis2_4():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.imd')
     assert ds is not None
@@ -1184,15 +1172,13 @@ def test_ogr_interlis2_4():
 
     if feat.GetFieldCount() != len(field_values):
         feat.DumpReadable()
-        gdaltest.post_reason('field count wrong.')
-        return 'fail'
+        pytest.fail('field count wrong.')
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
             feat.DumpReadable()
             print(feat.GetFieldAsString(i))
-            gdaltest.post_reason('field value wrong.')
-            return 'fail'
+            pytest.fail('field value wrong.')
 
     geom_field_values = [None, None, 'CURVEPOLYGON (COMPOUNDCURVE ((658593.928 254957.714,658511.628 254948.614,658418.028 254938.516,658106.426 254913.918,658192.222 254445.914,658771.228 254619.412,659667.232 254699.606,660369.238 254827.202,661016.442 255010.1,661279.644 255090.198,661866.648 255138.094,661784.45 255601.798,661211.146 255432.8,660320.54 255352.806,659523.436 255206.71,658703.528 254966.814,658624.228 254961.014,658593.928 254957.714)))']
     assert feat.GetGeomFieldCount() == len(geom_field_values), 'geom field count wrong.'
@@ -1217,7 +1203,7 @@ def test_ogr_interlis2_4():
 def test_ogr_interlis_arc1():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', 'TRUE')
     # gdal.SetConfigOption('OGR_ARC_STEPSIZE', '0.96')
@@ -1270,7 +1256,7 @@ def test_ogr_interlis_arc1():
 def test_ogr_interlis_arc2():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
 
@@ -1286,7 +1272,7 @@ def test_ogr_interlis_arc2():
         geom = feat.GetGeomFieldRef(i)
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -1297,7 +1283,7 @@ def test_ogr_interlis_arc2():
 def test_ogr_interlis_cleanup():
 
     if not gdaltest.have_ili_reader:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', None)
 

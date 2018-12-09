@@ -36,6 +36,7 @@ from osgeo import ogr
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Basic testing
@@ -63,10 +64,10 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
     drv = ogr.GetDriverByName(tested_driver)
 
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip', 'PGeoTest.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/Autodesk Test.mdb')
@@ -76,14 +77,13 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
             try:
                 os.stat('tmp/cache/Autodesk Test.mdb')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except:
-            return 'skip'
+            pytest.skip()
 
     ogrtest.pgeo_ds = ogr.Open('tmp/cache/Autodesk Test.mdb')
     if ogrtest.pgeo_ds is None:
-        gdaltest.post_reason('could not open DB. Driver probably misconfigured')
-        return 'skip'
+        pytest.skip('could not open DB. Driver probably misconfigured')
 
     assert ogrtest.pgeo_ds.GetLayerCount() == 3, 'did not get expected layer count'
 
@@ -92,14 +92,12 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
     if feat.GetField('OBJECTID') != 1 or \
        feat.GetField('IDNUM') != 9424 or \
        feat.GetField('OWNER') != 'City':
-        gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected attributes')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (1910941.703951031 445833.57942859828 0,1910947.927691862 445786.43811868131 0)', max_error=0.0000001) != 0:
-        gdaltest.post_reason('did not get expected geometry')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected geometry')
 
     feat_count = lyr.GetFeatureCount()
     assert feat_count == 9418, 'did not get expected feature count'
@@ -116,7 +114,7 @@ def ogr_pgeo_mdb_1():
 
 def ogr_pgeo_2():
     if ogrtest.pgeo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     lyr.ResetReading()
@@ -133,9 +131,8 @@ def ogr_pgeo_2():
     if feat.GetField('OBJECTID') != 1 or \
        feat.GetField('IDNUM') != 9424 or \
        feat.GetField('OWNER') != 'City':
-        gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected attributes')
 
     # Check that geometry filter is well cleared
     lyr.SetSpatialFilter(None)
@@ -150,7 +147,7 @@ def ogr_pgeo_2():
 
 def ogr_pgeo_3():
     if ogrtest.pgeo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     lyr.SetAttributeFilter('OBJECTID=1')
@@ -162,9 +159,8 @@ def ogr_pgeo_3():
     if feat.GetField('OBJECTID') != 1 or \
        feat.GetField('IDNUM') != 9424 or \
        feat.GetField('OWNER') != 'City':
-        gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected attributes')
 
     # Check that attribute filter is well cleared (#3706)
     lyr.SetAttributeFilter(None)
@@ -179,7 +175,7 @@ def ogr_pgeo_3():
 
 def ogr_pgeo_4():
     if ogrtest.pgeo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = ogrtest.pgeo_ds.ExecuteSQL('SELECT * FROM SDPipes WHERE OBJECTID = 1')
 
@@ -190,9 +186,8 @@ def ogr_pgeo_4():
     if feat.GetField('OBJECTID') != 1 or \
        feat.GetField('IDNUM') != 9424 or \
        feat.GetField('OWNER') != 'City':
-        gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected attributes')
 
     ogrtest.pgeo_ds.ReleaseResultSet(sql_lyr)
 
@@ -204,14 +199,13 @@ def ogr_pgeo_4():
 
 def ogr_pgeo_5():
     if ogrtest.pgeo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     feat = lyr.GetFeature(9418)
     if feat.GetField('OBJECTID') != 9418:
-        gdaltest.post_reason('did not get expected attributes')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected attributes')
 
     return 'success'
 
@@ -221,11 +215,11 @@ def ogr_pgeo_5():
 
 def ogr_pgeo_6():
     if ogrtest.pgeo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "tmp/cache/Autodesk Test.mdb"')
 
@@ -239,11 +233,11 @@ def ogr_pgeo_6():
 
 def ogr_pgeo_7():
     if ogrtest.pgeo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "tmp/cache/Autodesk Test.mdb" -sql "SELECT * FROM SDPipes"')
 
@@ -261,7 +255,7 @@ def ogr_pgeo_cleanup():
         ogrtest.other_driver.Register()
 
     if ogrtest.pgeo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.pgeo_ds = None
     return 'success'

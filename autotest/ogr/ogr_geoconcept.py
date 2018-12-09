@@ -37,6 +37,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Simple read test of known file.
@@ -214,7 +215,7 @@ def test_ogr_gxt_multipolygon_singlepart_nohole():
     if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -225,7 +226,7 @@ def test_ogr_gxt_multipolygon_singlepart_nohole():
 def test_ogr_gxt_multipolygon_singlepart_hole():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/geoconcept_multipolygon_singlepart_hole.txt')
     lyr = ds.GetLayer(0)
@@ -234,7 +235,7 @@ def test_ogr_gxt_multipolygon_singlepart_hole():
     if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -245,7 +246,7 @@ def test_ogr_gxt_multipolygon_singlepart_hole():
 def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/geoconcept_multipolygon_twoparts_second_with_hole.txt')
     lyr = ds.GetLayer(0)
@@ -254,7 +255,7 @@ def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
     if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((-10 -10,-10 -9,-9 -9,-10 -10)),((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -265,7 +266,7 @@ def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
 def test_ogr_gxt_line():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/line.gxt')
     lyr = ds.GetLayer(0)
@@ -274,7 +275,7 @@ def test_ogr_gxt_line():
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (440720 3751320,441920 3750120)',
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 

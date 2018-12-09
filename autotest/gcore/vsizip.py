@@ -309,7 +309,7 @@ def test_vsizip_6():
     gdal.PopErrorHandler()
     if f is not None:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
     gdal.VSIFCloseL(fmain)
     fmain = None
 
@@ -327,7 +327,7 @@ def test_vsizip_6():
     gdal.PopErrorHandler()
     if f is not None:
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail()
 
     gdal.Unlink("/vsimem/test6.zip")
 
@@ -408,11 +408,10 @@ def test_vsizip_10():
 
     if ok == 0:
         if gdal.GetLastErrorMsg().find('Recode from CP866 to UTF-8 not supported') >= 0:
-            return 'skip'
+            pytest.skip()
 
-        gdaltest.post_reason('bad content')
         print(content)
-        return 'fail'
+        pytest.fail('bad content')
 
     return 'success'
 
@@ -529,7 +528,7 @@ def test_vsizip_14():
     if f is None:
         gdal.VSIFCloseL(fmain)
         gdal.Unlink('/vsimem/vsizip_14.zip')
-        return 'skip'
+        pytest.skip()
 
     gdal.VSIFWriteL('hello', 1, 5, f)
     gdal.VSIFCloseL(f)
@@ -569,7 +568,7 @@ def test_vsizip_multi_thread():
                 print(i*5, data[i*5:i*5+5], data[i*5-5:i*5+5-5])
                 break
 
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -604,7 +603,7 @@ def test_vsizip_multi_thread_below_threshold():
 def test_vsizip_create_zip64():
 
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     niters = 1000
     s = 'hello' * 1000 * 1000
@@ -639,7 +638,7 @@ def test_vsizip_create_zip64():
 def test_vsizip_create_zip64_stream_larger_than_4G():
 
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     zip_name = 'tmp/vsizip_create_zip64_stream_larger_than_4G.zip'
 

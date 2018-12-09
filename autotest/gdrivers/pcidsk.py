@@ -36,6 +36,7 @@ from osgeo import ogr
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read test of floating point reference data.
@@ -93,7 +94,7 @@ def test_pcidsk_5():
     col = driver.GetMetadataItem('DMD_CREATIONOPTIONLIST')
     if col.find('COMPRESSION') == -1:
         gdaltest.pcidsk_new = 0
-        return 'skip'
+        pytest.skip()
     else:
         gdaltest.pcidsk_new = 1
 
@@ -136,7 +137,7 @@ def test_pcidsk_5():
 def test_pcidsk_6():
 
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -172,7 +173,7 @@ def test_pcidsk_6():
 def test_pcidsk_7():
 
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -236,11 +237,11 @@ def test_pcidsk_8():
 def pcidsk_9():
 
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr_drv.CreateDataSource('/vsimem/pcidsk_9.pix')
     ds.CreateLayer('foo')
@@ -262,7 +263,7 @@ def pcidsk_9():
 
 def test_pcidsk_10():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_10.pix', src_ds)
@@ -291,7 +292,7 @@ def test_pcidsk_10():
 
 def test_pcidsk_11():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
                             options=['INTERLEAVING=TILED', 'TILESIZE=32'])
@@ -304,7 +305,7 @@ def test_pcidsk_11():
 
 def test_pcidsk_12():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
                             options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
@@ -317,10 +318,10 @@ def test_pcidsk_12():
 
 def test_pcidsk_13():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_13.pix', src_ds, options=['INTERLEAVING=TILED', 'COMPRESSION=JPEG'])
@@ -347,7 +348,7 @@ def test_pcidsk_13():
 
 def test_pcidsk_14():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('PCIDSK').Create('/vsimem/pcidsk_14.pix', 1, 1)
     band = ds.GetRasterBand(1).SetDescription('mydescription')
@@ -373,7 +374,7 @@ def test_pcidsk_14():
 
 def test_pcidsk_15():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     # One raster band and vector layer
     ds = gdal.GetDriverByName('PCIDSK').Create('/vsimem/pcidsk_15.pix', 1, 1)
@@ -476,10 +477,10 @@ def test_pcidsk_external_ovr_rrd():
 
 def test_pcidsk_online_1():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/irvine_gcp2.pix', 'irvine_gcp2.pix'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/irvine_gcp2.pix')
 

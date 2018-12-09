@@ -283,12 +283,12 @@ def test_ecrgtoc_4():
 def test_ecrgtoc_online_1():
 
     if not gdaltest.download_file('http://www.falconview.org/trac/FalconView/downloads/17', 'ECRG_Sample.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/ECRG_Sample.zip')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/TOC.xml')
     assert ds is not None

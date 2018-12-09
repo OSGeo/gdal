@@ -36,6 +36,7 @@ import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Open CSV datasource.
@@ -48,7 +49,7 @@ def test_ogr_csv_1():
 
     if gdaltest.csv_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 
 ###############################################################################
@@ -84,7 +85,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
 
 def test_ogr_csv_2():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         assert gdaltest.csv_ds.CreateLayer('foo') is None
@@ -143,7 +144,7 @@ def ogr_csv_copy_layer(layer_name, options):
 
 def test_ogr_csv_3():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Ensure any old copy of our working datasource is cleaned up
@@ -184,7 +185,7 @@ def test_ogr_csv_3():
 
 def test_ogr_csv_4():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     return ogr_csv_check_layer(gdaltest.csv_lyr1, True)
 
@@ -194,7 +195,7 @@ def test_ogr_csv_4():
 
 def test_ogr_csv_5():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Create layer (.csv file)
@@ -209,7 +210,7 @@ def test_ogr_csv_5():
 
 def test_ogr_csv_6():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     return ogr_csv_check_layer(gdaltest.csv_lyr2, True)
 
@@ -220,7 +221,7 @@ def test_ogr_csv_6():
 
 def test_ogr_csv_7():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.csv_tmpds.GetLayer(0)
     assert lyr.GetName() == 'pm1', 'unexpected name for first layer'
@@ -248,7 +249,7 @@ def test_ogr_csv_7():
 
 def test_ogr_csv_8():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_tmpds = ogr.Open('tmp/csvwrk', update=1)
 
@@ -272,7 +273,7 @@ def test_ogr_csv_8():
 
 def test_ogr_csv_9():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_tmpds = ogr.Open('tmp/csvwrk', update=1)
 
@@ -304,7 +305,7 @@ def test_ogr_csv_9():
 
 def test_ogr_csv_10():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.csv_ds.GetLayerByName('prime_meridian')
 
@@ -422,7 +423,7 @@ def ogr_csv_check_testcsvt(lyr):
 def test_ogr_csv_11():
 
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open('data/testcsvt.csv')
@@ -440,7 +441,7 @@ def test_ogr_csv_11():
 def test_ogr_csv_12():
 
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     srclyr = gdaltest.csv_ds.GetLayerByName('testcsvt')
 
@@ -498,7 +499,7 @@ def test_ogr_csv_12():
 def test_ogr_csv_13():
 
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_tmpds = ogr.Open('tmp/csvwrk', update=1)
 
@@ -652,7 +653,7 @@ def test_ogr_csv_13():
 
 def test_ogr_csv_14():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_tmpds = ogr.Open('tmp/csvwrk', update=1)
     gdaltest.csv_ds = None
@@ -671,7 +672,7 @@ def test_ogr_csv_14():
 
 def test_ogr_csv_15():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     return ogr_csv_check_layer(gdaltest.csv_lyr1, True)
 
@@ -682,7 +683,7 @@ def test_ogr_csv_15():
 
 def test_ogr_csv_16():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_tmpds = None
     gdaltest.csv_tmpds = ogr.Open('tmp/csvwrk')
@@ -697,7 +698,7 @@ def test_ogr_csv_16():
 
 def test_ogr_csv_17():
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     csv_ds = ogr.Open('data/wkt.csv')
     csv_lyr = csv_ds.GetLayer(0)
@@ -744,7 +745,7 @@ def test_ogr_csv_18():
 def test_ogr_csv_19():
 
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open('data/testnull.csv')
@@ -774,7 +775,7 @@ def test_ogr_csv_19():
 def test_ogr_csv_20():
 
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_ds = None
 
@@ -819,7 +820,7 @@ def test_ogr_csv_20():
 def test_ogr_csv_21():
 
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_ds = None
 
@@ -1042,7 +1043,7 @@ def test_ogr_csv_27():
        feat.GetField('time_2012') != 2.34 or \
        feat.IsFieldSet('time_2012_flag'):
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -1103,11 +1104,11 @@ def test_ogr_csv_29():
     geom = feat.GetGeomFieldRef('geom__WKT_lyr1_EPSG_4326')
     if geom.ExportToWkt() != 'POINT (1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     geom = feat.GetGeomFieldRef('geom__WKT_lyr2_EPSG_32632')
     if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     return 'success'
@@ -1120,7 +1121,7 @@ def test_ogr_csv_30():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_csv_29')
 
@@ -1140,13 +1141,13 @@ def test_ogr_csv_31():
     if f.GetField('GEONAMEID') != '3038814' or f.GetField('LATITUDE') != 42.5 or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1.48333 42.5)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetField('GEONAMEID') != '3038814':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     assert lyr.GetFeatureCount() == 10
 
@@ -1169,9 +1170,8 @@ def test_ogr_csv_32():
         assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
 
     # Without limit, everything will be detected as string
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1182,9 +1182,8 @@ def test_ogr_csv_32():
         assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
 
     # We limit to the first "1.5" line
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1200,9 +1199,8 @@ def test_ogr_csv_32():
         assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
 
     # Without QUOTED_FIELDS_AS_STRING=YES, str3 will be detected as integer
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1224,9 +1222,8 @@ def test_ogr_csv_32():
         assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == col_type[i] and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
 
     # Test AUTODETECT_WIDTH=YES
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1241,9 +1238,8 @@ def test_ogr_csv_32():
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == col_width[i] and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i])
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
 
     # Test AUTODETECT_WIDTH=STRING_ONLY
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1258,9 +1254,8 @@ def test_ogr_csv_32():
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == col_width[i] and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i])
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
 
     # Test KEEP_SOURCE_COLUMNS=YES
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1276,9 +1271,8 @@ def test_ogr_csv_32():
         assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString or \
            lyr.GetLayerDefn().GetFieldDefn(i + 1).GetNameRef() == lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef() + '_original')
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
 
     # Test warnings
     for fid in [3,  # string in real field
@@ -1297,9 +1291,8 @@ def test_ogr_csv_32():
         lyr.GetFeature(fid)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorType() != gdal.CE_Warning:
-            print(fid)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(fid)
 
     # Test Real -> Integer64 (https://github.com/OSGeo/gdal/issues/343)
     gdal.FileFromMemBuffer('/vsimem/testtypeautodetect.csv',
@@ -1313,7 +1306,7 @@ def test_ogr_csv_32():
     f = lyr.GetNextFeature()
     if f.GetField(0) != 1.2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -1332,9 +1325,8 @@ def test_ogr_csv_33():
         assert (not (i < 10 and lyr.GetLayerDefn().GetFieldDefn(i).GetSubType() != ogr.OFSTBoolean) or \
            (i >= 10 and lyr.GetLayerDefn().GetFieldDefn(i).GetSubType() == ogr.OFSTBoolean))
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
     ds = None
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/subtypes.csv')
@@ -1367,7 +1359,7 @@ def test_ogr_csv_33():
     f = lyr.GetNextFeature()
     if f.GetField(0) != 1 or f.GetField(1) != -32768 or f.GetField(2) != 1.23:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/subtypes.csv')
@@ -1388,16 +1380,14 @@ def test_ogr_csv_34():
     col_values = [1, 10000000000, 10000000000, 10000000000.0]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
     f = lyr.GetNextFeature()
     col_values = [10000000000, 1, 10000000000, 1.0]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if f.GetField(i) != col_values[i]:
-            print(i)
             f.DumpReadable()
-            return 'fail'
+            pytest.fail(i)
     ds = None
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/int64.csv')
@@ -1415,7 +1405,7 @@ def test_ogr_csv_34():
     f = lyr.GetNextFeature()
     if f.GetField(0) != 10000000000:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/int64.csv')
@@ -1440,7 +1430,7 @@ VAL1   "VAL 2"   "VAL 3"
     f = lyr.GetNextFeature()
     if f['FIELD_1'] != 'VAL1' or f['FIELD 2'] != 'VAL 2' or f['FIELD_3'] != 'VAL 3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_35.csv')
@@ -1486,23 +1476,23 @@ def test_ogr_csv_36():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)' or f['id'] != '1' or f['mygeometry'] != 'POINT(1 2)' or f['format'] != 'wkt':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     # Test prefix* pattern
@@ -1512,7 +1502,7 @@ def test_ogr_csv_36():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     # Test *suffix pattern
@@ -1522,7 +1512,7 @@ def test_ogr_csv_36():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     # Test *middle* pattern
@@ -1532,7 +1522,7 @@ def test_ogr_csv_36():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     # Test non matching pattern
@@ -1550,7 +1540,7 @@ def test_ogr_csv_36():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)' or f['id'] != '1' or f['format'] != 'wkt':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_36.csv')
@@ -1576,15 +1566,15 @@ def test_ogr_csv_37():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)' or f['id'] != '1' or f['x'] != 2 or f['y'] != 49 or f['other'] != 'a' or f['z'] != '100':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     # Check Z_POSSIBLE_NAMES
@@ -1594,15 +1584,15 @@ def test_ogr_csv_37():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49 100)' or f['id'] != '1' or f['x'] != 2 or f['y'] != 49 or f['other'] != 'a' or f['z'] != 100:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     # Check KEEP_GEOM_COLUMNS=NO
@@ -1613,7 +1603,7 @@ def test_ogr_csv_37():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)' or f['id'] != '1' or f['other'] != 'a':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_37.csv')
@@ -1644,7 +1634,7 @@ def test_ogr_csv_38():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_38.csv')
@@ -1673,7 +1663,7 @@ def test_ogr_csv_39():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_39.csv')
@@ -1698,7 +1688,7 @@ def test_ogr_csv_40():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)' or f['id'] != '1' or f['the_geom'] != '0101000020E61000004486E281C5C257C068B89DDA998F4640':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     ds = None
 
@@ -1715,7 +1705,7 @@ def test_ogr_csv_40():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt().find('POINT (-95.04') < 0 or f['id'] != '1' or f['longitude'] != '2' or f['latitude'] != '49':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     ds = None
 
@@ -1740,7 +1730,7 @@ def test_ogr_csv_41():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is not None or f['id'] != '1' or f['foo'] != 'bar':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_41.csv')
@@ -1783,7 +1773,7 @@ def test_ogr_csv_43():
     f = lyr.GetNextFeature()
     if f['id'] != 1:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = None
 
     assert lyr.TestCapability(ogr.OLCCreateField) == 1
@@ -1797,12 +1787,12 @@ def test_ogr_csv_43():
     f = lyr.GetFeature(1)
     if f['id'] != 1 or f['foo'] != 'bar' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f['id'] != 1 or f['foo'] != 'bar' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     assert f is None
     assert lyr.GetFeatureCount() == 1
@@ -1815,17 +1805,17 @@ def test_ogr_csv_43():
     f = lyr.GetFeature(2)
     if f['id'] != 2 or f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     assert lyr.GetFeatureCount() == 2
     lyr.SetNextByIndex(1)
     f = lyr.GetNextFeature()
     if f['id'] != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = None
 
     ds = None
@@ -1835,7 +1825,7 @@ def test_ogr_csv_43():
     f = lyr.GetFeature(2)
     if f['id'] != 2 or f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = None
     assert lyr.TestCapability(ogr.OLCDeleteField) == 1
     with gdaltest.error_handler():
@@ -1870,7 +1860,7 @@ def test_ogr_csv_43():
     f = lyr.GetFeature(2)
     if f['id'] != 3:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = None
     assert lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('foo')) == 0
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1878,7 +1868,7 @@ def test_ogr_csv_43():
     assert lyr.CreateFeature(f) == 0
     if f.GetFID() != 3:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     assert lyr.GetExtent() == (2.0, 4.0, 49.0, 51.0)
     assert lyr.DeleteFeature(f.GetFID()) == 0
     assert lyr.GetFeatureCount() == 2
@@ -1936,7 +1926,7 @@ def test_ogr_csv_43():
     f = lyr.GetFeature(2)
     if f['WKT'] != 'POINT (1 2)' or f['_WKT_2'] != 'POINT (3 4)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     assert lyr.SetFeature(f) == 0
     f = None
     assert lyr.DeleteFeature(2) == 0
@@ -1965,14 +1955,14 @@ def test_ogr_csv_44():
     f = lyr.GetFeature(1)
     if f['id'] != 1 or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('id', 2)
     assert lyr.CreateFeature(f) == 0
     f = lyr.GetFeature(2)
     if f['id'] != 2 or f.GetGeometryRef() is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_44.csv')
@@ -2039,7 +2029,7 @@ def test_ogr_csv_46():
     f = lyr.GetNextFeature()
     if f['id'] != '1' or f['X'] != '10' or f['Y'] != '20' or f['Z'] != '3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ds = gdal.OpenEx('/vsimem/ogr_csv_46.csv', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['KEEP_GEOM_COLUMNS=NO', 'X_POSSIBLE_NAMES=X', 'Y_POSSIBLE_NAMES=Y'])
@@ -2056,7 +2046,7 @@ def test_ogr_csv_46():
     f = lyr.GetNextFeature()
     if f['id'] != '1' or f['X'] != '-10' or f['Y'] != '-20' or f['Z'] != '3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ds = gdal.OpenEx('/vsimem/ogr_csv_46.csv', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['KEEP_GEOM_COLUMNS=NO', 'X_POSSIBLE_NAMES=X', 'Y_POSSIBLE_NAMES=Y', 'Z_POSSIBLE_NAMES=Z'])
@@ -2073,7 +2063,7 @@ def test_ogr_csv_46():
     f = lyr.GetNextFeature()
     if f['id'] != '1' or f['X'] != '-1' or f['Y'] != '-2' or f['Z'] != '-3':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_46.csv')
@@ -2103,7 +2093,7 @@ def test_ogr_csv_47():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_47.csv')
@@ -2158,7 +2148,7 @@ def test_ogr_csv_49():
     f = lyr.GetNextFeature()
     if not f.IsFieldNull('str'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_49.csv')
@@ -2302,7 +2292,7 @@ def test_ogr_csv_iter_and_set_feature():
 def test_ogr_csv_cleanup():
 
     if gdaltest.csv_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.csv_ds = None
 

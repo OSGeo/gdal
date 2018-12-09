@@ -40,6 +40,7 @@ import gdaltest
 
 from osgeo import gdal
 from osgeo import gnm
+import pytest
 
 ###############################################################################
 # Create file base network
@@ -58,7 +59,7 @@ def test_gnm_filenetwork_create():
     ogrtest.drv = gdal.GetDriverByName('GNMFile')
 
     if ogrtest.drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogrtest.drv.Create('tmp/', 0, 0, 0, gdal.GDT_Unknown, options=['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'])
     # cast to GNM
@@ -80,7 +81,7 @@ def test_gnm_filenetwork_create():
 def test_gnm_filenetwork_open():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     # cast to GNM
@@ -101,7 +102,7 @@ def test_gnm_filenetwork_open():
 def test_gnm_import():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
 
@@ -133,7 +134,7 @@ def test_gnm_import():
 def test_gnm_autoconnect():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dgn = gnm.CastToGenericNetwork(ds)
@@ -152,7 +153,7 @@ def test_gnm_autoconnect():
 def test_gnm_graph_dijkstra():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
@@ -163,8 +164,7 @@ def test_gnm_graph_dijkstra():
 
     if lyr.GetFeatureCount() == 0:
         dn.ReleaseResultSet(lyr)
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+        pytest.fail('failed to get path')
 
     dn.ReleaseResultSet(lyr)
     dn = None
@@ -179,7 +179,7 @@ import ogrtest
 def test_gnm_graph_kshortest():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
@@ -190,8 +190,7 @@ def test_gnm_graph_kshortest():
 
     if lyr.GetFeatureCount() < 20:
         dn.ReleaseResultSet(lyr)
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+        pytest.fail('failed to get path')
 
     dn.ReleaseResultSet(lyr)
     dn = None
@@ -204,7 +203,7 @@ def test_gnm_graph_kshortest():
 def test_gnm_graph_connectedcomponents():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
@@ -215,8 +214,7 @@ def test_gnm_graph_connectedcomponents():
 
     if lyr.GetFeatureCount() == 0:
         dn.ReleaseResultSet(lyr)
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+        pytest.fail('failed to get path')
 
     dn.ReleaseResultSet(lyr)
     dn = None
@@ -229,14 +227,13 @@ def test_gnm_graph_connectedcomponents():
 def test_gnm_delete():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GNMFile').Delete('tmp/test_gnm')
 
     try:
         os.stat('tmp/test_gnm')
-        gdaltest.post_reason('Expected delete tmp/test_gnm')
-        return 'fail'
+        pytest.fail('Expected delete tmp/test_gnm')
     except OSError:
         pass
 

@@ -892,7 +892,7 @@ def test_osr_esri_21():
 
     # FIXME ?
     if sys.version_info >= (3, 0, 0):
-        return 'skip'
+        pytest.skip()
 
     result = 'success'
 

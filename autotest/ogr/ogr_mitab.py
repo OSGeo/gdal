@@ -53,7 +53,7 @@ def test_ogr_mitab_1():
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -62,7 +62,7 @@ def test_ogr_mitab_1():
 def test_ogr_mitab_2():
 
     if gdaltest.mapinfo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # This should convert to MapInfo datum name 'New_Zealand_GD49'
     WEIRD_SRS = 'PROJCS["NZGD49 / UTM zone 59S",GEOGCS["NZGD49",DATUM["NZGD49",SPHEROID["International 1924",6378388,297,AUTHORITY["EPSG","7022"]],TOWGS84[59.47,-5.04,187.44,0.47,-0.1,1.024,-4.5993],AUTHORITY["EPSG","6272"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4272"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",171],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","27259"]]'
@@ -117,7 +117,7 @@ def test_ogr_mitab_2():
 
 def test_ogr_mitab_3():
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mapinfo_ds = ogr.Open('tmp')
     gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.GetLayer(0)
@@ -154,7 +154,7 @@ def test_ogr_mitab_3():
 def test_ogr_mitab_4():
 
     if gdaltest.mapinfo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.mapinfo_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'")
@@ -177,7 +177,7 @@ def test_ogr_mitab_4():
 def test_ogr_mitab_5():
 
     if gdaltest.mapinfo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
@@ -198,7 +198,7 @@ def test_ogr_mitab_5():
 def test_ogr_mitab_6():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = gdaltest.mapinfo_lyr.GetSpatialRef()
     datum_name = srs.GetAttrValue('PROJCS|GEOGCS|DATUM')
@@ -221,7 +221,7 @@ def test_ogr_mitab_7():
 
     if gdaltest.mapinfo_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -230,7 +230,7 @@ def test_ogr_mitab_7():
 def test_ogr_mitab_8():
 
     if gdaltest.mapinfo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Create memory Layer
@@ -277,7 +277,7 @@ def test_ogr_mitab_8():
 
 def test_ogr_mitab_9():
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mapinfo_ds = ogr.Open('tmp')
     gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.GetLayer(0)
@@ -311,7 +311,7 @@ def test_ogr_mitab_9():
 
 def test_ogr_mitab_10():
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/small.mif')
     lyr = ds.GetLayer(0)
@@ -346,7 +346,7 @@ def test_ogr_mitab_10():
 def test_ogr_mitab_11():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/small_ntf.mif')
     srs = ds.GetLayer(0).GetSpatialRef()
@@ -365,7 +365,7 @@ def test_ogr_mitab_11():
 def test_ogr_mitab_12():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.mapinfo_drv.CreateDataSource('tmp', options=['FORMAT=MIF'])
     lyr = ds.CreateLayer('testlyrdef')
@@ -385,13 +385,13 @@ def test_ogr_mitab_12():
 def test_ogr_mitab_13():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import ogr_gml_read
     ogr_gml_read.ogr_gml_1()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/testlyrdef.tab')
@@ -432,13 +432,13 @@ def test_ogr_mitab_13():
 def test_ogr_mitab_14():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import ogr_gml_read
     ogr_gml_read.ogr_gml_1()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/testlyrdef.mif')
@@ -482,7 +482,7 @@ def test_ogr_mitab_14():
 def test_ogr_mitab_15():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/nomid.mif')
     lyr = ds.GetLayer(0)
@@ -506,7 +506,7 @@ def test_ogr_mitab_15():
     f = lyr.GetNextFeature()
     if f.IsFieldSet(0) or f.GetGeometryRef() is None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdal.Unlink('/vsimem/nomid.mif')
 
     return 'success'
@@ -518,7 +518,7 @@ def test_ogr_mitab_15():
 def test_ogr_mitab_16():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/empty.mif')
     lyr = ds.CreateLayer('empty')
@@ -538,13 +538,13 @@ def test_ogr_mitab_16():
 def test_ogr_mitab_17():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import ogr_gml_read
     ogr_gml_read.ogr_gml_1()
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp')
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
@@ -562,7 +562,7 @@ def test_ogr_mitab_17():
 def test_ogr_mitab_18():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_18.tab')
     sr = osr.SpatialReference()
@@ -596,7 +596,7 @@ def test_ogr_mitab_18():
 def test_ogr_mitab_19():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/utm31.TAB')
     lyr = ds.GetLayer(0)
@@ -604,7 +604,7 @@ def test_ogr_mitab_19():
     # Strict text comparison to check precision
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (485248.12 2261.45)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -617,7 +617,7 @@ def test_ogr_mitab_19():
 def test_ogr_mitab_20():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Pass i==0: without MITAB_BOUNDS_FILE
     # Pass i==1: with MITAB_BOUNDS_FILE and French bounds : first load
@@ -688,16 +688,14 @@ def test_ogr_mitab_20():
             if fmt == 'tab':
                 if i == 1 or i == 2 or i == 4:
                     if feat.GetGeometryRef().ExportToWkt() != 'POINT (700000.001 6600000.001)':
-                        print(fmt)
                         print(i)
                         feat.DumpReadable()
-                        return 'fail'
+                        pytest.fail(fmt)
                 else:
                     if feat.GetGeometryRef().ExportToWkt() == 'POINT (700000.001 6600000.001)':
-                        print(fmt)
                         print(i)
                         feat.DumpReadable()
-                        return 'fail'
+                        pytest.fail(fmt)
 
             ds = None
 
@@ -738,11 +736,10 @@ Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 7
         else:
             expected = '49.00000000002'
         if lyr.GetSpatialRef().ExportToWkt().find(expected) < 0:
-            print(lyr.GetSpatialRef().ExportToWkt())
             print(i)
             gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
             os.unlink('tmp/mitab_bounds.txt')
-            return 'fail'
+            pytest.fail(lyr.GetSpatialRef().ExportToWkt())
         ds = None
         ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_20.tab')
 
@@ -758,7 +755,7 @@ Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 7
 def test_ogr_mitab_21():
 
     if gdaltest.mapinfo_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_21.tab')
     lyr = ds.CreateLayer('test')
@@ -774,7 +771,7 @@ def test_ogr_mitab_21():
     feat = lyr.GetNextFeature()
     if feat.GetField('FID') != 1:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_21.tab')
@@ -1099,7 +1096,7 @@ def test_ogr_mitab_27():
     if f.GetField('intfield') != 0 or f.GetField('realfield') != 0 or f.GetField('stringfield') != '' or \
        f.GetGeometryRef() is not None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f.SetField('intfield', 1)
     f.SetField('realfield', 2.34)
@@ -1114,7 +1111,7 @@ def test_ogr_mitab_27():
     if f.GetField('intfield') != 1 or f.GetField('realfield') != 2.34 or f.GetField('stringfield') != 'foo' or \
        f.GetGeometryRef() is None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.DeleteFeature(f.GetFID())
     ds = None
@@ -1128,7 +1125,7 @@ def test_ogr_mitab_27():
     if f.GetField('intfield') != 1 or f.GetField('realfield') != 2.34 or f.GetField('stringfield') != 'foo' or \
        f.GetGeometryRef() is None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ds = ogr.Open(filename, update=1)
@@ -1169,7 +1166,7 @@ def test_ogr_mitab_27():
     if f.GetField('intfield') != -1 or f.GetField('realfield') != 2.34 or f.GetField('stringfield') != 'foo' or \
        f.GetGeometryRef() is None:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -1273,9 +1270,9 @@ def test_ogr_mitab_29():
             try:
                 os.stat('tmp/cache/compr_symb_deleted_records.tab')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     shutil.copy('tmp/cache/compr_symb_deleted_records.tab', 'tmp')
     shutil.copy('tmp/cache/compr_symb_deleted_records.dat', 'tmp')
@@ -1384,18 +1381,16 @@ def test_ogr_mitab_30(update=0):
             assert lyr2.GetFeatureCount() == j + 1, i
             feat2 = lyr2.GetFeature(j + 1)
             if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j, j):
-                print(j)
                 print(i)
                 feat2.DumpReadable()
-                return 'fail'
+                pytest.fail(j)
             lyr2.ResetReading()
             for _ in range(j + 1):
                 feat2 = lyr2.GetNextFeature()
             if feat2.GetField('ID') != j + 1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j, j):
-                print(j)
                 print(i)
                 feat2.DumpReadable()
-                return 'fail'
+                pytest.fail(j)
             ds2 = None
 
     ds = None
@@ -1774,8 +1769,7 @@ def test_ogr_mitab_36():
     got_g = f.GetGeometryRef()
     if ogrtest.check_feature_geometry(f, got_g, max_error=0.1):
         f.DumpReadable()
-        print(g)
-        return 'fail'
+        pytest.fail(g)
     while True:
         f = lyr.GetNextFeature()
         if f is None:
@@ -1833,7 +1827,7 @@ def test_ogr_mitab_38():
     f = lyr.GetNextFeature()
     if f['field1'] != '' or f['field2'] != 'foo':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -1858,7 +1852,7 @@ def test_ogr_mitab_39():
            f.GetStyleString() != f_ref.GetStyleString():
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -1904,7 +1898,7 @@ def test_ogr_mitab_41():
            f.GetStyleString() != f_ref.GetStyleString():
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -1929,7 +1923,7 @@ def test_ogr_mitab_42():
            f.GetStyleString() != f_ref.GetStyleString():
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     return 'success'
 
@@ -1969,7 +1963,7 @@ def test_ogr_mitab_43():
            f.GetStyleString() != f_ref.GetStyleString():
             f.DumpReadable()
             f_ref.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/all_geoms_block_512.tab')
     gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/all_geoms_block_32256.tab')
@@ -2031,8 +2025,7 @@ def test_ogr_mitab_45():
                                      ' for ' + dsName)
 
             if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-                gdaltest.post_reason('skipping test: recode is not possible')
-                return 'skip'
+                pytest.skip('skipping test: recode is not possible')
 
             for fldName in fldNames:
                 fld_defn = ogr.FieldDefn(fldName, ogr.OFTString)
@@ -2112,8 +2105,7 @@ def test_ogr_mitab_46():
         assert lyr is not None, ('Can\'t get layer 0 from ' + dsName)
 
         if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-            gdaltest.post_reason('skipping test: recode is not possible')
-            return 'skip'
+            pytest.skip('skipping test: recode is not possible')
 
         for fldN, expectedName in enumerate(fldNames):
             fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
@@ -2293,9 +2285,8 @@ def test_ogr_mitab_tab_view():
     assert lyr.GetLayerDefn().GetFieldCount() == 2, 'bad field count'
     f = lyr.GetNextFeature()
     if f['ID'] != 100 or f['foo'] != 'foo':
-        gdaltest.post_reason('bad feature')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail('bad feature')
     ds = None
 
     ds = ogr.Open('data/mitab/view_select_all_first_table_second_table.tab')
@@ -2303,9 +2294,8 @@ def test_ogr_mitab_tab_view():
     assert lyr.GetLayerDefn().GetFieldCount() == 3, 'bad field count'
     f = lyr.GetNextFeature()
     if f['joint_field'] != 1 or f['ID'] != 100 or f['foo'] != 'foo':
-        gdaltest.post_reason('bad feature')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail('bad feature')
     ds = None
 
     return 'success'
@@ -2339,15 +2329,15 @@ def test_ogr_mitab_style():
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'BRUSH(fc:#aabbcc,bc:#ddeeff,id:"mapinfo-brush-2,ogr-brush-0");PEN(w:1px,c:#ddeeff,id:"mapinfo-pen-2,ogr-pen-0")':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
@@ -2387,7 +2377,7 @@ def test_ogr_mitab_tab_write_field_name_with_dot():
 def test_ogr_mitab_cleanup():
 
     if gdaltest.mapinfo_ds is None:
-        return 'skip'
+        pytest.skip()
 
     fl = gdal.ReadDir('/vsimem/')
     if fl is not None:

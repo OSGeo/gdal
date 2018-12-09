@@ -68,8 +68,7 @@ def test_gml_geom(unit):
     if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
         clean_wkt = geom_wkt.ExportToWkt()
         gml_wkt = geom_gml.ExportToWkt()
-        gdaltest.post_reason('WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml))
-        return 'fail'
+        pytest.fail('WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml))
 
     return 'success'
 
@@ -1286,8 +1285,7 @@ def test_gml_invalid_geoms():
         else:
             wkt = geom.ExportToWkt()
             if expected_wkt is None:
-                gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
-                return 'fail'
+                pytest.fail('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
             else:
                 assert wkt == expected_wkt, \
                     ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
@@ -1648,8 +1646,7 @@ def test_gml_Coordinates_ts_cs_decimal():
         geom = ogr.CreateGeometryFromGML(gml)
         wkt = geom.ExportToWkt()
         if expected_wkt is None:
-            gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
-            return 'fail'
+            pytest.fail('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
         else:
             assert wkt == expected_wkt, \
                 ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
@@ -1691,8 +1688,7 @@ def test_gml_with_xml_header_and_comments():
         geom = ogr.CreateGeometryFromGML(gml)
         wkt = geom.ExportToWkt()
         if expected_wkt is None:
-            gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
-            return 'fail'
+            pytest.fail('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
         else:
             assert wkt == expected_wkt, \
                 ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))

@@ -36,6 +36,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Open Memory datasource.
@@ -57,7 +58,7 @@ def test_ogr_mem_1():
 def test_ogr_mem_2():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.mem_ds.TestCapability(ogr.ODsCCreateLayer) != 0, \
         'ODsCCreateLayer TestCapability failed.'
@@ -104,7 +105,7 @@ def test_ogr_mem_2():
 
 def test_ogr_mem_3():
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -137,7 +138,7 @@ def test_ogr_mem_3():
 def test_ogr_mem_4():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     dst_feat = ogr.Feature(feature_def=gdaltest.mem_lyr.GetLayerDefn())
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
@@ -171,7 +172,7 @@ def test_ogr_mem_4():
 def test_ogr_mem_5():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
@@ -190,7 +191,7 @@ def test_ogr_mem_5():
 def test_ogr_mem_6():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.mem_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '2'")
@@ -213,7 +214,7 @@ def test_ogr_mem_6():
 def test_ogr_mem_7():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
@@ -372,7 +373,7 @@ def test_ogr_mem_11():
 def test_ogr_mem_12():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Create memory Layer
@@ -398,7 +399,7 @@ def test_ogr_mem_12():
 def test_ogr_mem_13():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.mem_ds.CreateLayer('listlayer')
     field_defn = ogr.FieldDefn('stringlist', ogr.OFTStringList)
@@ -413,7 +414,7 @@ def test_ogr_mem_13():
         feat.SetFieldStringList
     except AttributeError:
         # OG python bindings
-        return 'skip'
+        pytest.skip()
 
     feat.SetFieldStringList(0, ['a', 'b'])
     assert feat.GetFieldAsStringList(0) == ['a', 'b']
@@ -433,7 +434,7 @@ def test_ogr_mem_13():
 def test_ogr_mem_14():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.mem_ds.CreateLayer('SetNextByIndex')
     field_defn = ogr.FieldDefn('foo', ogr.OFTString)
@@ -662,7 +663,7 @@ def test_ogr_mem_17():
 def test_ogr_mem_cleanup():
 
     if gdaltest.mem_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ogr.SetNonLinearGeometriesEnabledFlag(True)
     gdaltest.mem_ds = None

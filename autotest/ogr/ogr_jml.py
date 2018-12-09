@@ -36,6 +36,7 @@ import gdaltest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 
 def test_ogr_jml_init():
@@ -57,7 +58,7 @@ def test_ogr_jml_init():
 def test_ogr_jml_1():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/test.jml')
     assert ds.GetLayerCount() == 1
@@ -95,7 +96,7 @@ def test_ogr_jml_1():
        feat.GetStyleString() != 'BRUSH(fc:#0000FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 10,10 10,10 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('datetime') != '2014/10/18 21:36:45+02' or \
@@ -103,12 +104,12 @@ def test_ogr_jml_1():
        feat.GetStyleString() != 'PEN(c:#FF00FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (-1 -1)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -402,11 +403,11 @@ def test_ogr_jml_2():
 def test_ogr_jml_3():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.jml')
 
@@ -421,7 +422,7 @@ def test_ogr_jml_3():
 def test_ogr_jml_4():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     # Missing CollectionElement, FeatureElement or GeometryElement
     gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
@@ -602,7 +603,7 @@ def test_ogr_jml_4():
 def test_ogr_jml_read_srs():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/one_point_srid_4326.jml')
     lyr = ds.GetLayer(0)

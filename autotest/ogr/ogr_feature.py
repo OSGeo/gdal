@@ -35,6 +35,7 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
+import pytest
 
 ###############################################################################
 # Create a destination feature type with one field for each field in the source
@@ -595,7 +596,7 @@ def test_ogr_feature_cp_stringlist():
 
 def test_ogr_feature_unicode():
     if sys.version_info >= (3, 0, 0):
-        return 'skip'
+        pytest.skip()
 
     feat_def = ogr.FeatureDefn('test')
 
@@ -646,13 +647,13 @@ def test_ogr_feature_overflow_64bit_integer():
     gdal.PopErrorHandler()
     if f.GetField(0) != 9223372036854775807:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdal.PushErrorHandler()
     f.SetField(0, '-9999999999999999999')
     gdal.PopErrorHandler()
     if f.GetField(0) != -9223372036854775808:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     return 'success'
 
 ###############################################################################
@@ -815,14 +816,14 @@ def test_ogr_feature_default():
        f.GetField('field_int') != 123 or \
        f.IsFieldSet('field_nodefault'):
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = ogr.Feature(feat_def)
     f.SetField('field_string', 'b')
     f.FillUnsetWithDefault()
     if f.GetField('field_string') != 'b':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 

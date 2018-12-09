@@ -59,7 +59,7 @@ def test_gta_1():
 
     gdaltest.gta_drv = gdal.GetDriverByName('GTA')
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -70,7 +70,7 @@ def test_gta_1():
 def test_gta_2():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/byte.gta', src_ds)
@@ -114,7 +114,7 @@ def test_gta_2():
 def test_gta_3():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/gcps.vrt')
 
@@ -148,7 +148,7 @@ def test_gta_3():
 def test_gta_4():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 17)
     src_ds.GetRasterBand(1).Fill(255)
@@ -195,7 +195,7 @@ def test_gta_4():
 def test_gta_5():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
 

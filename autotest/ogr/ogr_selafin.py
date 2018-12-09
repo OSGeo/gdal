@@ -38,6 +38,7 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Create wasp datasource
@@ -56,7 +57,7 @@ def test_ogr_selafin_create_ds():
 
     if gdaltest.selafin_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Add a few points to the datasource
@@ -94,7 +95,7 @@ def test_ogr_selafin_create_elements():
 
     gdaltest.selafin_ds = ogr.Open('tmp/tmp.slf', 1)
     if gdaltest.selafin_ds is None:
-        return 'skip'
+        pytest.skip()
     layerCount = gdaltest.selafin_ds.GetLayerCount()
     assert layerCount >= 2, 'elements layer not created with nodes layer'
     for i in range(layerCount):
@@ -148,7 +149,7 @@ def test_ogr_selafin_set_field():
 
     gdaltest.selafin_ds = ogr.Open('tmp/tmp.slf', 1)
     if gdaltest.selafin_ds is None:
-        return 'skip'
+        pytest.skip()
     layerCount = gdaltest.selafin_ds.GetLayerCount()
     assert layerCount >= 2, 'elements layer not created with nodes layer'
     for i in range(layerCount):

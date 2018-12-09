@@ -48,7 +48,7 @@ def test_ogr_mssqlspatial_1():
     gdaltest.mssqlspatial_ds = None
 
     if ogr.GetDriverByName('MSSQLSpatial') is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mssqlspatial_dsname = gdal.GetConfigOption(
         'OGR_MSSQL_CONNECTION_STRING',
@@ -56,7 +56,7 @@ def test_ogr_mssqlspatial_1():
         'MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd')
     gdaltest.mssqlspatial_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
     if gdaltest.mssqlspatial_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Fetch and store the major-version number of the SQL Server engine in use
     sql_lyr = gdaltest.mssqlspatial_ds.ExecuteSQL(
@@ -85,7 +85,7 @@ def test_ogr_mssqlspatial_1():
 def test_ogr_mssqlspatial_2():
 
     if gdaltest.mssqlspatial_ds is None:
-        return 'skip'
+        pytest.skip()
 
     shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
@@ -140,7 +140,7 @@ def test_ogr_mssqlspatial_2():
 
 def test_ogr_mssqlspatial_3():
     if gdaltest.mssqlspatial_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.mssqlspatial_lyr.GetGeometryColumn() == 'ogr_geometry'
 
@@ -183,7 +183,7 @@ def test_ogr_mssqlspatial_3():
 
 def test_ogr_mssqlspatial_4():
     if gdaltest.mssqlspatial_ds is None:
-        return 'skip'
+        pytest.skip()
 
     dst_feat = ogr.Feature(
         feature_def=gdaltest.mssqlspatial_lyr.GetLayerDefn())
@@ -241,11 +241,11 @@ def test_ogr_mssqlspatial_4():
 def test_ogr_mssqlspatial_test_ogrsf():
 
     if gdaltest.mssqlspatial_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " -ro '" + gdaltest.mssqlspatial_dsname + "' tpoly")
 
@@ -260,7 +260,7 @@ def test_ogr_mssqlspatial_test_ogrsf():
 
 def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
     if gdaltest.mssqlspatial_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Create a feature that specifies a spatial-reference system
     spatial_reference = osr.SpatialReference()
@@ -332,7 +332,7 @@ def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
 def test_ogr_mssqlspatial_cleanup():
 
     if gdaltest.mssqlspatial_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mssqlspatial_ds = None
 

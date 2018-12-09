@@ -49,12 +49,12 @@ def pdf_init():
 
     gdaltest.pdf_drv = gdal.GetDriverByName('PDF')
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     md = gdaltest.pdf_drv.GetMetadata()
     if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md and 'HAVE_PDFIUM' not in md:
         gdaltest.pdf_drv = None
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -115,15 +115,15 @@ def pdf_checksum_available():
 def pdf_online_1():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.agc.army.mil/GeoPDFgallery/Imagery/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf', 'Cherrydale_eDOQQ_1m_0_033_R1C1.pdf'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
     assert ds is not None
@@ -161,12 +161,12 @@ def pdf_online_1():
 def pdf_online_2():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('PDF:1:tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
     assert ds is not None
@@ -199,7 +199,7 @@ def pdf_online_2():
 def pdf_1():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_PDF_DPI', '200')
     ds = gdal.Open('data/adobe_style_geospatial.pdf')
@@ -245,7 +245,7 @@ def pdf_1():
 def pdf_iso32000():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None)
     ret = tst.testCreateCopy(check_minmax=0, check_gt=1, check_srs=True, check_checksum_not_null=pdf_checksum_available())
@@ -259,7 +259,7 @@ def pdf_iso32000():
 def pdf_iso32000_dpi_300():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['DPI=300'])
     ret = tst.testCreateCopy(check_minmax=0, check_gt=1, check_srs=True, check_checksum_not_null=pdf_checksum_available())
@@ -273,7 +273,7 @@ def pdf_iso32000_dpi_300():
 def pdf_ogcbp():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['GEO_ENCODING=OGC_BP'])
@@ -289,7 +289,7 @@ def pdf_ogcbp():
 def pdf_ogcbp_dpi_300():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['GEO_ENCODING=OGC_BP', 'DPI=300'])
@@ -302,7 +302,7 @@ def pdf_ogcbp_dpi_300():
 def pdf_ogcbp_lcc():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     wkt = """PROJCS["NAD83 / Utah North",
     GEOGCS["NAD83",
@@ -351,7 +351,7 @@ def pdf_ogcbp_lcc():
 def pdf_no_compression():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options=['COMPRESS=NONE'])
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
@@ -365,10 +365,10 @@ def pdf_no_compression():
 def pdf_jpeg_compression(filename='byte.tif'):
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', filename, 1, None, options=['COMPRESS=JPEG'])
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
@@ -390,16 +390,16 @@ def pdf_get_J2KDriver(drv_name):
 def pdf_jpx_compression(filename, drv_name=None):
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if drv_name is None:
         if pdf_get_J2KDriver('JP2KAK') is None and \
            pdf_get_J2KDriver('JP2ECW') is None and \
            pdf_get_J2KDriver('JP2OpenJpeg') is None and \
            pdf_get_J2KDriver('JPEG2000') is None:
-            return 'skip'
+            pytest.skip()
     elif pdf_get_J2KDriver(drv_name) is None:
-        return 'skip'
+        pytest.skip()
 
     if drv_name is None:
         options = ['COMPRESS=JPEG2000']
@@ -446,10 +446,10 @@ def pdf_jpeg_compression_rgb():
 def pdf_rgba_default_compression(options_param=None):
     options_param = [] if options_param is None else options_param
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not pdf_checksum_available():
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/rgba.pdf', src_ds, options=options_param)
@@ -481,7 +481,7 @@ def pdf_rgba_default_compression(options_param=None):
     gdal.GetDriverByName('PDF').Delete('tmp/rgba.pdf')
 
     if cs4 < 0:
-        return 'skip'
+        pytest.skip()
 
     assert (content.find('Type = dictionary, Num = 3, Gen = 0') == 0 and \
        content.find('      Type = dictionary, Num = 3, Gen = 0') >= 0), \
@@ -516,7 +516,7 @@ def pdf_jpeg_compression_rgba():
 def pdf_predictor_2():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options=['PREDICTOR=2'])
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
@@ -527,7 +527,7 @@ def pdf_predictor_2():
 def pdf_predictor_2_rgb():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'rgbsmall.tif', 1, None, options=['PREDICTOR=2'])
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
@@ -541,7 +541,7 @@ def pdf_predictor_2_rgb():
 def pdf_tiled():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options=['COMPRESS=DEFLATE', 'TILED=YES'])
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
@@ -552,7 +552,7 @@ def pdf_tiled():
 def pdf_tiled_128():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options=['BLOCKXSIZE=128', 'BLOCKYSIZE=128'])
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
@@ -566,10 +566,10 @@ def pdf_tiled_128():
 def pdf_color_table():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('GIF') is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PDF', 'bug407.gif', 1, None)
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
@@ -583,7 +583,7 @@ def pdf_color_table():
 def pdf_xmp():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/adobe_style_geospatial_with_xmp.pdf')
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options=['WRITE_INFO=NO'])
@@ -591,7 +591,7 @@ def pdf_xmp():
     if out_ds is None:
         # Some Poppler versions cannot re-open the file
         gdal.GetDriverByName('PDF').Delete('tmp/pdf_xmp.pdf')
-        return 'skip'
+        pytest.skip()
 
     ref_md = src_ds.GetMetadata('xml:XMP')
     got_md = out_ds.GetMetadata('xml:XMP')
@@ -614,7 +614,7 @@ def pdf_xmp():
 def pdf_info():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         val = '\xc3\xa9'.decode('UTF-8')
@@ -659,7 +659,7 @@ def pdf_info():
 def pdf_update_gt():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_update_gt.pdf', src_ds)
@@ -725,7 +725,7 @@ def pdf_update_gt():
 def pdf_update_info():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_update_info.pdf', src_ds)
@@ -784,7 +784,7 @@ def pdf_update_info():
 def pdf_update_xmp():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_update_xmp.pdf', src_ds)
@@ -842,7 +842,7 @@ def pdf_update_xmp():
 def pdf_update_gcps(dpi=300):
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     out_filename = 'tmp/pdf_update_gcps.pdf'
 
@@ -951,7 +951,7 @@ def pdf_update_gcps_ogc_bp():
 def pdf_set_5_gcps_ogc_bp(dpi=300):
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     out_filename = 'tmp/pdf_set_5_gcps_ogc_bp.pdf'
 
@@ -1051,7 +1051,7 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
 def pdf_set_neatline(geo_encoding, dpi=300):
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     out_filename = 'tmp/pdf_set_neatline.pdf'
 
@@ -1142,7 +1142,7 @@ def pdf_set_neatline_ogc_bp():
 def pdf_check_identity_iso32000():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     out_filename = 'tmp/pdf_check_identity_iso32000.pdf'
 
@@ -1172,7 +1172,7 @@ def pdf_check_identity_iso32000():
 def pdf_check_identity_ogc_bp():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     out_filename = 'tmp/pdf_check_identity_ogc_bp.pdf'
 
@@ -1204,10 +1204,10 @@ def pdf_check_identity_ogc_bp():
 def pdf_layers():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not pdf_is_poppler() and not pdf_is_pdfium():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/adobe_style_geospatial.pdf')
     layers = ds.GetMetadata_List('LAYERS')
@@ -1219,7 +1219,7 @@ def pdf_layers():
         'did not get expected layers'
 
     if not pdf_checksum_available():
-        return 'skip'
+        pytest.skip()
 
     # Turn a layer off
     gdal.SetConfigOption('GDAL_PDF_LAYERS_OFF', 'New_Data_Frame')
@@ -1256,7 +1256,7 @@ def pdf_layers():
 def pdf_custom_layout():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     js = """button = app.alert({cMsg: 'This file was generated by GDAL. Do you want to visit its website ?', cTitle: 'Question', nIcon:2, nType:2});
 if (button == 4) app.launchURL('http://gdal.org/');"""
@@ -1298,7 +1298,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
 def pdf_extra_rasters():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     subbyte = """<VRTDataset rasterXSize="10" rasterYSize="10">
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
@@ -1365,7 +1365,7 @@ def pdf_extra_rasters():
 def pdf_write_ogr():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     f = gdal.VSIFOpenL('tmp/test.csv', 'wb')
     data = """id,foo,WKT,style
@@ -1458,12 +1458,12 @@ def pdf_write_ogr():
 def pdf_write_ogr_with_reprojection():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import osr_ct
     osr_ct.osr_ct_1()
     if gdaltest.have_proj4 == 0:
-        return 'skip'
+        pytest.skip()
 
     f = gdal.VSIFOpenL('tmp/test.csv', 'wb')
     data = """WKT,id
@@ -1521,10 +1521,10 @@ def pdf_write_ogr_with_reprojection():
 def pdf_jpeg_direct_copy():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte_with_xmp.jpg')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_jpeg_direct_copy.pdf', src_ds, options=['XMP=NO'])
@@ -1557,10 +1557,10 @@ def pdf_jpeg_direct_copy():
 def pdf_jpeg_in_vrt_direct_copy():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
@@ -1605,7 +1605,7 @@ def pdf_jpeg_in_vrt_direct_copy():
 def pdf_georef_on_image(src_filename='data/byte.tif'):
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open(src_filename)
     gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', 'YES')
@@ -1649,7 +1649,7 @@ def pdf_georef_on_image_rgb():
 def pdf_write_huge():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if pdf_is_poppler() or pdf_is_pdfium():
         tmp_filename = '/vsimem/pdf_write_huge.pdf'
@@ -1705,10 +1705,10 @@ def pdf_write_huge():
 def pdf_overviews():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not pdf_is_poppler() and not pdf_is_pdfium():
-        return 'skip'
+        pytest.skip()
     tmp_filename = '/vsimem/pdf_overviews.pdf'
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024, 3)
@@ -1726,8 +1726,7 @@ def pdf_overviews():
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         assert cs == 5934
     elif pdf_is_pdfium():
-        gdaltest.post_reason('Overview expected at this point!')
-        return 'fail'
+        pytest.fail('Overview expected at this point!')
     ds.BuildOverviews('NONE', [2])
     after = ds.GetRasterBand(1).GetOverviewCount()
     assert after == 1
@@ -1746,7 +1745,7 @@ def pdf_overviews():
 def pdf_password():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # User password of this test file is user_password and owner password is
     # owner_password
@@ -1767,7 +1766,7 @@ def pdf_password():
 
     import test_cli_utilities
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Test ASK_INTERACTIVE with wrong password
     cmd_line = test_cli_utilities.get_gdal_translate_path() + ' data/byte_enc.pdf /vsimem/out.tif -q -oo USER_PWD=ASK_INTERACTIVE < tmp/password.txt'
@@ -1794,7 +1793,7 @@ def pdf_password():
 def pdf_multipage():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # byte_and_rgbsmall_2pages.pdf was generated with :
     # 1) gdal_translate gcore/data/byte.tif byte.pdf -of PDF
@@ -1834,7 +1833,7 @@ def pdf_multipage():
 def pdf_metadata():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/pdf_metadata.pdf', 'data/byte.tif', format='PDF', metadataOptions=['FOO=BAR'])
     ds = gdal.Open('tmp/pdf_metadata.pdf')
@@ -1856,7 +1855,7 @@ def pdf_metadata():
 def pdf_pam_georef():
 
     if gdaltest.pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
 

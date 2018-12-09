@@ -37,6 +37,7 @@ from osgeo import gdal
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Test .pbf
@@ -46,16 +47,16 @@ def test_ogr_osm_1(filename='data/test.pbf'):
 
     ogrtest.osm_drv = ogr.GetDriverByName('OSM')
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(filename)
     if ds is None:
         if filename == 'data/test.osm':
             ogrtest.osm_drv_parse_osm = False
             if gdal.GetLastErrorMsg().find('OSM XML detected, but Expat parser not available') == 0:
-                return 'skip'
+                pytest.skip()
 
-        return 'fail'
+        pytest.fail()
     else:
         if filename == 'data/test.osm':
             ogrtest.osm_drv_parse_osm = True
@@ -76,16 +77,16 @@ def test_ogr_osm_1(filename='data/test.pbf'):
        feat.GetFieldAsString('name') != 'Some interesting point' or \
        feat.GetFieldAsString('other_tags') != '"foo"=>"bar","bar"=>"baz"':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (3.0 49.5)')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test lines
     lyr = ds.GetLayer('lines')
@@ -97,25 +98,25 @@ def test_ogr_osm_1(filename='data/test.pbf'):
        feat.GetFieldAsInteger('z_order') != 9 or \
        feat.GetFieldAsString('other_tags') != '"foo"=>"bar"':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 50)')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '6':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 49,3 50,2 50,2 49)')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test multipolygons
     lyr = ds.GetLayer('multipolygons')
@@ -129,34 +130,34 @@ def test_ogr_osm_1(filename='data/test.pbf'):
        feat.GetFieldAsString('type') != 'multipolygon' or \
        feat.GetFieldAsString('natural') != 'forest':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     if filename == 'tmp/ogr_osm_3':
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1))')) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
     else:
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1)))')) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '5' or \
        feat.GetFieldAsString('type') != 'multipolygon' or \
        feat.GetFieldAsString('natural') != 'wood':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_way_id') != '8' or \
        feat.GetFieldAsString('name') != 'standalone_polygon':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test multilinestrings
     lyr = ds.GetLayer('multilinestrings')
@@ -169,21 +170,21 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     if feat.GetFieldAsString('osm_id') != '3' or \
        feat.GetFieldAsString('type') != 'route':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     if filename == 'tmp/ogr_osm_3':
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 50)')) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
     else:
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTILINESTRING ((2 49,3 50))')) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test other_relations
     lyr = ds.GetLayer('other_relations')
@@ -196,16 +197,16 @@ def test_ogr_osm_1(filename='data/test.pbf'):
         if feat.GetFieldAsString('osm_id') != '4' or \
            feat.GetFieldAsString('type') != 'other_type':
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (2 49),LINESTRING (2 49,3 50))')) != 0:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
         feat = lyr.GetNextFeature()
         if feat is not None:
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
 
     if ds.GetDriver().GetName() == 'OSM':
         sql_lyr = ds.ExecuteSQL("GetBytesRead()")
@@ -239,7 +240,7 @@ def test_ogr_osm_2():
 def test_ogr_osm_3(options=None, all_layers=False):
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     filepath = 'tmp/ogr_osm_3'
     if os.path.exists(filepath):
@@ -296,7 +297,7 @@ def test_ogr_osm_3_all_layers():
 def test_ogr_osm_4():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/test.pbf')
     assert ds is not None
@@ -350,7 +351,7 @@ def test_ogr_osm_4():
 def test_ogr_osm_5():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/test.pbf')
     assert ds is not None
@@ -390,11 +391,11 @@ def test_ogr_osm_5():
 def test_ogr_osm_6():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/ogr_osm_6')
@@ -423,14 +424,14 @@ def test_ogr_osm_6():
 def test_ogr_osm_7():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/test.pbf')
     assert ds is not None
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM points LIMIT 10', dialect='SQLite')
     if sql_lyr is None and gdal.GetLastErrorMsg().find('automatic extension loading failed') != 0:
-        return 'skip'
+        pytest.skip()
     count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
@@ -445,7 +446,7 @@ def test_ogr_osm_7():
 def test_ogr_osm_8():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/base-64.osm.pbf')
     assert ds is not None
@@ -457,14 +458,14 @@ def test_ogr_osm_8():
     if feat.GetField('name') != 'Treetops' or \
        ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (-61.7964321 17.1498319)')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayerByName('multipolygons')
     feat = lyr.GetFeature(1113)
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((-61.7780345 17.140634,-61.7777002 17.1406069,-61.7776854 17.1407739,-61.7779131 17.1407923,-61.7779158 17.1407624,-61.7780224 17.140771,-61.7780345 17.140634)))')) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -475,7 +476,7 @@ def test_ogr_osm_8():
 def test_ogr_osm_9():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     old_val = gdal.GetConfigOption('OSM_USE_CUSTOM_INDEXING')
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
@@ -491,7 +492,7 @@ def test_ogr_osm_9():
 def test_ogr_osm_10():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # A file that does not exist.
     ds = ogr.Open('/nonexistent/foo.osm')
@@ -569,7 +570,7 @@ def test_ogr_osm_10():
 def test_ogr_osm_11():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OSM_CONFIG_FILE', 'data/osmconf_alltags.ini')
     ds = ogr.Open('data/test.pbf')
@@ -580,13 +581,13 @@ def test_ogr_osm_11():
        feat.GetFieldAsString('name') != 'Some interesting point' or \
        feat.GetFieldAsString('all_tags') != '"name"=>"Some interesting point","foo"=>"bar","bar"=>"baz"':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayerByName('lines')
     feat = lyr.GetNextFeature()
     if feat.GetField('z_order') != 9:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -598,7 +599,7 @@ def test_ogr_osm_11():
 def test_ogr_osm_12():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/test.pbf')
     for i in range(2):
@@ -637,7 +638,7 @@ def test_ogr_osm_test_uncompressed_dense_false_pbf():
 def test_ogr_osm_13():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_13.osm',
                            """<osm><node id="123" lon="2" lat="49"><tag k="osm_id" v="0"/></node></osm>""")
@@ -646,12 +647,12 @@ def test_ogr_osm_13():
         ds = ogr.Open('/vsimem/ogr_osm_13.osm')
     if ds is None:
         gdal.Unlink('/vsimem/ogr_osm_13.osm')
-        return 'skip'
+        pytest.skip()
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['osm_id'] != '123' or f['other_tags'] != '"osm_id"=>"0"':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_osm_13.osm')
@@ -665,7 +666,7 @@ def test_ogr_osm_13():
 def test_ogr_osm_14():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_14.osm',
                            """<osm>
@@ -690,12 +691,12 @@ def test_ogr_osm_14():
         ds = ogr.Open('/vsimem/ogr_osm_14.osm')
     if ds is None:
         gdal.Unlink('/vsimem/ogr_osm_14.osm')
-        return 'skip'
+        pytest.skip()
     sql_lyr = ds.ExecuteSQL('SELECT * FROM other_relations')
     f = sql_lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((49 2,49.0 2.1,49.1 2.1,49 2)))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
@@ -721,7 +722,7 @@ def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
 def test_ogr_osm_15():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/test.pbf')
 
@@ -740,8 +741,7 @@ def test_ogr_osm_15():
         count += 1
         if f.GetDefnRef().GetName() != l.GetName():
             f.DumpReadable()
-            print(l.GetName())
-            return 'fail'
+            pytest.fail(l.GetName())
 
     assert count == 8
 
@@ -784,7 +784,7 @@ def test_ogr_osm_15():
 def test_ogr_osm_16():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_osm_16.osm',
                            """<osm>
@@ -807,7 +807,7 @@ attributes=foo:baar,foo:bar
     f = lyr.GetNextFeature()
     if f['foo_baar'] != 'val' or f['foo_bar'] != 'val2':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_osm_16.osm')
@@ -823,7 +823,7 @@ attributes=foo:baar,foo:bar
 def test_ogr_osm_17():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         gdal.VectorTranslate('/vsimem/ogr_osm_17', 'data/empty.osm', options='-skip')
@@ -846,7 +846,7 @@ def test_ogr_osm_17():
 def test_ogr_osm_18():
 
     if ogrtest.osm_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/two_points.pbf')
     lyr = ds.GetLayerByName('points')

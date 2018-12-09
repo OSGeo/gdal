@@ -58,7 +58,7 @@ def test_ogr_mysql_1():
     try:
         ogr.GetDriverByName('MySQL')
     except:
-        return 'skip'
+        pytest.skip()
 
     val = gdal.GetConfigOption('OGR_MYSQL_CONNECTION_STRING', None)
     if val is not None:
@@ -68,7 +68,7 @@ def test_ogr_mysql_1():
 
     gdaltest.mysql_ds = ogr.Open(gdaltest.mysql_connection_string, update=1)
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT VERSION()")
     f = sql_lyr.GetNextFeature()
@@ -85,7 +85,7 @@ def test_ogr_mysql_1():
 def test_ogr_mysql_2():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
@@ -139,7 +139,7 @@ def test_ogr_mysql_2():
 
 def test_ogr_mysql_3():
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     assert gdaltest.mysql_lyr.GetGeometryColumn() == 'SHAPE'
 
@@ -183,7 +183,7 @@ def test_ogr_mysql_3():
 def test_ogr_mysql_4():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # E. Rouault : the mySQL driver doesn't seem to like adding new features and
     # iterating over a query at the same time.
@@ -244,7 +244,7 @@ def test_ogr_mysql_4():
 def test_ogr_mysql_5():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # E. Rouault : unlike PostgreSQL driver : None is sorted in last position
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
@@ -266,7 +266,7 @@ def test_ogr_mysql_5():
 def test_ogr_mysql_6():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
 
@@ -299,7 +299,7 @@ def test_ogr_mysql_6():
 def test_ogr_mysql_7():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mysql_lyr.SetAttributeFilter(None)
 
@@ -335,7 +335,7 @@ def test_ogr_mysql_7():
 def test_ogr_mysql_8():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     dst_feat = ogr.Feature(feature_def=gdaltest.mysql_lyr.GetLayerDefn())
 
@@ -366,7 +366,7 @@ def test_ogr_mysql_8():
 def test_ogr_mysql_9():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat = gdaltest.mysql_lyr.GetNextFeature()
@@ -380,8 +380,7 @@ def test_ogr_mysql_9():
 
     if gdaltest.mysql_lyr.SetFeature(feat) != 0:
         feat.Destroy()
-        gdaltest.post_reason('SetFeature() method failed.')
-        return 'fail'
+        pytest.fail('SetFeature() method failed.')
 
     fid = feat.GetFID()
     feat.Destroy()
@@ -401,14 +400,12 @@ def test_ogr_mysql_9():
     feat.SetFID(-10)
     if gdaltest.mysql_lyr.SetFeature(feat) != ogr.OGRERR_NON_EXISTING_FEATURE:
         feat.Destroy()
-        gdaltest.post_reason('Expected failure of SetFeature().')
-        return 'fail'
+        pytest.fail('Expected failure of SetFeature().')
 
     # Test deleting non-existing feature
     if gdaltest.mysql_lyr.DeleteFeature(-10) != ogr.OGRERR_NON_EXISTING_FEATURE:
         feat.Destroy()
-        gdaltest.post_reason('Expected failure of DeleteFeature().')
-        return 'fail'
+        pytest.fail('Expected failure of DeleteFeature().')
 
     feat.Destroy()
 
@@ -421,7 +418,7 @@ def test_ogr_mysql_9():
 def test_ogr_mysql_10():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat = gdaltest.mysql_lyr.GetNextFeature()
@@ -440,8 +437,7 @@ def test_ogr_mysql_10():
         return 'success'
 
     feat.Destroy()
-    gdaltest.post_reason('DeleteFeature() seems to have had no effect.')
-    return 'fail'
+    pytest.fail('DeleteFeature() seems to have had no effect.')
 
 
 ###############################################################################
@@ -450,7 +446,7 @@ def test_ogr_mysql_10():
 def test_ogr_mysql_15():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [169]
 
@@ -473,7 +469,7 @@ def test_ogr_mysql_15():
 def test_ogr_mysql_16():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [169]
 
@@ -499,7 +495,7 @@ def test_ogr_mysql_16():
 def test_ogr_mysql_17():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     count = gdaltest.mysql_ds.GetLayerCount()
     layer = gdaltest.mysql_ds.GetLayerByName('JunkTableName')
@@ -517,7 +513,7 @@ def test_ogr_mysql_17():
 def ogr_mysql_18():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     count = gdaltest.mysql_ds.GetLayerCount()
     layer = gdaltest.mysql_ds.GetLayerByName('geometry_columns')
@@ -535,7 +531,7 @@ def ogr_mysql_18():
 def test_ogr_mysql_19():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.mysql_ds.GetLayerByName('tpoly')
     assert layer is not None, 'did not get tpoly layer'
@@ -561,7 +557,7 @@ def test_ogr_mysql_19():
 def test_ogr_mysql_20():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.mysql_ds.CreateLayer('select', options=['ENGINE=MyISAM'])
     ogrtest.quick_create_layer_def(layer,
@@ -581,7 +577,7 @@ def test_ogr_mysql_20():
     feat = layer.GetNextFeature()
     if feat.desc == 'desc' and feat.select == 'select':
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Test inserting NULL geometries into a table with a spatial index -> must FAIL
@@ -590,7 +586,7 @@ def test_ogr_mysql_20():
 def test_ogr_mysql_21():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
     ogrtest.quick_create_layer_def(layer, [('name', ogr.OFTString)])
@@ -617,7 +613,7 @@ def test_ogr_mysql_21():
 def test_ogr_mysql_22():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     layer = gdaltest.mysql_ds.CreateLayer('tablewithoutspatialindex', geom_type=ogr.wkbPoint,
                                           options=['SPATIAL_INDEX=NO', 'ENGINE=MyISAM'])
@@ -642,7 +638,7 @@ def test_ogr_mysql_22():
 def test_ogr_mysql_23():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     fields = ('zero', 'widthonly', 'onedecimal', 'twentynine', 'thirtyone')
     values = (1, 2, 1.1, 0.12345678901234567890123456789, 0.1234567890123456789012345678901)
@@ -680,11 +676,11 @@ def test_ogr_mysql_23():
 def test_ogr_mysql_24():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " '" + gdaltest.mysql_connection_string + "' tpoly")
 
@@ -699,7 +695,7 @@ def test_ogr_mysql_24():
 def test_ogr_mysql_72():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Regular layer with 32 bit IDs
     lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type=ogr.wkbNone)
@@ -729,7 +725,7 @@ def test_ogr_mysql_72():
     f = lyr.GetNextFeature()
     if f.GetFID() != 123456789012345:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -740,7 +736,7 @@ def test_ogr_mysql_72():
 def test_ogr_mysql_25():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
@@ -791,7 +787,7 @@ def test_ogr_mysql_25():
 def test_ogr_mysql_26():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
 
@@ -859,7 +855,7 @@ def test_ogr_mysql_26():
        not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime') or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
 
@@ -872,7 +868,7 @@ def test_ogr_mysql_26():
 def test_ogr_mysql_longlat():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('WGS84')
@@ -911,7 +907,7 @@ def test_ogr_mysql_longlat():
 def test_ogr_mysql_cleanup():
 
     if gdaltest.mysql_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE tpoly')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE `select`')

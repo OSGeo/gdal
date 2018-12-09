@@ -36,6 +36,7 @@ import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 
 wkts = [('POINT (0 1 2)', 'points', 0),
@@ -52,7 +53,7 @@ def test_ogr_pcidsk_1():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr_drv.CreateDataSource('tmp/ogr_pcidsk_1.pix')
 
@@ -111,8 +112,7 @@ def test_ogr_pcidsk_1():
         assert feat is not None, layername
         if feat.GetGeometryRef().ExportToWkt() != wkt:
             feat.DumpReadable()
-            print(layername)
-            return 'fail'
+            pytest.fail(layername)
 
     ds = None
 
@@ -126,7 +126,7 @@ def test_ogr_pcidsk_2():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/ogr_pcidsk_1.pix')
     assert ds.GetLayerCount() == 2 + len(wkts)
@@ -158,8 +158,7 @@ def test_ogr_pcidsk_2():
         assert feat is not None, layername
         if feat.GetGeometryRef().ExportToWkt() != wkt:
             feat.DumpReadable()
-            print(layername)
-            return 'fail'
+            pytest.fail(layername)
 
     ds = None
 
@@ -173,10 +172,10 @@ def test_ogr_pcidsk_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_pcidsk_1.pix')
 
@@ -202,10 +201,10 @@ def test_ogr_pcidsk_3():
 def test_ogr_pcidsk_4():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('../gdrivers/data/utm.pix')
     assert ds is None
@@ -220,10 +219,10 @@ def test_ogr_pcidsk_4():
 def test_ogr_pcidsk_5():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('../gdrivers/data/utm.pix', update=1)
     assert ds is not None
@@ -237,7 +236,7 @@ def test_ogr_pcidsk_5():
 def test_ogr_pcidsk_add_field_to_non_empty_layer():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     tmpfile = '/vsimem/tmp.pix'
     ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
@@ -265,7 +264,7 @@ def test_ogr_pcidsk_add_field_to_non_empty_layer():
 def test_ogr_pcidsk_too_many_layers():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     tmpfile = '/vsimem/tmp.pix'
     ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
@@ -286,10 +285,10 @@ def test_ogr_pcidsk_too_many_layers():
 def test_ogr_pcidsk_online_1():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/polygon.pix', 'polygon.pix'):
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/cache/polygon.pix')
     assert ds is not None
@@ -303,7 +302,7 @@ def test_ogr_pcidsk_online_1():
     geom = 'POLYGON ((479819.84375 4765180.5 0,479690.1875 4765259.5 0,479647.0 4765369.5 0,479730.375 4765400.5 0,480039.03125 4765539.5 0,480035.34375 4765558.5 0,480159.78125 4765610.5 0,480202.28125 4765482.0 0,480365.0 4765015.5 0,480389.6875 4764950.0 0,480133.96875 4764856.5 0,480080.28125 4764979.5 0,480082.96875 4765049.5 0,480088.8125 4765139.5 0,480059.90625 4765239.5 0,480019.71875 4765319.5 0,479980.21875 4765409.5 0,479909.875 4765370.0 0,479859.875 4765270.0 0,479819.84375 4765180.5 0))'
     if ogrtest.check_feature_geometry(feat, geom) != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     return 'success'
 
@@ -315,13 +314,13 @@ def test_ogr_pcidsk_online_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/polygon.pix', 'polygon.pix'):
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/cache/polygon.pix')
 

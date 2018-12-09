@@ -33,6 +33,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Open DODS datasource.
@@ -43,14 +44,14 @@ def ogr_dods_1():
     ogrtest.dods_drv = ogr.GetDriverByName('DODS')
 
     if ogrtest.dods_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('DODS_AIS_FILE', 'data/ais.xml')
 
     srv = 'http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp?&_id=1'
     if gdaltest.gdalurlopen(srv) is None:
         gdaltest.dods_ds = None
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_ds = ogr.Open('DODS:' + srv)
 
@@ -66,8 +67,7 @@ def ogr_dods_1():
 
     if gdaltest.dods_profiles is None:
         gdaltest.dods_ds = None
-        gdaltest.post_reason('profiles layer missing, likely AIS stuff not working.')
-        return 'fail'
+        pytest.fail('profiles layer missing, likely AIS stuff not working.')
     return 'success'
 
 ###############################################################################
@@ -78,7 +78,7 @@ def ogr_dods_1():
 def ogr_dods_2():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_profiles.ResetReading()
     feat = gdaltest.dods_profiles.GetNextFeature()
@@ -94,8 +94,7 @@ def ogr_dods_2():
     feat = gdaltest.dods_profiles.GetNextFeature()
     if feat is not None:
         feat.Destroy()
-        gdaltest.post_reason('got more than expected number of features.')
-        return 'fail'
+        pytest.fail('got more than expected number of features.')
 
     return 'success'
 
@@ -107,7 +106,7 @@ def ogr_dods_2():
 def ogr_dods_3():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_normalized.ResetReading()
     expect = [0, 10, 20, 30, 39]
@@ -133,8 +132,7 @@ def ogr_dods_3():
     feat = gdaltest.dods_normalized.GetNextFeature()
     if feat is not None:
         feat.Destroy()
-        gdaltest.post_reason('got more than expected number of features.')
-        return 'fail'
+        pytest.fail('got more than expected number of features.')
 
     return 'success'
 
@@ -146,7 +144,7 @@ def ogr_dods_3():
 def ogr_dods_4():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_lines.ResetReading()
     feat = gdaltest.dods_lines.GetNextFeature()
@@ -165,8 +163,7 @@ def ogr_dods_4():
     feat = gdaltest.dods_lines.GetNextFeature()
     if feat is not None:
         feat.Destroy()
-        gdaltest.post_reason('got more than expected number of features.')
-        return 'fail'
+        pytest.fail('got more than expected number of features.')
 
     return 'success'
 
@@ -178,11 +175,11 @@ def ogr_dods_4():
 def ogr_dods_5():
 
     if ogrtest.dods_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srv = 'http://uhslc1.soest.hawaii.edu/cgi-bin/nph-nc/fast/m004.nc.dds'
     if gdaltest.gdalurlopen(srv) is None:
-        return 'skip'
+        pytest.skip()
 
     grid_ds = ogr.Open('DODS:' + srv)
     assert grid_ds is not None
@@ -202,7 +199,7 @@ def ogr_dods_5():
 def ogr_dods_cleanup():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_profiles = None
     gdaltest.dods_lines = None

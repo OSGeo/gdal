@@ -34,6 +34,7 @@ import sys
 
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -41,7 +42,7 @@ import test_cli_utilities
 
 def test_gdalsrsinfo_1():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalsrsinfo_path() + ' ../gcore/data/byte.tif')
     assert (err is None or err == ''), 'got error/warning'
@@ -57,7 +58,7 @@ def test_gdalsrsinfo_1():
 
 def test_gdalsrsinfo_2():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../gcore/data/byte.tif')
@@ -72,7 +73,7 @@ def test_gdalsrsinfo_2():
 
 def test_gdalsrsinfo_3():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt ../gcore/data/byte.tif')
@@ -90,7 +91,7 @@ def test_gdalsrsinfo_3():
 
 def test_gdalsrsinfo_4():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_esri ../gcore/data/byte.tif')
@@ -105,7 +106,7 @@ def test_gdalsrsinfo_4():
 
 def test_gdalsrsinfo_5():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_noct ../gcore/data/byte.tif')
@@ -122,7 +123,7 @@ def test_gdalsrsinfo_5():
 
 def test_gdalsrsinfo_6():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_simple ../gcore/data/byte.tif')
@@ -165,7 +166,7 @@ def test_gdalsrsinfo_6():
 
 def test_gdalsrsinfo_7():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o mapinfo ../gcore/data/byte.tif')
@@ -180,7 +181,7 @@ def test_gdalsrsinfo_7():
 
 def test_gdalsrsinfo_8():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt -p EPSG:4326')
@@ -205,7 +206,7 @@ def test_gdalsrsinfo_8():
 
 def test_gdalsrsinfo_9():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdalsrsinfo_path() + ' nonexistent_file')
@@ -220,7 +221,7 @@ def test_gdalsrsinfo_9():
 
 def test_gdalsrsinfo_10():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
     if sys.platform == 'win32':
@@ -242,7 +243,7 @@ def test_gdalsrsinfo_10():
 
 def test_gdalsrsinfo_11():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],BADAUTHORITY["EPSG","4326"]]'
     if sys.platform == 'win32':
@@ -264,7 +265,7 @@ def test_gdalsrsinfo_11():
 
 def test_gdalsrsinfo_12():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt EPSG:4326')
@@ -279,7 +280,7 @@ def test_gdalsrsinfo_12():
 
 def test_gdalsrsinfo_13():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt "+proj=longlat +datum=WGS84 +no_defs"')
@@ -294,7 +295,7 @@ def test_gdalsrsinfo_13():
 
 def test_gdalsrsinfo_14():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 /vsizip/../gcore/data/byte.tif.zip')
@@ -309,7 +310,7 @@ def test_gdalsrsinfo_14():
 
 def test_gdalsrsinfo_14bis():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../ogr/data/Stacks.shp')
@@ -324,7 +325,7 @@ def test_gdalsrsinfo_14bis():
 
 def test_gdalsrsinfo_15():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../osr/data/lcc_esri.prj')
@@ -339,7 +340,7 @@ def test_gdalsrsinfo_15():
 
 def test_gdalsrsinfo_16():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     cmd = test_cli_utilities.get_gdalsrsinfo_path() +\
         ' GTIFF_RAW:../gcore/data/byte.tif'
@@ -347,8 +348,7 @@ def test_gdalsrsinfo_16():
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
-        gdaltest.post_reason('gdalsrsinfo execution failed')
-        return 'fail'
+        pytest.fail('gdalsrsinfo execution failed')
 
     assert err == ''
 
@@ -360,7 +360,7 @@ def test_gdalsrsinfo_16():
 
 def test_gdalsrsinfo_17():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Zero match
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +

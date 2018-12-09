@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Create a MEM dataset, and set some data, then test it.
@@ -113,7 +114,7 @@ def test_mem_2():
     try:
         import ctypes
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     for libname in ['msvcrt', 'libc.so.6']:
         try:
@@ -124,7 +125,7 @@ def test_mem_2():
             break
 
     if crt is None:
-        return 'skip'
+        pytest.skip()
 
     malloc = crt.malloc
     malloc.argtypes = [ctypes.c_size_t]
@@ -139,7 +140,7 @@ def test_mem_2():
     height = 3
     p = malloc(width * height * 4)
     if p is None:
-        return 'skip'
+        pytest.skip()
     float_p = ctypes.cast(p, ctypes.POINTER(ctypes.c_float))
 
     # build ds name.
@@ -153,25 +154,22 @@ def test_mem_2():
 
         ds = gdal.Open(dsname)
         if ds is None:
-            gdaltest.post_reason('opening MEM dataset failed.')
             free(p)
-            return 'fail'
+            pytest.fail('opening MEM dataset failed.')
 
         chksum = ds.GetRasterBand(1).Checksum()
         if chksum != 750:
-            gdaltest.post_reason('checksum failed.')
             print(chksum)
             free(p)
-            return 'fail'
+            pytest.fail('checksum failed.')
 
         ds.GetRasterBand(1).Fill(100.0)
         ds.FlushCache()
 
         if float_p[0] != 100.0:
             print(float_p[0])
-            gdaltest.post_reason('fill seems to have failed.')
             free(p)
-            return 'fail'
+            pytest.fail('fill seems to have failed.')
 
         ds = None
 
@@ -254,7 +252,7 @@ def test_mem_5():
 def test_mem_6():
 
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('MEM')
 
@@ -348,11 +346,10 @@ def test_mem_9():
         ref_data = src_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5)
         got_data = out_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5)
         if ref_data != got_data:
-            print(interleave)
             import struct
             print(struct.unpack('B' * 4 * 5, ref_data))
             print(struct.unpack('B' * 4 * 5, got_data))
-            return 'fail'
+            pytest.fail(interleave)
 
         ref_data = src_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_line_space=100)
         got_data = out_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_line_space=100)

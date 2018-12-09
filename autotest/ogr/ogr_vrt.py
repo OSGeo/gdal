@@ -37,6 +37,7 @@ from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Open VRT datasource.
@@ -50,7 +51,7 @@ def test_ogr_vrt_1():
 
     if gdaltest.vrt_ds is not None:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Verify the geometries, in the "test2" layer based on x,y,z columns.
@@ -60,7 +61,7 @@ def test_ogr_vrt_1():
 
 def test_ogr_vrt_2():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.vrt_ds.GetLayerByName('test2')
 
@@ -96,7 +97,7 @@ def test_ogr_vrt_2():
 
 def test_ogr_vrt_3():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.vrt_ds.GetLayerByName('test3')
 
@@ -127,7 +128,7 @@ def test_ogr_vrt_3():
 
 def test_ogr_vrt_4():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.vrt_ds.GetLayerByName('test3')
     lyr.ResetReading()
@@ -182,7 +183,7 @@ def test_ogr_vrt_5():
 def test_ogr_vrt_6():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.vrt_ds.GetLayerByName('test3')
     lyr.ResetReading()
@@ -199,7 +200,7 @@ def test_ogr_vrt_6():
 
 def test_ogr_vrt_7():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.vrt_ds.GetLayerByName('test4')
 
@@ -232,7 +233,7 @@ def test_ogr_vrt_7():
 
 def test_ogr_vrt_8():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test4"><SrcDataSource relativeToVRT="0">data/flat.dbf</SrcDataSource><SrcSQL>SELECT * FROM flat</SrcSQL><FID>fid</FID><GeometryType>wkbPoint</GeometryType><GeometryField encoding="PointFromColumns" x="x" y="y" z="z"/></OGRVRTLayer></OGRVRTDataSource>'
     ds = ogr.Open(vrt_xml)
@@ -266,7 +267,7 @@ def test_ogr_vrt_8():
 def test_ogr_vrt_9():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.vrt_ds.GetLayerByName('test3')
     lyr.SetAttributeFilter("other = 'Second'")
@@ -295,7 +296,7 @@ def test_ogr_vrt_9():
 
 def test_ogr_vrt_10():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test"><SrcDataSource relativeToVRT="0">data/testpoly.shp</SrcDataSource><SrcLayer>testpoly</SrcLayer></OGRVRTLayer></OGRVRTDataSource>'
     vrt_ds = ogr.Open(vrt_xml)
@@ -316,7 +317,7 @@ def test_ogr_vrt_10():
 
 def test_ogr_vrt_11():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test.csv', 'wb')
     f.write('x,val1,y,val2,style\n'.encode('ascii'))
@@ -348,7 +349,7 @@ def test_ogr_vrt_11():
     feat = vrt_lyr.GetNextFeature()
     if feat.GetStyleString() != 'PEN(c:#FF0000,w:5pt,p:"2px 1pt")':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = ogr.Feature(vrt_lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POINT (3 50)')
@@ -361,7 +362,7 @@ def test_ogr_vrt_11():
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POINT (3 50)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     assert feat.GetFieldAsString('val1') == 'val21'
 
     # The x and y fields are considered as string by default, so spatial
@@ -405,7 +406,7 @@ def test_ogr_vrt_11():
 
 def test_ogr_vrt_12():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test.csv', 'wb')
     f.write('wkt_geom,val1,val2\n'.encode('ascii'))
@@ -447,7 +448,7 @@ def test_ogr_vrt_12():
 
 def test_ogr_vrt_13():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test.csv', 'wb')
     f.write('wkb_geom,val1,val2\n'.encode('ascii'))
@@ -488,7 +489,7 @@ def test_ogr_vrt_13():
 
 def test_ogr_vrt_14():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
@@ -553,11 +554,10 @@ def test_ogr_vrt_14():
         if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
             vrt_ds = None
             ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
-            return 'skip'
+            pytest.skip()
 
         print(vrt_lyr.GetFeatureCount())
-        gdaltest.post_reason('did not get one feature on rect spatial filter.')
-        return 'fail'
+        pytest.fail('did not get one feature on rect spatial filter.')
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 48.5)
     assert vrt_lyr.GetFeatureCount() == 0, 'Did not get expected zero feature count.'
@@ -577,7 +577,7 @@ def test_ogr_vrt_14():
 
 def test_ogr_vrt_15():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test.csv', 'wb')
     f.write('wkt_geom,val1,val2\n'.encode('ascii'))
@@ -630,7 +630,7 @@ def test_ogr_vrt_15():
 
 def test_ogr_vrt_16():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test.csvt', 'wb')
     f.write('Real,Real,String,String\n'.encode('ascii'))
@@ -672,8 +672,8 @@ def test_ogr_vrt_16():
             vrt_ds = None
             os.remove('tmp/test.csv')
             os.remove('tmp/test.csvt')
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail()
 
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 48.5)
     assert vrt_lyr.GetFeatureCount() == 0
@@ -695,7 +695,7 @@ def test_ogr_vrt_16():
 def test_ogr_vrt_17():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     vrt_xml = """
 <OGRVRTDataSource>
@@ -745,7 +745,7 @@ def test_ogr_vrt_17():
 def test_ogr_vrt_18():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     vrt_xml = """
 <OGRVRTDataSource>
@@ -775,10 +775,10 @@ def test_ogr_vrt_18():
 def test_ogr_vrt_19_optimized():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_vrt.vrt')
 
@@ -793,10 +793,10 @@ def test_ogr_vrt_19_optimized():
 def test_ogr_vrt_19_nonoptimized():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_nonoptimized_vrt.vrt')
 
@@ -810,7 +810,7 @@ def test_ogr_vrt_19_nonoptimized():
 
 def test_ogr_vrt_20():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
@@ -873,11 +873,10 @@ def test_ogr_vrt_20():
         if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
             vrt_ds = None
             ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
-            return 'skip'
+            pytest.skip()
 
         print(vrt_lyr.GetFeatureCount())
-        gdaltest.post_reason('did not get one feature on rect spatial filter.')
-        return 'fail'
+        pytest.fail('did not get one feature on rect spatial filter.')
 
     assert vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) == 1, \
         'Fast feature count not set.'
@@ -907,7 +906,7 @@ def test_ogr_vrt_20():
     if feat.GetGeometryRef() is None or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     vrt_ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
@@ -921,7 +920,7 @@ def test_ogr_vrt_20():
 def ogr_vrt_21_internal():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
@@ -1034,7 +1033,7 @@ def test_ogr_vrt_21():
 def ogr_vrt_22_internal():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
@@ -1162,8 +1161,7 @@ def test_ogr_vrt_22():
 def test_ogr_vrt_23(shared_ds_flag=''):
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would crash')
-        return 'skip'
+        pytest.skip('would crash')
 
     rec1 = """<OGRVRTDataSource>
     <OGRVRTLayer name="rec1">
@@ -1273,11 +1271,11 @@ def test_ogr_vrt_25():
 def test_ogr_vrt_26():
 
     if ogr.GetDriverByName('SQLite') is None:
-        return 'skip'
+        pytest.skip()
 
     sqlite_ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_vrt_26.db')
     if sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = sqlite_ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
@@ -1561,7 +1559,7 @@ def test_ogr_vrt_29():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT(426857.987717275274917 5427937.523466162383556)') != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
 
@@ -1578,7 +1576,7 @@ def test_ogr_vrt_29():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT(500000 0)') != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -1629,21 +1627,21 @@ def test_ogr_vrt_29():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT(3.0 0.0)') != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetAttributeFilter('id = -99')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT(3.0 0.0)') != 0:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetAttributeFilter('id = -100')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 1000)
@@ -1665,14 +1663,14 @@ def test_ogr_vrt_29():
     fid = feat.GetFID()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     feat = lyr.GetFeature(fid)
     gdal.PopErrorHandler()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = None
 
     lyr.DeleteFeature(fid)
@@ -1839,9 +1837,8 @@ def test_ogr_vrt_30():
                         'did not get expected value'
                     assert not feat.IsFieldSet("id3"), 'did not get expected value'
                     if ogrtest.check_feature_geometry(feat, 'POINT(%f %f)' % (2 + int(i / 5) / 5.0, 49 + int(i % 5) / 5.0)) != 0:
-                        gdaltest.post_reason('did not get expected value')
                         feat.DumpReadable()
-                        return 'fail'
+                        pytest.fail('did not get expected value')
                 else:
                     assert feat.GetFID() == i, 'did not get expected value'
                     assert not feat.IsFieldSet("id1"), 'did not get expected value'
@@ -2266,10 +2263,10 @@ def test_ogr_vrt_33():
                 feat = lyr.GetNextFeature()
                 if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)':
                     feat.DumpReadable()
-                    return 'fail'
+                    pytest.fail()
                 if feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
                     feat.DumpReadable()
-                    return 'fail'
+                    pytest.fail()
 
         if test_cli_utilities.get_test_ogrsf_path() is not None:
             f = open('tmp/ogr_vrt_33.vrt', 'wb')
@@ -2315,7 +2312,7 @@ def test_ogr_vrt_33():
                 feat = lyr.GetNextFeature()
                 if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0.5 1.0,1 1,1.0 0.5,0.5 0.5,0.5 1.0))':
                     feat.DumpReadable()
-                    return 'fail'
+                    pytest.fail()
 
         if test_cli_utilities.get_test_ogrsf_path() is not None:
             f = open('tmp/ogr_vrt_33.vrt', 'wb')
@@ -2349,7 +2346,7 @@ def test_ogr_vrt_33():
             feat = lyr.GetNextFeature()
             if feat.GetGeomFieldRef(0) is not None:
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail()
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
         f = open('tmp/ogr_vrt_33.vrt', 'wb')
@@ -2377,10 +2374,10 @@ def test_ogr_vrt_33():
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (-1 -2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     lyr.SetSpatialFilterRect(1, 0, 0, 0, 0)
     assert lyr.GetFeatureCount() == 0
     lyr.SetSpatialFilterRect(1, -1.1, -2.1, -0.9, -1.9)
@@ -2393,14 +2390,14 @@ def test_ogr_vrt_33():
     if feat.GetGeomFieldRef(0) is not None or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (-1 -2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     lyr.SetIgnoredFields(['foo'])
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef(1) is not None or \
        feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
         f = open('tmp/ogr_vrt_33.vrt', 'wb')
@@ -2428,7 +2425,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(0).ExportToWkt() == 'POINT (1 2)' or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Warped layer with explicit WarpedGeomFieldName (that is the first field)
     ds_str = """<OGRVRTDataSource>
@@ -2448,7 +2445,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(0).ExportToWkt() == 'POINT (1 2)' or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Warped layer with explicit WarpedGeomFieldName (that does NOT exist)
     ds_str = """<OGRVRTDataSource>
@@ -2483,7 +2480,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(1).ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' or \
        feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # UnionLayer with default union strategy
 
@@ -2514,7 +2511,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(2) is not None or \
        feat.GetGeomFieldRef(3) is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
@@ -2522,7 +2519,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(2) is not None or \
        feat.GetGeomFieldRef(3).ExportToWkt() != 'POINT (5 6)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -2561,13 +2558,13 @@ def test_ogr_vrt_33():
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)' or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((1 1,1 2,2 2,2 1,1 1))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -2607,13 +2604,13 @@ def test_ogr_vrt_33():
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)' or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((1 1,1 2,2 2,2 1,1 1))':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -2653,7 +2650,7 @@ def test_ogr_vrt_33():
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' or \
        feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     ds = None
 
@@ -2704,7 +2701,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(1).ExportToWkt().find('POINT (') != 0 or \
        feat.GetGeomFieldRef(1).ExportToWkt() == 'POINT (1 2)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
@@ -2765,7 +2762,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(2) is not None or \
        feat.GetGeomFieldRef(3) is not None:
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = sql_lyr.GetNextFeature()
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
@@ -2773,7 +2770,7 @@ def test_ogr_vrt_33():
        feat.GetGeomFieldRef(2) is not None or \
        feat.GetGeomFieldRef(3).ExportToWkt() != 'POINT (5 6)':
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
@@ -2785,7 +2782,7 @@ def test_ogr_vrt_33():
 
 def test_ogr_vrt_34():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test.csv', 'wb')
     f.write('x,y\n'.encode('ascii'))
@@ -2814,7 +2811,7 @@ def test_ogr_vrt_34():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     os.unlink('tmp/test.csv')
@@ -2827,7 +2824,7 @@ def test_ogr_vrt_34():
 
 def test_ogr_vrt_35():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test.csv', 'wb')
     f.write('c1,c2,WKT,WKT2\n'.encode('ascii'))
@@ -2891,7 +2888,7 @@ def test_ogr_vrt_35():
 
 def test_ogr_vrt_36():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_vrt_36.shp')
     lyr = ds.CreateLayer('ogr_vrt_36', geom_type=ogr.wkbPoint)
@@ -2923,7 +2920,7 @@ def test_ogr_vrt_36():
     f = lyr.GetNextFeature()
     if f['id'] != '1':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_vrt_36.shp')
@@ -2957,7 +2954,7 @@ def test_ogr_vrt_37():
 
 def test_ogr_vrt_38():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     types = [['Point', ogr.wkbPoint],
              ['LineString', ogr.wkbLineString],
@@ -3010,7 +3007,7 @@ def test_ogr_vrt_38():
 
 def test_ogr_vrt_39():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_39.csv',
                            """my_fid,val
@@ -3038,7 +3035,7 @@ def test_ogr_vrt_39():
     f = lyr.GetNextFeature()
     if f['val'] != 2:
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_vrt_39.csv')
@@ -3053,7 +3050,7 @@ def test_ogr_vrt_39():
 
 def test_ogr_vrt_40():
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_40.csv',
                            """id,x,y,z,m
@@ -3076,7 +3073,7 @@ def test_ogr_vrt_40():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_vrt_40.csv')
@@ -3108,7 +3105,7 @@ def test_ogr_vrt_41():
 def test_ogr_vrt_cleanup():
 
     if gdaltest.vrt_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('/vsimem/rec1.vrt')
     gdal.Unlink('/vsimem/rec2.vrt')

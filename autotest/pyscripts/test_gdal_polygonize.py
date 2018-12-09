@@ -38,6 +38,7 @@ import ogrtest
 import test_py_scripts
 
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test a fairly simple case, with nodata masking.
@@ -47,7 +48,7 @@ def test_gdal_polygonize_1():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     # Create a OGR datasource to put results in.
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
@@ -105,7 +106,7 @@ def test_gdal_polygonize_2():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
     try:
@@ -141,11 +142,11 @@ def test_gdal_polygonize_3():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     drv = ogr.GetDriverByName('GPKG')
     if drv is None:
-        return 'skip'
+        pytest.skip()
     try:
         os.stat('tmp/out.gpkg')
         drv.DeleteDataSource('tmp/out.gpkg')
@@ -168,8 +169,7 @@ def test_gdal_polygonize_3():
 
     if geom_is_polygon:
         return 'success'
-    gdaltest.post_reason('GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon))
-    return 'fail'
+    pytest.fail('GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon))
 
 ###############################################################################
 # Test -b mask
@@ -179,7 +179,7 @@ def test_gdal_polygonize_4():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     # Test mask syntax
     test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask ../gcore/data/byte.tif tmp/out.gml')

@@ -35,6 +35,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 # Nothing exciting here. Just trying to open non existing files,
 # or empty names, or files that are not valid datasets...
@@ -53,14 +54,13 @@ def test_basic_test_1():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-    return 'fail'
+    pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
 def test_basic_test_strace_non_existing_file():
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     python_exe = sys.executable
     cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
@@ -70,7 +70,7 @@ def test_basic_test_strace_non_existing_file():
         (_, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
         # strace not available
-        return 'skip'
+        pytest.skip()
 
     interesting_lines = []
     for line in err.split('\n'):
@@ -87,8 +87,7 @@ def test_basic_test_2():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-    return 'fail'
+    pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
 def test_basic_test_3():
@@ -97,8 +96,7 @@ def test_basic_test_3():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-    return 'fail'
+    pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
 def test_basic_test_4():
@@ -107,8 +105,7 @@ def test_basic_test_4():
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
-    gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-    return 'fail'
+    pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
 def test_basic_test_5():
@@ -119,7 +116,7 @@ def test_basic_test_5():
     expected = '`data/doctype.xml\' not recognized as a supported file format'
     if ds is None and expected in last_error:
         return 'success'
-    return 'fail'
+    pytest.fail()
 
 ###############################################################################
 # Issue several AllRegister() to check that GDAL drivers are good citizens
@@ -139,8 +136,7 @@ def test_basic_test_6():
 def basic_test_7_internal():
     try:
         gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
-        gdaltest.post_reason('opening should have thrown an exception')
-        return 'fail'
+        pytest.fail('opening should have thrown an exception')
     except:
         # Special case: we should still be able to get the error message
         # until we call a new GDAL function
@@ -414,7 +410,7 @@ def test_basic_test_14():
 
     try:
         ds.SetMetadata(5)
-        return 'fail'
+        pytest.fail()
     except:
         pass
 
@@ -423,7 +419,7 @@ def test_basic_test_14():
 
     try:
         ds.SetMetadata([5])
-        return 'fail'
+        pytest.fail()
     except:
         pass
 
@@ -432,19 +428,19 @@ def test_basic_test_14():
 
     try:
         ds.SetMetadata({'foo': 5})
-        return 'fail'
+        pytest.fail()
     except:
         pass
 
     try:
         ds.SetMetadata({5: 'baz'})
-        return 'fail'
+        pytest.fail()
     except:
         pass
 
     try:
         ds.SetMetadata({5: 6})
-        return 'fail'
+        pytest.fail()
     except:
         pass
 
@@ -461,13 +457,13 @@ def test_basic_test_14():
 
     try:
         ds.SetMetadata({val: 5})
-        return 'fail'
+        pytest.fail()
     except:
         pass
 
     try:
         ds.SetMetadata({5: val})
-        return 'fail'
+        pytest.fail()
     except:
         pass
 
@@ -496,7 +492,7 @@ def test_basic_test_15():
     try:
         with gdaltest.error_handler():
             gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback='foo')
-        return 'fail'
+        pytest.fail()
     except:
         pass
 

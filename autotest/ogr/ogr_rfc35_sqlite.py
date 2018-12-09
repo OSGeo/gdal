@@ -34,6 +34,7 @@ import sys
 import gdaltest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Initiate the test file
@@ -45,7 +46,7 @@ def test_ogr_rfc35_sqlite_1():
     gdaltest.rfc35_sqlite_ds_name = None
     sqlite_dr = ogr.GetDriverByName('SQLite')
     if sqlite_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/rfc35_test.sqlite')
 
@@ -131,7 +132,7 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
            (field3 is not None and feat.GetField(field3) != Truncate(expected_values[i][2], lyr_defn, field3)) or \
            (field4 is not None and feat.GetField(field4) != Truncate(expected_values[i][3], lyr_defn, field4)):
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = lyr.GetNextFeature()
         i = i + 1
 
@@ -159,7 +160,7 @@ def Check(lyr, expected_order):
 def test_ogr_rfc35_sqlite_2():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
 
@@ -212,7 +213,7 @@ def test_ogr_rfc35_sqlite_2():
 def test_ogr_rfc35_sqlite_3():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
 
@@ -258,7 +259,7 @@ def test_ogr_rfc35_sqlite_3():
 def test_ogr_rfc35_sqlite_4():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
@@ -353,7 +354,7 @@ def test_ogr_rfc35_sqlite_4():
 def test_ogr_rfc35_sqlite_5():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
@@ -397,7 +398,7 @@ def test_ogr_rfc35_sqlite_5():
 def test_ogr_rfc35_sqlite_cleanup():
 
     if gdaltest.rfc35_sqlite_ds_name is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.rfc35_sqlite_ds = None
     ogr.GetDriverByName('SQLite').DeleteDataSource(gdaltest.rfc35_sqlite_ds_name)

@@ -34,6 +34,7 @@ import sys
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Read SEGP1
@@ -64,15 +65,13 @@ def test_ogr_segp1_points():
 
     for values in expected_values:
         if feat.GetField(values[0]) != values[1]:
-            print('did not get expected value for %s' % values[0])
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('did not get expected value for %s' % values[0])
 
     if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     return 'success'
 
@@ -93,28 +92,24 @@ def test_ogr_segp1_lines():
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'firstline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,2.0 49.5)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'secondline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     return 'success'
 
@@ -146,15 +141,13 @@ def test_ogr_ukooa_points():
 
     for values in expected_values:
         if feat.GetField(values[0]) != values[1]:
-            print('did not get expected value for %s' % values[0])
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('did not get expected value for %s' % values[0])
 
     if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     return 'success'
 
@@ -175,28 +168,24 @@ def test_ogr_ukooa_lines():
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'firstline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,2.0 49.5)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'secondline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     return 'success'
 

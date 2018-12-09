@@ -36,6 +36,7 @@ from osgeo import ogr
 
 import gdaltest
 import webserver
+import pytest
 
 ###############################################################################
 # Get the mbtiles driver
@@ -54,10 +55,10 @@ def test_mbtiles_1():
 def test_mbtiles_2():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/world_l1.mbtiles', open_options=['USE_BOUNDS=NO'])
     assert ds is not None
@@ -109,45 +110,42 @@ def test_mbtiles_2():
 def test_mbtiles_3():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
-        print("Hangs on MacOSX Travis sometimes. Not sure why.")
-        return 'skip'
+        pytest.skip("Hangs on MacOSX Travis sometimes. Not sure why.")
 
     # Check that we have SQLite VFS support
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/mbtiles_3.db')
     gdal.PopErrorHandler()
     if ds is None:
-        return 'skip'
+        pytest.skip()
     ds = None
     gdal.Unlink('/vsimem/mbtiles_3.db')
 
     ds = gdal.Open('/vsicurl/http://a.tiles.mapbox.com/v3/mapbox.geography-class.mbtiles')
     if ds is None:
         # Just skip. The service isn't perfectly reliable sometimes
-        return 'skip'
+        pytest.skip()
 
     # long=2,lat=49 in WGS 84 --> x=222638,y=6274861 in Google Mercator
     locationInfo = ds.GetRasterBand(1).GetMetadataItem('GeoPixel_222638_6274861', 'LocationInfo')
     if locationInfo is None or locationInfo.find("France") == -1:
-        gdaltest.post_reason('did not get expected LocationInfo')
         print(locationInfo)
         if gdaltest.skip_on_travis():
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail('did not get expected LocationInfo')
 
     locationInfo2 = ds.GetRasterBand(1).GetOverview(5).GetMetadataItem('GeoPixel_222638_6274861', 'LocationInfo')
     if locationInfo2 != locationInfo:
-        gdaltest.post_reason('did not get expected LocationInfo on overview')
         print(locationInfo2)
         if gdaltest.skip_on_travis():
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail('did not get expected LocationInfo on overview')
 
     return 'success'
 
@@ -158,14 +156,14 @@ def test_mbtiles_3():
 def test_mbtiles_start_webserver():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 
@@ -176,16 +174,16 @@ def test_mbtiles_start_webserver():
 def test_mbtiles_http_jpeg_three_bands():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.FileHandler(
         {'/world_l1.mbtiles': open('data/world_l1.mbtiles', 'rb').read()})
@@ -202,16 +200,16 @@ def test_mbtiles_http_jpeg_three_bands():
 def test_mbtiles_http_jpeg_single_band():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.FileHandler(
         {'/byte_jpeg.mbtiles': open('data/byte_jpeg.mbtiles', 'rb').read()})
@@ -228,16 +226,16 @@ def test_mbtiles_http_jpeg_single_band():
 def test_mbtiles_http_png():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.FileHandler(
         {'/byte.mbtiles': open('data/byte.mbtiles', 'rb').read()})
@@ -254,10 +252,10 @@ def test_mbtiles_http_png():
 def test_mbtiles_stop_webserver():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
@@ -271,10 +269,10 @@ def test_mbtiles_stop_webserver():
 def test_mbtiles_4():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/world_l1.mbtiles')
     assert ds is not None
@@ -302,10 +300,10 @@ def test_mbtiles_4():
 def test_mbtiles_5():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_5.mbtiles', src_ds)
@@ -340,10 +338,10 @@ def test_mbtiles_5():
 def test_mbtiles_6():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     # Test options
     src_ds = gdal.Open('data/byte.tif')
@@ -377,10 +375,10 @@ def test_mbtiles_6():
 def test_mbtiles_7():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/small_world.tif')
     data = src_ds.ReadRaster()
@@ -433,10 +431,10 @@ def test_mbtiles_7():
 def test_mbtiles_8():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/small_world_pct.tif')
     out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options=['RESAMPLING=NEAREST'])
@@ -477,10 +475,10 @@ def test_mbtiles_8():
 def test_mbtiles_9():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options=['RESAMPLING=NEAREST'])
@@ -505,10 +503,10 @@ def test_mbtiles_9():
 def test_mbtiles_10():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     old_val_GPKG_FORCE_TEMPDB_COMPACTION = gdal.GetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION')
     gdal.SetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION', 'YES')
@@ -531,13 +529,13 @@ def test_mbtiles_10():
 def test_mbtiles_11():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.mbtiles_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open('data/byte.mbtiles.sql')
     assert ds.GetRasterBand(1).Checksum() == 4118, 'validation failed'
 
@@ -549,7 +547,7 @@ def test_mbtiles_11():
 def test_mbtiles_raster_open_in_vector_mode():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/byte.mbtiles')
     assert ds is None
@@ -562,7 +560,7 @@ def test_mbtiles_raster_open_in_vector_mode():
 def test_mbtiles_create():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsimem/mbtiles_create.mbtiles'
     gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
@@ -628,7 +626,7 @@ def test_mbtiles_create():
 def test_mbtiles_cleanup():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     return 'success'
 

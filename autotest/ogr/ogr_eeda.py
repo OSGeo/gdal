@@ -37,6 +37,7 @@ from osgeo import gdal, ogr
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Find EEDA driver
@@ -47,7 +48,7 @@ def test_eeda_1():
     ogrtest.eeda_drv = ogr.GetDriverByName('EEDA')
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -60,7 +61,7 @@ def test_eeda_1():
 def test_eeda_2():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageSize=1', json.dumps({
         'assets': [
@@ -168,12 +169,12 @@ def test_eeda_2():
        f.GetField('other_properties') != '{ "another_prop": 3 }' or \
        f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.1 49.0,2.1 49.1,2.0 49.1,2 49)))':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/second_feature':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageToken=myToken', json.dumps({
         'assets': [
@@ -186,7 +187,7 @@ def test_eeda_2():
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/third_feature':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     assert f is None
@@ -196,7 +197,7 @@ def test_eeda_2():
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/first_feature':
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetAttributeFilter('EEDA:raw_filter')
 
@@ -311,7 +312,7 @@ def test_eeda_2():
 def test_eeda_3():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('EEDA_BEARER', 'mybearer')
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
@@ -334,7 +335,7 @@ def test_eeda_3():
 def test_eeda_4():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('EEDA_BEARER', 'mybearer')
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
@@ -419,7 +420,7 @@ def test_eeda_4():
 def test_eeda_cleanup():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
     gdal.SetConfigOption('EEDA_BEARER', None)
