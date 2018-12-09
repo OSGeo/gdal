@@ -112,10 +112,8 @@ def test_ignfheightasciigrid_invalid():
     gdal.FileFromMemBuffer(filename, ok_content)
     ds = gdal.OpenEx(filename)
     if not ds:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetUnitType() != 'm':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink(filename)
 
@@ -151,7 +149,6 @@ def test_ignfheightasciigrid_invalid():
         gdal.FileFromMemBuffer(filename, content)
         with gdaltest.error_handler():
             if gdal.OpenEx(filename, gdal.OF_RASTER):
-                gdaltest.post_reason('fail')
                 print(content)
                 return 'fail'
         gdal.Unlink(filename)
@@ -185,7 +182,6 @@ def test_ignfheightasciigrid_gra():
 
     ds = gdal.OpenEx('data/ignfheightasciigrid.gra', gdal.OF_RASTER)
     if ds.GetRasterBand(1).GetNoDataValue() != 9999:
-        gdaltest.post_reason('fail')
         return 'fail'
     return 'success'
 
@@ -203,7 +199,6 @@ def test_ignfheightasciigrid_gra_invalid():
         gdal.FileFromMemBuffer(filename, content)
         with gdaltest.error_handler():
             if gdal.OpenEx(filename, gdal.OF_RASTER):
-                gdaltest.post_reason('fail')
                 print(content)
                 return 'fail'
         gdal.Unlink(filename)

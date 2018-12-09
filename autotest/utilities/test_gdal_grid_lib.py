@@ -122,13 +122,11 @@ def test_gdal_grid_lib_2():
 
         cs = ds1.GetRasterBand(1).Checksum()
         if cs != 2:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 
         cs = ds2.GetRasterBand(1).Checksum()
         if cs != 1064:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 

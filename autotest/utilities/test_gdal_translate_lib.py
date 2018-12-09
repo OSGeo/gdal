@@ -433,7 +433,6 @@ def test_gdal_translate_lib_102():
     ds = gdal.Translate('', gdal.Open('../gcore/data/byte.tif'), format='MEM', scaleParams=[[0, 255, 0, 65535]], outputType=gdal.GDT_UInt16)
     result = ds.GetRasterBand(1).ComputeRasterMinMax(False)
     if result != (19018.0, 65535.0):
-        gdaltest.post_reason('failure')
         print(result)
         return 'fail'
 
@@ -446,7 +445,6 @@ def test_gdal_translate_lib_102():
     stats = ds2.GetRasterBand(1).ComputeStatistics(False)
     for i in range(4):
         if abs(stats[i] - expected_stats[i]) > 1e-3:
-            gdaltest.post_reason('failure')
             print(stats)
             return 'fail'
 
@@ -548,45 +546,35 @@ def test_gdal_translate_lib_colorinterp():
     # Less bands specified than available
     ds = gdal.Translate('', src_ds, options='-f MEM -colorinterp blue,gray')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # More bands specified than available and a unknown color interpretation
     with gdaltest.error_handler():
         ds = gdal.Translate('', src_ds, options='-f MEM -colorinterp alpha,red,undefined,foo')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test colorinterp_
     ds = gdal.Translate('', src_ds, options='-f MEM -colorinterp_2 alpha')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test invalid colorinterp_
     try:
         with gdaltest.error_handler():
             gdal.Translate('', src_ds, options='-f MEM -colorinterp_0 alpha')
-        gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass

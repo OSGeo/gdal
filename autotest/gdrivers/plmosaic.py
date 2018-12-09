@@ -66,7 +66,6 @@ def test_plmosaic_2():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -86,7 +85,6 @@ def test_plmosaic_3():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -108,7 +106,6 @@ def test_plmosaic_4():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -130,7 +127,6 @@ def test_plmosaic_5():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -152,7 +148,6 @@ def test_plmosaic_6():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -174,7 +169,6 @@ def test_plmosaic_7():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -231,7 +225,6 @@ def test_plmosaic_8():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds.GetMetadata("SUBDATASETS") != {'SUBDATASET_2_NAME': 'PLMOSAIC:mosaic=another_mosaic_name', 'SUBDATASET_2_DESC': 'Mosaic another_mosaic_name', 'SUBDATASET_1_NAME': 'PLMOSAIC:mosaic=my_mosaic_name', 'SUBDATASET_1_DESC': 'Mosaic my_mosaic_name'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata("SUBDATASETS"))
         return 'fail'
     ds = None
@@ -253,7 +246,6 @@ def test_plmosaic_9():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if ds is not None or gdal.GetLastErrorMsg().find('/vsimem/root/?name__is=does_not_exist') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -275,7 +267,6 @@ def test_plmosaic_9bis():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('JSON parsing error') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -297,7 +288,6 @@ def test_plmosaic_9ter():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('No mosaic my_mosaic') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -324,7 +314,6 @@ def test_plmosaic_10():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Missing required parameter') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -357,7 +346,6 @@ def test_plmosaic_11():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported coordinate_system') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -390,7 +378,6 @@ def test_plmosaic_12():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported data_type') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -423,7 +410,6 @@ def test_plmosaic_13():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported resolution') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -456,7 +442,6 @@ def test_plmosaic_14():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported quad_size') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -495,15 +480,12 @@ def test_plmosaic_15():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if gdal.GetLastErrorMsg().find('Invalid _links.tiles') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(0) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -563,7 +545,6 @@ def test_plmosaic_16():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option unsupported_option') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -571,11 +552,9 @@ def test_plmosaic_16():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds.GetMetadata("SUBDATASETS") != {}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata("SUBDATASETS"))
         return 'fail'
     if ds.GetMetadata() != {'LAST_ACQUIRED': 'last_date', 'NAME': 'my_mosaic', 'FIRST_ACQUIRED': 'first_date'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     ds = None
@@ -595,48 +574,37 @@ def test_plmosaic_17():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadata() != {'LAST_ACQUIRED': 'last_date', 'NAME': 'my_mosaic', 'FIRST_ACQUIRED': 'first_date'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     if ds.GetProjectionRef().find('3857') < 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     if ds.RasterXSize != 8388608:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 8388608:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-20037508.34, 4.7773142671600004, 0.0, 20037508.34, 0.0, -4.7773142671600004)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(ds.GetGeoTransform())
             return 'fail'
     if ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') != 'PIXEL':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata('IMAGE_STRUCTURE'))
         print(ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE'))
         return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 15:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount()) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(0) is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     try:
@@ -648,19 +616,16 @@ def test_plmosaic_17():
         # Read at one nonexistent position.
         ds.GetRasterBand(1).ReadRaster(4096 * i, 0, 1, 1)
         if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
             return 'fail'
     for i in range(11, -1, -1):
         # Again in the same quad, but in different block, to test cache
         ds.GetRasterBand(1).ReadRaster(4096 * i + 256, 0, 1, 1)
         if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
             return 'fail'
     for i in range(12):
         # Again in the same quad, but in different block, to test cache
         ds.GetRasterBand(1).ReadRaster(4096 * i + 512, 256, 1, 1)
         if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ds.FlushCache()
@@ -695,7 +660,6 @@ def test_plmosaic_17():
     val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 255:
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
@@ -712,7 +676,6 @@ def test_plmosaic_17():
     val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 255:
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
@@ -728,7 +691,6 @@ def test_plmosaic_17():
     val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 255:
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
     ds = None
@@ -746,7 +708,6 @@ def test_plmosaic_17():
     val = ds.ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
@@ -770,13 +731,11 @@ def test_plmosaic_18():
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
     if ret != """<LocationInfo />
 """:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
     old_ret = ret
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
     if ret != old_ret:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -797,7 +756,6 @@ def test_plmosaic_18():
   </Scenes>
 </LocationInfo>
 """:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
     ds = None
@@ -821,14 +779,12 @@ def test_plmosaic_19():
     gdal.PopErrorHandler()
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
     val = ds.ReadRaster(256, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
     ds = None
@@ -850,14 +806,12 @@ def test_plmosaic_20():
     val = ds.ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
     val = ds.ReadRaster(256, 0, 1, 1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
     ds = None
@@ -882,7 +836,6 @@ def test_plmosaic_21():
     ds.ReadRaster(256, 512, 1, 1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
@@ -890,7 +843,6 @@ def test_plmosaic_21():
     ds.GetRasterBand(1).ReadRaster(256, 512, 1, 1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
@@ -898,7 +850,6 @@ def test_plmosaic_21():
     ds.GetRasterBand(1).ReadBlock(1, 2)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=mosaic_uint16', """{
@@ -928,7 +879,6 @@ def test_plmosaic_21():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg().find('Cannot use tile API for full resolution data on non Byte mosaic') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -956,7 +906,6 @@ def test_plmosaic_21():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg().find('Cannot find tile definition, so use_tiles will be ignored') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1020,18 +969,15 @@ def test_plmosaic_with_bbox():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds.RasterXSize != 233472:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 286720:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-11134123.286585508, 4.77731426716, 0.0, 4872401.930333553, 0.0, -4.77731426716)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
 
@@ -1043,7 +989,6 @@ def test_plmosaic_with_bbox():
     val = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     val = struct.unpack('B', val)[0]
     if val != 125:
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
@@ -1062,7 +1007,6 @@ def test_plmosaic_with_bbox():
   </Scenes>
 </LocationInfo>
 """:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 

@@ -215,7 +215,6 @@ def test_ogrtindex_3():
         feat = ds.GetLayer(0).GetNextFeature()
         while feat is not None:
             if feat.GetField('src_srs') != expected_srss[i]:
-                gdaltest.post_reason('fail')
                 print(i, src_srs_format)
                 feat.DumpReadable()
                 return 'fail'

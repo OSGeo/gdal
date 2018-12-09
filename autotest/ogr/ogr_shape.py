@@ -1206,7 +1206,6 @@ def test_ogr_shape_28():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     if gdal.GetLastErrorMsg().find('2GB file size limit reached') < 0:
@@ -1233,7 +1232,6 @@ def test_ogr_shape_28():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     if gdal.GetLastErrorMsg().find('2GB file size limit reached') < 0:
@@ -1272,12 +1270,10 @@ def test_ogr_shape_29():
 
     for filename in lst:
         if filename not in ['.', '..', 'UPPERCASE.SHP', 'UPPERCASE.SHX', 'UPPERCASE.DBF', 'UPPERCASE.CPG']:
-            gdaltest.post_reason('fail')
             print(lst)
             print(filename)
             return 'fail'
         if filename.find('packed') >= 0:
-            gdaltest.post_reason('fail')
             print(lst)
             print(filename)
             return 'fail'
@@ -2227,7 +2223,6 @@ def test_ogr_shape_53():
     # Test ReorderFields() when there are no fields
     ret = lyr.ReorderFields([])
     if ret != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test REPACK when there are no features
@@ -2237,7 +2232,6 @@ def test_ogr_shape_53():
     gdal.PopErrorHandler()
     # Should work without any error
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Create a field
@@ -2250,7 +2244,6 @@ def test_ogr_shape_53():
     feat = lyr.GetFeature(-1)
     gdal.PopErrorHandler()
     if feat is not None or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # SetFeature() on a invalid FID
@@ -2261,7 +2254,6 @@ def test_ogr_shape_53():
     feat = None
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # SetFeature() on a invalid FID
@@ -2273,7 +2265,6 @@ def test_ogr_shape_53():
     feat = None
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # DeleteFeature() on a invalid FID
@@ -2282,7 +2273,6 @@ def test_ogr_shape_53():
     ret = lyr.DeleteFeature(-1)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2291,7 +2281,6 @@ def test_ogr_shape_53():
 
     ret = lyr.DeleteFeature(0)
     if ret != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Try deleting an already deleted feature
@@ -2300,7 +2289,6 @@ def test_ogr_shape_53():
     ret = lyr.DeleteFeature(0)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test DeleteField() on a invalid index
@@ -2309,7 +2297,6 @@ def test_ogr_shape_53():
     ret = lyr.DeleteField(-1)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test ReorderFields() with invalid permutation
@@ -2318,7 +2305,6 @@ def test_ogr_shape_53():
     ret = lyr.ReorderFields([1])
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test AlterFieldDefn() on a invalid index
@@ -2328,7 +2314,6 @@ def test_ogr_shape_53():
     ret = lyr.AlterFieldDefn(-1, fd, 0)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test AlterFieldDefn() when attempting to convert from OFTString to something else
@@ -2338,7 +2323,6 @@ def test_ogr_shape_53():
     ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test DROP SPATIAL INDEX ON layer without index
@@ -2347,7 +2331,6 @@ def test_ogr_shape_53():
     ret = ds.ExecuteSQL("DROP SPATIAL INDEX ON ogr_shape_53")
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Re-create a feature
@@ -2363,22 +2346,16 @@ def test_ogr_shape_53():
     lyr = ds.GetLayer(0)
 
     if lyr.TestCapability(ogr.OLCSequentialWrite) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.TestCapability(ogr.OLCDeleteFeature) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.TestCapability(ogr.OLCCreateField) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.TestCapability(ogr.OLCDeleteField) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.TestCapability(ogr.OLCReorderFields) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test CreateField()
@@ -2389,7 +2366,6 @@ def test_ogr_shape_53():
     ret = lyr.CreateField(fd)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test ReorderFields()
@@ -2398,7 +2374,6 @@ def test_ogr_shape_53():
     ret = lyr.ReorderFields([0])
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test DeleteField()
@@ -2407,7 +2382,6 @@ def test_ogr_shape_53():
     ret = lyr.DeleteField(0)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test AlterFieldDefn()
@@ -2417,7 +2391,6 @@ def test_ogr_shape_53():
     ret = lyr.AlterFieldDefn(0, fd, 0)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test CreateFeature()
@@ -2428,7 +2401,6 @@ def test_ogr_shape_53():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test DeleteFeature()
@@ -2437,7 +2409,6 @@ def test_ogr_shape_53():
     ret = lyr.DeleteFeature(0)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test SetFeature()
@@ -2448,7 +2419,6 @@ def test_ogr_shape_53():
     ret = lyr.SetFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test REPACK
@@ -2457,7 +2427,6 @@ def test_ogr_shape_53():
     ret = ds.ExecuteSQL("REPACK ogr_shape_53")
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test RECOMPUTE EXTENT ON
@@ -2466,7 +2435,6 @@ def test_ogr_shape_53():
     ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     feat = None
@@ -2483,7 +2451,6 @@ def test_ogr_shape_53():
     ret = lyr.DeleteFeature(0)
     gdal.PopErrorHandler()
     if ret == 0 or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test REPACK
@@ -2506,7 +2473,6 @@ def test_ogr_shape_53():
     ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr = None
@@ -2629,7 +2595,6 @@ def test_ogr_shape_54():
         lyr.GetNextFeature()
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('failed')
             return 'fail'
     gdal.ErrorReset()
 
@@ -2876,12 +2841,10 @@ def test_ogr_shape_59():
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'LINESTRING M (0 0 10,1 1 20)':
         print(geom.ExportToIsoWkt())
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'MULTILINESTRING M ((0 0 10,1 1 20),(2 2 30,3 3 40))':
-        gdaltest.post_reason('fail')
         return 'fail'
     geom = None
     feat = None
@@ -2892,13 +2855,11 @@ def test_ogr_shape_59():
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40))':
         print(geom.ExportToIsoWkt())
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40),(0.25 0.25 50,0.75 0.75 60,0.25 0.75 70,0.25 0.25 80))':
         print(geom.ExportToIsoWkt())
-        gdaltest.post_reason('fail')
         return 'fail'
     geom = None
     feat = None
@@ -3088,12 +3049,10 @@ def test_ogr_shape_63():
     lyr = ds.CreateLayer('ogr_shape_63', geom_type=ogr.wkbNone)
     gdaltest.fieldname = '\xc3\xa9'
     if lyr.CreateField(ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString)) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     gdaltest.fieldname = '\xc3\xa9\xc3\xa9'
     if lyr.AlterFieldDefn(0, ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString), ogr.ALTER_NAME_FLAG) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     chinese_str = struct.pack('B' * 6, 229, 144, 141, 231, 167, 176)
@@ -3105,7 +3064,6 @@ def test_ogr_shape_63():
     gdal.PopErrorHandler()
 
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -3113,7 +3071,6 @@ def test_ogr_shape_63():
     gdal.PopErrorHandler()
 
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     ds = None
@@ -3121,10 +3078,8 @@ def test_ogr_shape_63():
     ds = ogr.Open('/vsimem/ogr_shape_63.dbf')
     lyr = ds.GetLayer(0)
     if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != gdaltest.fieldname:
-        gdaltest.post_reason('failed')
         print(gdaltest.fieldname)
         return 'fail'
     ds = None
@@ -3136,7 +3091,6 @@ def test_ogr_shape_63():
     lyr = ds.GetLayer(0)
     # TestCapability(OLCStringsAsUTF8) should return FALSE
     if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     ds = None
 
@@ -3155,7 +3109,6 @@ def test_ogr_shape_64():
 
     lyr = ds.CreateLayer('a.b')
     if lyr.GetName() != 'a.b':
-        gdaltest.post_reason('failed')
         return 'fail'
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -3165,7 +3118,6 @@ def test_ogr_shape_64():
 
     lyr = ds.CreateLayer('a.c')
     if lyr.GetName() != 'a.c':
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Test that we cannot create a duplicate layer
@@ -3173,7 +3125,6 @@ def test_ogr_shape_64():
     lyr = ds.CreateLayer('a.b')
     gdal.PopErrorHandler()
     if lyr is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     ds = None
@@ -3182,7 +3133,6 @@ def test_ogr_shape_64():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('foo') != 'bar':
-        gdaltest.post_reason('failed')
         return 'fail'
     ds = None
 
@@ -3226,7 +3176,6 @@ def test_ogr_shape_66():
     lyr = ds.CreateLayer('bar', geom_type=ogr.wkbNone)
     gdal.PopErrorHandler()
     if lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3235,7 +3184,6 @@ def test_ogr_shape_66():
     lyr = ds.CreateLayer('bar', geom_type=ogr.wkbPoint)
     gdal.PopErrorHandler()
     if lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3243,7 +3191,6 @@ def test_ogr_shape_66():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/i_dont_exist/bar')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = open('tmp/foo', 'wb')
@@ -3252,7 +3199,6 @@ def test_ogr_shape_66():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/foo')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     os.unlink('tmp/foo')
 
@@ -3327,15 +3273,12 @@ def test_ogr_shape_68():
 
         if sys.platform == 'win32':
             if lyr.GetGeomType() != ogr.wkbPolygon:
-                gdaltest.post_reason('fail')
                 return 'fail'
         else:
             if lyr.GetGeomType() != ogr.wkbNone:
-                gdaltest.post_reason('fail')
                 return 'fail'
             lyr = ds.GetLayerByName('mixedcase')
             if lyr.GetGeomType() != ogr.wkbPolygon:
-                gdaltest.post_reason('fail')
                 return 'fail'
             gdal.PushErrorHandler('CPLQuietErrorHandler')
             ret = lyr.DeleteFeature(0)
@@ -3362,22 +3305,17 @@ def test_ogr_shape_68():
         new_dbf_size = os.stat('tmp/mixedcase/MIXEDCASE.DBF').st_size
 
         if new_dbf_size == ori_dbf_size:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         if sys.platform == 'win32':
             if new_shp_size == ori_shp_size:
-                gdaltest.post_reason('fail')
                 return 'fail'
             if new_shx_size == ori_shx_size:
-                gdaltest.post_reason('fail')
                 return 'fail'
         else:
             if new_shp_size != ori_shp_size:
-                gdaltest.post_reason('fail')
                 return 'fail'
             if new_shx_size != ori_shx_size:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     return 'success'
@@ -3518,7 +3456,6 @@ def test_ogr_shape_72():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3539,7 +3476,6 @@ def test_ogr_shape_72():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3553,7 +3489,6 @@ def test_ogr_shape_72():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find('2GB file size limit reached') < 0:
         gdaltest.post_reason('did not find expected warning')
@@ -3564,7 +3499,6 @@ def test_ogr_shape_72():
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(1)
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (7 8)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3622,7 +3556,6 @@ def test_ogr_shape_74():
     feat = lyr.GetNextFeature()
     got_geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != got_geom.ExportToWkt():
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -3632,7 +3565,6 @@ def test_ogr_shape_74():
     gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', None)
     got_geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != got_geom.ExportToWkt():
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds = None
@@ -3648,28 +3580,24 @@ def test_ogr_shape_75():
     ds = gdal.OpenEx('data/poly.shp')
     if ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.PRJ'] and \
        ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.prj']:
-        gdaltest.post_reason('fail')
         print(ds.GetFileList())
         return 'fail'
     ds = None
 
     ds = gdal.OpenEx('data/idlink.dbf')
     if ds.GetFileList() != ['data/idlink.dbf']:
-        gdaltest.post_reason('fail')
         print(ds.GetFileList())
         return 'fail'
     ds = None
 
     ds = gdal.OpenEx('data/testpoly.shp')
     if ds.GetFileList() != ['data/testpoly.shp', 'data/testpoly.shx', 'data/testpoly.dbf', 'data/testpoly.qix']:
-        gdaltest.post_reason('fail')
         print(ds.GetFileList())
         return 'fail'
     ds = None
 
     ds = gdal.OpenEx('data/emptyshapefilewithsbn.shx')
     if ds.GetFileList() != ['data/emptyshapefilewithsbn.shp', 'data/emptyshapefilewithsbn.shx', 'data/emptyshapefilewithsbn.sbn', 'data/emptyshapefilewithsbn.sbx']:
-        gdaltest.post_reason('fail')
         print(ds.GetFileList())
         return 'fail'
     ds = None
@@ -3797,7 +3725,6 @@ def test_ogr_shape_79():
     ds = ogr.Open('/vsimem/ogr_shape_79.dbf')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3813,7 +3740,6 @@ def test_ogr_shape_80():
     lyr = ds.GetLayer(0)
     extent = lyr.GetExtent()
     if extent is not None and extent[0] != extent[0]:
-        gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
     ds = None
@@ -3850,7 +3776,6 @@ def test_ogr_shape_81():
     ds.ExecuteSQL('REPACK ogr_shape_81')
     size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
     if size_after != size_before:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = lyr.GetNextFeature()
@@ -3861,7 +3786,6 @@ def test_ogr_shape_81():
     ds.ExecuteSQL('REPACK ogr_shape_81')
     size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
     if size_after != size_before:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Writes a longer geometry. So .shp will be extended
@@ -3869,7 +3793,6 @@ def test_ogr_shape_81():
     lyr.SetFeature(f)
     size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
     if size_after == size_before:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Should do something
@@ -3877,7 +3800,6 @@ def test_ogr_shape_81():
     ds.ExecuteSQL('REPACK ogr_shape_81')
     size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
     if size_after == size_before:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Writes a shorter geometry, so .shp should not change size.
@@ -3886,7 +3808,6 @@ def test_ogr_shape_81():
     lyr.SetFeature(f)
     size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
     if size_after != size_before:
-        gdaltest.post_reason('fail')
         return 'fail'
     size_before = size_after
 
@@ -3894,7 +3815,6 @@ def test_ogr_shape_81():
     ds.ExecuteSQL('REPACK ogr_shape_81')
     size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
     if size_after == size_before:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -3987,7 +3907,6 @@ def test_ogr_shape_83():
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_83.shp')
     lyr = ds.CreateLayer('ogr_shape_83', geom_type=ogr.wkbCurvePolygon)
     if lyr.GetGeomType() != ogr.wkbPolygon:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('CURVEPOLYGON((0 0,0 1,1 1,1 0,0 0))'))
@@ -3996,7 +3915,6 @@ def test_ogr_shape_83():
 
     f = lyr.GetFeature(0)
     if f.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4017,7 +3935,6 @@ def test_ogr_shape_84():
     ds = None
 
     if gdal.VSIStatL('/vsimem/ogr_shape_84.qix') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -4042,14 +3959,11 @@ def test_ogr_shape_85():
     ds = ogr.Open('/vsimem/ogr_shape_85.shp', update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0) != 123456789 or f.GetField(1) != 123456789012345678:
-        gdaltest.post_reason('failure')
         return 'fail'
     # Passing from 9 to 10 figures causes "promotion" to Integer64
     f.SetField(0, 2000000000)
@@ -4061,14 +3975,11 @@ def test_ogr_shape_85():
     ds = ogr.Open('/vsimem/ogr_shape_85.shp')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTReal:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0) != 2000000000 or f.GetField(1) != 9000000000000000000:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -4076,14 +3987,11 @@ def test_ogr_shape_85():
     ds = gdal.OpenEx('/vsimem/ogr_shape_85.shp', gdal.OF_VECTOR, open_options=['ADJUST_TYPE=YES'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0) != 2000000000 or f.GetField(1) != 9000000000000000000:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -4098,7 +4006,6 @@ def test_ogr_shape_85():
     fd = ogr.FieldDefn("foo", ogr.OFTInteger64)
     ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
     if ret != 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     f.SetField(0, 123456789012345678)
     lyr.SetFeature(f)
@@ -4107,11 +4014,9 @@ def test_ogr_shape_85():
     ds = ogr.Open('/vsimem/ogr_shape_85.shp', update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0) != 123456789012345678:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -4206,7 +4111,6 @@ def test_ogr_shape_89():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f is not None and f.GetGeometryRef() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4220,7 +4124,6 @@ def test_ogr_shape_89():
     f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
     if g.GetPointCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -4299,7 +4202,6 @@ def test_ogr_shape_92():
     f = lyr.GetNextFeature()
     wkt = f.GetGeometryRef().ExportToIsoWkt()
     if wkt != 'MULTIPOINT Z ((0 1 2),(3 4 5))':
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -4316,7 +4218,6 @@ def test_ogr_shape_93():
     f = lyr.GetNextFeature()
     wkt = f.GetGeometryRef().ExportToIsoWkt()
     if wkt != 'POINT Z (1 2 3)':
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -4369,7 +4270,6 @@ def test_ogr_shape_94():
                 lyr = ds.CreateLayer('ogr_shape_94', geom_type=geom_type)
             test_lyr_geom_type = ogr.GT_Flatten(geom_type) != ogr.wkbMultiLineString and ogr.GT_Flatten(geom_type) != ogr.wkbMultiPolygon
             if test_lyr_geom_type and lyr.GetGeomType() != geom_type:
-                gdaltest.post_reason('fail')
                 print(i, shpt, geom_type, wkt, lyr.GetGeomType())
                 return 'fail'
             f = ogr.Feature(lyr.GetLayerDefn())
@@ -4380,7 +4280,6 @@ def test_ogr_shape_94():
             ds = ogr.Open('/vsimem/ogr_shape_94.shp')
             lyr = ds.GetLayer(0)
             if test_lyr_geom_type and lyr.GetGeomType() != geom_type:
-                gdaltest.post_reason('fail')
                 print(shpt, geom_type, wkt, lyr.GetGeomType())
                 return 'fail'
             f = lyr.GetNextFeature()
@@ -4388,7 +4287,6 @@ def test_ogr_shape_94():
                 if expected_fail:
                     print('FIXME!:', i, shpt, geom_type, wkt, f.GetGeometryRef().ExportToIsoWkt())
                 else:
-                    gdaltest.post_reason('fail')
                     print(i, shpt, geom_type, wkt, f.GetGeometryRef().ExportToIsoWkt())
                     return 'fail'
             ds = None
@@ -4405,24 +4303,20 @@ def test_ogr_shape_95():
     ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPoint25D:
-        gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToIsoWkt() != 'POINT Z (1 2 3)':
-        gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
 
     ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp', open_options=['ADJUST_GEOM_TYPE=NO'])
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPointZM:
-        gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 -1.79769313486232e+308)')) != 0:
-        gdaltest.post_reason('fail')
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
 
@@ -4430,14 +4324,12 @@ def test_ogr_shape_95():
     ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options=['ADJUST_GEOM_TYPE=FIRST_SHAPE'])
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPoint25D:
-        gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
 
     ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options=['ADJUST_GEOM_TYPE=ALL_SHAPES'])
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPointZM:
-        gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
 
@@ -4460,7 +4352,6 @@ def test_ogr_shape_96():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToIsoWkt() != 'POINT M (1 2 3)':
-        gdaltest.post_reason('fail')
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT M (1 2 4)'))
@@ -4471,7 +4362,6 @@ def test_ogr_shape_96():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToIsoWkt() != 'POINT M (1 2 4)':
-        gdaltest.post_reason('fail')
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
     ds = None
@@ -4497,7 +4387,6 @@ def test_ogr_shape_97():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 3 4)':
-        gdaltest.post_reason('fail')
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 5 6)'))
@@ -4508,7 +4397,6 @@ def test_ogr_shape_97():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToIsoWkt() != 'POINT ZM (1 2 5 6)':
-        gdaltest.post_reason('fail')
         print(f.GetGeometryRef().ExportToIsoWkt())
         return 'fail'
     ds = None
@@ -4645,43 +4533,36 @@ def test_ogr_shape_100():
         gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', old_val)
 
         if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
             print(variant)
             return 'fail'
 
         for ext in ['dbf', 'shp', 'shx', 'cpg']:
             if gdal.VSIStatL('tmp/ogr_shape_100_packed.' + ext) is not None:
-                gdaltest.post_reason('fail')
                 print(variant)
                 print(ext)
                 return 'fail'
 
         f = lyr.GetFeature(0)
         if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            gdaltest.post_reason('fail')
             print(variant)
             f.DumpReadable()
             return 'fail'
         with gdaltest.error_handler():
             f = lyr.GetFeature(1)
         if f is not None:
-            gdaltest.post_reason('fail')
             print(variant)
             return 'fail'
         lyr.ResetReading()
         if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('fail')
             print(variant)
             return 'fail'
         f = lyr.GetNextFeature()
         if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            gdaltest.post_reason('fail')
             print(variant)
             f.DumpReadable()
             return 'fail'
         f = lyr.GetNextFeature()
         if f is not None:
-            gdaltest.post_reason('fail')
             print(variant)
             return 'fail'
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -4694,24 +4575,20 @@ def test_ogr_shape_100():
         ds = ogr.Open('tmp/ogr_shape_100.shp')
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 2:
-            gdaltest.post_reason('fail')
             print(variant)
             return 'fail'
         f = lyr.GetNextFeature()
         if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            gdaltest.post_reason('fail')
             print(variant)
             f.DumpReadable()
             return 'fail'
         f = lyr.GetNextFeature()
         if f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
-            gdaltest.post_reason('fail')
             print(variant)
             f.DumpReadable()
             return 'fail'
         f = lyr.GetNextFeature()
         if f is not None:
-            gdaltest.post_reason('fail')
             print(variant)
             return 'fail'
         ds = None
@@ -4748,7 +4625,6 @@ def test_ogr_shape_101():
         else:
             ds.SyncToDisk()
             if lyr.GetFeatureCount() != 1:
-                gdaltest.post_reason('fail')
                 print(i)
                 return 'fail'
             # No-op
@@ -4757,18 +4633,15 @@ def test_ogr_shape_101():
         ds_read = ogr.Open('/vsimem/ogr_shape_101.shp')
         lyr = ds_read.GetLayer(0)
         if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
         f = lyr.GetNextFeature()
         if f.GetFID() != 0 or f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
-            gdaltest.post_reason('fail')
             print(i)
             f.DumpReadable()
             return 'fail'
         f = lyr.GetNextFeature()
         if f is not None:
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
 
@@ -4792,18 +4665,15 @@ def test_ogr_shape_101():
             ds = ogr.Open('/vsimem/ogr_shape_101.shp')
             lyr = ds.GetLayer(0)
             if lyr.GetFeatureCount() != 1:
-                gdaltest.post_reason('fail')
                 print(i)
                 return 'fail'
             f = lyr.GetNextFeature()
             if f.GetFID() != 0 or f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
-                gdaltest.post_reason('fail')
                 print(i)
                 f.DumpReadable()
                 return 'fail'
             f = lyr.GetNextFeature()
             if f is not None:
-                gdaltest.post_reason('fail')
                 print(i)
                 return 'fail'
             ds = None
@@ -4822,12 +4692,10 @@ def test_ogr_shape_101():
             ds = ogr.Open('/vsimem/ogr_shape_101.shp')
             lyr = ds.GetLayer(0)
             if lyr.GetFeatureCount() != 2:
-                gdaltest.post_reason('fail')
                 print(i)
                 return 'fail'
             f = lyr.GetNextFeature()
             if f.GetFID() != 1 or f['foo'] != '4':
-                gdaltest.post_reason('fail')
                 print(i)
                 f.DumpReadable()
                 return 'fail'
@@ -4899,7 +4767,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             print(options)
             return 'fail'
 
@@ -4910,7 +4777,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Add record
@@ -4920,7 +4786,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Add another field
@@ -4930,7 +4795,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Grow a field
@@ -4943,7 +4807,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Reorder fields
@@ -4953,7 +4816,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Shrink a field
@@ -4966,7 +4828,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Remove a field
@@ -4976,7 +4837,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
@@ -4988,7 +4848,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
 
@@ -5001,7 +4860,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Test editing a record that is not the last one
@@ -5011,7 +4869,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Test editing the last record
@@ -5022,7 +4879,6 @@ def test_ogr_shape_103():
         ds = None
 
         if not check_EOF(filename, expected=expected):
-            gdaltest.post_reason('fail')
             return 'fail'
 
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
@@ -5039,7 +4895,6 @@ def test_ogr_shape_103():
     ds.FlushCache()
 
     if not check_EOF(filename):
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -5059,7 +4914,6 @@ def test_ogr_shape_103():
 
     # To document our current behaviour. Could make sense to be changed.
     if not check_EOF(filename, expected=False):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
@@ -5103,7 +4957,6 @@ def test_ogr_shape_104():
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToIsoWkt() != expected_wkt:
-            gdaltest.post_reason('fail')
             print(wkt, lyr_type, options)
             f.DumpReadable()
             return 'fail'
@@ -5122,11 +4975,9 @@ def test_ogr_shape_105():
     ds = ogr.Open('data/padding_after_field_defns.dbf')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f['id'] != '1' or f['foo'] != '2':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -5148,7 +4999,6 @@ def test_ogr_shape_106():
 
     size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
     if size != 188:
-        gdaltest.post_reason('fail')
         print(size)
         return 'fail'
 
@@ -5162,7 +5012,6 @@ def test_ogr_shape_106():
 
     size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
     if size != 188 + 2 * 8:
-        gdaltest.post_reason('fail')
         print(size)
         return 'fail'
 
@@ -5242,19 +5091,16 @@ def test_ogr_shape_107():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return'fail'
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 6)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return'fail'
     ds = None
 
     gdal.VectorTranslate(copy_filename, filename)
     if not is_same(copy_filename, filename):
-        gdaltest.post_reason('fail')
         return'fail'
 
     shape_drv.DeleteDataSource(copy_filename)
@@ -5278,14 +5124,12 @@ def test_ogr_shape_107():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return'fail'
     ds = None
 
     gdal.VectorTranslate(copy_filename, filename)
     if not is_same(copy_filename, filename):
-        gdaltest.post_reason('fail')
         return'fail'
 
     shape_drv.DeleteDataSource(copy_filename)
@@ -5305,7 +5149,6 @@ def test_ogr_shape_108():
     expected_fc = lyr.GetFeatureCount()
     lyr.SetAttributeFilter("1=1")
     if lyr.GetFeatureCount() != expected_fc:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount(), expected_fc)
         return'fail'
 

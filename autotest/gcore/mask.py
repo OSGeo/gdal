@@ -676,7 +676,6 @@ def test_mask_14():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
     gdal.SetCacheMax(old_val)
     if out_ds.GetRasterBand(1).Checksum() == 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 400:
@@ -1035,14 +1034,12 @@ def test_mask_24():
     # IRasterIO() optimized case
     import struct
     if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 255:
-        gdaltest.post_reason('fail')
         print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
         return 'fail'
 
     # IReadBlock() code path
     (blockx, blocky) = mask.GetBlockSize()
     if struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0] != 255:
-        gdaltest.post_reason('fail')
         print(struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0])
         return 'fail'
     mask.FlushCache()
@@ -1050,7 +1047,6 @@ def test_mask_24():
     # Test special case where dynamics is only 0-255
     ds.GetRasterBand(4).Fill(255)
     if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 1:
-        gdaltest.post_reason('fail')
         print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
         return 'fail'
 
@@ -1068,7 +1064,6 @@ def test_mask_25():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1)
     if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1076,11 +1071,9 @@ def test_mask_25():
     gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif.msk', 1, 1)
     ds = gdal.Open('/vsimem/mask_25.tif')
     if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 3:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -1093,11 +1086,9 @@ def test_mask_25():
     ds = None
     ds = gdal.Open('/vsimem/mask_25.tif')
     if ds.GetRasterBand(1).GetMaskFlags() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 0:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -1112,7 +1103,6 @@ def test_mask_25():
     ds = gdal.Open('/vsimem/mask_25.tif')
     with gdaltest.error_handler():
         if ds.GetRasterBand(2).GetMaskFlags() != gdal.GMF_ALL_VALID:
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
     gdal.Unlink('/vsimem/mask_25.tif')
@@ -1123,7 +1113,6 @@ def test_mask_25():
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
         if ds.GetRasterBand(2).CreateMaskBand(0) == 0:
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
     gdal.Unlink('/vsimem/mask_25.tif')
@@ -1155,7 +1144,6 @@ def test_mask_26():
     # IRasterIO() optimized case
     import struct
     if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 255:
-        gdaltest.post_reason('fail')
         print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
         return 'fail'
 

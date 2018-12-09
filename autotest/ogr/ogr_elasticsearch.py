@@ -136,23 +136,18 @@ def test_ogr_elasticsearch_1():
         return 'fail'
 
     if ds.TestCapability(ogr.ODsCCreateLayer) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.TestCapability(ogr.ODsCDeleteLayer) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Failed index creation
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84, options=['FID='])
     if lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorType() != gdal.CE_Failure:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.ErrorReset()
 
@@ -161,10 +156,8 @@ def test_ogr_elasticsearch_1():
         '/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=PUT', '{}')
     lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84, options=['FID='])
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorType() != gdal.CE_None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(
@@ -176,7 +169,6 @@ def test_ogr_elasticsearch_1():
     lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone,
                          options=['OVERWRITE=TRUE', 'FID='])
     if gdal.GetLastErrorType() != gdal.CE_None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Simulate failed overwrite
@@ -186,7 +178,6 @@ def test_ogr_elasticsearch_1():
         lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone,
                              options=['OVERWRITE=TRUE'])
     if gdal.GetLastErrorType() != gdal.CE_Failure:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.ErrorReset()
 
@@ -198,23 +189,17 @@ def test_ogr_elasticsearch_1():
     lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone, options=[
                          'OVERWRITE=TRUE', 'BULK_INSERT=NO', 'FID='])
     if gdal.GetLastErrorType() != gdal.CE_None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCStringsAsUTF8) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCSequentialWrite) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCCreateField) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -223,7 +208,6 @@ def test_ogr_elasticsearch_1():
         '/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ "properties": { } }', '{}')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -232,10 +216,8 @@ def test_ogr_elasticsearch_1():
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('foo', srs=ogrtest.srs_wgs84)
     if gdal.GetLastErrorType() != gdal.CE_Failure:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(
@@ -248,7 +230,6 @@ def test_ogr_elasticsearch_1():
     ds.DeleteLayer(10)
     ret = ds.DeleteLayer(0)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(
@@ -275,7 +256,6 @@ def test_ogr_elasticsearch_1():
 
     ret = lyr.SyncToDisk()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -298,7 +278,6 @@ def test_ogr_elasticsearch_1():
     with gdaltest.error_handler():
         ret = lyr.CreateFeature(feat)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Success
@@ -306,10 +285,8 @@ def test_ogr_elasticsearch_1():
         '/vsimem/fakeelasticsearch/foo2/FeatureCollection/&POSTFIELDS={ "geometry": { "type": "POINT", "coordinates": [ 0.0, 1.0 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.34, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.23, 4.56 ], "date_field": "2015\/08\/12", "datetime_field": "2015\/08\/12 12:34:56.789", "time_field": "12:34:56.789", "binary_field": "ASNGV4mrze8=" } }', '{ "_id": "my_id" }')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat['_id'] != 'my_id':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # DateTime with TZ
@@ -319,7 +296,6 @@ def test_ogr_elasticsearch_1():
     feat['datetime_field'] = '2015/08/12 12:34:56.789+0300'
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # CreateFeature() with _id set
@@ -329,7 +305,6 @@ def test_ogr_elasticsearch_1():
     feat['_id'] = 'my_id2'
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Failed SetFeature because of missing _id
@@ -337,7 +312,6 @@ def test_ogr_elasticsearch_1():
     with gdaltest.error_handler():
         ret = lyr.SetFeature(feat)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Simulate server error
@@ -345,14 +319,12 @@ def test_ogr_elasticsearch_1():
     with gdaltest.error_handler():
         ret = lyr.SetFeature(feat)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(
         '/vsimem/fakeelasticsearch/foo2/FeatureCollection/my_id&POSTFIELDS={ "properties": { } }', '{}')
     ret = lyr.SetFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # With explicit GEOM_MAPPING_TYPE=GEO_POINT
@@ -369,7 +341,6 @@ def test_ogr_elasticsearch_1():
     feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -380,7 +351,6 @@ def test_ogr_elasticsearch_1():
         lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84, options=[
                              'MAPPING={ "FeatureCollection": { "properties": {} }}'])
     if lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test successful explicit MAPPING with inline JSon mapping
@@ -389,7 +359,6 @@ def test_ogr_elasticsearch_1():
     lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84, options=[
                          'MAPPING={ "FeatureCollection": { "properties": {} }}'])
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test successful explicit MAPPING with reference to file with mapping
@@ -401,7 +370,6 @@ def test_ogr_elasticsearch_1():
                          options=['MAPPING=/vsimem/map.txt'])
     gdal.Unlink('/vsimem/map.txt')
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test successful explicit INDEX_DEFINITION with inline JSon mapping
@@ -412,7 +380,6 @@ def test_ogr_elasticsearch_1():
     lyr = ds.CreateLayer('foo4', srs=ogrtest.srs_wgs84, options=[
                          'INDEX_DEFINITION={}', 'MAPPING={}'])
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test successful explicit INDEX_DEFINITION with reference to file
@@ -423,7 +390,6 @@ def test_ogr_elasticsearch_1():
                          options=['INDEX_DEFINITION=/vsimem/map.txt', 'MAPPING={}'])
     gdal.Unlink('/vsimem/map.txt')
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -457,7 +423,6 @@ def test_ogr_elasticsearch_2():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ "geometry": { "type": "geometrycollection", "geometries": [ { "type": "point", "coordinates": [ 0.0, 1.0 ] }, { "type": "linestring", "coordinates": [ [ 0.0, 1.0 ], [ 2.0, 3.0 ] ] }, { "type": "polygon", "coordinates": [ [ [ 0.0, 0.0 ], [ 0.0, 10.0 ], [ 10.0, 10.0 ], [ 0.0, 0.0 ] ], [ [ 1.0, 1.0 ], [ 1.0, 9.0 ], [ 9.0, 9.0 ], [ 1.0, 1.0 ] ] ] }, { "type": "multipoint", "coordinates": [ [ 0.0, 1.0 ], [ 2.0, 3.0 ] ] }, { "type": "multilinestring", "coordinates": [ [ [ 0.0, 1.0 ], [ 2.0, 3.0 ] ], [ [ 4.0, 5.0 ], [ 6.0, 7.0 ] ] ] }, { "type": "multipolygon", "coordinates": [ [ [ [ 0.0, 0.0 ], [ 0.0, 10.0 ], [ 10.0, 10.0 ], [ 0.0, 0.0 ] ], [ [ 1.0, 1.0 ], [ 1.0, 9.0 ], [ 9.0, 9.0 ], [ 1.0, 1.0 ] ] ], [ [ [ -1.0, -1.0 ], [ -1.0, -9.0 ], [ -9.0, -9.0 ], [ -1.0, -1.0 ] ] ] ] } ] }, "type": "Feature", "properties": { } }', '{}')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -473,7 +438,6 @@ def test_ogr_elasticsearch_2():
 
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -503,20 +467,17 @@ def test_ogr_elasticsearch_3():
     feat = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
     with gdaltest.error_handler():
         ret = lyr.SyncToDisk()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -526,7 +487,6 @@ def test_ogr_elasticsearch_3():
 """, '{}')
     ret = lyr.SyncToDisk()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -544,7 +504,6 @@ def test_ogr_elasticsearch_4():
     with gdaltest.error_handler():
         ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test case where there's no index
@@ -552,10 +511,8 @@ def test_ogr_elasticsearch_4():
         """/vsimem/fakeelasticsearch/_cat/indices?h=i""", '\n')
     ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
 
@@ -627,20 +584,16 @@ def test_ogr_elasticsearch_4():
 
     ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('a_layer')
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('a_layer')
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         lyr = ds.GetLayerByName('not_a_layer')
     if lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -648,7 +601,6 @@ def test_ogr_elasticsearch_4():
     ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
                      open_options=['LAYER=a_layer'])
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     ds = None
@@ -657,7 +609,6 @@ def test_ogr_elasticsearch_4():
         ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
                          open_options=['LAYER=not_a_layer'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -666,7 +617,6 @@ def test_ogr_elasticsearch_4():
     lyr = ds.GetLayerByName('a_layer')
     lyr = ds.GetLayerByName('a_layer')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     ds = None
@@ -677,10 +627,8 @@ def test_ogr_elasticsearch_4():
 
     ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     lyr = ds.GetLayer(0)
@@ -689,14 +637,11 @@ def test_ogr_elasticsearch_4():
         lyr_defn = lyr.GetLayerDefn()
     idx = lyr_defn.GetFieldIndex("strlist_field")
     if lyr_defn.GetFieldDefn(idx).GetType() != ogr.OFTStringList:
-        gdaltest.post_reason('fail')
         return 'fail'
     idx = lyr_defn.GetGeomFieldIndex("a_geoshape")
     if lyr_defn.GetGeomFieldDefn(idx).GetType() != ogr.wkbLineString:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetFIDColumn() != 'my_fid':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_count?pretty""", """{
@@ -724,13 +669,11 @@ def test_ogr_elasticsearch_4():
 }""")
     fc = lyr.GetFeatureCount()
     if fc != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
@@ -739,7 +682,6 @@ def test_ogr_elasticsearch_4():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
@@ -807,7 +749,6 @@ def test_ogr_elasticsearch_4():
     lyr = ds.GetLayer(0)
 
     if lyr.GetLayerDefn().GetFieldCount() != 15:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
@@ -862,7 +803,6 @@ def test_ogr_elasticsearch_4():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetFID() != 5 or f['_id'] != 'my_id' or f['str_field'] != 'foo' or f['int_field'] != 1 or f['int64_field'] != 123456789012 or \
        f['double_field'] != 1.23 or f['float_field'] != 3.45 or f['boolean_field'] != 1 or \
@@ -874,7 +814,6 @@ def test_ogr_elasticsearch_4():
        f['doublelist_field'] != [1.23] or \
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -882,7 +821,6 @@ def test_ogr_elasticsearch_4():
     lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&scroll_id=my_scrollid""", """{
@@ -902,7 +840,6 @@ def test_ogr_elasticsearch_4():
 }""")
     f = lyr.GetNextFeature()
     if f['int_field'] != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&scroll_id=my_scrollid""", """{
@@ -913,11 +850,9 @@ def test_ogr_elasticsearch_4():
 }""")
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetSpatialFilterRect(1, 48, 3, 50)
@@ -943,7 +878,6 @@ def test_ogr_elasticsearch_4():
 }""")
     f = lyr.GetNextFeature()
     if f['int_field'] != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetSpatialFilterRect(1, 1, 48, 3, 50)
@@ -969,7 +903,6 @@ def test_ogr_elasticsearch_4():
 }""")
     f = lyr.GetNextFeature()
     if f['int_field'] != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0, "query": { "constant_score" : { "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""", """{
@@ -980,7 +913,6 @@ def test_ogr_elasticsearch_4():
 }""")
     fc = lyr.GetFeatureCount()
     if fc != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetSpatialFilter(None)
@@ -1012,7 +944,6 @@ def test_ogr_elasticsearch_4():
 }""")
     f = lyr.GetNextFeature()
     if f['int_field'] != 5:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr.SetAttributeFilter(None)
 
@@ -1050,7 +981,6 @@ def test_ogr_elasticsearch_4():
 """)
     f = sql_lyr.GetNextFeature()
     if f['some_field'] != '5':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
@@ -1110,7 +1040,6 @@ def test_ogr_elasticsearch_4():
 }""")
     bbox = lyr.GetExtent(geom_field=1)
     if bbox != (1.0, 2.0, 9.0, 10.0):
-        gdaltest.post_reason('fail')
         print(bbox)
         return 'fail'
 
@@ -1118,38 +1047,32 @@ def test_ogr_elasticsearch_4():
     with gdaltest.error_handler():
         ret = lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ret = lyr.CreateGeomField(ogr.GeomFieldDefn('shape', ogr.wkbPoint))
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ret = lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.ResetReading()
     with gdaltest.error_handler():
         ret = lyr.SetFeature(lyr.GetNextFeature())
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('will_not_work')
     if lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ret = ds.DeleteLayer(0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1183,7 +1106,6 @@ def test_ogr_elasticsearch_5():
         '/vsimem/fakeelasticsearch/non_geojson/my_mapping/&POSTFIELDS={ "ogc_fid": 5, "str": "foo" }', '{}')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -1294,7 +1216,6 @@ def test_ogr_elasticsearch_5():
 }""")
     index = lyr.GetLayerDefn().GetFieldIndex('another_field')
     if index < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo' or \
@@ -1306,7 +1227,6 @@ def test_ogr_elasticsearch_5():
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)' or \
        f['superobject.another_geoshape'].ExportToWkt() != 'POINT (3 50)' or \
        f['superobject.another_geoshape2'].ExportToWkt() != 'POINT (2 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1315,25 +1235,21 @@ def test_ogr_elasticsearch_5():
         """/vsimem/fakeelasticsearch/non_geojson/my_mapping/my_id&POSTFIELDS={ "a_geoshape": { "type": "linestring", "coordinates": [ [ 2.0, 49.0 ], [ 3.0, 50.0 ] ] }, "a_geopoint": { "type": "POINT", "coordinates": [ 2.0, 49.0 ] }, "another_geopoint": [ 2.5, 49.5 ], "superobject": { "another_geoshape": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2.0, 50.0 ] }, "subfield": "5", "subobject": { "subfield": "foo", "another_subfield": 6 } }, "str_field": "foo" }""", "{}")
     ret = lyr.SetFeature(f)
     if ret != 0:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['another_geopoint'].ExportToWkt() != 'POINT (2.1 49.1)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['another_geopoint'].ExportToWkt() != 'POINT (2.2 49.2)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     # Test geohash
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f['another_geopoint'], 'POINT (2 49)') != 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1362,7 +1278,6 @@ def test_ogr_elasticsearch_5():
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)' or \
        f['superobject.another_geoshape'].ExportToWkt() != 'POINT (3 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1371,14 +1286,12 @@ def test_ogr_elasticsearch_5():
     lyr = ds.GetLayer(0)
     index = lyr.GetLayerDefn().GetFieldIndex('another_field')
     if index >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo' or \
        f['superobject'] != '{ "subfield": 5, "subobject": { "subfield": "foo", "another_subfield": 6 }, "another_geoshape": { "type": "point", "coordinates": [ 3, 50 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2, 50 ] } }' or \
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1392,7 +1305,6 @@ def test_ogr_elasticsearch_5():
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)' or \
        f['superobject.another_geoshape'].ExportToWkt() != 'POINT (3 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1402,7 +1314,6 @@ def test_ogr_elasticsearch_5():
         """/vsimem/fakeelasticsearch/non_geojson/my_mapping/my_id&POSTFIELDS={ "foo": "bar" }""", "{}")
     ret = lyr.SetFeature(f)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1483,26 +1394,22 @@ def test_ogr_elasticsearch_6():
 }""")
     f = lyr.GetNextFeature()
     if f['geometry'].ExportToWkt() != 'POLYGON ((2 49,3 49,3 50,2 50,2 49))':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     ref_txt = f['geometry'].ExportToWkt()
     if ref_txt.find('POLYGON ((') != 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['geometry'].ExportToWkt() != ref_txt:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['geometry'].ExportToWkt() != ref_txt:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1532,7 +1439,6 @@ def test_ogr_elasticsearch_7():
 
     f = gdal.VSIFOpenL('/vsimem/map.txt', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
@@ -1540,7 +1446,6 @@ def test_ogr_elasticsearch_7():
     gdal.Unlink('/vsimem/map.txt')
 
     if data != '{ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }':
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -1586,7 +1491,6 @@ def test_ogr_elasticsearch_8():
         gdaltest.post_reason('warning expected')
         return 'fail'
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Non EPSG-4326 SRS
@@ -1605,7 +1509,6 @@ def test_ogr_elasticsearch_8():
 """, "{}")
     ret = lyr.CreateFeature(f)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1691,7 +1594,6 @@ def test_ogr_elasticsearch_9():
 
     count = lyr.GetFeatureCount()
     if count != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 2.0, 50.0 ], [ 3.0, 49.0 ] ] } } } } } } }""",
@@ -1717,7 +1619,6 @@ def test_ogr_elasticsearch_9():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1803,7 +1704,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("text_field = 'foo'")
@@ -1826,7 +1726,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("text_field_with_raw = 'foo'")
@@ -1849,7 +1748,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("\"_id\" = 'my_id2'")
@@ -1871,7 +1769,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field != 'foo'")
@@ -1894,7 +1791,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field IS NULL")
@@ -1916,7 +1812,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field BETWEEN 'bar' AND 'foo'")
@@ -1939,7 +1834,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field IN ('foo', 'bar')")
@@ -1962,7 +1856,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("text_field IN ('foo', 'bar')")
@@ -1985,7 +1878,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("text_field_with_raw IN ('foo', 'bar')")
@@ -2008,7 +1900,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("\"_id\" IN ('my_id', 'bar')")
@@ -2031,7 +1922,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter(
@@ -2057,7 +1947,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("dt_field > '2016/01/01 12:34:56.123'")
@@ -2080,7 +1969,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("NOT dt_field < '2016/01/01 12:34:56.123'")
@@ -2103,7 +1991,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field LIKE '_o%'")
@@ -2126,7 +2013,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Evaluated client-side since the pattern uses ? or *
@@ -2150,7 +2036,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Evaluated client-side since the field is analyzed
@@ -2174,7 +2059,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("text_field_with_raw LIKE '_xo%' ESCAPE 'x'")
@@ -2197,7 +2081,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field = 'foo' AND 1 = 1")
@@ -2220,13 +2103,11 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("1 = 1 AND keyword_field = 'foo'")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field = 'bar' OR 1 = 0")
@@ -2249,7 +2130,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("keyword_field = 'foo2'")
@@ -2277,7 +2157,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # SQL with WHERE
@@ -2285,7 +2164,6 @@ def test_ogr_elasticsearch_10():
         "SELECT * FROM a_layer WHERE keyword_field = 'foo'")
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -2311,7 +2189,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -2336,7 +2213,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -2361,7 +2237,6 @@ def test_ogr_elasticsearch_10():
 }""")
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -2456,19 +2331,16 @@ def test_ogr_elasticsearch_11():
 
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['str_field'] is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.IsFieldSet('str_field'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -2491,18 +2363,15 @@ def test_ogr_elasticsearch_11():
     f.SetFieldNull('str_field')
     ret = lyr.CreateFeature(f)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
     if lyr.SyncToDisk() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -2550,7 +2419,6 @@ def test_ogr_elasticsearch_authentication():
     ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
                      open_options=['USERPWD=user:pwd'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

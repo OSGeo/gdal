@@ -152,15 +152,12 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
         expected_mime_type = 'image/x-webp'
 
     if mime_type != expected_mime_type:
-        gdaltest.post_reason('fail')
         print(mime_type)
         return 'fail'
     if band_count != expected_band_count:
-        gdaltest.post_reason('fail')
         print(band_count)
         return 'fail'
     if expected_ct != has_ct:
-        gdaltest.post_reason('fail')
         print(has_ct)
         return 'fail'
     return 'success'
@@ -200,7 +197,6 @@ def test_gpkg_1():
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
         if abs(expected_gt[i] - got_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             return 'fail'
     got_wkt = out_ds.GetProjectionRef()
     print("\n** expected_wkt " + expected_wkt + " **\n")
@@ -209,12 +205,10 @@ def test_gpkg_1():
 #   the WKT (similar but different)
 #   just check if it contains '11N' for NAD27 UTM zone 11N
     if got_wkt.find('11N') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
 

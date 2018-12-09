@@ -99,7 +99,6 @@ def test_osr_micoordsys_3():
     proj = srs.ExportToMICoordSys()
 
     if proj != 'Earth Projection 10, 157, "m", 0':
-        gdaltest.post_reason('failure')
         print(proj)
         return 'fail'
 
@@ -107,7 +106,6 @@ def test_osr_micoordsys_3():
     srs.ImportFromMICoordSys('Earth Projection 10, 157, "m", 0')
     wkt = srs.ExportToWkt()
     if wkt.find('EXTENSION["PROJ4"') < 0:
-        gdaltest.post_reason('failure')
         print(wkt)
         return 'fail'
 
@@ -115,7 +113,6 @@ def test_osr_micoordsys_3():
     proj = srs.ExportToMICoordSys()
 
     if proj != 'Earth Projection 10, 157, "m", 0':
-        gdaltest.post_reason('failure')
         print(proj)
         return 'fail'
 

@@ -1123,7 +1123,6 @@ def test_ogr_gml_27():
     lyr = ds.GetLayer(0)
 
     if lyr.GetGeomType() != ogr.wkbPolygon25D:
-        gdaltest.post_reason('fail')
         print(lyr.GetGeomType())
         return 'fail'
 
@@ -1150,7 +1149,6 @@ def test_ogr_gml_28():
     ds = ogr.Open('tmp/ogr_gml_28.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1159,7 +1157,6 @@ def test_ogr_gml_28():
     ds = ogr.Open('tmp/ogr_gml_28.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1167,7 +1164,6 @@ def test_ogr_gml_28():
     ds = ogr.Open('tmp/ogr_gml_28.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2015,11 +2011,9 @@ def test_ogr_gml_48():
     lyr = ds.GetLayer(0)
 
     if lyr.GetGeomType() != ogr.wkbUnknown:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     ds = None
@@ -2051,7 +2045,6 @@ def test_ogr_gml_49():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -2060,7 +2053,6 @@ def test_ogr_gml_49():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -2098,15 +2090,12 @@ def test_ogr_gml_50():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsStringList(lyr.GetLayerDefn().GetFieldIndex('stringlist')) != ['a', 'b']:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     if feat.GetFieldAsIntegerList(lyr.GetLayerDefn().GetFieldIndex('intlist')) != [2, 3]:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     if feat.GetFieldAsDoubleList(lyr.GetLayerDefn().GetFieldIndex('reallist')) != [4.56, 5.67]:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds = None
@@ -2137,25 +2126,20 @@ def test_ogr_gml_51():
         content = f.read()
         f.close()
         if content.find("<FeatureCollection") == -1:
-            gdaltest.post_reason('fail')
             print(content)
             return 'fail'
         if frmt == 'GML3':
             if content.find("<featureMember>") == -1:
-                gdaltest.post_reason('fail')
                 print(content)
                 return 'fail'
         if content.find("""<poly""") == -1:
-            gdaltest.post_reason('fail')
             print(content)
             return 'fail'
         if content.find("""<AREA>215229.266</AREA>""") == -1:
-            gdaltest.post_reason('fail')
             print(content)
             return 'fail'
 
         if content.find("""<gml:boundedBy><gml:Envelope><gml:lowerCorner>479647""") != -1:
-            gdaltest.post_reason('fail')
             print(content)
             return 'fail'
 
@@ -2188,15 +2172,12 @@ def test_ogr_gml_52():
 
         lyr = ds.GetLayerByName('A')
         if lyr.GetGeomType() != ogr.wkbPoint25D:
-            gdaltest.post_reason('fail')
             return 'fail'
         srs = lyr.GetSpatialRef()
         if srs is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         wkt = srs.ExportToWkt()
         if wkt.find('3067') < 0:
-            gdaltest.post_reason('fail')
             print(wkt)
             return 'fail'
 
@@ -2207,31 +2188,25 @@ def test_ogr_gml_52():
                 feat.GetField('teksti') != 'En francais !' or \
                 feat.GetField('teksti_kieli') != 'fr' or \
                 ogrtest.check_feature_geometry(feat, 'POINT (280000 7000000 0)') != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('B')
         if lyr.GetGeomType() != ogr.wkbPolygon25D:
-            gdaltest.post_reason('fail')
             return 'fail'
         srs = lyr.GetSpatialRef()
         if srs is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if ogrtest.check_feature_geometry(feat, 'POLYGON ((280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0))') != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('C')
         if lyr.GetGeomType() != ogr.wkbLineString25D:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if ogrtest.check_feature_geometry(feat, 'LINESTRING (280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0)') != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
@@ -2252,7 +2227,6 @@ def test_ogr_gml_53():
 
     ds = ogr.Open('data/archsites.xsd')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2271,14 +2245,12 @@ def test_ogr_gml_54():
 
     ds = ogr.Open('data/empty.gml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     # with .gfs now
     ds = ogr.Open('data/empty.gml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2327,49 +2299,37 @@ def test_ogr_gml_56():
     gdal.SetConfigOption('GML_REGISTRY', None)
     lyr = ds.GetLayerByName('mainFeature')
     if lyr.GetSpatialRef() is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString(feat.GetFieldIndex('subFeatureProperty_href')) != '#subFeature.0':
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFieldAsStringList(feat.GetFieldIndex('subFeatureRepeatedProperty_href')) != ['#subFeatureRepeated.0', '#subFeatureRepeated.1']:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (10 10)':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayerByName('subFeature')
     if lyr.GetLayerDefn().GetGeomFieldCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsStringList(feat.GetFieldIndex('subFeatureRepeatedProperty_href')) != ['#subFeatureRepeated.2']:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetField('foo') != 'bar':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayerByName('subFeatureRepeated')
     feat = lyr.GetNextFeature()
     if feat.GetField('gml_id') != 'subFeatureRepeated.2':
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetField('bar') != 'baz':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetField('gml_id') != 'subFeatureRepeated.0':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetField('gml_id') != 'subFeatureRepeated.1':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2396,11 +2356,9 @@ def test_ogr_gml_57():
             options = ['FORMAT=GML3.2']
         ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_57.gml', options=options)
         if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
         lyr = ds.CreateLayer('myLayer', geom_type=ogr.wkbNone)
         if lyr.TestCapability(ogr.OLCCreateGeomField) != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
         geomfielddefn = ogr.GeomFieldDefn('first_geometry', ogr.wkbPoint)
         if i == 1 or i == 2:
@@ -2434,19 +2392,14 @@ def test_ogr_gml_57():
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
         if i == 1 and feat.GetGeomFieldRef(0).GetSpatialReference().ExportToWkt().find('32630') < 0:
-            gdaltest.post_reason('fail')
             return 'fail'
         if i == 1 and feat.GetGeomFieldRef(1).GetSpatialReference().ExportToWkt().find('32630') < 0:
-            gdaltest.post_reason('fail')
             return 'fail'
         if i == 2 and feat.GetGeomFieldRef(1).GetSpatialReference().ExportToWkt().find('32631') < 0:
-            gdaltest.post_reason('fail')
             return 'fail'
         if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (0 1)':
-            gdaltest.post_reason('fail')
             return 'fail'
         if feat.GetGeomFieldRef(1).ExportToWkt() != 'LINESTRING (2 3,4 5)':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
@@ -2470,19 +2423,14 @@ def test_ogr_gml_58():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetGeomFieldCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetName() != 'geometry':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbMultiPolygon:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(1).GetName() != 'referencePoint':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(1).GetType() != ogr.wkbPoint:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2505,13 +2453,10 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2.5 49.5)':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2534,13 +2479,10 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetGeomFieldRef(1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
     lyr = None
@@ -2550,7 +2492,6 @@ def test_ogr_gml_58():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetGeomFieldCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2570,7 +2511,6 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2590,7 +2530,6 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     feat = None
     lyr = None
@@ -2600,13 +2539,10 @@ def test_ogr_gml_58():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetGeomFieldCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetName() != 'geometry':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbLineString:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2625,10 +2561,8 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'LINESTRING (2 49,3 50)':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2647,10 +2581,8 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'LINESTRING (2 49,3 50)':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
     lyr = None
@@ -2660,19 +2592,14 @@ def test_ogr_gml_58():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetGeomFieldCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetName() != 'geometry':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbMultiPolygon:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(1).GetName() != 'referencePoint':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(1).GetType() != ogr.wkbPoint:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2702,13 +2629,10 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2.5 49.5)':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -2738,13 +2662,10 @@ def test_ogr_gml_58():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetGeomFieldRef(1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
     lyr = None
@@ -2788,7 +2709,6 @@ def test_ogr_gml_59():
             print(key)
             print(val)
             print(feat.GetField(key))
-            gdaltest.post_reason('fail')
             return 'fail'
     feat = None
     lyr = None
@@ -2813,19 +2733,15 @@ def test_ogr_gml_60():
         ds = ogr.Open('data/wfs_200_multiplelayers.gml')
         lyr = ds.GetLayerByName('road')
         if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('gml_id') != 'road.21':
-            gdaltest.post_reason('fail')
             return 'fail'
         lyr = ds.GetLayerByName('popplace')
         if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('gml_id') != 'popplace.BACMK':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
@@ -2865,23 +2781,19 @@ def test_ogr_gml_61():
 
     feat = lyr.GetNextFeature()
     if feat.GetField('gml_id') != 'Object.1' or feat.GetField('foo') != 'bar':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POLYGON ((2 48,2 49,3 49,3 48,2 48))':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetField('gml_id') != 'Object.2' or feat.GetField('foo') != 'baz':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POLYGON ((2 -48,2 -49,3 -49,3 -48,2 -48))':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -2905,7 +2817,6 @@ def test_ogr_gml_62():
     ds = ogr.Open('tmp/gmlattributes.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2921,7 +2832,6 @@ def test_ogr_gml_62():
             gdal.SetConfigOption('GML_ATTRIBUTES_TO_OGR_FIELDS', None)
         lyr = ds.GetLayer(0)
         if lyr.GetLayerDefn().GetFieldCount() != 4:
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
         feat = lyr.GetNextFeature()
@@ -2929,7 +2839,6 @@ def test_ogr_gml_62():
                 feat.GetField('element2_attr1') != 'a' or \
                 feat.GetField('element2') != 'foo' or \
                 feat.IsFieldSet('element3_attr1'):
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
             return 'fail'
@@ -2938,7 +2847,6 @@ def test_ogr_gml_62():
                 feat.IsFieldSet('element2_attr1') or \
                 feat.IsFieldSet('element2') or \
                 feat.GetField('element3_attr1') != 1:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
             return 'fail'
@@ -2947,7 +2855,6 @@ def test_ogr_gml_62():
                 feat.IsFieldSet('element2_attr1') or \
                 feat.IsFieldSet('element2') or \
                 feat.IsFieldSet('element3_attr1'):
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             print(i)
             return 'fail'
@@ -3052,14 +2959,12 @@ def test_ogr_gml_65():
         gdal.VSIFCloseL(f)
 
         if data.find(expected) < 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != "MULTIPOLYGON (((0 1 2,3 4 5,6 7 8,0 1 2)))":
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
         ds = None
@@ -3214,107 +3119,86 @@ def test_ogr_gml_66():
 
         lyr = ds.GetLayerByName('compoundcurve')
         if lyr.GetGeomType() != ogr.wkbCompoundCurve:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1,2 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('curvepolygon')
         if lyr.GetGeomType() != ogr.wkbCurvePolygon:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,0.5 0.5,1 0,0.5 -0.5,0 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'CURVEPOLYGON ((0 0,0 1,1 1,0 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('multisurface')
         if lyr.GetGeomType() != ogr.wkbMultiSurface:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,0.5 0.5,1 0,0.5 -0.5,0 0)))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTISURFACE (((0 0,0 1,1 1,0 0)))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('multicurve')
         if lyr.GetGeomType() != ogr.wkbMultiCurve:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTICURVE (CIRCULARSTRING (0 0,0.5 0.5,1 0,0.5 -0.5,0 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTICURVE ((0 0,0 1,1 1,0 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('polygon')
         if lyr.GetGeomType() != ogr.wkbPolygon:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('linestring')
         if lyr.GetGeomType() != ogr.wkbLineString:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 0,0 1,1 1,0 0)':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('multipolygon')
         if lyr.GetGeomType() != ogr.wkbMultiPolygon:
             print(lyr.GetGeomType())
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,0 0)))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('multilinestring')
         if lyr.GetGeomType() != ogr.wkbMultiLineString:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTILINESTRING ((0 0,0 1,1 1,0 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
@@ -3322,88 +3206,72 @@ def test_ogr_gml_66():
         if i != 0:
             if lyr.GetGeomType() != ogr.wkbCompoundCurve:
                 print(lyr.GetGeomType())
-                gdaltest.post_reason('fail')
                 return 'fail'
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1,2 0))':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         else:
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 0,1 1,2 0)':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('curvepolygon_untyped')
         if i != 0:
             if lyr.GetGeomType() != ogr.wkbCurvePolygon:
-                gdaltest.post_reason('fail')
                 return 'fail'
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'CURVEPOLYGON ((0 0,0 1,1 1,0 0))':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         else:
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,0.5 0.5,1 0,0.5 -0.5,0 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('multisurface_untyped')
         if i != 0:
             if lyr.GetGeomType() != ogr.wkbMultiSurface:
-                gdaltest.post_reason('fail')
                 return 'fail'
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'MULTISURFACE (((0 0,0 1,1 1,0 0)))':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         else:
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,0 0)))':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,0.5 0.5,1 0,0.5 -0.5,0 0)))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         lyr = ds.GetLayerByName('multicurve_untyped')
         if i != 0:
             if lyr.GetGeomType() != ogr.wkbMultiCurve:
-                gdaltest.post_reason('fail')
                 return 'fail'
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'MULTICURVE ((0 0,0 1,1 1,0 0))':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         else:
             feat = lyr.GetNextFeature()
             if feat.GetGeometryRef().ExportToWkt() != 'MULTILINESTRING ((0 0,0 1,1 1,0 0))':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetGeometryRef().ExportToWkt() != 'MULTICURVE (CIRCULARSTRING (0 0,1 1,2 0))':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
@@ -3474,43 +3342,35 @@ def test_ogr_gml_67():
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('b1')).GetType() != ogr.OFTInteger or \
            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('b1')).GetSubType() != ogr.OFSTBoolean:
             print(i)
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('bool_list')).GetType() != ogr.OFTIntegerList or \
            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('bool_list')).GetSubType() != ogr.OFSTBoolean:
             print(i)
-            gdaltest.post_reason('fail')
             return 'fail'
         if i == 0:
             if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetType() != ogr.OFTInteger or \
                     lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetSubType() != ogr.OFSTInt16:
                 print(i)
-                gdaltest.post_reason('fail')
                 return 'fail'
         if i == 0:
             if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetType() != ogr.OFTReal or \
                     lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
                 print(i)
-                gdaltest.post_reason('fail')
                 return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('int64')).GetType() != ogr.OFTInteger64:
             print(i)
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('int64list')).GetType() != ogr.OFTInteger64List:
             print(i)
-            gdaltest.post_reason('fail')
             return 'fail'
         f = lyr.GetNextFeature()
         if f.GetField('b1') != 1 or f.GetField('b2') != 0 or f.GetFieldAsString('bool_list') != '(2:1,0)' or f.GetField('short') != -32768 or f.GetField('float') != 1.23:
             print(i)
-            gdaltest.post_reason('fail')
             f.DumpReadable()
             return 'fail'
         f = lyr.GetNextFeature()
         if f.GetFID() != 1234567890123 or f.GetField('int64') != 1234567890123 or f.GetField('int64list') != [1, 1234567890123]:
             print(i)
-            gdaltest.post_reason('fail')
             f.DumpReadable()
             return 'fail'
         ds = None
@@ -3587,7 +3447,6 @@ def test_ogr_gml_69():
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
@@ -3598,7 +3457,6 @@ def test_ogr_gml_69():
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
@@ -3607,16 +3465,12 @@ def test_ogr_gml_69():
     ds = gdal.OpenEx('/vsimem/ogr_gml_69.gml', open_options=['EMPTY_AS_NULL=NO'])
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3653,7 +3507,6 @@ def test_ogr_gml_70():
     lyr = ds.GetLayerByName('test')
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -3670,12 +3523,10 @@ def test_ogr_gml_70():
 def ogr_gml_71_helper(ds):
 
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'join_table1_table2':
-        gdaltest.post_reason('fail')
         print(lyr.GetName())
         return 'fail'
     fields = [('table1.gml_id', ogr.OFTString),
@@ -3686,31 +3537,25 @@ def ogr_gml_71_helper(ds):
               ('table2.baz', ogr.OFTString)]
     layer_defn = lyr.GetLayerDefn()
     if layer_defn.GetFieldCount() != len(fields):
-        gdaltest.post_reason('fail')
         print(layer_defn.GetFieldCount())
         return 'fail'
     for i, field in enumerate(fields):
         fld_defn = layer_defn.GetFieldDefn(i)
         if fld_defn.GetName() != field[0]:
-            gdaltest.post_reason('fail')
             print(i)
             print(fld_defn.GetName())
             return 'fail'
         if fld_defn.GetType() != field[1]:
-            gdaltest.post_reason('fail')
             print(i)
             print(fld_defn.GetType())
             return 'fail'
     if layer_defn.GetGeomFieldCount() != 2:
-        gdaltest.post_reason('fail')
         print(layer_defn.GetGeomFieldCount())
         return 'fail'
     if layer_defn.GetGeomFieldDefn(0).GetName() != 'table1.geometry':
-        gdaltest.post_reason('fail')
         print(layer_defn.GetGeomFieldDefn(0).GetName())
         return 'fail'
     if layer_defn.GetGeomFieldDefn(1).GetName() != 'table2.geometry':
-        gdaltest.post_reason('fail')
         print(layer_defn.GetGeomFieldDefn(1).GetName())
         return 'fail'
     f = lyr.GetNextFeature()
@@ -3722,7 +3567,6 @@ def ogr_gml_71_helper(ds):
        f.GetField('table2.baz') != 'foo' or \
        f.GetGeomFieldRef(0) is not None or \
        f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
@@ -3734,7 +3578,6 @@ def ogr_gml_71_helper(ds):
        f.GetField('table2.baz') != 'bar' or \
        f.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 50)' or \
        f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3754,7 +3597,6 @@ def test_ogr_gml_71():
 
     try:
         os.unlink('data/wfsjointlayer.gfs')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -3767,7 +3609,6 @@ def test_ogr_gml_71():
     try:
         os.unlink('data/wfsjointlayer.gfs')
     except OSError:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Without .xsd nor .gfs
@@ -3780,7 +3621,6 @@ def test_ogr_gml_71():
     try:
         os.stat('tmp/wfsjointlayer.gfs')
     except OSError:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # With .gfs
@@ -3805,7 +3645,6 @@ def test_ogr_gml_72():
 
     ds = ogr.Open('/vsimem/ogr_gml_72.gml')
     if ds.GetMetadata() != {'NAME': 'name', 'DESCRIPTION': 'description'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     ds = None
@@ -3820,7 +3659,6 @@ def test_ogr_gml_72():
 
     ds = ogr.Open('/vsimem/ogr_gml_72.gml')
     if ds.GetMetadata() != {'NAME': 'name', 'DESCRIPTION': 'description'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     ds = None
@@ -3962,7 +3800,6 @@ version="1.0.0">
 
     ds = ogr.Open('/vsimem/ogr_gml_75.xml')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/ogr_gml_75.xml')
 
@@ -4020,11 +3857,9 @@ def test_ogr_gml_77():
     ds = ogr.Open('/vsimem/ogr_gml_77.xml')
     lyr = ds.GetLayer(0)
     if lyr.GetSpatialRef().ExportToWkt().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4032,7 +3867,6 @@ def test_ogr_gml_77():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4040,7 +3874,6 @@ def test_ogr_gml_77():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4076,11 +3909,9 @@ def test_ogr_gml_78():
     ds = ogr.Open('/vsimem/ogr_gml_78.xml')
     lyr = ds.GetLayer(0)
     if lyr.GetSpatialRef().ExportToWkt().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4088,7 +3919,6 @@ def test_ogr_gml_78():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4096,7 +3926,6 @@ def test_ogr_gml_78():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4135,7 +3964,6 @@ def test_ogr_gml_79():
             gdal.VSIFCloseL(f)
 
         if data.find(expected_srsname) < 0 or data.find(expected_coords) < 0:
-            gdaltest.post_reason('fail')
             print(srsname_format)
             print(data)
             return 'fail'
@@ -4175,19 +4003,16 @@ def test_ogr_gml_80():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['int_field'] != 4:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['int_field'] is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.IsFieldSet('int_field'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = None
@@ -4237,7 +4062,6 @@ def test_ogr_gml_82():
     ds = ogr.Open('/vsimem/ogr_gml_82.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -4246,7 +4070,6 @@ def test_ogr_gml_82():
         data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
         gdal.VSIFCloseL(f)
     if data.find('gml:FeatureCollection') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -4255,11 +4078,9 @@ def test_ogr_gml_82():
         data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
         gdal.VSIFCloseL(f)
     if data.find('name = "FeatureCollection"') >= 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('gmlsf') >= 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 

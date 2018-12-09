@@ -110,7 +110,6 @@ def mk_src_feature():
     expected_vals = [2011, 11, 11, 14, 10, 35.123, 0]
     for i, exp_val in enumerate(expected_vals):
         if abs(got_vals[i] - exp_val) > 1e-4:
-            gdaltest.post_reason('fail')
             print(got_vals)
             print(expected_vals)
     src_feature.field_integerlist = '(3:10,20,30)'
@@ -189,7 +188,6 @@ def test_ogr_feature_cp_integer():
         vals.append(val)
     if vals != [17, 2147483647, 18, 0, None, None, None, None, 15,
                 2147483647, 17, None]:
-        gdaltest.post_reason('fail')
         print(vals)
         return 'fail'
 
@@ -217,7 +215,6 @@ def test_ogr_feature_cp_integer64():
     int32_ovflw = dst_feature.GetFieldAsInteger('field_integer64')
     gdal.PopErrorHandler()
     if int32_ovflw != 2147483647:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if not check(dst_feature, 'field_real', 18):
@@ -800,14 +797,12 @@ def test_ogr_feature_overflow_64bit_integer():
     f.SetField(0, '9999999999999999999')
     gdal.PopErrorHandler()
     if f.GetField(0) != 9223372036854775807:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     gdal.PushErrorHandler()
     f.SetField(0, '-9999999999999999999')
     gdal.PopErrorHandler()
     if f.GetField(0) != -9223372036854775808:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     return 'success'
@@ -821,22 +816,18 @@ def test_ogr_feature_nullable_validate():
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
     if f.Validate() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Field with default parameter and empty feature
     feat_def = ogr.FeatureDefn('test')
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
     if field_def.IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat_def.GetGeomFieldDefn(0).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
     if f.Validate() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Field with not NULL constraint and empty feature
@@ -844,7 +835,6 @@ def test_ogr_feature_nullable_validate():
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
     field_def.SetNullable(0)
     if field_def.IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
@@ -852,7 +842,6 @@ def test_ogr_feature_nullable_validate():
     ret = f.Validate()
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Field with not NULL constraint and non-empty feature
@@ -863,7 +852,6 @@ def test_ogr_feature_nullable_validate():
     f = ogr.Feature(feat_def)
     f.SetField(0, 'foo')
     if f.Validate() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Field with width constraint that is met
@@ -874,7 +862,6 @@ def test_ogr_feature_nullable_validate():
     f = ogr.Feature(feat_def)
     f.SetField(0, 'foo')
     if f.Validate() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Field with width constraint that is not met
@@ -888,7 +875,6 @@ def test_ogr_feature_nullable_validate():
     ret = f.Validate()
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Geometry field with not-null geometry constraint that is met
@@ -897,13 +883,11 @@ def test_ogr_feature_nullable_validate():
     gfield_def = ogr.GeomFieldDefn('test', ogr.wkbUnknown)
     gfield_def.SetNullable(0)
     if gfield_def.IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddGeomFieldDefn(gfield_def)
     f = ogr.Feature(feat_def)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
     if f.Validate() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Geometry field with not-null geometry constraint that is not met
@@ -917,7 +901,6 @@ def test_ogr_feature_nullable_validate():
     ret = f.Validate()
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Geometry field with Point geometry type that is met
@@ -926,7 +909,6 @@ def test_ogr_feature_nullable_validate():
     f = ogr.Feature(feat_def)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
     if f.Validate() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Geometry field with LineString geometry type that is not met
@@ -938,7 +920,6 @@ def test_ogr_feature_nullable_validate():
     ret = f.Validate()
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -953,45 +934,36 @@ def test_ogr_feature_default():
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
 
     if field_def.GetDefault() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if field_def.IsDefaultDriverSpecific():
-        gdaltest.post_reason('fail')
         return 'fail'
 
     field_def.SetDefault("(some_expr)")
     if field_def.GetDefault() != "(some_expr)":
-        gdaltest.post_reason('fail')
         return 'fail'
     if not field_def.IsDefaultDriverSpecific():
-        gdaltest.post_reason('fail')
         return 'fail'
 
     field_def.SetDefault("'a")
     if field_def.GetDefault() != "'a":
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     field_def.SetDefault("'a''")
     gdal.PopErrorHandler()
     if field_def.GetDefault() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     field_def.SetDefault("'a'b'")
     gdal.PopErrorHandler()
     if field_def.GetDefault() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     field_def.SetDefault("'a''b'''")
     if field_def.GetDefault() != "'a''b'''":
-        gdaltest.post_reason('fail')
         return 'fail'
     if field_def.IsDefaultDriverSpecific():
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
@@ -1018,7 +990,6 @@ def test_ogr_feature_default():
        f.GetField('field_int') != 123 or \
        f.IsFieldSet('field_nodefault'):
         f.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = ogr.Feature(feat_def)
@@ -1026,7 +997,6 @@ def test_ogr_feature_default():
     f.FillUnsetWithDefault()
     if f.GetField('field_string') != 'b':
         f.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1040,45 +1010,35 @@ def test_ogr_feature_native_data():
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
     if f.GetNativeData() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetNativeMediaType() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f.SetNativeData('native_data')
     if f.GetNativeData() != 'native_data':
-        gdaltest.post_reason('fail')
         return 'fail'
     f.SetNativeMediaType('native_media_type')
     if f.GetNativeMediaType() != 'native_media_type':
-        gdaltest.post_reason('fail')
         print(f.GetNativeMediaType())
         return 'fail'
 
     f2 = ogr.Feature(feat_def)
     f2.SetFrom(f)
     if f2.GetNativeData() != 'native_data':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f2.GetNativeMediaType() != 'native_media_type':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f_clone = f.Clone()
     if f_clone.GetNativeData() != 'native_data':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f_clone.GetNativeMediaType() != 'native_media_type':
-        gdaltest.post_reason('fail')
         return 'fail'
     f_clone.SetNativeData(None)
     f_clone.SetNativeMediaType(None)
     if f_clone.GetNativeData() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f_clone.GetNativeMediaType() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
@@ -1098,24 +1058,20 @@ def test_ogr_feature_native_data():
         sql_lyr = ds.ExecuteSQL('SELECT * FROM %s' % lyr.GetName(), dialect=dialect)
         native_data = sql_lyr.GetMetadataItem('NATIVE_DATA', 'NATIVE_DATA')
         if native_data != 'native_data':
-            gdaltest.post_reason('fail')
             print(dialect)
             print(native_data)
             return 'fail'
         native_media_type = sql_lyr.GetMetadataItem('NATIVE_MEDIA_TYPE', 'NATIVE_DATA')
         if native_media_type != 'native_media_type':
-            gdaltest.post_reason('fail')
             print(dialect)
             print(native_media_type)
             return 'fail'
         f = sql_lyr.GetNextFeature()
         if f.GetNativeData() != 'native_data':
-            gdaltest.post_reason('fail')
             print(dialect)
             print(f.GetNativeData())
             return 'fail'
         if f.GetNativeMediaType() != 'native_media_type':
-            gdaltest.post_reason('fail')
             print(dialect)
             print(f.GetNativeMediaType())
             return 'fail'
@@ -1137,7 +1093,6 @@ def test_ogr_feature_set_geometry_self():
     f.SetGeometry(f.GetGeometryRef())
     f.SetGeometry(f.GetGeometryRef())
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1153,22 +1108,17 @@ def test_ogr_feature_null_field():
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
     if f.IsFieldNull(feat_def.GetFieldIndex("field_string")):
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull("field_string"):
-        gdaltest.post_reason('fail')
         return 'fail'
     f.SetFieldNull(feat_def.GetFieldIndex("field_string"))
     if f.IsFieldNull(feat_def.GetFieldIndex("field_string")) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f.SetField("field_string", "foo")
     if f.IsFieldNull("field_string"):
-        gdaltest.post_reason('fail')
         return 'fail'
     f.SetFieldNull("field_string")
     if f.IsFieldNull(feat_def.GetFieldIndex("field_string")) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
@@ -1194,19 +1144,14 @@ def test_ogr_feature_null_field():
     f.field_reallist = [123.5, 567.0]
     f.field_stringlist = ['abc', 'def']
     if f.IsFieldNull('field_binary') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_integerlist') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_integer64list') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_reallist') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_stringlist') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f.SetField('field_binary', None)
     f.SetFieldNull('field_integerlist')
@@ -1214,27 +1159,20 @@ def test_ogr_feature_null_field():
     f.SetFieldNull('field_reallist')
     f.SetFieldNull('field_stringlist')
     if f.IsFieldNull('field_binary') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_integerlist') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_integer64list') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_reallist') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.IsFieldNull('field_stringlist') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f_clone = f.Clone()
     if f_clone.IsFieldNull('field_binary') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if not f.Equal(f_clone):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = None

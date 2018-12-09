@@ -51,7 +51,6 @@ def test_ogrmerge_1():
     ds = ogr.Open('/vsimem/out.shp')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 20:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -76,7 +75,6 @@ def test_ogrmerge_2():
     ds = ogr.Open('/vsimem/out.shp')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 20:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -101,7 +99,6 @@ def test_ogrmerge_3():
     ds = ogr.Open('/vsimem/out.shp')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -124,10 +121,8 @@ def test_ogrmerge_4():
     ds = ogr.Open('/vsimem/out.vrt')
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'poly':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -151,19 +146,15 @@ def test_ogrmerge_5():
     ds = ogr.Open('/vsimem/out.vrt')
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'foo_../ogr/data/poly.shp_poly_0_poly_0':
-        gdaltest.post_reason('fail')
         print(lyr.GetName())
         return 'fail'
     if lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer(1)
     if lyr.GetName() != 'foo_../ogr/data/testpoly.shp_testpoly_1_testpoly_0':
-        gdaltest.post_reason('fail')
         print(lyr.GetName())
         return 'fail'
     if lyr.GetFeatureCount() != 14:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -189,7 +180,6 @@ def test_ogrmerge_6():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['source'] != 'foo_../ogr/data/poly.shp_poly_0_poly_0':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -214,7 +204,6 @@ def test_ogrmerge_7():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -227,7 +216,6 @@ def test_ogrmerge_7():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -240,7 +228,6 @@ def test_ogrmerge_7():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -253,7 +240,6 @@ def test_ogrmerge_7():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -276,7 +262,6 @@ def test_ogrmerge_8():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -288,12 +273,10 @@ def test_ogrmerge_8():
     gdal.Unlink('/vsimem/out.vrt')
 
     if content.find('<SrcSRS>EPSG:32630</SrcSRS>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('<TargetSRS>EPSG:4326</TargetSRS>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -314,7 +297,6 @@ def test_ogrmerge_9():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -326,12 +308,10 @@ def test_ogrmerge_9():
     gdal.Unlink('/vsimem/out.vrt')
 
     if content.find('<SrcSRS>EPSG:32630</SrcSRS>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('<TargetSRS>EPSG:4326</TargetSRS>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -352,7 +332,6 @@ def test_ogrmerge_10():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -364,7 +343,6 @@ def test_ogrmerge_10():
     gdal.Unlink('/vsimem/out.vrt')
 
     if content.find('<LayerSRS>EPSG:32630</LayerSRS>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -385,7 +363,6 @@ def test_ogrmerge_11():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -397,7 +374,6 @@ def test_ogrmerge_11():
     gdal.Unlink('/vsimem/out.vrt')
 
     if content.find('<LayerSRS>EPSG:32630</LayerSRS>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -420,7 +396,6 @@ def test_ogrmerge_12():
 
     ds = ogr.Open('/vsimem/out.vrt')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

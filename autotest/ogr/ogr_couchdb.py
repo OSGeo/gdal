@@ -82,7 +82,6 @@ def test_ogr_couchdb_1():
     lyr = ds.GetLayerByName(ogrtest.couchdb_temp_layer_name)
     f = lyr.GetNextFeature()
     if f['AREA'] != 215229.266 or f['EAS_ID'] != '168' or f.GetGeometryRef() is None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
@@ -116,19 +115,16 @@ def test_ogr_couchdb_2():
 
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['str_field'] is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.IsFieldSet('str_field'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 

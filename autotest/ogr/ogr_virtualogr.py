@@ -77,65 +77,51 @@ def test_ogr_virtualogr_1():
 
     # Invalid syntax
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Nonexistent dataset
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('foo')"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Dataset with 0 layer
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('<OGRVRTDataSource></OGRVRTDataSource>')"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Dataset with more than 1 layer
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data')"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp')"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0)"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 1)"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Invalid value for update_mode
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 'foo')"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Nonexistent layer
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'foo')"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly')"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 0)"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1)"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1, 1)"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     # Too many arguments
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1, 1, bla)"):
-        gdaltest.post_reason('failed')
         return 'fail'
 
     return 'success'
@@ -159,7 +145,6 @@ def test_ogr_virtualogr_2():
     ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
     for i in range(ds.GetLayerCount()):
         if ds.GetLayer(i).GetName() == 'foo':
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
 
@@ -172,7 +157,6 @@ def test_ogr_virtualogr_2():
         if ds.GetLayer(i).GetName() == 'foo':
             found = True
     if not found:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -187,7 +171,6 @@ def test_ogr_virtualogr_2():
     ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
     for i in range(ds.GetLayerCount()):
         if ds.GetLayer(i).GetName() == 'foo':
-            gdaltest.post_reason('fail')
             return 'fail'
     # An error will be triggered at the time the trigger is used
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -285,7 +268,6 @@ def test_ogr_virtualogr_4():
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
     if ret != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
@@ -298,7 +280,6 @@ def test_ogr_virtualogr_4():
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
     if ret != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
@@ -311,7 +292,6 @@ def test_ogr_virtualogr_4():
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
     if ret != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Various error conditions

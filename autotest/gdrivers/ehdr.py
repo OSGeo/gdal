@@ -331,12 +331,10 @@ def test_ehdr_14():
         cs2 = out_ds.GetRasterBand(1).Checksum()
 
         if space == 1 and data != data2:
-            gdaltest.post_reason('fail')
             print(space)
             return 'fail'
 
         if (cs1 != 1087 and cs1 != 1192) or (cs2 != 1087 and cs2 != 1192):
-            gdaltest.post_reason('fail')
             print(space)
             print(cs1)
             print(cs2)
@@ -350,7 +348,6 @@ def test_ehdr_14():
         cs3 = out_ds.GetRasterBand(1).Checksum()
 
         if cs3 != 1087 and cs3 != 1192:
-            gdaltest.post_reason('fail')
             print(space)
             print(cs3)
             return 'fail'
@@ -373,28 +370,22 @@ def test_ehdr_rat():
     ds = gdal.Open(tmpfile)
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     if rat is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetColumnCount() != 4:
-        gdaltest.post_reason('fail')
         print(rat.GetColumnCount())
         return 'fail'
     if rat.GetRowCount() != 25:
-        gdaltest.post_reason('fail')
         print(rat.GetRowCount())
         return 'fail'
     for (idx, val) in [(0, -500), (1, 127), (2, 40), (3, 65)]:
         if rat.GetValueAsInt(0, idx) != val:
-            gdaltest.post_reason('fail')
             print(idx, rat.GetValueAsInt(0, idx))
             return 'fail'
     for (idx, val) in [(0, 2000), (1, 145), (2, 97), (3, 47)]:
         if rat.GetValueAsInt(24, idx) != val:
-            gdaltest.post_reason('fail')
             print(idx, rat.GetValueAsInt(24, idx))
             return 'fail'
     if ds.GetRasterBand(1).GetColorTable() is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -405,12 +396,10 @@ def test_ehdr_rat():
 
     ds = gdal.Open(tmpfile, gdal.GA_Update)
     if ds.GetRasterBand(1).GetDefaultRAT() or ds.GetRasterBand(1).GetColorTable():
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

@@ -175,7 +175,6 @@ def test_ogr_rfc35_mitab_2():
     lyr = ds.GetLayer(0)
 
     if lyr.TestCapability(ogr.OLCReorderFields) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -187,7 +186,6 @@ def test_ogr_rfc35_mitab_2():
     feat = None
 
     if lyr.ReorderField(1, 3) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     # ds = None
     # ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
@@ -264,7 +262,6 @@ def test_ogr_rfc35_mitab_2():
     ret = lyr.ReorderFields([0, 0, 0, 0])
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # ds = None
@@ -302,14 +299,12 @@ def test_ogr_rfc35_mitab_3():
     ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
@@ -337,7 +332,6 @@ def test_ogr_rfc35_mitab_3():
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
     if fld_defn.GetWidth() != 5:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -355,7 +349,6 @@ def test_ogr_rfc35_mitab_4():
     lyr_defn = lyr.GetLayerDefn()
 
     if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
@@ -374,13 +367,11 @@ def test_ogr_rfc35_mitab_4():
     ret = lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetField("intfield") != 12345:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -396,7 +387,6 @@ def test_ogr_rfc35_mitab_4():
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         if feat.GetField("intfield") != 12345:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = None
 
@@ -418,7 +408,6 @@ def test_ogr_rfc35_mitab_4():
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         if feat.GetField("intfield") != 1234:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = None
 
@@ -446,7 +435,6 @@ def test_ogr_rfc35_mitab_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetField("oldintfld") != '12345':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -464,7 +452,6 @@ def test_ogr_rfc35_mitab_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetField("oldintfld") != '12345':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -478,18 +465,15 @@ def test_ogr_rfc35_mitab_4():
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
     fd.SetWidth(10)
     if lyr.CreateField(fd) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.ReorderField(lyr_defn.GetFieldIndex("intfield"), 0) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     feat.SetField("intfield", 98765)
     if lyr.SetFeature(feat) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -500,7 +484,6 @@ def test_ogr_rfc35_mitab_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetField("oldintfld") != '98765':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -518,7 +501,6 @@ def test_ogr_rfc35_mitab_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetField("oldintfld") != '98765':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = None
 
@@ -540,25 +522,21 @@ def test_ogr_rfc35_mitab_5():
     lyr_defn = lyr.GetLayerDefn()
 
     if lyr.TestCapability(ogr.OLCDeleteField) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.DeleteField(0) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(-1)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -567,7 +545,6 @@ def test_ogr_rfc35_mitab_5():
         return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -588,7 +565,6 @@ def test_ogr_rfc35_mitab_5():
         return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = CheckFeatures(lyr, field3=None, field4=None)
@@ -597,7 +573,6 @@ def test_ogr_rfc35_mitab_5():
         return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # We cannot delete the only one remaining field (well MapInfo prohibits that)
@@ -605,7 +580,6 @@ def test_ogr_rfc35_mitab_5():
     ret = lyr.DeleteField(lyr_defn.GetFieldIndex('bar10'))
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)

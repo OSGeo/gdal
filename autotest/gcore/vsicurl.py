@@ -326,12 +326,10 @@ def test_vsicurl_test_redirect():
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_redirect/test.bin' % gdaltest.webserver_port, 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSIFSeekL(f, 0, 2)
     if gdal.VSIFTellL(f) != 1000000:
-        gdaltest.post_reason('fail')
         print(gdal.VSIFTellL(f))
         gdal.VSIFCloseL(f)
         return 'fail'
@@ -374,13 +372,11 @@ def test_vsicurl_test_redirect():
     with webserver.install_http_handler(handler):
         content = gdal.VSIFReadL(1, 16383, f).decode('ascii')
         if len(content) != 16383 or content[0] != 'x':
-            gdaltest.post_reason('fail')
             print(content)
             gdal.VSIFCloseL(f)
             return 'fail'
         content = gdal.VSIFReadL(1, 2, f).decode('ascii')
         if content != 'xy':
-            gdaltest.post_reason('fail')
             print(content)
             gdal.VSIFCloseL(f)
             return 'fail'
@@ -419,7 +415,6 @@ def test_vsicurl_test_retry():
             data_len = len(gdal.VSIFReadL(1, 1, f))
             gdal.VSIFCloseL(f)
         if data_len != 0:
-            gdaltest.post_reason('fail')
             print(data_len)
             return 'fail'
 
@@ -434,7 +429,6 @@ def test_vsicurl_test_retry():
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl?max_retry=2&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.ErrorReset()
         with gdaltest.error_handler():
@@ -442,11 +436,9 @@ def test_vsicurl_test_retry():
         error_msg = gdal.GetLastErrorMsg()
         gdal.VSIFCloseL(f)
         if data != 'foo':
-            gdaltest.post_reason('fail')
             print(data)
             return 'fail'
         if error_msg.find('429') < 0:
-            gdaltest.post_reason('fail')
             print(error_msg)
             return 'fail'
 
@@ -500,19 +492,16 @@ def test_vsicurl_test_parse_html_filelist_apache():
     with webserver.install_http_handler(handler):
         fl = gdal.ReadDir('/vsicurl/http://localhost:%d/mydir' % gdaltest.webserver_port)
     if fl != ['foo.tif', 'foo%20with%20space.tif']:
-        gdaltest.post_reason('fail')
         print(fl)
         return 'fail'
 
     if gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/foo%%20with%%20space.tif' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/mydir/i_dont_exist', 404, {})
     with webserver.install_http_handler(handler):
         if gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/i_dont_exist' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     return 'success'

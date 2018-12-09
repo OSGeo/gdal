@@ -154,7 +154,6 @@ def test_vrtovr_none():
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverview(0):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -189,16 +188,13 @@ def test_vrtovr_errors():
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverview(-1):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverview(1):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         if ds.GetRasterBand(1).GetOverview(0):
-            gdaltest.post_reason('fail')
             return 'fail'
 
     return 'success'

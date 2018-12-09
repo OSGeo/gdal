@@ -725,11 +725,9 @@ def test_gdal_translate_26():
 
     ds = gdal.Open('tmp/test_gdal_translate_26.tif')
     if ds.GetRasterBand(1).GetMinimum() != 10:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetMinimum())
         return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() != -999:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetNoDataValue())
         return 'fail'
 
@@ -764,7 +762,6 @@ cellsize     60.000000000000
 
     ds = gdal.Open('tmp/test_gdal_translate_27.tif')
     if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -773,7 +770,6 @@ cellsize     60.000000000000
 
     ds = gdal.Open('tmp/test_gdal_translate_27.tif')
     if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -782,7 +778,6 @@ cellsize     60.000000000000
 
     ds = gdal.Open('tmp/test_gdal_translate_27.tif')
     if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -800,7 +795,6 @@ def test_gdal_translate_28():
 
     ds = gdal.Open('tmp/test_gdal_translate_28.tif')
     if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -922,7 +916,6 @@ def test_gdal_translate_32():
        abs(float(md['LINE_SCALE']) - 47502) > 1e-5 or \
        abs(float(md['SAMP_OFF']) - 19676.6923076923) > 1e-5 or \
        abs(float(md['SAMP_SCALE']) - 19678.1538461538) > 1e-5:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -933,7 +926,6 @@ def test_gdal_translate_32():
        abs(float(md['LINE_SCALE']) - 15834) > 1e-5 or \
        abs(float(md['SAMP_OFF']) - (13464 - -10)) > 1e-5 or \
        abs(float(md['SAMP_SCALE']) - 13464) > 1e-5:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -951,7 +943,6 @@ def test_gdal_translate_33():
 
     ds = gdal.Open('tmp/test_gdal_translate_33.tif')
     if ds.RasterYSize != 50:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     ds = None
@@ -960,7 +951,6 @@ def test_gdal_translate_33():
 
     ds = gdal.Open('tmp/test_gdal_translate_33.tif')
     if ds.RasterXSize != 200:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     ds = None
@@ -969,7 +959,6 @@ def test_gdal_translate_33():
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
     if err.find('-outsize 0 0 invalid') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -986,7 +975,6 @@ def test_gdal_translate_34():
 
     ds = gdal.Open('tmp/test_gdal_translate_34.vrt')
     if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1004,25 +992,21 @@ def test_gdal_translate_35():
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path())
     if err.find('No source dataset specified') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif')
     if err.find('No target dataset specified') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' /non_existing_path/non_existing.tif /vsimem/out.tif')
     if err.find('does not exist in the file system') < 0 and err.find('No such file or directory') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif /non_existing_path/non_existing.tif')
     if err.find('Attempt to create new tiff file') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 

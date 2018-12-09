@@ -173,13 +173,11 @@ def test_http_4():
         if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
             print("Fails on MacOSX Travis sometimes. Not sure why.")
             return 'skip'
-        gdaltest.post_reason('fail')
         return 'fail'
 
     filelist = ds.GetFileList()
     if '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' not in filelist:
         print(filelist)
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -206,7 +204,6 @@ def test_http_5():
             print('cannot read')
             return 'skip'
         conn.close()
-        gdaltest.post_reason('fail')
         return 'fail'
     filename = ds.GetDescription()
     ds = None
@@ -242,7 +239,6 @@ def test_http_6():
             print('cannot read')
             return 'skip'
         conn.close()
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

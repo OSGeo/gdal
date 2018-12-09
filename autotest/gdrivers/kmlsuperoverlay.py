@@ -146,27 +146,22 @@ def test_kmlsuperoverlay_4():
     src_ds = gdal.Open("/vsimem/src.vrt")
     ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlsuperoverlay_4.kmz', src_ds, options=['FORMAT=PNG', 'NAME=myname', 'DESCRIPTION=mydescription', 'ALTITUDE=10', 'ALTITUDEMODE=absolute'])
     if ds.GetMetadataItem('NAME') != 'myname':
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadataItem('DESCRIPTION') != 'mydescription':
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         ds = None
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
         gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 30111:
-        gdaltest.post_reason('fail')
         ds = None
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
         gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
         return 'fail'
     if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('fail')
         ds = None
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
@@ -179,7 +174,6 @@ def test_kmlsuperoverlay_4():
     ref_data = ds.ReadRaster(0, 0, 800, 400, 200, 100)
     vrt_ds = None
     if got_data != ref_data:
-        gdaltest.post_reason('fail')
         ds = None
         src_ds = None
         gdal.Unlink("/vsimem/src.vrt")
@@ -271,31 +265,25 @@ def test_kmlsuperoverlay_6():
 
     ds = gdal.Open('data/kmlimage.kmz')
     if ds.GetProjectionRef().find('WGS_1984') < 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     got_gt = ds.GetGeoTransform()
     ref_gt = [1.2554125761846773, 1.6640895429971981e-05, 0.0, 43.452120815728101, 0.0, -1.0762348187666334e-05]
     for i in range(6):
         if abs(got_gt[i] - ref_gt[i]) > 1e-6:
-            gdaltest.post_reason('failure')
             print(got_gt)
             return 'fail'
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != 47673:
             print(cs)
-            gdaltest.post_reason('failure')
             return 'fail'
         if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
-            gdaltest.post_reason('failure')
             return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 61070:
         print(cs)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -308,23 +296,19 @@ def test_kmlsuperoverlay_7():
 
     ds = gdal.Open('data/small_world.kml')
     if ds.GetProjectionRef().find('WGS_1984') < 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     got_gt = ds.GetGeoTransform()
     ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
     for i in range(6):
         if abs(got_gt[i] - ref_gt[i]) > 1e-6:
-            gdaltest.post_reason('failure')
             print(got_gt)
             return 'fail'
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 30111:
         print(cs)
-        gdaltest.post_reason('failure')
         return 'fail'
     if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -418,15 +402,12 @@ def test_kmlsuperoverlay_8():
     src_ds = None
 
     if set(os.listdir('tmp/0/0')) != set(('0.kml', '0.png')):
-        gdaltest.post_reason('failure')
         return 'fail'
     if set(os.listdir('tmp/3/1')) != set(('0.jpg', '0.kml', '1.jpg', '1.kml', '2.jpg', '2.kml', '3.jpg', '3.kml',
                                           '4.jpg', '4.kml', '5.jpg', '5.kml', '6.jpg', '6.kml', '7.jpg', '7.kml',)):
-        gdaltest.post_reason('failure')
         return 'fail'
     if set(os.listdir('tmp/3/2')) != set():
         # dir should be empty - 3/2 is entirely transparent so we skip generating files.
-        gdaltest.post_reason('failure')
         return 'fail'
 
     shutil.rmtree('tmp/0')

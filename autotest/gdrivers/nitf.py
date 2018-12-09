@@ -281,7 +281,6 @@ def test_nitf_10():
     expected_cs = src_ds.GetRasterBand(2).Checksum()
     src_ds = None
     if expected_cs != 22296 and expected_cs != 22259:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     tst = gdaltest.GDALTest('NITF', '../tmp/nitf9.ntf', 2, expected_cs)
@@ -1102,7 +1101,6 @@ def test_nitf_38():
 
     gdal.Unlink('tmp/nitf38.vrt')
     if cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
 
@@ -1117,7 +1115,6 @@ def test_nitf_38():
 
     gdal.Unlink('tmp/nitf38.vrt')
     if cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
 
@@ -1132,7 +1129,6 @@ def test_nitf_38():
 
     gdal.Unlink('tmp/nitf38.vrt')
     if cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
 
@@ -1876,7 +1872,6 @@ def test_nitf_read_IMRFCA_IMASDA():
     ds = None
     gdal.Unlink(tmpfile)
     if md is None or md == {}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -1887,7 +1882,6 @@ def test_nitf_read_IMRFCA_IMASDA():
     ds = None
     gdal.Unlink(tmpfile)
     if md != {}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -1898,7 +1892,6 @@ def test_nitf_read_IMRFCA_IMASDA():
     ds = None
     gdal.Unlink(tmpfile)
     if md != {}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -1910,7 +1903,6 @@ def test_nitf_read_IMRFCA_IMASDA():
     ds = None
     gdal.Unlink(tmpfile)
     if md != {}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -1922,7 +1914,6 @@ def test_nitf_read_IMRFCA_IMASDA():
     ds = None
     gdal.Unlink(tmpfile)
     if md != {}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 

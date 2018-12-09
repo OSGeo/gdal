@@ -503,7 +503,6 @@ def test_gdalbuildvrt_14():
     ds_ref = None
 
     if cs != cs_ref:
-        gdaltest.post_reason('fail')
         print(cs)
         print(cs_ref)
         return 'fail'
@@ -525,7 +524,6 @@ def test_gdalbuildvrt_15():
     ds = None
 
     if cs != 4672:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -543,14 +541,12 @@ def test_gdalbuildvrt_16():
 
     if not gdaltest.is_travis_branch('mingw'):
         if err.find('ERROR ret code = 1') < 0:
-            gdaltest.post_reason('fail')
             print(out)
             print(err)
             return 'fail'
     else:
         # We don't get the error code on Travis mingw
         if err.find('ERROR') < 0:
-            gdaltest.post_reason('fail')
             print(out)
             print(err)
             return 'fail'

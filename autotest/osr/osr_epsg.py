@@ -195,7 +195,6 @@ def test_osr_epsg_9():
     srs.ImportFromEPSG(3857)
 
     if srs.ExportToWkt() != 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]':
-        gdaltest.post_reason('fail')
         print(srs.ExportToWkt())
         return 'fail'
 
@@ -231,18 +230,15 @@ def test_osr_epsg_10():
         AUTHORITY["EPSG","9001"]]]""")
 
     if srs.AutoIdentifyEPSG() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if srs.GetAuthorityCode(None) != '3031':
-        gdaltest.post_reason('fail')
         print(srs.ExportToWkt())
         return 'fail'
 
     srs_ref = osr.SpatialReference()
     srs_ref.ImportFromEPSG(3031)
     if srs.IsSame(srs_ref) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     srs = osr.SpatialReference()
@@ -265,18 +261,15 @@ def test_osr_epsg_10():
         AUTHORITY["EPSG","9001"]]]""")
 
     if srs.AutoIdentifyEPSG() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if srs.GetAuthorityCode(None) != '3995':
-        gdaltest.post_reason('fail')
         print(srs.ExportToWkt())
         return 'fail'
 
     srs_ref = osr.SpatialReference()
     srs_ref.ImportFromEPSG(3995)
     if srs.IsSame(srs_ref) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -327,11 +320,9 @@ def test_osr_epsg_13():
     sr.MorphFromESRI()
     matches = sr.FindMatches()
     if len(matches) != 1 or matches[0][1] != 100:
-        gdaltest.post_reason('fail')
         print(matches)
         return 'fail'
     if matches[0][0].IsSame(sr) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Two matches (and test GEOGCS)
@@ -343,15 +334,12 @@ def test_osr_epsg_13():
     UNIT["degree",0.0174532925199433]]""")
     matches = sr.FindMatches()
     if len(matches) != 2:
-        gdaltest.post_reason('fail')
         print(matches)
         return 'fail'
     if matches[0][0].GetAuthorityCode(None) != '4126' or matches[0][1] != 90:
-        gdaltest.post_reason('fail')
         print(matches)
         return 'fail'
     if matches[1][0].GetAuthorityCode(None) != '4669' or matches[1][1] != 90:
-        gdaltest.post_reason('fail')
         print(matches)
         return 'fail'
 
@@ -364,7 +352,6 @@ def test_osr_epsg_13():
 """)
     matches = sr.FindMatches()
     if matches:
-        gdaltest.post_reason('fail')
         print(matches)
         return 'fail'
 
@@ -392,11 +379,9 @@ def test_osr_epsg_13():
 """)
     matches = sr.FindMatches()
     if len(matches) != 1 or matches[0][1] != 50:
-        gdaltest.post_reason('fail')
         print(matches)
         return 'fail'
     if matches[0][0].IsSame(sr) == 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # WKT has EPSG code but the definition doesn't match with the official
@@ -430,11 +415,9 @@ def test_osr_epsg_13():
 """)
     matches = sr.FindMatches()
     if len(matches) != 1 or matches[0][1] != 50:
-        gdaltest.post_reason('fail')
         print(matches)
         return 'fail'
     if matches[0][0].IsSame(sr) == 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

@@ -63,7 +63,6 @@ def test_jpeg_copy_icc():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with dataset from Open()
@@ -73,7 +72,6 @@ def test_jpeg_copy_icc():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')
@@ -106,7 +104,6 @@ def test_jpeg_copy_options_icc():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with dataset from Open()
@@ -116,7 +113,6 @@ def test_jpeg_copy_options_icc():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')
@@ -157,17 +153,14 @@ def test_jpeg_copy_icc_64K():
 
     try:
         os.stat('tmp/icc_test.jpg.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
 
     if comment != 'foo':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with dataset from Open()
@@ -177,13 +170,11 @@ def test_jpeg_copy_icc_64K():
 
     try:
         os.stat('tmp/icc_test.jpg.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with GetMetadataItem()
@@ -193,13 +184,11 @@ def test_jpeg_copy_icc_64K():
 
     try:
         os.stat('tmp/icc_test.jpg.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
 
     if source_icc_profile != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')

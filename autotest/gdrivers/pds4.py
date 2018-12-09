@@ -248,7 +248,6 @@ def test_pds4_8():
     got_gt = ds.GetGeoTransform()
     expected_gt = (85151.12354629935, 42575.561773149675, 0.0, 2086202.5268843342, 0.0, -85151.12354629935)
     if max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) > 1:
-        gdaltest.post_reason('fail')
         print('')
         print(got_gt)
         print(expected_gt)
@@ -267,13 +266,11 @@ def test_pds4_9():
     ds = gdal.Open('data/byte_pds4.xml')
     ndv = ds.GetRasterBand(1).GetNoDataValue()
     if ndv != 74:
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 4800:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -291,13 +288,11 @@ def test_pds4_9():
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
     if ndv != 74:
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 4800:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -319,19 +314,16 @@ def test_pds4_9():
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
         if ndv != 75:
-            gdaltest.post_reason('fail')
             print(ndv)
             return 'fail'
 
         flag = ds.GetRasterBand(1).GetMaskFlags()
         if flag != 0:
-            gdaltest.post_reason('fail')
             print(flag)
             return 'fail'
 
         cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
         if cs != 4833:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 
@@ -352,7 +344,6 @@ def test_pds4_9():
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
         if ndv != 74:
-            gdaltest.post_reason('fail')
             print(frmt)
             print(ndv)
             return 'fail'
@@ -369,7 +360,6 @@ def test_pds4_9():
         ds = gdal.Open(filename)
         cs = ds.GetRasterBand(1).Checksum()
         if cs != 1:
-            gdaltest.post_reason('fail')
             print(frmt)
             print(cs)
             return 'fail'
@@ -386,7 +376,6 @@ def test_pds4_9():
         ds = gdal.Open(filename)
         cs = ds.GetRasterBand(1).Checksum()
         if cs != 1:
-            gdaltest.post_reason('fail')
             print(frmt)
             print(cs)
             return 'fail'
@@ -449,7 +438,6 @@ def test_pds4_9():
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
     if ndv != 10:
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
     ds = None
@@ -516,7 +504,6 @@ def test_pds4_9():
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
     if ndv != 10:
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
     ds = None
@@ -551,12 +538,10 @@ def test_pds4_10():
         ds = gdal.Open(filename2)
         scale = ds.GetRasterBand(1).GetScale()
         if scale != 2:
-            gdaltest.post_reason('fail')
             print(scale)
             return 'fail'
         offset = ds.GetRasterBand(1).GetOffset()
         if offset != 3:
-            gdaltest.post_reason('fail')
             print(offset)
             return 'fail'
         ds = None
@@ -590,18 +575,15 @@ def test_pds4_11():
         with gdaltest.config_option('PDS4_FORCE_MASK', 'YES'):
             ds = gdal.Open(filename)
         if ds.GetRasterBand(1).DataType != dt:
-            gdaltest.post_reason('fail')
             print(ds.GetRasterBand(1).DataType)
             print(dt)
             return 'fail'
         got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
         if got_data != data:
-            gdaltest.post_reason('fail')
             print(dt)
             return 'fail'
         cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
         if cs != 3:
-            gdaltest.post_reason('fail')
             print(dt)
             print(cs)
             return 'fail'
@@ -641,35 +623,27 @@ def test_pds4_12():
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
     if data.find('<logical_identifier>logical_identifier</logical_identifier>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<cart:west_bounding_coordinate unit="deg">1</cart:west_bounding_coordinate>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<cart:east_bounding_coordinate unit="deg">3</cart:east_bounding_coordinate>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<cart:north_bounding_coordinate unit="deg">4</cart:north_bounding_coordinate>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<cart:south_bounding_coordinate unit="deg">2</cart:south_bounding_coordinate>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<cart:latitude_type>planetographic</cart:latitude_type>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<cart:longitude_direction>Positive West</cart:longitude_direction>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<file_name>myimage.raw</file_name>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -692,28 +666,24 @@ def test_pds4_13():
                       ('PDS4:data/byte_pds4_multi_sds.xml:2:1',
                        'Image file byte_pds4.img, array third_sds')]
     if subds != expected_subds:
-        gdaltest.post_reason('fail')
         print(subds)
         return 'fail'
 
     ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:1')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 2315:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:2')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 2302:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:2:1')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 3496:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -721,37 +691,31 @@ def test_pds4_13():
     subds_name = ds.GetSubDatasets()[0][0]
     ds = gdal.Open(subds_name)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:c:\do_not\exist.xml:1:1')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:i_do_not_exist.xml')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:i_do_not_exist.xml:1:1')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:3:1')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:3')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -768,7 +732,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(filename, """
@@ -842,7 +805,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(filename, """
@@ -878,7 +840,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(filename, """
@@ -909,7 +870,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(filename, """
@@ -940,7 +900,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer(filename, """
@@ -971,7 +930,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink(filename)
@@ -981,7 +939,6 @@ def test_pds4_14():
         ds = gdal.GetDriverByName('PDS4').Create('/vsimem/out.xml', 1, 1,
                                                  options=['INTERLEAVE=INVALID'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # INTERLEAVE=BIL not supported for GeoTIFF in PDS4
@@ -990,7 +947,6 @@ def test_pds4_14():
                                                  options=['INTERLEAVE=BIL',
                                                           'IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Cannot create GeoTIFF file
@@ -998,7 +954,6 @@ def test_pds4_14():
         ds = gdal.GetDriverByName('PDS4').Create('/i/do_not/exist.xml', 1, 1,
                                                  options=['IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif')
@@ -1007,7 +962,6 @@ def test_pds4_14():
         ds = gdal.Translate('/vsimem/test.xml', '/vsimem/test.tif',
                             format='PDS4', creationOptions=['IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/test.tif')
 
@@ -1021,7 +975,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = None
     if gdal.GetLastErrorMsg() != 'Cannot find Product_Observational element in template':
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1041,7 +994,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = None
     if gdal.GetLastErrorMsg() != 'Cannot find Target_Identification element in template':
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1057,7 +1009,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = None
     if gdal.GetLastErrorMsg() != 'Cannot find Observation_Area in template':
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1076,7 +1027,6 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = None
     if gdal.GetLastErrorMsg() != 'Unexpected content found after Observation_Area in template':
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1107,7 +1057,6 @@ def test_pds4_15():
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
     if data.find('<cart:Cartography>') >= 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -1186,15 +1135,12 @@ def test_pds4_16():
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
     if data.find('http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
     if data.find('<cart:Cartography>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -1226,7 +1172,6 @@ def test_pds4_17():
     if data.find('<Array_2D>') < 0 or data.find('<axes>2</axes>') < 0 or \
        data.find('<axis_name>Band</axis_name>') >= 0 or \
        data.find('<sequence_number>3</sequence_number>') >= 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -1253,7 +1198,6 @@ def test_pds4_17():
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
     if data.find('<Array_3D_Spectrum>') < 0 or data.find('<axes>3</axes>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -1284,7 +1228,6 @@ def test_pds4_18():
     if data.find('<cart:semi_major_radius unit="m">1</cart:semi_major_radius>') < 0 or \
        data.find('<cart:semi_minor_radius unit="m">1</cart:semi_minor_radius>') < 0 or \
        data.find('<cart:polar_radius unit="m">2</cart:polar_radius>') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 

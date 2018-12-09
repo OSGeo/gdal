@@ -57,12 +57,10 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     lyr.CreateFeature(f)
 
     if ds.TestCapability(ogr.ODsCCreateLayer):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         if ds.CreateLayer('foo') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ds = None
@@ -72,11 +70,9 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     gdal.VSIFCloseL(f)
     if expect_rs:
         if first != '\x1e':
-            gdaltest.post_reason('fail')
             return 'fail'
     else:
         if first != '{':
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ds = ogr.Open(filename)
@@ -84,16 +80,13 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     f = lyr.GetNextFeature()
     if f['foo'] != 'bar"d' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if lyr.GetNextFeature() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -146,7 +139,6 @@ def test_ogr_geojsonseq_seq_geometries():
             return 'fail'
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-            gdaltest.post_reason('fail')
             f.DumpReadable()
             return 'fail'
 
@@ -171,7 +163,6 @@ def test_ogr_geojsonseq_reprojection():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -188,16 +179,13 @@ def test_ogr_geojsonseq_read_rs_json_pretty():
     f = lyr.GetNextFeature()
     if f['foo'] != 'bar' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if lyr.GetNextFeature() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     return 'success'
 

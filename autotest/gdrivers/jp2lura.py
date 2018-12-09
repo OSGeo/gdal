@@ -206,7 +206,6 @@ def test_jp2lura_3():
 
     ds = ogr.Open('data/int16.jp2')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -238,11 +237,9 @@ def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
     gdal.Unlink('/vsimem/jp2lura_4.vrt')
 
     if gdal.VSIStatL(out_filename + '.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if validate(out_filename, inspire_tg=False) == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open(out_filename)
@@ -398,13 +395,10 @@ def DISABLED_jp2lura_10():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_10.jp2', src_ds, options=['YCBCR420=YES', 'RESOLUTIONS=3'])
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
     if out_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     del out_ds
     src_ds = None
@@ -429,11 +423,9 @@ def DISABLED_jp2lura_11():
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     got_cs = fourth_band.Checksum()
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
@@ -449,22 +441,18 @@ def DISABLED_jp2lura_11():
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jp2lura_11.tif')
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
 
     if jp2_bands_data != gtiff_bands_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if jp2_fourth_band_data != gtiff_fourth_band_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -494,7 +482,6 @@ def test_jp2lura_12():
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_12.jp2')
 
     if wkt.find('32631') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -512,7 +499,6 @@ def test_jp2lura_12():
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_12.jp2')
 
     if gt != (1000, 1, 0, 2000, 0, -1):
-        gdaltest.post_reason('fail')
         print(gt)
         return 'fail'
 
@@ -534,7 +520,6 @@ def test_jp2lura_13():
     src_ds = None
 
     if gdal.VSIStatL('tmp/jp2lura_13.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('tmp/jp2lura_13.jp2')
@@ -542,13 +527,10 @@ def test_jp2lura_13():
     gcps = ds.GetGCPs()
     wkt = ds.GetGCPProjection()
     if count != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
     if len(gcps) != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
     if wkt.find('4326') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -570,13 +552,10 @@ def test_jp2lura_13():
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_13.jp2')
 
     if count != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if len(gcps) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if wkt.find('32631') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -593,7 +572,6 @@ def test_jp2lura_14():
 
     ds = gdal.Open('data/byte_2gcps.jp2')
     if ds.GetGCPCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -653,7 +631,6 @@ def test_jp2lura_17():
     src_ds = None
 
     if gdal.VSIStatL('/vsimem/jp2lura_17.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('/vsimem/jp2lura_17.jp2')
@@ -692,7 +669,6 @@ def test_jp2lura_18():
     ds = gdal.Open('/vsimem/jp2lura_18.jp2')
     ds.GetRasterBand(1).Checksum()
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -711,7 +687,6 @@ def test_jp2lura_19():
 
     ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
     if ds.GetProjectionRef() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -805,25 +780,19 @@ def test_jp2lura_22():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2lura_22.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     if validate('/vsimem/jp2lura_22.jp2', expected_gmljp2=False, inspire_tg=False) == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/jp2lura_22.jp2')
@@ -839,17 +808,14 @@ def test_jp2lura_22():
         del out_ds
         src_ds = None
         if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.OpenEx('/vsimem/jp2lura_22.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
         fourth_band = ds.GetRasterBand(4)
         if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
         if ds.GetRasterBand(4).Checksum() != 23120:
-            gdaltest.post_reason('fail')
             print(ds.GetRasterBand(4).Checksum())
             return 'fail'
         ds = None
@@ -861,23 +827,17 @@ def test_jp2lura_22():
         del out_ds
         src_ds = None
         if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
         if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(1).Checksum() != 11457:
-            gdaltest.post_reason('fail')
             print(ds.GetRasterBand(1).Checksum())
             return 'fail'
         ds = None
@@ -891,7 +851,6 @@ def test_jp2lura_22():
         del out_ds
         src_ds = None
         if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
 
@@ -906,20 +865,15 @@ def test_jp2lura_22():
         del out_ds
         src_ds = None
         if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
         if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
@@ -935,20 +889,15 @@ def test_jp2lura_22():
         del out_ds
         src_ds = None
         if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
         if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
@@ -975,18 +924,15 @@ def DISABLED_jp2lura_23():
     src_ds = None
     ds = gdal.Open('/vsimem/jp2lura_23.jp2')
     if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '9':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_23_2.jp2', ds)
     if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '9':
-        gdaltest.post_reason('failure')
         return 'fail'
     del out_ds
 
     ds = None
     if gdal.VSIStatL('/vsimem/jp2lura_23.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2lura_23.jp2')
     gdal.Unlink('/vsimem/jp2lura_23_2.jp2')
@@ -1013,19 +959,15 @@ def test_jp2lura_24():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2lura_24.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2lura_24.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     if validate('/vsimem/jp2lura_24.jp2', expected_gmljp2=False, inspire_tg=False) == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/jp2lura_24.jp2')
@@ -1041,26 +983,20 @@ def test_jp2lura_24():
 
         src_ds = None
         if gdal.VSIStatL('/vsimem/jp2lura_24.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.OpenEx('/vsimem/jp2lura_24.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
         if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
         ds = gdal.Open('/vsimem/jp2lura_24.jp2')
         if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-            gdaltest.post_reason('fail')
             print(ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE'))
             return 'fail'
         if ds.GetRasterBand(2).Checksum() != 23120:
-            gdaltest.post_reason('fail')
             print(ds.GetRasterBand(2).Checksum())
             return 'fail'
         ds = None
@@ -1090,11 +1026,9 @@ def test_jp2lura_25():
     src_ds = None
     ds = gdal.Open('/vsimem/jp2lura_25.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     if gdal.VSIStatL('/vsimem/jp2lura_25.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/jp2lura_25.jp2')
@@ -1272,18 +1206,14 @@ def DISABLED_jp2lura_31():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_31.jp2', src_ds)
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2lura_31.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2lura_31.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetColorInterpretation())
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2lura_31.jp2')
@@ -1297,21 +1227,16 @@ def DISABLED_jp2lura_31():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_31.jp2', src_ds)
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2lura_31.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2lura_31.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetColorInterpretation())
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2lura_31.jp2')
@@ -1335,7 +1260,6 @@ def DISABLED_jp2lura_33():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_33.jp2', src_ds, options=['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     gdal.Unlink('/vsimem/jp2lura_33.jp2')
@@ -1355,7 +1279,6 @@ def test_jp2lura_34():
     ds = gdal.Open('data/dimensions_above_31bit.jp2')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1373,7 +1296,6 @@ def test_jp2lura_35():
     ds = gdal.Open('data/truncated.jp2')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1392,7 +1314,6 @@ def test_jp2lura_36():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_36.jp2', src_ds)
     gdal.PopErrorHandler()
     if out_ds is not None or gdal.VSIStatL('/vsimem/jp2lura_36.jp2') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1411,11 +1332,9 @@ def test_jp2lura_37():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2lura_37.jp2')
     if ds.GetMetadata() != {}:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
@@ -1426,11 +1345,9 @@ def test_jp2lura_37():
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2lura_37.jp2')
         if ds.GetMetadata() != {'FOO': 'BAR'}:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
@@ -1442,12 +1359,10 @@ def test_jp2lura_37():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2lura_37.jp2')
     md = ds.GetMetadata('SOME_DOMAIN')
     if md != {'FOO': 'BAR'}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     gdal.Unlink('/vsimem/jp2lura_37.jp2')
@@ -1458,11 +1373,9 @@ def test_jp2lura_37():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2lura_37.jp2')
     if ds.GetMetadata('xml:SOME_DOMAIN')[0] != '<some_arbitrary_xml_box />\n':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
@@ -1473,11 +1386,9 @@ def test_jp2lura_37():
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2lura_37.jp2')
         if ds.GetMetadata('xml:BOX_0')[0] != '<some_arbitrary_xml_box/>':
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
@@ -1488,11 +1399,9 @@ def test_jp2lura_37():
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2lura_37.jp2')
         if ds.GetMetadata('xml:XMP')[0] != '<fake_xmp_box/>':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
@@ -1533,7 +1442,6 @@ def test_jp2lura_38():
     src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_38.jp2', src_ds, options=['GeoJP2=NO'])
     if out_ds.GetProjectionRef() != wkt:
-        gdaltest.post_reason('fail')
         print(out_ds.GetProjectionRef())
         return 'fail'
     crsdictionary = out_ds.GetMetadata_List("xml:CRSDictionary.gml")[0]
@@ -1625,7 +1533,6 @@ def test_jp2lura_39():
     del out_ds
     ds = gdal.Open('/vsimem/jp2lura_39.jp2')
     if ds.GetProjectionRef().find('4326') < 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     ds = None
@@ -1702,14 +1609,12 @@ def test_jp2lura_40():
     del out_ds
     ds = gdal.Open('/vsimem/jp2lura_40.jp2')
     if ds.GetProjectionRef().find('4326') < 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (2, 0.1, 0, 49, 0, -0.1)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     ds = None
@@ -1730,11 +1635,9 @@ def test_jp2lura_41():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES', '@PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('fail')
         return 'fail'
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2lura_41.jp2').size != 9923:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2lura_41.jp2')
     gdal.Unlink('/vsimem/jp2lura_41.jp2.aux.xml')
@@ -1761,7 +1664,6 @@ def test_jp2lura_41():
     gdal.PopErrorHandler()
     del out_ds
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2lura_41.jp2')
 
@@ -1796,10 +1698,8 @@ def test_jp2lura_45():
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_45.jp2', src_ds, options=['GMLJP2V2_DEF=YES'])
     if out_ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetLayer(0) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     del out_ds
 
@@ -1864,7 +1764,6 @@ def test_jp2lura_45():
 </gmljp2:GMLJP2CoverageCollection>
 """
     if gmljp2 != minimal_instance:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
 
@@ -1885,12 +1784,10 @@ def test_jp2lura_47():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_47.jp2', src_ds)
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2lura_47.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('/vsimem/jp2lura_47.jp2')
     if ds.GetMetadata('RPC') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1910,11 +1807,9 @@ def test_jp2lura_48():
     ds = gdal.Open('data/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     if (blockxsize, blockysize) != (20, 20):
-        gdaltest.post_reason('fail')
         print(blockxsize, blockysize)
         return 'fail'
     if ds.GetRasterBand(1).Checksum() != 4610:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2247,7 +2142,6 @@ def test_jp2lura_51():
     with gdaltest.error_handler():
         ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds,
@@ -2256,13 +2150,11 @@ def test_jp2lura_51():
     ds = None
 
     if validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
 
     if maxdiff > 0.01:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # QUALITY
@@ -2273,12 +2165,10 @@ def test_jp2lura_51():
         maxdiff = gdaltest.compare_ds(ds, src_ds)
         ds = None
         if maxdiff > 124:
-            gdaltest.post_reason('fail')
             print(maxdiff)
             return 'fail'
 
         if validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) == 'fail':
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
     with gdaltest.error_handler():
@@ -2291,12 +2181,10 @@ def test_jp2lura_51():
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
     if maxdiff > 370:
-        gdaltest.post_reason('fail')
         print(maxdiff)
         return 'fail'
 
     if validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
@@ -2307,7 +2195,6 @@ def test_jp2lura_51():
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
     if maxdiff != 0.0:
-        gdaltest.post_reason('fail')
         print(maxdiff)
         return 'fail'
 
@@ -2342,13 +2229,11 @@ def test_jp2lura_52():
                                              options=['REVERSIBLE=YES'])
         got_min, got_max = ds.GetRasterBand(1).ComputeRasterMinMax()
         if val != got_min or val != got_max:
-            gdaltest.post_reason('fail')
             print(val, dt, fmt, got_min, got_max)
             return 'fail'
         ds = None
 
         if val >= 0 and validate('/vsimem/jp2lura_52.jp2', expected_gmljp2=False, inspire_tg=False) == 'fail':
-            gdaltest.post_reason('fail')
             print(val, dt, fmt)
             return 'fail'
 
@@ -2372,7 +2257,6 @@ def test_jp2lura_53():
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
     if maxdiff > 8:
-        gdaltest.post_reason('fail')
         print(maxdiff)
         return 'fail'
 
@@ -2383,7 +2267,6 @@ def test_jp2lura_53():
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
     if maxdiff > 2:
-        gdaltest.post_reason('fail')
         print(maxdiff)
         return 'fail'
 
@@ -2395,7 +2278,6 @@ def test_jp2lura_53():
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
     if maxdiff > 8:
-        gdaltest.post_reason('fail')
         print(maxdiff)
         return 'fail'
 
@@ -2407,7 +2289,6 @@ def test_jp2lura_53():
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
     if maxdiff > 0:
-        gdaltest.post_reason('fail')
         print(maxdiff)
         return 'fail'
 
@@ -2434,7 +2315,6 @@ def test_jp2lura_54():
                                           buf_type=gdal.GDT_Int16)
     data = struct.unpack('h' * 100 * 100, data)
     if min(data) != 100 or max(data) != 100:
-        gdaltest.post_reason('fail')
         print(min(data))
         print(max(data))
         return 'fail'
@@ -2443,7 +2323,6 @@ def test_jp2lura_54():
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)
     data = struct.unpack('B' * 30 * 30, data)
     if min(data) != 100 or max(data) != 100:
-        gdaltest.post_reason('fail')
         print(min(data))
         print(max(data))
         return 'fail'

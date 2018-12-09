@@ -206,7 +206,6 @@ def test_bag_vr_normal():
 
     for key in expected_md:
         if key not in got_md or got_md[key] != expected_md[key]:
-            gdaltest.post_reason('fail')
             print(key)
             import pprint
             pp = pprint.PrettyPrinter()
@@ -222,7 +221,6 @@ def test_bag_vr_normal():
 
     got_md2 = gdal.Info(ds, computeChecksum=True, format='json')
     if got_md2 != got_md:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -238,17 +236,14 @@ def test_bag_vr_list_supergrids():
 
     ds = gdal.OpenEx('data/test_vr.bag', open_options=['MODE=LIST_SUPERGRIDS'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     sub_ds = ds.GetSubDatasets()
     if len(sub_ds) != 24:
-        gdaltest.post_reason('fail')
         print(len(sub_ds))
         print(sub_ds)
         return 'fail'
 
     if sub_ds[0][0] != 'BAG:"data/test_vr.bag":supergrid:0:0':
-        gdaltest.post_reason('fail')
         print(sub_ds)
         return 'fail'
 
@@ -259,7 +254,6 @@ def test_bag_vr_list_supergrids():
                          open_options=['MODE=LIST_SUPERGRIDS', 'MINX=200'])
     sub_ds = ds.GetSubDatasets()
     if len(sub_ds) != 24:
-        gdaltest.post_reason('fail')
         print(len(sub_ds))
         print(sub_ds)
         return 'fail'
@@ -268,12 +262,10 @@ def test_bag_vr_list_supergrids():
                      'MODE=LIST_SUPERGRIDS', 'MINX=100', 'MAXX=220', 'MINY=500000', 'MAXY=500100'])
     sub_ds = ds.GetSubDatasets()
     if len(sub_ds) != 6:
-        gdaltest.post_reason('fail')
         print(len(sub_ds))
         print(sub_ds)
         return 'fail'
     if sub_ds[0][0] != 'BAG:"data/test_vr.bag":supergrid:1:1':
-        gdaltest.post_reason('fail')
         print(sub_ds)
         return 'fail'
 
@@ -281,12 +273,10 @@ def test_bag_vr_list_supergrids():
                      'MODE=LIST_SUPERGRIDS', 'RES_FILTER_MIN=5', 'RES_FILTER_MAX=10'])
     sub_ds = ds.GetSubDatasets()
     if len(sub_ds) != 12:
-        gdaltest.post_reason('fail')
         print(len(sub_ds))
         print(sub_ds)
         return 'fail'
     if sub_ds[0][0] != 'BAG:"data/test_vr.bag":supergrid:0:3':
-        gdaltest.post_reason('fail')
         print(sub_ds)
         return 'fail'
 
@@ -294,13 +284,11 @@ def test_bag_vr_list_supergrids():
                      'SUPERGRIDS_INDICES=(2,1),(3,4)'])
     sub_ds = ds.GetSubDatasets()
     if len(sub_ds) != 2:
-        gdaltest.post_reason('fail')
         print(len(sub_ds))
         print(sub_ds)
         return 'fail'
     if sub_ds[0][0] != 'BAG:"data/test_vr.bag":supergrid:2:1' or \
        sub_ds[1][0] != 'BAG:"data/test_vr.bag":supergrid:3:4':
-        gdaltest.post_reason('fail')
         print(sub_ds)
         return 'fail'
 
@@ -309,7 +297,6 @@ def test_bag_vr_list_supergrids():
                      'SUPERGRIDS_INDICES=(2,1)'])
     ds2 = gdal.Open('BAG:"data/test_vr.bag":supergrid:2:1')
     if gdal.Info(ds) != gdal.Info(ds2):
-        gdaltest.post_reason('fail')
         print(sub_ds)
         return 'fail'
 
@@ -320,7 +307,6 @@ def test_bag_vr_list_supergrids():
             ds = gdal.OpenEx('data/test_vr.bag', open_options=[
                 'SUPERGRIDS_INDICES=' + invalid_val])
         if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             print(invalid_val)
             return 'fail'
 
@@ -337,7 +323,6 @@ def test_bag_vr_open_supergrids():
 
     ds = gdal.Open('BAG:"data/test_vr.bag":supergrid:0:0')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     got_md = gdal.Info(ds, computeChecksum=True, format='json')
@@ -375,7 +360,6 @@ def test_bag_vr_open_supergrids():
 
     for key in expected_md:
         if key not in got_md or got_md[key] != expected_md[key]:
-            gdaltest.post_reason('fail')
             print(key)
             import pprint
             pp = pprint.PrettyPrinter()
@@ -385,19 +369,16 @@ def test_bag_vr_open_supergrids():
     with gdaltest.error_handler():
         ds = gdal.Open('BAG:"/vsimem/unexisting.bag":supergrid:0:0')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('BAG:"data/test_vr.bag":supergrid:4:0')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('BAG:"data/test_vr.bag":supergrid:0:6')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
@@ -420,7 +401,6 @@ def test_bag_vr_resampled():
 
     ds = gdal.OpenEx('data/test_vr.bag', open_options=['MODE=RESAMPLED_GRID'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     got_md = gdal.Info(ds, computeChecksum=True, format='json')
@@ -462,7 +442,6 @@ def test_bag_vr_resampled():
 
     for key in expected_md:
         if key not in got_md or got_md[key] != expected_md[key]:
-            gdaltest.post_reason('fail')
             print(key)
             import pprint
             pp = pprint.PrettyPrinter()
@@ -477,14 +456,12 @@ def test_bag_vr_resampled():
             ds = gdal.OpenEx('data/test_vr.bag',
                              open_options=['MODE=RESAMPLED_GRID'])
             if ds.GetRasterBand(1).GetBlockSize() != [block_size, block_size]:
-                gdaltest.post_reason('fail')
                 print(block_size)
                 print(ds.GetRasterBand(1).GetBlockSize())
                 return 'fail'
             data = ds.ReadRaster()
 
         if data != data_ref:
-            gdaltest.post_reason('fail')
             print(block_size)
             return 'fail'
 
@@ -493,39 +470,32 @@ def test_bag_vr_resampled():
         ds = gdal.OpenEx('data/test_vr.bag',
                          open_options=['MODE=RESAMPLED_GRID'])
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(2) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ovr = ds.GetRasterBand(1).GetOverview(0)
     cs = ovr.Checksum()
     if cs != 681:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ovr = ds.GetRasterBand(2).GetOverview(0)
     cs = ovr.Checksum()
     if cs != 1344:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds.GetRasterBand(1).GetOverview(0).FlushCache()
     ds.GetRasterBand(1).GetOverview(1).FlushCache()
     cs = ovr.Checksum()
     if cs != 1344:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ovr = ds.GetRasterBand(1).GetOverview(0)
     cs = ovr.Checksum()
     if cs != 681:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -535,7 +505,6 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[0], gt[3], ds.RasterXSize)
     if got != (90.0, 500112.0, 6):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -545,7 +514,6 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[3] + gt[5] * ds.RasterYSize, ds.RasterYSize)
     if got != (500000.0, 21):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -555,7 +523,6 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (5.0, -6.0):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -565,7 +532,6 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (4.983333110809326, -5.316666603088379):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -575,7 +541,6 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (29.899999618530273, -31.899999618530273):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -585,7 +550,6 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (12.209166447321573, -13.025833209355673):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -596,12 +560,10 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (8.0, -8.0):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     if got != (2099, 2747):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -611,12 +573,10 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (8.0, -8.0):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     if got != (2099, 2747):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -627,12 +587,10 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (16.0, -16.0):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     if got != (796, 864):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -643,12 +601,10 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (32.0, -32.0):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     if got != (207, 207):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -658,12 +614,10 @@ def test_bag_vr_resampled():
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     if got != (29.899999618530273, -31.899999618530273):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     if got != (165, 205):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -673,7 +627,6 @@ def test_bag_vr_resampled():
                          open_options=['MODE=RESAMPLED_GRID',
                                        'RES_FILTER_MIN=32'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Too small RES_FILTER_MAX
@@ -682,7 +635,6 @@ def test_bag_vr_resampled():
                          open_options=['MODE=RESAMPLED_GRID',
                                        'RES_FILTER_MAX=4'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # RES_FILTER_MIN >= RES_FILTER_MAX
@@ -692,7 +644,6 @@ def test_bag_vr_resampled():
                                        'RES_FILTER_MIN=4',
                                        'RES_FILTER_MAX=4'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test VALUE_POPULATION
@@ -720,7 +671,6 @@ def test_bag_vr_resampled():
     m2_min, M2_min, mean2_min, _ = ds.GetRasterBand(2).ComputeStatistics(False)
 
     if mean1_min >= mean1_mean or mean1_mean >= mean1_max:
-        gdaltest.post_reason('fail')
         print(m1_max, M1_max, mean1_max)
         print(m2_max, M2_max, mean2_max)
         print(m1_mean, M1_mean, mean1_mean)
@@ -731,7 +681,6 @@ def test_bag_vr_resampled():
 
     if m2_min >= m2_max or \
        (m2_mean, M2_mean, mean2_mean) != (m2_max, M2_max, mean2_max):
-        gdaltest.post_reason('fail')
         print(m1_max, M1_max, mean1_max)
         print(m2_max, M2_max, mean2_max)
         print(m1_mean, M1_mean, mean1_mean)
@@ -755,20 +704,15 @@ def test_bag_vr_resampled_mask():
                      open_options=['MODE=RESAMPLED_GRID',
                                    'SUPERGRIDS_MASK=YES'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4507:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -788,7 +732,6 @@ def test_bag_vr_resampled_interpolated():
                                    'INTERPOLATION=INVDIST'])
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 2175:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -797,7 +740,6 @@ def test_bag_vr_resampled_interpolated():
         ds = gdal.OpenEx('data/test_vr.bag',
                          open_options=['MODE=RESAMPLED_GRID'])
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
 
@@ -808,7 +750,6 @@ def test_bag_vr_resampled_interpolated():
                                        'SUPERGRIDS_MASK=YES',
                                        'INTERPOLATION=INVDIST'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -847,11 +788,9 @@ def test_bag_write_two_bands():
     ds = gdal.Open('/vsimem/out.bag')
     xml = ds.GetMetadata_List('xml:BAG')[0]
     if xml.find('<bar />') < 0:
-        gdaltest.post_reason('fail')
         print(xml)
         return 'fail'
     if xml.find('Generated by GDAL ') < 0:
-        gdaltest.post_reason('fail')
         print(xml)
         return 'fail'
 
@@ -879,13 +818,11 @@ def test_bag_write_south_up():
     # Check that it is presented as north-up
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4672:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     gt = ds.GetGeoTransform()
     if gt != (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0):
-        gdaltest.post_reason('fail')
         print(gt)
         return 'fail'
 

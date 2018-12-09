@@ -116,17 +116,13 @@ def test_vrtwarp_4():
 
     for i in range(3):
         if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
-            gdaltest.post_reason('fail')
             return 'fail'
         if vrtwarp_ds.GetRasterBand(1).Checksum() != cs_main:
             print(i)
-            gdaltest.post_reason('fail')
             return 'fail'
         if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != cs_ov0:
-            gdaltest.post_reason('fail')
             return 'fail'
         if vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() != cs_ov1:
-            gdaltest.post_reason('fail')
             return 'fail'
         if i == 0:
             vrtwarp_ds.SetDescription('tmp/vrtwarp_4.vrt')
@@ -151,19 +147,14 @@ def test_vrtwarp_4():
 
     vrtwarp_ds = gdal.Open('tmp/vrtwarp_4.vrt')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).Checksum() != cs_main:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != cs_ov0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() != cs_ov1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(2).Checksum() != expected_cs_ov2:
-        gdaltest.post_reason('fail')
         return 'fail'
     vrtwarp_ds = None
 
@@ -202,16 +193,12 @@ def test_vrtwarp_5():
     vrtwarp_ds.SetMetadataItem('SrcOvrLevel', 'AUTO-1')
     tmp_ds = None
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).Checksum() != cs_main:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != expected_cs_ov0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() != expected_cs_ov1:
-        gdaltest.post_reason('fail')
         return 'fail'
     vrtwarp_ds = None
 
@@ -258,16 +245,12 @@ def test_vrtwarp_6():
     vrtwarp_ds = gdal.Open('tmp/vrtwarp_6.vrt')
 
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).Checksum() != cs_main:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != cs_ov0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() != cs_ov1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('tmp/vrtwarp_6.vrt')
@@ -309,16 +292,13 @@ def test_vrtwarp_7():
 
     vrtwarp_ds = gdal.Warp('tmp/vrtwarp_7.vrt', 'tmp/vrtwarp_7.tif', options='-overwrite -of VRT -tps')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).Checksum() != cs_main:
         print(cs_main)
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != cs_ov0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() != cs_ov1:
-        gdaltest.post_reason('fail')
         return 'fail'
     vrtwarp_ds = None
 
@@ -345,13 +325,10 @@ def test_vrtwarp_8():
 
     vrtwarp_ds = gdal.Warp('tmp/vrtwarp_8.vrt', 'tmp/vrtwarp_8.tif', options='-overwrite -of VRT -rpc')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).Checksum() != expected_cs_main:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != 1214:
-        gdaltest.post_reason('fail')
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize)
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize)
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum())
@@ -408,13 +385,10 @@ def test_vrtwarp_9():
 
     vrtwarp_ds = gdal.Warp('tmp/vrtwarp_9.vrt', 'tmp/sstgeo.vrt', options='-overwrite -of VRT -geoloc')
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).Checksum() != expected_cs_main:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != 63859:
-        gdaltest.post_reason('fail')
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize)
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize)
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum())
@@ -457,16 +431,12 @@ def test_vrtwarp_10():
     vrtwarp_ds.SetMetadataItem('SrcOvrLevel', 'NONE')
     tmp_ds = None
     if vrtwarp_ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).Checksum() != cs_main:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != expected_cs_ov0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() != expected_cs_ov1:
-        gdaltest.post_reason('fail')
         return 'fail'
     vrtwarp_ds = None
 
@@ -487,7 +457,6 @@ def test_vrtwarp_11():
     ds = None
 
     if cs1 != 22122 or cs2 != 56685 or cs3 != 22122:
-        gdaltest.post_reason('fail')
         print(cs1)
         print(cs2)
         print(cs3)

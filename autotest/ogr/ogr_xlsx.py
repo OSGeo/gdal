@@ -44,7 +44,6 @@ from osgeo import ogr
 def ogr_xlsx_check(ds):
 
     if ds.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerCount() != 8:
@@ -65,12 +64,10 @@ def ogr_xlsx_check(ds):
         return 'fail'
 
     if lyr.GetFeatureCount() != 26:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
     if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(6)
@@ -79,7 +76,6 @@ def ogr_xlsx_check(ds):
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() != 12:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
@@ -98,7 +94,6 @@ def ogr_xlsx_check(ds):
 
     for i, typ in enumerate(type_array):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
 
@@ -109,13 +104,11 @@ def ogr_xlsx_check(ds):
        feat.GetFieldAsDouble(3) != 0.52 or \
        feat.GetFieldAsString(4) != '2012/01/22' or \
        feat.GetFieldAsString(5) != '2012/01/22 18:49:00':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.IsFieldSet(2):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -132,7 +125,6 @@ def test_ogr_xlsx_1():
         return 'skip'
 
     if drv.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.Open('data/test.xlsx')
@@ -158,7 +150,6 @@ def test_ogr_xlsx_2():
     lyr = ds.GetLayerByName('Feuille7')
 
     if lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
@@ -182,7 +173,6 @@ def test_ogr_xlsx_3():
     lyr = ds.GetLayerByName('Feuille7')
 
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTString:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
@@ -252,7 +242,6 @@ def test_ogr_xlsx_6():
     lyr = ds.GetLayerByName('inlineStr')
 
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
@@ -374,12 +363,10 @@ def test_ogr_xlsx_9():
     ds = ogr.Open('/vsimem/ogr_xlsx_9.xlsx')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     if f.GetField(0) != 12345678901234:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -414,19 +401,15 @@ def test_ogr_xlsx_10():
     lyr = ds.GetLayer(0)
     for i in range(3):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
-            gdaltest.post_reason('failure')
             return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0) != '2015/12/23 12:34:56.789':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     if f.GetField(1) != '2015/12/23 12:34:56':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     if f.GetField(2) != '2015/12/23 12:34:56':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -596,10 +579,8 @@ def test_ogr_xlsx_15():
 
     ds = ogr.Open(out_filename)
     if ds.GetLayerByName('first').GetFeatureCount() == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerByName('second').GetFeatureCount() == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -631,14 +612,11 @@ def test_ogr_xlsx_boolean():
     ds = ogr.Open(out_filename)
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0) != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 

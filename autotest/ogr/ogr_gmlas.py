@@ -72,7 +72,6 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
     expected = open(reffile, 'rb').read().decode('utf-8')
     expected = expected.replace('\r\n', '\n')
     if ret != expected:
-        gdaltest.post_reason('fail')
         print('Got:')
         print(ret.encode('utf-8'))
         open(tmpfilename, 'wb').write(ret.encode('utf-8'))
@@ -100,7 +99,6 @@ def test_ogr_gmlas_basic():
 
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_test1.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -163,7 +161,6 @@ def test_ogr_gmlas_virtual_file():
 
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_8.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/ogr_gmlas_8.xml')
@@ -182,7 +179,6 @@ def test_ogr_gmlas_datafile_with_xsd_option():
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['XSD=data/gmlas/gmlas_test1.xsd'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -198,7 +194,6 @@ def test_ogr_gmlas_no_datafile_with_xsd_option():
 
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_test1.xsd'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -215,10 +210,8 @@ def test_ogr_gmlas_no_datafile_xsd_which_is_not_xsd():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_test1.xml'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find("invalid content in 'schema' element") < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -236,10 +229,8 @@ def test_ogr_gmlas_no_datafile_no_xsd():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find('XSD open option must be provided when no XML data file is passed') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -257,10 +248,8 @@ def test_ogr_gmlas_non_existing_gml():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:/vsimem/i_do_not_exist.gml')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find('Cannot open /vsimem/i_do_not_exist.gml') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -278,10 +267,8 @@ def test_ogr_gmlas_non_existing_xsd():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:', open_options=['XSD=/vsimem/i_do_not_exist.xsd'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find('Cannot resolve /vsimem/i_do_not_exist.xsd') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -302,10 +289,8 @@ def test_ogr_gmlas_gml_without_schema_location():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_gml_without_schema_location.xml')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find('No schema locations found when analyzing data file: XSD open option must be provided') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -325,10 +310,8 @@ def test_ogr_gmlas_invalid_schema():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_invalid_schema.xml')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find('invalid content') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -348,10 +331,8 @@ def test_ogr_gmlas_invalid_xml():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg().find('input ended before all started tags were ended') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -368,7 +349,6 @@ def test_ogr_gmlas_gml_Reference():
 
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_test_targetelement.xml')
     if ds.GetLayerCount() != 3:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
 
@@ -382,7 +362,6 @@ def test_ogr_gmlas_gml_Reference():
        f['reference_existing_abstract_target_elt_href'] != '#BAW' or \
        f.IsFieldSet('reference_existing_abstract_target_elt_nillable_href') or \
        f['reference_existing_abstract_target_elt_nillable_nil'] != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -399,32 +378,25 @@ def test_ogr_gmlas_same_element_in_different_ns():
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_same_element_in_different_ns.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     # for i in range(ds.GetLayerCount()):
     #    print(ds.GetLayer(i).GetName())
 
     if ds.GetLayerCount() != 5:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     lyr = ds.GetLayerByName('elt')
     f = lyr.GetNextFeature()
     if f.IsFieldSet('abstractElt_other_ns_realizationOfAbstractElt_pkid') == 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if ds.GetLayerByName('myns_realizationOfAbstractElt') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerByName('other_ns_realizationOfAbstractElt') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerByName('elt_elt2_abstractElt_myns_realizationOfAbstractElt') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerByName('elt_elt2_abstractElt_other_ns_realizationOfAbstractElt') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -440,7 +412,6 @@ def test_ogr_gmlas_corner_case_relative_path():
 
     ds = ogr.Open('GMLAS:../ogr/data/gmlas/gmlas_test1.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -459,16 +430,13 @@ def test_ogr_gmlas_unexpected_repeated_element():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f is None or f['foo'] != 'foo_again':  # somewhat arbitrary to keep the latest one!
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if gdal.GetLastErrorMsg().find('Unexpected element myns:main_elt/myns:foo') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -488,16 +456,13 @@ def test_ogr_gmlas_unexpected_repeated_element_variant():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f is None or f['foo'] != 'foo_again':  # somewhat arbitrary to keep the latest one!
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if gdal.GetLastErrorMsg().find('Unexpected element myns:main_elt/myns:foo') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -518,87 +483,71 @@ def test_ogr_gmlas_geometryproperty():
     with gdaltest.error_handler():
         geom_field_count = lyr.GetLayerDefn().GetGeomFieldCount()
     if geom_field_count != 15:
-        gdaltest.post_reason('fail')
         print(geom_field_count)
         return 'fail'
     f = lyr.GetNextFeature()
     if f['geometryProperty_xml'] != ' <gml:Point gml:id="poly.geom.Geometry" srsName="urn:ogc:def:crs:EPSG::4326"> <gml:pos>49 2</gml:pos> </gml:Point> ':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if not f.IsFieldNull('geometryPropertyEmpty_xml'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if f['pointProperty_xml'] != '<gml:Point gml:id="poly.geom.Point"><gml:pos srsName="http://www.opengis.net/def/crs/EPSG/0/4326">50 3</gml:pos></gml:Point>':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if f['pointPropertyRepeated_xml'] != [
             '<gml:Point gml:id="poly.geom.pointPropertyRepeated.1"><gml:pos>0 1</gml:pos></gml:Point>',
             '<gml:Point gml:id="poly.geom.pointPropertyRepeated.2"><gml:pos>1 2</gml:pos></gml:Point>',
             '<gml:Point gml:id="poly.geom.pointPropertyRepeated.3"><gml:pos>3 4</gml:pos></gml:Point>']:
-        gdaltest.post_reason('fail')
         print(f['pointPropertyRepeated_xml'])
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('geometryProperty')
     sr = lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetSpatialRef()
     if sr is None or sr.ExportToWkt().find('4326') < 0 or sr.ExportToWkt().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(sr)
         return 'fail'
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     # Axis swapping
     if wkt != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('geometryPropertyEmpty')
     if f.GetGeomFieldRef(geom_idx) is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('pointProperty')
     sr = lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetSpatialRef()
     if sr is None or sr.ExportToWkt().find('4326') < 0 or sr.ExportToWkt().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(sr)
         return 'fail'
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'POINT (3 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('lineStringProperty')
     sr = lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetSpatialRef()
     if sr is None or sr.ExportToWkt().find('4326') < 0 or sr.ExportToWkt().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(sr)
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetType() != ogr.wkbLineString:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetType())
         return 'fail'
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'LINESTRING (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('pointPropertyRepeated')
     if lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetType() != ogr.wkbUnknown:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetGeomFieldDefn(geom_idx).GetType())
         return 'fail'
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'GEOMETRYCOLLECTION (POINT (0 1),POINT (1 2),POINT (3 4))':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('mycustompointproperty_point')
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'POINT (5 6)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -607,7 +556,6 @@ def test_ogr_gmlas_geometryproperty():
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('geometryProperty')
     geom = f.GetGeomFieldRef(geom_idx)
     if ogrtest.check_feature_geometry(geom, 'POINT (3.0 0.0)') != 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -616,7 +564,6 @@ def test_ogr_gmlas_geometryproperty():
         f = lyr.GetNextFeature()
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('geometryProperty')
     if f.GetGeomFieldRef(geom_idx) is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -630,14 +577,12 @@ def test_ogr_gmlas_geometryproperty():
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     # Axis swapping
     if wkt != 'POINT (49 2)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('lineStringProperty')
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     # Axis swapping
     if wkt != 'LINESTRING (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -651,14 +596,12 @@ def test_ogr_gmlas_geometryproperty():
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     # Axis swapping
     if wkt != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('lineStringProperty')
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     # Axis swapping
     if wkt != 'LINESTRING (49 2)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -677,29 +620,24 @@ def test_ogr_gmlas_abstractgeometry():
         'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetGeomFieldCount() != 2:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetGeomFieldCount())
         return 'fail'
     f = lyr.GetNextFeature()
     if f['AbstractGeometry_xml'] != '<gml:Point gml:id="test.geom.0"><gml:pos>0 1</gml:pos></gml:Point>':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if f['repeated_AbstractGeometry_xml'] != [
             '<gml:Point gml:id="test.geom.repeated.1"><gml:pos>0 1</gml:pos>',
             '<gml:Point gml:id="test.geom.repeated.2"><gml:pos>1 2</gml:pos>']:
-        gdaltest.post_reason('fail')
         print(f['repeated_AbstractGeometry_xml'])
         f.DumpReadable()
         return 'fail'
     wkt = f.GetGeomFieldRef(0).ExportToWkt()
     if wkt != 'POINT (0 1)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     wkt = f.GetGeomFieldRef(1).ExportToWkt()
     if wkt != 'GEOMETRYCOLLECTION (POINT (0 1),POINT (1 2))':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -726,7 +664,6 @@ def test_ogr_gmlas_validate():
     # By default check we are silent about validation error
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     myhandler = MyHandler()
     gdal.PushErrorHandler(myhandler.error_handler)
@@ -736,13 +673,11 @@ def test_ogr_gmlas_validate():
     gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', 'YES')
     gdal.PopErrorHandler()
     if myhandler.error_list:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     myhandler = MyHandler()
     gdal.PushErrorHandler(myhandler.error_handler)
@@ -751,7 +686,6 @@ def test_ogr_gmlas_validate():
     gdal.PopErrorHandler()
     # Unexpected element with xpath=myns:main_elt/myns:bar (subxpath=myns:main_elt/myns:bar) found
     if len(myhandler.error_list) < 2:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
 
@@ -761,11 +695,9 @@ def test_ogr_gmlas_validate():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['VALIDATE=YES'])
     gdal.PopErrorHandler()
     if ds is None:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
     if myhandler.error_list:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
 
@@ -779,11 +711,9 @@ def test_ogr_gmlas_validate():
     gdal.PopErrorHandler()
     gdal.Unlink('/vsimem/gmlas_test1.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
     if myhandler.error_list:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
 
@@ -793,10 +723,8 @@ def test_ogr_gmlas_validate():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate.xml', open_options=['VALIDATE=YES'])
     gdal.PopErrorHandler()
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if len(myhandler.error_list) != 5:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         print(len(myhandler.error_list))
         return 'fail'
@@ -807,10 +735,8 @@ def test_ogr_gmlas_validate():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate.xml', open_options=['VALIDATE=YES', 'FAIL_IF_VALIDATION_ERROR=YES'])
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if len(myhandler.error_list) != 6:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         print(len(myhandler.error_list))
         return 'fail'
@@ -821,11 +747,9 @@ def test_ogr_gmlas_validate():
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_test1.xsd', 'VALIDATE=YES'])
     gdal.PopErrorHandler()
     if ds is None:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
     if myhandler.error_list:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
 
@@ -846,7 +770,6 @@ def test_ogr_gmlas_test_ns_prefix():
     lyr = ds.GetLayerByName('_ogr_fields_metadata')
     f = lyr.GetNextFeature()
     if f['field_xpath'] != 'myns:main_elt/myns:reference_missing_target_elt/@xlink:href':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -865,7 +788,6 @@ def test_ogr_gmlas_no_namespace():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['foo'] != 'bar':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -884,7 +806,6 @@ def test_ogr_gmlas_conf():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['CONFIG_FILE=not_existing'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Broken conf file
@@ -893,7 +814,6 @@ def test_ogr_gmlas_conf():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['CONFIG_FILE=/vsimem/my_conf.xml'])
     gdal.Unlink('/vsimem/my_conf.xml')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Valid XML, but not validating
@@ -906,24 +826,20 @@ def test_ogr_gmlas_conf():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=[
         'CONFIG_FILE=<Configuration><LayerBuildingRules><UseArrays>false</UseArrays></LayerBuildingRules></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('main_elt_string_array')
     if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # AlwaysGenerateOGRId = true
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=[
         'CONFIG_FILE=<Configuration><LayerBuildingRules><AlwaysGenerateOGRId>true</AlwaysGenerateOGRId></LayerBuildingRules></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('main_elt')
     f = lyr.GetNextFeature()
     if f['ogr_pkid'].find('main_elt_1') < 0 or \
        f['otherns_id'] != 'otherns_id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -931,18 +847,15 @@ def test_ogr_gmlas_conf():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32.gml', open_options=[
         'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>false</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         if lyr.GetLayerDefn().GetFieldIndex('geometryProperty_xml') >= 0:
-            gdaltest.post_reason('fail')
             return 'fail'
     f = lyr.GetNextFeature()
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('geometryProperty')
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -950,10 +863,8 @@ def test_ogr_gmlas_conf():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_abstractgeometry_gml32.gml', open_options=[
         'CONFIG_FILE=<Configuration><ExposeMetadataLayers>true</ExposeMetadataLayers></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 5:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     # Test override with open option
@@ -961,10 +872,8 @@ def test_ogr_gmlas_conf():
         'EXPOSE_METADATA_LAYERS=NO',
         'CONFIG_FILE=<Configuration><ExposeMetadataLayers>true</ExposeMetadataLayers></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
 
@@ -973,7 +882,6 @@ def test_ogr_gmlas_conf():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate.xml', open_options=[
             'CONFIG_FILE=<Configuration><Validation enabled="true"><FailIfError>true</FailIfError></Validation></Configuration>'])
     if ds is not None or gdal.GetLastErrorMsg().find('Validation') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1010,7 +918,6 @@ def test_ogr_gmlas_conf_ignored_xpath():
                         </IgnoredXPaths>
                     </Configuration>""" % xpath])
         if gdal.GetLastErrorMsg().find('XPath syntax') < 0:
-            gdaltest.post_reason('fail')
             print(xpath)
             print(gdal.GetLastErrorMsg())
             return 'fail'
@@ -1028,7 +935,6 @@ def test_ogr_gmlas_conf_ignored_xpath():
                     </IgnoredXPaths>
                 </Configuration>"""])
     if gdal.GetLastErrorMsg().find('Prefix ns was already mapped') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1041,16 +947,13 @@ def test_ogr_gmlas_conf_ignored_xpath():
                 </IgnoredXPaths>
             </Configuration>"""])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('main_elt')
     if lyr.GetLayerDefn().GetFieldIndex('otherns_id') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         lyr.GetNextFeature()
     if gdal.GetLastErrorMsg().find('Attribute with xpath=myns:main_elt/@otherns:id found in document but ignored') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1065,12 +968,10 @@ def test_ogr_gmlas_conf_ignored_xpath():
                 </IgnoredXPaths>
             </Configuration>"""])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('main_elt')
     lyr.GetNextFeature()
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1093,33 +994,25 @@ def test_ogr_gmlas_conf_ignored_xpath():
                 </IgnoredXPaths>
             </Configuration>"""])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('main_elt')
 
     # Ignored fields
     if lyr.GetLayerDefn().GetFieldIndex('optionalStrAttr') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldIndex('fixedValUnset') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldIndex('base_int') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldIndex('string') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldIndex('string_array') >= 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Present fields
     if lyr.GetLayerDefn().GetFieldIndex('int_array') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldIndex('long') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1214,7 +1107,6 @@ def test_ogr_gmlas_cache():
         ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
             'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is not None or gdal.GetLastErrorMsg().find('Cannot resolve') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1223,11 +1115,9 @@ def test_ogr_gmlas_cache():
         ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
             'CONFIG_FILE=<Configuration><SchemaCache><Directory>/inexisting_directory/not/exist</Directory></SchemaCache></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
@@ -1236,11 +1126,9 @@ def test_ogr_gmlas_cache():
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
         'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
@@ -1251,11 +1139,9 @@ def test_ogr_gmlas_cache():
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
         'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
@@ -1264,11 +1150,9 @@ def test_ogr_gmlas_cache():
         'XSD=http://localhost:%d/vsimem/ogr_gmlas_cache.xsd' % webserver_port,
         'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
@@ -1278,10 +1162,8 @@ def test_ogr_gmlas_cache():
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
         'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Re try but ask for refresh
@@ -1290,7 +1172,6 @@ def test_ogr_gmlas_cache():
             'REFRESH_CACHE=YES',
             'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is not None or gdal.GetLastErrorMsg().find('Cannot resolve') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
@@ -1302,7 +1183,6 @@ def test_ogr_gmlas_cache():
         ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options=[
             'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is not None or gdal.GetLastErrorMsg().find('Cannot resolve') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1332,7 +1212,6 @@ def test_ogr_gmlas_link_nested_independant_child():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['second_my_id'] != 'second_id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1352,24 +1231,20 @@ def test_ogr_gmlas_composition_compositionPart():
     lyr = ds.GetLayerByName('first_composition')
     f = lyr.GetNextFeature()
     if f.IsFieldSet('parent_ogr_pkid') == 0 or f.IsFieldSet('CompositionPart_pkid') == 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f.IsFieldSet('parent_ogr_pkid') == 0 or f.IsFieldSet('CompositionPart_pkid') == 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayerByName('CompositionPart')
     f = lyr.GetNextFeature()
     if f.IsFieldSet('my_id') == 0 or f.IsFieldSet('a') == 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f.IsFieldSet('my_id') == 0 or f.IsFieldSet('a') == 0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -1388,7 +1263,6 @@ def test_ogr_gmlas_instantiate_only_gml_feature():
     ds = gdal.OpenEx('GMLAS:',
                      open_options=['XSD=data/gmlas/gmlas_instantiate_only_gml_feature.xsd'])
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1412,7 +1286,6 @@ def test_ogr_gmlas_timestamp_ignored_for_hash():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['ogr_pkid'] != pkid:
-        gdaltest.post_reason('fail')
         print(pkid)
         f.DumpReadable()
         return 'fail'
@@ -1431,7 +1304,6 @@ def test_ogr_gmlas_dataset_getnextfeature():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml')
 
     if ds.TestCapability(ogr.ODsCRandomLayerRead) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     count = 0
@@ -1440,7 +1312,6 @@ def test_ogr_gmlas_dataset_getnextfeature():
         f, lyr = ds.GetNextFeature()
         if f is None:
             if lyr is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             break
         count += 1
@@ -1448,18 +1319,15 @@ def test_ogr_gmlas_dataset_getnextfeature():
 
     base_count = 59
     if count != base_count:
-        gdaltest.post_reason('fail')
         print(count)
         return 'fail'
 
     if last_l.GetName() != 'main_elt':
-        gdaltest.post_reason('fail')
         print(last_l.GetName())
         return 'fail'
 
     f, lyr = ds.GetNextFeature()
     if f is not None or lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
@@ -1469,11 +1337,9 @@ def test_ogr_gmlas_dataset_getnextfeature():
         last_pct = pct
         if f is None:
             if l is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             break
     if last_pct != 1.0:
-        gdaltest.post_reason('fail')
         print(last_pct - 1.0)
         return 'fail'
 
@@ -1492,7 +1358,6 @@ def test_ogr_gmlas_dataset_getnextfeature():
         f, lyr = ds.GetNextFeature()
         if f is None:
             if lyr is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             break
         count += 1
@@ -1503,13 +1368,11 @@ def test_ogr_gmlas_dataset_getnextfeature():
     expected_count += fc_map['_ogr_layer_relationships']
     expected_count += fc_map['_ogr_other_metadata']
     if count != expected_count:
-        gdaltest.post_reason('fail')
         print(count)
         return 'fail'
 
     f, lyr = ds.GetNextFeature()
     if f is not None or lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
@@ -1519,13 +1382,11 @@ def test_ogr_gmlas_dataset_getnextfeature():
         f, lyr = ds.GetNextFeature()
         if f is None:
             if lyr is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             break
         count += 1
 
     if count != expected_count:
-        gdaltest.post_reason('fail')
         print(count)
         print(expected_count)
         return 'fail'
@@ -1549,20 +1410,17 @@ def test_ogr_gmlas_dataset_getnextfeature():
             f, lyr = ds.GetNextFeature()
             if f is None:
                 if lyr is not None:
-                    gdaltest.post_reason('fail')
                     return 'fail'
                 break
             count += 1
 
         if count != expected_count:
-            gdaltest.post_reason('fail')
             print(count)
             print(expected_count)
             return 'fail'
 
         f, lyr = ds.GetNextFeature()
         if f is not None or lyr is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Test iterating over metadata layers on XSD-only based dataset
@@ -1573,14 +1431,12 @@ def test_ogr_gmlas_dataset_getnextfeature():
         f, lyr = ds.GetNextFeature()
         if f is None:
             if lyr is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             break
         count += 1
         last_l = lyr
 
     if count == 0:
-        gdaltest.post_reason('fail')
         print(count)
         return 'fail'
 
@@ -1598,14 +1454,12 @@ def test_ogr_gmlas_inline_identifier():
 
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_inline_identifier.xsd'])
     if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         for i in range(ds.GetLayerCount()):
             print(ds.GetLayer(i).GetName())
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldIndex('identifier_foo') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1621,16 +1475,13 @@ def test_ogr_gmlas_avoid_same_name_inlined_classes():
 
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_avoid_same_name_inlined_classes.xsd'])
     if ds.GetLayerCount() != 3:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     lyr = ds.GetLayerByName('myFeature_ns1_dt')
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('myFeature_ns2_dt')
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1651,7 +1502,6 @@ def test_ogr_gmlas_validate_ignored_fixed_attribute():
                               'CONFIG_FILE=<Configuration><IgnoredXPaths><XPath>@bar</XPath></IgnoredXPaths></Configuration>'])
     gdal.PopErrorHandler()
     if myhandler.error_list:
-        gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
 
@@ -1670,36 +1520,30 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
                      open_options=['REMOVE_UNUSED_LAYERS=YES',
                                    'REMOVE_UNUSED_FIELDS=YES'])
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if lyr.GetLayerDefn().GetFieldCount() != 4:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         f.DumpReadable()
         return 'fail'
     if f['used1'] != 'foo' or f['used2'] != 'bar' or f['nillable_nilReason'] != 'unknown':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayerByName('_ogr_layers_metadata')
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         for f in lyr:
             f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayerByName('_ogr_fields_metadata')
     if lyr.GetFeatureCount() != 7:
-        gdaltest.post_reason('fail')
         for f in lyr:
             f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayerByName('_ogr_layer_relationships')
     if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
         for f in lyr:
             f.DumpReadable()
         return 'fail'
@@ -1784,7 +1628,6 @@ def test_ogr_gmlas_xlink_resolver():
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldIndex('my_link_rawcontent') >= 0:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     ds = None
@@ -1800,12 +1643,10 @@ def test_ogr_gmlas_xlink_resolver():
         </XLinkResolution></Configuration>"""])
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldIndex('my_link_rawcontent') < 0:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     f = lyr.GetNextFeature()
     if f.IsFieldSet('my_link_rawcontent'):
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
@@ -1815,7 +1656,6 @@ def test_ogr_gmlas_xlink_resolver():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] != 'foo':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     ds = None
@@ -1837,12 +1677,10 @@ def test_ogr_gmlas_xlink_resolver():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] != 'bar':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     # Check that the content is not cached
     if gdal.VSIStatL(cached_file) is not None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
@@ -1851,13 +1689,11 @@ def test_ogr_gmlas_xlink_resolver():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] != 'bar':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] != 'baz':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
@@ -1867,13 +1703,11 @@ def test_ogr_gmlas_xlink_resolver():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] is not None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] != 'baz':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
@@ -1893,12 +1727,10 @@ def test_ogr_gmlas_xlink_resolver():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] != 'bar':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     # Check that the content is cached
     if gdal.VSIStatL(cached_file) is None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     ds = None
@@ -1917,12 +1749,10 @@ def test_ogr_gmlas_xlink_resolver():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['my_link_rawcontent'] != 'baz':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     # Check that the content is cached
     if gdal.VSIStatL(cached_file) is None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     ds = None
@@ -1947,7 +1777,6 @@ def test_ogr_gmlas_xlink_resolver():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f.IsFieldSet('my_link_rawcontent'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
@@ -1969,12 +1798,10 @@ def test_ogr_gmlas_xlink_resolver():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     # Check that the content is not cached
     if gdal.VSIStatL(cached_file) is not None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     ds = None
@@ -1998,13 +1825,11 @@ def test_ogr_gmlas_xlink_resolver():
        f['my_link_href'] != 'http://localhost:%d/vsimem/resource.xml' % webserver_port or \
        f['my_link_rawcontent'] != 'bar' or \
        f['my_link_attr_after'] != 'b':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     # Check that the content is cached
     if gdal.VSIStatL(cached_file) is None:
-        gdaltest.post_reason('fail')
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
     ds = None
@@ -2129,14 +1954,12 @@ bar""" or \
        f['my_link2_datetime'] != '2016/10/07 12:34:56+00' or \
        f['my_link2_bar'] is not None or \
        f['my_link2_attr_after'] != 'b2':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['my_link2_bar'] != 123:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
@@ -2160,7 +1983,6 @@ bar""" or \
        f['my_link2_baz'] != 345 or \
        f['my_link2_bar'] is not None or \
        f['my_link2_attr_after'] != 'b2':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         webserver.server_stop(webserver_process, webserver_port)
         return 'fail'
@@ -2205,7 +2027,6 @@ def test_ogr_gmlas_recoding():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['attr'] != accent:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -2225,7 +2046,6 @@ def test_ogr_gmlas_schema_without_namespace_prefix():
     lyr = ds.GetLayerByName('_ogr_layers_metadata')
     f = lyr.GetNextFeature()
     if f['layer_xpath'] != 'my_ns:main_elt':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -2237,7 +2057,6 @@ def test_ogr_gmlas_schema_without_namespace_prefix():
     lyr = ds.GetLayerByName('_ogr_layers_metadata')
     f = lyr.GetNextFeature()
     if f['layer_xpath'] != 'fake_3_0:main_elt':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -2249,7 +2068,6 @@ def test_ogr_gmlas_schema_without_namespace_prefix():
     lyr = ds.GetLayerByName('_ogr_layers_metadata')
     f = lyr.GetNextFeature()
     if f['layer_xpath'] != 'my_namespace:main_elt':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -2269,7 +2087,6 @@ def test_ogr_gmlas_truncated_xml():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -2289,57 +2106,46 @@ def test_ogr_gmlas_identifier_truncation():
         'CONFIG_FILE=<Configuration><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayerByName('v_l_i_clas')
     if lyr is None:
-        gdaltest.post_reason('fail')
         print(ds.GetLayer(0).GetName())
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(1).GetName()
     if s != 'v_l_idTifi':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(2).GetName()
     if s != 'an_lo_ide1':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(3).GetName()
     if s != 'an_lo_ide2':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(4).GetName()
     if s != 'x':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(5).GetName()
     if s != 'noTCAMELCa':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(6).GetName()
     if s != 'suuuuuuuuu':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(7).GetName()
     if s != '_r_l_o_n_g':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     lyr = ds.GetLayerByName('a_l_i_cla1')
     if lyr is None:
-        gdaltest.post_reason('fail')
         print(ds.GetLayer(1).GetName())
         return 'fail'
     lyr = ds.GetLayerByName('a_l_i_cla2')
     if lyr is None:
-        gdaltest.post_reason('fail')
         print(ds.GetLayer(2).GetName())
         return 'fail'
     lyr = ds.GetLayerByName('y')
     if lyr is None:
-        gdaltest.post_reason('fail')
         print(ds.GetLayer(3).GetName())
         return 'fail'
     ds = None
@@ -2360,22 +2166,18 @@ def test_ogr_gmlas_identifier_case_ambiguity():
         'CONFIG_FILE=<Configuration><LayerBuildingRules><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayerByName('differentcase1')
     if lyr is None:
-        gdaltest.post_reason('fail')
         print(ds.GetLayer(0).GetName())
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(1).GetName()
     if s != 'differentcase1':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(2).GetName()
     if s != 'DifferentCASE2':
-        gdaltest.post_reason('fail')
         print(s)
         return 'fail'
     lyr = ds.GetLayerByName('DifferentCASE2')
     if lyr is None:
-        gdaltest.post_reason('fail')
         print(ds.GetLayer(0).GetName())
         return 'fail'
     ds = None
@@ -2404,7 +2206,6 @@ def test_ogr_gmlas_writer():
     gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
 
     if ret_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -2427,7 +2228,6 @@ def test_ogr_gmlas_writer_check_xml_xsd():
     pos_end = got.find('"', pos)
     absolute_xsd = got[pos:pos_end]
     if not absolute_xsd.endswith('gmlas_test1.xsd') or not os.path.exists(absolute_xsd):
-        gdaltest.post_reason('fail')
         print(absolute_xsd)
         return 'fail'
     got = got.replace(absolute_xsd, 'gmlas_test1.xsd')
@@ -2436,8 +2236,6 @@ def test_ogr_gmlas_writer_check_xml_xsd():
     expected = expected.replace('\r\n', '\n')
 
     if got != expected:
-        gdaltest.post_reason('fail')
-
         print('Got:')
         print(got)
         print('')
@@ -2452,7 +2250,6 @@ def test_ogr_gmlas_writer_check_xml_xsd():
     pos_end = got.find('"', pos)
     absolute_xsd = got[pos:pos_end]
     if not absolute_xsd.endswith('gmlas_test1.xsd') or not os.path.exists(absolute_xsd):
-        gdaltest.post_reason('fail')
         print(absolute_xsd)
         return 'fail'
     got = got.replace(absolute_xsd, 'gmlas_test1.xsd')
@@ -2461,8 +2258,6 @@ def test_ogr_gmlas_writer_check_xml_xsd():
     expected = expected.replace('\r\n', '\n')
 
     if got != expected:
-        gdaltest.post_reason('fail')
-
         print('Got:')
         print(got)
         print('')
@@ -2515,8 +2310,6 @@ def test_ogr_gmlas_writer_check_xml_read_back():
     ret_for_comparison = ret_for_comparison.replace('fake_hash', '3CF9893502A592E8CF5EA6EF3D8F8C7B')
 
     if ret_for_comparison != expected:
-        gdaltest.post_reason('fail')
-
         print('XML:')
         print(open('tmp/gmlas_test1_generated.xml', 'rt').read())
         print('')
@@ -2565,12 +2358,10 @@ def test_ogr_gmlas_writer_gml():
     tmp_ds = None
 
     if ret_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_gml.xml', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
     gdal.VSIFCloseL(f)
@@ -2579,27 +2370,22 @@ def test_ogr_gmlas_writer_gml():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
 
     if content.find('xmlns:gml="http://fake_gml32"') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('<ogr:geometryProperty><gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326" gml:id="hash_test_1.geom0"><gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('<ogr:pointProperty><gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326" gml:id="hash_test_1.geom2"><gml:pos>50 3</gml:pos></gml:Point></ogr:pointProperty>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.0"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.1"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2626,12 +2412,10 @@ def test_ogr_gmlas_writer_gml_assign_srs():
     tmp_ds = None
 
     if ret_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_gml.xml', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
     gdal.VSIFCloseL(f)
@@ -2640,7 +2424,6 @@ def test_ogr_gmlas_writer_gml_assign_srs():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
 
     if content.find('http://www.opengis.net/def/crs/EPSG/0/32631') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2663,7 +2446,6 @@ def test_ogr_gmlas_writer_gml_assign_srs():
     gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
 
     if gdal.VSIStatL('/vsimem/gmlas_test1_generated_ref0.xml').size != gdal.VSIStatL('/vsimem/gmlas_test1_generated_asrs.xml').size:
-        gdaltest.post_reason('fail')
         print(gdal.VSIStatL('/vsimem/gmlas_test1_generated_ref0.xml').size)
         print(gdal.VSIStatL('/vsimem/gmlas_test1_generated_asrs.xml').size)
         return 'fail'
@@ -2694,19 +2476,16 @@ def test_ogr_gmlas_writer_gml_original_xml():
     tmp_ds = None
 
     if ret_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret_ds = None
 
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_writer_gml.xml', open_options=['VALIDATE=YES'])
     if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_gml.xml', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
     gdal.VSIFCloseL(f)
@@ -2715,17 +2494,14 @@ def test_ogr_gmlas_writer_gml_original_xml():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
 
     if content.find('<ogr:geometryProperty> <gml:Point gml:id="poly.geom.Geometry" srsName="urn:ogc:def:crs:EPSG::4326"> <gml:pos>49 2</gml:pos> </gml:Point> </ogr:geometryProperty>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.1"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     if content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.2"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2754,12 +2530,10 @@ def test_ogr_gmlas_writer_options():
     tmp_ds = None
 
     if ret_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_options.xml', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
     gdal.VSIFCloseL(f)
@@ -2767,32 +2541,27 @@ def test_ogr_gmlas_writer_options():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_options.xml')
 
     if gdal.VSIStatL('/vsimem/my_schema.xsd') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/my_schema.xsd')
 
     # Test indentation size
     if content.find('\n        <ogr:test gml:id="poly.0">') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     # Test comment
     if content.find('\n<!-- - - -a comment- - - -->') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     # Test OUTPUT_XSD_FILENAME
     if content.find('/vsimem/my_schema.xsd') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
     # Test SRSNAME_FORMAT=OGC_URN
     if content.find('<ogr:geometryProperty><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="hash_test_1.geom0"><gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2806,12 +2575,10 @@ def test_ogr_gmlas_writer_options():
     tmp_ds = None
 
     if ret_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_options.xml', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
     gdal.VSIFCloseL(f)
@@ -2819,12 +2586,10 @@ def test_ogr_gmlas_writer_options():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_options.xml')
 
     if gdal.VSIStatL('/vsimem/my_schema.xsd') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if content.find('timeStamp="1970-01-01T12:34:56Z"') < 0 or \
        content.find('xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd ') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2838,7 +2603,6 @@ def test_ogr_gmlas_writer_options():
     tmp_ds = None
 
     if ret_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/fake_wfs.xsd',
@@ -2863,13 +2627,11 @@ def test_ogr_gmlas_writer_options():
     gdal.Unlink('/vsimem/fake_wfs.xsd')
 
     if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_options.xml', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
     gdal.VSIFCloseL(f)
@@ -2877,11 +2639,9 @@ def test_ogr_gmlas_writer_options():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_options.xml')
 
     if gdal.VSIStatL('/vsimem/my_schema.xsd') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if content.find('xsi:schemaLocation="http://www.opengis.net/wfs/2.0 /vsimem/fake_wfs.xsd ') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2900,7 +2660,6 @@ def test_ogr_gmlas_writer_errors():
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', gdal.GetDriverByName('Memory').Create('', 0, 0, 0, 0), format='GMLAS')
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Source dataset has no layers') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -2911,7 +2670,6 @@ def test_ogr_gmlas_writer_errors():
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS')
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot establish schema since no INPUT_XSD creation option specified and no _ogr_other_metadata found in source dataset') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -2920,7 +2678,6 @@ def test_ogr_gmlas_writer_errors():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['INPUT_XSD=/i_do_not/exist.xsd'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot resolve /i_do_not/exist.xsd') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -2933,7 +2690,6 @@ def test_ogr_gmlas_writer_errors():
         ret_ds = gdal.VectorTranslate('/i_am/not/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['GENERATE_XSD=NO'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot create /i_am/not/valid.xml') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -2942,7 +2698,6 @@ def test_ogr_gmlas_writer_errors():
         ret_ds = gdal.VectorTranslate('/i_am/not/valid.xsd', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['GENERATE_XSD=NO'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('.xsd extension is not valid') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -2952,7 +2707,6 @@ def test_ogr_gmlas_writer_errors():
                                       datasetCreationOptions=['WRAPPING=GMLAS_FEATURECOLLECTION',
                                                               'OUTPUT_XSD_FILENAME=/i_am/not/valid.xsd'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot create /i_am/not/valid.xsd') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
     gdal.Unlink('/vsimem/valid.xml')
@@ -2962,7 +2716,6 @@ def test_ogr_gmlas_writer_errors():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['CONFIG_FILE=/i/do_not/exist'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Loading of configuration failed') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -2971,7 +2724,6 @@ def test_ogr_gmlas_writer_errors():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format='GMLAS',
                                       datasetCreationOptions=['LAYERS=foo'])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Layer foo specified in LAYERS option does not exist') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
     gdal.Unlink('/vsimem/valid.xml')
@@ -2982,7 +2734,6 @@ def test_ogr_gmlas_writer_errors():
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', src_ds, format='GMLAS')
     if ret_ds is not None or gdal.GetLastErrorMsg().find('_ogr_layers_metadata not found') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -2993,7 +2744,6 @@ def test_ogr_gmlas_writer_errors():
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', src_ds, format='GMLAS')
     if ret_ds is not None or gdal.GetLastErrorMsg().find('_ogr_fields_metadata not found') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -3005,7 +2755,6 @@ def test_ogr_gmlas_writer_errors():
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', src_ds, format='GMLAS')
     if ret_ds is not None or gdal.GetLastErrorMsg().find('_ogr_layer_relationships not found') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -3018,7 +2767,6 @@ def test_ogr_gmlas_writer_errors():
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', src_ds, format='GMLAS')
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot find field layer_name in _ogr_layers_metadata layer') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
     gdal.Unlink('/vsimem/valid.xml')
@@ -3043,13 +2791,11 @@ def test_ogr_gmlas_read_fake_gmljp2():
         f, lyr = ds.GetNextFeature()
         if f is None:
             if lyr is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             break
         count += 1
 
     if count != 5:
-        gdaltest.post_reason('fail')
         print(count)
         return 'fail'
 
@@ -3082,13 +2828,11 @@ def test_ogr_gmlas_typing_constraints():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if not f.IsFieldSetAndNotNull('foo_bar_pkid'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if f.GetField('value') != 'baz':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -3111,17 +2855,14 @@ def test_ogr_gmlas_typing_constraints():
 </Configuration>"""])
     lyr = ds.GetLayer('main_elt_foo_bar')
     if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer('bar')
     f = lyr.GetNextFeature()
     if f.GetField('value') != 'baz':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('value') != 'baz2':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -3145,17 +2886,14 @@ def test_ogr_gmlas_typing_constraints():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if not f.IsFieldSetAndNotNull('foo_bar_pkid'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if f.IsFieldSetAndNotNull('foo_baz_pkid'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if f.GetField('value') != 'baz':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -3182,19 +2920,16 @@ def test_ogr_gmlas_swe_dataarray():
        f.GetField('myCount') != 3 or \
        f.GetField('myText') != 'foo' or \
        f.GetField('myBoolean') is False:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('myTime') != '2017/09/01 00:00:00' or \
        f.GetField('myCategory') != '2' or \
        f.GetField('myQuantity') != 3.45:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3203,19 +2938,16 @@ def test_ogr_gmlas_swe_dataarray():
     if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
        f.GetField('myCategory') != '1' or \
        f.GetField('myQuantity') != 2.34:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('myTime') != '2017/09/01 00:00:00' or \
        f.GetField('myCategory') is not None or \
        f.GetField('myQuantity') != 3.45:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3224,19 +2956,16 @@ def test_ogr_gmlas_swe_dataarray():
     if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
        f.GetField('myCategory') != '1' or \
        f.GetField('myQuantity') != 2.34:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('myTime') != '2017/09/01 00:00:00' or \
        f.GetField('myCategory') is not None or \
        f.GetField('myQuantity') != 3.45:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3256,14 +2985,12 @@ def test_ogr_gmlas_swe_datarecord():
     gdal.ErrorReset()
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_swe_datarecord.xml', open_options=['VALIDATE=YES'])
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_swe_datarecord.xml')
     lyr = ds.GetLayerByName('main_elt_foo')
     if lyr.GetLayerDefn().GetFieldCount() != 12:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
     f = lyr.GetNextFeature()
@@ -3275,7 +3002,6 @@ def test_ogr_gmlas_swe_datarecord():
        f.GetField('mycount_value') != 2 or \
        f.GetField('mytext_value') != 'foo' or \
        f.GetField('myboolean_value') is False:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -3303,10 +3029,8 @@ def test_ogr_gmlas_any_field_at_end_of_declaration():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetField('foo') != 'bar':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     if f.GetField('value') != '<something>baz</something>':
@@ -3390,7 +3114,6 @@ def test_ogr_gmlas_no_element_in_first_choice_schema():
     lyr = ds.GetLayerByName('_ogr_layers_metadata')
     f = lyr.GetNextFeature()
     if f['layer_xpath'] != 'my_ns:main_elt':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3413,7 +3136,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f.IsFieldSet('link_to_second_or_third_elt_second_elt_pkid') or \
        f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
        f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3422,7 +3144,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f['link_to_second_or_third_elt_second_elt_pkid'] != 'id2' or \
        f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
        f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3431,7 +3152,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f['link_to_second_or_third_elt_second_elt_pkid'] != 'id3' or \
        f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
        f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3440,7 +3160,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f.IsFieldSet('link_to_second_or_third_elt_second_elt_pkid') or \
        f['link_to_second_or_third_elt_third_elt_pkid'] != 'D1013B7E44F28C976B976A4314FA4A09_third_elt_1' or \
        f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3449,7 +3168,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f.IsFieldSet('link_to_second_or_third_elt_second_elt_pkid') or \
        f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
        f['link_to_third_elt_third_elt_pkid'] != 'D1013B7E44F28C976B976A4314FA4A09_third_elt_1':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3457,7 +3175,6 @@ def test_ogr_gmlas_internal_xlink_href():
     f = lyr.GetNextFeature()
     if f['layer_name'] != 'main_elt' or f['field_index'] != 1 or \
        f['field_name'] != 'link_to_second_or_third_elt_href':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3471,7 +3188,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f['field_max_occurs'] != 1 or \
        f['field_category'] != 'PATH_TO_CHILD_ELEMENT_WITH_LINK' or \
        f['field_related_layer'] != 'second_elt':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3485,35 +3201,30 @@ def test_ogr_gmlas_internal_xlink_href():
        f['field_max_occurs'] != 1 or \
        f['field_category'] != 'PATH_TO_CHILD_ELEMENT_WITH_LINK' or \
        f['field_related_layer'] != 'third_elt':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['layer_name'] != 'main_elt' or f['field_index'] != 4 or \
        f['field_name'] != 'link_to_second_or_third_elt':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['layer_name'] != 'main_elt' or f['field_index'] != 5 or \
        f['field_name'] != 'link_to_third_elt_href':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['layer_name'] != 'main_elt' or f['field_index'] != 6 or \
        f['field_name'] != 'link_to_third_elt_third_elt_pkid':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f['layer_name'] != 'third_elt' or f['field_index'] != 1 or \
        f['field_name'] != 'id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3524,7 +3235,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f['parent_element_name'] != 'link_to_third_elt_third_elt_pkid' or \
        f['child_layer'] != 'third_elt' or \
        f['child_pkid'] != 'ogr_pkid':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3534,7 +3244,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f['parent_element_name'] != 'link_to_second_or_third_elt_second_elt_pkid' or \
        f['child_layer'] != 'second_elt' or \
        f['child_pkid'] != 'id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -3544,7 +3253,6 @@ def test_ogr_gmlas_internal_xlink_href():
        f['parent_element_name'] != 'link_to_second_or_third_elt_third_elt_pkid' or \
        f['child_layer'] != 'third_elt' or \
        f['child_pkid'] != 'ogr_pkid':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 

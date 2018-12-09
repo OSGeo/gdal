@@ -324,7 +324,6 @@ def test_hdf5_10():
     gdal.ErrorReset()
     ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/QLK')
     if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -332,17 +331,14 @@ def test_hdf5_10():
     got_gcpprojection = ds.GetGCPProjection()
     if got_gcpprojection.find('GEOGCS["WGS 84",DATUM["WGS_1984"') != 0:
         print(got_gcpprojection)
-        gdaltest.post_reason('fail')
         return 'fail'
 
     got_gcps = ds.GetGCPs()
     if len(got_gcps) != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if abs(got_gcps[0].GCPPixel - 0) > 1e-5 or abs(got_gcps[0].GCPLine - 0) > 1e-5 or \
        abs(got_gcps[0].GCPX - 12.2395902509238) > 1e-5 or abs(got_gcps[0].GCPY - 44.7280047434954) > 1e-5:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -362,7 +358,6 @@ def test_hdf5_11():
     gdal.ErrorReset()
     ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/QLK')
     if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -370,7 +365,6 @@ def test_hdf5_11():
     got_projection = ds.GetProjection()
     if got_projection.find('PROJCS["Transverse_Mercator",GEOGCS["WGS 84",DATUM["WGS_1984"') != 0:
         print(got_projection)
-        gdaltest.post_reason('fail')
         return 'fail'
 
     got_gt = ds.GetGeoTransform()
@@ -378,7 +372,6 @@ def test_hdf5_11():
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-5:
             print(got_gt)
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ds = None
@@ -402,7 +395,6 @@ def test_hdf5_12():
     got_projection = ds.GetProjection()
     if got_projection.find('Azimuthal_Equidistant') < 0:
         print(got_projection)
-        gdaltest.post_reason('fail')
         return 'fail'
 
     got_gt = ds.GetGeoTransform()
@@ -413,7 +405,6 @@ def test_hdf5_12():
     if max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) > 1e-5 and \
        max([abs(got_gt[i] - expected_gt2[i]) for i in range(6)]) > 1e-5:
         print(got_gt)
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -431,12 +422,10 @@ def test_hdf5_13():
 
     got_gcps = ds.GetGCPs()
     if len(got_gcps) != 3030:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if abs(got_gcps[0].GCPPixel - 0.5) > 1e-5 or abs(got_gcps[0].GCPLine - 0.5) > 1e-5 or \
        abs(got_gcps[0].GCPX - 33.1655693) > 1e-5 or abs(got_gcps[0].GCPY - 39.3207207) > 1e-5:
-        gdaltest.post_reason('fail')
         print(got_gcps[0])
         return 'fail'
 

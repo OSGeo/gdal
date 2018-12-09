@@ -66,42 +66,36 @@ def test_vsicrypt_2():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid file
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'wb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid file
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'rb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid file
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'ab')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid access
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'foo')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Key to short
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=a,file=/vsimem/file.bin', 'wb+')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid signature
@@ -109,7 +103,6 @@ def test_vsicrypt_2():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Generate empty file
@@ -118,7 +111,6 @@ def test_vsicrypt_2():
 
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
     if fp is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(fp)
 
@@ -127,7 +119,6 @@ def test_vsicrypt_2():
     gdal.VSIFCloseL(fp)
 
     if len(header) != 46:
-        gdaltest.post_reason('fail')
         print(len(header))
         return 'fail'
 
@@ -140,7 +131,6 @@ def test_vsicrypt_2():
         with gdaltest.error_handler():
             fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
         if fp is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Test corrupting all bytes of header
@@ -193,7 +183,6 @@ def test_vsicrypt_2():
         fp = gdal.VSIFOpenL(
             '/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Inconsistent initial vector with key check.
@@ -220,7 +209,6 @@ def test_vsicrypt_2():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test reading with wrong key
@@ -233,13 +221,11 @@ def test_vsicrypt_2():
     gdal.VSIFCloseL(fp)
 
     if content == 'hello':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=short_key,file=/vsimem/file.bin', 'ab')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test reading with wrong key with add_key_check
@@ -250,19 +236,16 @@ def test_vsicrypt_2():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin', 'rb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=short_key,file=/vsimem/file.bin', 'ab')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin', 'ab')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test creating with potentially not build-in alg:
@@ -275,14 +258,12 @@ def test_vsicrypt_2():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,sector_size=1,file=/vsimem/file.bin', 'wb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Sector size (16) should be at least twice larger than the block size (16) in CBC_CTS
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,sector_size=16,mode=CBC_CTS,file=/vsimem/file.bin', 'wb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/file.bin')
@@ -311,7 +292,6 @@ def test_vsicrypt_3():
         else:
             fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PRODDONT_USE_IN_PROD,%s,file=/vsimem/file.bin' % options, 'wb')
         if fp is None:
-            gdaltest.post_reason('fail')
             print(options)
             return 'fail'
         gdal.VSIFWriteL('hello', 1, 5, fp)
@@ -322,7 +302,6 @@ def test_vsicrypt_3():
         gdal.VSIFCloseL(fp)
 
         if content != 'hello':
-            gdaltest.post_reason('fail')
             print(options)
             return 'fail'
 
@@ -342,7 +321,6 @@ def test_vsicrypt_3():
             gdal.VSIFCloseL(fp)
 
             if content != 'hello':
-                gdaltest.post_reason('fail')
                 print(options)
                 return 'fail'
 
@@ -356,7 +334,6 @@ def test_vsicrypt_3():
     # Get the generated random key
     key_b64 = gdal.GetConfigOption('VSICRYPT_KEY_B64')
     if key_b64 is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSIFWriteL('hello', 1, 5, fp)
@@ -367,7 +344,6 @@ def test_vsicrypt_3():
     gdal.VSIFCloseL(fp)
 
     if content != 'hello':
-        gdaltest.post_reason('fail')
         print(options)
         return 'fail'
 
@@ -378,31 +354,26 @@ def test_vsicrypt_3():
     gdal.VSIFCloseL(fp)
 
     if content != 'hello':
-        gdaltest.post_reason('fail')
         print(options)
         return 'fail'
 
     with gdaltest.error_handler():
         statRes = gdal.VSIStatL('/vsicrypt//vsimem/file.bin')
     if statRes is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = gdal.Rename('/vsicrypt//vsimem/file.bin', '/vsicrypt//vsimem/subdir_crypt/file.bin')
     if ret != 0:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
     ret = gdal.Rename('/vsicrypt//vsimem/subdir_crypt/file.bin', '/vsimem/subdir_crypt/file2.bin')
     if ret != 0:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
     dir_content = gdal.ReadDir('/vsicrypt//vsimem/subdir_crypt')
     if dir_content != ['file2.bin']:
-        gdaltest.post_reason('fail')
         print(dir_content)
         return 'fail'
 
@@ -504,7 +475,6 @@ def test_vsicrypt_5():
     content = struct.unpack('B' * len(content), content)
     gdal.VSIFCloseL(f)
     if content != (97, 98, 0, 100):
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -519,7 +489,6 @@ def test_vsicrypt_5():
     content = struct.unpack('B' * len(content), content)
     gdal.VSIFCloseL(f)
     if content != (97, 98, 0, 100, 0, 102):
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -536,7 +505,6 @@ def test_vsicrypt_5():
     content = struct.unpack('B' * len(content), content)
     gdal.VSIFCloseL(f)
     if content != (97, 98, 0, 100, 0, 102, 0, 104):
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -572,7 +540,6 @@ def test_vsicrypt_6():
 
     fp = gdal.VSIFOpenL('/vsicrypt/add_key_check=yes,file=/vsimem/file.bin', 'wb+')
     if fp is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFWriteL('hello', 1, 5, fp)
     gdal.VSIFCloseL(fp)
@@ -582,12 +549,10 @@ def test_vsicrypt_6():
     gdal.VSIFCloseL(fp)
 
     if content != 'hello':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
     if fp is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFWriteL('hello', 1, 5, fp)
     gdal.VSIFCloseL(fp)
@@ -597,7 +562,6 @@ def test_vsicrypt_6():
     gdal.VSIFCloseL(fp)
 
     if content != 'hello':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Set a too short key
@@ -605,13 +569,11 @@ def test_vsicrypt_6():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'rb')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Erase key
@@ -619,7 +581,6 @@ def test_vsicrypt_6():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
     if fp is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/file.bin')

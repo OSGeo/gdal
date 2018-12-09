@@ -409,10 +409,8 @@ def test_pcidsk_15():
 
     ds = gdal.Open('/vsimem/pcidsk_15.pix')
     if ds.RasterCount != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
@@ -421,10 +419,8 @@ def test_pcidsk_15():
 
     ds = gdal.Open('/vsimem/pcidsk_15_2.pix')
     if ds.RasterCount != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -435,10 +431,8 @@ def test_pcidsk_15():
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
     if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
@@ -447,10 +441,8 @@ def test_pcidsk_15():
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
     if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -460,10 +452,8 @@ def test_pcidsk_15():
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
     if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
@@ -472,10 +462,8 @@ def test_pcidsk_15():
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
     if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -494,11 +482,9 @@ def test_pcidsk_external_ovr():
     ds.BuildOverviews('NEAR', [2])
     ds = None
     if gdal.VSIStatL('/vsimem/test.pix.ovr') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/test.pix')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -517,7 +503,6 @@ def test_pcidsk_external_ovr_rrd():
         ds.BuildOverviews('NEAR', [2])
     ds = None
     if gdal.VSIStatL('/vsimem/test.aux') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/test.pix')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:

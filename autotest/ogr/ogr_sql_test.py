@@ -132,23 +132,18 @@ def test_ogr_sql_5():
     feat = sql_lyr.GetNextFeature()
     if feat['max_eas_id'] != 179:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat['min_eas_id'] != 158:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
     if abs(feat['avg_eas_id'] - 168.142857142857) > 1e-12:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat['count_eas_id'] != 7:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat['sum_eas_id'] != 1177:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
@@ -1055,13 +1050,11 @@ def test_ogr_sql_36():
         sql_lyr = ds.ExecuteSQL("select distinct %s from layer order by %s asc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) != 0:
-            gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) == 0:
-            gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
@@ -1071,13 +1064,11 @@ def test_ogr_sql_36():
         sql_lyr = ds.ExecuteSQL("select distinct %s from layer order by %s desc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) == 0:
-            gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSetAndNotNull(0) != 0:
-            gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
@@ -1120,19 +1111,16 @@ def test_ogr_sql_37():
         sql_lyr = ds.ExecuteSQL("select count(%s), count(distinct %s), count(*) from layer" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.GetFieldAsInteger(0) != 2:
-            gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
 
         if feat.GetFieldAsInteger(1) != 1:
-            gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
 
         if feat.GetFieldAsInteger(2) != 4:
-            gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
@@ -1142,7 +1130,6 @@ def test_ogr_sql_37():
     sql_lyr = ds.ExecuteSQL("select avg(intfield) from layer where intfield is null")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull(0) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
@@ -1151,12 +1138,10 @@ def test_ogr_sql_37():
     sql_lyr = ds.ExecuteSQL("select distinct strfield_first_null from layer")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull('strfield_first_null'):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     feat = sql_lyr.GetNextFeature()
     if feat.GetFieldAsString('strfield_first_null') != 'foo':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
@@ -1164,7 +1149,6 @@ def test_ogr_sql_37():
     sql_lyr = ds.ExecuteSQL("select distinct strfield_never_set from layer")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull('strfield_never_set'):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
@@ -1172,7 +1156,6 @@ def test_ogr_sql_37():
     sql_lyr = ds.ExecuteSQL("select min(intfield_never_set), max(intfield_never_set), avg(intfield_never_set), sum(intfield_never_set), count(intfield_never_set) from layer")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull(0) or feat.IsFieldSetAndNotNull(1) or feat.IsFieldSetAndNotNull(2) or feat.IsFieldSetAndNotNull(3) or feat.GetField(4) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
@@ -1254,14 +1237,12 @@ def test_ogr_sql_42():
     feat = lyr.GetNextFeature()
     lyr.SetAttributeFilter(None)
     if feat is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sql_lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE prfedea <> ''")
     feat = sql_lyr.GetNextFeature()
     gdaltest.ds.ReleaseResultSet(sql_lyr)
     if feat is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1297,7 +1278,6 @@ def test_ogr_sql_44():
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         gdal.PopErrorHandler()
         if sql_lyr is not None:
-            gdaltest.post_reason('fail')
             print(sql)
             return 'fail'
 
@@ -1319,7 +1299,6 @@ def test_ogr_sql_44():
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         f = sql_lyr.GetNextFeature()
         if f.IsFieldSetAndNotNull(0):
-            gdaltest.post_reason('fail')
             print(sql)
             f.DumpReadable()
             return 'fail'
@@ -1338,7 +1317,6 @@ def test_ogr_sql_44():
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         f = sql_lyr.GetNextFeature()
         if f.GetField(0) != expected:
-            gdaltest.post_reason('fail')
             print(sql)
             f.DumpReadable()
             return 'fail'
@@ -1366,24 +1344,20 @@ def test_ogr_sql_45():
     lyr = ds.GetLayer(0)
 
     if lyr.GetFeatureCount() != 1000000000000:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sql_lyr = ds.ExecuteSQL('SELECT COUNT(*) FROM poly')
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != 1000000000000:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL('SELECT COUNT(AREA) FROM poly')
     if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
     ds.ReleaseResultSet(sql_lyr)
@@ -1413,19 +1387,16 @@ def test_ogr_sql_46():
     sql_lyr = ds.ExecuteSQL("select id, 'id', \"id\" as id2, id as \"id3\", \"from\" from test where \"from\" = 'from'")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 3 or feat.GetField(1) != 'id' or feat.GetField(2) != 3 or feat.GetField(3) != 3 or feat.GetField(4) != 'from':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     feat = sql_lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL("select max(\"id\"), max(id), count(\"id\"), count(id) from \"test\"")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 3 or feat.GetField(1) != 3 or feat.GetField(2) != 2 or feat.GetField(3) != 2:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
@@ -1435,7 +1406,6 @@ def test_ogr_sql_46():
     sql_lyr = ds.ExecuteSQL("select * from 'test'")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Not accepted
@@ -1443,7 +1413,6 @@ def test_ogr_sql_46():
     sql_lyr = ds.ExecuteSQL("select distinct 'id' from 'test'")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Not accepted
@@ -1451,7 +1420,6 @@ def test_ogr_sql_46():
     sql_lyr = ds.ExecuteSQL("select max('id') from 'test'")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Not accepted
@@ -1459,7 +1427,6 @@ def test_ogr_sql_46():
     sql_lyr = ds.ExecuteSQL("select id as 'id2' from 'test'")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1479,7 +1446,6 @@ def test_ogr_sql_47():
         else:
             new_val = ''
         if new_val < prec_val:
-            gdaltest.post_reason('fail')
             print("new_val = '%s', prec_val = '%s'" % (new_val, prec_val))
             return 'fail'
         prec_val = new_val
@@ -1507,13 +1473,11 @@ def test_ogr_sql_48():
     i = 1
     for f in sql_lyr:
         if f['int_field'] != i:
-            gdaltest.post_reason('fail')
             f.DumpReadable()
             return 'fail'
         i = i + 1
     ds.ReleaseResultSet(sql_lyr)
     if i != 1001:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

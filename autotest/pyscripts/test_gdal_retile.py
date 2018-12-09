@@ -235,13 +235,11 @@ def test_gdal_retile_4():
     for (filename, width, height) in expected_results:
         ds = gdal.Open(filename)
         if ds.RasterXSize != width:
-            gdaltest.post_reason('fail')
             print(filename)
             print(ds.RasterXSize)
             print(width)
             return 'fail'
         if ds.RasterYSize != height:
-            gdaltest.post_reason('fail')
             print(filename)
             print(ds.RasterYSize)
             print(height)
@@ -274,13 +272,11 @@ def test_gdal_retile_4():
     for (filename, width, height) in expected_results:
         ds = gdal.Open(filename)
         if ds.RasterXSize != width:
-            gdaltest.post_reason('fail')
             print(filename)
             print(ds.RasterXSize)
             print(width)
             return 'fail'
         if ds.RasterYSize != height:
-            gdaltest.post_reason('fail')
             print(filename)
             print(ds.RasterYSize)
             print(height)

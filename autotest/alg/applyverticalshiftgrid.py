@@ -47,23 +47,18 @@ def test_applyverticalshiftgrid_1():
     grid_ds = gdal.Translate('', src_ds, format='MEM')
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     if out_ds.GetRasterBand(1).DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('fail')
         print(out_ds.GetRasterBand(1).DataType)
         return 'fail'
     if out_ds.RasterXSize != src_ds.RasterXSize:
-        gdaltest.post_reason('fail')
         print(out_ds.RasterXSize)
         return 'fail'
     if out_ds.RasterYSize != src_ds.RasterYSize:
-        gdaltest.post_reason('fail')
         print(out_ds.RasterYSize)
         return 'fail'
     if out_ds.GetGeoTransform() != src_ds.GetGeoTransform():
-        gdaltest.post_reason('fail')
         print(out_ds.GetGeoTransform())
         return 'fail'
     if out_ds.GetProjectionRef() != src_ds.GetProjectionRef():
-        gdaltest.post_reason('fail')
         print(out_ds.GetProjectionRef())
         return 'fail'
     # Check that we can drop the reference to the sources
@@ -72,7 +67,6 @@ def test_applyverticalshiftgrid_1():
 
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 10038:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -85,7 +79,6 @@ def test_applyverticalshiftgrid_1():
                                          options=['BLOCKSIZE=15'])
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 10038:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -93,12 +86,10 @@ def test_applyverticalshiftgrid_1():
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, src_ds, True,
                                          options=['DATATYPE=Float32'])
     if out_ds.GetRasterBand(1).DataType != gdal.GDT_Float32:
-        gdaltest.post_reason('fail')
         print(out_ds.GetRasterBand(1).DataType)
         return 'fail'
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -130,7 +121,6 @@ def test_applyverticalshiftgrid_2():
         with gdaltest.error_handler():
             out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
         if out_ds is not None:
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
 
@@ -144,7 +134,6 @@ def test_applyverticalshiftgrid_2():
     with gdaltest.error_handler():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Non invertable grid geotransform
@@ -157,7 +146,6 @@ def test_applyverticalshiftgrid_2():
     with gdaltest.error_handler():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # No PROJ.4 translation for source SRS, coordinate transformation
@@ -171,7 +159,6 @@ def test_applyverticalshiftgrid_2():
     with gdaltest.error_handler():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Out of memory
@@ -186,7 +173,6 @@ def test_applyverticalshiftgrid_2():
             out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
                                                  options=['BLOCKSIZE=2000000000'])
         if out_ds is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Wrong DATATYPE
@@ -200,7 +186,6 @@ def test_applyverticalshiftgrid_2():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
                                              options=['DATATYPE=x'])
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -217,24 +202,19 @@ def test_applyverticalshiftgrid_3():
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
                                          options=['RESAMPLING=NEAREST'])
     if out_ds.RasterXSize != src_ds.RasterXSize:
-        gdaltest.post_reason('fail')
         print(out_ds.RasterXSize)
         return 'fail'
     if out_ds.RasterYSize != src_ds.RasterYSize:
-        gdaltest.post_reason('fail')
         print(out_ds.RasterYSize)
         return 'fail'
     if out_ds.GetGeoTransform() != src_ds.GetGeoTransform():
-        gdaltest.post_reason('fail')
         print(out_ds.GetGeoTransform())
         return 'fail'
     if out_ds.GetProjectionRef() != src_ds.GetProjectionRef():
-        gdaltest.post_reason('fail')
         print(out_ds.GetProjectionRef())
         return 'fail'
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 5112:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -242,7 +222,6 @@ def test_applyverticalshiftgrid_3():
                                          options=['RESAMPLING=BILINEAR'])
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 4867 and cs != 4868:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -250,7 +229,6 @@ def test_applyverticalshiftgrid_3():
                                          options=['RESAMPLING=CUBIC'])
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 4841 and cs != 4854:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -277,12 +255,10 @@ def test_applyverticalshiftgrid_4():
     grid_ds.GetRasterBand(1).Fill(30)
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     if out_ds.GetRasterBand(1).GetNoDataValue() != 1:
-        gdaltest.post_reason('fail')
         print(out_ds.GetRasterBand(1).GetNoDataValue())
         return 'fail'
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 1:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -298,12 +274,10 @@ def test_applyverticalshiftgrid_4():
     grid_ds.GetRasterBand(1).SetNoDataValue(30)
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     if out_ds.GetRasterBand(1).GetNoDataValue() is not None:
-        gdaltest.post_reason('fail')
         print(out_ds.GetRasterBand(1).GetNoDataValue())
         return 'fail'
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 1:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -320,7 +294,6 @@ def test_applyverticalshiftgrid_4():
     with gdaltest.error_handler():
         data = out_ds.GetRasterBand(1).ReadRaster()
     if data is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # ERROR_ON_MISSING_VERT_SHIFT due to nodata in grid
@@ -337,7 +310,6 @@ def test_applyverticalshiftgrid_4():
     with gdaltest.error_handler():
         data = out_ds.GetRasterBand(1).ReadRaster()
     if data is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -357,7 +329,6 @@ def test_applyverticalshiftgrid_5():
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds, srcUnitToMeter=2)
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 4672:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -370,7 +341,6 @@ def test_applyverticalshiftgrid_5():
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds, dstUnitToMeter=0.5)
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 4672:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -392,7 +362,6 @@ def test_applyverticalshiftgrid_6():
                    dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=/vsimem/applyverticalshiftgrid_6.gtx +vunits=m +no_defs')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4783:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -416,7 +385,6 @@ def test_applyverticalshiftgrid_7():
                    dstSRS='+proj=utm +zone=11 +datum=NAD27 +geoidgrids=/vsimem/applyverticalshiftgrid_7.gtx +vunits=m +no_defs')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4783:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 

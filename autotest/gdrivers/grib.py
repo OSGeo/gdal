@@ -138,12 +138,10 @@ def test_grib_read_units():
     ds = gdal.Open('tmp/ds.mint.bin')
     md = ds.GetRasterBand(1).GetMetadata()
     if md['GRIB_UNIT'] != '[C]' or md['GRIB_COMMENT'] != 'Minimum temperature [C]':
-        gdaltest.post_reason('fail')
         print(md)
         return 'success'
     ds.GetRasterBand(1).ComputeStatistics(False)
     if abs(ds.GetRasterBand(1).GetMinimum() - 13) > 1:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMinimum())
         return 'success'
     ds = None
@@ -155,12 +153,10 @@ def test_grib_read_units():
     gdal.SetConfigOption('GRIB_NORMALIZE_UNITS', None)
     md = ds.GetRasterBand(1).GetMetadata()
     if md['GRIB_UNIT'] != '[K]' or md['GRIB_COMMENT'] != 'Minimum temperature [K]':
-        gdaltest.post_reason('fail')
         print(md)
         return 'success'
     ds.GetRasterBand(1).ComputeStatistics(False)
     if abs(ds.GetRasterBand(1).GetMinimum() - 286) > 1:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMinimum())
         return 'success'
     ds = None
@@ -748,7 +744,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_NUMBERS=20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255 0extra"
                                 ])
     if out_ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     out_ds = None
     ds = gdal.Open(tmpfilename)
@@ -770,7 +765,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_NUMBERS=20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255"
                                 ])
     if out_ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink(tmpfilename)
 
@@ -799,7 +793,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647 0extra"
                                 ])
     if out_ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     out_ds = None
     ds = gdal.Open(tmpfilename)
@@ -821,7 +814,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127"
                                 ])
     if out_ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink(tmpfilename)
 
@@ -850,7 +842,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2"
                                 ])
     if out_ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink(tmpfilename)
 
@@ -897,7 +888,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_NUMBERS=1 2 3 4 5"
                                 ])
     if out_ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     out_ds = None
     with gdaltest.error_handler():
@@ -920,7 +910,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_ASSEMBLED_VALUES=1 2 3 4 5"
                                 ])
     if out_ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink(tmpfilename)
 
@@ -931,7 +920,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_PDTN=32"
                                 ])
     if out_ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink(tmpfilename)
 
@@ -943,7 +931,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_NUMBERS=-1 256 0 0 0 0"
                                 ])
     if out_ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     out_ds = None
     gdal.Unlink(tmpfilename)
@@ -957,7 +944,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_ASSEMBLED_VALUES=-1 256 -1 1 128 4000000000 -1 -4 1 1 1 65536 1 1 32768 1 -129 -4 1 -1 -4"
                                 ])
     if out_ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     out_ds = None
     gdal.Unlink(tmpfilename)
@@ -971,7 +957,6 @@ def test_grib_grib2_write_creation_options():
                                     "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647"
                                 ])
     if out_ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink(tmpfilename)
 
@@ -1032,7 +1017,6 @@ def test_grib_grib2_write_projections():
     out_ds = None
     gdal.Unlink(tmpfilename)
     if wkt.find('SPHEROID["GRS80",6378137,298.257222101]') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -1553,7 +1537,6 @@ def test_grib_grib2_write_nodata():
 
         ds = gdal.Open(tmpfilename)
         if ds.GetRasterBand(1).GetNoDataValue() != 123:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
         gdal.Unlink(tmpfilename)

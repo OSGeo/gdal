@@ -71,7 +71,6 @@ def test_rl2_2():
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4672:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -85,29 +84,23 @@ def test_rl2_2():
 
     wkt = ds.GetProjectionRef()
     if wkt.find('26711') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).GetMinimum() != 74:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverview(0) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     subds = ds.GetSubDatasets()
     expected_subds = []
     if subds != expected_subds:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetConfigOption('RL2_SHOW_ALL_PYRAMID_LEVELS', 'YES')
@@ -116,7 +109,6 @@ def test_rl2_2():
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1087:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -134,37 +126,31 @@ def test_rl2_3():
     ds = gdal.Open('data/small_world.rl2')
 
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.GetRasterBand(1).GetNoDataValue()
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 25550:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     cs = ds.GetRasterBand(2).Checksum()
     if cs != 28146:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs != 51412:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     subds = ds.GetSubDatasets()
     expected_subds = [('RASTERLITE2:data/small_world.rl2:small_world:1:world_west', 'Coverage small_world, section world_west / 1'), ('RASTERLITE2:data/small_world.rl2:small_world:2:world_east', 'Coverage small_world, section world_east / 2')]
     if subds != expected_subds:
-        gdaltest.post_reason('fail')
         print(subds)
         return 'fail'
 
@@ -172,17 +158,14 @@ def test_rl2_3():
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 3721:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 35686:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -200,32 +183,26 @@ def test_rl2_4():
     ds = gdal.Open('data/small_world_pct.rl2')
 
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 14890:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     pct = ds.GetRasterBand(1).GetColorTable()
     if pct.GetCount() != 256:
-        gdaltest.post_reason('fail')
         return 'fail'
     if pct.GetColorEntry(1) != (176, 184, 176, 255):
-        gdaltest.post_reason('fail')
         print(pct.GetColorEntry(1))
         return 'fail'
 
     pct = ds.GetRasterBand(1).GetColorTable()
     if pct.GetCount() != 256:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 35614:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -245,7 +222,6 @@ def test_rl2_5():
     subds = ds.GetSubDatasets()
     expected_subds = [('RASTERLITE2:data/multi_type.rl2:uint8', 'Coverage uint8'), ('RASTERLITE2:data/multi_type.rl2:int8', 'Coverage int8'), ('RASTERLITE2:data/multi_type.rl2:uint16', 'Coverage uint16'), ('RASTERLITE2:data/multi_type.rl2:int16', 'Coverage int16'), ('RASTERLITE2:data/multi_type.rl2:uint32', 'Coverage uint32'), ('RASTERLITE2:data/multi_type.rl2:int32', 'Coverage int32'), ('RASTERLITE2:data/multi_type.rl2:float', 'Coverage float'), ('RASTERLITE2:data/multi_type.rl2:double', 'Coverage double'), ('RASTERLITE2:data/multi_type.rl2:1bit', 'Coverage 1bit'), ('RASTERLITE2:data/multi_type.rl2:2bit', 'Coverage 2bit'), ('RASTERLITE2:data/multi_type.rl2:4bit', 'Coverage 4bit')]
     if subds != expected_subds:
-        gdaltest.post_reason('fail')
         print(subds)
         return 'fail'
 
@@ -261,17 +237,14 @@ def test_rl2_5():
     for (subds_name, dt, expected_cs) in tests:
         ds = gdal.Open(subds_name)
         if ds.GetRasterBand(1).DataType != dt:
-            gdaltest.post_reason('fail')
             print(subds_name)
             return 'fail'
         cs = ds.GetRasterBand(1).Checksum()
         if cs != expected_cs:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
         if subds_name == 'RASTERLITE2:data/multi_type.rl2:int8':
             if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
-                gdaltest.post_reason('fail')
                 print(ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE'))
                 return 'fail'
 
@@ -557,16 +530,13 @@ def test_rl2_22():
     ds = None
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=byte'])
     if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     ds = None
     ds = gdal.OpenEx('/vsimem/rl2_22.rl2')
     if ds.RasterXSize != 20:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     left_ds = gdal.Translate('left', src_ds, srcWin=[0, 0, 10, 20], format='MEM')
@@ -575,14 +545,12 @@ def test_rl2_22():
     gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', left_ds, options=['COVERAGE=left_right'])
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', right_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=left_right', 'SECTION=right'])
     if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=rgbsmall'])
     if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     ds = None
@@ -605,24 +573,19 @@ def test_rl2_23():
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_23.rl2', src_ds)
     ret = ds.BuildOverviews('NEAR', [2])
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs == 0:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ret = ds.BuildOverviews('NONE', [])
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/rl2_23.rl2')
     if ds.GetRasterBand(1).GetOverviewCount() == 5:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     ds = None

@@ -49,7 +49,6 @@ def test_ers_1():
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {'STATISTICS_MEAN': '-4020.25', 'STATISTICS_MINIMUM': '-4315', 'STATISTICS_MAXIMUM': '-3744', 'STATISTICS_MEDIAN': '-4000'}
     if md != expected_md:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     return 'success'

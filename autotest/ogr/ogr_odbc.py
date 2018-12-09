@@ -76,50 +76,42 @@ def test_ogr_odbc_1():
     # Test with ODBC:user/pwd@dsn syntax
     ds = ogrtest.odbc_drv.Open('ODBC:user/pwd@DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
     if ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
     # Test with ODBC:dsn syntax
     ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
     if ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
     # Test with ODBC:dsn,table_list syntax
     ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb,test')
     if ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
     # Reopen and check
     ds = ogrtest.odbc_drv.Open('tmp/odbc.mdb')
     if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     lyr = ds.GetLayerByName('test')
     feat = lyr.GetNextFeature()
     if feat.GetField('intfield') != 1 or feat.GetField('doublefield') != 2.34 or feat.GetField('stringfield') != 'foo':
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayerByName('test_with_pk')
     # Test GetFeatureCount()
     if lyr.GetFeatureCount() != 5:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test GetFeature()
     feat = lyr.GetFeature(4)
     if feat.GetField('intfield') != 5:
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
         return 'fail'
 
@@ -127,7 +119,6 @@ def test_ogr_odbc_1():
     lyr.SetAttributeFilter('intfield = 6')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 5:
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
         return 'fail'
 
@@ -135,7 +126,6 @@ def test_ogr_odbc_1():
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('intfield') != 1 or feat.GetField('doublefield') != 2.34 or feat.GetField('stringfield') != 'foo':
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)

@@ -121,7 +121,6 @@ def test_pixfun_imag_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     if not numpy.alltrue(data == refdata.imag):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test bugfix of #6599
@@ -130,7 +129,6 @@ def test_pixfun_imag_c():
     copied_ds = None
 
     if not numpy.alltrue(data == data_ds):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

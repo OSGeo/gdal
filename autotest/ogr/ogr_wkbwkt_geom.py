@@ -625,7 +625,6 @@ def test_ogr_wkbwkt_export_wkt_iso_multipoint():
     g = ogr.CreateGeometryFromWkt(wkt)
     out_wkt = g.ExportToIsoWkt()
     if out_wkt != wkt:
-        gdaltest.post_reason('fail')
         print(out_wkt)
         return 'fail'
 
@@ -641,7 +640,6 @@ def test_ogr_wkt_inf_nan():
     g.AddPoint(float('inf'), float('-inf'), float('nan'))
     out_wkt = g.ExportToWkt()
     if out_wkt != 'POINT (inf -inf nan)':
-        gdaltest.post_reason('fail')
         print(out_wkt)
         return 'fail'
 

@@ -134,23 +134,18 @@ def test_xyz_4():
     expected_gt = (440660.0, 60.0, 0.0, 3751350.0, 0.0, -120.0)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
             return 'fail'
 
     if ds.GetRasterBand(1).GetMinimum() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMaximum() != 7:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     for i in [0, 1, 2, 1, 0, 2, 0, 2, 0, 1, 2]:
         if not xyz_4_checkline(ds, i, expected[i]):
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
@@ -173,7 +168,6 @@ def test_xyz_5():
 
     ds = gdal.Open('/vsimem/grid.xyz')
     if ds.RasterXSize != 3 or ds.RasterYSize != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
@@ -182,7 +176,6 @@ def test_xyz_5():
 
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
             return 'fail'
@@ -206,7 +199,6 @@ def test_xyz_6():
 
     ds = gdal.Open('/vsimem/grid.xyz')
     if ds.RasterXSize != 3 or ds.RasterYSize != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
@@ -215,7 +207,6 @@ def test_xyz_6():
 
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
             return 'fail'
@@ -249,7 +240,6 @@ def test_xyz_7():
 
     ds = gdal.Open('/vsimem/grid.xyz')
     if ds.RasterXSize != 3 or ds.RasterYSize != 5:
-        gdaltest.post_reason('fail')
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (354.46666625, 0.0333335, 0.0, 51.5125, 0.0, -0.025)
@@ -259,13 +249,11 @@ def test_xyz_7():
 
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
             return 'fail'
 
     if cs != 146:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -287,14 +275,12 @@ def test_xyz_8():
 
     ds = gdal.Open('/vsimem/grid.xyz')
     if ds.RasterXSize != 4 or ds.RasterYSize != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
 
     if cs != 35:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 

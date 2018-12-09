@@ -77,7 +77,6 @@ def test_vrtderived_1():
         'BlockXSize="20" BlockYSize="20" />\n'
         '</SimpleSource>\n')
     if md_read['source_0'] != expected_md_read:
-        gdaltest.post_reason('fail')
         print(md_read['source_0'])
         return 'fail'
 
@@ -121,12 +120,10 @@ def test_vrtderived_2():
     with gdaltest.error_handler():
         cs = vrt_ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         ret = vrt_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, ' ')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     vrt_ds = None
 
@@ -272,7 +269,6 @@ def test_vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -284,7 +280,6 @@ def test_vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -296,7 +291,6 @@ def test_vrtderived_7():
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -306,7 +300,6 @@ def test_vrtderived_7():
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
     if ret.find('Checksum=0') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -318,7 +311,6 @@ def test_vrtderived_7():
         if gdal.GetConfigOption('CPL_DEBUG') is not None:
             print(err)
         if ret.find('Checksum=0') < 0:
-            gdaltest.post_reason('fail')
             print(ret)
             print(err)
             return 'fail'
@@ -378,7 +370,6 @@ def test_vrtderived_9():
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Unsupported PixelFunctionLanguage
@@ -391,7 +382,6 @@ def test_vrtderived_9():
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # PixelFunctionCode can only be used with Python
@@ -408,7 +398,6 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # PixelFunctionArguments can only be used with Python
@@ -421,7 +410,6 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # BufferRadius can only be used with Python
@@ -434,7 +422,6 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid BufferRadius
@@ -448,7 +435,6 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 </VRTDataset>
 """)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error at Python code compilation (indentation error)

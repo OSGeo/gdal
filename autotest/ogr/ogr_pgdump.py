@@ -274,14 +274,12 @@ def test_ogr_pgdump_4():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('tmp/ogr_pgdump_4.sql', options=['LINEFORMAT=LF'])
     if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ######################################################
     # Create Layer
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['WRITE_EWKT_GEOM=YES'])
     if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gfld_defn = ogr.GeomFieldDefn("point_nosrs", ogr.wkbPoint)
@@ -350,7 +348,6 @@ def test_ogr_pgdump_5():
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
@@ -361,7 +358,6 @@ def test_ogr_pgdump_5():
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
@@ -489,12 +485,10 @@ def test_ogr_pgdump_7():
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTString))
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTInteger))
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr.CreateField(ogr.FieldDefn('str2', ogr.OFTString))
 
@@ -504,24 +498,19 @@ def test_ogr_pgdump_7():
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() < 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     if feat.GetField('myfid') != feat.GetFID():
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -538,7 +527,6 @@ def test_ogr_pgdump_7():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # gdal.PushErrorHandler()
@@ -562,10 +550,8 @@ def test_ogr_pgdump_7():
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() != 12:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -600,12 +586,10 @@ def test_ogr_pgdump_8():
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTString))
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTInteger))
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr.CreateField(ogr.FieldDefn('str2', ogr.OFTString))
 
@@ -617,10 +601,8 @@ def test_ogr_pgdump_8():
     ret = lyr.CreateFeature(feat)
     gdal.SetConfigOption('PG_USE_COPY', None)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -629,14 +611,11 @@ def test_ogr_pgdump_8():
     ret = lyr.CreateFeature(feat)
     gdal.SetConfigOption('PG_USE_COPY', None)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() < 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     if feat.GetField('myfid') != feat.GetFID():
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -655,7 +634,6 @@ def test_ogr_pgdump_8():
     gdal.SetConfigOption('PG_USE_COPY', None)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # gdal.PushErrorHandler()
@@ -681,10 +659,8 @@ def test_ogr_pgdump_8():
     ret = lyr.CreateFeature(feat)
     gdal.SetConfigOption('PG_USE_COPY', None)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() != 12:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -870,7 +846,6 @@ def test_ogr_pgdump_13():
 
         for expected_string in expected_strings:
             if sql.find(expected_string) < 0:
-                gdaltest.post_reason('fail')
                 print(geom_type, options, wkt, expected_string)
                 print(sql)
                 return 'fail'
@@ -895,7 +870,6 @@ def test_ogr_pgdump_13():
 
         for expected_string in expected_strings:
             if sql.find(expected_string) < 0:
-                gdaltest.post_reason('fail')
                 print(geom_type, options, wkt, expected_string)
                 print(sql)
                 return 'fail'
@@ -923,7 +897,6 @@ def test_ogr_pgdump_14():
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
 
     if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'foo';""") < 0 or sql.find('bar') >= 0 or sql.find('baz') >= 0:
-        gdaltest.post_reason('fail')
         print(sql)
         return 'fail'
 
@@ -939,7 +912,6 @@ def test_ogr_pgdump_14():
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
     if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'bar';""") < 0:
-        gdaltest.post_reason('fail')
         print(sql)
         return 'fail'
 
@@ -955,7 +927,6 @@ def test_ogr_pgdump_14():
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
     if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""") < 0:
-        gdaltest.post_reason('fail')
         print(sql)
         return 'fail'
 

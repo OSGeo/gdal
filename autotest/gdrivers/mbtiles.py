@@ -342,41 +342,34 @@ def test_mbtiles_5():
 
     ds = gdal.OpenEx('/vsimem/mbtiles_5.mbtiles', open_options=['BAND_COUNT=2'])
     if ds.RasterXSize != 19 or ds.RasterYSize != 19:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         print(ds.RasterYSize)
         return 'fail'
     if ds.RasterCount != 2:
-        gdaltest.post_reason('fail')
         print(ds.RasterCount)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-13095853.550435878, 76.437028285176254, 0.0, 4015708.8887064462, 0.0, -76.437028285176254)
     for i in range(6):
         if abs(expected_gt[i] - got_gt[i]) > 1e-6:
-            gdaltest.post_reason('fail')
             print(got_gt)
             print(expected_gt)
             return 'fail'
     got_cs = ds.GetRasterBand(1).Checksum()
     if got_cs != 4118:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     got_cs = ds.GetRasterBand(2).Checksum()
     if got_cs != 4406:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
     expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
     if set(got_md.keys()) != set(expected_md.keys()):
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     for key in got_md:
         if key != 'bounds' and got_md[key] != expected_md[key]:
-            gdaltest.post_reason('fail')
             print(got_md)
             return 'fail'
     ds = None
@@ -413,13 +406,11 @@ def test_mbtiles_6():
     ds = gdal.Open('tmp/mbtiles_6.mbtiles')
     got_cs = ds.GetRasterBand(1).Checksum()
     if got_cs == 0:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     got_md = ds.GetMetadata()
     expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     ds = None
@@ -465,17 +456,14 @@ def test_mbtiles_7():
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     expected_ovr_cs = [21179, 22577, 11996, 17849]
     got_ovr_cs = [ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)]
     if expected_ovr_cs != got_ovr_cs:
-        gdaltest.post_reason('fail')
         print(got_ovr_cs)
         return 'fail'
     if ds.GetMetadataItem('minzoom') != '0':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     ds = None
@@ -486,11 +474,9 @@ def test_mbtiles_7():
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     if ds.GetMetadataItem('minzoom') != '1':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     ds = None
@@ -520,15 +506,12 @@ def test_mbtiles_8():
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
     if got_ct is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetRasterBand(1).GetBlockSize() != [256, 256]:
-        gdaltest.post_reason('fail')
         print(out_ds.GetRasterBand(1).GetBlockSize())
         return 'fail'
     out_ds = None
@@ -543,15 +526,12 @@ def test_mbtiles_8():
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
     if got_ct is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetRasterBand(1).GetBlockSize() != [512, 512]:
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
 
@@ -580,10 +560,8 @@ def test_mbtiles_9():
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/mbtiles_9.mbtiles')
     if ds.RasterXSize != 256 or ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         return 'fail'
     if abs(ds.GetGeoTransform()[0] - -13110479.091473430395126) > 1e-6:
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
     ds = None
@@ -612,7 +590,6 @@ def test_mbtiles_10():
     ds = gdal.Open('/vsimem/mbtiles_10.mbtiles')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 29925:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -667,7 +644,6 @@ def test_mbtiles_create():
     gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
     with gdaltest.error_handler():
         if gdal.Open(filename) is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Nominal case
@@ -681,7 +657,6 @@ def test_mbtiles_create():
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -690,13 +665,11 @@ def test_mbtiles_create():
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     # SetProjection() not supported on read-only dataset
     with gdaltest.error_handler():
         ret = ds.SetProjection(src_ds.GetProjectionRef())
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -706,7 +679,6 @@ def test_mbtiles_create():
     with gdaltest.error_handler():
         ret = ds.SetProjection('LOCAL_CS["foo"]')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -716,7 +688,6 @@ def test_mbtiles_create():
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -726,7 +697,6 @@ def test_mbtiles_create():
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

@@ -304,119 +304,102 @@ def test_ogr_index_10():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('intfield = 1')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('intfield IN (2)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('intfield IN (1.0)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('intfield = 1.0')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('intfield IN (1.1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter("intfield IN ('1')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('realfield IN (1.0)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('realfield = 1.0')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('realfield IN (1.1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('realfield IN (1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('realfield = 1')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter('realfield IN (2)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter("realfield IN ('1')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter("strfield IN ('foo')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter("strfield = 'foo'")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.SetAttributeFilter("strfield IN ('bar')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     ds = None
@@ -433,10 +416,8 @@ def ogr_index_11_check(lyr, expected_fids):
     for expected_fid in expected_fids:
         feat = lyr.GetNextFeature()
         if feat is None:
-            gdaltest.post_reason('failed')
             return 'fail'
         if feat.GetFID() != expected_fid:
-            gdaltest.post_reason('failed')
             return 'fail'
 
     return 'success'

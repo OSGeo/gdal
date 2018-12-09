@@ -56,7 +56,6 @@ def test_vsiaz_init():
             gdal.SetConfigOption(var, "")
 
     if gdal.GetSignedURL('/vsiaz/foo/bar') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -75,7 +74,6 @@ def test_vsiaz_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiaz/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('AZURE_STORAGE_ACCOUNT') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -83,7 +81,6 @@ def test_vsiaz_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiaz_streaming/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('AZURE_STORAGE_ACCOUNT') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -93,7 +90,6 @@ def test_vsiaz_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiaz/foo/bar')
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING', '')
 
@@ -104,7 +100,6 @@ def test_vsiaz_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiaz/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('AZURE_STORAGE_ACCESS_KEY') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -118,7 +113,6 @@ def test_vsiaz_real_server_errors():
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
             return 'success'
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -126,7 +120,6 @@ def test_vsiaz_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiaz_streaming/foo/bar.baz')
     if f is not None:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -167,7 +160,6 @@ def test_vsiaz_fake_basic():
     signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource', ['START_DATE=20180213T123456'])
     if signed_url not in ('http://127.0.0.1:8080/azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=9Jc4yBFlSRZSSxf059OohN6pYRrjuHWJWSEuryczN%2FM%3D&sp=r&sr=c&st=2018-02-13T12%3A34%3A56Z&sv=2012-02-12',
                           'http://127.0.0.1:8081/azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=9Jc4yBFlSRZSSxf059OohN6pYRrjuHWJWSEuryczN%2FM%3D&sp=r&sr=c&st=2018-02-13T12%3A34%3A56Z&sv=2012-02-12'):
-        gdaltest.post_reason('fail')
         print(signed_url)
         return 'fail'
 
@@ -193,13 +185,11 @@ def test_vsiaz_fake_basic():
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiaz/az_fake_bucket/resource')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
     if data != 'foo':
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -226,13 +216,11 @@ def test_vsiaz_fake_basic():
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiaz_streaming/az_fake_bucket/resource')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
         if data != 'foo':
-            gdaltest.post_reason('fail')
             print(data)
             return 'fail'
 
@@ -242,7 +230,6 @@ def test_vsiaz_fake_basic():
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiaz/az_fake_bucket/resource2.bin')
         if stat_res is None or stat_res.size != 1000000:
-            gdaltest.post_reason('fail')
             if stat_res is not None:
                 print(stat_res.size)
             else:
@@ -255,7 +242,6 @@ def test_vsiaz_fake_basic():
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiaz_streaming/az_fake_bucket/resource2.bin')
         if stat_res is None or stat_res.size != 1000000:
-            gdaltest.post_reason('fail')
             if stat_res is not None:
                 print(stat_res.size)
             else:
@@ -319,27 +305,22 @@ def test_vsiaz_fake_readdir():
             print('Skipped on trusty branch, but should be investigated')
             return 'skip'
 
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(f)
 
     dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/a_dir')
     if dir_contents != ['resource3.bin', 'resource4.bin', 'subdir']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
     if gdal.VSIStatL('/vsiaz/az_fake_bucket2/a_dir/resource3.bin').size != 123456:
-        gdaltest.post_reason('fail')
         print(gdal.VSIStatL('/vsiaz/az_fake_bucket2/a_dir/resource3.bin').size)
         return 'fail'
     if gdal.VSIStatL('/vsiaz/az_fake_bucket2/a_dir/resource3.bin').mtime != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/a_dir/resource3.bin')
     if dir_contents is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test error on ReadDir()
@@ -348,7 +329,6 @@ def test_vsiaz_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/error_test/')
     if dir_contents is not None:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -363,7 +343,6 @@ def test_vsiaz_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/')
     if dir_contents != ['.']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -395,7 +374,6 @@ def test_vsiaz_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/')
     if dir_contents != ['mycontainer1', 'mycontainer2']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -415,7 +393,6 @@ def test_vsiaz_fake_write():
     # Test creation of BlockBob
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -450,7 +427,6 @@ def test_vsiaz_fake_write():
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
         if ret != 40000:
-            gdaltest.post_reason('fail')
             print(ret)
             gdal.VSIFCloseL(f)
             return 'fail'
@@ -459,12 +435,10 @@ def test_vsiaz_fake_write():
     # Simulate illegal read
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         ret = gdal.VSIFReadL(1, 1, f)
     if ret:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
     gdal.VSIFCloseL(f)
@@ -472,19 +446,16 @@ def test_vsiaz_fake_write():
     # Simulate illegal seek
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         ret = gdal.VSIFSeekL(f, 1, 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(f)
 
     # Simulate failure when putting BlockBob
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -498,33 +469,27 @@ def test_vsiaz_fake_write():
     handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
 
     if gdal.VSIFSeekL(f, 0, 0) != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
 
     gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
 
     if gdal.VSIFTellL(f) != 35000:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
 
     if gdal.VSIFSeekL(f, 35000, 0) != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
 
     if gdal.VSIFSeekL(f, 0, 1) != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
     if gdal.VSIFSeekL(f, 0, 2) != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
 
     if gdal.VSIFEofL(f) != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
 
@@ -532,7 +497,6 @@ def test_vsiaz_fake_write():
         with gdaltest.error_handler():
             ret = gdal.VSIFCloseL(f)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print(ret)
             gdal.VSIFCloseL(f)
             return 'fail'
@@ -540,7 +504,6 @@ def test_vsiaz_fake_write():
     # Simulate creation of BlockBob over an existing blob of incompatible type
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -555,7 +518,6 @@ def test_vsiaz_fake_write():
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -627,7 +589,6 @@ def test_vsiaz_fake_write():
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
         if ret != 16:
-            gdaltest.post_reason('fail')
             print(ret)
             gdal.VSIFCloseL(f)
             return 'fail'
@@ -638,7 +599,6 @@ def test_vsiaz_fake_write():
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -655,7 +615,6 @@ def test_vsiaz_fake_write():
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
         if ret != 0:
-            gdaltest.post_reason('fail')
             print(ret)
             gdal.VSIFCloseL(f)
             return 'fail'
@@ -666,7 +625,6 @@ def test_vsiaz_fake_write():
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -676,7 +634,6 @@ def test_vsiaz_fake_write():
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
         if ret != 0:
-            gdaltest.post_reason('fail')
             print(ret)
             gdal.VSIFCloseL(f)
             return 'fail'
@@ -700,7 +657,6 @@ def test_vsiaz_fake_unlink():
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Failure
@@ -711,7 +667,6 @@ def test_vsiaz_fake_unlink():
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
     if ret != -1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -728,7 +683,6 @@ def test_vsiaz_fake_mkdir_rmdir():
     # Invalid name
     ret = gdal.Mkdir('/vsiaz', 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -738,7 +692,6 @@ def test_vsiaz_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiaz/az_bucket_test_mkdir/dir', 0)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Try creating already existing directory
@@ -760,13 +713,11 @@ def test_vsiaz_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiaz/az_bucket_test_mkdir/dir', 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid name
     ret = gdal.Rmdir('/vsiaz')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Not a directory
@@ -783,7 +734,6 @@ def test_vsiaz_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/it_is_a_file')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Valid
@@ -805,7 +755,6 @@ def test_vsiaz_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/dir')
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Try deleting already deleted directory
@@ -815,7 +764,6 @@ def test_vsiaz_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/dir')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Try deleting non-empty directory
@@ -850,7 +798,6 @@ def test_vsiaz_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/dir_nonempty')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -868,7 +815,6 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
 
     signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource')
     if signed_url.find('http://127.0.0.1:%d/myaccount/az_fake_bucket/resource' % gdaltest.webserver_port) < 0:
-        gdaltest.post_reason('fail')
         print(signed_url)
         return 'fail'
 
@@ -909,20 +855,17 @@ def vsiaz_extra_1():
         path = '/vsiaz/' + az_resource
         statres = gdal.VSIStatL(path)
         if statres is None or not stat.S_ISDIR(statres.mode):
-            gdaltest.post_reason('fail')
             print('%s is not a valid bucket' % path)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if readdir is None:
-            gdaltest.post_reason('fail')
             print('ReadDir() should not return empty list')
             return 'fail'
         for filename in readdir:
             if filename != '.':
                 subpath = path + '/' + filename
                 if gdal.VSIStatL(subpath) is None:
-                    gdaltest.post_reason('fail')
                     print('Stat(%s) should not return an error' % subpath)
                     return 'fail'
 
@@ -930,81 +873,68 @@ def vsiaz_extra_1():
         subpath = path + '/' + unique_id
         ret = gdal.Mkdir(subpath, 0)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) should not return an error' % subpath)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if unique_id not in readdir:
-            gdaltest.post_reason('fail')
             print('ReadDir(%s) should contain %s' % (path, unique_id))
             print(readdir)
             return 'fail'
 
         ret = gdal.Mkdir(subpath, 0)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) repeated should return an error' % subpath)
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if unique_id in readdir:
-            gdaltest.post_reason('fail')
             print('ReadDir(%s) should not contain %s' % (path, unique_id))
             print(readdir)
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) repeated should return an error' % subpath)
             return 'fail'
 
         ret = gdal.Mkdir(subpath, 0)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) should not return an error' % subpath)
             return 'fail'
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
 
         ret = gdal.Rmdir(subpath)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) on non empty directory should return an error' % subpath)
             return 'fail'
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
         if data != 'hello':
-            gdaltest.post_reason('fail')
             print(data)
             return 'fail'
         gdal.VSIFCloseL(f)
 
         ret = gdal.Unlink(subpath + '/test.txt')
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
 
@@ -1012,26 +942,22 @@ def vsiaz_extra_1():
 
     f = open_for_read('/vsiaz/' + az_resource)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
     if len(ret) != 1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
     # Same with /vsiaz_streaming/
     f = open_for_read('/vsiaz_streaming/' + az_resource)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
     if len(ret) != 1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -1044,7 +970,6 @@ def vsiaz_extra_1():
             gdal.VSIFReadL(1, 1, f)
         gdal.VSIFCloseL(f)
         if gdal.VSIGetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             print(gdal.VSIGetLastErrorMsg())
             return 'fail'
 
@@ -1052,7 +977,6 @@ def vsiaz_extra_1():
     gdal.ErrorReset()
     f = open_for_read('/vsiaz_streaming/' + az_resource + '/invalid_resource.baz')
     if f is not None:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -1060,13 +984,11 @@ def vsiaz_extra_1():
     signed_url = gdal.GetSignedURL('/vsiaz/' + az_resource)
     f = open_for_read('/vsicurl_streaming/' + signed_url)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
     if len(ret) != 1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 

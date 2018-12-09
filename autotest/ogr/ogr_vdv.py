@@ -48,28 +48,24 @@ def test_ogr_idf_1():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49,2.5 49.5,2.7 49.7,3 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(2)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2.5 49.5)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(3)
     f = lyr.GetNextFeature()
     if f['FOO'] != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -95,28 +91,24 @@ def test_ogr_idf_3d():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49 10)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49 10,2.5 49.5 10,2.7 49.7 20,3 50 20)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(2)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2.5 49.5 10)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(3)
     f = lyr.GetNextFeature()
     if f['FOO'] != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -260,7 +252,6 @@ eof; 4
     gdal.VSIFCloseL(f)
 
     if got != expected:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -348,7 +339,6 @@ def test_ogr_vdv_7():
         if f[longname] != -1234556789 or \
            f[latname] != -234556789 or \
            ogrtest.check_feature_geometry(f, 'POINT (-123.765774722222 -23.7657747222222)') != 0:
-            gdaltest.post_reason('fail')
             f.DumpReadable()
             return 'fail'
         ds = None
@@ -365,13 +355,10 @@ def test_ogr_vdv_7():
         lyr = ds.CreateLayer('UNKNOWN', options=['PROFILE=' + profile, 'PROFILE_STRICT=' + str(strict)])
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             return 'fail'
         if strict and lyr is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         elif not strict and lyr is None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         if profile == 'VDV-452-GERMAN':
@@ -384,13 +371,10 @@ def test_ogr_vdv_7():
         ret = lyr.CreateField(ogr.FieldDefn('UNKNOWN'))
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             return 'fail'
         if strict and ret == 0:
-            gdaltest.post_reason('fail')
             return 'fail'
         elif not strict and ret != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         ds = None
@@ -409,14 +393,12 @@ def test_ogr_vdv_8():
     ds = ogr.GetDriverByName('VDV').CreateDataSource('/does/not_exist')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ds = ogr.GetDriverByName('VDV').CreateDataSource('/does/not_exist', options=['SINGLE_FILE=FALSE'])
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Add layer in non writable directory
@@ -441,7 +423,6 @@ def test_ogr_vdv_8():
             ds = None
             shutil.rmtree('tmp/ogr_vdv_8')
             if lyr is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     out_filename = '/vsimem/vdv/ogr_vdv_8.x10'
@@ -452,19 +433,15 @@ def test_ogr_vdv_8():
     ds2 = ogr.GetDriverByName('VDV').CreateDataSource(out_filename)
     gdal.PopErrorHandler()
     if ds2 is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.TestCapability(ogr.ODsCCreateLayer) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr1 = ds.CreateLayer("lyr1")
     if lyr1.TestCapability(ogr.OLCSequentialWrite) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr1.TestCapability(ogr.OLCCreateField) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr1.ResetReading()
@@ -477,14 +454,12 @@ def test_ogr_vdv_8():
 
     # Layer structure is now frozen
     if lyr1.TestCapability(ogr.OLCCreateField) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ret = lyr1.CreateField(ogr.FieldDefn('not_allowed'))
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr2 = ds.CreateLayer("lyr2")
@@ -493,18 +468,15 @@ def test_ogr_vdv_8():
     # Test interleaved writing
 
     if lyr1.TestCapability(ogr.OLCSequentialWrite) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ret = lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr1.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -537,7 +509,6 @@ eof; 2
     gdal.VSIFCloseL(f)
 
     if got != expected:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -546,14 +517,12 @@ eof; 2
     for i in range(2):
         lyr = ds.GetLayer(i)
         if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
         lyr.ResetReading()
         fc = 0
         for f in lyr:
             fc += 1
         if fc != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
         lyr = None
     ds = None
@@ -574,7 +543,6 @@ eof; 2
     gdal.VSIFCloseL(f)
 
     if got != expected:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 

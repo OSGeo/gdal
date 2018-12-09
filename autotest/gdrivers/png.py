@@ -261,7 +261,6 @@ def test_png_12():
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved
@@ -270,7 +269,6 @@ def test_png_12():
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_pixel_space=ds.RasterCount, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved with padding
@@ -279,7 +277,6 @@ def test_png_12():
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_pixel_space=5, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -297,13 +294,11 @@ def test_png_13():
     out_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options=['WRITE_METADATA_AS_TEXT=YES', 'DESCRIPTION=my desc'])
     md = out_ds.GetMetadata()
     if len(md) != 3 or md['foo'] != 'bar' or md['Copyright'] != 'copyright value' or md['Description'] != 'my desc':
-        gdaltest.post_reason('failure')
         print(md)
         return 'fail'
     out_ds = None
     # check that no PAM file is created
     if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink('/vsimem/tmp.png')
     return 'success'
@@ -323,18 +318,15 @@ def test_png_14():
     gdal.Unlink('/vsimem/tmp.png')
 
     if cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
 
     if nbits != '1':
-        gdaltest.post_reason('failure')
         print(nbits)
         return 'fail'
 
     # check that no PAM file is created
     if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test explicit NBITS
@@ -343,7 +335,6 @@ def test_png_14():
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')
     if nbits != '2':
-        gdaltest.post_reason('failure')
         print(nbits)
         return 'fail'
 
@@ -354,7 +345,6 @@ def test_png_14():
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')
     if nbits is not None:
-        gdaltest.post_reason('failure')
         print(nbits)
         return 'fail'
 

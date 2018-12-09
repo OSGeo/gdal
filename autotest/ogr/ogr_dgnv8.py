@@ -92,7 +92,6 @@ def test_ogr_dgnv8_3():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_dgnv8.dgn')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -101,7 +100,6 @@ def test_ogr_dgnv8_3():
     os.unlink('tmp/test_dgnv8.dgn')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -165,7 +163,6 @@ def test_ogr_dgnv8_5():
     ds = ogr.Open(tmp_dgn)
     got_md = ds.GetMetadata_List('DGN')
     if got_md != options:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     ds = None
@@ -174,16 +171,13 @@ def test_ogr_dgnv8_5():
     gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
     ds = ogr.Open(tmp2_dgn)
     if ds.GetMetadataItem('TITLE', 'DGN') != 'another_title' or ds.GetMetadataItem('APPLICATION', 'DGN') != 'application':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata('DGN'))
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'my_layer':
-        gdaltest.post_reason('fail')
         print(lyr.GetName())
         return 'fail'
     if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
     ds = None
@@ -197,16 +191,13 @@ def test_ogr_dgnv8_5():
     ds = ogr.Open(tmp2_dgn, update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'a_layer':
-        gdaltest.post_reason('fail')
         print(lyr.GetName())
         return 'fail'
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 3)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None

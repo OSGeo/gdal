@@ -119,7 +119,6 @@ def test_reproject_3():
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0, 0, 6, 3).decode('latin1')
     expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
-        gdaltest.post_reason('fail')
         import struct
         print(struct.unpack('B' * 18, got_data))
         return 'fail'
@@ -146,7 +145,6 @@ def test_reproject_4():
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0, 0, 6, 3).decode('latin1')
     expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
-        gdaltest.post_reason('fail')
         import struct
         print(struct.unpack('B' * 18, got_data))
         return 'fail'

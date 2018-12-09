@@ -170,7 +170,6 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
     for f_ref in lyr_ref:
         f = lyr.GetNextFeature()
         if f is None:
-            gdaltest.post_reason('fail')
             f_ref.DumpReadable()
             return 'fail'
         if check_feature(f, f_ref, excluded_fields=excluded_fields) != 0:
@@ -179,7 +178,6 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
             return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     return 'success'

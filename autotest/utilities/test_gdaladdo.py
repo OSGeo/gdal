@@ -172,7 +172,6 @@ def test_gdaladdo_5():
     ds = None
 
     if cnt != 0:
-        gdaltest.post_reason('fail')
         print(cnt)
         return 'fail'
 
@@ -184,7 +183,6 @@ def test_gdaladdo_5():
     ds = None
 
     if cnt != 5:
-        gdaltest.post_reason('fail')
         print(cnt)
         return 'fail'
 
@@ -198,7 +196,6 @@ def test_gdaladdo_5():
     ds = None
 
     if cnt != 1:
-        gdaltest.post_reason('fail')
         print(cnt)
         return 'fail'
 

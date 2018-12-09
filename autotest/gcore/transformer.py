@@ -317,12 +317,10 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 40000, 0, 0)
     if success != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     (success, pnt) = tr.TransformPoint(1, 125, 40, 0)
     if success != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     tr = None
@@ -466,19 +464,16 @@ def test_transformer_9():
         points = [(125.64828521533849, 39.869345204440144)] * 10
         (pnt, success) = tr.TransformPoints(1, points)
         if not success[0]:
-            gdaltest.post_reason('failure')
             print(method)
             return 'fail'
         pnt_optimized = pnt[0]
 
         (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
         if not success:
-            gdaltest.post_reason('failure')
             print(method)
             return 'fail'
 
         if pnt != pnt_optimized:
-            gdaltest.post_reason('failure')
             print(method)
             print(pnt)
             print(pnt_optimized)
@@ -641,7 +636,6 @@ def test_transformer_12():
 
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     if tr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open("""
@@ -665,7 +659,6 @@ def test_transformer_12():
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open("""
@@ -689,7 +682,6 @@ def test_transformer_12():
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -763,7 +755,6 @@ def test_transformer_14():
     gdal.SetConfigOption('RPC_INVERSE_LOG', old_rpc_inverse_log)
     (success, pnt) = tr.TransformPoint(0, 0, 0)
     if not success or abs(pnt[0] - 1.9391846640653961e-05) > 1e-7 or abs(pnt[1] - -0.0038824752244123275) > 1e-7:
-        gdaltest.post_reason('fail')
         print(pnt)
         return 'fail'
 
@@ -772,7 +763,6 @@ def test_transformer_14():
         content = gdal.VSIFReadL(1, 1000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
     if content.find('Integer,Real,Real,Real,String,Real,Real') != 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -782,7 +772,6 @@ def test_transformer_14():
         gdal.VSIFCloseL(f)
     if content.find("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
 0,""") != 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -905,12 +894,10 @@ def test_transformer_16():
        content.find('<MaxErrorReverse>0.1</MaxErrorReverse>') < 0 or \
        content.find('<MaxErrorForward>0.0001</MaxErrorForward>') < 0 or \
        content.find('<MaxErrorReverse>6.1</MaxErrorReverse>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
     ds = gdal.Translate('', '/vsimem/transformer_16.vrt', format='MEM')
     if ds.GetRasterBand(1).Checksum() != 4727:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     ds = None

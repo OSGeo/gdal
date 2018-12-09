@@ -44,7 +44,6 @@ from osgeo import ogr
 def ogr_ods_check(ds):
 
     if ds.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerCount() != 8:
@@ -65,12 +64,10 @@ def ogr_ods_check(ds):
         return 'fail'
 
     if lyr.GetFeatureCount() != 26:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
     if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(6)
@@ -79,7 +76,6 @@ def ogr_ods_check(ds):
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() != 12:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
@@ -98,7 +94,6 @@ def ogr_ods_check(ds):
 
     for i, typ in enumerate(type_array):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            gdaltest.post_reason('fail')
             print(i)
             print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
             return 'fail'
@@ -110,13 +105,11 @@ def ogr_ods_check(ds):
        feat.GetFieldAsDouble(3) != 0.52 or \
        feat.GetFieldAsString(4) != '2012/01/22' or \
        feat.GetFieldAsString(5) != '2012/01/22 18:49:00':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.IsFieldSet(2):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -133,7 +126,6 @@ def test_ogr_ods_1():
         return 'skip'
 
     if drv.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.Open('data/test.ods')
@@ -154,7 +146,6 @@ def test_ogr_ods_kspread_1():
         return 'skip'
 
     if drv.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.Open('data/test_kspread.ods')
@@ -163,7 +154,6 @@ def test_ogr_ods_kspread_1():
         return 'fail'
 
     if ds.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerCount() != 8:
@@ -184,12 +174,10 @@ def test_ogr_ods_kspread_1():
         return 'fail'
 
     if lyr.GetFeatureCount() != 26:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
     if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(6)
@@ -198,7 +186,6 @@ def test_ogr_ods_kspread_1():
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() != 12:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
@@ -218,7 +205,6 @@ def test_ogr_ods_kspread_1():
 
     for i, typ in enumerate(type_array):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
 
@@ -229,13 +215,11 @@ def test_ogr_ods_kspread_1():
        feat.GetFieldAsDouble(3) != 0.52 or \
        feat.GetFieldAsString(4) != '2012/01/22' or \
        feat.GetFieldAsString(5) != '22/01/2012 18:49:00':  # 2012/01/22 18:49:00
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.IsFieldSet(2):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -257,7 +241,6 @@ def test_ogr_ods_2():
     lyr = ds.GetLayerByName('Feuille7')
 
     if lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
@@ -281,7 +264,6 @@ def test_ogr_ods_3():
     lyr = ds.GetLayerByName('Feuille7')
 
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTString:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetConfigOption('OGR_ODS_FIELD_TYPES', None)
@@ -454,12 +436,10 @@ def test_ogr_ods_8():
     ds = ogr.Open('/vsimem/ogr_ods_8.ods')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     if f.GetField(0) != 12345678901234:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -494,19 +474,15 @@ def test_ogr_ods_9():
     lyr = ds.GetLayer(0)
     for i in range(3):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
-            gdaltest.post_reason('failure')
             return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0) != '2015/12/23 12:34:56.789':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     if f.GetField(1) != '2015/12/23 12:34:56':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     if f.GetField(2) != '2015/12/23 12:34:56':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -543,18 +519,14 @@ def test_ogr_ods_boolean():
     ds = ogr.Open(out_filename)
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     if not f.GetField(0):
-        gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField(0):
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 

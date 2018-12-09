@@ -63,12 +63,10 @@ def test_png_copy_icc():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     try:
         os.stat('tmp/icc_test.png.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -80,13 +78,11 @@ def test_png_copy_icc():
 
     try:
         os.stat('tmp/icc_test.png.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with GetMetadataItem()
@@ -96,13 +92,11 @@ def test_png_copy_icc():
 
     try:
         os.stat('tmp/icc_test.png.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
 
     if source_icc_profile != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')
@@ -139,7 +133,6 @@ def test_png_copy_options_icc():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with dataset from Open()
@@ -149,7 +142,6 @@ def test_png_copy_options_icc():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')
@@ -186,7 +178,6 @@ def test_png_copy_options_colorimetric_data():
 
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     source_primaries2 = [
@@ -197,11 +188,9 @@ def test_png_copy_options_colorimetric_data():
     for j in range(0, 3):
         for i in range(0, 3):
             if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with dataset from Open()
@@ -214,7 +203,6 @@ def test_png_copy_options_colorimetric_data():
 
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     source_primaries2 = [
@@ -225,11 +213,9 @@ def test_png_copy_options_colorimetric_data():
     for j in range(0, 3):
         for i in range(0, 3):
             if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')
@@ -269,7 +255,6 @@ def test_png_copy_colorimetric_data():
 
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     source_primaries2 = [
@@ -280,11 +265,9 @@ def test_png_copy_colorimetric_data():
     for j in range(0, 3):
         for i in range(0, 3):
             if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with dataset from Open()
@@ -297,7 +280,6 @@ def test_png_copy_colorimetric_data():
 
     for i in range(0, 3):
         if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     source_primaries2 = [
@@ -308,11 +290,9 @@ def test_png_copy_colorimetric_data():
     for j in range(0, 3):
         for i in range(0, 3):
             if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')
@@ -339,7 +319,6 @@ def test_png_sRGB():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE_NAME'] != 'sRGB':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check again with dataset from Open()
@@ -349,7 +328,6 @@ def test_png_sRGB():
     ds2 = None
 
     if md['SOURCE_ICC_PROFILE_NAME'] != 'sRGB':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     driver_tiff.Delete('tmp/icc_test.tiff')

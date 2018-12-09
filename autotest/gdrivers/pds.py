@@ -251,12 +251,10 @@ def test_pds_9():
     got_nd = ds.GetRasterBand(1).GetNoDataValue()
     expected_nd = -3.40282265508890445e+38
     if abs((got_nd - expected_nd) / expected_nd) > 1e-5:
-        gdaltest.post_reason('fail')
         print(got_nd)
         return 'fail'
 
     if not ds.GetProjectionRef():
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -291,12 +289,10 @@ END
     ds = gdal.Open('/vsimem/pds_10')
 
     if ds.GetMetadataItem('NOTE') != '((1,2,3))':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('NOTE'))
         return 'fail'
 
     if ds.GetMetadataItem('PRODUCT_ID') != '({1,2},{3,4})':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('NOTE'))
         return 'fail'
 

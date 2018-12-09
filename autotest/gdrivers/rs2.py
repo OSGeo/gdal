@@ -72,7 +72,6 @@ def test_rs2_3():
                     'SAMP_OFF': 'pixelOffset',
                     'SAMP_SCALE': 'pixelScale'}
     if got_rpc != expected_rpc:
-        gdaltest.post_reason('fail')
         print(got_rpc)
         return 'fail'
     return 'success'

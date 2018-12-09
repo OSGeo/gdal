@@ -114,7 +114,6 @@ def test_jp2openjpeg_3():
 
     ds = ogr.Open('data/int16.jp2')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -146,7 +145,6 @@ def test_jp2openjpeg_4(out_filename='tmp/jp2openjpeg_4.jp2'):
     gdal.Unlink('/vsimem/jp2openjpeg_4.vrt')
 
     if gdal.VSIStatL(out_filename + '.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open(out_filename)
@@ -302,13 +300,10 @@ def test_jp2openjpeg_10():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_10.jp2', src_ds, options=['YCBCR420=YES', 'RESOLUTIONS=3'])
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
     if out_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     del out_ds
     src_ds = None
@@ -333,11 +328,9 @@ def test_jp2openjpeg_11():
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     got_cs = fourth_band.Checksum()
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
@@ -353,22 +346,18 @@ def test_jp2openjpeg_11():
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jp2openjpeg_11.tif')
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
 
     if jp2_bands_data != gtiff_bands_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if jp2_fourth_band_data != gtiff_fourth_band_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -398,7 +387,6 @@ def test_jp2openjpeg_12():
     gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_12.jp2')
 
     if wkt.find('32631') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -416,7 +404,6 @@ def test_jp2openjpeg_12():
     gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_12.jp2')
 
     if gt != (1000, 1, 0, 2000, 0, -1):
-        gdaltest.post_reason('fail')
         print(gt)
         return 'fail'
 
@@ -438,7 +425,6 @@ def test_jp2openjpeg_13():
     src_ds = None
 
     if gdal.VSIStatL('tmp/jp2openjpeg_13.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('tmp/jp2openjpeg_13.jp2')
@@ -446,13 +432,10 @@ def test_jp2openjpeg_13():
     gcps = ds.GetGCPs()
     wkt = ds.GetGCPProjection()
     if count != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
     if len(gcps) != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
     if wkt.find('4326') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -474,13 +457,10 @@ def test_jp2openjpeg_13():
     gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_13.jp2')
 
     if count != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if len(gcps) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if wkt.find('32631') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -497,7 +477,6 @@ def test_jp2openjpeg_14():
 
     ds = gdal.Open('data/byte_2gcps.jp2')
     if ds.GetGCPCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -579,7 +558,6 @@ def test_jp2openjpeg_17():
     src_ds = None
 
     if gdal.VSIStatL('/vsimem/jp2openjpeg_17.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('/vsimem/jp2openjpeg_17.jp2')
@@ -618,7 +596,6 @@ def test_jp2openjpeg_18():
     ds = gdal.Open('/vsimem/jp2openjpeg_18.jp2')
     ds.GetRasterBand(1).Checksum()
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -637,7 +614,6 @@ def test_jp2openjpeg_19():
 
     ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
     if ds.GetProjectionRef() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -754,20 +730,15 @@ def test_jp2openjpeg_22():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_22.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
@@ -782,17 +753,14 @@ def test_jp2openjpeg_22():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_22.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.OpenEx('/vsimem/jp2openjpeg_22.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
     if ds.GetRasterBand(4).Checksum() != 23120:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(4).Checksum())
         return 'fail'
     ds = None
@@ -804,23 +772,17 @@ def test_jp2openjpeg_22():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_22.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).Checksum() not in [11457, 11450]:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     ds = None
@@ -834,7 +796,6 @@ def test_jp2openjpeg_22():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_22.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
 
@@ -849,20 +810,15 @@ def test_jp2openjpeg_22():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_22.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
@@ -878,20 +834,15 @@ def test_jp2openjpeg_22():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_22.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
@@ -918,18 +869,15 @@ def test_jp2openjpeg_23():
     src_ds = None
     ds = gdal.Open('/vsimem/jp2openjpeg_23.jp2')
     if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '9':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_23_2.jp2', ds)
     if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '9':
-        gdaltest.post_reason('failure')
         return 'fail'
     del out_ds
 
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_23.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_23.jp2')
     gdal.Unlink('/vsimem/jp2openjpeg_23_2.jp2')
@@ -956,14 +904,11 @@ def test_jp2openjpeg_24():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_24.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_24.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_24.jp2')
@@ -978,26 +923,20 @@ def test_jp2openjpeg_24():
     del out_ds
     src_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_24.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.OpenEx('/vsimem/jp2openjpeg_24.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     ds = gdal.Open('/vsimem/jp2openjpeg_24.jp2')
     if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE'))
         return 'fail'
     if ds.GetRasterBand(2).Checksum() != 23120:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
     ds = None
@@ -1027,11 +966,9 @@ def test_jp2openjpeg_25():
     src_ds = None
     ds = gdal.Open('/vsimem/jp2openjpeg_25.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_25.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/jp2openjpeg_25.jp2')
@@ -1099,14 +1036,11 @@ def test_jp2openjpeg_26():
        out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize != 2 * 128:
         print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize)
         print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize)
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if validate('/vsimem/jp2openjpeg_26.jp2') == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
@@ -1117,23 +1051,18 @@ def test_jp2openjpeg_26():
        out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize != 128:
         print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).XSize)
         print(out_ds.GetRasterBand(1).GetOverview(overview_count - 1).YSize)
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.ErrorReset()
     out_ds.GetRasterBand(1).Checksum()
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if validate('/vsimem/jp2openjpeg_26.jp2') == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
@@ -1145,17 +1074,13 @@ def test_jp2openjpeg_26():
     out_ds = None
     ds = gdal.OpenEx('/vsimem/jp2openjpeg_26.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if validate('/vsimem/jp2openjpeg_26.jp2') == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
@@ -1165,15 +1090,12 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'JPX=NO'])
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     res = validate('/vsimem/jp2openjpeg_26.jp2', return_error_count=True)
     if res != 'skip' and res != (2, 0):
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
@@ -1182,14 +1104,11 @@ def test_jp2openjpeg_26():
     src_ds.GetRasterBand(1).SetMetadataItem('NBITS', '1', 'IMAGE_STRUCTURE')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES'])
     if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if validate('/vsimem/jp2openjpeg_26.jp2', expected_gmljp2=False) == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
@@ -1198,14 +1117,11 @@ def test_jp2openjpeg_26():
     src_ds.GetRasterBand(1).SetMetadataItem('NBITS', '12', 'IMAGE_STRUCTURE')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES'])
     if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if validate('/vsimem/jp2openjpeg_26.jp2', expected_gmljp2=False) == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
@@ -1216,7 +1132,6 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'BLOCKXSIZE=1536', 'BLOCKYSIZE=1536'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error case: non square tile
@@ -1224,7 +1139,6 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=128'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error case: incompatible PROFILE
@@ -1232,7 +1146,6 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'PROFILE=UNRESTRICTED'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error case: valid, but too small number of resolutions regarding PROFILE_1
@@ -1240,7 +1153,6 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'RESOLUTIONS=1'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Too big resolution number. Will fallback to default one
@@ -1248,7 +1160,6 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'RESOLUTIONS=100'])
     gdal.PopErrorHandler()
     if out_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
@@ -1258,7 +1169,6 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'NBITS=2'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error case: unsupported CODEC (J2K)
@@ -1266,7 +1176,6 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.j2k', src_ds, options=['INSPIRE_TG=YES'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error case: invalid CODEBLOCK_WIDTH/HEIGHT
@@ -1274,13 +1183,11 @@ def test_jp2openjpeg_26():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=32'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options=['INSPIRE_TG=YES', 'CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=128'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1491,7 +1398,6 @@ def test_jp2openjpeg_30():
         del out_ds
 
         if validate('/vsimem/jp2openjpeg_30.jp2', expected_gmljp2=False) == 'fail':
-            gdaltest.post_reason('fail')
             return 'fail'
 
     gdal.Unlink('/vsimem/jp2openjpeg_30.jp2')
@@ -1545,7 +1451,6 @@ def test_jp2openjpeg_30():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds)
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1566,18 +1471,14 @@ def test_jp2openjpeg_31():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_31.jp2', src_ds)
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_31.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_31.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetColorInterpretation())
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_31.jp2')
@@ -1591,21 +1492,16 @@ def test_jp2openjpeg_31():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_31.jp2', src_ds)
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_31.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_31.jp2')
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetColorInterpretation())
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_31.jp2')
@@ -1626,7 +1522,6 @@ def test_jp2openjpeg_32():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_32.jp2', src_ds, options=['JP2C_XLBOX=YES'])
     gdal.PopErrorHandler()
     if out_ds.GetRasterBand(1).Checksum() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_32.jp2')
@@ -1652,7 +1547,6 @@ def test_jp2openjpeg_33():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_33.jp2', src_ds, options=['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000', 'RESOLUTIONS=5'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_33.jp2')
@@ -1672,7 +1566,6 @@ def test_jp2openjpeg_34():
     ds = gdal.Open('data/dimensions_above_31bit.jp2')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1690,7 +1583,6 @@ def test_jp2openjpeg_35():
     ds = gdal.Open('data/truncated.jp2')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1709,7 +1601,6 @@ def test_jp2openjpeg_36():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_36.jp2', src_ds)
     gdal.PopErrorHandler()
     if out_ds is not None or gdal.VSIStatL('/vsimem/jp2openjpeg_36.jp2') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1728,11 +1619,9 @@ def test_jp2openjpeg_37():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
     if ds.GetMetadata() != {}:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
@@ -1743,16 +1632,13 @@ def test_jp2openjpeg_37():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
         if ds.GetMetadata() != {'FOO': 'BAR'}:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
         if 'INSPIRE_TG=YES' in options and validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2=False) == 'fail':
-            gdaltest.post_reason('fail')
             return 'fail'
 
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
@@ -1763,12 +1649,10 @@ def test_jp2openjpeg_37():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
     md = ds.GetMetadata('SOME_DOMAIN')
     if md != {'FOO': 'BAR'}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
@@ -1779,11 +1663,9 @@ def test_jp2openjpeg_37():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
     if ds.GetMetadata('xml:SOME_DOMAIN')[0] != '<some_arbitrary_xml_box />\n':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
@@ -1794,11 +1676,9 @@ def test_jp2openjpeg_37():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
         if ds.GetMetadata('xml:BOX_0')[0] != '<some_arbitrary_xml_box/>':
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
@@ -1809,16 +1689,13 @@ def test_jp2openjpeg_37():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
         if ds.GetMetadata('xml:XMP')[0] != '<fake_xmp_box/>':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
         if 'INSPIRE_TG=YES' in options and validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2=False) == 'fail':
-            gdaltest.post_reason('fail')
             return 'fail'
 
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
@@ -1830,16 +1707,13 @@ def test_jp2openjpeg_37():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
         if ds.GetMetadata('xml:IPR')[0] != '<fake_ipr_box/>':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
         if validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2=False) == 'fail':
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
@@ -1861,7 +1735,6 @@ def test_jp2openjpeg_38():
     src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_38.jp2', src_ds, options=['GeoJP2=NO'])
     if out_ds.GetProjectionRef() != wkt:
-        gdaltest.post_reason('fail')
         print(out_ds.GetProjectionRef())
         return 'fail'
     crsdictionary = out_ds.GetMetadata_List("xml:CRSDictionary.gml")[0]
@@ -1954,7 +1827,6 @@ def test_jp2openjpeg_39():
     del out_ds
     ds = gdal.Open('/vsimem/jp2openjpeg_39.jp2')
     if ds.GetProjectionRef().find('4326') < 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     ds = None
@@ -2031,14 +1903,12 @@ def test_jp2openjpeg_40():
     del out_ds
     ds = gdal.Open('/vsimem/jp2openjpeg_40.jp2')
     if ds.GetProjectionRef().find('4326') < 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (2, 0.1, 0, 49, 0, -0.1)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     ds = None
@@ -2059,11 +1929,9 @@ def test_jp2openjpeg_41():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds,
                                                  options=['USE_SRC_CODESTREAM=YES', 'PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('fail')
         return 'fail'
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_41.jp2').size != 9923:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
     gdal.Unlink('/vsimem/jp2openjpeg_41.jp2.aux.xml')
@@ -2076,7 +1944,6 @@ def test_jp2openjpeg_41():
     gdal.PopErrorHandler()
     del out_ds
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
     gdal.Unlink('/vsimem/jp2openjpeg_41.jp2.aux.xml')
@@ -2090,7 +1957,6 @@ def test_jp2openjpeg_41():
     gdal.PopErrorHandler()
     del out_ds
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
 
@@ -2120,13 +1986,11 @@ def test_jp2openjpeg_42():
     ds.SetMetadataItem('FOO', 'BAR')
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Add metadata and GCP
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetMetadata() != {'FOO': 'BAR'}:
-        gdaltest.post_reason('fail')
         return 'fail'
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
@@ -2134,19 +1998,15 @@ def test_jp2openjpeg_42():
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check we got metadata and GCP, and there's no GMLJP2 box
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetMetadata() != {'FOO': 'BAR'}:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if len(ds.GetMetadataDomainList()) != 2:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
     # Unset metadata and GCP
@@ -2154,20 +2014,16 @@ def test_jp2openjpeg_42():
     ds.SetGCPs([], '')
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check we have no longer metadata or GCP
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetMetadata() != {}:
         print(ds.GetMetadata())
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
     # Add projection and geotransform
@@ -2175,22 +2031,18 @@ def test_jp2openjpeg_42():
     ds.SetGeoTransform([0, 1, 2, 3, 4, 5])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check them
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetProjectionRef().find('32631') < 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     if ds.GetGeoTransform() != (0, 1, 2, 3, 4, 5):
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
     # Check that we have a GMLJP2 box
     if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS']:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
     # Remove projection and geotransform
@@ -2198,21 +2050,17 @@ def test_jp2openjpeg_42():
     ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check we have no longer anything
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     if ds.GetGeoTransform() != (0, 1, 0, 0, 0, 1):
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
     if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
     ds = None
@@ -2229,17 +2077,14 @@ def test_jp2openjpeg_42():
     ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check it and that we don't have GMLJP2
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetGeoTransform() != (1, 2, 3, 4, 5, 6):
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
     if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
     ds = None
@@ -2254,23 +2099,19 @@ def test_jp2openjpeg_42():
     # Modify geotransform
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetGeoTransform() != (2, 3, 0, 4, 0, -5):
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
     ds.SetGeoTransform([1, 2, 0, 3, 0, -4])
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check it
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetGeoTransform() != (1, 2, 0, 3, 0, -4):
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
     if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS']:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
     # Add GCPs
@@ -2278,29 +2119,24 @@ def test_jp2openjpeg_42():
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check it (a GeoJP2 box has been added and GMLJP2 removed)
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if not ds.GetGCPs():
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
     # Add IPR box
     ds.SetMetadata(['<fake_ipr_box/>'], 'xml:IPR')
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check it
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetMetadata('xml:IPR')[0] != '<fake_ipr_box/>':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata('xml:IPR'))
         return 'fail'
     ds = None
@@ -2361,10 +2197,8 @@ def test_jp2openjpeg_45():
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=YES'])
     if out_ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.GetLayer(0) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     del out_ds
 
@@ -2429,13 +2263,11 @@ def test_jp2openjpeg_45():
 </gmljp2:GMLJP2CoverageCollection>
 """
     if gmljp2 != minimal_instance:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
 
     ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg=False)
     if ret == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
@@ -2446,7 +2278,6 @@ def test_jp2openjpeg_45():
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     if gmljp2 != minimal_instance:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
     ds = None
@@ -2458,7 +2289,6 @@ def test_jp2openjpeg_45():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF={'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Non existing file
@@ -2467,7 +2297,6 @@ def test_jp2openjpeg_45():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=/vsimem/i_do_not_exist'])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test JSon conf file as a file
@@ -2478,11 +2307,9 @@ def test_jp2openjpeg_45():
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     if gmljp2.find('some_gml_id') < 0:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
     if gmljp2.find('urn:ogc:def:crs:EPSG::26711') < 0:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
     ds = None
@@ -2497,7 +2324,6 @@ def test_jp2openjpeg_45():
         ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
         gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
         if gmljp2.find(predefined[1]) < 0:
-            gdaltest.post_reason('fail')
             print(predefined[0])
             print(gmljp2)
             return 'fail'
@@ -2513,7 +2339,6 @@ def test_jp2openjpeg_45():
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     if gmljp2.find('<gmlcov:rangeType></gmlcov:rangeType>') < 0:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
     ds = None
@@ -2536,7 +2361,6 @@ def test_jp2openjpeg_45():
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     if gmljp2.find("custom_datarecord") < 0:
-        gdaltest.post_reason('fail')
         print(predefined[0])
         print(gmljp2)
         return 'fail'
@@ -2557,7 +2381,6 @@ def test_jp2openjpeg_45():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     conf = {
@@ -2913,14 +2736,12 @@ def test_jp2openjpeg_45():
     # Now do the checks
     dircontent = gdal.ReadDir('/vsimem/gmljp2')
     if dircontent is not None:
-        gdaltest.post_reason('fail')
         print(dircontent)
         return 'fail'
 
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     if gmljp2.find('my_GMLJP2RectifiedGridCoverage') < 0:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
     first_metadata_pos = gmljp2.find("First metadata")
@@ -2970,54 +2791,45 @@ def test_jp2openjpeg_45():
             style4_pos < extension1_pos and
             extension1_pos < extension3_pos and
             extension3_pos < extension4_pos):
-        gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
     # print(gmljp2)
 
     myshape_gml = ds.GetMetadata_List("xml:myshape.gml")[0]
     if myshape_gml.find("""<ogr1:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/1 gmljp2://xml/myshape.xsd" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
-        gdaltest.post_reason('fail')
         print(myshape_gml)
         return 'fail'
     if myshape_gml.find("""http://www.opengis.net/def/crs/EPSG/0/4326""") < 0:
-        gdaltest.post_reason('fail')
         print(myshape_gml)
         return 'fail'
 
     myshape_xsd = ds.GetMetadata_List("xml:myshape.xsd")[0]
     if myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/1" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") < 0:
-        gdaltest.post_reason('fail')
         print(myshape_xsd)
         return 'fail'
 
     myshape2_gml = ds.GetMetadata_List("xml:myshape2.gml")[0]
     if myshape2_gml.find("""<ogr2:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr2="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
-        gdaltest.post_reason('fail')
         print(myshape2_gml)
         return 'fail'
 
     feature2_gml = ds.GetMetadata_List("xml:feature2.gml")[0]
     if feature2_gml.find("""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""") < 0:
-        gdaltest.post_reason('fail')
         print(feature2_gml)
         return 'fail'
 
     feature3_gml = ds.GetMetadata_List("xml:feature3.gml")[0]
     if feature3_gml.find("""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""") < 0:
-        gdaltest.post_reason('fail')
         print(feature3_gml)
         return 'fail'
 
     myshape2_xsd = ds.GetMetadata_List("xml:a_schema.xsd")[0]
     if myshape2_xsd.find("""<xs:schema xmlns:ogr="http://ogr.maptools.org/" """) < 0:
-        gdaltest.post_reason('fail')
         print(myshape2_xsd)
         return 'fail'
 
     duplicated_xsd = ds.GetMetadata_List("xml:duplicated.xsd")[0]
     if duplicated_xsd.find("""<xs:schema xmlns:ogr="http://ogr.maptools.org/" """) < 0:
-        gdaltest.post_reason('fail')
         print(myshape2_xsd)
         return 'fail'
 
@@ -3025,7 +2837,6 @@ def test_jp2openjpeg_45():
 
     ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
     if ds.GetLayerCount() != 6:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     expected_layers = ['FC_GridCoverage_1_myshape',
@@ -3036,7 +2847,6 @@ def test_jp2openjpeg_45():
                        'Annotation_1_myshape']
     for j in range(6):
         if ds.GetLayer(j).GetName() != expected_layers[j]:
-            gdaltest.post_reason('fail')
             for i in range(ds.GetLayerCount()):
                 print(ds.GetLayer(i).GetName())
             return 'fail'
@@ -3044,7 +2854,6 @@ def test_jp2openjpeg_45():
 
     ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg=False)
     if ret == 'fail':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
@@ -3056,17 +2865,14 @@ def test_jp2openjpeg_45():
 
     dircontent = gdal.ReadDir('/vsimem/gmljp2')
     if dircontent is not None:
-        gdaltest.post_reason('fail')
         print(dircontent)
         return 'fail'
 
     ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
     if ds.GetLayer(0).GetName() != 'FC_GridCoverage_1_poly':
-        gdaltest.post_reason('fail')
         print(ds.GetLayer(0).GetName())
         return 'fail'
     ds = None
@@ -3085,7 +2891,6 @@ def test_jp2openjpeg_45():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_45.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         fp = gdal.VSIFOpenL('/vsimem/jp2openjpeg_45.jp2.aux.xml', 'rb')
         if fp is not None:
             data = gdal.VSIFReadL(1, 100000, fp).decode('ascii')
@@ -3095,7 +2900,6 @@ def test_jp2openjpeg_45():
 
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     if ds.GetMetadata() != {'FOO': 'BAR'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     ds = None
@@ -3110,7 +2914,6 @@ def test_jp2openjpeg_45():
     # Nothing should be reported by default
     ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3121,10 +2924,8 @@ def test_jp2openjpeg_45():
     if ds is None:
         if gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml') is None:
             return 'skip'
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3181,7 +2982,6 @@ def test_jp2openjpeg_46():
     if gmljp2.find("""<gmljp2:metadata>1 str trueX
         <B>my_value</B>
 yeah: """) < 0:
-        gdaltest.post_reason('fail')
         print(gmljp2)
         if gmljp2.find("""<gmljp2:metadata>1 str true""") >= 0:
             return 'skip'
@@ -3219,7 +3019,6 @@ yeah: """) < 0:
         gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
         if gmljp2.find('<gmljp2:metadata>') >= 0:
-            gdaltest.post_reason('fail')
             print(invalid_template)
             print(gmljp2)
             return 'fail'
@@ -3315,12 +3114,10 @@ def test_jp2openjpeg_47():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_47.jp2', src_ds)
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_47.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('/vsimem/jp2openjpeg_47.jp2')
     if ds.GetMetadata('RPC') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3340,11 +3137,9 @@ def test_jp2openjpeg_48():
     ds = gdal.Open('data/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     if (blockxsize, blockysize) != (20, 20):
-        gdaltest.post_reason('fail')
         print(blockxsize, blockysize)
         return 'fail'
     if ds.GetRasterBand(1).Checksum() != 4610:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3692,13 +3487,11 @@ def test_jp2openjpeg_codeblock_style():
         gdaltest.jp2openjpeg_drv.CreateCopy(filename, gdal.Open('data/byte.tif'),
                                             options=options)
         if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open(filename)
         cs = ds.GetRasterBand(1).Checksum()
         ds = None
         if cs != 4672:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 
@@ -3706,14 +3499,12 @@ def test_jp2openjpeg_codeblock_style():
         gdaltest.jp2openjpeg_drv.CreateCopy(filename, gdal.Open('data/byte.tif'),
                                             options=['CODEBLOCK_STYLE=64'])
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         gdaltest.jp2openjpeg_drv.CreateCopy(filename, gdal.Open('data/byte.tif'),
                                             options=['CODEBLOCK_STYLE=UNSUPPORTED'])
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdaltest.jp2openjpeg_drv.Delete(filename)

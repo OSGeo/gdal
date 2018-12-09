@@ -141,7 +141,6 @@ def test_srtmhgt_4():
 
     ds = gdal.Open('/vsimem/N43W080.SRTMSWBD.raw.zip')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).Checksum()
     ds = None

@@ -55,7 +55,6 @@ def test_ogr_osm_1(filename='data/test.pbf'):
             if gdal.GetLastErrorMsg().find('OSM XML detected, but Expat parser not available') == 0:
                 return 'skip'
 
-        gdaltest.post_reason('fail')
         return 'fail'
     else:
         if filename == 'data/test.osm':
@@ -64,19 +63,16 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     # Test points
     lyr = ds.GetLayer('points')
     if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sr = lyr.GetSpatialRef()
     if sr.ExportToWkt().find('GEOGCS["WGS 84",DATUM["WGS_1984",') != 0 and \
        sr.ExportToWkt().find('GEOGCS["GCS_WGS_1984",DATUM["WGS_1984"') != 0:
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
 
     if filename == 'data/test.osm':
         if lyr.GetExtent() != (2.0, 3.0, 49.0, 50.0):
-            gdaltest.post_reason('fail')
             print(lyr.GetExtent())
             return 'fail'
 
@@ -84,25 +80,21 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     if feat.GetFieldAsString('osm_id') != '3' or \
        feat.GetFieldAsString('name') != 'Some interesting point' or \
        feat.GetFieldAsString('other_tags') != '"foo"=>"bar","bar"=>"baz"':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (3.0 49.5)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     # Test lines
     lyr = ds.GetLayer('lines')
     if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -110,29 +102,24 @@ def test_ogr_osm_1(filename='data/test.pbf'):
        feat.GetFieldAsString('highway') != 'motorway' or \
        feat.GetFieldAsInteger('z_order') != 9 or \
        feat.GetFieldAsString('other_tags') != '"foo"=>"bar"':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 50)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '6':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 49,3 50,2 50,2 49)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -140,29 +127,24 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     lyr = ds.GetLayer('multipolygons')
     if filename == 'tmp/ogr_osm_3':
         if lyr.GetGeomType() != ogr.wkbPolygon:
-            gdaltest.post_reason('fail')
             return 'fail'
     else:
         if lyr.GetGeomType() != ogr.wkbMultiPolygon:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '1' or \
        feat.GetFieldAsString('type') != 'multipolygon' or \
        feat.GetFieldAsString('natural') != 'forest':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if filename == 'tmp/ogr_osm_3':
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1))')) != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
     else:
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1)))')) != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
@@ -170,20 +152,17 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     if feat.GetFieldAsString('osm_id') != '5' or \
        feat.GetFieldAsString('type') != 'multipolygon' or \
        feat.GetFieldAsString('natural') != 'wood':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_way_id') != '8' or \
        feat.GetFieldAsString('name') != 'standalone_polygon':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -191,34 +170,28 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     lyr = ds.GetLayer('multilinestrings')
     if filename == 'tmp/ogr_osm_3':
         if lyr.GetGeomType() != ogr.wkbLineString:
-            gdaltest.post_reason('fail')
             return 'fail'
     else:
         if lyr.GetGeomType() != ogr.wkbMultiLineString:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '3' or \
        feat.GetFieldAsString('type') != 'route':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if filename == 'tmp/ogr_osm_3':
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 50)')) != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
     else:
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTILINESTRING ((2 49,3 50))')) != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -226,48 +199,39 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     lyr = ds.GetLayer('other_relations')
     if filename == 'tmp/ogr_osm_3':
         if lyr is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
     else:
         if lyr.GetGeomType() != ogr.wkbGeometryCollection:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         feat = lyr.GetNextFeature()
         if feat.GetFieldAsString('osm_id') != '4' or \
            feat.GetFieldAsString('type') != 'other_type':
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (2 49),LINESTRING (2 49,3 50))')) != 0:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         feat = lyr.GetNextFeature()
         if feat is not None:
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
     if ds.GetDriver().GetName() == 'OSM':
         sql_lyr = ds.ExecuteSQL("GetBytesRead()")
         if sql_lyr is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = sql_lyr.GetNextFeature()
         if feat is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         feat = sql_lyr.GetNextFeature()
         if feat is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         if feat is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         sql_lyr.GetLayerDefn()
         sql_lyr.TestCapability("foo")
@@ -352,7 +316,6 @@ def test_ogr_osm_4():
 
     ds = ogr.Open('data/test.pbf')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM points')
@@ -363,7 +326,6 @@ def test_ogr_osm_4():
     ds.ReleaseResultSet(sql_lyr)
 
     if is_none:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test spatial filter
@@ -388,7 +350,6 @@ def test_ogr_osm_4():
         ds.ReleaseResultSet(sql_lyr)
 
     if is_none:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Change layer
@@ -400,7 +361,6 @@ def test_ogr_osm_4():
     ds.ReleaseResultSet(sql_lyr)
 
     if is_none:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -416,7 +376,6 @@ def test_ogr_osm_5():
 
     ds = ogr.Open('data/test.pbf')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     tests = [['points', '3', True],
@@ -436,7 +395,6 @@ def test_ogr_osm_5():
         ds.ReleaseResultSet(sql_lyr)
 
         if not (test[2] ^ is_none):  # pylint: disable=superfluous-parens
-            gdaltest.post_reason('fail')
             print(test)
             return 'fail'
 
@@ -447,7 +405,6 @@ def test_ogr_osm_5():
     ds.ReleaseResultSet(sql_lyr)
 
     if is_none:
-        gdaltest.post_reason('fail')
         print(test)
         return 'fail'
 
@@ -482,7 +439,6 @@ def test_ogr_osm_6():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_osm_6')
 
     if count != 3:
-        gdaltest.post_reason('fail')
         print(count)
         return 'fail'
 
@@ -500,7 +456,6 @@ def test_ogr_osm_7():
 
     ds = ogr.Open('data/test.pbf')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM points LIMIT 10', dialect='SQLite')
@@ -510,7 +465,6 @@ def test_ogr_osm_7():
     ds.ReleaseResultSet(sql_lyr)
 
     if count != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -526,7 +480,6 @@ def test_ogr_osm_8():
 
     ds = ogr.Open('data/base-64.osm.pbf')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayerByName('points')
@@ -535,7 +488,6 @@ def test_ogr_osm_8():
 
     if feat.GetField('name') != 'Treetops' or \
        ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (-61.7964321 17.1498319)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -543,7 +495,6 @@ def test_ogr_osm_8():
     feat = lyr.GetFeature(1113)
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((-61.7780345 17.140634,-61.7777002 17.1406069,-61.7776854 17.1407739,-61.7779131 17.1407923,-61.7779158 17.1407624,-61.7780224 17.140771,-61.7780345 17.140634)))')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -577,7 +528,6 @@ def test_ogr_osm_10():
     # A file that does not exist.
     ds = ogr.Open('/nonexistent/foo.osm')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Empty .osm file
@@ -586,7 +536,6 @@ def test_ogr_osm_10():
 
     ds = ogr.Open('/vsimem/foo.osm')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/foo.osm')
@@ -597,7 +546,6 @@ def test_ogr_osm_10():
 
     ds = ogr.Open('/vsimem/foo.pbf')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/foo.pbf')
@@ -616,7 +564,6 @@ def test_ogr_osm_10():
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
@@ -635,7 +582,6 @@ def test_ogr_osm_10():
     feat = lyr.GetNextFeature()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -650,7 +596,6 @@ def test_ogr_osm_10():
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
         if feat is not None or gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             return 'fail'
 
     return 'success'
@@ -672,14 +617,12 @@ def test_ogr_osm_11():
     if feat.GetFieldAsString('osm_id') != '3' or \
        feat.GetFieldAsString('name') != 'Some interesting point' or \
        feat.GetFieldAsString('all_tags') != '"name"=>"Some interesting point","foo"=>"bar","bar"=>"baz"':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayerByName('lines')
     feat = lyr.GetNextFeature()
     if feat.GetField('z_order') != 9:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -747,7 +690,6 @@ def test_ogr_osm_13():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['osm_id'] != '123' or f['other_tags'] != '"osm_id"=>"0"':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -792,7 +734,6 @@ def test_ogr_osm_14():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM other_relations')
     f = sql_lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((49 2,49.0 2.1,49.1 2.1,49 2)))':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
@@ -825,7 +766,6 @@ def test_ogr_osm_15():
     ds = gdal.OpenEx('data/test.pbf')
 
     if ds.TestCapability(ogr.ODsCRandomLayerRead) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     count = 0
@@ -833,37 +773,31 @@ def test_ogr_osm_15():
     while True:
         f, l, pct = ds.GetNextFeature(include_pct=True)
         if pct < last_pct:
-            gdaltest.post_reason('fail')
             print(last_pct)
             print(pct)
             return 'fail'
         last_pct = pct
         if f is None:
             if l is not None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             break
         # f.DumpReadable()
         count += 1
         if f.GetDefnRef().GetName() != l.GetName():
-            gdaltest.post_reason('fail')
             f.DumpReadable()
             print(l.GetName())
             return 'fail'
 
     if count != 8:
-        gdaltest.post_reason('fail')
         print(count)
         return 'fail'
 
     if last_pct != 1.0:
-        gdaltest.post_reason('fail')
         print(last_pct)
         return 'fail'
 
     f, l, pct = ds.GetNextFeature(include_pct=True)
     if f is not None or l is not None or pct != 1.0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
@@ -871,24 +805,20 @@ def test_ogr_osm_15():
         f, lyr = ds.GetNextFeature()
         # f.DumpReadable()
         if f is None or lyr is None:
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
 
     ds.ResetReading()
     f, lyr = ds.GetNextFeature(callback=ogr_osm_15_progresscbk_return_false)
     if f is not None or lyr is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
     pct_array = [0]
     f, lyr = ds.GetNextFeature(callback=ogr_osm_15_progresscbk_return_true, callback_data=pct_array)
     if f is None or lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if pct_array[0] != 1.0:
-        gdaltest.post_reason('fail')
         print(pct_array)
         return 'fail'
 
@@ -932,7 +862,6 @@ attributes=foo:baar,foo:bar
     lyr = ds.GetLayerByName('points')
     f = lyr.GetNextFeature()
     if f['foo_baar'] != 'val' or f['foo_bar'] != 'val2':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -962,7 +891,6 @@ def test_ogr_osm_17():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_osm_17')
 
     if layer_count != 4:
-        gdaltest.post_reason('fail')
         print(layer_count)
         return 'fail'
 
@@ -986,7 +914,6 @@ def test_ogr_osm_18():
     ds = None
 
     if count != 2:
-        gdaltest.post_reason('fail')
         print(count)
         return 'fail'
 

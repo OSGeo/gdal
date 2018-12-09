@@ -90,26 +90,19 @@ def test_virtualmem_1():
                 for x in range(reqxsize):
                     for band in range(3):
                         if ar_tip[tiley][tilex][y][x][band] != ar[band][tiley * tileysize + y][tilex * tilexsize + x]:
-                            gdaltest.post_reason('fail')
                             return 'fail'
                         if ar_tip[tiley][tilex][y][x][band] != ar_flat_bsq[band][tiley * tileysize + y][tilex * tilexsize + x]:
-                            gdaltest.post_reason('fail')
                             return 'fail'
                         if ar_tip[tiley][tilex][y][x][band] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][band]:
-                            gdaltest.post_reason('fail')
                             return 'fail'
                         if ar_tip[tiley][tilex][y][x][band] != ar_bsq[band][tiley][tilex][y][x]:
-                            gdaltest.post_reason('fail')
                             return 'fail'
                         if ar_tip[tiley][tilex][y][x][band] != ar_bit[tiley][tilex][band][y][x]:
-                            gdaltest.post_reason('fail')
                             return 'fail'
                         if band == 0:
                             if ar_flat_band1[tiley * tileysize + y][tilex * tilexsize + x] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]:
-                                gdaltest.post_reason('fail')
                                 return 'fail'
                             if ar_tiled_band1[tiley][tilex][y][x] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]:
-                                gdaltest.post_reason('fail')
                                 return 'fail'
 
     # We need to destroy the array before dataset destruction
@@ -192,10 +185,8 @@ def test_virtualmem_3():
         ar_255.fill(255)
         for y in range(ds.RasterYSize):
             if not gdalnumeric.array_equal(ar1[y], ar_127):
-                gdaltest.post_reason('fail')
                 return 'fail'
             if not gdalnumeric.array_equal(ar2[y], ar_255):
-                gdaltest.post_reason('fail')
                 return 'fail'
         # We need to destroy the array before dataset destruction
         ar1 = None
@@ -246,7 +237,6 @@ def test_virtualmem_4():
         ar2 = None
         ds = None
         if val != 127:
-            gdaltest.post_reason('fail')
             print(val)
             return 'fail'
 
@@ -259,13 +249,11 @@ def test_virtualmem_4():
         ar_255.fill(255)
         for y in range(ds.RasterYSize):
             if not gdalnumeric.array_equal(ar1[y], ar_127):
-                gdaltest.post_reason('fail')
                 ar1 = None
                 ar2 = None
                 ds = None
                 return 'fail'
             if not gdalnumeric.array_equal(ar2[y], ar_255):
-                gdaltest.post_reason('fail')
                 ar1 = None
                 ar2 = None
                 ds = None

@@ -66,14 +66,12 @@ def test_ogr_tiger_1():
 
     ogrtest.tiger_ds = ogr.Open('tmp/cache/TGR01001')
     if ogrtest.tiger_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ogrtest.tiger_ds = None
     # also test opening with a filename (#4443)
     ogrtest.tiger_ds = ogr.Open('tmp/cache/TGR01001/TGR01001.RT1')
     if ogrtest.tiger_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check a few features.
@@ -202,7 +200,6 @@ def test_ogr_tiger_4():
     # also test opening with a filename (#4443)
     ogrtest.tiger_ds = ogr.Open('tmp/cache/TGR01001/TGR01001.RT1')
     if ogrtest.tiger_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check a few features.

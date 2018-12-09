@@ -90,7 +90,6 @@ def test_gdal_rasterize_lib_1():
 
     ret = gdal.Rasterize(target_ds, vector_ds, bands=[3, 2, 1], burnValues=[200, 220, 240], layers='rast1')
     if ret != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check results.
@@ -178,7 +177,6 @@ def test_gdal_rasterize_lib_100():
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[255])
     if ret != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check results.
@@ -218,7 +216,6 @@ def test_gdal_rasterize_lib_101():
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[255])
     if ret != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check results.
@@ -275,7 +272,6 @@ def test_gdal_rasterize_lib_102():
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[0])
     if ret != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check results.
@@ -291,7 +287,6 @@ def test_gdal_rasterize_lib_102():
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[0],
                          transformerOptions=['RPC_HEIGHT=1000'])
     if ret != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check results.
@@ -359,7 +354,6 @@ def test_gdal_rasterize_lib_4():
 
         ret = gdal.Rasterize(target_ds, vector_ds, bands=[3, 2, 1], burnValues=[200, 220, 240], layers='rast1', optim=optim)
         if ret != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Check results.

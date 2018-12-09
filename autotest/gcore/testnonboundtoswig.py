@@ -204,7 +204,6 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
 
     native_in_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_ReadOnly)
     if native_in_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     filename = '/vsimem/out.tif'
@@ -213,17 +212,14 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
 
     native_out_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_Update)
     if native_out_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     pTransformerArg = gdal_handle.GDALCreateGenImgProjTransformer2(native_in_ds, native_out_ds, None)
     if pTransformerArg is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = gdal_handle_stdcall.GDALSimpleImageWarp(native_in_ds, native_out_ds, 0, None, gdal_handle_stdcall.GDALGenImgProjTransform, pTransformerArg, None, None, None)
     if ret != 1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -239,7 +235,6 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
     gdal.Unlink('/vsimem/out.tif')
 
     if cs != 4672:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -336,7 +331,6 @@ def test_testnonboundtoswig_VRTDerivedBands():
         funcName = bytes(funcName, 'utf-8')
     ret = gdal_handle_stdcall.GDALAddDerivedBandPixelFunc(funcName, my_cDerivedPixelFunc)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     vrt_xml = """<VRTDataset rasterXSize="20" rasterYSize="20">

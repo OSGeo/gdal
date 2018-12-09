@@ -55,11 +55,9 @@ def test_rraster_1(filename='data/byte_rraster.grd', check_prj=None):
     ds = gdal.Open(filename)
     md = ds.GetMetadata()
     if md != {'CREATOR': "R package 'raster'", 'CREATED': '2016-06-25 17:32:47'}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     if ds.GetRasterBand(1).GetDescription() != 'byte':
-        gdaltest.post_reason('fail')
         return 'fail'
     return 'success'
 
@@ -352,10 +350,8 @@ def test_rraster_signedbyte():
 
     ds = gdal.Open(filename2)
     if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMinimum() != -124:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -381,11 +377,9 @@ def test_rraster_datatypes():
         gdal.Translate(filename, src_ds, format='RRASTER')
         ds = gdal.Open(filename)
         if ds.GetRasterBand(1).DataType != src_ds.GetRasterBand(1).DataType:
-            gdaltest.post_reason('fail')
             print(srcfilename)
             return 'fail'
         if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-            gdaltest.post_reason('fail')
             print(srcfilename)
             return 'fail'
 
@@ -408,10 +402,8 @@ def test_rraster_nodata_and_metadata():
     ds = None
     ds = gdal.Open(filename)
     if ds.GetMetadata() != {'CREATOR': 'GDAL', 'CREATED': 'Today'}:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -429,13 +421,11 @@ def test_rraster_update():
     gdal.Open(filename, gdal.GA_Update)
     ds = gdal.Open(filename, gdal.GA_Update)
     if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.GetRasterBand(1).Fill(0)
     ds = None
     ds = gdal.Open(filename)
     if ds.GetRasterBand(1).Checksum() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -457,16 +447,12 @@ def test_rraster_colorinterpretation():
     ds = None
     ds = gdal.Open(filename)
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

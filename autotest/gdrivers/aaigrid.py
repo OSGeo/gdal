@@ -328,11 +328,9 @@ def test_aaigrid_12():
     aai.close()
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
     if not ndv.startswith('nodata_value'):
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
     if not ndv.endswith('-99999.000'):
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
     return 'success'
@@ -357,11 +355,9 @@ def test_aaigrid_13():
     aai.close()
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
     if not ndv.startswith('nodata_value'):
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
     if not ndv.endswith('-1e+05') and not ndv.endswith('-1e+005'):
-        gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
     return 'success'
@@ -385,7 +381,6 @@ def test_aaigrid_14():
     gdal.GetDriverByName('AAIGRID').Delete('/vsimem/aaigrid_14.asc')
 
     if data.find('107.0 123') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -408,7 +403,6 @@ NODATA_value  2.2250738585072014e-308
 
     ds = gdal.Open('/vsimem/aaigrid_15.asc')
     if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

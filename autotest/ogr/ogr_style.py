@@ -49,11 +49,9 @@ def test_ogr_style_styletable():
     ret = style_table.SaveStyleTable('/nonexistingdir/nonexistingfile')
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('failure')
         print(ret)
         return 'fail'
     if style_table.SaveStyleTable("/vsimem/out.txt") != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     style_table = None
 
@@ -62,10 +60,8 @@ def test_ogr_style_styletable():
     ret = style_table.LoadStyleTable('/nonexistent')
     gdal.PopErrorHandler()
     if ret != 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     if style_table.LoadStyleTable('/vsimem/out.txt') != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     gdal.Unlink('/vsimem/out.txt')
@@ -74,63 +70,51 @@ def test_ogr_style_styletable():
     ret = style_table.Find("non_existing_style")
     gdal.PopErrorHandler()
     if ret is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if style_table.Find("style1_normal") != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     style = style_table.GetNextStyle()
     if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
         return 'fail'
     style_name = style_table.GetLastStyleName()
     if style_name != 'style1_normal':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     style = style_table.GetNextStyle()
     if style is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     style_table.ResetStyleStringReading()
     style = style_table.GetNextStyle()
     if style is None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # GetStyleTable()/SetStyleTable() on data source
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     if ds.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds.SetStyleTable(None)
     if ds.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds.SetStyleTable(style_table)
     style_table2 = ds.GetStyleTable()
     style = style_table2.GetNextStyle()
     if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # GetStyleTable()/SetStyleTable() on layer
     lyr = ds.CreateLayer('foo')
     if lyr.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     lyr.SetStyleTable(None)
     if lyr.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     lyr.SetStyleTable(style_table)
     style_table2 = lyr.GetStyleTable()
     style = style_table2.GetNextStyle()
     if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     ds = None

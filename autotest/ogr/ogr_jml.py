@@ -61,16 +61,12 @@ def test_ogr_jml_1():
 
     ds = ogr.Open('data/test.jml')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayer(1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.TestCapability(ogr.ODsCCreateLayer) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.TestCapability(ogr.ODsCDeleteLayer) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer(0)
     fields = [('first_property', ogr.OFTString),
@@ -85,13 +81,11 @@ def test_ogr_jml_1():
               ('R_G_B', ogr.OFTString),
               ('not_ignored', ogr.OFTString)]
     if lyr.GetLayerDefn().GetFieldCount() != len(fields):
-        gdaltest.post_reason('fail')
         return 'fail'
     for i, field in enumerate(fields):
         field_defn = lyr.GetLayerDefn().GetFieldDefn(i)
         if field_defn.GetName() != field[0] or field_defn.GetType() != field[1]:
             print(i)
-            gdaltest.post_reason('fail')
             return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetField('first_property') != 'even' or \
@@ -108,7 +102,6 @@ def test_ogr_jml_1():
        feat.GetStyleString() != 'BRUSH(fc:#0000FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 10,10 10,10 0,0 0))':
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -117,13 +110,11 @@ def test_ogr_jml_1():
        feat.GetStyleString() != 'PEN(c:#FF00FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (-1 -1)':
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -170,7 +161,6 @@ def test_ogr_jml_2():
 </featureCollection>
 </JCSDataFile>
 """:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -192,16 +182,12 @@ def test_ogr_jml_2():
         lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
 
     if lyr.TestCapability(ogr.OLCCreateField) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCSequentialWrite) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCRandomWrite) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # empty feature
@@ -209,10 +195,8 @@ def test_ogr_jml_2():
     lyr.CreateFeature(f)
 
     if lyr.TestCapability(ogr.OLCCreateField) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.CreateField(ogr.FieldDefn('that_wont_work')) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -344,7 +328,6 @@ def test_ogr_jml_2():
 </featureCollection>
 </JCSDataFile>
 """:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -372,7 +355,6 @@ def test_ogr_jml_2():
     gdal.VSIFCloseL(f)
 
     if data.find('112233') < 0 or data.find('445566') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -391,7 +373,6 @@ def test_ogr_jml_2():
     gdal.VSIFCloseL(f)
 
     if data.find('R_G_B') >= 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -411,7 +392,6 @@ def test_ogr_jml_2():
     gdal.VSIFCloseL(f)
 
     if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -433,7 +413,6 @@ def test_ogr_jml_2():
     gdal.VSIFCloseL(f)
 
     if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0 or data.find('112233') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -491,7 +470,6 @@ def test_ogr_jml_4():
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -515,7 +493,6 @@ def test_ogr_jml_4():
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -545,7 +522,6 @@ def test_ogr_jml_4():
     lyr.GetLayerDefn().GetFieldCount()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -576,7 +552,6 @@ def test_ogr_jml_4():
     lyr.GetLayerDefn().GetFieldCount()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     del ds
 
@@ -646,7 +621,6 @@ def test_ogr_jml_4():
     ds = ogr.Open('/vsimem/ogr_jml.jml')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr.GetNextFeature()
     ds = None
@@ -665,11 +639,9 @@ def test_ogr_jml_read_srs():
     ds = ogr.Open('data/one_point_srid_4326.jml')
     lyr = ds.GetLayer(0)
     if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

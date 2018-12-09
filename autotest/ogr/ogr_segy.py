@@ -47,7 +47,6 @@ def test_ogr_segy_1():
         return 'fail'
 
     if ds.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerCount() != 2:
@@ -64,11 +63,9 @@ def test_ogr_segy_1():
         return 'fail'
 
     if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() != 71:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
@@ -81,7 +78,6 @@ def test_ogr_segy_1():
 
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(1)
@@ -94,22 +90,18 @@ def test_ogr_segy_1():
         return 'fail'
 
     if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() != 32:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

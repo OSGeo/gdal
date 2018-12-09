@@ -1240,7 +1240,6 @@ def test_osr_esri_26():
     srs.SetFromUserInput("""PROJCS["NAD_1983_HARN_WISCRS_Washburn_County_Meters",GEOGCS["GCS_North_American_1983_HARN",DATUM["D_North_American_1983_HARN",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",234086.8682],PARAMETER["False_Northing",188358.6058],PARAMETER["Central_Meridian",-91.78333333333333],PARAMETER["Standard_Parallel_1",45.96121983333334],PARAMETER["Scale_Factor",1.0000475376],PARAMETER["Latitude_Of_Origin",45.96121983333334],UNIT["Meter",1.0]]""")
     srs.MorphFromESRI()
     if srs.Validate() != 0:
-        gdaltest.post_reason('fail')
         print(srs.ExportToWkt())
         return 'fail'
 
@@ -1282,7 +1281,6 @@ def test_osr_esri_27():
     PARAMETER["Central_Meridian",110.0],
     PARAMETER["Standard_Parallel_1",4.45405154589751],
     UNIT["Meter",1.0]]""":
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1300,7 +1298,6 @@ def test_osr_esri_27():
     PARAMETER["Central_Meridian",110.0],
     PARAMETER["Standard_Parallel_1",4.45405154589751],
     UNIT["Meter",1.0]]""":
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1353,7 +1350,6 @@ def test_osr_esri_28():
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
     PARAMETER["standard_parallel_1",4.45405154""") != 0:
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1371,7 +1367,6 @@ def test_osr_esri_28():
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
     PARAMETER["standard_parallel_1",4.45405154""") != 0:
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1401,7 +1396,6 @@ def test_osr_esri_29():
     PARAMETER["Standard_Parallel_1",0.0],
     PARAMETER["Auxiliary_Sphere_Type",0.0],
     UNIT["Meter",1.0]]""":
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1429,7 +1423,6 @@ def test_osr_esri_29():
     AXIS["Y",NORTH],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],
     AUTHORITY["EPSG","3857"]]""":
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1459,7 +1452,6 @@ def test_osr_esri_29():
     AXIS["Y",NORTH],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],
     AUTHORITY["EPSG","3857"]]""":
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1487,7 +1479,6 @@ def test_osr_esri_30():
     srs_wkt = osr.SpatialReference(wkt=wkt)
 
     if not srs_prj.IsSame(srs_wkt):
-        gdaltest.post_reason('fail')
         print(srs_prj)
         return 'fail'
 
@@ -1538,7 +1529,6 @@ def test_osr_esri_31():
     srs_wkt = osr.SpatialReference(wkt=wkt)
 
     if not srs_prj.IsSame(srs_wkt):
-        gdaltest.post_reason('fail')
         print(srs_prj)
         return 'fail'
 

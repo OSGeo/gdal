@@ -72,21 +72,18 @@ def test_rda_bad_connection_string():
     with gdaltest.error_handler():
         ds = gdal.Open('graph-id node-id')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing graph-id
     with gdaltest.error_handler():
         ds = gdal.Open('"graph-id node-id"')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing node-id
     with gdaltest.error_handler():
         ds = gdal.Open('{"graph-id": "node-id"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -102,7 +99,6 @@ def test_rda_missing_credentials():
     with gdaltest.error_handler():
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -125,7 +121,6 @@ def test_rda_failed_authentication():
         with gdaltest.error_handler():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # invalid URL
@@ -135,7 +130,6 @@ def test_rda_failed_authentication():
         with gdaltest.error_handler():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # 404
@@ -148,7 +142,6 @@ def test_rda_failed_authentication():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid json
@@ -161,7 +154,6 @@ def test_rda_failed_authentication():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # No access token
@@ -174,7 +166,6 @@ def test_rda_failed_authentication():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -202,7 +193,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # 404 with payload
@@ -218,7 +208,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # invalid json
@@ -234,7 +223,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # a lot of missing elements
@@ -248,7 +236,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Bad dataType
@@ -285,7 +272,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Huge numBands
@@ -322,7 +308,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid dataset dimensions
@@ -359,7 +344,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -420,16 +404,12 @@ def test_rda_graph_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 320:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterYSize != 300:
-        gdaltest.post_reason('fail')
         return 'fail'
     expected_md = {
         'SENSOR_NAME': 'SENSOR_NAME',
@@ -444,15 +424,12 @@ def test_rda_graph_nominal():
     }
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -464,16 +441,12 @@ def test_rda_graph_nominal():
                 fd.write('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
             ds = gdal.Open('tmp/rda_test1.dgrda')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 320:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterYSize != 300:
-        gdaltest.post_reason('fail')
         return 'fail'
     expected_md = {
         'SENSOR_NAME': 'SENSOR_NAME',
@@ -488,15 +461,12 @@ def test_rda_graph_nominal():
     }
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     try:
@@ -509,10 +479,8 @@ def test_rda_graph_nominal():
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -527,15 +495,12 @@ def test_rda_graph_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
         if ds is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetProjectionRef().find('32631') < 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     got_gt = ds.GetGeoTransform()
     if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
 
@@ -546,7 +511,6 @@ def test_rda_graph_nominal():
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
     got_gt = ds.GetGeoTransform()
     if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
 
@@ -562,10 +526,8 @@ def test_rda_graph_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
         if ds is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetMetadata('RPC') != {}:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -582,10 +544,8 @@ def test_rda_graph_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
         if ds is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetMetadata('RPC') != {}:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_00.tif', 256, 256, 3)
@@ -636,7 +596,6 @@ def test_rda_graph_nominal():
     with webserver.install_http_handler(handler):
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [54287, 50451, 21110]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -645,33 +604,26 @@ def test_rda_graph_nominal():
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [54287, 50451, 21110]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     data = struct.unpack('B' * (320 * 300 * 3), ds.ReadRaster())
     if data[0] != 255:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[0 + 320 * 300] != 250:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[0 + 320 * 300 * 2] != 245:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[319] != 240:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[320 * 299] != 225:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[320 * 299 + 319] != 210:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -727,10 +679,8 @@ def test_rda_graph_nominal():
 
     data = struct.unpack('B' * (256 * 256), data)
     if data[0] != 255:
-        gdaltest.post_reason('fail')
         return 'fail'
     if data[256 * (256 - 2)] != 225:
-        gdaltest.post_reason('fail')
         return 'fail'
 
 
@@ -739,7 +689,6 @@ def test_rda_graph_nominal():
     data = ds.GetRasterBand(1).ReadBlock(0, 0)
     data = struct.unpack('B' * (256 * 256), data)
     if data[0] != 255:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -756,7 +705,6 @@ def test_rda_graph_nominal():
             with gdaltest.error_handler():
                 data = ds.GetRasterBand(1).ReadBlock(0, 0)
                 if data is not None:
-                    gdaltest.post_reason('fail')
                     return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -811,19 +759,14 @@ def test_rda_template_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 320:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterYSize != 300:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -832,10 +775,8 @@ def test_rda_template_nominal():
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -850,15 +791,12 @@ def test_rda_template_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
         if ds is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetProjectionRef().find('32631') < 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     got_gt = ds.GetGeoTransform()
     if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
 
@@ -869,7 +807,6 @@ def test_rda_template_nominal():
         ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
     got_gt = ds.GetGeoTransform()
     if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
 
@@ -928,7 +865,6 @@ def test_rda_template_nominal():
 
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
         if cs != [54287, 50451, 21110]:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 
@@ -937,33 +873,26 @@ def test_rda_template_nominal():
         ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [54287, 50451, 21110]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     data = struct.unpack('B' * (320 * 300 * 3), ds.ReadRaster())
     if data[0] != 255:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[0 + 320 * 300] != 250:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[0 + 320 * 300 * 2] != 245:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[319] != 240:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[320 * 299] != 225:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[320 * 299 + 319] != 210:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -1051,19 +980,14 @@ def test_rda_template_image_reference_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 320:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterYSize != 300:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -1072,10 +996,8 @@ def test_rda_template_image_reference_nominal():
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -1090,15 +1012,12 @@ def test_rda_template_image_reference_nominal():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
         if ds is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetProjectionRef().find('32631') < 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     got_gt = ds.GetGeoTransform()
     if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
 
@@ -1109,7 +1028,6 @@ def test_rda_template_image_reference_nominal():
         ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
     got_gt = ds.GetGeoTransform()
     if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
 
@@ -1168,7 +1086,6 @@ def test_rda_template_image_reference_nominal():
 
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
         if cs != [54287, 50451, 21110]:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 
@@ -1177,33 +1094,26 @@ def test_rda_template_image_reference_nominal():
         ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != [54287, 50451, 21110]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     data = struct.unpack('B' * (320 * 300 * 3), ds.ReadRaster())
     if data[0] != 255:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[0 + 320 * 300] != 250:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[0 + 320 * 300 * 2] != 245:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[319] != 240:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[320 * 299] != 225:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if data[320 * 299 + 319] != 210:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -1343,7 +1253,6 @@ def test_rda_download_queue():
     with webserver.install_http_handler(handler):
         data = ds.ReadRaster(0, 1, 4, 2)
     if data != ref_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1403,7 +1312,6 @@ def test_rda_rpc():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
         md = ds.GetMetadata('RPC')
     if md != {}:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -1420,7 +1328,6 @@ def test_rda_rpc():
         with gdaltest.error_handler():
             md = ds.GetMetadata('RPC')
     if md != {}:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -1438,7 +1345,6 @@ def test_rda_rpc():
     for key in expected_md:
         if not key.endswith('_COEFF'):
             if abs(float(expected_md[key]) - float(md[key])) > 1e-8 * abs(float(expected_md[key])):
-                gdaltest.post_reason('fail')
                 print(key, md)
                 return 'fail'
         else:
@@ -1446,7 +1352,6 @@ def test_rda_rpc():
             got_vals = [float(v) for v in md[key].split(' ')]
             for x in range(20):
                 if abs(expected_vals[x] - got_vals[x]) > 1e-8 * abs(expected_vals[x]):
-                    gdaltest.post_reason('fail')
                     print(key, md)
                     return 'fail'
     ds = None
@@ -1672,7 +1577,6 @@ def test_rda_bad_tile():
         with gdaltest.error_handler():
             data = ds.ReadRaster()
         if data is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
 
@@ -1688,7 +1592,6 @@ def test_rda_bad_tile():
         with gdaltest.error_handler():
             data = ds.GetRasterBand(1).ReadBlock(0, 0)
         if data is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
 
@@ -1704,7 +1607,6 @@ def test_rda_bad_tile():
         with gdaltest.error_handler():
             data = ds.ReadRaster()
         if data is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
 
@@ -1720,7 +1622,6 @@ def test_rda_bad_tile():
         with gdaltest.error_handler():
             data = ds.GetRasterBand(1).ReadBlock(0, 0)
         if data is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
     ds = None
 

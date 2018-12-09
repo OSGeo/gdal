@@ -71,7 +71,6 @@ def test_vsiswift_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('SWIFT_STORAGE_URL') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -79,7 +78,6 @@ def test_vsiswift_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift_streaming/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('SWIFT_STORAGE_URL') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -90,7 +88,6 @@ def test_vsiswift_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('SWIFT_AUTH_TOKEN') < 0:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -102,7 +99,6 @@ def test_vsiswift_real_server_errors():
     if f is not None:
         if f is not None:
             gdal.VSIFCloseL(f)
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -110,7 +106,6 @@ def test_vsiswift_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift_streaming/foo/bar.baz')
     if f is not None:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
@@ -190,13 +185,11 @@ def test_vsiswift_fake_auth_v1_url():
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
     if data != 'foo':
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -223,13 +216,11 @@ def test_vsiswift_fake_auth_v1_url():
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/baz')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
     if data != 'bar':
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -257,7 +248,6 @@ def test_vsiswift_fake_auth_storage_url_and_auth_token():
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
@@ -286,13 +276,11 @@ def test_vsiswift_fake_auth_storage_url_and_auth_token():
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
     if data != 'foo':
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -315,7 +303,6 @@ def test_vsiswift_stat():
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiswift/foo/bar')
         if stat_res is None or stat_res.size != 1000000:
-            gdaltest.post_reason('fail')
             if stat_res is not None:
                 print(stat_res.size)
             else:
@@ -327,7 +314,6 @@ def test_vsiswift_stat():
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiswift_streaming/foo/bar')
         if stat_res is None or stat_res.size != 1000000:
-            gdaltest.post_reason('fail')
             if stat_res is not None:
                 print(stat_res.size)
             else:
@@ -342,7 +328,6 @@ def test_vsiswift_stat():
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiswift/foo')
         if stat_res is None or not stat.S_ISDIR(stat_res.mode):
-            gdaltest.post_reason('fail')
             return 'fail'
 
     return 'success'
@@ -386,28 +371,23 @@ def test_vsiswift_fake_readdir():
         with webserver.install_http_handler(handler):
             f = open_for_read('/vsiswift/foo/bar.baz')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFCloseL(f)
 
     dir_contents = gdal.ReadDir('/vsiswift/foo')
     if dir_contents != ['bar.baz', 'mysubdir']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
     stat_res = gdal.VSIStatL('/vsiswift/foo/bar.baz')
     if stat_res.size != 123456:
-        gdaltest.post_reason('fail')
         print(stat_res.size)
         return 'fail'
     if stat_res.mtime != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir('/vsiswift/foo/bar.baz')
     if dir_contents is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test error on ReadDir()
@@ -416,7 +396,6 @@ def test_vsiswift_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/foo/error_test/')
     if dir_contents is not None:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -428,7 +407,6 @@ def test_vsiswift_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
     if dir_contents != ['.']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -443,7 +421,6 @@ def test_vsiswift_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
     if dir_contents != ['mycontainer1', 'mycontainer2']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -461,7 +438,6 @@ def test_vsiswift_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
     if dir_contents != ['foo', 'foo/']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -471,7 +447,6 @@ def test_vsiswift_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/foo/')
     if dir_contents != ['.']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -491,7 +466,6 @@ def test_vsiswift_fake_write():
     # Test creation of BlockBob
     f = gdal.VSIFOpenL('/vsiswift/test_copy/file.bin', 'wb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -529,7 +503,6 @@ def test_vsiswift_fake_write():
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
         if ret != 40000:
-            gdaltest.post_reason('fail')
             print(ret)
             gdal.VSIFCloseL(f)
             return 'fail'
@@ -556,7 +529,6 @@ def test_vsiswift_fake_unlink():
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsiswift/foo/bar')
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Failure
@@ -568,7 +540,6 @@ def test_vsiswift_fake_unlink():
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsiswift/foo/bar')
     if ret != -1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -587,7 +558,6 @@ def test_vsiswift_fake_mkdir_rmdir():
     # Invalid name
     ret = gdal.Mkdir('/vsiswift', 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -597,7 +567,6 @@ def test_vsiswift_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiswift/foo/dir', 0)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Try creating already existing directory
@@ -610,13 +579,11 @@ def test_vsiswift_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiswift/foo/dir', 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid name
     ret = gdal.Rmdir('/vsiswift')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSICurlClearCache()
@@ -631,7 +598,6 @@ def test_vsiswift_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/it_is_a_file')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Valid
@@ -646,7 +612,6 @@ def test_vsiswift_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir')
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Try deleting already deleted directory
@@ -656,7 +621,6 @@ def test_vsiswift_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSICurlClearCache()
@@ -675,7 +639,6 @@ def test_vsiswift_fake_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir_nonempty')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -714,20 +677,17 @@ def vsiswift_extra_1():
         path = '/vsiswift/' + swift_resource
         statres = gdal.VSIStatL(path)
         if statres is None or not stat.S_ISDIR(statres.mode):
-            gdaltest.post_reason('fail')
             print('%s is not a valid bucket' % path)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if readdir is None:
-            gdaltest.post_reason('fail')
             print('ReadDir() should not return empty list')
             return 'fail'
         for filename in readdir:
             if filename != '.':
                 subpath = path + '/' + filename
                 if gdal.VSIStatL(subpath) is None:
-                    gdaltest.post_reason('fail')
                     print('Stat(%s) should not return an error' % subpath)
                     return 'fail'
 
@@ -735,81 +695,68 @@ def vsiswift_extra_1():
         subpath = path + '/' + unique_id
         ret = gdal.Mkdir(subpath, 0)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) should not return an error' % subpath)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if unique_id not in readdir:
-            gdaltest.post_reason('fail')
             print('ReadDir(%s) should contain %s' % (path, unique_id))
             print(readdir)
             return 'fail'
 
         ret = gdal.Mkdir(subpath, 0)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) repeated should return an error' % subpath)
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if unique_id in readdir:
-            gdaltest.post_reason('fail')
             print('ReadDir(%s) should not contain %s' % (path, unique_id))
             print(readdir)
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) repeated should return an error' % subpath)
             return 'fail'
 
         ret = gdal.Mkdir(subpath, 0)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) should not return an error' % subpath)
             return 'fail'
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
 
         ret = gdal.Rmdir(subpath)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) on non empty directory should return an error' % subpath)
             return 'fail'
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
         if data != 'hello':
-            gdaltest.post_reason('fail')
             print(data)
             return 'fail'
         gdal.VSIFCloseL(f)
 
         ret = gdal.Unlink(subpath + '/test.txt')
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
 
@@ -817,26 +764,22 @@ def vsiswift_extra_1():
 
     f = open_for_read('/vsiswift/' + swift_resource)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
     if len(ret) != 1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
     # Same with /vsiswift_streaming/
     f = open_for_read('/vsiswift_streaming/' + swift_resource)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
     if len(ret) != 1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -844,7 +787,6 @@ def vsiswift_extra_1():
     gdal.ErrorReset()
     f = open_for_read('/vsiswift_streaming/' + swift_resource + '/invalid_resource.baz')
     if f is not None:
-        gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 

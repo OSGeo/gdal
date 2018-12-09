@@ -342,7 +342,6 @@ def test_gdalwarp_lib_16():
 
     ds = gdal.Warp('/vsimem/test_gdalwarp_lib_16.vrt', 'tmp/testgdalwarp_gcp.tif', format='VRT')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -358,7 +357,6 @@ def test_gdalwarp_lib_16():
     with gdaltest.error_handler():
         ds = gdal.Warp('/i_dont/exist/test_gdalwarp_lib_16.vrt', 'tmp/testgdalwarp_gcp.tif', format='VRT')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -507,7 +505,6 @@ def test_gdalwarp_lib_45():
 
     ds = gdal.Warp('', ['../gcore/data/byte.tif'], format='MEM', outputBounds=[-117.641087629972, 33.8915301685897, -117.628190189534, 33.9024195619201], outputBoundsSRS='EPSG:4267')
     if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
@@ -550,11 +547,9 @@ def test_gdalwarp_lib_46():
     got_gt = ds.GetGeoTransform()
     expected_gt = (2.15, 0.05, 0.0, 48.8, 0.0, -0.05)
     if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
     if ds.RasterXSize != 13 or ds.RasterYSize != 13:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize, ds.RasterYSize)
         return 'fail'
 
@@ -566,11 +561,9 @@ def test_gdalwarp_lib_46():
     got_gt = ds.GetGeoTransform()
     expected_gt = (2.1, 0.05, 0.0, 48.85, 0.0, -0.05)
     if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
-        gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
     if ds.RasterXSize != 15 or ds.RasterYSize != 15:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize, ds.RasterYSize)
         return 'fail'
 
@@ -590,11 +583,9 @@ def test_gdalwarp_lib_46():
         got_gt = ds.GetGeoTransform()
         expected_gt = (2.15, 0.05, 0.0, 48.85, 0.0, -0.05)
         if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
         if ds.RasterXSize != 14 or ds.RasterYSize != 14:
-            gdaltest.post_reason('fail')
             print(ds.RasterXSize, ds.RasterYSize)
             return 'fail'
 
@@ -1548,7 +1539,6 @@ def test_gdalwarp_lib_135():
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing grid in forward path with PROJ_LIB
@@ -1563,7 +1553,6 @@ def test_gdalwarp_lib_135():
     else:
         del os.environ['PROJ_LIB']
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing grid in forward path
@@ -1572,7 +1561,6 @@ def test_gdalwarp_lib_135():
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=~/i_dont_exist.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing grid in forward path
@@ -1581,7 +1569,6 @@ def test_gdalwarp_lib_135():
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/i_dont/exist.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Ungeoref grid in forward path
@@ -1590,7 +1577,6 @@ def test_gdalwarp_lib_135():
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing grid in inverse path
@@ -1599,7 +1585,6 @@ def test_gdalwarp_lib_135():
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                        dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=i_dont_exist.tif +vunits=m +no_defs')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Ungeoref grid in inverse path
@@ -1608,7 +1593,6 @@ def test_gdalwarp_lib_135():
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                        dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing grid in forward path, but this is OK
@@ -1783,13 +1767,11 @@ def test_gdalwarp_lib_136():
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', warpOptions=['CUTLINE=invalid'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='VRT', warpOptions=['CUTLINE=invalid'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1810,15 +1792,12 @@ def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs(
                                   dstSRS='EPSG:4326')
     out_ds = gdal.Warp('', [src_ds_4326_right, src_ds_32611_left], format='MEM')
     if out_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out_ds.RasterXSize != 23:
-        gdaltest.post_reason('fail')
         print(out_ds.RasterXSize)
         return 'fail'
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 5048:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1837,7 +1816,6 @@ def test_gdalwarp_lib_touching_dateline():
     src_ds.SetProjection(sr.ExportToWkt())
     out_ds = gdal.Warp('', src_ds, dstSRS='EPSG:4326', format='MEM')
     if out_ds.RasterXSize != 319:
-        gdaltest.post_reason('fail')
         print(out_ds.RasterXSize)
         return 'fail'
 
@@ -1865,12 +1843,10 @@ def test_gdalwarp_lib_override_default_output_nodata():
                   format='netCDF', creationOptions=['FORMAT=' + frmt])
         ds = gdal.Open('tmp/out.nc')
         if ds.GetRasterBand(1).GetNoDataValue() != 255:
-            gdaltest.post_reason('fail')
             print(frmt)
             print(ds.GetRasterBand(1).GetNoDataValue())
             return 'fail'
         if ds.GetProjection() == '':
-            gdaltest.post_reason('fail')
             print(frmt)
             return 'fail'
         ds = None
@@ -1905,7 +1881,6 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
         if cs != 41500:
-            gdaltest.post_reason('fail')
             print(options, cs)
             return 'fail'
 
@@ -1919,7 +1894,6 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            '-of MEM ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
         if cs != 41500:
-            gdaltest.post_reason('fail')
             print(options, cs)
             return 'fail'
 
@@ -1934,7 +1908,6 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
         if cs != 51132:
-            gdaltest.post_reason('fail')
             print(options, cs)
             return 'fail'
 
@@ -1949,7 +1922,6 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            '-of MEM ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
         if cs != 51132:
-            gdaltest.post_reason('fail')
             print(options, cs)
             return 'fail'
 
@@ -1962,7 +1934,6 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
         if cs != 41500:
-            gdaltest.post_reason('fail')
             print(options, cs)
             return 'fail'
 
@@ -1984,7 +1955,6 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
         if cs != 41500:
-            gdaltest.post_reason('fail')
             print(options, cs)
             return 'fail'
 

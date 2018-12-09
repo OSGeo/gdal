@@ -320,12 +320,10 @@ def test_gdal_calc_py_6():
     ds = gdal.Open('tmp/test_gdal_calc_py_6.tif')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4673:
-        gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
     result = ds.GetRasterBand(1).ComputeRasterMinMax()
     if result != (90, 255):
-        gdaltest.post_reason('failure')
         print(result)
         return 'fail'
 

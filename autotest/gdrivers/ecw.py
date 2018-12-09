@@ -835,7 +835,6 @@ def test_ecw_24():
 
     try:
         os.stat('tmp/spif83.ecw.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -846,7 +845,6 @@ def test_ecw_24():
 
     for i in range(6):
         if abs(gt[i] - got_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
 
@@ -891,7 +889,6 @@ def test_ecw_25():
 
     try:
         os.stat('tmp/spif83.ecw.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -904,20 +901,16 @@ def test_ecw_25():
     ds = None
 
     if got_proj != proj:
-        gdaltest.post_reason('fail')
         print(got_proj)
         return 'fail'
     if got_datum != datum:
-        gdaltest.post_reason('fail')
         print(got_datum)
         return 'fail'
     if got_units != units:
-        gdaltest.post_reason('fail')
         print(got_units)
         return 'fail'
 
     if wkt != got_wkt:
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -961,7 +954,6 @@ def test_ecw_26():
 
     try:
         os.stat('tmp/spif83.ecw.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -974,15 +966,12 @@ def test_ecw_26():
     ds = None
 
     if got_proj != proj:
-        gdaltest.post_reason('fail')
         print(proj)
         return 'fail'
     if got_datum != datum:
-        gdaltest.post_reason('fail')
         print(datum)
         return 'fail'
     if got_units != units:
-        gdaltest.post_reason('fail')
         print(units)
         return 'fail'
 
@@ -991,7 +980,6 @@ def test_ecw_26():
     wkt = sr.ExportToWkt()
 
     if wkt != got_wkt:
-        gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
@@ -1212,7 +1200,6 @@ def test_ecw_32():
     data_123 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
     data_321 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[3, 2, 1])
     if data_123 == data_321:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="400" rasterYSize="400">
@@ -1238,7 +1225,6 @@ def test_ecw_32():
     data_vrt = vrt_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
 
     if data_321 != data_vrt:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1285,7 +1271,6 @@ def test_ecw_33():
     ds = None
 
     if data1_1 != data1_2 or data2_1 != data2_2 or data3_1 != data3_2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # When heuristics is ON, returned values should be the same as
@@ -1294,7 +1279,6 @@ def test_ecw_33():
     tab1 = struct.unpack('B' * 3 * 50 * 50, multiband_data)
     tab2 = struct.unpack('B' * 3 * 50 * 50, data1_1 + data2_1 + data3_2)
     if tab1 != tab2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -1331,13 +1315,10 @@ def test_ecw_33_bis():
     # SDK such as 5.0)
     for i in range(50 * 50):
         if data1[i * 4] != data_ref[i]:
-            gdaltest.post_reason('fail')
             return 'fail'
         if data2[i * 4] != data_ref[50 * 50 + i]:
-            gdaltest.post_reason('fail')
             return 'fail'
         if data3[i * 4] != data_ref[2 * 50 * 50 + i]:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ds = None
@@ -1591,7 +1572,6 @@ def test_ecw_40():
                 return 'skip'
             gdaltest.post_reason('explicit error message expected')
             return 'fail'
-        gdaltest.post_reason('fail')
         return 'fail'
 
     expected_md = [
@@ -1616,7 +1596,6 @@ def test_ecw_40():
     got_md = ds.GetMetadata()
     for (key, value) in expected_md:
         if key not in got_md or got_md[key] != value:
-            gdaltest.post_reason('fail')
             print(key)
             print(got_md[key])
             return 'fail'
@@ -1625,7 +1604,6 @@ def test_ecw_40():
     for i in range(4):
         got_cs = ds.GetRasterBand(i + 1).Checksum()
         if got_cs != expected_cs_list[i]:
-            gdaltest.post_reason('fail')
             print(expected_cs_list[i])
             print(got_cs)
             return 'fail'
@@ -1651,16 +1629,12 @@ def test_ecw_41():
 
     # Check that no statistics is already included in the file
     if ds.GetRasterBand(1).GetMinimum() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMaximum() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetStatistics(1, 0) != [0.0, 0.0, 0.0, -1.0]:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetDefaultHistogram(force=0) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Now compute the stats
@@ -1668,7 +1642,6 @@ def test_ecw_41():
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
         if abs(stats[i] - expected_stats[i]) > 1:
-            gdaltest.post_reason('fail')
             print(stats)
             print(expected_stats)
             return 'fail'
@@ -1678,25 +1651,21 @@ def test_ecw_41():
     # Check that there's no .aux.xml file
     try:
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
     if ds.GetRasterBand(1).GetMinimum() != 0:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMinimum())
         return 'fail'
     if ds.GetRasterBand(1).GetMaximum() != 255:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMaximum())
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
         if abs(stats[i] - expected_stats[i]) > 1:
-            gdaltest.post_reason('fail')
             print(stats[i])
             print(expected_stats[i])
             return 'fail'
@@ -1707,7 +1676,6 @@ def test_ecw_41():
     got_hist = ds.GetRasterBand(1).GetDefaultHistogram()
     expected_hist = (-0.5, 255.5, 256, [1006, 16106, 548, 99, 13, 24, 62, 118, 58, 125, 162, 180, 133, 146, 70, 81, 84, 97, 90, 60, 79, 70, 85, 77, 73, 63, 60, 64, 56, 69, 63, 73, 70, 72, 61, 66, 40, 52, 65, 44, 62, 54, 56, 55, 63, 51, 47, 39, 58, 44, 36, 43, 47, 45, 54, 28, 40, 41, 37, 36, 33, 31, 28, 34, 19, 32, 19, 23, 23, 33, 16, 34, 32, 54, 29, 33, 40, 37, 27, 34, 24, 29, 26, 21, 22, 24, 25, 19, 29, 22, 24, 14, 20, 20, 29, 28, 13, 19, 21, 19, 19, 21, 13, 19, 13, 14, 22, 15, 13, 26, 10, 13, 13, 14, 10, 17, 15, 19, 11, 18, 11, 14, 8, 12, 20, 12, 17, 10, 15, 15, 16, 14, 11, 7, 7, 10, 8, 12, 7, 8, 14, 7, 9, 12, 4, 6, 12, 5, 5, 4, 11, 8, 4, 8, 7, 10, 11, 6, 7, 5, 6, 8, 10, 10, 7, 5, 3, 5, 5, 6, 4, 10, 7, 6, 8, 4, 6, 6, 4, 6, 6, 7, 10, 4, 5, 2, 5, 6, 1, 1, 2, 6, 2, 1, 7, 4, 1, 3, 3, 2, 6, 2, 3, 3, 3, 3, 5, 5, 4, 2, 3, 2, 1, 3, 5, 5, 4, 1, 1, 2, 5, 10, 5, 9, 3, 5, 3, 5, 4, 5, 4, 4, 6, 7, 9, 17, 13, 15, 14, 13, 20, 18, 16, 27, 35, 53, 60, 51, 46, 40, 38, 50, 66, 36, 45, 13])
     if got_hist != expected_hist:
-        gdaltest.post_reason('fail')
         print(got_hist)
         print(expected_hist)
         return 'fail'
@@ -1721,16 +1689,13 @@ def test_ecw_41():
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
     if ds.GetRasterBand(1).GetMinimum() != 0:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMinimum())
         return 'fail'
     if ds.GetRasterBand(1).GetMaximum() != 255:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMaximum())
         return 'fail'
     got_hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     if got_hist != expected_hist:
-        gdaltest.post_reason('fail')
         print(got_hist)
         print(expected_hist)
         return 'fail'
@@ -1739,7 +1704,6 @@ def test_ecw_41():
     # Check that there's no .aux.xml file
     try:
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -1779,7 +1743,6 @@ def test_ecw_42():
     # Check that there's no .aux.xml file
     try:
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -1789,7 +1752,6 @@ def test_ecw_42():
     got_md = ds.GetMetadata()
     for item in md:
         if got_md[item] != md[item]:
-            gdaltest.post_reason('fail')
             print(got_md[item])
             print(md[item])
             return 'fail'
@@ -1814,7 +1776,6 @@ def test_ecw_42():
     # Check that there's no .aux.xml file
     try:
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-        gdaltest.post_reason('fail')
         return 'fail'
     except OSError:
         pass
@@ -1824,7 +1785,6 @@ def test_ecw_42():
     got_md = ds.GetMetadata()
     for item in md:
         if item in got_md and item != 'FILE_METADATA_ACQUISITION_DATE':
-            gdaltest.post_reason('fail')
             print(got_md[item])
             print(md[item])
             return 'fail'
@@ -1848,7 +1808,6 @@ def test_ecw_43():
         return 'fail'
     got_cs = fourth_band.Checksum()
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
@@ -1864,22 +1823,18 @@ def test_ecw_43():
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/ecw_43.tif')
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
 
     if jp2_bands_data != gtiff_bands_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if jp2_fourth_band_data != gtiff_fourth_band_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1920,7 +1875,6 @@ def test_ecw_44():
     got_md = ds.GetMetadata('JPEG2000')
     for (key, value) in expected_md:
         if key not in got_md or got_md[key] != value:
-            gdaltest.post_reason('fail')
             print(key)
             print(got_md)
             return 'fail'
@@ -1950,12 +1904,10 @@ def test_ecw_45():
     out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/ecw_45.jp2')
     md = RemoveDriverMetadata(ds.GetMetadata())
     if md != {}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     gdal.Unlink('/vsimem/ecw_45.jp2')
@@ -1967,12 +1919,10 @@ def test_ecw_45():
         out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/ecw_45.jp2')
         md = RemoveDriverMetadata(ds.GetMetadata())
         if md != {'FOO': 'BAR'}:
-            gdaltest.post_reason('fail')
             print(md)
             return 'fail'
         gdal.Unlink('/vsimem/ecw_45.jp2')
@@ -1983,12 +1933,10 @@ def test_ecw_45():
     out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/ecw_45.jp2')
     md = RemoveDriverMetadata(ds.GetMetadata('SOME_DOMAIN'))
     if md != {'FOO': 'BAR'}:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     gdal.Unlink('/vsimem/ecw_45.jp2')
@@ -1999,11 +1947,9 @@ def test_ecw_45():
     out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
     if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/ecw_45.jp2')
     if ds.GetMetadata('xml:SOME_DOMAIN')[0] != '<some_arbitrary_xml_box />\n':
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/ecw_45.jp2')
 
@@ -2014,11 +1960,9 @@ def test_ecw_45():
         out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/ecw_45.jp2')
         if ds.GetMetadata('xml:BOX_0')[0] != '<some_arbitrary_xml_box/>':
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/ecw_45.jp2')
 
@@ -2029,11 +1973,9 @@ def test_ecw_45():
         out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options=options)
         del out_ds
         if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open('/vsimem/ecw_45.jp2')
         if ds.GetMetadata('xml:XMP')[0] != '<fake_xmp_box/>':
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/ecw_45.jp2')
 
@@ -2066,7 +2008,6 @@ def test_ecw_46():
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
     cs = mem_ds.GetRasterBand(1).Checksum()
     if cs != ref_cs:
-        gdaltest.post_reason('fail')
         print(cs)
         print(ref_cs)
         return 'fail'
@@ -2090,7 +2031,6 @@ def test_ecw_47():
 
     ds = gdal.Open('/vsimem/ecw_47.ecw')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     mean_tolerance = 0.5

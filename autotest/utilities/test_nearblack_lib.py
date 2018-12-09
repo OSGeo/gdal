@@ -192,7 +192,6 @@ def test_nearblack_lib_8():
     ds = gdal.GetDriverByName('MEM').CreateCopy('', src_ds)
     ret = gdal.Nearblack(ds, ds, maxNonBlack=0)
     if ret != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 21106:

@@ -293,25 +293,19 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
         elif expected_geom_type == ogr.wkbPolygon25D:
             expected_geom_type = ogr.wkbMultiPolygon25D
         if lyr.GetGeomType() != expected_geom_type:
-            gdaltest.post_reason('fail')
             print(lyr.GetName())
             print(lyr.GetGeomType())
             return 'fail'
         if expected_geom_type is not ogr.wkbNone and lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str')).GetWidth() != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint')).GetSubType() != ogr.OFSTInt16:
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
-            gdaltest.post_reason('fail')
             return 'fail'
         if data[1] != ogr.wkbNone:
             if lyr.GetSpatialRef().IsSame(srs) != 1:
-                gdaltest.post_reason('fail')
                 print(lyr.GetSpatialRef())
                 return 'fail'
         feat = lyr.GetNextFeature()
@@ -324,7 +318,6 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
             if geom:
                 geom = geom.ExportToWkt()
             if geom != expected_wkt and ogrtest.check_feature_geometry(feat, expected_wkt) == 1:
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 print(expected_wkt)
                 return 'fail'
@@ -339,22 +332,18 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
            (version10 and feat.GetField('xml') != "<foo></foo>") or \
            feat.GetField('binary') != "00FF7F" or \
            feat.GetField('binary2') != "123456":
-            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
         if version10:
             sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
             if sql_lyr is None:
-                gdaltest.post_reason('failure')
                 return 'fail'
             feat = sql_lyr.GetNextFeature()
             if feat is None:
-                gdaltest.post_reason('failure')
                 return 'fail'
             feat = sql_lyr.GetNextFeature()
             if feat is not None:
-                gdaltest.post_reason('failure')
                 return 'fail'
             lyr.ResetReading()
             lyr.TestCapability("foo")
@@ -362,23 +351,19 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
 
             sql_lyr = ds.ExecuteSQL("GetLayerMetadata %s" % lyr.GetName())
             if sql_lyr is None:
-                gdaltest.post_reason('failure')
                 return 'fail'
             feat = sql_lyr.GetNextFeature()
             if feat is None:
-                gdaltest.post_reason('failure')
                 return 'fail'
             ds.ReleaseResultSet(sql_lyr)
 
     if version10:
         sql_lyr = ds.ExecuteSQL("GetLayerDefinition foo")
         if sql_lyr is not None:
-            gdaltest.post_reason('failure')
             return 'fail'
 
         sql_lyr = ds.ExecuteSQL("GetLayerMetadata foo")
         if sql_lyr is not None:
-            gdaltest.post_reason('failure')
             return 'fail'
 
     if version10:
@@ -395,7 +380,6 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
                 expected_geom_type = ogr.wkbMultiPolygonZM
 
             if lyr.GetGeomType() != expected_geom_type:
-                gdaltest.post_reason('fail')
                 print(data)
                 print(lyr.GetGeomType())
                 return 'fail'
@@ -406,12 +390,10 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
                 expected_wkt = data[2]
             if expected_wkt is None:
                 if feat.GetGeometryRef() is not None:
-                    gdaltest.post_reason('fail')
                     print(data)
                     feat.DumpReadable()
                     return 'fail'
             elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
-                gdaltest.post_reason('fail')
                 print(data)
                 feat.DumpReadable()
                 return 'fail'
@@ -462,25 +444,20 @@ def test_ogr_openfilegdb_3():
 
     ds = ogr.Open('/vsizip/data/testopenfilegdb.gdb.zip/testopenfilegdb.gdb/a00000009.gdbtable')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'none':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Try opening a system table
     lyr = ds.GetLayerByName('GDB_SystemCatalog')
     if lyr.GetName() != 'GDB_SystemCatalog':
-        gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetField('Name') != 'GDB_SystemCatalog':
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('GDB_SystemCatalog')
     if lyr.GetName() != 'GDB_SystemCatalog':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -614,23 +591,19 @@ def test_ogr_openfilegdb_4():
         if attr_index_use != expected_attr_index_use:
             print(where_clause, fids, expected_attr_index_use)
             print(attr_index_use)
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetFeatureCount() != len(fids):
             print(where_clause, fids)
             print(lyr.GetFeatureCount())
-            gdaltest.post_reason('fail')
             return 'fail'
         for fid in fids:
             feat = lyr.GetNextFeature()
             if feat.GetFID() != fid:
                 print(where_clause, fids)
-                gdaltest.post_reason('fail')
                 return 'fail'
         feat = lyr.GetNextFeature()
         if feat is not None:
             print(where_clause, fids)
-            gdaltest.post_reason('fail')
             return 'fail'
 
     lyr = ds.GetLayerByName('none')
@@ -656,23 +629,19 @@ def test_ogr_openfilegdb_4():
         if attr_index_use != expected_attr_index_use:
             print(where_clause, fids, expected_attr_index_use)
             print(attr_index_use)
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetFeatureCount() != len(fids):
             print(where_clause, fids)
             print(lyr.GetFeatureCount())
-            gdaltest.post_reason('fail')
             return 'fail'
         for fid in fids:
             feat = lyr.GetNextFeature()
             if feat.GetFID() != fid:
                 print(where_clause, fids)
-                gdaltest.post_reason('fail')
                 return 'fail'
         feat = lyr.GetNextFeature()
         if feat is not None:
             print(where_clause, fids)
-            gdaltest.post_reason('fail')
             return 'fail'
 
     lyr = ds.GetLayerByName('big_layer')
@@ -691,7 +660,6 @@ def test_ogr_openfilegdb_4():
         if lyr.GetFeatureCount() != count:
             print(where_clause, count)
             print(lyr.GetFeatureCount())
-            gdaltest.post_reason('fail')
             return 'fail'
         for i in range(count):
             feat = lyr.GetNextFeature()
@@ -699,12 +667,10 @@ def test_ogr_openfilegdb_4():
                (start is not None and
                     feat.GetFID() != i * 4 + start):
                 print(where_clause, count)
-                gdaltest.post_reason('fail')
                 return 'fail'
         feat = lyr.GetNextFeature()
         if feat is not None:
             print(where_clause, count)
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ds = None
@@ -731,7 +697,6 @@ def test_ogr_openfilegdb_5():
 
     ds = ogr.Open('tmp/testopenfilegdb.gdb')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -825,25 +790,21 @@ def test_ogr_openfilegdb_7():
             if sql_lyr is not None:
                 ds.ReleaseResultSet(sql_lyr)
                 print(sql, feat_count, first_fid)
-                gdaltest.post_reason('fail')
                 return 'fail'
             continue
         if sql_lyr is None:
             print(sql, feat_count, first_fid)
-            gdaltest.post_reason('fail')
             return 'fail'
         if expected_optimized:
             if sql_lyr.GetFeatureCount() != feat_count:
                 print(sql, feat_count, first_fid)
                 ds.ReleaseResultSet(sql_lyr)
-                gdaltest.post_reason('fail')
                 return 'fail'
             feat = sql_lyr.GetNextFeature()
             if feat.GetFID() != first_fid:
                 print(sql, feat_count, first_fid)
                 ds.ReleaseResultSet(sql_lyr)
                 feat.DumpReadable()
-                gdaltest.post_reason('fail')
                 return 'fail'
         ds.ReleaseResultSet(sql_lyr)
 
@@ -852,7 +813,6 @@ def test_ogr_openfilegdb_7():
         ds.ReleaseResultSet(sql_lyr)
         if optimized != expected_optimized:
             print(sql, feat_count, first_fid)
-            gdaltest.post_reason('fail')
             return 'fail'
 
         if optimized and sql.find('big_layer') < 0:
@@ -862,7 +822,6 @@ def test_ogr_openfilegdb_7():
                 if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
                     print(sql, feat_count, first_fid)
                     print(ret)
-                    gdaltest.post_reason('fail')
                     return 'fail'
 
     return 'success'
@@ -1122,25 +1081,19 @@ def test_ogr_openfilegdb_11():
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('several_polygons')
     if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
-        gdaltest.post_reason('failure')
         return 'fail'
     lyr.ResetReading()
     if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     if get_spi_state(ds, lyr) != SPI_COMPLETED:
-        gdaltest.post_reason('failure')
         return 'fail'
     # Should return cached value
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     # Should use index
     c = 0
@@ -1149,7 +1102,6 @@ def test_ogr_openfilegdb_11():
         c = c + 1
         feat = lyr.GetNextFeature()
     if c != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     lyr = None
@@ -1162,16 +1114,13 @@ def test_ogr_openfilegdb_11():
     c = 0
     feat = lyr.GetNextFeature()
     if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
-        gdaltest.post_reason('failure')
         return 'fail'
     while feat is not None:
         c = c + 1
         feat = lyr.GetNextFeature()
     if c != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     if get_spi_state(ds, lyr) != SPI_COMPLETED:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     lyr = None
@@ -1188,7 +1137,6 @@ def test_ogr_openfilegdb_11():
     lyr = ds.GetLayerByName('multipolygon')
     lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
     if lyr.GetFeatureCount() != expected_count:
-        gdaltest.post_reason('failure')
         return 'fail'
     lyr = None
     ds = None
@@ -1204,10 +1152,8 @@ def test_ogr_openfilegdb_11():
         c = c + 1
         feat = lyr.GetNextFeature()
     if c != expected_count:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetFeatureCount() != expected_count:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     lyr = None
@@ -1220,13 +1166,11 @@ def test_ogr_openfilegdb_11():
     feat = lyr.GetFeature(1)
     feat = lyr.GetFeature(1)
     if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = lyr.GetNextFeature()
     while feat is not None:
         feat = lyr.GetNextFeature()
     if get_spi_state(ds, lyr) != SPI_COMPLETED:
-        gdaltest.post_reason('failure')
         return 'fail'
     lyr.ResetReading()
     c = 0
@@ -1235,33 +1179,25 @@ def test_ogr_openfilegdb_11():
         c = c + 1
         feat = lyr.GetNextFeature()
     if c != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     if get_spi_state(ds, lyr) != SPI_COMPLETED:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # This will create an array of filtered features
     lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     if lyr.TestCapability(ogr.OLCFastSetNextByIndex) != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     # Test SetNextByIndex() with filtered features
     if lyr.SetNextByIndex(-1) == 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.SetNextByIndex(1) == 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.SetNextByIndex(0) != 0:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
     if get_spi_state(ds, lyr) != SPI_COMPLETED:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     feat = None
@@ -1273,7 +1209,6 @@ def test_ogr_openfilegdb_11():
     lyr = ds.GetLayerByName('multipolygon')
     lyr.SetNextByIndex(3)
     if get_spi_state(ds, lyr) != SPI_INVALID:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     lyr = None
@@ -1285,7 +1220,6 @@ def test_ogr_openfilegdb_11():
     feat = lyr.GetNextFeature()
     lyr.ResetReading()
     if get_spi_state(ds, lyr) != SPI_INVALID:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     lyr = None
@@ -1296,7 +1230,6 @@ def test_ogr_openfilegdb_11():
     lyr = ds.GetLayerByName('point')
     lyr.SetAttributeFilter('id = 1')
     if get_spi_state(ds, lyr) != SPI_INVALID:
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = None
     lyr = None
@@ -1316,7 +1249,6 @@ def test_ogr_openfilegdb_12():
     sr.ImportFromEPSG(3005)
     expected_wkt = sr.ExportToWkt()
     if got_wkt != expected_wkt:
-        gdaltest.post_reason('fail')
         print(got_wkt)
         print(expected_wkt)
         return 'fail'
@@ -1333,18 +1265,14 @@ def test_ogr_openfilegdb_13():
     ds = ogr.Open('/vsizip/data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'DDE_ESSEN_NAIPF_ORI_VUE':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('GEOCODE') != '-673985,22+745574,77':
         f.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1359,13 +1287,10 @@ def test_ogr_openfilegdb_14():
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('testnotnullable')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1380,25 +1305,18 @@ def test_ogr_openfilegdb_15():
     ds = ogr.Open('data/test_default_val.gdb.zip')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('STR')).GetDefault() != "'default_val'":
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('STR')).GetWidth() != 50:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('INT32')).GetDefault() != "123456788":
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('INT16')).GetDefault() != "12345":
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('FLOAT32')).GetDefault().find('1.23') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('FLOAT64')).GetDefault().find('1.23456') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('DATETIME')).GetDefault() != "'2015/06/30 12:34:56'":
-        gdaltest.post_reason('fail')
         return 'fail'
     return 'success'
 
@@ -1413,28 +1331,23 @@ def test_ogr_openfilegdb_16():
     for fid in [2, 3, 4, 7, 8, 9, 10, 2049, 8191, 16384, 10000000, 10000001]:
         f = lyr.GetNextFeature()
         if f.GetFID() != fid:
-            gdaltest.post_reason('fail')
             print(f.GetFID())
             print(fid)
             return 'fail'
 
     f = lyr.GetFeature(100000)
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = lyr.GetFeature(10000000 - 1)
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = lyr.GetFeature(16384)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1449,7 +1362,6 @@ def test_ogr_openfilegdb_17():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1467,7 +1379,6 @@ def test_ogr_openfilegdb_18():
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            gdaltest.post_reason('fail')
             print(f.GetGeometryRef().ExportToWkt())
             print(f_ref.GetGeometryRef().ExportToWkt())
             return 'fail'
@@ -1478,7 +1389,6 @@ def test_ogr_openfilegdb_18():
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            gdaltest.post_reason('fail')
             print(f.GetGeometryRef().ExportToWkt())
             print(f_ref.GetGeometryRef().ExportToWkt())
             return 'fail'
@@ -1490,7 +1400,6 @@ def test_ogr_openfilegdb_18():
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            gdaltest.post_reason('fail')
             print(f.GetGeometryRef().ExportToWkt())
             print(f_ref.GetGeometryRef().ExportToWkt())
             return 'fail'
@@ -1525,7 +1434,6 @@ def test_ogr_openfilegdb_20():
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            gdaltest.post_reason('fail')
             print(f.GetGeometryRef().ExportToIsoWkt())
             print(f_ref.GetGeometryRef().ExportToIsoWkt())
             return 'fail'
@@ -1537,7 +1445,6 @@ def test_ogr_openfilegdb_20():
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
         if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            gdaltest.post_reason('fail')
             print(f.GetGeometryRef().ExportToIsoWkt())
             print(f_ref.GetGeometryRef().ExportToIsoWkt())
             return 'fail'
@@ -1553,16 +1460,13 @@ def test_ogr_openfilegdb_21():
     ds = ogr.Open('data/curves.gdb')
     sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
     if sql_lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = sql_lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -1570,7 +1474,6 @@ def test_ogr_openfilegdb_21():
     lyr.SetAttributeFilter('OBJECTID = 2')
     f = lyr.GetNextFeature()
     if f.GetFID() != 2:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 

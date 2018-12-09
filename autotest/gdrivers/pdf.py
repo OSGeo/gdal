@@ -639,12 +639,10 @@ def pdf_xmp():
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_xmp.pdf')
 
     if ref_md[0] != got_md[0]:
-        gdaltest.post_reason('fail')
         print(got_md[0])
         return 'fail'
 
     if len(base_md) != 2:  # NEATLINE and DPI
-        gdaltest.post_reason('fail')
         print(base_md)
         return 'fail'
 
@@ -721,7 +719,6 @@ def pdf_update_gt():
     ds = None
 
     if os.path.exists('tmp/pdf_update_gt.pdf.aux.xml'):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check geotransform
@@ -1563,14 +1560,12 @@ def pdf_write_ogr():
             # print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
             for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
-                    gdaltest.post_reason('fail')
                     print('Checksum %s: %d' % (roi, cs_tab[i]))
                     print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]))
                     return 'fail'
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
         if abs(cs_tab[len(rendering_options) - 1]) != cs_ref:
-            gdaltest.post_reason('fail')
             print(cs_ref)
             print(cs_tab[len(rendering_options) - 1])
             return 'fail'
@@ -1680,13 +1675,10 @@ def pdf_jpeg_direct_copy():
     ds = gdal.Open('tmp/pdf_jpeg_direct_copy.pdf')
     # No XMP at PDF level
     if ds.GetMetadata('xml:XMP') is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
     if ds.RasterXSize != 20:
-        gdaltest.post_reason('failed')
         return 'fail'
     if pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     ds = None
 
@@ -1699,7 +1691,6 @@ def pdf_jpeg_direct_copy():
     gdal.Unlink('tmp/pdf_jpeg_direct_copy.pdf')
 
     if offset == -1:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     return 'success'
@@ -1736,13 +1727,10 @@ def pdf_jpeg_in_vrt_direct_copy():
     ds = gdal.Open('tmp/pdf_jpeg_in_vrt_direct_copy.pdf')
     # No XMP at PDF level
     if ds.GetMetadata('xml:XMP') is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
     if ds.RasterXSize != 20:
-        gdaltest.post_reason('failed')
         return 'fail'
     if pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
     ds = None
 
@@ -1755,7 +1743,6 @@ def pdf_jpeg_in_vrt_direct_copy():
     gdal.Unlink('tmp/pdf_jpeg_in_vrt_direct_copy.pdf')
 
     if offset == -1:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     return 'success'
@@ -1830,12 +1817,10 @@ def pdf_write_huge():
         ds = None
         ds = gdal.Open(tmp_filename)
         if int(ds.GetMetadataItem('DPI')) != 96:
-            gdaltest.post_reason('failure')
             print(ds.GetMetadataItem('DPI'))
             return 'fail'
         if ds.RasterXSize != src_ds.RasterXSize or \
                 ds.RasterYSize != src_ds.RasterYSize:
-            gdaltest.post_reason('failure')
             print(ds.RasterXSize)
             print(ds.RasterYSize)
             return 'fail'
@@ -1847,12 +1832,10 @@ def pdf_write_huge():
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
         if msg == '':
-            gdaltest.post_reason('failure')
             return 'fail'
         ds = None
         ds = gdal.Open(tmp_filename)
         if int(ds.GetMetadataItem('DPI')) != 72:
-            gdaltest.post_reason('failure')
             print(ds.GetMetadataItem('DPI'))
             return 'fail'
         ds = None
@@ -1867,12 +1850,10 @@ def pdf_write_huge():
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
         if msg == '':
-            gdaltest.post_reason('failure')
             return 'fail'
         ds = None
         ds = gdal.Open(tmp_filename)
         if int(ds.GetMetadataItem('DPI')) != 72:
-            gdaltest.post_reason('failure')
             print(ds.GetMetadataItem('DPI'))
             return 'fail'
         ds = None
@@ -1912,7 +1893,6 @@ def pdf_overviews():
             return 'fail'
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         if cs != 5934:
-            gdaltest.post_reason('failure')
             print(cs)
             return 'fail'
     elif pdf_is_pdfium():
@@ -1921,12 +1901,10 @@ def pdf_overviews():
     ds.BuildOverviews('NONE', [2])
     after = ds.GetRasterBand(1).GetOverviewCount()
     if after != 1:
-        gdaltest.post_reason('failure')
         print(after)
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 0:
-        gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
     ds = None
@@ -1951,20 +1929,17 @@ def pdf_password():
     with gdaltest.error_handler():
         ds = gdal.Open('data/byte_enc.pdf')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Wrong password
     with gdaltest.error_handler():
         ds = gdal.OpenEx('data/byte_enc.pdf', open_options=['USER_PWD=wrong_password'])
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Correct password
     ds = gdal.OpenEx('data/byte_enc.pdf', open_options=['USER_PWD=user_password'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     import test_cli_utilities
@@ -1980,7 +1955,6 @@ def pdf_password():
     ret = os.system(cmd_line)
     os.unlink('tmp/password.txt')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test ASK_INTERACTIVE with correct password
@@ -1988,7 +1962,6 @@ def pdf_password():
     ret = os.system(cmd_line)
     os.unlink('tmp/password.txt')
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -2032,19 +2005,16 @@ def pdf_multipage():
     with gdaltest.error_handler():
         ds3 = gdal.Open('PDF:0:data/byte_and_rgbsmall_2pages.pdf')
     if ds3 is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds3 = gdal.Open('PDF:3:data/byte_and_rgbsmall_2pages.pdf')
     if ds3 is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDF:1:/does/not/exist.pdf')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -2062,13 +2032,11 @@ def pdf_metadata():
     ds = gdal.Open('tmp/pdf_metadata.pdf')
     md = ds.GetMetadata()
     if 'FOO' not in md:
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     ds = None
     ds = gdal.Open('tmp/pdf_metadata.pdf')
     if ds.GetMetadataItem('FOO') != 'BAR':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2090,21 +2058,17 @@ def pdf_pam_georef():
     # Default behaviour should result in no PAM file
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds)
     if os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Now disable internal georeferencing, so georef should go to PAM
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options=['GEO_ENCODING=NONE'])
     if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('tmp/pdf_pam_georef.pdf')
     if ds.GetGeoTransform() != src_ds.GetGeoTransform():
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetProjectionRef() != src_ds.GetProjectionRef():
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

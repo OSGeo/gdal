@@ -661,7 +661,6 @@ def test_osr_basic_19():
     sr_ref.ImportFromEPSG(4326)
 
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         print(sr_ref.ExportToWkt())
         return 'fail'
@@ -673,7 +672,6 @@ def test_osr_basic_19():
     sr_ref.ImportFromEPSG(4322)
 
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         print(sr_ref.ExportToWkt())
         return 'fail'
@@ -685,7 +683,6 @@ def test_osr_basic_19():
     sr_ref.ImportFromEPSG(4267)
 
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         print(sr_ref.ExportToWkt())
         return 'fail'
@@ -697,7 +694,6 @@ def test_osr_basic_19():
     sr_ref.ImportFromEPSG(4269)
 
     if sr.ExportToWkt() != sr_ref.ExportToWkt():
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         print(sr_ref.ExportToWkt())
         return 'fail'
@@ -714,27 +710,22 @@ def test_osr_basic_20():
     sr.ImportFromEPSGA(4326)
 
     if sr.GetAxisName(None, 0) != 'Latitude':
-        gdaltest.post_reason('fail')
         print(sr.GetAxisName(None, 0))
         return 'fail'
 
     if sr.GetAxisOrientation(None, 0) != osr.OAO_North:
-        gdaltest.post_reason('fail')
         print(sr.GetAxisOrientation(None, 0))
         return 'fail'
 
     if sr.GetAxisName('GEOGCS', 1) != 'Longitude':
-        gdaltest.post_reason('fail')
         print(sr.GetAxisName('GEOGCS', 1))
         return 'fail'
 
     if sr.GetAxisOrientation('GEOGCS', 1) != osr.OAO_East:
-        gdaltest.post_reason('fail')
         print(sr.GetAxisOrientation('GEOGCS', 1))
         return 'fail'
 
     if sr.GetAngularUnitsName() != 'degree':
-        gdaltest.post_reason('fail')
         print(sr.GetAngularUnitsName())
         return 'fail'
 
@@ -788,18 +779,15 @@ def test_osr_basic_21():
     sr2.ImportFromWkt(wkt2)
 
     if sr1.IsSame(sr2) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if sr2.IsSame(sr1) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sr2_not_equivalent = osr.SpatialReference()
     sr2_not_equivalent.ImportFromWkt(wkt2_not_equivalent)
 
     if sr1.IsSame(sr2_not_equivalent) == 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -859,14 +847,12 @@ def test_osr_basic_22():
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
     if sr2.IsSame(expected_sr2) == 0:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
     # Back to LCC_2SP
     sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
     if sr3.IsSame(sr) == 0:
-        gdaltest.post_reason('fail')
         print(sr3)
         return 'fail'
 
@@ -914,13 +900,11 @@ def test_osr_basic_22():
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
     if sr2.IsSame(expected_sr2) == 0:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
     sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
     if sr3.IsSame(sr) == 0:
-        gdaltest.post_reason('fail')
         print(sr3)
         return 'fail'
 
@@ -968,7 +952,6 @@ def test_osr_basic_22():
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
     if sr2.IsSame(expected_sr2) == 0:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -995,7 +978,6 @@ def test_osr_basic_22():
     expected_sr3 = osr.SpatialReference()
     expected_sr3.ImportFromWkt(expected_sr3_wkt)
     if sr3.IsSame(expected_sr3) == 0:
-        gdaltest.post_reason('fail')
         print(sr3)
         return 'fail'
 
@@ -1056,14 +1038,12 @@ def test_osr_basic_23():
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
     if sr2.IsSame(expected_sr2) == 0:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
     # Back to LCC_2SP
     sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
     if sr3.IsSame(sr) == 0:
-        gdaltest.post_reason('fail')
         print(sr3)
         return 'fail'
 
@@ -1114,14 +1094,12 @@ def test_osr_basic_24():
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
     if sr2.IsSame(expected_sr2) == 0:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
     # Back to LCC_2SP
     sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_MERCATOR_1SP)
     if sr3.IsSame(sr) == 0:
-        gdaltest.post_reason('fail')
         print(sr3)
         return 'fail'
 
@@ -1140,7 +1118,6 @@ def test_osr_basic_25():
             UNIT["degree",0.0174532925199433]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1157,17 +1134,14 @@ def test_osr_basic_25():
 
     sr2 = sr.ConvertToOtherProjection(None)
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sr2 = sr.ConvertToOtherProjection('foo')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
     if sr2.IsSame(sr) == 0:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1185,7 +1159,6 @@ def test_osr_basic_25():
         PARAMETER["false_northing",0]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_2SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1203,7 +1176,6 @@ def test_osr_basic_25():
         PARAMETER["false_northing",0]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_2SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1221,7 +1193,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",0]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1239,7 +1210,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",0]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1259,7 +1229,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",4185861.369]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1279,7 +1248,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",4185861.369]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1299,7 +1267,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",4185861.369]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1319,7 +1286,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",4185861.369]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1338,7 +1304,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1357,7 +1322,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1376,7 +1340,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1395,7 +1358,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1414,7 +1376,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1433,7 +1394,6 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     if sr2 is not None:
-        gdaltest.post_reason('fail')
         print(sr2)
         return 'fail'
 
@@ -1448,30 +1408,25 @@ def test_osr_basic_setgeogcs():
     sr = osr.SpatialReference()
     sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
     if sr.ExportToWkt() != 'GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
 
     sr.SetGeogCS('a', 'b', 'c', 1, 2, 'd', 3, 'e', 4)
     if sr.ExportToWkt() != 'GEOGCS["a",DATUM["b",SPHEROID["c",1,2]],PRIMEM["d",3],UNIT["e",4]]':
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
 
     sr.SetUTM(31)
     sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
     if sr.ExportToWkt() != 'PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0.01308996938995747],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]':
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
 
     sr.ImportFromWkt('FOO["bar",GEOGCS[]]')
     if sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0) == 0:
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
     if sr.ExportToWkt() != 'FOO["bar",GEOGCS[]]':
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
 

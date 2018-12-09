@@ -144,7 +144,6 @@ def test_ogr_mssqlspatial_3():
         return 'skip'
 
     if gdaltest.mssqlspatial_lyr.GetGeometryColumn() != 'ogr_geometry':
-        gdaltest.post_reason('fail')
         print(gdaltest.mssqlspatial_lyr.GetGeometryColumn())
         return 'fail'
 
@@ -179,7 +178,6 @@ def test_ogr_mssqlspatial_3():
                 gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
         if read_feat.GetField('INT64') != 1234567890123:
-            gdaltest.post_reason('failure')
             return 'fail'
 
         read_feat = None

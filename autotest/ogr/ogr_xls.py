@@ -47,7 +47,6 @@ def test_ogr_xls_1():
         return 'skip'
 
     if drv.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.Open('data/test972000xp.xls')
@@ -56,7 +55,6 @@ def test_ogr_xls_1():
         return 'fail'
 
     if ds.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerCount() != 1:
@@ -77,16 +75,13 @@ def test_ogr_xls_1():
         return 'fail'
 
     if lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
     if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() != 5:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
@@ -95,7 +90,6 @@ def test_ogr_xls_1():
        lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTString or \
        lyr.GetLayerDefn().GetFieldDefn(3).GetType() != ogr.OFTDate or \
        lyr.GetLayerDefn().GetFieldDefn(4).GetType() != ogr.OFTDateTime:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -104,7 +98,6 @@ def test_ogr_xls_1():
        feat.IsFieldSet(2) or \
        feat.GetFieldAsString(3) != '1980/01/01' or \
        feat.GetFieldAsString(4) != '1980/01/01 00:00:00':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -112,7 +105,6 @@ def test_ogr_xls_1():
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -133,7 +125,6 @@ def test_ogr_xls_2():
     lyr = ds.GetLayer(0)
 
     if lyr.GetFeatureCount() != 4:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
@@ -157,7 +148,6 @@ def test_ogr_xls_3():
     lyr = ds.GetLayer(0)
 
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetConfigOption('OGR_XLS_FIELD_TYPES', None)

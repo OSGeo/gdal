@@ -68,7 +68,6 @@ def test_gdal_pansharpen_1():
     gdal.GetDriverByName('GTiff').Delete('tmp/out.tif')
 
     if cs != [4735, 10000, 9742]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -92,7 +91,6 @@ def test_gdal_pansharpen_2():
     gdal.GetDriverByName('VRT').Delete('tmp/out.vrt')
 
     if cs != [9742, 4735]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 

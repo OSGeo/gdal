@@ -692,10 +692,8 @@ def test_numpy_rw_14():
                                            callback=numpy_rw_14_progress_callback,
                                            callback_data=tab)
     if data is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if abs(tab[0] - 1.05) > 1e-5 or not tab[1]:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test interruption
@@ -703,10 +701,8 @@ def test_numpy_rw_14():
     data = ds.GetRasterBand(1).ReadAsArray(callback=numpy_rw_14_progress_interrupt_callback,
                                            callback_data=tab)
     if data is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if tab[0] < 0.50:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test Dataset.ReadAsArray
@@ -715,10 +711,8 @@ def test_numpy_rw_14():
                           callback=numpy_rw_14_progress_callback,
                           callback_data=tab)
     if data is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if abs(tab[0] - 1.05) > 1e-5 or not tab[1]:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Same with interruption
@@ -726,7 +720,6 @@ def test_numpy_rw_14():
     data = ds.ReadAsArray(callback=numpy_rw_14_progress_interrupt_callback,
                           callback_data=tab)
     if data is not None or tab[0] < 0.50:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test Dataset.ReadAsArray on a multi band file
@@ -736,7 +729,6 @@ def test_numpy_rw_14():
     data = ds.ReadAsArray(callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
     if data is None or abs(last_pct[0] - 1.0) > 1e-5:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     last_pct = [0]
@@ -747,7 +739,6 @@ def test_numpy_rw_14():
                           callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
     if data is None or abs(last_pct[0] - 1.0) > 1e-5:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -768,12 +759,10 @@ def test_numpy_rw_15():
     ds = gdal_array.OpenArray(array)
     gt = ds.GetGeoTransform(can_return_null=True)
     if gt is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds.SetGeoTransform([1, 2, 3, 4, 5, -6])
     gt = ds.GetGeoTransform()
     if gt != (1, 2, 3, 4, 5, -6):
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -795,7 +784,6 @@ def test_numpy_rw_16():
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
     if ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # 4D
@@ -803,7 +791,6 @@ def test_numpy_rw_16():
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
     if ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Unsupported data type
@@ -811,7 +798,6 @@ def test_numpy_rw_16():
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
     if ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -833,21 +819,18 @@ def test_numpy_rw_17():
     with gdaltest.error_handler():
         ds = gdal.Open(gdal_array.GetArrayFilename(array))
     if ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     gdal.SetConfigOption('GDAL_ARRAY_OPEN_BY_FILENAME', 'TRUE')
     ds = gdal.Open(gdal_array.GetArrayFilename(array))
     gdal.SetConfigOption('GDAL_ARRAY_OPEN_BY_FILENAME', None)
     if ds is None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Invalid value
     with gdaltest.error_handler():
         ds = gdal.Open('NUMPY:::invalid')
     if ds is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'

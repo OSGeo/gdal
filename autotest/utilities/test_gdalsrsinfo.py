@@ -393,7 +393,6 @@ def test_gdalsrsinfo_17():
                                ' -e "LOCAL_CS[foo]"')
 
     if ret.find('EPSG:-1') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -402,7 +401,6 @@ def test_gdalsrsinfo_17():
                                ' -e ../osr/data/lcc_esri.prj')
 
     if ret.find('EPSG:32119') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -410,7 +408,6 @@ def test_gdalsrsinfo_17():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                """ -e "GEOGCS[\"myLKS94\",DATUM[\"Lithuania_1994_ETRS89\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" """)
     if ret.find('EPSG:4126') < 0 or ret.find('EPSG:4669') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 

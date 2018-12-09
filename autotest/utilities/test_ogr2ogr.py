@@ -1629,7 +1629,6 @@ def test_ogr2ogr_44():
     f.close()
 
     if data.find('type="gml:MultiPolygonPropertyType"') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1638,7 +1637,6 @@ def test_ogr2ogr_44():
     f.close()
 
     if data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1683,7 +1681,6 @@ def test_ogr2ogr_45():
     f.close()
 
     if data.find('type="gml:MultiLineStringPropertyType"') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1692,7 +1689,6 @@ def test_ogr2ogr_45():
     f.close()
 
     if data.find('<ogr:geometryProperty><gml:MultiLineString><gml:lineStringMember><gml:LineString><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LineString></gml:lineStringMember></gml:MultiLineString></ogr:geometryProperty>') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1738,13 +1734,11 @@ def test_ogr2ogr_46():
         f.close()
 
         if data.find('2,49') == -1 and data.find('2.0,49.0') == -1 and data.find('222638.') == -1:
-            gdaltest.post_reason('failure')
             print(option)
             print(data)
             return 'fail'
 
         if data.find('3,50') == -1 and data.find('3.0,50.0') == -1 and data.find('333958.') == -1:
-            gdaltest.post_reason('failure')
             print(option)
             print(data)
             return 'fail'
@@ -1804,7 +1798,6 @@ def test_ogr2ogr_47():
     f.close()
 
     if data.find('>-3.0,40.65') == -1 and data.find('<3.0,40.65') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1945,13 +1938,11 @@ def test_ogr2ogr_50():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('field1') != 'foo' or not feat.IsFieldNull('field2'):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetField('field1') != 'bar' or feat.GetField('field2') != 'baz':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds = None
@@ -1985,7 +1976,6 @@ def test_ogr2ogr_51():
     expected_lines = ['"_WKTgeom1_EPSG_4326","_WKTgeom2_EPSG_32631","id","foo"', '"POINT (1 2)","POINT (3 4)","1","bar"']
     for i in range(2):
         if lines[i].strip() != expected_lines[i]:
-            gdaltest.post_reason('fail')
             print(lines)
             return 'fail'
 
@@ -1996,12 +1986,10 @@ def test_ogr2ogr_51():
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
     if sr is None or sr.ExportToWkt().find('GEOGCS["WGS 84"') != 0:
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_51_dst.shp')
@@ -2018,7 +2006,6 @@ def test_ogr2ogr_51():
                       '"POINT (1 2)","POINT (3 4)","1","bar"']
     for i in range(3):
         if lines[i].strip() != expected_lines[i]:
-            gdaltest.post_reason('fail')
             print(lines)
             return 'fail'
 
@@ -2034,7 +2021,6 @@ def test_ogr2ogr_51():
     expected_lines = ['"_WKTgeom2_EPSG_32631","_WKTgeom1_EPSG_4326","foo","id"', '"POINT (3 4)","POINT (1 2)","bar","1"']
     for i in range(2):
         if lines[i].strip() != expected_lines[i]:
-            gdaltest.post_reason('fail')
             print(lines)
             return 'fail'
 
@@ -2050,7 +2036,6 @@ def test_ogr2ogr_51():
                       '"POINT (3 4)","POINT (1 2)","bar","1"']
     for i in range(2):
         if lines[i].strip() != expected_lines[i]:
-            gdaltest.post_reason('fail')
             print(lines)
             return 'fail'
 
@@ -2079,7 +2064,6 @@ def test_ogr2ogr_52():
     f.close()
 
     if content.find('LINESTRING (0 0,') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2090,7 +2074,6 @@ def test_ogr2ogr_52():
     f.close()
 
     if content.find('COMPOUNDCURVE ((0 0,') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2129,7 +2112,6 @@ def test_ogr2ogr_53():
        content.find('<SimpleData name="i64">123456789012</SimpleData>') < 0 or \
        content.find('<SimpleField name="b" type="string"></SimpleField>') < 0 or \
        content.find('<SimpleData name="b">1</SimpleData>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2143,7 +2125,6 @@ def test_ogr2ogr_53():
     f.close()
 
     if content.find('"123456789012.0"') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2158,7 +2139,6 @@ def test_ogr2ogr_53():
 
     if content.find('<SimpleField name="i64" type="string"></SimpleField>') < 0 or \
        content.find('<SimpleData name="i64">123456789012</SimpleData>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2205,7 +2185,6 @@ def test_ogr2ogr_54():
     if content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>') < 0 or \
        content.find('<xs:element name="fld1" nillable="true" minOccurs="1" maxOccurs="1">') < 0 or \
        content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2222,7 +2201,6 @@ def test_ogr2ogr_54():
     if content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') < 0 or \
        content.find('<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">') < 0 or \
        content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2272,7 +2250,6 @@ def test_ogr2ogr_55():
     f.close()
 
     if content.find('<ogr:fld2>2</ogr:fld2>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2287,7 +2264,6 @@ def test_ogr2ogr_55():
     f.close()
 
     if content.find('<ogr:fld2>') >= 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2325,7 +2301,6 @@ def test_ogr2ogr_56():
 
     if content.find("""ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid"" """) >= 0 or \
        content.find("""INSERT INTO "public"."test_ogr2ogr_56" ("wkb_geometry" , "myid" , "str", "wkt") VALUES ('010100000000000000000000000000000000000000', 10, 'aaa', 'POINT(0 0)');""") < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2374,7 +2349,6 @@ def test_ogr2ogr_57():
 
     if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") < 0 or \
        content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2389,7 +2363,6 @@ def test_ogr2ogr_57():
 
     if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") < 0 or \
        content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -2416,7 +2389,6 @@ def test_ogr2ogr_58():
     ds = ogr.Open('tmp/test_ogr2ogr_58.sqlite')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2446,20 +2418,16 @@ def test_ogr2ogr_59():
 
     ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
     if ds.GetMetadata() != {'FOO': 'BAR', 'BAZ': 'BAW'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     if ds.GetMetadata('another_domain') != {'BAR': 'BAZ'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetMetadata() != {'lyr_FOO': 'lyr_BAR'}:
-        gdaltest.post_reason('fail')
         print(lyr.GetMetadata())
         return 'fail'
     if lyr.GetMetadata('lyr_another_domain') != {'lyr_BAR': 'lyr_BAZ'}:
-        gdaltest.post_reason('fail')
         print(lyr.GetMetadata())
         return 'fail'
     ds = None
@@ -2469,12 +2437,10 @@ def test_ogr2ogr_59():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -nomd')
     ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
     if ds.GetMetadata() != {}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetMetadata() != {}:
-        gdaltest.post_reason('fail')
         print(lyr.GetMetadata())
         return 'fail'
     ds = None
@@ -2500,7 +2466,6 @@ def test_ogr2ogr_60():
     ds = ogr.Open('tmp/test_ogr2ogr_60.gdb')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2525,7 +2490,6 @@ def test_ogr2ogr_61():
 
     ds = ogr.Open('tmp/test_ogr2ogr_61.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.Destroy()
 
@@ -2533,7 +2497,6 @@ def test_ogr2ogr_61():
 
     ds = ogr.Open('tmp/test_ogr2ogr_61_2.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.Destroy()
 
@@ -2560,14 +2523,12 @@ def test_ogr2ogr_62():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json""")
     fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
     if fp is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
     os.unlink('tmp/test_ogr2ogr_62.json')
 
     if data.find('bar') < 0 or data.find('baz') < 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -2575,7 +2536,6 @@ def test_ogr2ogr_62():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json -noNativeData""")
     fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
     if fp is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
@@ -2583,7 +2543,6 @@ def test_ogr2ogr_62():
     os.unlink('tmp/test_ogr2ogr_62_in.json')
 
     if data.find('bar') >= 0 or data.find('baz') >= 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -2605,12 +2564,10 @@ def test_ogr2ogr_63():
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' --formats')
     if ret.find('Supported Formats') < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
     if err.find('ERROR') >= 0:
-        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'
@@ -2647,10 +2604,8 @@ def test_ogr2ogr_64():
 
     ds = ogr.Open('tmp/out_csv')
     if ds.GetLayerByName(first_layer).GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerByName(second_layer).GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2670,7 +2625,6 @@ def test_ogr2ogr_65():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/out.csv ../ogr/data/poly.shp')
     ds = gdal.OpenEx('tmp/out.csv')
     if ds.GetDriver().ShortName != 'CSV':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.Unlink('tmp/out.csv')
@@ -2694,7 +2648,6 @@ def test_ogr2ogr_66():
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' ../ogr/data/poly.shp ../ogr/data/poly.shp')
     if err.find("Source and destination datasets must be different in non-update mode") < 0:
-        gdaltest.post_reason('fail')
         print(ret)
         print(err)
         return 'fail'

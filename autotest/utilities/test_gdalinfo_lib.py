@@ -119,17 +119,13 @@ def test_gdalinfo_lib_5():
                     showGCPs=False, showMetadata=False, showRAT=False,
                     showColorTable=False, listMDD=True, showFileList=False)
     if 'files' in ret:
-        gdaltest.post_reason('fail')
         return 'fail'
     band = ret['bands'][0]
     if 'computedMin' not in band:
-        gdaltest.post_reason('fail')
         return 'fail'
     if 'histogram' not in band:
-        gdaltest.post_reason('fail')
         return 'fail'
     if 'checksum' not in band:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None

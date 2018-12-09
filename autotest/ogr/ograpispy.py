@@ -103,14 +103,12 @@ def test_ograpispy_2():
     ds = ogr.Open('tmp/snapshot_1/source/ograpispy_2.shp')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp', update=1)
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Add a feature to check that running the script will work
@@ -124,7 +122,6 @@ def test_ograpispy_2():
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
         print(lyr.GetFeatureCount())
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

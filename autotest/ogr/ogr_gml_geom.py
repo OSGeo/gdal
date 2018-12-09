@@ -1860,7 +1860,6 @@ def test_gml_srsDimension_topgeometry():
     geom = ogr.CreateGeometryFromGML(gml)
 
     if geom.ExportToWkt() != 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))':
-        gdaltest.post_reason('fail')
         print(geom.ExportToWkt())
         return 'fail'
 
@@ -1876,20 +1875,17 @@ def test_gml_Arc():
     geom = ogr.CreateGeometryFromGML(gml)
 
     if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 0,0 1,-1 0)')) != 0:
-        gdaltest.post_reason('fail')
         print(geom)
         return 'fail'
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:ArcString><gml:posList>1 0 0 1 -1 0</gml:posList></gml:ArcString></gml:segments></gml:Curve>'
     if gml2 != expected_gml2:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 
     geom2 = ogr.CreateGeometryFromGML(gml2)
     if not geom.Equals(geom2):
-        gdaltest.post_reason('fail')
         print(geom2)
         return 'fail'
 
@@ -1905,7 +1901,6 @@ def test_gml_ArcByBulge():
     geom = ogr.CreateGeometryFromGML(gml)
 
     if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (2 0,0 2,-2 0)')) != 0:
-        gdaltest.post_reason('fail')
         print(geom)
         return 'fail'
 
@@ -1921,7 +1916,6 @@ def test_gml_ArcByCenterPoint():
     geom = ogr.CreateGeometryFromGML(gml)
 
     if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 4,-1 2,1 0)')) != 0:
-        gdaltest.post_reason('fail')
         print(geom)
         return 'fail'
 
@@ -1984,7 +1978,6 @@ def test_gml_CompoundCurve_of_ArcByCenterPoint():
     geom = ogr.CreateGeometryFromGML(gml)
 
     if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('POLYGON ((-80.4 33.86,-80.27 33.63,-80.305028054229538 33.622017309598967,-80.335422529369936 33.613343178471617,-80.366464292754429 33.606448070493634,-80.398003921948742 33.601365147653873,-80.429889693662162 33.598118851265042,-80.461968286017793 33.596724788982847,-80.494085487001527 33.597189662699385,-80.52608690656875 33.599511237590342,-80.557818688893789 33.603678352435914,-80.589128223167393 33.609670971175497,-80.619864849221443 33.617460275496377,-80.63 33.62,-80.39 33.85))')) != 0:
-        gdaltest.post_reason('fail')
         print(geom)
         return 'fail'
 
@@ -2000,7 +1993,6 @@ def test_gml_CircleByCenterPoint():
     geom = ogr.CreateGeometryFromGML(gml)
 
     if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (-1 2,3 2,-1 2)')) != 0:
-        gdaltest.post_reason('fail')
         print(geom)
         return 'fail'
 
@@ -2027,13 +2019,11 @@ def test_gml_Circle():
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 1 1 2 0</gml:posList></gml:Circle></gml:segments></gml:Curve>'
     if gml2 != expected_gml2:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 
     geom2 = ogr.CreateGeometryFromGML(gml2)
     if geom2.ExportToWkt() != 'CIRCULARSTRING (0 0,1 1,2 0,1 -1,0 0)':
-        gdaltest.post_reason('fail')
         print(geom2)
         return 'fail'
 
@@ -2041,7 +2031,6 @@ def test_gml_Circle():
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:Circle><gml:posList srsDimension="3">0 0 10 1 1 10 2 0 10</gml:posList></gml:Circle></gml:segments></gml:Curve>'
     if gml2 != expected_gml2:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 
@@ -2091,13 +2080,11 @@ def test_gml_ArcString():
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:ArcString><gml:posList>-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString></gml:segments></gml:Curve>'
     if gml2 != expected_gml2:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 
     geom2 = ogr.CreateGeometryFromGML(gml2)
     if geom2.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)':
-        gdaltest.post_reason('fail')
         print(geom2)
         return 'fail'
 
@@ -2114,7 +2101,6 @@ def test_gml_OGRCompoundCurve():
     gml = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml = '<gml:CompositeCurve><gml:curveMember><gml:LineString><gml:posList>0 0 1 1 2 0</gml:posList></gml:LineString></gml:curveMember></gml:CompositeCurve>'
     if gml != expected_gml:
-        gdaltest.post_reason('fail')
         print(gml)
         return 'fail'
 
@@ -2136,7 +2122,6 @@ def test_gml_OGRCompoundCurve():
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     if gml2 != gml:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 
@@ -2205,7 +2190,6 @@ def test_gml_OGRCurvePolygon():
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:exterior></gml:Polygon>'
     if gml2 != expected_gml2:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 
@@ -2319,7 +2303,6 @@ def test_gml_OGRMultiSurface():
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>'
     if gml2 != expected_gml2:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 
@@ -2342,7 +2325,6 @@ def test_gml_OGRMultiCurve():
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     if gml2 != gml:
-        gdaltest.post_reason('fail')
         print(gml2)
         return 'fail'
 

@@ -222,7 +222,6 @@ def test_ingr_17():
     gdal.GetDriverByName('INGR').Delete('/vsimem/ingr_17.rle')
 
     if got_cs != ref_cs:
-        gdaltest.post_reason('fail')
         print(got_cs)
         print(ref_cs)
         return 'fail'
@@ -247,7 +246,6 @@ def test_ingr_18():
     got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
 
     if got_data != expected_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.FlushCache()
@@ -255,7 +253,6 @@ def test_ingr_18():
     got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
 
     if got_data != expected_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

@@ -190,7 +190,6 @@ def test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
     PARAMETER["Auxiliary_Sphere_Type",0.0],
     UNIT["Meter",1.0],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"]]""":
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -213,7 +212,6 @@ def test_tiff_srs_angular_units():
     wkt = ds.GetProjectionRef()
     if wkt.find('UNIT["arc-second",4.848136811095361e-06]') < 0 and \
        wkt.find('UNIT["arc-second",4.848136811095361e-006]') < 0:  # wine variant
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -228,7 +226,6 @@ def test_tiff_srs_angular_units():
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
     if wkt.find('UNIT["arc-minute",0.0002908882086657216]') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -243,7 +240,6 @@ def test_tiff_srs_angular_units():
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
     if wkt.find('UNIT["grad",0.01570796326794897]') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -258,7 +254,6 @@ def test_tiff_srs_angular_units():
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
     if wkt.find('UNIT["gon",0.01570796326794897]') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -273,7 +268,6 @@ def test_tiff_srs_angular_units():
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
     if wkt.find('UNIT["radian",1]') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -288,7 +282,6 @@ def test_tiff_srs_angular_units():
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
     if wkt.find('UNIT["custom",1.23]') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -313,7 +306,6 @@ def test_tiff_custom_datum_known_ellipsoid():
     ds = gdal.Open('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
     wkt = ds.GetProjectionRef()
     if wkt != 'GEOGCS["WGS 84 based",DATUM["WGS_1984_based",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -335,7 +327,6 @@ def test_tiff_srs_epsg_2853_with_us_feet():
     gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
     wkt = ds.GetProjectionRef()
     if wkt.find('PARAMETER["false_easting",11482916.66') < 0 or wkt.find('UNIT["us_survey_feet",0.3048006') < 0 or wkt.find('2853') >= 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -344,7 +335,6 @@ def test_tiff_srs_epsg_2853_with_us_feet():
     gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
     wkt = ds.GetProjectionRef()
     if wkt.find('PARAMETER["false_easting",11482916.66') < 0 or wkt.find('UNIT["us_survey_feet",0.3048006') < 0 or wkt.find('2853') >= 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -375,7 +365,6 @@ def test_tiff_srs_PCSCitationGeoKey_LUnits():
     ds = gdal.Open('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif')
     wkt = ds.GetProjectionRef()
     if wkt != 'PROJCS["UTM Zone 32, Northern Hemisphere",GEOGCS["GRS 1980(IUGG, 1980)",DATUM["unknown",SPHEROID["GRS80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",50000000],PARAMETER["false_northing",0],UNIT["Centimeter",0.01]]':
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
     ds = None
@@ -395,7 +384,6 @@ def test_tiff_srs_projection_3856():
     ds = None
 
     if wkt.find('EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -412,7 +400,6 @@ def test_tiff_srs_imagine_localcs_citation():
     ds = None
 
     if wkt != 'LOCAL_CS["Projection Name = UTM Units = meters GeoTIFF Units = meters",UNIT["unknown",1]]':
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -430,7 +417,6 @@ def test_tiff_srs_towgs84_override():
     ds = None
 
     if wkt.find('TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]') < 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 
@@ -447,7 +433,6 @@ def test_tiff_srs_pcscitation():
     ds = None
 
     if wkt.find('PROJCS["mycitation",') != 0:
-        gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
 

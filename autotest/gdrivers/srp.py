@@ -51,21 +51,17 @@ def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
 
     ds = gdal.Open('data/' + filename)
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ct = ds.GetRasterBand(1).GetColorTable()
     if ct.GetCount() != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ct.GetColorEntry(0) != (0, 0, 0, 255):
-        gdaltest.post_reason('fail')
         print(ct.GetColorEntry(0))
         return 'fail'
 
     if ct.GetColorEntry(1) != (255, 0, 0, 255):
-        gdaltest.post_reason('fail')
         print(ct.GetColorEntry(1))
         return 'fail'
 
@@ -124,12 +120,10 @@ def test_srp_5():
     subdatasets = ds.GetMetadata('SUBDATASETS')
     if subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' and \
        subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG':
-        gdaltest.post_reason('fail')
         print(subdatasets)
         return 'fail'
     if subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' and \
        subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG':
-        gdaltest.post_reason('fail')
         print(subdatasets)
         return 'fail'
 

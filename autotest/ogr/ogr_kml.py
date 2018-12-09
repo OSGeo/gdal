@@ -649,7 +649,6 @@ def test_ogr_kml_read_empty():
 
     ds = ogr.Open('data/empty.kml')
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
@@ -666,17 +665,14 @@ def test_ogr_kml_read_emptylayers():
 
     ds = ogr.Open('data/emptylayers.kml')
     if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
     if ds.GetLayer(0).GetFeatureCount() != 0:
-        gdaltest.post_reason('failed')
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
 
     if ds.GetLayer(1).GetFeatureCount() != 0:
-        gdaltest.post_reason('failed')
         print(ds.GetLayer(1).GetFeatureCount())
         return 'fail'
 
@@ -690,12 +686,10 @@ def compare_output(content, expected_content):
     expected_lines = expected_content.strip().split('\n')
 
     if len(content_lines) != len(expected_lines):
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
     for i, content_line in enumerate(content_lines):
         if content_line.strip() != expected_lines[i].strip():
-            gdaltest.post_reason('fail')
             print(content)
             return 'fail'
 
@@ -844,12 +838,10 @@ def test_ogr_kml_read_folder_with_subfolder_placemark():
 
     ds = ogr.Open('data/folder_with_subfolder_placemark.kml')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
     if ds.GetLayer(0).GetFeatureCount() != 0:
-        gdaltest.post_reason('failed')
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
 
@@ -882,12 +874,10 @@ def test_ogr_kml_read_weird_empty_folders():
 
     ds = ogr.Open('data/weird_empty_folders.kml')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
     if ds.GetLayer(0).GetFeatureCount() != 0:
-        gdaltest.post_reason('failed')
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
 
@@ -938,12 +928,10 @@ def test_ogr_kml_read_duplicate_folder_name():
     ds = ogr.Open('data/duplicate_folder_name.kml')
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'layer':
-        gdaltest.post_reason('failure')
         print(lyr.GetName())
         return 'fail'
     lyr = ds.GetLayer(1)
     if lyr.GetName() != 'layer (#2)':
-        gdaltest.post_reason('failure')
         print(lyr.GetName())
         return 'fail'
 
@@ -961,18 +949,14 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
     ds = ogr.Open('data/placemark_in_root_and_subfolder.kml')
     lyr = ds.GetLayerByName('TopLevel')
     if lyr is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     lyr = ds.GetLayerByName('SubFolder1')
     if lyr is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'

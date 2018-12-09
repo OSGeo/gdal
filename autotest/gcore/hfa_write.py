@@ -289,11 +289,9 @@ def test_hfa_update_existing_aux_overviews():
     new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
     new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs_ovr0 != new_cs_ovr0:
-        gdaltest.post_reason('fail')
         gdal.SetConfigOption('USE_RRD', None)
         return 'fail'
     if cs_ovr1 != new_cs_ovr1:
-        gdaltest.post_reason('fail')
         gdal.SetConfigOption('USE_RRD', None)
         return 'fail'
 
@@ -307,11 +305,9 @@ def test_hfa_update_existing_aux_overviews():
     new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
     new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs_ovr0 != new_cs_ovr0:
-        gdaltest.post_reason('fail')
         gdal.SetConfigOption('USE_RRD', None)
         return 'fail'
     if cs_ovr1 != new_cs_ovr1:
-        gdaltest.post_reason('fail')
         gdal.SetConfigOption('USE_RRD', None)
         return 'fail'
 
@@ -324,11 +320,9 @@ def test_hfa_update_existing_aux_overviews():
     new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
     new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs_ovr0 != new_cs_ovr0:
-        gdaltest.post_reason('fail')
         gdal.SetConfigOption('USE_RRD', None)
         return 'fail'
     if cs_ovr1 != new_cs_ovr1:
-        gdaltest.post_reason('fail')
         gdal.SetConfigOption('USE_RRD', None)
         return 'fail'
     ds = None

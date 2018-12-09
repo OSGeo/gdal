@@ -211,7 +211,6 @@ def test_vrtrawlink_5():
     if xmlstring.find('<ImageOffset>100</ImageOffset>') < 0 or \
        xmlstring.find('<PixelOffset>3</PixelOffset>') < 0 or \
        xmlstring.find('<LineOffset>93</LineOffset>') < 0:
-        gdaltest.post_reason('fail')
         print(xmlstring)
         return 'fail'
 

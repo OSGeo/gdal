@@ -87,25 +87,20 @@ def test_eeda_2():
     lyr = ds.GetLayer(0)
 
     if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability('foo') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
     if lyr.GetExtent() != (-180.0, 180.0, -90.0, 90.0):
-        gdaltest.post_reason('fail')
         print(lyr.GetExtent())
         return 'fail'
 
     if lyr.GetFeatureCount() != -1:
-        gdaltest.post_reason('fail')
         print(lyr.GetFeatureCount())
         return 'fail'
 
@@ -180,13 +175,11 @@ def test_eeda_2():
        f.GetField('double_field') != 1.23 or \
        f.GetField('other_properties') != '{ "another_prop": 3 }' or \
        f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.1 49.0,2.1 49.1,2.0 49.1,2 49)))':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/second_feature':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -200,20 +193,17 @@ def test_eeda_2():
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/third_feature':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.ResetReading()
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/first_feature':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -229,7 +219,6 @@ def test_eeda_2():
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/raw_filter':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter(None)
@@ -274,7 +263,6 @@ def test_eeda_2():
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetSpatialFilter(None)
@@ -299,7 +287,6 @@ def test_eeda_2():
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test time equality with day granularity
@@ -322,7 +309,6 @@ def test_eeda_2():
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -348,7 +334,6 @@ def test_eeda_3():
     lyr = ds.GetLayer(0)
 
     if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
     ds = None
@@ -379,7 +364,6 @@ def test_eeda_4():
         ]
     }))
     if not ogr.Open('EEDA:users/foo').GetLayer(0):
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
@@ -394,7 +378,6 @@ def test_eeda_4():
     }))
     ds = ogr.Open('EEDA:projects/foo')
     if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
@@ -410,7 +393,6 @@ def test_eeda_4():
     }))
     ds = ogr.Open('EEDA:projects/foo/bar/baz')
     if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
@@ -426,7 +408,6 @@ def test_eeda_4():
     }))
     ds = ogr.Open('EEDA:foo')
     if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
@@ -442,7 +423,6 @@ def test_eeda_4():
     }))
     ds = ogr.Open('EEDA:projects/foo/assets/bar')
     if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None

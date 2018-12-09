@@ -63,21 +63,16 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         if ds.GetLayerByName('non_existing') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
     if ds.GetLayerByName('PSScene3Band') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         if ds.GetLayerByName('non_existing') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     gdal.Unlink('/vsimem/data_v1/item-types')
@@ -99,28 +94,21 @@ def test_ogr_plscenes_data_v1_catalog_paging():
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         if ds.GetLayerByName('non_existing') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
     if ds.GetLayerByName('PSScene3Band') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/PSScene4Band', '{ "id": "PSScene4Band"} }')
     if ds.GetLayerByName('PSScene4Band') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetLayerByName('PSScene4Band') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
         if ds.GetLayerByName('non_existing') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     gdal.Unlink('/vsimem/data_v1/item-types')
@@ -148,44 +136,36 @@ def test_ogr_plscenes_data_v1_nominal():
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
     ds = gdal.OpenEx('PLScenes:version=data_v1,api_key=foo,FOLLOW_LINKS=YES', gdal.OF_VECTOR)
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'PSOrthoTile':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1 or \
        lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1 or \
        lyr.TestCapability(ogr.OLCRandomRead) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     # Different serialization depending on libjson versions
     gdal.FileFromMemBuffer("""/vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"RangeFilter","field_name":"cloud_cover","config":{"gte":0.000000}}]}}""", """{ "buckets": [ { "count": 1 }, { "count": 1} ] }""")
     gdal.FileFromMemBuffer("""/vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"RangeFilter","field_name":"cloud_cover","config":{"gte":0}}]}}""", """{ "buckets": [ { "count": 1 }, { "count": 1} ] }""")
     gdal.FileFromMemBuffer("""/vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"RangeFilter","field_name":"cloud_cover","config":{"gte":0.0}}]}}""", """{ "buckets": [ { "count": 1 }, { "count": 1} ] }""")
     if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetGeomType() != ogr.wkbMultiPolygon:
-        gdaltest.post_reason('fail')
         return 'fail'
     ext = lyr.GetExtent()
     if ext != (-180.0, 180.0, -90.0, 90.0):
-        gdaltest.post_reason('fail')
         print(ext)
         return 'fail'
 
     field_count = lyr.GetLayerDefn().GetFieldCount()
     if field_count != 68:
-        gdaltest.post_reason('fail')
         print(field_count)
         return 'fail'
 
@@ -252,14 +232,12 @@ def test_ogr_plscenes_data_v1_nominal():
        f['asset_analytic_location'] != '/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets/analytic/my.tiff' or \
        f['asset_analytic_status'] != 'active' or \
        f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.0 49.1,2.1 49.1,2.1 49.0,2 49)))':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -274,31 +252,26 @@ def test_ogr_plscenes_data_v1_nominal():
 
     f = lyr.GetNextFeature()
     if f.GetFID() != 2 or f['id'] != 'id2':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetFID() != 2:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"GeometryFilter","field_name":"geometry","config":{"type":"Point","coordinates":[2.0,49.0]}}]}}""",
@@ -308,21 +281,18 @@ def test_ogr_plscenes_data_v1_nominal():
     lyr.SetSpatialFilterRect(2, 49, 2, 49)
     f = lyr.GetNextFeature()
     if f['id'] != 'id3':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     # Cannot find /vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"GeometryFilter","field_name":"geometry","config":{"type":"Point","coordinates":[2.0,49.0]}}]}}
     with gdaltest.error_handler():
         if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Reset spatial filter
     lyr.SetSpatialFilter(0, None)
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -336,7 +306,6 @@ def test_ogr_plscenes_data_v1_nominal():
 
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -369,7 +338,6 @@ def test_ogr_plscenes_data_v1_nominal():
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"NotFilter","config":{"type":"StringInFilter","field_name":"id","config":["a"]}},{"type":"DateRangeFilter","field_name":"acquired","config":{"gte":"2016-02-11T00:00:00Z"}}]},{"type":"DateRangeFilter","field_name":"acquired","config":{"lte":"2016-02-12T00:00:00Z"}}]},{"type":"DateRangeFilter","field_name":"acquired","config":{"gt":"1970-01-01T01:23:45Z"}}]},{"type":"DateRangeFilter","field_name":"acquired","config":{"lt":"2100-01-01T01:23:45Z"}}]},{"type":"RangeFilter","field_name":"anomalous_pixels","config":{"gte":1.23456699,"lte":1.2345670099999999}}]},{"type":"NotFilter","config":{"type":"StringInFilter","field_name":"id","config":["b"]}}]},{"type":"RangeFilter","field_name":"columns","config":{"gt":0}}]},{"type":"RangeFilter","field_name":"columns","config":{"lt":2}}]},{"type":"NumberInFilter","field_name":"columns","config":[1]}]},{"type":"NumberInFilter","field_name":"columns","config":[1,2]}]},{"type":"OrFilter","config":[{"type":"StringInFilter","field_name":"id","config":["filtered_2"]},{"type":"StringInFilter","field_name":"id","config":["foo"]}]}]},{"type":"PermissionFilter","config":["download"]}]},{"type":"PermissionFilter","config":["download"]}]}]}}""", content)
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_2':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -387,14 +355,12 @@ def test_ogr_plscenes_data_v1_nominal():
 }""")
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_3':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     lyr.SetAttributeFilter("id > 'a' AND id = 'filtered_3'")
     f = lyr.GetNextFeature()
     if f['id'] != 'filtered_3':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -402,7 +368,6 @@ def test_ogr_plscenes_data_v1_nominal():
     lyr.SetAttributeFilter("id > 'a' OR id = 'id'")
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -410,7 +375,6 @@ def test_ogr_plscenes_data_v1_nominal():
     lyr.SetAttributeFilter("NOT id > 'z'")
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -418,7 +382,6 @@ def test_ogr_plscenes_data_v1_nominal():
     lyr.SetAttributeFilter(None)
     f = lyr.GetNextFeature()
     if f['id'] != 'id':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -430,7 +393,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'SCENE=id'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None or gdal.GetLastErrorMsg().find('Missing catalog') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid catalog
@@ -447,7 +409,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Inactive file, and activation link not working
@@ -467,7 +428,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=analytic'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # File in activation
@@ -487,7 +447,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=analytic'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets',
@@ -510,7 +469,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=analytic'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # JSon content for /vsimem/data_v1/item-types/PSOrthoTile/items/id/assets/analytic/my.tiff
@@ -521,7 +479,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=analytic'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing metadata
@@ -532,7 +489,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=analytic'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds_raster = None
 
@@ -543,7 +499,6 @@ def test_ogr_plscenes_data_v1_nominal():
     ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=analytic'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds_raster = None
 
@@ -559,10 +514,8 @@ def test_ogr_plscenes_data_v1_nominal():
     ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=analytic'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds_raster.GetMetadataItem('anomalous_pixels') != '1.23':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds_raster = None
 
@@ -572,7 +525,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id', 'ACTIVATION_TIMEOUT=1', 'ASSET=invalid'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test subdatasets
@@ -580,7 +532,6 @@ def test_ogr_plscenes_data_v1_nominal():
     ds_raster = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'ASSET=list', 'SCENE=id'])
     gdal.SetConfigOption('PL_URL', None)
     if len(ds_raster.GetSubDatasets()) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds_raster = None
 
@@ -590,7 +541,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds_raster = gdal.OpenEx('PLScenes:unsupported=yes', gdal.OF_RASTER, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile', 'SCENE=id'])
     gdal.SetConfigOption('PL_URL', None)
     if ds_raster is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test catalog with vector access
@@ -598,7 +548,6 @@ def test_ogr_plscenes_data_v1_nominal():
     ds2 = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=PSOrthoTile'])
     gdal.SetConfigOption('PL_URL', None)
     if ds2 is None or ds2.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
@@ -606,7 +555,6 @@ def test_ogr_plscenes_data_v1_nominal():
         ds2 = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo', 'ITEMTYPES=invalid'])
     gdal.SetConfigOption('PL_URL', None)
     if ds2 is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     fl = gdal.ReadDir('/vsimem/data_v1')
@@ -635,7 +583,6 @@ def test_ogr_plscenes_data_v1_errors():
         gdal.SetConfigOption('PL_API_KEY', old_key)
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid option
@@ -645,7 +592,6 @@ def test_ogr_plscenes_data_v1_errors():
         ds = gdal.OpenEx('PLScenes:version=data_v1,api_key=foo,invalid=invalid', gdal.OF_VECTOR)
         gdal.SetConfigOption('PL_URL', None)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid JSON
@@ -655,7 +601,6 @@ def test_ogr_plscenes_data_v1_errors():
         ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
         gdal.SetConfigOption('PL_URL', None)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Not an object
@@ -665,7 +610,6 @@ def test_ogr_plscenes_data_v1_errors():
         ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
         gdal.SetConfigOption('PL_URL', None)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Lack of "item_types"
@@ -675,7 +619,6 @@ def test_ogr_plscenes_data_v1_errors():
         ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
         gdal.SetConfigOption('PL_URL', None)
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid catalog objects
@@ -685,7 +628,6 @@ def test_ogr_plscenes_data_v1_errors():
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid next URL
@@ -696,7 +638,6 @@ def test_ogr_plscenes_data_v1_errors():
     with gdaltest.error_handler():
         lyr_count = ds.GetLayerCount()
     if lyr_count != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types', '{"item_types": [{"id": "PSScene3Band"}]}')
@@ -749,18 +690,15 @@ def test_ogr_plscenes_data_v1_live():
     ds = ogr.Open('PLScenes:version=data_v1,FOLLOW_LINKS=YES')
     gdal.SetConfigOption('PLSCENES_PAGE_SIZE', None)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(0)
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.SetAttributeFilter("permissions = 'assets:download'")
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     catalog = lyr.GetName()
     scene = f['id']
@@ -778,16 +716,13 @@ def test_ogr_plscenes_data_v1_live():
             asset_name = name[len('asset_'):-len('_location')]
             break
     if asset_name is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     acquired_field = lyr_defn.GetFieldIndex('acquired')
     if acquired_field < 0 or lyr_defn.GetFieldDefn(acquired_field).GetType() != ogr.OFTDateTime:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if not f.IsFieldSet(acquired_field):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -822,17 +757,14 @@ def test_ogr_plscenes_data_v1_live():
     lyr.SetAttributeFilter(filtr)
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
 
     ds = gdal.Open('PLScenes:version=data_v1,itemtypes=%s,scene=%s,asset=%s' % (catalog, scene, asset_name))
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

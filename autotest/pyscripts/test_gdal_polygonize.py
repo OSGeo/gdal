@@ -193,7 +193,6 @@ def test_gdal_polygonize_4():
     os.unlink('tmp/out.gml')
 
     if content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -205,7 +204,6 @@ def test_gdal_polygonize_4():
     os.unlink('tmp/out.gml')
 
     if content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 

@@ -126,7 +126,6 @@ def ogr_fgdb_stress_test_1():
                 fid = f.GetFID()
                 # print("created %d" % fid)
             if ret[0] != ret[1]:
-                gdaltest.post_reason('fail')
                 print(ret)
                 return 'fail'
             if ret[0] == 0:
@@ -148,7 +147,6 @@ def ogr_fgdb_stress_test_1():
                 ret.append(lyr.SetFeature(f))
                 # gdal.PopErrorHandler()
             if ret[0] != ret[1]:
-                gdaltest.post_reason('fail')
                 print(ret)
                 return 'fail'
         # Same for DeleteFeature()
@@ -162,7 +160,6 @@ def ogr_fgdb_stress_test_1():
                 ret.append(lyr.DeleteFeature(fid))
                 # gdal.PopErrorHandler()
             if ret[0] != ret[1]:
-                gdaltest.post_reason('fail')
                 print(ret)
                 return 'fail'
 
@@ -189,14 +186,12 @@ def ogr_fgdb_stress_test_2():
         f_test = lyr_test.GetNextFeature()
         f_ref = lyr_ref.GetNextFeature()
         if (f_test is None and f_ref is not None) or (f_test is not None and f_ref is None):
-            gdaltest.post_reason('fail')
             return 'fail'
         if f_test is None:
             break
         if f_test.GetFID() != f_ref.GetFID() or \
            f_test['str'] != f_ref['str'] or \
            ogrtest.check_feature_geometry(f_test, f_ref.GetGeometryRef()) != 0:
-            gdaltest.post_reason('fail')
             f_test.DumpReadable()
             f_ref.DumpReadable()
             return 'fail'
@@ -205,7 +200,6 @@ def ogr_fgdb_stress_test_2():
         lyr_test.SetAttributeFilter("str = '%d'" % val)
         lyr_ref.SetAttributeFilter("str = '%d'" % val)
         if lyr_test.GetFeatureCount() != lyr_ref.GetFeatureCount():
-            gdaltest.post_reason('fail')
             print(val)
             print(lyr_test.GetFeatureCount())
             print(lyr_ref.GetFeatureCount())

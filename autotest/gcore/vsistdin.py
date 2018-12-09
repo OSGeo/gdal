@@ -57,10 +57,8 @@ def test_vsistdin_1():
 
     ds = gdal.Open("tmp/vsistdin_1_out.tif")
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).Checksum() != cs:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink("tmp/vsistdin_1_out.tif")

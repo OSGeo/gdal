@@ -171,20 +171,17 @@ def test_ecrgtoc_3():
         ds = gdal.Open(name)
         gdal.PopErrorHandler()
         if ds is not None:
-            gdaltest.post_reason('fail')
             print(name)
             return 'fail'
 
     # Legacy syntax
     ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

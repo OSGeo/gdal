@@ -52,7 +52,6 @@ def test_iris_2():
 
     ds = gdal.Open('data/iristest.dat')
     if ds.GetRasterBand(1).Checksum() != 52872:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.GetProjectionRef()
@@ -75,7 +74,6 @@ def test_iris_2():
     for i in range(6):
         if (expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
            (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i]) / abs(expected_gt[i]) > 1e-5):
-            gdaltest.post_reason('fail')
             print(got_gt)
             print(i)
             return 'fail'

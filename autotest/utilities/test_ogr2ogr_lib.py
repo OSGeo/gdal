@@ -68,14 +68,12 @@ def test_ogr2ogr_lib_2():
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='select * from poly', SQLDialect='OGRSQL')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test @filename syntax
     gdal.FileFromMemBuffer('/vsimem/sql.txt', '-- initial comment\nselect * from poly\n-- trailing comment')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='@/vsimem/sql.txt')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/sql.txt')
 
@@ -86,7 +84,6 @@ def test_ogr2ogr_lib_2():
         gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='@/vsimem/sql.txt')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/sql.txt')
 
@@ -101,14 +98,12 @@ def test_ogr2ogr_lib_3():
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', where='EAS_ID=171')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test @filename syntax
     gdal.FileFromMemBuffer('/vsimem/filter.txt', 'EAS_ID=171')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', where='@/vsimem/filter.txt')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/filter.txt')
 
@@ -390,7 +385,6 @@ def test_ogr2ogr_lib_16():
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToIsoWkt() != wkt_after:
-            gdaltest.post_reason('failure')
             print(wkt_before)
             print(dim)
             print(wkt_after)
@@ -449,12 +443,10 @@ def test_ogr2ogr_lib_19():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['foo'] != 'bar' or f.IsFieldSet('bar'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f['bar'] != 'foo' or f.IsFieldSet('foo'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds = None
@@ -477,7 +469,6 @@ def test_ogr2ogr_lib_20():
     ds = gdal.VectorTranslate('/vsimem/out.gpkg', src_ds, format='GPKG')
     lyr = ds.GetLayer(0)
     if lyr.GetGeometryColumn() != 'foo':
-        gdaltest.post_reason('fail')
         print(lyr.GetGeometryColumn())
         return 'fail'
     ds = None
@@ -491,7 +482,6 @@ def test_ogr2ogr_lib_20():
     ds = gdal.VectorTranslate('/vsimem/out.gpkg', src_ds, format='GPKG', selectFields=['bar'])
     lyr = ds.GetLayer(0)
     if lyr.GetGeometryColumn() != 'bar':
-        gdaltest.post_reason('fail')
         print(lyr.GetGeometryColumn())
         return 'fail'
     ds = None
@@ -546,7 +536,6 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
     if fc != 1:
-        gdaltest.post_reason('fail')
         print(fc)
         return 'fail'
     ds = None

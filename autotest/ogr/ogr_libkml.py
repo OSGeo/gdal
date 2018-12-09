@@ -694,7 +694,6 @@ def test_ogr_libkml_read_empty():
 
     ds = ogr.Open('data/empty.kml')
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
@@ -713,18 +712,15 @@ def test_ogr_libkml_read_emptylayers():
 
     ds = ogr.Open('data/emptylayers.kml')
     if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
     # --> One difference with the old KML driver
     if ds.GetLayer(0).GetFeatureCount() != 1:
-        gdaltest.post_reason('failed')
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
 
     if ds.GetLayer(1).GetFeatureCount() != 0:
-        gdaltest.post_reason('failed')
         print(ds.GetLayer(1).GetFeatureCount())
         return 'fail'
 
@@ -746,13 +742,11 @@ def test_ogr_libkml_read_emptylayers_without_folder():
 
     ds = ogr.Open('data/emptylayers_without_folder.kml')
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
     # --> One difference with the old KML driver
     if ds.GetLayer(0).GetName() != 'Test':
-        gdaltest.post_reason('failed')
         print("Layer name must be '" + ds.GetLayer(0).GetName() + "'.")
         return 'fail'
 
@@ -771,32 +765,27 @@ def test_ogr_libkml_read_schema():
 
     ds = ogr.Open('data/test_schema.kml')
     if ds.GetLayerCount() != 4:
-        gdaltest.post_reason('failed')
         print(ds.GetLayerCount())
         return 'fail'
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('foo') != 'bar':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(1)
     feat = lyr.GetNextFeature()
     if feat.GetField('foo') != 'baz':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
 
     lyr = ds.GetLayer(2)
     if lyr.GetLayerDefn().GetFieldIndex('foo') != -1:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr = ds.GetLayer(3)
     if lyr.GetLayerDefn().GetFieldIndex('foo') != -1:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     ds = None
@@ -817,21 +806,17 @@ def test_ogr_libkml_extended_data_without_schema_data():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('field1') != '1_1':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetField('field2') != '1_2':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetField('field1') != '2_1':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.IsFieldSet('field2'):
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
 
@@ -856,7 +841,6 @@ def test_ogr_libkml_gxtrack():
        feat.GetField('end') != '2013/05/28 13:00:00' or \
        feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49,3 50)':
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -879,7 +863,6 @@ def test_ogr_libkml_gxmultitrack():
        feat.GetField('end') != '2013/05/28 13:00:00' or \
        feat.GetGeometryRef().ExportToWkt() != 'MULTILINESTRING ((2 49,3 50))':
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -929,7 +912,6 @@ def test_ogr_libkml_camera():
        data.find('<roll>10</roll>') == -1 or \
        data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     ds = ogr.Open('/vsimem/ogr_libkml_camera.kml')
@@ -941,7 +923,6 @@ def test_ogr_libkml_camera():
         feat.GetField("tilt") != 75.0 or
             feat.GetField("roll") != 10.0):
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -951,7 +932,6 @@ def test_ogr_libkml_camera():
         feat.IsFieldSet("roll") or
             feat.GetField("altitudeMode") != 'relativeToGround'):
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -984,7 +964,6 @@ def test_ogr_libkml_write_layer_lookat():
        data.find('<latitude>49</latitude>') == -1 or \
        data.find('<range>150</range>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if data.find('<LookAt>') == -1 or \
@@ -996,7 +975,6 @@ def test_ogr_libkml_write_layer_lookat():
        data.find('<range>150</range>') == -1 or \
        data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1030,7 +1008,6 @@ def test_ogr_libkml_write_layer_camera():
        data.find('<roll>10</roll>') == -1 or \
        data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1063,12 +1040,10 @@ def test_ogr_libkml_write_multigeometry():
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1 0)':
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1098,7 +1073,6 @@ def test_ogr_libkml_write_snippet():
 
     if data.find('<snippet>test_snippet</snippet>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     ds = ogr.Open("/vsimem/ogr_libkml_write_snippet.kml")
@@ -1106,11 +1080,9 @@ def test_ogr_libkml_write_snippet():
     feat = lyr.GetNextFeature()
     if feat.GetField('snippet') != 'test_snippet':
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1 0)':
         feat.DumpReadable()
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1172,7 +1144,6 @@ def test_ogr_libkml_write_atom_link():
     if data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
        data.find('<atom:link href="http://foo" rel="related"/>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1201,7 +1172,6 @@ def test_ogr_libkml_write_phonenumber():
 
     if data.find('<phoneNumber>tel:911</phoneNumber>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1238,7 +1208,6 @@ def test_ogr_libkml_write_region():
        data.find('<minLodPixels>256</minLodPixels>') == -1 or \
        data.find('<maxLodPixels>-1</maxLodPixels>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if data.find('<north>90</north>') == -1 or \
@@ -1250,7 +1219,6 @@ def test_ogr_libkml_write_region():
        data.find('<minFadeExtent>1</minFadeExtent>') == -1 or \
        data.find('<maxFadeExtent>2</maxFadeExtent>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1291,7 +1259,6 @@ def test_ogr_libkml_write_screenoverlay():
     if data.find('<href>http://foo</href>') == -1 or \
        data.find('<screenXY x="0.05" xunits="fraction" y="0.05" yunits="fraction"/>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if data.find('<overlayXY x="10" xunits="pixels" y="20" yunits="pixels"/>') == -1 or \
@@ -1300,7 +1267,6 @@ def test_ogr_libkml_write_screenoverlay():
        data.find('<name>name</name>') == -1 or \
        data.find('<description>description</description>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1365,7 +1331,6 @@ def test_ogr_libkml_write_model():
        data.find('<href>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae</href>') == -1 or \
        data.find('<href>http://foo</href>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # This can only appear if HTTP resource is available and GDAL is built with curl/http support
@@ -1375,7 +1340,6 @@ def test_ogr_libkml_write_model():
 
         if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:
             print(data)
-            gdaltest.post_reason('failure')
             return 'fail'
 
     return 'success'
@@ -1483,7 +1447,6 @@ def test_ogr_libkml_read_write_style():
     if lines_got != lines_ref:
         print(data)
         print(styles)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     lines_got = lines[lines.index('<Style id="styleMapExample">'):lines.index('</Document>')]
@@ -1491,7 +1454,6 @@ def test_ogr_libkml_read_write_style():
     if lines_got != lines_ref:
         print(data)
         print(resolved_stylemap)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test reading highlight style in StyleMap
@@ -1516,7 +1478,6 @@ def test_ogr_libkml_read_write_style():
     if lines_got != lines_ref:
         print(data)
         print(resolved_stylemap_highlight)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test writing feature style
@@ -1538,12 +1499,10 @@ def test_ogr_libkml_read_write_style():
     feat = lyr.GetNextFeature()
     if feat.GetStyleString() != '@unknown_style':
         print(feat.GetStyleString())
-        gdaltest.post_reason('failure')
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetStyleString() != style_string:
         print(feat.GetStyleString())
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1580,7 +1539,6 @@ def test_ogr_libkml_read_write_style():
     if lines_got != lines_ref:
         print(data)
         print(resolved_stylemap_highlight)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Automatic StyleMap creation testing
@@ -1629,7 +1587,6 @@ def test_ogr_libkml_read_write_style():
     if lines_got != lines_ref:
         print(data)
         print(styles)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1690,7 +1647,6 @@ def test_ogr_libkml_write_update():
                 data.find('<Delete>') == -1 or \
                 data.find('<Placemark targetId="layer_to_edit.3"/>') == -1:
             print(data)
-            gdaltest.post_reason('failure')
             return 'fail'
 
     return 'success'
@@ -1735,7 +1691,6 @@ def test_ogr_libkml_write_networklinkcontrol():
         else:
             f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol_dir/doc.kml', 'rb')
         if f is None:
-            gdaltest.post_reason('failure')
             return 'fail'
         data = gdal.VSIFReadL(1, 2048, f)
         data = data.decode('ascii')
@@ -1750,7 +1705,6 @@ def test_ogr_libkml_write_networklinkcontrol():
                 data.find('<linkSnippet>linksnippet</linkSnippet>') == -1 or \
                 data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
             print(data)
-            gdaltest.post_reason('failure')
             return 'fail'
 
     return 'success'
@@ -1791,7 +1745,6 @@ def test_ogr_libkml_write_liststyle():
        data.find('<listItemType>checkOffOnly</listItemType>') == -1 or \
        data.find('<listItemType>checkHideChildren</listItemType>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1862,7 +1815,6 @@ def test_ogr_libkml_write_networklink():
        data.find('<viewBoundScale>0.5</viewBoundScale>') == -1 or \
        data.find('<viewFormat>BBOX=[bboxWest],[bboxSouth],[bboxEast],[bboxNorth]</viewFormat>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1951,7 +1903,6 @@ def test_ogr_libkml_write_photooverlay():
        data.find('<maxHeight>512</maxHeight>') == -1 or \
        data.find('<gridOrigin>upperLeft</gridOrigin>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1984,14 +1935,12 @@ def test_ogr_libkml_read_write_data():
     if data.find('<Data name="foo">') == -1 or \
        data.find('<value>bar</value>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     ds = ogr.Open("/vsimem/ogr_libkml_read_write_data.kml")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('foo') != 'bar':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -2021,7 +1970,6 @@ def test_ogr_libkml_write_folder():
        data.find('<styleUrl>#test_liststyle</styleUrl>') == -1 or \
        data.find('<Folder id="test2">') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -2056,7 +2004,6 @@ def test_ogr_libkml_write_container_properties():
        data.find('<snippet>lyr_snippet</snippet>') == -1 or \
        data.find('<description>lyr_description</description>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -2074,12 +2021,10 @@ def test_ogr_libkml_read_gx_timestamp():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['timestamp'] != '2016/02/13 12:34:56+00':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
     f = lyr.GetNextFeature()
     if f['begin'] != '2016/02/13 00:00:00+00' or f['end'] != '2016/02/14 00:00:00+00':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
         return 'fail'
 
@@ -2114,12 +2059,10 @@ def test_ogr_libkml_read_duplicate_folder_name():
     ds = ogr.Open('data/duplicate_folder_name.kml')
     lyr = ds.GetLayer(0)
     if lyr.GetName() != 'layer':
-        gdaltest.post_reason('failure')
         print(lyr.GetName())
         return 'fail'
     lyr = ds.GetLayer(1)
     if lyr.GetName() != 'layer (#2)':
-        gdaltest.post_reason('failure')
         print(lyr.GetName())
         return 'fail'
 
@@ -2137,18 +2080,14 @@ def test_ogr_libkml_read_placemark_in_root_and_subfolder():
     ds = ogr.Open('data/placemark_in_root_and_subfolder.kml')
     lyr = ds.GetLayerByName('TopLevel')
     if lyr is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     lyr = ds.GetLayerByName('SubFolder1')
     if lyr is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -2206,13 +2145,11 @@ def test_ogr_libkml_read_several_schema():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat['fieldA'] != 'fieldAValue' or feat['common'] != 'commonAValue':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat['fieldB'] != 'fieldBValue' or feat['common'] != 'commonBValue':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -2220,13 +2157,11 @@ def test_ogr_libkml_read_several_schema():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat['fieldA'] != 'fieldAValue' or feat['common'] != 'commonAValue':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat['fieldB'] != 'fieldBValue' or feat['common'] != 'commonBValue':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 

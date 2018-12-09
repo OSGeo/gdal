@@ -97,14 +97,12 @@ def test_gdaltindex_1():
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
-        gdaltest.post_reason('fail')
         print(ret_stdout)
         print(ret_stderr)
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
     tileindex_wkt = ds.GetLayer(0).GetSpatialRef().ExportToWkt()
     if tileindex_wkt.find('WGS_1984') == -1:
-        gdaltest.post_reason('fail')
         print(ret_stdout)
         print(ret_stderr)
         print(tileindex_wkt)
@@ -242,17 +240,14 @@ def test_gdaltindex_5():
         feat = lyr.GetNextFeature()
         if src_srs_format == '-src_srs_format PROJ':
             if feat.GetField('src_srs').find('+proj=longlat +ellps=WGS72') != 0:
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         elif src_srs_format == '-src_srs_format WKT':
             if feat.GetField('src_srs').find('GEOGCS["WGS 72"') != 0:
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         else:
             if feat.GetField('src_srs') != 'EPSG:4322':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
                 return 'fail'
         ds = None

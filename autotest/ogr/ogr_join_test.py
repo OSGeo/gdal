@@ -330,12 +330,10 @@ def test_ogr_join_15():
     gdal.Unlink('/vsimem/ogr_join_14')
 
     if val1 != 'c2':
-        gdaltest.post_reason('fail')
         print(val1)
         return 'fail'
 
     if val2 != 'c2':
-        gdaltest.post_reason('fail')
         print(val2)
         return 'fail'
 
@@ -489,7 +487,6 @@ def test_ogr_join_22():
     ds = None
 
     if val != '2':
-        gdaltest.post_reason('fail')
         print(val)
         return 'fail'
 
@@ -515,12 +512,10 @@ def test_ogr_join_23():
     sql_lyr = ds.ExecuteSQL("SELECT * FROM first JOIN second ON first.f = second.f")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull('second.f'):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     feat = sql_lyr.GetNextFeature()
     if feat['f'] != 'key1' or feat['second.f'] != 'key1':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)

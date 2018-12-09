@@ -97,11 +97,9 @@ def test_vsiwebhdfs_open():
     with webserver.install_http_handler(handler):
         f = open_for_read(gdaltest.webhdfs_base_connection + '/foo/bar')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFSeekL(f, 9999990784 + 10, 0)
         if gdal.VSIFReadL(1, 4, f).decode('ascii') != 'data':
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFCloseL(f)
 
@@ -120,10 +118,8 @@ def test_vsiwebhdfs_open():
         with webserver.install_http_handler(handler):
             f = open_for_read(gdaltest.webhdfs_base_connection + '/foo/bar')
             if f is None:
-                gdaltest.post_reason('fail')
                 return 'fail'
             if gdal.VSIFReadL(1, 4, f).decode('ascii') != 'yeah':
-                gdaltest.post_reason('fail')
                 return 'fail'
             gdal.VSIFCloseL(f)
 
@@ -133,19 +129,16 @@ def test_vsiwebhdfs_open():
 
     f = open_for_read(gdaltest.webhdfs_base_connection + '/foo/bar')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/webhdfs/v1/foo/bar?op=OPEN&offset=0&length=16384', 404)
     with webserver.install_http_handler(handler):
         if len(gdal.VSIFReadL(1, 4, f)) != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Retry: shouldn't not cause network access
     if len(gdal.VSIFReadL(1, 4, f)) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSIFCloseL(f)
@@ -169,7 +162,6 @@ def test_vsiwebhdfs_stat():
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL(gdaltest.webhdfs_base_connection + '/foo/bar')
     if stat_res is None or stat_res.size != 1000000:
-        gdaltest.post_reason('fail')
         if stat_res is not None:
             print(stat_res.size)
         else:
@@ -179,7 +171,6 @@ def test_vsiwebhdfs_stat():
     # Test caching
     stat_res = gdal.VSIStatL(gdaltest.webhdfs_base_connection + '/foo/bar')
     if stat_res.size != 1000000:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test missing file
@@ -190,7 +181,6 @@ def test_vsiwebhdfs_stat():
         stat_res = gdal.VSIStatL(
             gdaltest.webhdfs_base_connection + '/unexisting')
     if stat_res is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -212,23 +202,19 @@ def test_vsiwebhdfs_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir(gdaltest.webhdfs_base_connection + '/foo')
     if dir_contents != ['bar.baz', 'mysubdir']:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
     stat_res = gdal.VSIStatL(gdaltest.webhdfs_base_connection + '/foo/bar.baz')
     if stat_res.size != 123456:
-        gdaltest.post_reason('fail')
         print(stat_res.size)
         return 'fail'
     if stat_res.mtime != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir(
         gdaltest.webhdfs_base_connection + '/foo/bar.baz')
     if dir_contents is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Test error on ReadDir()
@@ -238,7 +224,6 @@ def test_vsiwebhdfs_readdir():
         dir_contents = gdal.ReadDir(
             gdaltest.webhdfs_base_connection + 'foo/error_test/')
     if dir_contents is not None:
-        gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
@@ -263,7 +248,6 @@ def test_vsiwebhdfs_write():
             f = gdal.VSIFOpenL(
                 gdaltest.webhdfs_base_connection + '/foo/bar', 'wb')
         if f is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -277,10 +261,8 @@ def test_vsiwebhdfs_write():
             f = gdal.VSIFOpenL(
                 gdaltest.webhdfs_base_connection + '/foo/bar', 'wb')
             if f is None:
-                gdaltest.post_reason('fail')
                 return 'fail'
     if gdal.VSIFCloseL(f) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Non-empty file
@@ -298,11 +280,9 @@ def test_vsiwebhdfs_write():
             f = gdal.VSIFOpenL(
                 gdaltest.webhdfs_base_connection + '/foo/bar', 'wb')
             if f is None:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     if gdal.VSIFWriteL('foobar', 1, 6, f) != 6:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -328,7 +308,6 @@ def test_vsiwebhdfs_write():
 
     with webserver.install_http_handler(handler):
         if gdal.VSIFCloseL(f) != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Errors during file creation
@@ -344,7 +323,6 @@ def test_vsiwebhdfs_write():
                 f = gdal.VSIFOpenL(
                     gdaltest.webhdfs_base_connection + '/foo/bar', 'wb')
                 if f is not None:
-                    gdaltest.post_reason('fail')
                     return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -356,7 +334,6 @@ def test_vsiwebhdfs_write():
                 f = gdal.VSIFOpenL(
                     gdaltest.webhdfs_base_connection + '/foo/bar', 'wb')
                 if f is not None:
-                    gdaltest.post_reason('fail')
                     return 'fail'
 
     # Errors during POST
@@ -374,11 +351,9 @@ def test_vsiwebhdfs_write():
             f = gdal.VSIFOpenL(
                 gdaltest.webhdfs_base_connection + '/foo/bar', 'wb')
             if f is None:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     if gdal.VSIFWriteL('foobar', 1, 6, f) != 6:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     handler = webserver.SequentialHandler()
@@ -390,7 +365,6 @@ def test_vsiwebhdfs_write():
     with gdaltest.error_handler():
         with webserver.install_http_handler(handler):
             if gdal.VSIFCloseL(f) == 0:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
     return 'success'
@@ -413,7 +387,6 @@ def test_vsiwebhdfs_unlink():
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink(gdaltest.webhdfs_base_connection + '/foo/bar')
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSICurlClearCache()
@@ -431,7 +404,6 @@ def test_vsiwebhdfs_unlink():
         with webserver.install_http_handler(handler):
             ret = gdal.Unlink(gdaltest.webhdfs_base_connection + '/foo/bar')
         if ret != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Failure
@@ -442,7 +414,6 @@ def test_vsiwebhdfs_unlink():
         with gdaltest.error_handler():
             ret = gdal.Unlink(gdaltest.webhdfs_base_connection + '/foo/bar')
     if ret != -1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSICurlClearCache()
@@ -455,7 +426,6 @@ def test_vsiwebhdfs_unlink():
         with gdaltest.error_handler():
             ret = gdal.Unlink(gdaltest.webhdfs_base_connection + '/foo/bar')
     if ret != -1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -474,7 +444,6 @@ def test_vsiwebhdfs_mkdir_rmdir():
     # Invalid name
     ret = gdal.Mkdir('/vsiwebhdfs', 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Valid
@@ -484,7 +453,6 @@ def test_vsiwebhdfs_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir(gdaltest.webhdfs_base_connection + '/foo/dir', 0)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Valid with all options
@@ -496,7 +464,6 @@ def test_vsiwebhdfs_mkdir_rmdir():
             ret = gdal.Mkdir(gdaltest.webhdfs_base_connection +
                              '/foo/dir/', 493)  # 0755
         if ret != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Error
@@ -506,19 +473,16 @@ def test_vsiwebhdfs_mkdir_rmdir():
         ret = gdal.Mkdir(gdaltest.webhdfs_base_connection +
                          '/foo/dir_error', 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Root name is invalid
     ret = gdal.Mkdir(gdaltest.webhdfs_base_connection + '/', 0)
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid name
     ret = gdal.Rmdir('/vsiwebhdfs')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.VSICurlClearCache()
@@ -530,7 +494,6 @@ def test_vsiwebhdfs_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir(gdaltest.webhdfs_base_connection + '/foo/dir')
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Error
@@ -539,7 +502,6 @@ def test_vsiwebhdfs_mkdir_rmdir():
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir(gdaltest.webhdfs_base_connection + '/foo/dir_error')
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -578,20 +540,17 @@ def vsiwebhdfs_extra_1():
         path = '/vsiwebhdfs/' + webhdfs_url
         statres = gdal.VSIStatL(path)
         if statres is None or not stat.S_ISDIR(statres.mode):
-            gdaltest.post_reason('fail')
             print('%s is not a valid bucket' % path)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if readdir is None:
-            gdaltest.post_reason('fail')
             print('ReadDir() should not return empty list')
             return 'fail'
         for filename in readdir:
             if filename != '.':
                 subpath = path + '/' + filename
                 if gdal.VSIStatL(subpath) is None:
-                    gdaltest.post_reason('fail')
                     print('Stat(%s) should not return an error' % subpath)
                     return 'fail'
 
@@ -599,13 +558,11 @@ def vsiwebhdfs_extra_1():
         subpath = path + '/' + unique_id
         ret = gdal.Mkdir(subpath, 0)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) should not return an error' % subpath)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if unique_id not in readdir:
-            gdaltest.post_reason('fail')
             print('ReadDir(%s) should contain %s' % (path, unique_id))
             print(readdir)
             return 'fail'
@@ -618,63 +575,53 @@ def vsiwebhdfs_extra_1():
 
         ret = gdal.Rmdir(subpath)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
 
         readdir = gdal.ReadDir(path)
         if unique_id in readdir:
-            gdaltest.post_reason('fail')
             print('ReadDir(%s) should not contain %s' % (path, unique_id))
             print(readdir)
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) repeated should return an error' % subpath)
             return 'fail'
 
         ret = gdal.Mkdir(subpath, 0)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Mkdir(%s) should not return an error' % subpath)
             return 'fail'
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
 
         ret = gdal.Rmdir(subpath)
         if ret == 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) on non empty directory should return an error' % subpath)
             return 'fail'
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
         if f is None:
-            gdaltest.post_reason('fail')
             return 'fail'
         data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
         if data != 'hello':
-            gdaltest.post_reason('fail')
             print(data)
             return 'fail'
         gdal.VSIFCloseL(f)
 
         ret = gdal.Unlink(subpath + '/test.txt')
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Unlink(%s) should not return an error' %
                   (subpath + '/test.txt'))
             return 'fail'
 
         ret = gdal.Rmdir(subpath)
         if ret < 0:
-            gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
 
@@ -682,13 +629,11 @@ def vsiwebhdfs_extra_1():
 
     f = open_for_read('/vsiwebhdfs/' + webhdfs_url)
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
     if len(ret) != 1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 

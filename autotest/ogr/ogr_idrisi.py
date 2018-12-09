@@ -43,79 +43,63 @@ def test_ogr_idrisi_1():
 
     ds = ogr.Open('data/points.vct')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldDefn(1).GetName() != 'IntegerField':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     sr = lyr.GetSpatialRef()
     if sr.ExportToWkt().find('PROJCS["UTM Zone 31, Northern Hemisphere"') != 0:
-        gdaltest.post_reason('fail')
         print(sr.ExportToWkt())
         return 'fail'
 
     if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetExtent() != (400000.0, 600000.0, 4000000.0, 5000000.0):
-        gdaltest.post_reason('fail')
         print(lyr.GetExtent())
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 1.0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if feat.GetFieldAsInteger(1) != 2:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if feat.GetFieldAsDouble(2) != 3.45:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if feat.GetFieldAsString(3) != 'foo':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(400000 5000000)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 2.0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (600000 4000000)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -123,7 +107,6 @@ def test_ogr_idrisi_1():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 2.0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -131,7 +114,6 @@ def test_ogr_idrisi_1():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -146,50 +128,40 @@ def test_ogr_idrisi_2():
 
     ds = ogr.Open('data/lines.vct')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetExtent() != (400000.0, 600000.0, 4000000.0, 5000000.0):
-        gdaltest.post_reason('fail')
         print(lyr.GetExtent())
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 10.0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (400000 5000000,600000 4500000)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 20.0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (450000 4000000,550000 4500000)')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -197,7 +169,6 @@ def test_ogr_idrisi_2():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -212,50 +183,40 @@ def test_ogr_idrisi_3():
 
     ds = ogr.Open('data/polygons.vct')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbPolygon:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if lyr.GetExtent() != (400000.0, 600000.0, 4000000.0, 5000000.0):
-        gdaltest.post_reason('fail')
         print(lyr.GetExtent())
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 1.0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000),(450000 4250000,450000 4750000,550000 4750000,550000 4250000,450000 4250000))')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 2.0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000))')) != 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
@@ -263,7 +224,6 @@ def test_ogr_idrisi_3():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None

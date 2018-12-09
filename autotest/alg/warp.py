@@ -1110,7 +1110,6 @@ def test_warp_29():
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
     if cs_monothread != cs_multithread:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
@@ -1123,7 +1122,6 @@ def test_warp_29():
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
     if cs_monothread != cs_multithread:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1138,7 +1136,6 @@ def test_warp_29():
     ds = None
 
     if got_cs != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('failed')
         return 'fail'
 
     ds = gdal.Open('data/byte_tps.vrt')
@@ -1151,7 +1148,6 @@ def test_warp_29():
     ds = None
 
     if got_cs != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('failed')
         return 'fail'
 
     src_ds = None
@@ -1215,7 +1211,6 @@ def test_warp_30():
     gdal.PopErrorHandler()
 
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
@@ -1234,7 +1229,6 @@ def test_warp_30():
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
 
     if ret == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     gdal.Unlink('/vsimem/warp_30.tif')
@@ -1386,7 +1380,6 @@ def test_warp_37():
     gdal.PopErrorHandler()
     gdal.ErrorReset()
     if tmp_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Incompatible projection (UTM 40 is on the other side of the earth w.r.t UTM 11)
@@ -1400,7 +1393,6 @@ def test_warp_37():
     gdal.PopErrorHandler()
     gdal.ErrorReset()
     if tmp_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1520,16 +1512,13 @@ def test_warp_41():
 
     vrt_ds = gdal.AutoCreateWarpedVRT(src_ds, None, None, gdal.GRA_NearestNeighbour, 0.3)
     if vrt_ds.RasterXSize != src_ds.RasterXSize:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrt_ds.RasterYSize != src_ds.RasterYSize:
-        gdaltest.post_reason('fail')
         return 'fail'
     src_gt = src_ds.GetGeoTransform()
     vrt_gt = vrt_ds.GetGeoTransform()
     for i in range(6):
         if abs(src_gt[i] - vrt_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     return 'success'
@@ -1792,7 +1781,6 @@ def test_warp_52():
 
     cs = out_ds.GetRasterBand(4).Checksum()
     if cs != 3188:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1829,7 +1817,6 @@ def test_warp_53():
                 cs1 = dst_ds.GetRasterBand(1).Checksum()
                 cs2 = dst_ds.GetRasterBand(2).Checksum()
                 if cs1 not in expected_cs or cs2 not in [3903, 4138]:
-                    gdaltest.post_reason('fail')
                     print(typestr)
                     print(option)
                     print(alg_name)
@@ -1853,7 +1840,6 @@ def test_warp_54():
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
-            gdaltest.post_reason('fail')
             print(i)
             print(got_cs)
             print(expected_cs)
@@ -1867,7 +1853,6 @@ def test_warp_54():
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
-            gdaltest.post_reason('fail')
             print(i)
             print(got_cs)
             print(expected_cs)
@@ -1883,7 +1868,6 @@ def test_warp_54():
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
         if expected_cs != got_cs:
-            gdaltest.post_reason('fail')
             print(i)
             print(got_cs)
             print(expected_cs)
@@ -1904,7 +1888,6 @@ def test_warp_55():
     ds = gdal.Open('data/warpedvrt_with_ovr.vrt')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 25128:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None

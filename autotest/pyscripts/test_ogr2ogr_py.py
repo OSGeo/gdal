@@ -1412,7 +1412,6 @@ def test_ogr2ogr_py_44():
     f.close()
 
     if data.find('type="gml:MultiPolygonPropertyType"') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1421,7 +1420,6 @@ def test_ogr2ogr_py_44():
     f.close()
 
     if data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1467,7 +1465,6 @@ def test_ogr2ogr_py_45():
     f.close()
 
     if data.find('type="gml:MultiPolygonPropertyType"') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1476,7 +1473,6 @@ def test_ogr2ogr_py_45():
     f.close()
 
     if data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1522,7 +1518,6 @@ def test_ogr2ogr_py_46():
     f.close()
 
     if data.find('type="gml:MultiLineStringPropertyType"') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 
@@ -1531,7 +1526,6 @@ def test_ogr2ogr_py_46():
     f.close()
 
     if data.find('<ogr:geometryProperty><gml:MultiLineString><gml:lineStringMember><gml:LineString><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LineString></gml:lineStringMember></gml:MultiLineString></ogr:geometryProperty>') == -1:
-        gdaltest.post_reason('failure')
         print(data)
         return 'fail'
 

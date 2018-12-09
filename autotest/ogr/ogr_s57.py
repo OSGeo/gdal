@@ -292,11 +292,9 @@ def test_ogr_s57_9():
 
     ds = gdal.OpenEx('tmp/ogr_s57_9.000', open_options=['RETURN_PRIMITIVES=ON'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerByName('IsolatedNode') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdaltest.s57_ds = ds

@@ -643,12 +643,10 @@ def test_osr_proj4_15():
         return 'skip'
 
     if srs.GetAuthorityName(None) != 'IGNF' or srs.GetAuthorityCode(None) != 'LAMB93':
-        gdaltest.post_reason('fail')
         print(srs)
         return 'fail'
 
     if srs.Validate() != 0:
-        gdaltest.post_reason('fail')
         print(srs)
         return 'fail'
 
@@ -771,7 +769,6 @@ def test_osr_proj4_19():
     srs.ImportFromProj4("+proj=longlat +datum=WGS84 +nadgrids=@null")
 
     if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],EXTENSION["PROJ4_GRIDS","@null"],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
-        gdaltest.post_reason('fail')
         print(srs.ExportToWkt())
         return 'fail'
 
@@ -793,7 +790,6 @@ def test_osr_proj4_20():
 
     if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["unknown",SPHEROID["WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],EXTENSION["PROJ4","+proj=longlat +foo=bar +wktext"]]' and \
        srs.ExportToWkt() != 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],EXTENSION["PROJ4","+proj=longlat +foo=bar +wktext"]]':
-        gdaltest.post_reason('fail')
         print(srs.ExportToWkt())
         return 'fail'
 
@@ -818,7 +814,6 @@ def test_osr_proj4_21():
     gdal.SetConfigOption('OVERRIDE_PROJ_DATUM_WITH_TOWGS84', None)
 
     if got.find('+proj=longlat +datum=nzgd49') != 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -835,7 +830,6 @@ def test_osr_proj4_22():
     got = srs.ExportToProj4()
 
     if got.find('+proj=longlat +a=1 +b=1') != 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -853,7 +847,6 @@ def test_osr_proj4_23():
     got = srs.ExportToProj4()
 
     if got.find('+proj=longlat +a=1 +b=1') != 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -862,7 +855,6 @@ def test_osr_proj4_23():
     got = srs.ExportToProj4()
 
     if got.find('+proj=longlat +a=2 +b=1') != 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -879,7 +871,6 @@ def test_osr_proj4_24():
     got = srs.ExportToProj4()
 
     if got.find('+units=m') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -889,7 +880,6 @@ def test_osr_proj4_24():
     got = srs.ExportToProj4()
 
     if got.find('+units=ft') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -899,7 +889,6 @@ def test_osr_proj4_24():
     got = srs.ExportToProj4()
 
     if got.find('+units=us-ft') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -909,7 +898,6 @@ def test_osr_proj4_24():
     got = srs.ExportToProj4()
 
     if got.find('+to_meter=0.4') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -929,7 +917,6 @@ def test_osr_proj4_25():
     got = srs.ExportToProj4()
 
     if got.find('+vunits=m') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -939,7 +926,6 @@ def test_osr_proj4_25():
     got = srs.ExportToProj4()
 
     if got.find('+vunits=ft') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -949,7 +935,6 @@ def test_osr_proj4_25():
     got = srs.ExportToProj4()
 
     if got.find('+vunits=us-ft') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -959,7 +944,6 @@ def test_osr_proj4_25():
     got = srs.ExportToProj4()
 
     if got.find('+vto_meter=0.4') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -979,7 +963,6 @@ def test_osr_proj4_26():
     got = srs.ExportToProj4()
 
     if got.find('+vunits=m') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -989,7 +972,6 @@ def test_osr_proj4_26():
     got = srs.ExportToProj4()
 
     if got.find('+vunits=ft') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -999,7 +981,6 @@ def test_osr_proj4_26():
     got = srs.ExportToProj4()
 
     if got.find('+vunits=us-yd') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -1019,7 +1000,6 @@ def test_osr_proj4_27():
     got = srs.ExportToProj4()
 
     if got.find('+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m') < 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -1036,7 +1016,6 @@ def test_osr_proj4_28():
     got = srs.ExportToWkt()
 
     if got.find('32631') >= 0:
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -1065,7 +1044,6 @@ def test_osr_proj4_error_cases_export_mercator():
     with gdaltest.error_handler():
         got = srs.ExportToProj4()
     if got != '':
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -1074,7 +1052,6 @@ def test_osr_proj4_error_cases_export_mercator():
     with gdaltest.error_handler():
         got = srs.ExportToProj4()
     if got != '':
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 

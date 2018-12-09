@@ -80,22 +80,16 @@ def test_ogrinfo_3():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al ../ogr/data/poly.shp')
     if ret.find('Layer name: poly') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ret.find('Geometry: Polygon') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ret.find('Feature Count: 10') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ret.find('Extent: (478315') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ret.find('PROJCS["OSGB') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ret.find('AREA: Real (') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -190,7 +184,6 @@ def test_ogrinfo_9():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -where "EAS_ID=171"')
     if ret.find('Feature Count: 1') == -1:
-        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
@@ -311,13 +304,11 @@ def test_ogrinfo_17():
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile', check_memleak=False)
     if err.find('--optfile option given without filename') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile /foo/bar', check_memleak=False)
     if err.find('Unable to open optfile') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
@@ -327,7 +318,6 @@ def test_ogrinfo_17():
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile tmp/optfile.txt', check_memleak=False)
     os.unlink('tmp/optfile.txt')
     if err.find('--config option given without a key and value argument') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 

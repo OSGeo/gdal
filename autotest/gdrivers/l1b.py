@@ -102,12 +102,10 @@ def test_l1b_geoloc():
     ds = gdal.Open('L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 62397:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     cs = ds.GetRasterBand(2).Checksum()
     if cs != 52616:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -138,7 +136,6 @@ def test_l1b_solar_zenith_angles_before_noaa_15():
     ds = gdal.Open('L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 22924:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -201,17 +198,14 @@ def test_l1b_angles_after_noaa_15():
     ds = gdal.Open('L1B_ANGLES:"tmp/cache/n16gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 31487:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     cs = ds.GetRasterBand(2).Checksum()
     if cs != 23380:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     cs = ds.GetRasterBand(3).Checksum()
     if cs != 64989:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -242,7 +236,6 @@ def test_l1b_clouds_after_noaa_15():
     ds = gdal.Open('L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -288,16 +281,12 @@ def test_l1b_little_endian():
 
     ds = gdal.Open('/vsizip/data/hrpt_little_endian.l1b.zip')
     if ds.GetGCPProjection().find('GRS80') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).Checksum() != 14145:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMaskBand().Checksum() != 25115:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

@@ -290,7 +290,6 @@ def test_jpeg2000_11():
         return 'fail'
     got_cs = fourth_band.Checksum()
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
@@ -306,22 +305,18 @@ def test_jpeg2000_11():
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jpeg2000_11.tif')
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
 
     if jp2_bands_data != gtiff_bands_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if jp2_fourth_band_data != gtiff_fourth_band_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

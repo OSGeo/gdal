@@ -44,7 +44,6 @@ def test_ogr_basic_1():
     gdaltest.ds = ogr.Open('data/poly.shp')
 
     if gdaltest.ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -422,7 +421,6 @@ def test_ogr_basic_9():
 
     for geom_type_tuple in geom_type_tuples:
         if ogr.GeometryTypeToName(geom_type_tuple[0]) != geom_type_tuple[1]:
-            gdaltest.post_reason('fail')
             print('Got %s, expected %s' % (ogr.GeometryTypeToName(geom_type_tuple[0]), geom_type_tuple[1]))
             return 'fail'
 
@@ -475,12 +473,10 @@ def test_ogr_basic_12():
     # boolean integer
     feat_def = ogr.FeatureDefn()
     if ogr.GetFieldSubTypeName(ogr.OFSTBoolean) != 'Boolean':
-        gdaltest.post_reason('fail')
         return 'fail'
     field_def = ogr.FieldDefn('fld', ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTBoolean)
     if field_def.GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
@@ -492,10 +488,8 @@ def test_ogr_basic_12():
     f.SetField('fld', 2)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetField('fld') != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     f.SetField('fld', '0')
@@ -505,10 +499,8 @@ def test_ogr_basic_12():
     f.SetField('fld', '2')
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetField('fld') != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
@@ -517,10 +509,8 @@ def test_ogr_basic_12():
     field_def.SetSubType(ogr.OFSTBoolean)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if field_def.GetSubType() != ogr.OFSTNone:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # boolean list
@@ -528,7 +518,6 @@ def test_ogr_basic_12():
     field_def = ogr.FieldDefn('fld', ogr.OFTIntegerList)
     field_def.SetSubType(ogr.OFSTBoolean)
     if field_def.GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
@@ -539,22 +528,18 @@ def test_ogr_basic_12():
     f.SetFieldIntegerList(0, [0, 1, 2, 1])
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetField('fld') != [0, 1, 1, 1]:
         print(f.GetField('fld'))
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # int16 integer
     feat_def = ogr.FeatureDefn()
     if ogr.GetFieldSubTypeName(ogr.OFSTInt16) != 'Int16':
-        gdaltest.post_reason('fail')
         return 'fail'
     field_def = ogr.FieldDefn('fld', ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTInt16)
     if field_def.GetSubType() != ogr.OFSTInt16:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
@@ -566,20 +551,16 @@ def test_ogr_basic_12():
     f.SetField('fld', -32769)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetField('fld') != -32768:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     f.SetField('fld', 32768)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if f.GetField('fld') != 32767:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
@@ -588,21 +569,17 @@ def test_ogr_basic_12():
     field_def.SetSubType(ogr.OFSTInt16)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if field_def.GetSubType() != ogr.OFSTNone:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # float32
     feat_def = ogr.FeatureDefn()
     if ogr.GetFieldSubTypeName(ogr.OFSTFloat32) != 'Float32':
-        gdaltest.post_reason('fail')
         return 'fail'
     field_def = ogr.FieldDefn('fld', ogr.OFTReal)
     field_def.SetSubType(ogr.OFSTFloat32)
     if field_def.GetSubType() != ogr.OFSTFloat32:
-        gdaltest.post_reason('fail')
         return 'fail'
     feat_def.AddFieldDefn(field_def)
 
@@ -611,17 +588,14 @@ def test_ogr_basic_12():
         gdal.ErrorReset()
         f.SetField('fld', '1.23')
         if gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
             return 'fail'
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         f.SetField('fld', 1.230000000001)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             return 'fail'
         if abs(f.GetField('fld') - 1.23) < 1e-8:
-            gdaltest.post_reason('fail')
             f.DumpReadable()
             return 'fail'
 
@@ -631,10 +605,8 @@ def test_ogr_basic_12():
     field_def.SetSubType(ogr.OFSTInt16)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     if field_def.GetSubType() != ogr.OFSTNone:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -675,7 +647,6 @@ def test_ogr_basic_13():
         f = ogr.Feature(feat_defn)
         f.SetField('date', val)
         if f.GetField('date') != expected_ret:
-            gdaltest.post_reason('fail')
             print(val)
             print(f.GetField('date'))
             return 'fail'
@@ -783,19 +754,16 @@ def test_ogr_basic_dataset_slice():
 
     lyrs = [lyr.GetName() for lyr in ds[1:3]]
     if lyrs != ['lyr2', 'lyr3']:
-        gdaltest.post_reason('fail')
         print(lyrs)
         return 'fail'
 
     lyrs = [lyr.GetName() for lyr in ds[0:4]]
     if lyrs != ['lyr1', 'lyr2', 'lyr3']:
-        gdaltest.post_reason('fail')
         print(lyrs)
         return 'fail'
 
     lyrs = [lyr.GetName() for lyr in ds[0:3:2]]
     if lyrs != ['lyr1', 'lyr3']:
-        gdaltest.post_reason('fail')
         print(lyrs)
         return 'fail'
 

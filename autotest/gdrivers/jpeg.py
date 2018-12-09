@@ -583,16 +583,12 @@ def test_jpeg_16():
 
     ds = gdal.Open('tmp/albania.jpg')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(0) is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     # "Internal" overview
 
@@ -602,14 +598,12 @@ def test_jpeg_16():
     else:
         expected_cs = 31892
     if cs != expected_cs:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
     # Build external overviews
     ds.BuildOverviews('NEAR', [2, 4])
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     # Check updated checksum
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -618,7 +612,6 @@ def test_jpeg_16():
     else:
         expected_cs = 32460
     if cs != expected_cs:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -627,7 +620,6 @@ def test_jpeg_16():
     # Check we are using external overviews
     ds = gdal.Open('tmp/albania.jpg')
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if gdaltest.jpeg_version in ('8', '9b'):
@@ -635,7 +627,6 @@ def test_jpeg_16():
     else:
         expected_cs = 32460
     if cs != expected_cs:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -654,7 +645,6 @@ def test_jpeg_17():
         if (ds is not None or
             gdal.GetLastErrorType() != gdal.CE_Failure or
                 gdal.GetLastErrorMsg() == ''):
-            gdaltest.post_reason('fail')
             return 'fail'
 
     gdal.ErrorReset()
@@ -666,7 +656,6 @@ def test_jpeg_17():
             gdal.GetLastErrorMsg() == ''):
         # libjpeg-turbo 1.4.0 doesn't emit errors...
         if cs != 4925:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     gdal.ErrorReset()
@@ -678,7 +667,6 @@ def test_jpeg_17():
 
     if (gdal.GetLastErrorType() != gdal.CE_Warning or
             gdal.GetLastErrorMsg() == ''):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
@@ -692,7 +680,6 @@ def test_jpeg_17():
 
     if (gdal.GetLastErrorType() != gdal.CE_Failure or
             gdal.GetLastErrorMsg() == ''):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -734,11 +721,9 @@ def test_jpeg_18():
         return 'fail'
     line1023_bis = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
     if line1023_bis == line0 or line1023 != line1023_bis:
-        gdaltest.post_reason('fail')
         return 'fail'
     line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
     if line0 != line0_bis:
-        gdaltest.post_reason('fail')
         return 'fail'
     line255_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(
         0, int(height / 4) - 1, int(width / 4), 1)
@@ -747,17 +732,14 @@ def test_jpeg_18():
         return 'fail'
     line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
     if line0 != line0_bis:
-        gdaltest.post_reason('fail')
         return 'fail'
     line0_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(
         0, 0, int(width / 4), 1)
     if line0_ovr1 != line0_ovr1_bis:
-        gdaltest.post_reason('fail')
         return 'fail'
     line255_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(
         0, int(height / 4) - 1, int(width / 4), 1)
     if line255_ovr1 != line255_ovr1_bis:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetCacheMax(oldSize)
@@ -811,11 +793,9 @@ def test_jpeg_19():
 
         if (width, height, iX) == (24, 25, 8):
             if data1 != data2:
-                gdaltest.post_reason('fail')
                 return 'fail'
         else:
             if data1 == data2:
-                gdaltest.post_reason('fail')
                 return 'fail'
 
         # Check the file with the LSB bit mask order
@@ -824,7 +804,6 @@ def test_jpeg_19():
             0, 0, width, height)
         ds = None
         if tiff_mask_data != jpg_mask_data:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         # Check the file with the MSB bit mask order
@@ -833,7 +812,6 @@ def test_jpeg_19():
             0, 0, width, height)
         ds = None
         if tiff_mask_data != jpg_mask_data:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         gdal.GetDriverByName('GTiff').Delete('/vsimem/jpeg_19.tif')
@@ -854,14 +832,11 @@ def test_jpeg_20():
 
     ds = gdal.Open('/vsimem/jpeg_20.jpg')
     if ds.GetGCPProjection().find('GEOGCS["WGS 84"') != 0:
-        gdaltest.post_reason('failure')
         print(ds.GetGCPProjection())
         return 'fail'
     if ds.GetGCPCount() != 4:
-        gdaltest.post_reason('failure')
         return 'fail'
     if len(ds.GetGCPs()) != 4:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -877,7 +852,6 @@ def test_jpeg_21():
 
     ds = gdal.Open('data/black_with_white_exif_ovr.jpg')
     if ds.GetRasterBand(1).GetOverviewCount() != 3:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     expected_dim_cs = [[512, 512, 0], [256, 256, 0], [196, 196, 12681]]
@@ -888,7 +862,6 @@ def test_jpeg_21():
         if (ovr.XSize != expected_w or
             ovr.YSize != expected_h or
                 cs != expected_cs):
-            gdaltest.post_reason('failure')
             print(ovr.XSize)
             print(ovr.YSize)
             print(cs)
@@ -910,13 +883,11 @@ def test_jpeg_22():
         '/vsimem/jpeg_22.jpg', src_ds, options=['EXIF_THUMBNAIL=YES'])
     src_ds = None
     if ds.GetRasterBand(1).GetOverviewCount() != 4:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     ovr = ds.GetRasterBand(1).GetOverview(3)
     cs = ovr.Checksum()
     if ovr.XSize != 128 or ovr.YSize != 64 or cs != 34957:
-        gdaltest.post_reason('failure')
         print(ovr.XSize)
         print(ovr.YSize)
         print(cs)
@@ -931,7 +902,6 @@ def test_jpeg_22():
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 64 or ovr.YSize != 128:
-        gdaltest.post_reason('failure')
         print(ovr.XSize)
         print(ovr.YSize)
         return 'fail'
@@ -946,10 +916,8 @@ def test_jpeg_22():
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ds.GetMetadataItem('COMMENT') != 'foo':
-        gdaltest.post_reason('failure')
         return 'fail'
     if ovr.XSize != 40 or ovr.YSize != 80:
-        gdaltest.post_reason('failure')
         print(ovr.XSize)
         print(ovr.YSize)
         return 'fail'
@@ -963,7 +931,6 @@ def test_jpeg_22():
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 30 or ovr.YSize != 60:
-        gdaltest.post_reason('failure')
         print(ovr.XSize)
         print(ovr.YSize)
         return 'fail'
@@ -979,7 +946,6 @@ def test_jpeg_22():
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
     if ovr.XSize != 50 or ovr.YSize != 40:
-        gdaltest.post_reason('failure')
         print(ovr.XSize)
         print(ovr.YSize)
         return 'fail'
@@ -1004,7 +970,6 @@ def test_jpeg_23():
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved
@@ -1016,7 +981,6 @@ def test_jpeg_23():
                        buf_pixel_space=3, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Pixel interleaved with padding
@@ -1028,7 +992,6 @@ def test_jpeg_23():
                        buf_pixel_space=4, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     if cs != got_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -1120,7 +1083,6 @@ def test_jpeg_27():
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
         if cs != 0 or gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             return 'fail'
 
     # Should error out with 'Scan number...
@@ -1133,7 +1095,6 @@ def test_jpeg_27():
         gdal.SetConfigOption('GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC', None)
         gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', None)
         if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
             return 'fail'
 
     return 'success'
@@ -1152,7 +1113,6 @@ def test_jpeg_28():
     src_ds = None
     ds = gdal.Open(tmpfilename)
     if ds.GetMetadata():
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # EXIF tags only
@@ -1184,13 +1144,11 @@ def test_jpeg_28():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
     expected_md = {'EXIF_DateTimeDigitized': '0123456789012345678', 'EXIF_DateTimeOriginal': '0123456789012345678', 'EXIF_Orientation': '10', 'EXIF_ApertureValue': '(0)', 'EXIF_YResolution': '(96)', 'EXIF_XResolution': '(96)', 'EXIF_TransferFunction': '0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0', 'EXIF_ExifVersion': '0123', 'EXIF_DateTime': 'dt                 ', 'EXIF_FlashpixVersion': 'ABCD', 'EXIF_ComponentsConfiguration': '0x1f 0x00 0x00 0x00', 'EXIF_Make': 'make', 'EXIF_StandardOutputSensitivity': '123456789', 'EXIF_ResolutionUnit': '2', 'EXIF_CompressedBitsPerPixel': '(0)', 'EXIF_SpatialFrequencyResponse': '0xab 0xcd', 'EXIF_ISOSpeedRatings': '1 2 3'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
 
@@ -1201,13 +1159,11 @@ def test_jpeg_28():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
         src_ds = None
         if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open(tmpfilename)
         got_val = ds.GetMetadataItem('EXIF_ShutterSpeedValue')
         got_val = got_val.replace('(', '').replace(')', '')
         if float(got_val) != val:
-            gdaltest.post_reason('fail')
             print(val)
             print(ds.GetMetadataItem('EXIF_ShutterSpeedValue'))
             return 'fail'
@@ -1219,13 +1175,11 @@ def test_jpeg_28():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
         src_ds = None
         if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = gdal.Open(tmpfilename)
         got_val = ds.GetMetadataItem('EXIF_ApertureValue')
         got_val = got_val.replace('(', '').replace(')', '')
         if float(got_val) != val:
-            gdaltest.post_reason('fail')
             print(val)
             print(ds.GetMetadataItem('EXIF_ApertureValue'))
             return 'fail'
@@ -1237,12 +1191,10 @@ def test_jpeg_28():
     gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
     if got_md != {'EXIF_GPSLatitudeRef': 'N', 'EXIF_GPSLatitude': '(49) (34) (56.5)'}:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     ds = None
@@ -1254,12 +1206,10 @@ def test_jpeg_28():
     gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
     if got_md != {'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N'}:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     ds = None
@@ -1273,12 +1223,10 @@ def test_jpeg_28():
         gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
     if got_md != {'EXIF_ExifVersion': '0231', 'EXIF_invalid': 'foo', 'FOO': 'BAR'}:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     ds = None
@@ -1299,16 +1247,13 @@ def test_jpeg_28():
                                             options=['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=32', 'THUMBNAIL_HEIGHT=32'])
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
     if got_md != {'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N'}:
-        gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount() - 1).XSize != 32:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 

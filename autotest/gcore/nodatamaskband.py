@@ -66,7 +66,6 @@ def test_nodatamaskband_1():
                        0, 255, 255, 0, 0, 255,
                        255, 0, 0, 255, 255, 255)
         if data_ar != expected_ar:
-            gdaltest.post_reason('fail')
             print(dt)
             print(data_ar)
             return 'fail'
@@ -75,7 +74,6 @@ def test_nodatamaskband_1():
         data_ar = struct.unpack('B' * 6 * 1, data)
         expected_ar = (0, 255, 255, 0, 0, 255)
         if data_ar != expected_ar:
-            gdaltest.post_reason('fail')
             print(dt)
             print(data_ar)
             return 'fail'
@@ -84,7 +82,6 @@ def test_nodatamaskband_1():
         data_ar = struct.unpack('B' * 6 * 1, data)
         expected_ar = (255, 0, 0, 255, 255, 255)
         if data_ar != expected_ar:
-            gdaltest.post_reason('fail')
             print(dt)
             print(data_ar)
             return 'fail'
@@ -95,7 +92,6 @@ def test_nodatamaskband_1():
         expected_ar = (255, 0, 255,
                        0, 255, 255)
         if data_ar != expected_ar:
-            gdaltest.post_reason('fail')
             print(dt)
             print(data_ar)
             return 'fail'
@@ -106,7 +102,6 @@ def test_nodatamaskband_1():
         expected_ar = (255, 0, 255,
                        0, 255, 255)
         if data_ar != expected_ar:
-            gdaltest.post_reason('fail')
             print(dt)
             print(data_ar)
             return 'fail'

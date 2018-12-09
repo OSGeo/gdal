@@ -1125,10 +1125,8 @@ def test_gdalwarp_38():
 
     ds = gdal.Open('tmp/testgdalwarp38.tif')
     if ds.GetRasterBand(1).Checksum() != 65531:
-        gdaltest.post_reason('failure')
         return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() != -999:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1146,7 +1144,6 @@ def test_gdalwarp_39():
 
     ds = gdal.Open('tmp/test_gdalwarp_39.tif')
     if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1175,7 +1172,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_main:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1184,7 +1180,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_main:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1198,7 +1193,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1212,7 +1206,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1221,7 +1214,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_ov0:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1230,7 +1222,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.vrt')
     if ds.GetRasterBand(1).Checksum() != cs_ov0:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1244,7 +1235,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1258,7 +1248,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1267,7 +1256,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_ov1:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1281,7 +1269,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1295,7 +1282,6 @@ def test_gdalwarp_40():
 
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1336,7 +1322,6 @@ def test_gdalwarp_41():
 
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
     if ds.GetRasterBand(1).Checksum() != 25945:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     ds = None
@@ -1346,7 +1331,6 @@ def test_gdalwarp_41():
 
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
     if ds.GetRasterBand(1).Checksum() != 65068:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     ds = None
@@ -1373,7 +1357,6 @@ def test_gdalwarp_42():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
     ds = None
@@ -1385,7 +1368,6 @@ def test_gdalwarp_42():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
     ds = None
@@ -1397,7 +1379,6 @@ def test_gdalwarp_42():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [30111, 32302, 40026, 59540]
     if got_cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
     ds = None
@@ -1410,7 +1391,6 @@ def test_gdalwarp_42():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
     ds = None
@@ -1433,15 +1413,12 @@ def test_gdalwarp_43():
 
     ds = gdal.Open('tmp/test_gdalwarp_43.tif')
     if ds.GetMetadataItem('NODATA_VALUES') is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     if ds.GetMetadataItem('FOO') != 'BAR':
-        gdaltest.post_reason('failure')
         return 'fail'
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [30106, 32285, 40022, 64261]
     if got_cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
 
@@ -1481,7 +1458,6 @@ def test_gdalwarp_44():
     ds = None
 
     if cs3 != cs4:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1498,7 +1474,6 @@ def test_gdalwarp_45():
 
     ds = gdal.Open('tmp/test_gdalwarp_45.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
@@ -1508,7 +1483,6 @@ def test_gdalwarp_45():
 
     ds = gdal.Open('tmp/test_gdalwarp_45.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 

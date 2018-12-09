@@ -64,7 +64,6 @@ def test_gnm_filenetwork_create():
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
     if dn is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if dn.GetVersion() != 100:
         gdaltest.post_reason('GNM: Check GNM version failed')
@@ -93,7 +92,6 @@ def test_gnm_filenetwork_open():
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
     if dn is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if dn.GetVersion() != 100:
         gdaltest.post_reason('GNM: Check GNM version failed')

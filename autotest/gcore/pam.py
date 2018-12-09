@@ -142,7 +142,6 @@ def test_pam_3():
     ds = None
     ds = gdal.Open('tmp/pam.pnm', gdal.GA_Update)
     if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -485,16 +484,13 @@ def test_pam_12():
     gdal.Unlink('tmp/byte.tif.aux.xml')
 
     if hist1 != hist2:
-        gdaltest.post_reason('fail')
         print(hist1)
         print(hist2)
         return 'fail'
     if hist1[0] != 6000000000:
-        gdaltest.post_reason('fail')
         print(hist1)
         return 'fail'
     if aux_xml.find('<HistCounts>6000000000|') < 0:
-        gdaltest.post_reason('fail')
         print(aux_xml)
         return 'fail'
 
@@ -517,20 +513,17 @@ def test_pam_13():
     ret = ds.GetRasterBand(1).SetNoDataValue(0)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ret = ds.GetRasterBand(1).DeleteNoDataValue()
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
 
     if gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('/vsimem/tmp.pnm')

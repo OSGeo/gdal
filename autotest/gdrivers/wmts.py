@@ -70,28 +70,24 @@ def test_wmts_2():
     ds = gdal.Open('WMTS:')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ds = gdal.Open('<GDAL_WMTS>')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ds = gdal.Open('<GDAL_WMTSxxx/>')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ds = gdal.Open('<GDAL_WMTS></GDAL_WMTS>')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -109,7 +105,6 @@ def test_wmts_3():
     ds = gdal.Open('WMTS:https://non_existing')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -127,7 +122,6 @@ def test_wmts_4():
     ds = gdal.Open('WMTS:/vsimem/non_existing')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -147,7 +141,6 @@ def test_wmts_5():
     ds = gdal.Open('WMTS:/vsimem/invalid_getcapabilities.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -167,7 +160,6 @@ def test_wmts_6():
     ds = gdal.Open('WMTS:/vsimem/invalid_getcapabilities.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -187,7 +179,6 @@ def test_wmts_7():
     ds = gdal.Open('WMTS:/vsimem/empty_getcapabilities.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -213,7 +204,6 @@ def test_wmts_8():
     ds = gdal.Open('WMTS:/vsimem/missing.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -246,7 +236,6 @@ def test_wmts_9():
     ds = gdal.Open('WMTS:/vsimem/missing_tms.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -282,7 +271,6 @@ def test_wmts_10():
     ds = gdal.Open('WMTS:/vsimem/missing_SupportedCRS.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -319,7 +307,6 @@ def test_wmts_11():
     ds = gdal.Open('WMTS:/vsimem/no_tilematrix.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -357,7 +344,6 @@ def test_wmts_12():
     ds = gdal.Open('WMTS:/vsimem/missing_required_element_in_tilematrix.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -402,7 +388,6 @@ def test_wmts_12bis():
     ds = gdal.Open('WMTS:/vsimem/wmts_12bis.xml')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -446,52 +431,39 @@ def test_wmts_13():
 
     ds = gdal.Open('WMTS:/vsimem/minimal.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 256:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342799999, 156543.03392811998, 0.0, 20037508.342799999, 0.0, -156543.03392811998)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('3857') < 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 4:
-        gdaltest.post_reason('fail')
         return 'fail'
     for i in range(4):
         if ds.GetRasterBand(i + 1).GetColorInterpretation() != gdal.GCI_RedBand + i:
-            gdaltest.post_reason('fail')
             return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetOverview(0) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     cs = ds.GetRasterBand(1).Checksum()
     gdal.PopErrorHandler()
     if cs != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetSubDatasets() != []:
-        gdaltest.post_reason('fail')
         print(ds.GetSubDatasets())
         return 'fail'
     if ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMetadataItem('foo') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     for connection_str in ['WMTS:/vsimem/minimal.xml,layer=',
@@ -502,7 +474,6 @@ def test_wmts_13():
                            'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=']:
         ds = gdal.Open(connection_str)
         if ds is None:
-            gdaltest.post_reason('fail')
             print(connection_str)
             return 'fail'
         ds = None
@@ -516,7 +487,6 @@ def test_wmts_13():
         ds = gdal.Open(connection_str)
         gdal.PopErrorHandler()
         if ds is not None:
-            gdaltest.post_reason('fail')
             print(connection_str)
             return 'fail'
         ds = None
@@ -529,19 +499,16 @@ def test_wmts_13():
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != tmp_ds.GetRasterBand(i + 1).Checksum():
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ref_data = tmp_ds.ReadRaster(0, 0, 256, 256)
     got_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -645,7 +612,6 @@ def test_wmts_14():
 
     ds = gdal.Open('WMTS:/vsimem/nominal.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetSubDatasets() != [('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style="style=auto"',
                                 'Layer My layer1, tile matrix set tms, style "Default style"'),
@@ -655,21 +621,17 @@ def test_wmts_14():
                                 'Layer My layer1, tile matrix set another_tms, style "Default style"'),
                                ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style=another_style',
                                 'Layer My layer1, tile matrix set another_tms, style "Another style"')]:
-        gdaltest.post_reason('fail')
         print(ds.GetSubDatasets())
         return 'fail'
     if ds.RasterXSize != 67108864:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     gdal.PopErrorHandler()
     if res != '':
-        gdaltest.post_reason('fail')
         print(res)
         return 'fail'
     if ds.GetMetadata() != {'ABSTRACT': 'My abstract', 'TITLE': 'My layer1'}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
 
@@ -701,7 +663,6 @@ def test_wmts_14():
   <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
 </GDAL_WMTS>
 """:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -709,30 +670,25 @@ def test_wmts_14():
     gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt', 'foo')
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>foo</LocationInfo>':
-        gdaltest.post_reason('fail')
         print(res)
         return 'fail'
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>foo</LocationInfo>':
-        gdaltest.post_reason('fail')
         print(res)
         return 'fail'
 
     ds = gdal.Open('<GDAL_WMTS><GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl></GDAL_WMTS>')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     for open_options in [['URL=/vsimem/nominal.xml'],
                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIXSET=tms']]:
         ds = gdal.OpenEx('WMTS:', open_options=open_options)
         if ds is None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     for open_options in [['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'],
@@ -742,7 +698,6 @@ def test_wmts_14():
         ds = gdal.OpenEx('WMTS:', open_options=open_options)
         gdal.PopErrorHandler()
         if ds is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ds = gdal.Open('WMTS:/vsimem/nominal.xml')
@@ -750,43 +705,34 @@ def test_wmts_14():
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != """<LocationInfo><xml_content />
 </LocationInfo>""":
-        gdaltest.post_reason('fail')
         print(res)
         return 'fail'
 
     ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,tilematrix=tm_0')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
 
     ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options=['tilematrix=tm_0'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
 
     ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,zoom_level=0')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
 
     ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options=['zoom_level=0'])
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
 
@@ -810,10 +756,8 @@ def test_wmts_14():
 </GDAL_WMTS>""")
     ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
 
@@ -837,10 +781,8 @@ def test_wmts_14():
 </GDAL_WMTS>""")
     ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
 
@@ -953,16 +895,13 @@ def test_wmts_15():
 
     ds = gdal.Open('/vsimem/nominal_kvp.xml?service=WMTS&request=GetCapabilities')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 67108864:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     gdal.PopErrorHandler()
     if res != '':
-        gdaltest.post_reason('fail')
         print(res)
         return 'fail'
 
@@ -973,13 +912,11 @@ def test_wmts_15():
     gdal.FileFromMemBuffer('/vsimem/nominal_kvp.xml?service=WMTS&request=GetFeatureInfo&version=1.0.0&layer=lyr1&style=default_style&InfoFormat=text/plain&TileMatrixSet=tms&TileMatrix=18&TileRow=0&TileCol=0&J=2&I=1&time=2011-10-04', 'bar')
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>bar</LocationInfo>':
-        gdaltest.post_reason('fail')
         print(res)
         return 'fail'
 
     ds = gdal.Open('WMTS:/vsimem/gdal_nominal_kvp.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
     for i in range(4):
@@ -988,19 +925,16 @@ def test_wmts_15():
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         if cs != tmp_ds.GetRasterBand(i + 1).Checksum():
-            gdaltest.post_reason('fail')
             return 'fail'
 
     ref_data = tmp_ds.ReadRaster(0, 0, 256, 256)
     got_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
     if ref_data != got_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -1074,25 +1008,20 @@ def test_wmts_16():
 
     ds = gdal.Open('WMTS:/vsimem/wmts_16.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 512:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('4326') < 0 or ds.GetProjectionRef().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
 
@@ -1164,25 +1093,20 @@ def test_wmts_17():
 
     ds = gdal.Open('WMTS:/vsimem/wmts_17.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 512:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('4326') < 0 or ds.GetProjectionRef().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
 
@@ -1254,25 +1178,20 @@ def test_wmts_18():
 
     ds = gdal.Open('WMTS:/vsimem/wmts_18.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 512:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('4326') < 0 or ds.GetProjectionRef().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
 
@@ -1349,25 +1268,20 @@ def test_wmts_19():
 
     ds = gdal.Open('WMTS:/vsimem/wmts_19.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 512:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('4326') < 0 or ds.GetProjectionRef().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
 
@@ -1448,25 +1362,20 @@ def test_wmts_20():
 
     ds = gdal.Open('WMTS:/vsimem/wmts_20.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 512:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('4326') < 0 or ds.GetProjectionRef().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
 
@@ -1543,25 +1452,20 @@ def test_wmts_21():
 
     ds = gdal.Open('WMTS:/vsimem/wmts_21.xml,extendbeyonddateline=yes')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 512:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (90, 0.3515625, 0.0, 0.0, 0.0, -0.3515625)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('4326') < 0 or ds.GetProjectionRef().find('AXIS') >= 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
 
@@ -1576,11 +1480,9 @@ def test_wmts_21():
     tmp0_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/wmts_21/default_style/tms/GoogleCRS84Quad:2/1/0.png', tmp_ds)
 
     if ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256) != tmp3_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).ReadRaster(256, 0, 256, 256) != tmp0_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1633,25 +1535,20 @@ def test_wmts_22():
 
     ds = gdal.Open('WMTS:/vsimem/wmts_22.xml')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterXSize != 2097152:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 2097152:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
     got_gt = ds.GetGeoTransform()
     expected_gt = (-548576.0, 1.0000000000004, 0.0, 8388608.0, 0.0, -1.0000000000004)
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
             print(got_gt)
             return 'fail'
     if ds.GetProjectionRef().find('3067') < 0:
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
 
@@ -1707,22 +1604,18 @@ def wmts_23(imagetype, expected_cs):
 
     ds = gdal.Open('WMTS:' + inputXml)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.RasterXSize != 128:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize)
         return 'fail'
     if ds.RasterYSize != 128:
-        gdaltest.post_reason('fail')
         print(ds.RasterYSize)
         return 'fail'
 
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs[i]:
-            gdaltest.post_reason('fail')
             print(cs)
             return 'fail'
 
@@ -2067,12 +1960,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
 
     ds = gdal.Open(inputXml)
     if ds.RasterXSize != 1073741766 or ds.RasterYSize != 1070224430:
-        gdaltest.post_reason('fail')
         print(ds.RasterXSize, ds.RasterYSize)
         return 'fail'
     count_levels = 1 + ds.GetRasterBand(1).GetOverviewCount()
     if count_levels != 23: # there are 24 in total, but we discard the one labelled 23
-        gdaltest.post_reason('fail')
         print(count_levels)
         return 'fail'
     ds = None

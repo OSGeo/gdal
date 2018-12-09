@@ -597,7 +597,6 @@ def test_misc_12():
             ds = drv.CreateCopy('/nonexistingpath' + get_filename(drv, ''), src_ds)
             gdal.PopErrorHandler()
             if ds is None and gdal.GetLastErrorMsg() == '':
-                gdaltest.post_reason('failure')
                 print('CreateCopy() into non existing dir fails without error message for driver %s' % drv.ShortName)
                 gdal.Unlink('/vsimem/misc_12_src.tif')
                 return 'fail'
@@ -637,7 +636,6 @@ def test_misc_13():
     out_ds = gdal.GetDriverByName('ESRI Shapefile').CreateCopy('/vsimem/out.shp', ds)
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Raster-only -> vector-only
@@ -646,7 +644,6 @@ def test_misc_13():
     out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', ds)
     gdal.PopErrorHandler()
     if out_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

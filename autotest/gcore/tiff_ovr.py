@@ -2025,7 +2025,6 @@ def test_tiff_ovr_49(both_endian):
     ds = None
     ds = gdal.Open('/vsimem/tiff_ovr_49.tif.ovr')
     if ds.GetRasterBand(1).Checksum() == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_49.tif')
@@ -2099,12 +2098,10 @@ def test_tiff_ovr_52():
     ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 328:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs != 1087:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -2123,12 +2120,10 @@ def test_tiff_ovr_52():
     ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 328:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs != 1087:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -2160,12 +2155,10 @@ def test_tiff_ovr_53():
     ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1087:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs != 328:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -2190,12 +2183,10 @@ def test_tiff_ovr_53():
     ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1087:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     if cs != 328:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     ds = None
@@ -2239,7 +2230,6 @@ def test_tiff_ovr_54():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_54.tif')
 
     if cs0 == 0 or cs1 == 0:
-        gdaltest.post_reason('fail')
         print(cs0, cs1)
         return 'fail'
 
@@ -2255,12 +2245,10 @@ def test_tiff_ovr_too_many_levels_contig():
     ds = gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
     if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
     if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
@@ -2277,11 +2265,9 @@ def test_tiff_ovr_too_many_levels_separate():
     ds = gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
     if ds.GetRasterBand(1).GetOverviewCount() != 6:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 6:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     ds = None
@@ -2300,11 +2286,9 @@ def test_tiff_ovr_too_many_levels_external():
     ds = gdal.Open(tmpfilename)
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
     if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
     if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
@@ -2333,7 +2317,6 @@ def test_tiff_ovr_average_multiband_vs_singleband():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_average_multiband_pixel.tif')
 
     if cs_band != cs_pixel:
-        gdaltest.post_reason('fail')
         print(cs_band, cs_pixel)
         return 'fail'
 

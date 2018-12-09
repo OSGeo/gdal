@@ -176,7 +176,6 @@ def test_jp2kak_11():
     ds = gdal.Open('data/gtsmall_11_int16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
     if cs not in (63475, 63472, 63452, 63471):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     return 'success'
@@ -194,7 +193,6 @@ def test_jp2kak_12():
     ds = gdal.Open('data/gtsmall_10_uint16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 63360 and cs != 63357 and cs != 63358:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     return 'success'
@@ -414,7 +412,6 @@ def test_jp2kak_20():
         return 'fail'
     got_cs = fourth_band.Checksum()
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
@@ -436,12 +433,10 @@ def test_jp2kak_20():
     tmp_ds = None
     tiff_drv.Delete('/vsimem/jp2kak_20.tif')
     if got_cs != 8527:
-        gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
 
     if jp2_bands_data != gtiff_bands_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # if jp2_fourth_band_data != gtiff_fourth_band_data:
@@ -452,7 +447,6 @@ def test_jp2kak_20():
                      open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -488,7 +482,6 @@ def test_jp2kak_21():
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
     cs = mem_ds.GetRasterBand(1).Checksum()
     if cs != ref_cs:
-        gdaltest.post_reason('fail')
         print(cs)
         print(ref_cs)
         return 'fail'
@@ -511,13 +504,11 @@ def test_jp2kak_22():
         ref_cs = src_ds.GetRasterBand(1).Checksum()
         cs = ds.GetRasterBand(1).Checksum()
         if ref_cs != cs:
-            gdaltest.post_reason('fail')
             print(i)
             print(cs)
             print(ref_cs)
             return 'fail'
         if src_ds.GetRasterBand(1).GetColorInterpretation() != ds.GetRasterBand(1).GetColorInterpretation():
-            gdaltest.post_reason('fail')
             print(i)
             return 'fail'
     ds = None

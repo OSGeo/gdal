@@ -97,13 +97,10 @@ def test_gnmmanage_3():
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' info tmp/test_gnm')
 
     if ret.find('Network version: 1.0.') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ret.find('Network name: test_gnm.') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ret.find('Network description') == -1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

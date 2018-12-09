@@ -40,7 +40,6 @@ def test_derived_test1():
     gdal.ErrorReset()
     ds = gdal.Open(filename)
     if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     got_dsds = ds.GetMetadata('DERIVED_SUBDATASETS')
     expected_gt = ds.GetGeoTransform()
@@ -61,7 +60,6 @@ def test_derived_test1():
                      'DERIVED_SUBDATASET_7_DESC': 'log10 of amplitude of input bands from ../gcore/data/cfloat64.tif'}
 
     if got_dsds != expected_dsds:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_dsds)
         return 'fail'
@@ -71,17 +69,14 @@ def test_derived_test1():
         if key.endswith('_NAME'):
             ds = gdal.Open(val)
             if ds is None or gdal.GetLastErrorMsg() != '':
-                gdaltest.post_reason('fail')
                 return 'fail'
             gt = ds.GetGeoTransform()
             if gt != expected_gt:
-                gdaltest.post_reason('fail')
                 import pprint
                 pprint.pprint("Expected geotransform: " + str(expected_gt) + ", got " + str(gt))
                 return 'fail'
             prj = ds.GetProjection()
             if prj != expected_prj:
-                gdaltest.post_reason('fail')
                 import pprint
                 pprint.pprint("Expected projection: " + str(expected_prj) + ", got: " + str(gt))
                 return 'fail'
@@ -93,7 +88,6 @@ def test_derived_test2():
     gdal.ErrorReset()
     ds = gdal.Open(filename)
     if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     got_dsds = ds.GetMetadata('DERIVED_SUBDATASETS')
     expected_dsds = {'DERIVED_SUBDATASET_1_NAME': 'DERIVED_SUBDATASET:AMPLITUDE:../gcore/data/cint_sar.tif',
@@ -120,7 +114,6 @@ def test_derived_test2():
                    'DERIVED_SUBDATASET_7_NAME': 55}
 
     if got_dsds != expected_dsds:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_dsds)
         return 'fail'
@@ -130,11 +123,9 @@ def test_derived_test2():
         if key.endswith('_NAME'):
             ds = gdal.Open(val)
             if ds is None or gdal.GetLastErrorMsg() != '':
-                gdaltest.post_reason('fail')
                 return 'fail'
             cs = ds.GetRasterBand(1).Checksum()
             if expected_cs[key] != cs:
-                gdaltest.post_reason('fail')
                 import pprint
                 pprint.pprint("Expected checksum " + str(expected_cs[key]) + ", got " + str(cs))
                 return 'fail'
@@ -150,26 +141,22 @@ def test_derived_test3():
         # Missing filename
         ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('DERIVED_SUBDATASET:invalid_alg:../gcore/data/byte.tif')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:dataset_does_not_exist')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
         # Raster with zero band
         ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:data/CSK_DGM.h5')
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     for function in ['real', 'imag', 'complex', 'mod', 'phase', 'conj',

@@ -341,11 +341,9 @@ def test_vrt_read_7():
     gdal.Unlink(filename)
 
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if error_msg == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -423,13 +421,11 @@ def test_vrt_read_10():
     gdal.VSIFCloseL(f)
 
     if vrt_hist != mem_hist:
-        gdaltest.post_reason('fail')
         print(vrt_hist)
         print(mem_hist)
         return 'fail'
 
     if content.find('<Histograms>') < 0:
-        gdaltest.post_reason('fail')
         print(content)
         return 'fail'
 
@@ -456,7 +452,6 @@ def test_vrt_read_10():
         gdal.VSIFCloseL(f)
 
         if content.find('<Histograms>') < 0:
-            gdaltest.post_reason('fail')
             print(content)
             return 'fail'
 
@@ -486,7 +481,6 @@ def test_vrt_read_10():
         gdal.VSIFCloseL(f)
 
         if content.find('<Histograms>') < 0:
-            gdaltest.post_reason('fail')
             print(content)
             return 'fail'
 
@@ -611,7 +605,6 @@ def test_vrt_read_14():
 
     if vrt_stats[0] != 115.0 or vrt_stats[1] != 173.0:
         print(vrt_stats)
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -807,7 +800,6 @@ def test_vrt_read_20():
 </VRTDataset>""")
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -checksum tmp/byte2.vrt --config VRT_SHARED_SOURCE 0 --config GDAL_MAX_DATASET_POOL_SIZE 3')
     if ret.find('Checksum=4672') < 0:
-        gdaltest.post_reason('failure')
         print(ret)
         return 'fail'
 
@@ -843,7 +835,6 @@ def test_vrt_read_21():
 </VRTDataset>""")
     ds = gdal.Open('/vsimem/vrt_read_21.vrt')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
     data_ds_one_band = ds.ReadRaster(0, 0, 800, 800, 400, 400)
@@ -872,22 +863,18 @@ def test_vrt_read_21():
 </VRTDataset>""")
     ds = gdal.Open('/vsimem/vrt_read_21.vrt')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
 
     ds = gdal.Open('/vsimem/vrt_read_21.vrt')
     ovr_band = ds.GetRasterBand(1).GetOverview(-1)
     if ovr_band is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ovr_band = ds.GetRasterBand(1).GetOverview(1)
     if ovr_band is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
     ovr_band = ds.GetRasterBand(1).GetOverview(0)
     if ovr_band is None:
-        gdaltest.post_reason('failure')
         return 'fail'
     cs = ovr_band.Checksum()
     cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
@@ -895,7 +882,6 @@ def test_vrt_read_21():
     data = ds.ReadRaster(0, 0, 800, 800, 400, 400)
 
     if data != data_ds_one_band + ds.GetRasterBand(2).ReadRaster(0, 0, 800, 800, 400, 400):
-        gdaltest.post_reason('failure')
         return 'fail'
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 400, 400, 2)
@@ -904,12 +890,10 @@ def test_vrt_read_21():
     ref_cs2 = mem_ds.GetRasterBand(2).Checksum()
     mem_ds = None
     if cs != ref_cs:
-        gdaltest.post_reason('failure')
         print(cs)
         print(ref_cs)
         return 'fail'
     if cs2 != ref_cs2:
-        gdaltest.post_reason('failure')
         print(cs2)
         print(ref_cs2)
         return 'fail'
@@ -920,12 +904,10 @@ def test_vrt_read_21():
     ds = None
 
     if cs != expected_cs:
-        gdaltest.post_reason('failure')
         print(cs)
         print(expected_cs)
         return 'fail'
     if cs2 != expected_cs2:
-        gdaltest.post_reason('failure')
         print(cs2)
         print(expected_cs2)
         return 'fail'
@@ -962,26 +944,21 @@ def test_vrt_read_22():
   </VRTRasterBand>
 </VRTDataset>""")
     if ds.GetRasterBand(1).GetMinimum() != 63:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).GetMaximum() != 63:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).ComputeRasterMinMax() != (63, 63):
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).ComputeStatistics(False) != [63.0, 63.0, 63.0, 0.0]:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).ComputeStatistics(False))
         return 'fail'
 
     data = ds.ReadRaster()
     got = struct.unpack('B' * 20 * 20, data)
     if got[0] != 63:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
@@ -996,19 +973,15 @@ def test_vrt_read_22():
   </VRTRasterBand>
 </VRTDataset>""")
     if ds.GetRasterBand(1).GetMinimum() != 63:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).GetMaximum() != 63:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).ComputeRasterMinMax() != (63, 63):
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).ComputeStatistics(False) != [63.0, 63.0, 63.0, 0.0]:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).ComputeStatistics(False))
         return 'fail'
 
@@ -1025,20 +998,16 @@ def test_vrt_read_22():
   </VRTRasterBand>
 </VRTDataset>""")
     if ds.GetRasterBand(1).GetMinimum() is not None:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetMinimum())
         return 'fail'
 
     if ds.GetRasterBand(1).GetMaximum() is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).ComputeRasterMinMax() != (63, 63):
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if ds.GetRasterBand(1).ComputeStatistics(False) != [63.0, 63.0, 63.0, 0.0]:
-        gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).ComputeStatistics(False))
         return 'fail'
 
@@ -1074,11 +1043,9 @@ def test_vrt_read_23():
 </VRTDataset>""")
     got_ar = ds.GetRasterBand(1).ReadAsArray(0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear)
     if list(got_ar[0]) != [0, 10, 10, 10]:
-        gdaltest.post_reason('failure')
         print(list(got_ar[0]))
         return 'fail'
     if ds.ReadRaster(0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear):
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1099,11 +1066,9 @@ def test_vrt_read_23():
 </VRTDataset>""")
     got_ar = ds.GetRasterBand(1).ReadAsArray(0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear)
     if list(got_ar[0]) != [0, 10, 10, 10]:
-        gdaltest.post_reason('failure')
         print(list(got_ar[0]))
         return 'fail'
     if ds.ReadRaster(0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear):
-        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
@@ -1129,7 +1094,6 @@ def test_vrt_read_24():
     # Please do not change the expected checksum without checking that
     # the result image has no vertical black line in the middle
     if cs != 46612:
-        gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
     ds = None
@@ -1171,28 +1135,24 @@ def test_vrt_read_25():
 
     (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 20, 20)
     if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA or pct != 100.0:
-        gdaltest.post_reason('failure')
         print(flags)
         print(pct)
         return 'fail'
 
     (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(1005, 35, 10, 10)
     if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA or pct != 100.0:
-        gdaltest.post_reason('failure')
         print(flags)
         print(pct)
         return 'fail'
 
     (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(100, 100, 20, 20)
     if flags != gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY or pct != 0.0:
-        gdaltest.post_reason('failure')
         print(flags)
         print(pct)
         return 'fail'
 
     (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(10, 10, 20, 20)
     if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY or pct != 25.0:
-        gdaltest.post_reason('failure')
         print(flags)
         print(pct)
         return 'fail'
@@ -1225,7 +1185,6 @@ def test_vrt_read_26():
     partial_data = struct.unpack('B' * 1 * 1, partial_data)
 
     if partial_data[0] != full_data[22 + 1]:
-        gdaltest.post_reason('fail')
         print(full_data)
         print(partial_data[0])
         print(full_data[22 + 1])
@@ -1296,7 +1255,6 @@ def test_vrt_read_29():
     # Just after opening, we shouldn't have read the source
     lst = gdaltest.get_opened_files()
     if lst.sort() != lst_before.sort():
-        gdaltest.post_reason('fail')
         print(lst)
         print(lst_before)
         return 'fail'
@@ -1305,14 +1263,12 @@ def test_vrt_read_29():
     ds.GetRasterBand(1).Checksum()
     lst = gdaltest.get_opened_files()
     if len(lst) != len(lst_before) + 1:
-        gdaltest.post_reason('fail')
         print(lst)
         print(lst_before)
         return 'fail'
     ds.GetRasterBand(2).Checksum()
     lst = gdaltest.get_opened_files()
     if len(lst) != len(lst_before) + 1:
-        gdaltest.post_reason('fail')
         print(lst)
         print(lst_before)
         return 'fail'
@@ -1324,7 +1280,6 @@ def test_vrt_read_29():
     ds2.GetRasterBand(1).Checksum()
     lst = gdaltest.get_opened_files()
     if len(lst) != len(lst_before) + 2:
-        gdaltest.post_reason('fail')
         print(lst)
         print(lst_before)
         return 'fail'
@@ -1379,14 +1334,12 @@ dy           1
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 2, 2, buf_type=gdal.GDT_Float32)
     got = struct.unpack('f' * 2 * 2, data)
     if got != (0, 1, 254, 255):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
     data = ds.ReadRaster(0, 0, 2, 2, buf_type=gdal.GDT_Float32)
     got = struct.unpack('f' * 2 * 2, data)
     if got != (0, 1, 254, 255):
-        gdaltest.post_reason('fail')
         print(got)
         return 'fail'
 
@@ -1445,7 +1398,6 @@ def test_vrt_subpixel_offset():
     ds = gdal.Open('data/vrt_subpixel_offset.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4849:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1461,7 +1413,6 @@ def test_vrt_dstsize_larger_than_source():
     ds = gdal.Open('data/dstsize_larger_than_source.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 33273:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 

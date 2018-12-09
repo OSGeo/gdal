@@ -437,7 +437,6 @@ def test_vrtmask_11():
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

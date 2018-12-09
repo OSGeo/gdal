@@ -140,7 +140,6 @@ def test_ogr_sqlite_2():
     gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update=1)
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('tpoly')
     if gdaltest.sl_lyr.GetGeometryColumn() != 'GEOMETRY':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     for field_desc in fields:
@@ -152,18 +151,14 @@ def test_ogr_sqlite_2():
                    field_defn.GetFieldTypeName(field_desc[1])))
     field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex('fld_boolean'))
     if field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('failure')
         return 'fail'
     field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex('INT64'))
     if field_defn.GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     if gdaltest.sl_ds.GetLayerByName('a_layer').GetGeometryColumn() != 'mygeom':
-        gdaltest.post_reason('failure')
         return 'fail'
     if gdaltest.sl_ds.GetLayerByName('a_layer').GetFIDColumn() != 'my_fid':
-        gdaltest.post_reason('failure')
         return 'fail'
 
     ######################################################
@@ -235,7 +230,6 @@ def test_ogr_sqlite_3():
                 gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
         if read_feat.GetField('int64') != 1234567890123:
-            gdaltest.post_reason('failure')
             read_feat.DumpReadable()
             return 'fail'
 
@@ -954,7 +948,6 @@ def test_ogr_sqlite_18():
     if feat.GetField('auth_name') != 'OGR' or \
        feat.GetField('proj4text').find('+proj=vandg') != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
@@ -1301,11 +1294,9 @@ def test_ogr_sqlite_25():
 
     lyr = ds.GetLayerByName('polygon')
     if lyr is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if lyr.GetLayerDefn().GetFieldCount() == 0:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     return 'success'
@@ -1372,7 +1363,6 @@ def test_ogr_sqlite_27():
                 ret = ret[0:pos]
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('failed')
         print(ret)
         return 'fail'
 
@@ -1380,7 +1370,6 @@ def test_ogr_sqlite_27():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_sqlite_27.sqlite -sql "SELECT * FROM poly"')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('failed')
         print(ret)
         return 'fail'
 
@@ -1405,7 +1394,6 @@ def test_ogr_sqlite_28():
     os.unlink('tmp/poly_spatialite.sqlite')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('failed')
         print(ret)
         return 'fail'
 
@@ -1413,7 +1401,6 @@ def test_ogr_sqlite_28():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite -sql "SELECT * FROM poly"')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('failed')
         print(ret)
         return 'fail'
 
@@ -1423,7 +1410,6 @@ def test_ogr_sqlite_28():
     os.unlink('tmp/poly_spatialite4.sqlite')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('failed')
         print(ret)
         return 'fail'
 
@@ -2036,44 +2022,34 @@ def test_ogr_spatialite_6():
     lyr = ds.GetLayerByName(layername)
     view_lyr = ds.GetLayerByName(viewname)
     if view_lyr.GetFIDColumn() != pkid_single:
-        gdaltest.post_reason('failed')
         print(view_lyr.GetGeometryColumn())
         return 'fail'
     if view_lyr.GetGeometryColumn() != thegeom_single:
-        gdaltest.post_reason('failed')
         print(view_lyr.GetGeometryColumn())
         return 'fail'
     if view_lyr.GetLayerDefn().GetFieldDefn(0).GetName() != "int'col":
-        gdaltest.post_reason('failed')
         print(view_lyr.GetLayerDefn().GetFieldDefn(0).GetName())
         return 'fail'
     if view_lyr.GetGeomType() != lyr.GetGeomType():
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetFeatureCount() != lyr.GetFeatureCount():
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetSpatialRef().IsSame(lyr.GetSpatialRef()) != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     feat = view_lyr.GetFeature(3)
     if feat.GetFieldAsInteger(0) != 34:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetFieldAsDouble(1) != 56.78:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     view_lyr.SetAttributeFilter('"int\'col" = 34')
     view_lyr.SetSpatialFilterRect(2.5, 49.5, 3.5, 50.5)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 3:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     ds = None
@@ -2092,7 +2068,6 @@ def test_ogr_spatialite_6():
     view_lyr.SetSpatialFilterRect(2.5, 49.5, 3.5, 50.5)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 3:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     ds = None
@@ -2110,21 +2085,17 @@ def test_ogr_spatialite_7():
 
     ds = ogr.Open('VirtualShape:data/poly.shp')
     if ds is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr = ds.GetLayerByName('poly')
     if lyr is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     if lyr.GetGeomType() != ogr.wkbPolygon:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     return 'success'
@@ -2165,7 +2136,6 @@ def test_ogr_spatialite_8():
     f = lyr.GetNextFeature()
     if f.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (0 -1)' or \
        f.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (0 -1,2 3)':
-        gdaltest.post_reason('failed')
         f.DumpReadable()
         return 'fail'
     f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 1)'))
@@ -2193,40 +2163,30 @@ def test_ogr_spatialite_8():
     lyr = ds.GetLayerByName('test(geom1)')
     view_lyr = ds.GetLayerByName('view_test_geom1')
     if lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeometryColumn() != 'geom1':
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetGeometryColumn() != 'renamed_geom1':
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetGeomType() != lyr.GetGeomType():
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetFeatureCount() != lyr.GetFeatureCount():
-        gdaltest.post_reason('failed')
         return 'fail'
     feat = view_lyr.GetFeature(1)
     if feat.GetFieldAsString(0) != 'bar':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
     view_lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 1:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
@@ -2234,40 +2194,30 @@ def test_ogr_spatialite_8():
     lyr = ds.GetLayerByName('test(geom2)')
     view_lyr = ds.GetLayerByName('view_test_geom2')
     if lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeometryColumn() != 'geom2':
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetGeometryColumn() != 'renamed_geom2':
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetGeomType() != lyr.GetGeomType():
-        gdaltest.post_reason('failed')
         return 'fail'
     if view_lyr.GetFeatureCount() != lyr.GetFeatureCount():
-        gdaltest.post_reason('failed')
         return 'fail'
     feat = view_lyr.GetFeature(1)
     if feat.GetFieldAsString(0) != 'bar':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
     view_lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 1:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
@@ -2276,7 +2226,6 @@ def test_ogr_spatialite_8():
     sql_lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = sql_lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
@@ -2285,40 +2234,30 @@ def test_ogr_spatialite_8():
     with gdaltest.error_handler():
         lyr = ds.GetLayerByName('invalid_layer_name(geom1)')
     if lyr is not None:
-        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldCount() != 2:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() != 'geom1':
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetName() != 'geom2':
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPoint:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() != ogr.wkbLineString:
-        gdaltest.post_reason('failed')
         return 'fail'
     lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (0 1)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetGeomFieldRef(1).ExportToWkt() != 'LINESTRING (0 1,2 3)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
@@ -2326,7 +2265,6 @@ def test_ogr_spatialite_8():
     lyr.SetSpatialFilterRect(1, -1, -1, 10, 10)
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
@@ -2371,44 +2309,34 @@ def test_ogr_sqlite_31():
 
     lyr = ds.GetLayerByName('test(geom1)')
     if lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeometryColumn() != 'geom1':
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('failed')
         return 'fail'
     lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
 
     lyr = ds.GetLayerByName('test(geom2)')
     if lyr.GetLayerDefn().GetFieldCount() != 1:
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeometryColumn() != 'geom2':
-        gdaltest.post_reason('failed')
         return 'fail'
     if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('failed')
         return 'fail'
     lyr.SetSpatialFilterRect(-1, -1, 10, 10)
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 1:
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
-        gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
     feat = None
@@ -2452,20 +2380,16 @@ def test_ogr_sqlite_32():
     lyr = ds.GetLayer(0)
 
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTDateTime:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTDate:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTTime:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
             feat.GetField('datefield') != '2012/08/23' or \
             feat.GetField('timefield') != '21:24:00':
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
         return 'fail'
     feat = None
@@ -2518,7 +2442,6 @@ def test_ogr_sqlite_33():
         lyr = ds.GetLayerByName('test2')
         srs = lyr.GetSpatialRef()
         if srs.ExportToWkt().find('4326') == -1:
-            gdaltest.post_reason('failure')
             print(i)
             return 'fail'
 
@@ -2530,7 +2453,6 @@ def test_ogr_sqlite_33():
         ds.ReleaseResultSet(sql_lyr)
 
         if is_none:
-            gdaltest.post_reason('failure')
             print(i)
             return 'fail'
 
@@ -2542,7 +2464,6 @@ def test_ogr_sqlite_33():
         ds.ReleaseResultSet(sql_lyr)
 
         if not is_none:
-            gdaltest.post_reason('failure')
             print(i)
             return 'fail'
 
@@ -2568,7 +2489,6 @@ def test_ogr_sqlite_34():
     val = feat.GetField(0)
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
     if val != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Evaluates to FALSE
@@ -2577,7 +2497,6 @@ def test_ogr_sqlite_34():
     val = feat.GetField(0)
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
     if val != 0:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # NULL left-member
@@ -2586,7 +2505,6 @@ def test_ogr_sqlite_34():
     val = feat.GetField(0)
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
     if val != 0:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # NULL regexp
@@ -2594,7 +2512,6 @@ def test_ogr_sqlite_34():
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP NULL")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Invalid regexp
@@ -2602,7 +2519,6 @@ def test_ogr_sqlite_34():
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP '['")
     gdal.PopErrorHandler()
     if sql_lyr is not None:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Adds another pattern
@@ -2611,7 +2527,6 @@ def test_ogr_sqlite_34():
     val = feat.GetField(0)
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
     if val != 1:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     # Test cache
@@ -2671,7 +2586,6 @@ def test_ogr_sqlite_35():
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         if feat is None:
-            gdaltest.post_reason('failure')
             return 'fail'
         feat = None
 
@@ -2679,7 +2593,6 @@ def test_ogr_sqlite_35():
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         if feat is not None:
-            gdaltest.post_reason('failure')
             return 'fail'
         feat = None
 
@@ -2687,7 +2600,6 @@ def test_ogr_sqlite_35():
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         if feat is None:
-            gdaltest.post_reason('failure')
             return 'fail'
         feat = None
 
@@ -2696,7 +2608,6 @@ def test_ogr_sqlite_35():
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         if feat is None:
-            gdaltest.post_reason('failure')
             return 'fail'
         feat = None
 
@@ -2705,7 +2616,6 @@ def test_ogr_sqlite_35():
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         if feat is not None:
-            gdaltest.post_reason('failure')
             return 'fail'
         feat = None
 
@@ -2714,7 +2624,6 @@ def test_ogr_sqlite_35():
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         if feat is None:
-            gdaltest.post_reason('failure')
             return 'fail'
         feat = None
 
@@ -2754,11 +2663,9 @@ def test_ogr_sqlite_36():
     ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
     lyr = ds.GetLayer(0)
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetFID() != 1234567890123:
-        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
@@ -2802,7 +2709,6 @@ def test_ogr_sqlite_37():
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
@@ -2813,7 +2719,6 @@ def test_ogr_sqlite_37():
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     f = None
 
@@ -2822,16 +2727,12 @@ def test_ogr_sqlite_37():
     ds = ogr.Open('tmp/ogr_sqlite_37.sqlite', update=1)
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Turn not null into nullable
@@ -2840,7 +2741,6 @@ def test_ogr_sqlite_37():
     fd.SetNullable(1)
     lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable'), fd, ogr.ALTER_ALL_FLAG)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Turn nullable into not null, but remove NULL values first
@@ -2851,7 +2751,6 @@ def test_ogr_sqlite_37():
     fd.SetNullable(0)
     lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable'), fd, ogr.ALTER_ALL_FLAG)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -2859,16 +2758,12 @@ def test_ogr_sqlite_37():
     ds = ogr.Open('tmp/ogr_sqlite_37.sqlite')
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2937,37 +2832,27 @@ def test_ogr_sqlite_38():
     ds = ogr.Open('tmp/ogr_sqlite_38.sqlite', update=1)
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() != '123':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_real')).GetDefault() != '1.23':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nodefault')).GetDefault() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault() != "(strftime('%Y-%m-%dT%H:%M:%fZ','now'))":
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault())
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault() != "'2015/06/30 12:34:56.123'":
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault())
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_time')).GetDefault() != "CURRENT_TIME":
-        gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
@@ -2977,7 +2862,6 @@ def test_ogr_sqlite_38():
        f.GetField('field_datetime4') != '2015/06/30 12:34:56.123' or \
        not f.IsFieldSet('field_datetime3') or \
        not f.IsFieldSet('field_date') or not f.IsFieldSet('field_time'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
@@ -2987,7 +2871,6 @@ def test_ogr_sqlite_38():
     fd.SetDefault("'c'")
     lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string'), fd, ogr.ALTER_DEFAULT_FLAG)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'c'":
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault())
         return 'fail'
 
@@ -2997,7 +2880,6 @@ def test_ogr_sqlite_38():
     fd.SetDefault(None)
     lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int'), fd, ogr.ALTER_DEFAULT_FLAG)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -3005,11 +2887,9 @@ def test_ogr_sqlite_38():
     ds = ogr.Open('tmp/ogr_sqlite_38.sqlite', update=1)
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'c'":
-        gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault())
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -3075,16 +2955,12 @@ def test_ogr_spatialite_10():
     ds = ogr.Open('tmp/ogr_spatialite_10.sqlite')
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -3107,12 +2983,10 @@ def test_ogr_sqlite_39():
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTString))
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTInteger))
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr.CreateField(ogr.FieldDefn('str2', ogr.OFTString))
 
@@ -3122,31 +2996,25 @@ def test_ogr_sqlite_39():
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() != 10:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if feat.GetFID() < 0:
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     if feat.GetField('myfid') != feat.GetFID():
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
 
     feat.SetField('str', 'foo')
     ret = lyr.SetFeature(feat)
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -3156,14 +3024,12 @@ def test_ogr_sqlite_39():
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat.UnsetField('myfid')
@@ -3171,13 +3037,11 @@ def test_ogr_sqlite_39():
     ret = lyr.SetFeature(feat)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f.GetFID() != 10 or f.GetField('str') != 'first string' or f.GetField('str2') != 'second string' or f.GetField('myfid') != 10:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     f = None
@@ -3204,66 +3068,55 @@ def test_ogr_sqlite_40():
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_40.sqlite', options=options)
 
     if ds.TestCapability(ogr.ODsCTransactions) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ret = ds.StartTransaction()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     ret = ds.StartTransaction()
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     ret = ds.RollbackTransaction()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     ret = ds.RollbackTransaction()
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_sqlite_40.sqlite', update=1)
     if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ret = ds.StartTransaction()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     ret = ds.StartTransaction()
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     ret = ds.CommitTransaction()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
     ret = ds.CommitTransaction()
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_sqlite_40.sqlite', update=1)
     if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayerByName('test')
 
@@ -3272,14 +3125,11 @@ def test_ogr_sqlite_40():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.RollbackTransaction()
     if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.StartTransaction()
@@ -3288,16 +3138,13 @@ def test_ogr_sqlite_40():
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None or f.GetFID() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.CommitTransaction()
     # the cursor is still valid after CommitTransaction(), which isn't the case for other backends such as PG !
     f = lyr.GetNextFeature()
     if f is None or f.GetFID() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.StartTransaction()
@@ -3309,7 +3156,6 @@ def test_ogr_sqlite_40():
     ret = lyr.CreateFeature(f)
     ds.CommitTransaction()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.StartTransaction()
@@ -3318,7 +3164,6 @@ def test_ogr_sqlite_40():
     ret = lyr.CreateFeature(f)
     ds.CommitTransaction()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.StartTransaction()
@@ -3341,7 +3186,6 @@ def test_ogr_sqlite_40():
     ret = lyr.CreateFeature(f)
     ds.CommitTransaction()
     if ret != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -3367,7 +3211,6 @@ def test_ogr_sqlite_41():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['a_date'] != '2015/04/30 12:34:56':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -3397,7 +3240,6 @@ def test_ogr_sqlite_42():
     sql_lyr.SetAttributeFilter('id = 1')
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -3405,7 +3247,6 @@ def test_ogr_sqlite_42():
     sql_lyr.SetAttributeFilter('id = 1')
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -3420,7 +3261,6 @@ def test_ogr_sqlite_42():
     sql_lyr.SetAttributeFilter('id = 1')
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -3429,7 +3269,6 @@ def test_ogr_sqlite_42():
     sql_lyr.SetAttributeFilter('id = 1')
     f = sql_lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
@@ -3479,13 +3318,11 @@ def test_ogr_sqlite_44():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csv', 'rb')
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('stringlist,intlist,int64list,reallist,wkt\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125') != 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -3494,7 +3331,6 @@ def test_ogr_sqlite_44():
     gdal.VSIFCloseL(f)
 
     if data.find('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList') != 0:
-        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
@@ -3526,20 +3362,17 @@ def test_ogr_sqlite_45():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM sqlite_master')
     ds.ReleaseResultSet(sql_lyr)
     if not os.path.exists('tmp/ogr_sqlite_45.db-wal'):
-        gdaltest.post_reason('fail')
         return 'fail'
     shutil.copy('tmp/ogr_sqlite_45.db', 'tmp/ogr_sqlite_45_bis.db')
     shutil.copy('tmp/ogr_sqlite_45.db-shm', 'tmp/ogr_sqlite_45_bis.db-shm')
     shutil.copy('tmp/ogr_sqlite_45.db-wal', 'tmp/ogr_sqlite_45_bis.db-wal')
     ds = None
     if os.path.exists('tmp/ogr_sqlite_45.db-wal'):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = ogr.Open('tmp/ogr_sqlite_45_bis.db')
     ds = None
     if os.path.exists('tmp/ogr_sqlite_45_bis.db-wal'):
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.Unlink('tmp/ogr_sqlite_45.db')
@@ -3568,7 +3401,6 @@ def test_ogr_spatialite_11():
     with gdaltest.error_handler():
         res = lyr.CreateGeomField(ogr.GeomFieldDefn('foo', ogr.wkbCurvePolygon))
     if res == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -3593,7 +3425,6 @@ def test_ogr_spatialite_12():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

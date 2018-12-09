@@ -70,7 +70,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # PanchroBand missing
@@ -109,7 +108,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # PanchroBand.SourceFilename missing
@@ -150,7 +148,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid dataset name
@@ -193,7 +190,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Inconsistent declared VRT dimensions with panchro dataset.
@@ -236,7 +232,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # VRTRasterBand of unrecognized subclass 'blabla'
@@ -279,7 +274,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Algorithm unsupported_alg unsupported
@@ -322,7 +316,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # 10 invalid band of tmp/small_world_pan.tif
@@ -365,7 +358,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # SpectralBand.dstBand = '-1' invalid
@@ -408,7 +400,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # SpectralBand.SourceFilename missing
@@ -450,7 +441,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid dataset name
@@ -493,7 +483,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # 10 invalid band of data/small_world.tif
@@ -536,7 +525,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Another spectral band is already mapped to output band 1
@@ -579,7 +567,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # No spectral band defined
@@ -610,7 +597,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Hole in SpectralBand.dstBand numbering
@@ -644,7 +630,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Band 4 of type VRTPansharpenedRasterBand, but no corresponding SpectralBand
@@ -689,7 +674,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # SpectralBand.dstBand = '3' invalid
@@ -729,7 +713,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # 2 weights defined, but 3 input spectral bands
@@ -772,7 +755,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Dimensions of input spectral band 1 different from first spectral band
@@ -795,7 +777,6 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Just warnings
@@ -819,10 +800,8 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Just warnings
@@ -859,10 +838,8 @@ def test_vrtpansharpen_1():
 </VRTDataset>""")
     gdal.PopErrorHandler()
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Unsupported
@@ -870,7 +847,6 @@ def test_vrtpansharpen_1():
     ret = vrt_ds.AddBand(gdal.GDT_Byte)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -923,28 +899,21 @@ def test_vrtpansharpen_2():
     </PansharpeningOptions>
 </VRTDataset>""")
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrt_ds.GetFileList() != ['tmp/small_world_pan.tif', 'data/small_world.tif']:
-        gdaltest.post_reason('fail')
         print(vrt_ds.GetFileList())
         return 'fail'
     if vrt_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([4735, 10000, 9742], [4731, 9991, 9734]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     if vrt_ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrt_ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrt_ds.GetRasterBand(1).GetOverview(0) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Check VRTPansharpenedDataset::IRasterIO() in non-resampling case
@@ -953,7 +922,6 @@ def test_vrtpansharpen_2():
     tmp_ds.WriteRaster(0, 0, 800, 400, data)
     cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(tmp_ds.RasterCount)]
     if cs not in ([4735, 10000, 9742], [4731, 9991, 9734]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -961,7 +929,6 @@ def test_vrtpansharpen_2():
     data = vrt_ds.ReadRaster(0, 0, 800, 400, 400, 200)
     ref_data = tmp_ds.ReadRaster(0, 0, 800, 400, 400, 200)
     if data != ref_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Compact case
@@ -986,11 +953,9 @@ def test_vrtpansharpen_2():
     </PansharpeningOptions>
 </VRTDataset>""")
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([4735, 10000, 9742], [4731, 9991, 9734]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1040,12 +1005,10 @@ def test_vrtpansharpen_2():
     </PansharpeningOptions>
 </VRTDataset>""")
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     # gdal.GetDriverByName('GTiff').CreateCopy('out1.tif', vrt_ds)
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([50261, 4735, 10000, 9742], [50261, 4731, 9991, 9734]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1096,12 +1059,10 @@ def test_vrtpansharpen_2():
     </PansharpeningOptions>
 </VRTDataset>""")
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     # gdal.GetDriverByName('GTiff').CreateCopy('out2.tif', vrt_ds)
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([50261, 4735, 10000, 9742], [50261, 4727, 9998, 9732]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1141,14 +1102,11 @@ def test_vrtpansharpen_3():
     # Test when only Pan band has overviews
     vrt_ds = gdal.Open(xml)
     if vrt_ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrt_ds.GetRasterBand(1).GetOverview(0) is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([7123, 7445, 5025], [7120, 7440, 5025]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1160,14 +1118,12 @@ def test_vrtpansharpen_3():
     data2 += vrt_ds.GetRasterBand(3).ReadRaster(0, 0, 800, 400, 400, 200)
 
     if data != data2:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     tmp_ds = gdal.GetDriverByName('MEM').Create('', 400, 200, 3)
     tmp_ds.WriteRaster(0, 0, 400, 200, data)
     cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(tmp_ds.RasterCount)]
     if cs not in ([7123, 7445, 5025], [7120, 7440, 5025]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1180,14 +1136,11 @@ def test_vrtpansharpen_3():
     # Test when both Pan and spectral bands have overviews
     vrt_ds = gdal.Open(xml)
     if vrt_ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if vrt_ds.GetRasterBand(1).GetOverview(0) is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([18033, 18395, 16824], [18033, 18395, 16822]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1233,7 +1186,6 @@ def test_vrtpansharpen_4():
         else:
             expected_cs = [4735, 4731]
         if cs not in expected_cs:
-            gdaltest.post_reason('fail')
             print(gdal.GetDataTypeName(dt))
             print(cs)
             return 'fail'
@@ -1311,13 +1263,11 @@ def test_vrtpansharpen_5():
         cs = tmp_ds.GetRasterBand(1).Checksum()
         if dt == gdal.GDT_UInt16:
             if cs not in (4553, 4549):
-                gdaltest.post_reason('fail')
                 print(gdal.GetDataTypeName(dt))
                 print(cs)
                 return 'fail'
         else:
             if cs != 4450:
-                gdaltest.post_reason('fail')
                 print(gdal.GetDataTypeName(dt))
                 print(cs)
                 return 'fail'
@@ -1389,7 +1339,6 @@ def test_vrtpansharpen_6():
 
             vrt_ds = gdal.Open(xml)
             if vrt_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != str(nbits):
-                gdaltest.post_reason('fail')
                 return 'fail'
 
             ar = vrt_ds.GetRasterBand(1).ReadAsArray()
@@ -1401,7 +1350,6 @@ def test_vrtpansharpen_6():
                 expected_ar = [97280, 113920, 131071, 131071, 131071, 131071, 113920, 97280]
 
             if list(ar[0]) != expected_ar:
-                gdaltest.post_reason('fail')
                 print(gdal.GetDataTypeName(dt))
                 print(i)
                 print(list(ar[0]))
@@ -1439,7 +1387,6 @@ def test_vrtpansharpen_7():
 </VRTDataset>"""
     ds = gdal.Open(xml)
     if ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or ds.RasterXSize != 40 or ds.RasterYSize != 60:
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         print(ds.RasterXSize)
         print(ds.RasterYSize)
@@ -1459,7 +1406,6 @@ def test_vrtpansharpen_7():
 </VRTDataset>"""
     ds = gdal.Open(xml)
     if ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or ds.RasterXSize != 40 or ds.RasterYSize != 60:
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         print(ds.RasterXSize)
         print(ds.RasterYSize)
@@ -1482,13 +1428,11 @@ def test_vrtpansharpen_7():
     ds = gdal.Open(xml)
     gdal.PopErrorHandler()
     if ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or ds.RasterXSize != 40 or ds.RasterYSize != 60:
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         print(ds.RasterXSize)
         print(ds.RasterYSize)
         return 'fail'
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1505,7 +1449,6 @@ def test_vrtpansharpen_7():
 </VRTDataset>"""
     ds = gdal.Open(xml)
     if ds.GetGeoTransform() != (120.0, 1.0, 0.0, 80.0, 0.0, -1.0) or ds.RasterXSize != 10 or ds.RasterYSize != 40:
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         print(ds.RasterXSize)
         print(ds.RasterYSize)
@@ -1528,13 +1471,11 @@ def test_vrtpansharpen_7():
     ds = gdal.Open(xml)
     gdal.PopErrorHandler()
     if ds.GetGeoTransform() != (120.0, 1.0, 0.0, 80.0, 0.0, -1.0) or ds.RasterXSize != 20 or ds.RasterYSize != 40:
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         print(ds.RasterXSize)
         print(ds.RasterYSize)
         return 'fail'
     if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1552,13 +1493,11 @@ def test_vrtpansharpen_7():
     gdal.ErrorReset()
     ds = gdal.Open(xml)
     if ds.GetGeoTransform() != (120.0, 1.0, 0.0, 80.0, 0.0, -1.0) or ds.RasterXSize != 20 or ds.RasterYSize != 40:
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         print(ds.RasterXSize)
         print(ds.RasterYSize)
         return 'fail'
     if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1582,7 +1521,6 @@ def test_vrtpansharpen_7():
     ds = gdal.Open(xml)
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1637,7 +1575,6 @@ def test_vrtpansharpen_8():
     gdal.Unlink('tmp/vrtpansharpen_8.vrt')
 
     if cs1 != expected_cs1 or cs2 != expected_cs2 or cs3 != expected_cs3:
-        gdaltest.post_reason('fail')
         print(cs1)
         print(expected_cs1)
         print(cs2)
@@ -1677,11 +1614,9 @@ def test_vrtpansharpen_9():
     </PansharpeningOptions>
 </VRTDataset>""")
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([6950, 11745, 8965],):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1719,11 +1654,9 @@ def test_vrtpansharpen_9():
     </PansharpeningOptions>
 </VRTDataset>""")
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in ([6950, 11745, 8965],):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1774,7 +1707,6 @@ def test_vrtpansharpen_10():
     </VRTDataset>""")
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs != [62009, 62009, 62009, 62009]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1786,7 +1718,6 @@ def test_vrtpansharpen_10():
     tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
     ref_data = tmp_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
     if data != ref_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # 4 bands -> 3 bands
@@ -1817,7 +1748,6 @@ def test_vrtpansharpen_10():
     </VRTDataset>""")
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs != [62009, 62009, 62009]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1829,7 +1759,6 @@ def test_vrtpansharpen_10():
     tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
     ref_data = tmp_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
     if data != ref_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # 3 bands
@@ -1856,7 +1785,6 @@ def test_vrtpansharpen_10():
     </VRTDataset>""")
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs != [62009, 62009, 62009]:
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1868,7 +1796,6 @@ def test_vrtpansharpen_10():
     tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
     ref_data = tmp_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
     if data != ref_data:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -1893,11 +1820,9 @@ def test_vrtpansharpen_11():
         </PansharpeningOptions>
     </VRTDataset>""", pan_ds.GetRasterBand(1), [ms_ds.GetRasterBand(i + 1) for i in range(3)])
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in([4735, 10000, 9742], [4731, 9991, 9734]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
 
@@ -1918,11 +1843,9 @@ def test_vrtpansharpen_11():
         </PansharpeningOptions>
     </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)])
     if vrt_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     if cs not in([4735, 10000, 9742], [4731, 9991, 9734]):
-        gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
     vrt_ds = None
@@ -1944,7 +1867,6 @@ def test_vrtpansharpen_11():
         </PansharpeningOptions>
     </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)])
     if vrt_ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or vrt_ds.RasterXSize != 40 or vrt_ds.RasterYSize != 60:
-        gdaltest.post_reason('fail')
         print(vrt_ds.GetGeoTransform())
         print(vrt_ds.RasterXSize)
         print(vrt_ds.RasterYSize)
@@ -1956,7 +1878,6 @@ def test_vrtpansharpen_11():
     vrt_ds = gdal.CreatePansharpenedVRT("""<invalid_xml""", pan_mem_ds.GetRasterBand(1), [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)])
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Not enough bands
@@ -1971,7 +1892,6 @@ def test_vrtpansharpen_11():
     </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)])
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Too many bands
@@ -1990,7 +1910,6 @@ def test_vrtpansharpen_11():
     </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)])
     gdal.PopErrorHandler()
     if vrt_ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'

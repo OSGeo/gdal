@@ -125,18 +125,15 @@ def test_ogr_avc_4():
             count += 1
             last_feature = f
         if count != 80:
-            gdaltest.post_reason('fail')
             print(filename)
             print(count)
             return 'fail'
         count = lyr.GetFeatureCount()
         if count != 80:
-            gdaltest.post_reason('fail')
             print(filename)
             print(count)
             return 'fail'
         if last_feature.GetFieldCount() != 7:
-            gdaltest.post_reason('fail')
             print(filename)
             f.DumpReadable()
             return 'fail'
@@ -145,7 +142,6 @@ def test_ogr_avc_4():
         else:
             fld_name = 'WELLS-ID'
         if last_feature.GetField('ValueId') != 80 or last_feature.GetField(fld_name) != 80:
-            gdaltest.post_reason('fail')
             print(filename)
             f.DumpReadable()
             return 'fail'
@@ -167,23 +163,19 @@ def test_ogr_avc_5():
             count += 1
             last_feature = f
         if count != 3:
-            gdaltest.post_reason('fail')
             print(filename)
             print(count)
             return 'fail'
         count = lyr.GetFeatureCount()
         if count != 3:
-            gdaltest.post_reason('fail')
             print(filename)
             print(count)
             return 'fail'
         if last_feature.GetFieldCount() != 5:
-            gdaltest.post_reason('fail')
             print(filename)
             f.DumpReadable()
             return 'fail'
         if last_feature.GetField('ArcIds') != [-4, -5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
-            gdaltest.post_reason('fail')
             print(filename)
             f.DumpReadable()
             return 'fail'
@@ -193,7 +185,6 @@ def test_ogr_avc_5():
             # Likely a bug in AVCE00 driver
             expected_wkt = 'POLYGON ((340299.94 4100199.8,340099.88 4100200.0,340299.94 4100199.8))'
         if last_feature.GetGeometryRef().ExportToWkt() != expected_wkt:
-            gdaltest.post_reason('fail')
             print(filename)
             f.DumpReadable()
             return 'fail'

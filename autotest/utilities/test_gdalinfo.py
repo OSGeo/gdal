@@ -370,13 +370,11 @@ def test_gdalinfo_18():
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak=False)
     if err.find('--optfile option given without filename') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak=False)
     if err.find('Unable to open optfile') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
@@ -427,13 +425,11 @@ def test_gdalinfo_21():
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak=False)
     if err.find('--format option given without a format code') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak=False)
     if err.find('--format option given with format') < 0:
-        gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 

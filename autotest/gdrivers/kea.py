@@ -110,19 +110,15 @@ def test_kea_4():
     ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     src_ds = gdaltest.kea_driver.Create('tmp/src.kea', 1, 1, 0)
     if src_ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = gdaltest.kea_driver.CreateCopy("tmp/out.kea", src_ds)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     src_ds = None
     ds = None
@@ -137,14 +133,12 @@ def test_kea_4():
     ret = ds.SetProjection('a')
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Disabled for now since some of them cause memory leaks or
@@ -154,42 +148,36 @@ def test_kea_4():
         ret = ds.SetMetadataItem('foo', 'bar')
         gdal.PopErrorHandler()
         if ret == 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.SetMetadata({'foo': 'bar'})
         gdal.PopErrorHandler()
         if ret == 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.GetRasterBand(1).SetMetadataItem('foo', 'bar')
         gdal.PopErrorHandler()
         if ret == 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.GetRasterBand(1).SetMetadata({'foo': 'bar'})
         gdal.PopErrorHandler()
         if ret == 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.SetGCPs([], "")
         gdal.PopErrorHandler()
         if ret == 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = ds.AddBand(gdal.GDT_Byte)
     gdal.PopErrorHandler()
     if ret == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, '\0')
@@ -198,7 +186,6 @@ def test_kea_4():
     ds.FlushCache()
     gdal.PopErrorHandler()
     if ds.GetRasterBand(1).Checksum() != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -223,23 +210,18 @@ def test_kea_5():
     ds = None
     ds = gdal.Open('tmp/out.kea')
     if ds.GetRasterBand(1).GetBlockSize() != [15, 15]:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetBlockSize())
         return 'fail'
     if ds.GetRasterBand(1).GetMetadataItem('LAYER_TYPE') != 'thematic':
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMetadata())
         return 'fail'
     if ds.GetRasterBand(1).Checksum() != 0:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
     if ds.GetGeoTransform() != (0, 1, 0, 0, 0, -1):
-        gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
     if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'
     ds = None
@@ -265,83 +247,63 @@ def test_kea_6():
     ds.GetRasterBand(4).SetMetadataItem('LAYER_TYPE', 'thematic')
     ds.GetRasterBand(5).SetMetadataItem('LAYER_TYPE', 'athematic')
     if ds.SetMetadata({'foo': 'bar'}, 'other_domain') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.SetMetadataItem('foo', 'bar', 'other_domain') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).SetMetadata({'foo': 'bar'}, 'other_domain') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).SetMetadataItem('foo', 'bar', 'other_domain') == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
     if ds.GetMetadata('other_domain') != {}:
-        gdaltest.post_reason('fail')
         print(ds.GetMetadata('other_domain'))
         return 'fail'
     if ds.GetMetadataItem('item', 'other_domain') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMetadata('other_domain') != {}:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMetadataItem('item', 'other_domain') is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     md = ds.GetMetadata()
     if md['foo'] != 'bar':
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     if ds.GetMetadataItem('foo') != 'bar':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('foo'))
         return 'fail'
     if ds.GetMetadataItem('bar') != 'baw':
-        gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('bar'))
         return 'fail'
     if ds.GetRasterBand(1).GetDescription() != 'desc':
-        gdaltest.post_reason('fail')
         return 'fail'
     md = ds.GetRasterBand(1).GetMetadata()
     if md['bar'] != 'baz':
-        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
     if ds.GetRasterBand(1).GetMetadataItem('bar') != 'baz':
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetMetadataItem('bar'))
         return 'fail'
     if ds.GetRasterBand(2).GetMetadataItem('LAYER_TYPE') != 'thematic':
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(2).GetMetadataItem('LAYER_TYPE'))
         return 'fail'
     if ds.GetRasterBand(3).GetMetadataItem('LAYER_TYPE') != 'athematic':
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(3).GetMetadataItem('LAYER_TYPE'))
         return 'fail'
     if ds.GetRasterBand(4).GetMetadataItem('LAYER_TYPE') != 'thematic':
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(4).GetMetadataItem('LAYER_TYPE'))
         return 'fail'
     if ds.GetRasterBand(5).GetMetadataItem('LAYER_TYPE') != 'athematic':
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(5).GetMetadataItem('LAYER_TYPE'))
         return 'fail'
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
 
     if out2_ds.GetMetadataItem('foo') != 'bar':
-        gdaltest.post_reason('fail')
         print(out2_ds.GetMetadataItem('foo'))
         return 'fail'
     if out2_ds.GetRasterBand(1).GetMetadataItem('bar') != 'baz':
-        gdaltest.post_reason('fail')
         print(out2_ds.GetRasterBand(1).GetMetadataItem('bar'))
         return 'fail'
 
@@ -363,13 +325,10 @@ def test_kea_7():
     # Geotransform
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
     if ds.GetGCPCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.SetGeoTransform([1, 2, 3, 4, 5, 6]) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.SetProjection('foo') != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -377,14 +336,11 @@ def test_kea_7():
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
     if out2_ds.GetGCPCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetGeoTransform() != (1, 2, 3, 4, 5, 6):
-        gdaltest.post_reason('fail')
         print(out2_ds.GetGeoTransform())
         return 'fail'
     if out2_ds.GetProjectionRef() != 'foo':
-        gdaltest.post_reason('fail')
         print(out2_ds.GetProjectionRef())
         return 'fail'
     out2_ds = None
@@ -407,10 +363,8 @@ def test_kea_7():
     ds = None
 
     if out2_ds.GetGCPCount() != 2:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetGCPProjection() != 'foo':
-        gdaltest.post_reason('fail')
         return 'fail'
     got_gcps = out2_ds.GetGCPs()
     for i in range(2):
@@ -420,7 +374,6 @@ def test_kea_7():
            got_gcps[i].Info != gcps[i].Info:
             print(i)
             print(got_gcps[i])
-            gdaltest.post_reason('fail')
             return 'fail'
     out2_ds = None
 
@@ -440,22 +393,18 @@ def test_kea_8():
     for i in range(2):
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
         if ds.GetRasterBand(1).GetColorTable() is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         if ds.GetRasterBand(1).SetColorTable(None) == 0:  # not allowed by the driver
-            gdaltest.post_reason('fail')
             return 'fail'
         ct = gdal.ColorTable()
         ct.SetColorEntry(0, (0, 255, 0, 255))
         ct.SetColorEntry(1, (255, 0, 255, 255))
         ct.SetColorEntry(2, (0, 0, 255, 255))
         if ds.GetRasterBand(1).SetColorTable(ct) != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
         if i == 1:
             # And again
             if ds.GetRasterBand(1).SetColorTable(ct) != 0:
-                gdaltest.post_reason('fail')
                 return 'fail'
         ds = None
 
@@ -487,7 +436,6 @@ def test_kea_9():
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, gdal.GCI_YCbCr_CrBand - gdal.GCI_GrayIndex + 1)
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        gdaltest.post_reason('fail')
         return 'fail'
     for i in range(gdal.GCI_GrayIndex, gdal.GCI_YCbCr_CrBand + 1):
         ds.GetRasterBand(i).SetColorInterpretation(i)
@@ -543,7 +491,6 @@ def test_kea_10():
                                   ]:
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, dt)
         if ds.GetRasterBand(1).GetNoDataValue() is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds.GetRasterBand(1).SetNoDataValue(nd)
         if ds.GetRasterBand(1).GetNoDataValue() != expected_nd:
@@ -566,7 +513,6 @@ def test_kea_10():
 
         ds = gdal.Open('tmp/out2.kea')
         if ds.GetRasterBand(1).GetNoDataValue() is not None:
-            gdaltest.post_reason('fail')
             return 'fail'
         ds = None
 
@@ -588,22 +534,17 @@ def test_kea_11():
 
     ds = gdal.Open('tmp/out.kea', gdal.GA_Update)
     if ds.AddBand(gdal.GDT_Byte) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.AddBand(gdal.GDT_Int16, options=['DEFLATE=9']) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
     if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(2).DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(3).DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -621,15 +562,12 @@ def test_kea_12():
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     if ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).SetDefaultRAT(None) == 0:  # not allowed by the driver
-        gdaltest.post_reason('fail')
         return 'fail'
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     rat.CreateColumn('col_real_generic', gdal.GFT_Real, gdal.GFU_Generic)
     if ds.GetRasterBand(1).SetDefaultRAT(rat) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     rat.CreateColumn('col_integer_pixelcount', gdal.GFT_Real, gdal.GFU_PixelCount)
@@ -654,7 +592,6 @@ def test_kea_12():
 
     cloned_rat = rat.Clone()
     if ds.GetRasterBand(1).SetDefaultRAT(rat) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -664,45 +601,33 @@ def test_kea_12():
 
     for i in range(7):
         if rat.GetColOfUsage(rat.GetUsageOfCol(i)) != i:
-            gdaltest.post_reason('fail')
             print(i)
             print(rat.GetColOfUsage(rat.GetUsageOfCol(i)))
             return 'fail'
 
     if cloned_rat.GetNameOfCol(0) != 'col_real_generic':
-        gdaltest.post_reason('fail')
         return 'fail'
     if cloned_rat.GetTypeOfCol(0) != gdal.GFT_Real:
-        gdaltest.post_reason('fail')
         return 'fail'
     if cloned_rat.GetUsageOfCol(0) != gdal.GFU_Generic:
-        gdaltest.post_reason('fail')
         return 'fail'
     if cloned_rat.GetUsageOfCol(1) != gdal.GFU_PixelCount:
-        gdaltest.post_reason('fail')
         return 'fail'
     if cloned_rat.GetTypeOfCol(2) != gdal.GFT_String:
-        gdaltest.post_reason('fail')
         return 'fail'
     if cloned_rat.GetTypeOfCol(3) != gdal.GFT_Integer:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if rat.GetColumnCount() != cloned_rat.GetColumnCount():
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetRowCount() != cloned_rat.GetRowCount():
-        gdaltest.post_reason('fail')
         return 'fail'
     for i in range(rat.GetColumnCount()):
         if rat.GetNameOfCol(i) != cloned_rat.GetNameOfCol(i):
-            gdaltest.post_reason('fail')
             return 'fail'
         if rat.GetTypeOfCol(i) != cloned_rat.GetTypeOfCol(i):
-            gdaltest.post_reason('fail')
             return 'fail'
         if rat.GetUsageOfCol(i) != cloned_rat.GetUsageOfCol(i):
-            gdaltest.post_reason('fail')
             print(i)
             print(rat.GetUsageOfCol(i))
             print(cloned_rat.GetUsageOfCol(i))
@@ -737,34 +662,25 @@ def test_kea_12():
     gdal.PopErrorHandler()
 
     if rat.GetValueAsDouble(0, 0) != 1.23:
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetValueAsInt(0, 0) != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetValueAsString(0, 0) != '1.23':
-        gdaltest.post_reason('fail')
         print(rat.GetValueAsString(0, 0))
         return 'fail'
 
     if rat.GetValueAsInt(0, 3) != 123:
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetValueAsDouble(0, 3) != 123:
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetValueAsString(0, 3) != '123':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if rat.GetValueAsString(0, 2) != 'foo':
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetValueAsInt(0, 2) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if rat.GetValueAsDouble(0, 2) != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -791,22 +707,16 @@ def test_kea_13():
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)  # yes CreateCopy() of KEA copies overviews
     if out2_ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetRasterBand(1).GetOverview(0).Checksum() != 1087:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetRasterBand(1).GetOverview(0).GetDefaultRAT() is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetRasterBand(1).GetOverview(0).SetDefaultRAT(None) == 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetRasterBand(1).GetOverview(1) is not None:
-        gdaltest.post_reason('fail')
         return 'fail'
     out2_ds = None
     ds = None
@@ -826,35 +736,28 @@ def test_kea_14():
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
     if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMaskBand().Checksum() != 3:
         print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.GetRasterBand(1).CreateMaskBand(0)
     if ds.GetRasterBand(1).GetMaskFlags() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMaskBand().Checksum() != 3:
         print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        gdaltest.post_reason('fail')
         return 'fail'
     ds.GetRasterBand(1).GetMaskBand().Fill(0)
     if ds.GetRasterBand(1).GetMaskBand().Checksum() != 0:
         print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)  # yes CreateCopy() of KEA copies overviews
     if out2_ds.GetRasterBand(1).GetMaskFlags() != 0:
-        gdaltest.post_reason('fail')
         return 'fail'
     if out2_ds.GetRasterBand(1).GetMaskBand().Checksum() != 0:
         print(out2_ds.GetRasterBand(1).GetMaskBand().Checksum())
-        gdaltest.post_reason('fail')
         return 'fail'
     out2_ds = None
     ds = None

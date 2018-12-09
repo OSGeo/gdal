@@ -83,13 +83,11 @@ def test_ntv2_5():
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_5.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=LE'])
     ds = gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_5.gsb', src_ds, options=['APPEND_SUBDATASET=YES'])
     if ds.GetRasterBand(2).Checksum() != 10:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
     ds = None
     ds = gdal.Open('NTv2:1:/vsimem/ntv2_5.gsb')
     if ds.GetRasterBand(2).Checksum() != 10:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
     ds = None
@@ -107,13 +105,11 @@ def test_ntv2_6():
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_6.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=BE'])
     ds = gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_6.gsb', src_ds, options=['APPEND_SUBDATASET=YES'])
     if ds.GetRasterBand(2).Checksum() != 10:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
     ds = None
     ds = gdal.Open('NTv2:1:/vsimem/ntv2_6.gsb')
     if ds.GetRasterBand(2).Checksum() != 10:
-        gdaltest.post_reason('fail')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
     ds = None

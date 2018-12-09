@@ -136,27 +136,21 @@ def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 
     ds = ogr.Open(name)
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     lyr = ds.GetLayerByName('first_layer')
     if lyr is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if has_attributes:
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('strfield')).GetType() != ogr.OFTString:
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('intfield')).GetType() != ogr.OFTInteger:
-            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('realfield')).GetType() != ogr.OFTReal:
-            gdaltest.post_reason('fail')
             return 'fail'
     else:
         if lyr.GetLayerDefn().GetFieldCount() != 0:
-            gdaltest.post_reason('fail')
             return 'fail'
 
     if has_attributes:
@@ -171,33 +165,27 @@ def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING(2 48,3 50)')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if has_attributes:
         if feat.GetField('strfield') != 'str':
             feat.DumpReadable()
-            gdaltest.post_reason('fail')
             return 'fail'
         if feat.GetField('intfield') != 1:
             feat.DumpReadable()
-            gdaltest.post_reason('fail')
             return 'fail'
         if abs(feat.GetFieldAsDouble('realfield') - 2.34) > 1e-10:
             feat.DumpReadable()
-            gdaltest.post_reason('fail')
             return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48),(2.25 48.25,2.25 48.75,2.75 48.75,2.75 48.25,2.25 48.25))')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
         return 'fail'
 
     for i in range(10):
@@ -262,13 +250,11 @@ def test_ogr_pdf_5():
     with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
         ds = ogr.Open('data/drawing.pdf')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     # Note: the circle is wrongly drawned as a diamond
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 8:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -301,22 +287,18 @@ def test_ogr_pdf_online_1():
 
     ds = ogr.Open('tmp/cache/webmap_urbansample.pdf')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerCount() != len(expected_layers):
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
         if ds.GetLayer(i).GetName() != expected_layers[i][0]:
-            gdaltest.post_reason('fail')
             print('%d : %s' % (i, ds.GetLayer(i).GetName()))
             return 'fail'
 
         if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
-            gdaltest.post_reason('fail')
             print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
             return 'fail'
 
@@ -326,7 +308,6 @@ def test_ogr_pdf_online_1():
         feat.DumpReadable()
         return 'fail'
     if feat.GetField('ID') != 'VL46':
-        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -382,11 +363,9 @@ def test_ogr_pdf_online_2():
 
     ds = ogr.Open('tmp/cache/340711752_Azusa_FSTopo.pdf')
     if ds is None:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetLayerCount() != len(expected_layers):
-        gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         for lyr in ds:
             print(lyr.GetName(), lyr.GetGeomType())
@@ -394,12 +373,10 @@ def test_ogr_pdf_online_2():
 
     for i in range(ds.GetLayerCount()):
         if ds.GetLayer(i).GetName() != expected_layers[i][0]:
-            gdaltest.post_reason('fail')
             print('%d : %s' % (i, ds.GetLayer(i).GetName()))
             return 'fail'
 
         if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
-            gdaltest.post_reason('fail')
             print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
             return 'fail'
 
