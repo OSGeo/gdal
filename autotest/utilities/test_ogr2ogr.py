@@ -2441,10 +2441,3 @@ def test_ogr2ogr_67():
 
 # gdaltest_list = [ test_ogr2ogr_51 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogr2ogr')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -1344,11 +1344,3 @@ disabled_gdaltest_list = [
     test_gdalwarp_cleanup,
     test_gdalwarp_46,
     test_gdalwarp_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdalwarp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

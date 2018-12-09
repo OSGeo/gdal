@@ -159,10 +159,3 @@ def test_vrtfilt_cleanup():
     pass
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vrtfilt')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

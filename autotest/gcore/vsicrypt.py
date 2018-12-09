@@ -523,10 +523,3 @@ def test_vsicrypt_6():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsicrypt')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

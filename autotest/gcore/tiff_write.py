@@ -6931,14 +6931,3 @@ def test_tiff_write_cleanup():
 
 # gdaltest_list = [ tiff_write_1, tiff_write_176_lerc_max_z_error ]
 
-if __name__ == '__main__':
-
-    if len(sys.argv) >= 2 and sys.argv[1] == '-api_proxy':
-        run_tiff_write_api_proxy = False
-        gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
-
-    gdaltest.setup_run('tiff_write')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

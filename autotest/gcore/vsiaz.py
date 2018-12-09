@@ -889,14 +889,3 @@ def test_vsiaz_cleanup():
 # gdaltest_list = [ vsiaz_init, vsiaz_start_webserver, vsiaz_fake_mkdir_rmdir, vsiaz_stop_webserver, vsiaz_cleanup ]
 
 gdaltest_list_extra = [vsiaz_extra_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsiaz')
-
-    if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests(gdaltest_list_extra)
-    else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsiaz_cleanup])
-
-    sys.exit(gdaltest.summarize())

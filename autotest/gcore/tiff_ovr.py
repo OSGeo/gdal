@@ -1961,10 +1961,3 @@ def test_tiff_ovr_average_multiband_vs_singleband():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('tiff_ovr')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

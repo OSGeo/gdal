@@ -451,10 +451,3 @@ def test_gdaldem_lib_nodata():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdaldem_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

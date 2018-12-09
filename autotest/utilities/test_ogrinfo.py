@@ -650,10 +650,3 @@ def test_ogrinfo_sql_filename():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogrinfo')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

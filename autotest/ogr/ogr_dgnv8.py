@@ -194,10 +194,3 @@ def test_ogr_dgnv8_cleanup():
     pass
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_dgnv8')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

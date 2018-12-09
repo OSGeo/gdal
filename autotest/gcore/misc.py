@@ -747,10 +747,3 @@ def test_misc_cleanup():
 
 # gdaltest_list = [ misc_6 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('misc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

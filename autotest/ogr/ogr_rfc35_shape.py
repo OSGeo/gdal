@@ -461,10 +461,3 @@ def test_ogr_rfc35_shape_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_rfc35_shape')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -194,10 +194,3 @@ def test_saga_8():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('saga')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

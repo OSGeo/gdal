@@ -552,21 +552,3 @@ def test_basic_test_17():
 
 
 
-if __name__ == '__main__':
-
-    if len(sys.argv) == 3 and sys.argv[1] == "LICENSE":
-        if sys.argv[2] == '0':
-            gdal.SetConfigOption('GDAL_DATA', '/foo')
-        else:
-            gdal.SetConfigOption('GDAL_DATA', 'tmp')
-        gdal.VersionInfo('LICENSE')
-        print(gdal.VersionInfo('LICENSE'))
-        import testnonboundtoswig
-        testnonboundtoswig.GDALDestroyDriverManager()
-        sys.exit(0)
-
-    gdaltest.setup_run('basic_test')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -199,10 +199,3 @@ def test_ogr_idrisi_3():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_idrisi')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

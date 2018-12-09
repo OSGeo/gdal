@@ -4573,10 +4573,3 @@ def test_ogr_shape_cleanup():
 
 # gdaltest_list = [ ogr_shape_107 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_shape')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

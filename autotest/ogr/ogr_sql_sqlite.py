@@ -1901,10 +1901,3 @@ def test_ogr_sql_sqlite_31():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sql_sqlite')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

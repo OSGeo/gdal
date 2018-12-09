@@ -193,10 +193,3 @@ def test_ignfheightasciigrid_gra_invalid():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('IGNFHeightASCIIGrid')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -84,10 +84,3 @@ def test_transformgeoloc_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('transform_geoloc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

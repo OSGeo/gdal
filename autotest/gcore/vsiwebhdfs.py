@@ -565,15 +565,3 @@ def test_vsiwebhdfs_cleanup():
 
 
 gdaltest_list_extra = [vsiwebhdfs_extra_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsiwebhdfs')
-
-    if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests(gdaltest_list_extra)
-    else:
-        gdaltest.run_tests(
-            gdaltest_list + gdaltest_list_extra + [test_vsiwebhdfs_cleanup])
-
-    sys.exit(gdaltest.summarize())

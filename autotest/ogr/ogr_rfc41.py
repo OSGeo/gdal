@@ -768,10 +768,3 @@ def test_ogr_rfc41_8():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_rfc41')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

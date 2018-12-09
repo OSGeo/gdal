@@ -107,10 +107,3 @@ def test_osr_micoordsys_3():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_micoordsys')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

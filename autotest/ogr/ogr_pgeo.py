@@ -272,10 +272,3 @@ def test_ogr_pgeo_main():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_pgeo')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

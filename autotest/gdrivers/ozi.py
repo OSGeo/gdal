@@ -87,10 +87,3 @@ def test_ozi_online_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('OZI')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

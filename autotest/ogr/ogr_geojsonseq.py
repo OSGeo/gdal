@@ -184,10 +184,3 @@ def test_ogr_geojsonseq_test_ogrsf():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_geojsonseq')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

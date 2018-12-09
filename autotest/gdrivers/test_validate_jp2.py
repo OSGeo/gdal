@@ -379,10 +379,3 @@ def test_validate_jp2_cleanup():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_validate_jp2')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

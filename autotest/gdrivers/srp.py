@@ -146,10 +146,3 @@ def test_srp_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('srp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

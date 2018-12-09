@@ -68,10 +68,3 @@ def test_hfa_read_completedefn_recursion():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hfa_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -252,10 +252,3 @@ def test_xyz_cleanup():
     pass
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('xyz')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

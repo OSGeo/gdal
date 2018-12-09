@@ -247,10 +247,3 @@ def test_l1b_little_endian():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('l1b')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

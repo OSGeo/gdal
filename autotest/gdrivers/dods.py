@@ -133,12 +133,3 @@ manual_gdaltest_list = [
     dods_5,
     dods_6,
     dods_cleanup]
-
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('dods')
-
-    gdaltest.run_tests(manual_gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

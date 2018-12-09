@@ -835,10 +835,3 @@ def test_vsifile_opendir():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsifile')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

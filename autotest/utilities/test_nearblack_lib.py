@@ -155,10 +155,3 @@ def test_nearblack_lib_8():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_nearblack_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -227,10 +227,3 @@ def test_gta_create(filename, checksum):
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gta')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

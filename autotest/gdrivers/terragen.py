@@ -59,10 +59,3 @@ def test_terragen_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('TERRAGEN')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

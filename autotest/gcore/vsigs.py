@@ -1194,14 +1194,3 @@ def test_vsigs_cleanup():
 # gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_write, vsigs_stop_webserver, vsigs_cleanup ]
 
 gdaltest_list_extra = [vsigs_extra_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsigs')
-
-    if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests(gdaltest_list_extra)
-    else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsigs_cleanup])
-
-    sys.exit(gdaltest.summarize())

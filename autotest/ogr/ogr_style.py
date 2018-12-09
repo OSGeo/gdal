@@ -107,10 +107,3 @@ def test_ogr_style_styletable():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_style')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

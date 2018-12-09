@@ -45,10 +45,3 @@ def test_leveller_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('leveller')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

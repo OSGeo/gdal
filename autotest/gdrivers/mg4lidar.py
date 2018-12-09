@@ -92,10 +92,3 @@ def test_mg4lidar_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('mg4lidar')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

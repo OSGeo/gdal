@@ -1626,10 +1626,3 @@ def test_gdalwarp_lib_cleanup():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdalwarp_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

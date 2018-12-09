@@ -140,9 +140,3 @@ def test_rat_3():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rat')
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -707,10 +707,3 @@ def test_ogr_plscenes_data_v1_live():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_plscenes')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

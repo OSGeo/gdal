@@ -469,10 +469,3 @@ def test_jp2kak_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jp2kak')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

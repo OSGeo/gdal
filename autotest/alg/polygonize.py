@@ -195,10 +195,3 @@ def test_polygonize_4():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('polygonize')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

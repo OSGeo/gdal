@@ -137,10 +137,3 @@ def test_ogr_shape_sbn_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_shape_sbn')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

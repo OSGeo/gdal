@@ -567,10 +567,3 @@ def test_ogr_georss_cleanup():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_georss')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

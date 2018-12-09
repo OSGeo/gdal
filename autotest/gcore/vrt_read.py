@@ -1183,12 +1183,3 @@ def test_vrt_dstsize_larger_than_source():
     ds = gdal.Open('data/dstsize_larger_than_source.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 33273
-
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vrt_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

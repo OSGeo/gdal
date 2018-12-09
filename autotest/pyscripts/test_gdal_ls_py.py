@@ -242,13 +242,3 @@ def test_gdal_ls_py_8():
 
 
 
-if __name__ == '__main__':
-
-    if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS') is None:
-        gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
-
-    gdaltest.setup_run('test_gdal_ls_py')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

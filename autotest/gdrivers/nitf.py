@@ -3440,10 +3440,3 @@ def test_nitf_cleanup():
 
 # gdaltest_list = [ nitf_72 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('nitf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

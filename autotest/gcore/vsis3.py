@@ -2422,14 +2422,3 @@ def test_vsis3_cleanup():
 # gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_opendir, vsis3_stop_webserver, vsis3_cleanup ]
 
 gdaltest_list_extra = [vsis3_extra_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsis3')
-
-    if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests(gdaltest_list_extra)
-    else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsis3_cleanup])
-
-    sys.exit(gdaltest.summarize())

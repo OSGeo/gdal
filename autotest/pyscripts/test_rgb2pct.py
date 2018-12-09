@@ -184,10 +184,3 @@ def test_rgb2pct_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_rgb2pct')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

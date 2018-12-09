@@ -105,10 +105,3 @@ def test_rpftoc_4():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rpftoc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

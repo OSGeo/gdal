@@ -137,10 +137,3 @@ def test_webp_5():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('webp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -442,10 +442,3 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hdf5')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

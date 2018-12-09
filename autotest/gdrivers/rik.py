@@ -85,10 +85,3 @@ def test_rik_online_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('RIK')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

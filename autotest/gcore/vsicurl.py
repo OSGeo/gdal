@@ -464,14 +464,3 @@ def test_vsicurl_stop_webserver():
 
 
 
-if __name__ == '__main__':
-
-    if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', '').upper() != 'NO':
-        print('Enabling slow tests as GDAL_RUN_SLOW_TESTS is not defined')
-        gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
-
-    gdaltest.setup_run('vsicurl')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -2896,11 +2896,3 @@ gdaltest_extra_list = [
     ogr_gmlas_extra_piezometre,
     ogr_gmlas_extra_eureg
 ]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gmlas')
-
-    gdaltest.run_tests(gdaltest_list + gdaltest_extra_list)
-
-    sys.exit(gdaltest.summarize())

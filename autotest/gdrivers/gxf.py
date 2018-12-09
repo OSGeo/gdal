@@ -98,10 +98,3 @@ def test_gxf(downloadURL, fileName, checksum, download_size):
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gxf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

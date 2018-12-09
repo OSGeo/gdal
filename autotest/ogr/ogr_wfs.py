@@ -4503,10 +4503,3 @@ def test_ogr_wfs_vsimem_cleanup(with_and_without_streaming):
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_wfs')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -4607,10 +4607,3 @@ def test_ogr_pg_cleanup(with_and_without_postgis):
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_pg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

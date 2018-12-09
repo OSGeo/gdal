@@ -1079,10 +1079,3 @@ def test_pds4_18():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('pds4')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

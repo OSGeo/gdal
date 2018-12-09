@@ -1045,14 +1045,3 @@ gdaltest_rw_list = [
     ogr_carto_rw_init,
     ogr_carto_rw_1,
 ]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_carto')
-
-    if gdal.GetConfigOption('CARTO_CONNECTION') is None:
-        gdaltest.run_tests(gdaltest_list)
-    else:
-        gdaltest.run_tests(gdaltest_rw_list)
-
-    sys.exit(gdaltest.summarize())

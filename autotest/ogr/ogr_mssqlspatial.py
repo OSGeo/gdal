@@ -334,10 +334,3 @@ def test_ogr_mssqlspatial_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_mssqlspatial')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

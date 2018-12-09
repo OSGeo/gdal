@@ -136,10 +136,3 @@ def test_gdalinfo_lib_nodatavalues():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdalinfo_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -285,10 +285,3 @@ def test_contour_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('contour')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

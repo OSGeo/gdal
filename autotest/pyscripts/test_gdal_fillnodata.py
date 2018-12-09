@@ -89,10 +89,3 @@ def test_gdal_fillnodata_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_fillnodata')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

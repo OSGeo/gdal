@@ -3680,11 +3680,3 @@ disabled_gdaltest_list = [
     test_ogr_gml_1,
     test_ogr_gml_82,
     test_ogr_gml_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gml_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

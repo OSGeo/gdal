@@ -187,10 +187,3 @@ def test_jpeg_copy_icc_64K():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jpeg_profile')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

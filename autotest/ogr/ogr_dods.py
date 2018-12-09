@@ -210,11 +210,3 @@ manual_gdaltest_list = [
     ogr_dods_4,
     ogr_dods_5,
     ogr_dods_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_dods')
-
-    gdaltest.run_tests(manual_gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

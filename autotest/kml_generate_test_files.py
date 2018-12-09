@@ -356,9 +356,3 @@ def generate_kmlsuperoverlay(filename):
 
 
 
-if __name__ == '__main__':
-
-    generate_libkml('test_ogrlibkml.kml')
-    generate_libkml('test_ogrlibkml.kmz')
-    generate_libkml_update('test_ogrlibkml_update.kml')
-    generate_kmlsuperoverlay('test_superoverlay.kmz')

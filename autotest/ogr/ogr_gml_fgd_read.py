@@ -117,10 +117,3 @@ def test_ogr_gml_fgd_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gml_fgd_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

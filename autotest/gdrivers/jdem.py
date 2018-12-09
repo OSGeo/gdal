@@ -44,10 +44,3 @@ def test_jdem_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jdem')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

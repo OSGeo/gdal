@@ -418,10 +418,3 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vrtwarp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

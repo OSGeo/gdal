@@ -1181,10 +1181,3 @@ def test_hfa_read_elevation_units():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hfa')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

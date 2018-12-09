@@ -1549,10 +1549,3 @@ def test_ogr_mvt_write_reuse_temp_db():
 
 # gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_mvt')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

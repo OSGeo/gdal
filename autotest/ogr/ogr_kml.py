@@ -766,10 +766,3 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_kml')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

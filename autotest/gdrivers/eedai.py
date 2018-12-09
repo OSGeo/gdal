@@ -753,10 +753,3 @@ def test_eedai_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('eedai')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -2201,11 +2201,3 @@ disabled_gdaltest_list = [
     test_ogr_fgdb_20,
     test_ogr_fgdb_cleanup
 ]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_fgdb')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

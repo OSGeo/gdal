@@ -66,10 +66,3 @@ def test_ogr_sua_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sua')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

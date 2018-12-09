@@ -1231,10 +1231,3 @@ def test_osr_basic_setgeogcs():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_basic')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

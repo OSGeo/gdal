@@ -1780,10 +1780,3 @@ def test_vrtpansharpen_cleanup():
 
 # gdaltest_list= [ vrtpansharpen_1, vrtpansharpen_8 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vrtpansharpen')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

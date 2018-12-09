@@ -703,14 +703,3 @@ def test_vsiswift_cleanup():
 # gdaltest_list = [ vsiswift_init, vsiswift_start_webserver, vsiswift_fake_mkdir_rmdir, vsiswift_stop_webserver, vsiswift_cleanup ]
 
 gdaltest_list_extra = [vsiswift_extra_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsiswift')
-
-    if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests(gdaltest_list_extra)
-    else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_vsiswift_cleanup])
-
-    sys.exit(gdaltest.summarize())

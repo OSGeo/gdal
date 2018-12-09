@@ -68,10 +68,3 @@ def test_nwt_grd_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('nwt_grd')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

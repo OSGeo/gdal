@@ -301,10 +301,3 @@ def test_osr_ct_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_ct')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

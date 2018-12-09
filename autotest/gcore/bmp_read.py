@@ -74,10 +74,3 @@ def test_bmp_online_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('bmp_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

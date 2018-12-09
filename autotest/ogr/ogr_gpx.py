@@ -486,10 +486,3 @@ def test_ogr_gpx_cleanup():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gpx')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

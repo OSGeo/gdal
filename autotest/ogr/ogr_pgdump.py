@@ -926,10 +926,3 @@ def test_ogr_pgdump_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_pgdump')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -79,10 +79,3 @@ def test_osr_url_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_url')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

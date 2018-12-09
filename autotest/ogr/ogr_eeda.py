@@ -429,10 +429,3 @@ def test_eeda_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_eeda')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

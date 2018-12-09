@@ -474,15 +474,3 @@ def test_georaster_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    if 'OCI_DSNAME' not in os.environ:
-        print('Enter ORACLE connection (e.g. OCI:scott/tiger@orcl): ')
-        oci_dsname = sys.stdin.readline().strip()
-        os.environ['OCI_DSNAME'] = oci_dsname
-
-    gdaltest.setup_run('GeoRaster')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

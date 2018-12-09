@@ -661,13 +661,3 @@ def test_netcdf_cf_5():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('netcdf_cf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    # make sure we cleanup
-    gdaltest.clean_tmp()
-
-    sys.exit(gdaltest.summarize())

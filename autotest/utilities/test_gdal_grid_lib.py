@@ -146,10 +146,3 @@ def test_gdal_grid_lib_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_grid_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

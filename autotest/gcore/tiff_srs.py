@@ -474,10 +474,3 @@ def test_tiff_srs_proj4(proj4):
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('tiff_srs')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

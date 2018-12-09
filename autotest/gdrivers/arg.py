@@ -320,10 +320,3 @@ def test_arg_destroy():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ARG')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

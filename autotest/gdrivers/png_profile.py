@@ -311,10 +311,3 @@ def test_png_sRGB():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('png_profile')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -143,10 +143,3 @@ def test_ograpispy_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ograpispy')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

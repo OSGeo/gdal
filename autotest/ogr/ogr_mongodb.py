@@ -810,13 +810,3 @@ def test_ogr_mongodb_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    import locale
-    locale.setlocale(locale.LC_ALL, '')
-
-    gdaltest.setup_run('ogr_mongodb')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

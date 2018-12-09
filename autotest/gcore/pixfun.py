@@ -713,7 +713,3 @@ def test_pixfun_dB2pow():
 
 
 
-if __name__ == '__main__':
-    gdaltest.setup_run('pixfun')
-    gdaltest.run_tests(gdaltest_list)
-    sys.exit(gdaltest.summarize())

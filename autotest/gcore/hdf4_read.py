@@ -307,10 +307,3 @@ def test_hdf4_read_online_10():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hdf4_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -1455,12 +1455,3 @@ def test_osr_esri_33():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_esri')
-
-    # make sure GDAL_FIX_ESRI_WKT does not interfere with tests
-    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', 'NO')
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

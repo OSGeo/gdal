@@ -344,10 +344,3 @@ def test_testnonboundtoswig_VRTDerivedBands():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('testnonboundtoswig')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

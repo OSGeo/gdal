@@ -204,10 +204,3 @@ def test_osr_xml_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_xml')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

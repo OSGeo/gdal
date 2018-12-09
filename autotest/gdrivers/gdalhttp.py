@@ -280,13 +280,3 @@ def test_http_cleanup():
 
 # gdaltest_list = [ http_test_use_capi_store ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('http')
-
-    if len(sys.argv) == 2 and sys.argv[1] == '-use_capi_store':
-        gdaltest_list = [test_http_test_use_capi_store_sub]
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

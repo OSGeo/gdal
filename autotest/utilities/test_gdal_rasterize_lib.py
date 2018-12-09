@@ -323,10 +323,3 @@ def test_gdal_rasterize_lib_4():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_rasterize_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

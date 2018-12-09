@@ -233,10 +233,3 @@ def test_gnm_delete():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gnm_test')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -283,10 +283,3 @@ def test_ogr_gxt_cleanup():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gxt')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

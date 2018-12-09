@@ -72,10 +72,3 @@ def test_bmp_create(filename, checksum, testfunction):
     getattr(ut, testfunction)()
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('bmp_write')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

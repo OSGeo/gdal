@@ -689,10 +689,3 @@ def test_ogr_basic_cleanup():
 
 # gdaltest_list = [ ogr_basic_13 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_basic_test')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

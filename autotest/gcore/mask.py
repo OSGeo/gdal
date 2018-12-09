@@ -935,10 +935,3 @@ def test_mask_27():
 # Extensive test of real NODATA_VALUES mask for all complex types
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('mask')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

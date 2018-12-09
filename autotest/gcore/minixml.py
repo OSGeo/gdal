@@ -244,9 +244,3 @@ def test_minixml_cleanup():
     pass
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('minixml')
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

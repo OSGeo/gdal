@@ -594,10 +594,3 @@ def test_ogr_geos_polygonize():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_geos')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

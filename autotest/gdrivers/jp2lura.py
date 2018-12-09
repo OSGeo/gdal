@@ -2013,11 +2013,3 @@ disabled_gdaltest_list = [
     test_jp2lura_1,
     test_jp2lura_53,
     test_jp2lura_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jp2lura')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -617,10 +617,3 @@ def test_ogr_wkt_multipolygon_corrupted():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_wkbwkt_geom')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

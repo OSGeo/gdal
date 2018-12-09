@@ -71,10 +71,3 @@ def test_sigdem_in_memory():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('sigdem')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

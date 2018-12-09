@@ -834,10 +834,3 @@ def test_ogr_osm_18():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_osm')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

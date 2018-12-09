@@ -175,10 +175,3 @@ def test_ogr_cloudant_SetSpatialFilter():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_cloudant')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

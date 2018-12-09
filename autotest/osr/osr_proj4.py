@@ -925,15 +925,3 @@ def test_osr_proj4_error_cases_export_mercator():
 
 
 
-if __name__ == '__main__':
-
-    if len(sys.argv) == 2 and sys.argv[1] == "osr_proj4_28":
-        os.putenv('PROJ_LIB', '/i/dont_exist')
-        gdaltest.run_tests([test_osr_proj4_28])
-        sys.exit(0)
-
-    gdaltest.setup_run('osr_proj4')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

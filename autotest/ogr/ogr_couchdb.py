@@ -138,10 +138,3 @@ def test_ogr_couchdb_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_couchdb')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

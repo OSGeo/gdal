@@ -273,11 +273,3 @@ def ogr_db2_listdrivers():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_db2')
-    if os.name == 'nt':
-        gdaltest.run_tests(gdaltest_list)
-    else:
-        print("These tests only run on Windows")
-    sys.exit(gdaltest.summarize())

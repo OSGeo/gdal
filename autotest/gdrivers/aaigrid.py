@@ -356,10 +356,3 @@ NODATA_value  2.2250738585072014e-308
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('aaigrid')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

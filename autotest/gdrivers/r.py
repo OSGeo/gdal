@@ -75,10 +75,3 @@ def test_r_4():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('r')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

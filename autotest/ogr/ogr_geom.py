@@ -3231,10 +3231,3 @@ def test_ogr_geom_cleanup():
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_geom')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

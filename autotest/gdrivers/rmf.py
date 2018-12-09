@@ -776,10 +776,3 @@ def test_rmf_33c():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rmf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

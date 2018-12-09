@@ -45,10 +45,3 @@ def test_osr_getprojectionmethods_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_getprojectionmethods')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

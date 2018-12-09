@@ -457,10 +457,3 @@ def test_ogr_ods_boolean():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_ods')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

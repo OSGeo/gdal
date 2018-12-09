@@ -669,10 +669,3 @@ def test_bag_write_south_up():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hdf5')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

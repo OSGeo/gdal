@@ -71,10 +71,3 @@ def test_pcraster_2():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('pcraster')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -84,10 +84,3 @@ def test_ogr_pds_2():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_pds')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

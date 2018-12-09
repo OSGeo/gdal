@@ -111,9 +111,3 @@ def do(sqlite3name, gdalname):
 
 
 
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print('python ogr_as_sqlite_extension name_of_libsqlite3 name_of_libgdal')
-        sys.exit(1)
-
-    do(sys.argv[1], sys.argv[2])

@@ -1687,10 +1687,3 @@ def test_warp_56():
 
 # gdaltest_list = [ warp_55 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('warp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

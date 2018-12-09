@@ -84,10 +84,3 @@ def test_hf2_cleanup():
     pass
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hf2')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

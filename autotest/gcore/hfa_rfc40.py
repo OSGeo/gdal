@@ -474,10 +474,3 @@ def test_hfa_rfc40_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hfa_rfc40')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

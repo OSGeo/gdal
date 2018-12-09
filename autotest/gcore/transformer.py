@@ -718,12 +718,3 @@ def test_transformer_17():
 disabled_gdaltest_list = [
     test_transformer_11
 ]
-
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('transformer')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

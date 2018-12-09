@@ -3136,15 +3136,3 @@ disabled_gdaltest_list = [
     test_ogr_sqlite_45,
     test_ogr_sqlite_cleanup,
 ]
-
-if __name__ == '__main__':
-
-    if len(sys.argv) >= 2 and sys.argv[1] == '-without_spatialite':
-        run_without_spatialite = False
-        gdal.SetConfigOption('SPATIALITE_LOAD', 'NO')
-
-    gdaltest.setup_run('ogr_sqlite')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -221,10 +221,3 @@ def test_gif_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gif')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

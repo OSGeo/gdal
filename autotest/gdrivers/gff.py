@@ -52,10 +52,3 @@ def test_gff_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gff')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

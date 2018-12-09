@@ -272,10 +272,3 @@ def test_gdaltindex_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdaltindex')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

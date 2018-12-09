@@ -75,10 +75,3 @@ def test_ogr_sdts_1():
 #
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sdts')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

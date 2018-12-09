@@ -44,10 +44,3 @@ def test_nwt_grc_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('nwt_grc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

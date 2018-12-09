@@ -468,13 +468,3 @@ def test_ogr_wasp_cleanup():
 
 
 
-if __name__ == '__main__':
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ogrtest.have_geos()
-    gdal.PopErrorHandler()
-
-    gdaltest.setup_run('ogr_wasp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -3206,10 +3206,3 @@ def test_gpkg_cleanup():
 
 
 # gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gpkg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -2286,10 +2286,3 @@ def test_ogr_elasticsearch_cleanup():
 
 # gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_elasticsearch')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

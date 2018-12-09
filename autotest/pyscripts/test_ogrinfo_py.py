@@ -335,10 +335,3 @@ OGRFeature(test_ogrinfo_23):2
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogrinfo_py')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

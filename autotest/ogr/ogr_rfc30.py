@@ -83,10 +83,3 @@ def test_ogr_rfc30_1_bis():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_rfc30')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -288,10 +288,3 @@ def test_ogr_gft_ogr2ogr_spatial():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gft')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

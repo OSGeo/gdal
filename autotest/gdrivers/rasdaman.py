@@ -90,10 +90,3 @@ def test_rasdaman_3():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('RASDAMAN')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

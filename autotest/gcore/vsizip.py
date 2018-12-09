@@ -644,10 +644,3 @@ def test_vsizip_byte_zip64_local_header_zeroed():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsizip')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

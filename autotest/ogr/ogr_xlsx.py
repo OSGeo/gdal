@@ -546,10 +546,3 @@ def test_ogr_xlsx_boolean():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_xlsx')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

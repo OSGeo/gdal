@@ -1382,10 +1382,3 @@ def test_ogr2ogr_py_46():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogr2ogr_py')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

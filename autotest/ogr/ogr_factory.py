@@ -533,10 +533,3 @@ def test_ogr_factory_8():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_factory')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -319,10 +319,3 @@ def test_pds_band_storage_type_line_interleaved():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('pds')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

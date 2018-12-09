@@ -134,10 +134,3 @@ def test_ogrlineref_cleanup():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogrlineref')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

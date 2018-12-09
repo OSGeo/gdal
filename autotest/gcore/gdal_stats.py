@@ -707,10 +707,3 @@ def test_stats_float32_with_nodata_slightly_above_float_max():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gdal_stats')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

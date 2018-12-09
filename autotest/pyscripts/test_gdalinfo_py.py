@@ -204,10 +204,3 @@ def test_gdalinfo_py_10():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdalinfo_py')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

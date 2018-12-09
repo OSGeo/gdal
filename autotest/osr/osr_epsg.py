@@ -370,10 +370,3 @@ def test_osr_epsg_geoccs_deprecated():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_epsg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

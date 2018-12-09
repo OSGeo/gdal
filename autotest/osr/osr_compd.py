@@ -342,10 +342,3 @@ def test_osr_compd_8():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_compd')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

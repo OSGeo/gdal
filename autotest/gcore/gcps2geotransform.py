@@ -168,10 +168,3 @@ def test_gcps2gt_8():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gcps2geotransform')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

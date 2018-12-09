@@ -97,10 +97,3 @@ def test_gsg_8():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gsg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

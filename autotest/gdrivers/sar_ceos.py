@@ -53,10 +53,3 @@ def test_sar_ceos_online_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('sar_ceos')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

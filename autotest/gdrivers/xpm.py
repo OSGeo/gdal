@@ -61,10 +61,3 @@ def test_xpm_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('xpm')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

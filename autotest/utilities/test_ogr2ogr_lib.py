@@ -452,10 +452,3 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     gdal.Unlink(tmpfilename)
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogr2ogr_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

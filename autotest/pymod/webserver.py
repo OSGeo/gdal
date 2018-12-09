@@ -458,5 +458,3 @@ def main():
     server.run_server(10)
 
 
-if __name__ == '__main__':
-    main()

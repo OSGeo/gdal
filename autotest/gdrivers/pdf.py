@@ -1924,10 +1924,3 @@ def test_pdf_run_all():
 
 # gdaltest_list = [ pdf_init, pdf_metadata ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('PDF')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

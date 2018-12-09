@@ -113,10 +113,3 @@ def test_ogr_db2_hack_3():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_db2_hack')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -3917,10 +3917,3 @@ def test_ogr_gpkg_cleanup():
 
 # gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_47, ogr_gpkg_cleanup ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gpkg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

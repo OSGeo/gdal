@@ -94,10 +94,3 @@ def test_nodatamaskband_1():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('nodatamaskband')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

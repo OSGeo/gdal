@@ -181,10 +181,3 @@ def test_gdaladdo_5():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdaladdo')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

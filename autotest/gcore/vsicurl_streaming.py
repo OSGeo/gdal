@@ -121,12 +121,3 @@ def test_vsicurl_streaming_1():
 
 
 
-if __name__ == '__main__':
-
-    gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
-
-    gdaltest.setup_run('vsicurl_streaming')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -540,10 +540,3 @@ def test_rl2_error_create():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rl2')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

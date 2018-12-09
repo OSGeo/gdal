@@ -141,10 +141,3 @@ def test_ogr_wktempty_test_partial_empty_geoms():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_wktempty')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

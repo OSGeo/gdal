@@ -381,10 +381,3 @@ def test_ehdr_approx_stats_flag():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ehdr')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

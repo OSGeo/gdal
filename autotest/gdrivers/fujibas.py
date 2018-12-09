@@ -44,10 +44,3 @@ def test_fujibas_1():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('fujibas')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

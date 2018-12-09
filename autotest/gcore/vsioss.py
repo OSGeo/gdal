@@ -1121,14 +1121,3 @@ def test_visoss_cleanup():
 # gdaltest_list = [ visoss_init, visoss_start_webserver, visoss_8, visoss_stop_webserver, visoss_cleanup ]
 
 gdaltest_list_extra = [visoss_extra_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsioss')
-
-    if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests(gdaltest_list_extra)
-    else:
-        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [test_visoss_cleanup])
-
-    sys.exit(gdaltest.summarize())

@@ -350,10 +350,3 @@ def test_envi_truncated():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('envi')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

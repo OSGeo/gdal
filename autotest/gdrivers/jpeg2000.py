@@ -442,10 +442,3 @@ def test_jpeg2000_cleanup():
 
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jpeg2000')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

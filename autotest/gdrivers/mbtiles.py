@@ -603,10 +603,3 @@ def test_mbtiles_cleanup():
 
 # gdaltest_list = [ mbtiles_1, mbtiles_create ]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('mbtiles')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

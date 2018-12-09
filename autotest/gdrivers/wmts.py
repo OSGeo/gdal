@@ -1800,10 +1800,3 @@ def test_wmts_cleanup():
     
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('wmts')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())
