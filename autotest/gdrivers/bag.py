@@ -96,8 +96,6 @@ def test_bag_2():
 
     assert not gdaltest.is_file_open('data/true_n_nominal.bag'), 'file still opened.'
 
-    return 'success'
-
 ###############################################################################
 # Test a southern hemisphere falseNorthing sample file.
 
@@ -122,8 +120,6 @@ def test_bag_3():
     assert 'Southern Hemisphere' in pj, 'Southern Hemisphere not in projection'
     assert 'PARAMETER["false_northing",10000000]' in pj, \
         'Did not find false_northing of 10000000'
-
-    return 'success'
 
 ###############################################################################
 #
@@ -188,8 +184,6 @@ def test_bag_vr_normal():
     got_md2 = gdal.Info(ds, computeChecksum=True, format='json')
     assert got_md2 == got_md
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -247,8 +241,7 @@ def test_bag_vr_list_supergrids():
                 'SUPERGRIDS_INDICES=' + invalid_val])
         assert gdal.GetLastErrorMsg() != '', invalid_val
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -317,8 +310,6 @@ def test_bag_vr_open_supergrids():
         ds = gdal.OpenEx('BAG:"data/test_vr.bag":supergrid:0:0',
                          open_options=['MINX=0'])
     assert gdal.GetLastErrorMsg() != '', 'warning expected'
-
-    return 'success'
 
 ###############################################################################
 #
@@ -561,8 +552,7 @@ def test_bag_vr_resampled():
         print(m1_min, M1_min, mean1_min)
         pytest.fail(m2_min, M2_min, mean2_min)
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -581,8 +571,6 @@ def test_bag_vr_resampled_mask():
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4507
-
-    return 'success'
 
 ###############################################################################
 #
@@ -612,8 +600,6 @@ def test_bag_vr_resampled_interpolated():
                                        'SUPERGRIDS_MASK=YES',
                                        'INTERPOLATION=INVDIST'])
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 #
@@ -653,8 +639,6 @@ def test_bag_write_two_bands():
 
     gdal.Unlink('/vsimem/out.bag')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -682,8 +666,6 @@ def test_bag_write_south_up():
     ds = None
 
     gdal.Unlink('/vsimem/out.bag')
-
-    return 'success'
 
 
 gdaltest_list = [test_bag_2,

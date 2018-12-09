@@ -64,8 +64,6 @@ def test_gcps2gt_1():
     assert gdaltest.geotransform_equals(
             gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001)
 
-    return 'success'
-
 ###############################################################################
 # Similar but non-exact.
 
@@ -80,8 +78,6 @@ def test_gcps2gt_2():
     ]))
     assert gdaltest.geotransform_equals(
             gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001)
-
-    return 'success'
 
 ###############################################################################
 # bApproxOK false, and no good solution.
@@ -98,8 +94,6 @@ def test_gcps2gt_3():
     ]), approx_ok)
     assert gt is None, 'Expected failure when no good solution.'
 
-    return 'success'
-
 ###############################################################################
 # Single point - Should return None.
 
@@ -110,8 +104,6 @@ def test_gcps2gt_4():
         (0.0, 0.0, 400000, 370000),
     ]))
     assert gt is None, 'Expected failure for single GCP.'
-
-    return 'success'
 
 ###############################################################################
 # Two points - simple offset and scale, no rotation.
@@ -125,8 +117,6 @@ def test_gcps2gt_5():
     ]))
     assert gdaltest.geotransform_equals(
             gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001)
-
-    return 'success'
 
 ###############################################################################
 # Special case for four points in a particular order.  Exact result.
@@ -143,8 +133,6 @@ def test_gcps2gt_6():
     assert gdaltest.geotransform_equals(
             gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
-    return 'success'
-
 ###############################################################################
 # Try a case that is hard to do without normalization.
 
@@ -159,8 +147,6 @@ def test_gcps2gt_7():
     ]))
     assert gdaltest.geotransform_equals(
             gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
-
-    return 'success'
 
 ###############################################################################
 # A fairly messy real world case without a easy to predict result.
@@ -179,8 +165,6 @@ def test_gcps2gt_8():
     gt_expected = (-87.056612873288, -2.232795668658e-05, 3.178617809303e-05,
                    39.227856615716, 2.6091510188921e-05, 1.596921026218e-05)
     assert gdaltest.geotransform_equals(gt, gt_expected, 0.00001)
-
-    return 'success'
 
 
 gdaltest_list = [

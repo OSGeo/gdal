@@ -123,8 +123,7 @@ def test_ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
         assert wantedstream.encode('utf-8') in data, \
             'Wrong text data in written PDF stream'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test read support
 
@@ -195,8 +194,6 @@ def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test write support without writing attributes
 
@@ -247,8 +244,6 @@ def test_ogr_pdf_5():
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 8
 
-    return 'success'
-
 ###############################################################################
 # Test read support with a non-OGR datasource
 
@@ -293,8 +288,6 @@ def test_ogr_pdf_online_1():
         feat.DumpReadable()
         pytest.fail()
     assert feat.GetField('ID') == 'VL46'
-
-    return 'success'
 
 ###############################################################################
 # Test read support of non-structured content
@@ -360,8 +353,7 @@ def test_ogr_pdf_online_2():
         assert ds.GetLayer(i).GetGeomType() == expected_layers[i][1], \
             ('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -373,8 +365,6 @@ def test_ogr_pdf_cleanup():
 
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_1.pdf')
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_2.pdf')
-
-    return 'success'
 
 
 gdaltest_list = [

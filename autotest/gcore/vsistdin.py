@@ -62,8 +62,6 @@ def test_vsistdin_1():
 
     gdal.Unlink("tmp/vsistdin_1_out.tif")
 
-    return 'success'
-
 ###############################################################################
 # Test on a bigger file (> 1 MB)
 
@@ -86,8 +84,6 @@ def test_vsistdin_2():
 
     gdal.Unlink("tmp/vsistdin_2_out.tif")
 
-    return 'success'
-
 ###############################################################################
 # Test opening /vsistdin/ in write mode (failure expected)
 
@@ -98,8 +94,6 @@ def test_vsistdin_3():
     f = gdal.VSIFOpenL('/vsistdin/', 'wb')
     gdal.PopErrorHandler()
     assert f is None
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #6061
@@ -134,8 +128,6 @@ def test_vsistdin_4():
     ds = None
 
     gdal.Unlink("tmp/vsistdin_4_out.tif")
-
-    return 'success'
 
 
 gdaltest_list = [test_vsistdin_1, test_vsistdin_2, test_vsistdin_3, test_vsistdin_4]

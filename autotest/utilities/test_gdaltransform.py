@@ -49,8 +49,6 @@ def test_gdaltransform_1():
     assert ret.find('2 49 1') != -1
     assert ret.find('3 50 2') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -gcp
 
@@ -66,8 +64,6 @@ def test_gdaltransform_2():
     assert ret.find('441920 3751320') != -1
     assert ret.find('441920 3750120') != -1
     assert ret.find('440720 3750120') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test -gcp -tps
@@ -85,8 +81,6 @@ def test_gdaltransform_3():
     assert ret.find('441920 3750120') != -1
     assert ret.find('440720 3750120') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -gcp -order 1
 
@@ -102,8 +96,6 @@ def test_gdaltransform_4():
     assert ret.find('441920 3751320') != -1
     assert ret.find('441920 3750120') != -1
     assert ret.find('440720 3750120') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test with input file and -t_srs
@@ -122,8 +114,6 @@ def test_gdaltransform_5():
 
     assert abs(x - 440720) <= 1e-4 and abs(y - 3751320) <= 1e-4, ret
 
-    return 'success'
-
 ###############################################################################
 # Test with input file and output file
 
@@ -140,8 +130,6 @@ def test_gdaltransform_6():
     y = float(text_split[1])
 
     assert abs(x - 440720) <= 1e-4 and abs(y - 3751320) <= 1e-4, ret
-
-    return 'success'
 
 
 ###############################################################################
@@ -160,8 +148,6 @@ def test_gdaltransform_7():
 
     assert abs(x - 0) <= 1e-4 and abs(y - 0) <= 1e-4, ret
 
-    return 'success'
-
 ###############################################################################
 # Test -to
 
@@ -174,8 +160,6 @@ def test_gdaltransform_8():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' -to "SRC_SRS=WGS84" -to "DST_SRS=WGS84"', strin)
 
     assert ret.find('2 49 1') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test -output_xy
@@ -190,8 +174,6 @@ def test_gdaltransform_9():
 
     text_split = ret.split(' ')
     assert len(text_split) == 2, ret
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -71,8 +71,6 @@ def test_gpkg_init():
 
     print("\ntest server: " + gdaltest.db2_test_server + "\n")
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -141,7 +139,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 
     if expected_format is None:
         if mime_type is None:
-            return 'success'
+            return
         pytest.fail()
 
     if expected_format == 'PNG':
@@ -154,7 +152,6 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
     assert mime_type == expected_mime_type
     assert band_count == expected_band_count
     assert expected_ct == has_ct
-    return 'success'
 
 ###############################################################################
 # Single band, PNG
@@ -198,8 +195,6 @@ def test_gpkg_1():
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     assert got_cs == expected_cs
-
-    return 'success'
 
 ###############################################################################
 

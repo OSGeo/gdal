@@ -73,8 +73,6 @@ def test_ogr2ogr_py_1():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test -sql
 
@@ -97,8 +95,6 @@ def test_ogr2ogr_py_2():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -spat
@@ -126,8 +122,6 @@ def test_ogr2ogr_py_3():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test -where
 
@@ -150,8 +144,6 @@ def test_ogr2ogr_py_4():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -append
@@ -184,8 +176,6 @@ def test_ogr2ogr_py_5():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test -overwrite
 
@@ -216,8 +206,6 @@ def test_ogr2ogr_py_6():
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
-    return 'success'
-
 ###############################################################################
 # Test -gt
 
@@ -247,8 +235,6 @@ def test_ogr2ogr_py_7():
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
-    return 'success'
-
 ###############################################################################
 # Test -t_srs
 
@@ -272,8 +258,6 @@ def test_ogr2ogr_py_8():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test -a_srs
 
@@ -296,8 +280,6 @@ def test_ogr2ogr_py_9():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -select
@@ -361,8 +343,6 @@ def test_ogr2ogr_py_11():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test -nlt
 
@@ -387,8 +367,6 @@ def test_ogr2ogr_py_12():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Add explicit source layer name
 
@@ -411,8 +389,6 @@ def test_ogr2ogr_py_13():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -segmentize
@@ -438,8 +414,6 @@ def test_ogr2ogr_py_14():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -overwrite with a shapefile
@@ -471,7 +445,6 @@ def test_ogr2ogr_py_15():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    return 'success'
 
 ###############################################################################
 # Test -fid
@@ -500,7 +473,6 @@ def test_ogr2ogr_py_16():
     src_ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    return 'success'
 
 ###############################################################################
 # Test -progress
@@ -525,7 +497,6 @@ def test_ogr2ogr_py_17():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    return 'success'
 
 ###############################################################################
 # Test -wrapdateline
@@ -577,7 +548,7 @@ def test_ogr2ogr_py_18():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
 
-    return 'success' if ret == 0 else 'fail'
+    assert ret == 0
 
 ###############################################################################
 # Test -clipsrc
@@ -608,8 +579,6 @@ def test_ogr2ogr_py_19():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test correct remap of fields when laundering to Shapefile format
@@ -684,8 +653,6 @@ def test_ogr2ogr_py_20():
 
     assert not error_occurred
 
-    return 'success'
-
 ###############################################################################
 # Test ogr2ogr when the output driver has already created the fields
 # at dataset creation (#3247)
@@ -720,8 +687,6 @@ def test_ogr2ogr_py_21():
     ds.Destroy()
     os.remove('tmp/testogr2ogr21.gtm')
 
-    return 'success'
-
 
 ###############################################################################
 # Test ogr2ogr when the output driver delays the destination layer defn creation (#3384)
@@ -749,8 +714,6 @@ def test_ogr2ogr_py_22():
 
     ds.Destroy()
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr22.mif')
-
-    return 'success'
 
 ###############################################################################
 # Same as previous but with -select
@@ -782,8 +745,6 @@ def test_ogr2ogr_py_23():
     ds.Destroy()
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testogr2ogr23.mif')
 
-    return 'success'
-
 ###############################################################################
 # Test -clipsrc with WKT geometry (#3530)
 
@@ -813,8 +774,6 @@ def test_ogr2ogr_py_24():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -clipsrc with clip from external datasource
@@ -852,8 +811,6 @@ def test_ogr2ogr_py_25():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
     os.remove('tmp/clip.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test -clipdst with WKT geometry (#3530)
 
@@ -883,8 +840,6 @@ def test_ogr2ogr_py_26():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -clipdst with clip from external datasource
@@ -922,8 +877,6 @@ def test_ogr2ogr_py_27():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
     os.remove('tmp/clip.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test that -overwrite work if the output file doesn't yet exist (#3825)
 
@@ -947,7 +900,6 @@ def test_ogr2ogr_py_31():
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
-    return 'success'
 
 ###############################################################################
 # Test that -append/-overwrite to a single-file shapefile work without specifying -nln
@@ -980,7 +932,6 @@ def test_ogr2ogr_py_32():
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_32.shp')
-    return 'success'
 
 ###############################################################################
 # Test -explodecollections
@@ -1044,7 +995,6 @@ def test_ogr2ogr_py_33():
 
     ogr.GetDriverByName('CSV').DeleteDataSource('tmp/test_ogr2ogr_33_src.csv')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_33_dst.shp')
-    return 'success'
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist src.shp -nln someDirThatDoesNotExist'
@@ -1085,7 +1035,6 @@ def test_ogr2ogr_py_34():
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_34_dir')
-    return 'success'
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist src.shp'
@@ -1124,7 +1073,6 @@ def test_ogr2ogr_py_35():
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_35_dir')
-    return 'success'
 
 ###############################################################################
 # Test ogr2ogr -zfield
@@ -1152,8 +1100,6 @@ def test_ogr2ogr_py_36():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_36.shp')
 
     assert wkt.find(' 168,') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer'
@@ -1191,8 +1137,6 @@ def test_ogr2ogr_py_37():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_37_src')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_37_dir.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test that we take into account the fields by the where clause when combining
 # -select and -where (#4015)
@@ -1219,8 +1163,6 @@ def test_ogr2ogr_py_38():
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_38.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer -sql "select * from alayer"' (#4268)
@@ -1257,8 +1199,6 @@ def test_ogr2ogr_py_39():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_39_src')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_39.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -dim 3 and -dim 2
@@ -1298,8 +1238,6 @@ def test_ogr2ogr_py_43():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_2d.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_3d.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
@@ -1348,8 +1286,6 @@ def test_ogr2ogr_py_44():
     os.unlink('tmp/test_ogr2ogr_44.gml')
     os.unlink('tmp/test_ogr2ogr_44.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
 
@@ -1397,8 +1333,6 @@ def test_ogr2ogr_py_45():
     os.unlink('tmp/test_ogr2ogr_44.gml')
     os.unlink('tmp/test_ogr2ogr_44.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for linestring/multilinestring
 
@@ -1445,8 +1379,6 @@ def test_ogr2ogr_py_46():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_45_src.shp')
     gdal.Unlink('tmp/test_ogr2ogr_45.gml')
     gdal.Unlink('tmp/test_ogr2ogr_45.xsd')
-
-    return 'success'
 
 
 gdaltest_list = [

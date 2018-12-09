@@ -125,8 +125,7 @@ def test_sentinel2_l1c_1():
             ds = gdal.Open(name)
         assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C subdataset on the 10m bands
 
@@ -236,8 +235,7 @@ def test_sentinel2_l1c_2():
         pprint.pprint(got_md)
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C subdataset on the 60m bands and enabling alpha band
 
@@ -259,8 +257,6 @@ def test_sentinel2_l1c_3():
     assert cs == 0 and gdal.GetLastErrorMsg() == ''
 
     band.ReadRaster()
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L1C subdataset on the PREVIEW bands
@@ -285,8 +281,6 @@ def test_sentinel2_l1c_4():
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
     assert band.DataType == gdal.GDT_Byte
-
-    return 'success'
 
 ###############################################################################
 # Test opening invalid XML files
@@ -459,8 +453,6 @@ def test_sentinel2_l1c_5():
 
     gdal.Unlink('/vsimem/test.xml')
 
-    return 'success'
-
 ###############################################################################
 # Windows specific test to test support for long filenames
 
@@ -481,8 +473,6 @@ def test_sentinel2_l1c_6():
     gdal.ErrorReset()
     ds = gdal.Open(subds_name)
     assert ds is not None and gdal.GetLastErrorMsg() == ''
-
-    return 'success'
 
 ###############################################################################
 # Test with a real JP2 tile
@@ -553,8 +543,6 @@ def test_sentinel2_l1c_7():
 
     gdal.Unlink('/vsimem/test.xml')
     gdal.Unlink('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_bla_B01.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L1C tile
@@ -634,8 +622,7 @@ def test_sentinel2_l1c_tile_1():
             ds = gdal.Open(name)
         assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C tile without main MTD file
 
@@ -675,8 +662,7 @@ def test_sentinel2_l1c_tile_2():
         pprint.pprint(got_md)
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C tile subdataset on the 10m bands
 
@@ -783,8 +769,7 @@ def test_sentinel2_l1c_tile_3():
         pprint.pprint(got_md)
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C tile subdataset on the 10m bands without main MTD file
 
@@ -853,8 +838,6 @@ def test_sentinel2_l1c_tile_4():
 
     assert band.GetColorInterpretation() == gdal.GCI_AlphaBand
 
-    return 'success'
-
 ###############################################################################
 # Test opening a L1C tile subdataset on the preview bands
 
@@ -884,8 +867,6 @@ def test_sentinel2_l1c_tile_5():
       <DstRect xOff="0" yOff="0" xSize="343" ySize="343" />
     </SimpleSource>"""
     assert vrt.find(placement_vrt) >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test opening invalid XML files
@@ -940,8 +921,6 @@ def test_sentinel2_l1c_tile_6():
 
     gdal.Unlink('/vsimem/test.xml')
     gdal.Unlink('/vsimem/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L1B product
@@ -1014,8 +993,7 @@ def test_sentinel2_l1b_1():
             ds = gdal.Open(name)
         assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1B granule
 
@@ -1093,8 +1071,7 @@ def test_sentinel2_l1b_2():
         pprint.pprint(got_md)
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1B subdataset
 
@@ -1212,8 +1189,6 @@ def test_sentinel2_l1b_3():
 
     assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
-    return 'success'
-
 ###############################################################################
 # Test opening a L1B granule (with missing tile, without any ../../main_mtd.xml)
 
@@ -1316,8 +1291,6 @@ def test_sentinel2_l1b_4():
 
     gdal.Unlink('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml')
     gdal.Unlink('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/IMG_DATA/S2B_OPER_MSI_L1B_B01.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test opening invalid XML files
@@ -1488,8 +1461,6 @@ def test_sentinel2_l1b_5():
 
     gdal.Unlink('/vsimem/test.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a L2A product
 
@@ -1588,8 +1559,7 @@ def test_sentinel2_l2a_1():
             ds = gdal.Open(name)
         assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L21 subdataset on the 60m bands
 
@@ -1728,8 +1698,7 @@ def test_sentinel2_l2a_2():
         pprint.pprint(got_categories)
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening invalid XML files
 
@@ -1799,8 +1768,6 @@ def test_sentinel2_l2a_3():
     assert ds is None
 
     gdal.Unlink('/vsimem/test.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L2A MSIL2A product
@@ -1912,8 +1879,7 @@ def test_sentinel2_l2a_4():
             ds = gdal.Open(name)
         assert ds is None, name
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test opening a L2A MSIL2A subdataset on the 60m bands
@@ -2016,8 +1982,6 @@ def test_sentinel2_l2a_5():
         pytest.fail()
 
     assert band.DataType == gdal.GDT_UInt16
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L2A MSIL2Ap product
@@ -2134,8 +2098,7 @@ def test_sentinel2_l2a_6():
             ds = gdal.Open(name)
         assert ds is None, name
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test opening a L2A MSIL2Ap subdataset on the 60m bands
@@ -2244,8 +2207,6 @@ def test_sentinel2_l2a_7():
 
     assert band.DataType == gdal.GDT_UInt16
 
-    return 'success'
-
 
 ###############################################################################
 # Test opening a L1C Safe Compact product
@@ -2335,8 +2296,7 @@ def test_sentinel2_l1c_safe_compact_1():
             assert ds is not None
             os.unlink('tmp/S2A_MSIL1C_test.zip')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C Safe Compact subdataset on the 10m bands
 
@@ -2440,8 +2400,7 @@ def test_sentinel2_l1c_safe_compact_2():
         pprint.pprint(got_md)
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C subdataset on the TCI bands
 
@@ -2465,8 +2424,6 @@ def test_sentinel2_l1c_safe_compact_3():
     assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
     assert band.DataType == gdal.GDT_Byte
-
-    return 'success'
 
 
 gdaltest_list = [

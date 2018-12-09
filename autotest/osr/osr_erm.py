@@ -46,8 +46,7 @@ def test_osr_erm_1():
         assert srs.GetInvFlattening() == 0.0 and not abs(srs.GetSemiMajor() - srs.GetSemiMinor() > 0.0000005), \
             'Wrong ERMapper spherical datum parameters (bug #3787). Be sure your "ecw_cs.wkt" is from 20890 revision or newer.'
 
-    return 'success'
-
+    
 ###############################################################################
 # Confirm that unsupported SRSes will be translated from/to EPSG:n
 # format (#3955)
@@ -64,8 +63,6 @@ def test_osr_erm_2():
     srs2.SetFromUserInput('EPSG:3395')
 
     assert srs2.IsSame(srs), 'EPSG:n import does not match.'
-
-    return 'success'
 
 
 gdaltest_list = [

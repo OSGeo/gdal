@@ -98,17 +98,17 @@ def netcdf_cf_setup():
             gdaltest.netcdf_cf_method = 'local'
             gdaltest.netcdf_cf_files = files
             print('NOTICE: netcdf CF compliance checks: using local checker script')
-            return 'success'
+            return
 
     # skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
     if not gdaltest.download_test_data():
         print('NOTICE: skipping netcdf CF compliance checks')
         print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA=YES')
-        return 'success'
+        return
 
     if not gdaltest.run_slow_tests():
         print('NOTICE: skipping netcdf CF compliance checks')
-        return 'success'
+        return
 
     # http method with curl, should use python module but easier for now
     success = False
@@ -127,13 +127,12 @@ def netcdf_cf_setup():
         gdaltest.netcdf_cf_method = 'http'
         print('NOTICE: netcdf CF compliance checks: using remote HTTP '
               'checker script, consider installing cdms2 locally')
-        return 'success'
+        return
 
     if gdaltest.netcdf_cf_method is None:
         print('NOTICE: skipping netcdf CF compliance checks')
 
-    return 'success'
-
+    
 ###############################################################################
 # build a command used to check ifile
 
@@ -572,7 +571,7 @@ def test_netcdf_cf_1():
         result_cf = netcdf_cf_check_file('tmp/netcdf_18.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
-        return 'success'
+        return
     pytest.fail()
 
 
@@ -590,7 +589,7 @@ def test_netcdf_cf_2():
         result_cf = netcdf_cf_check_file('tmp/netcdf_cf_2.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
-        return 'success'
+        return
     pytest.fail()
 
 
@@ -617,7 +616,7 @@ def test_netcdf_cf_3():
         result_cf = netcdf_cf_check_file('tmp/netcdf_cf_3.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -657,8 +656,7 @@ def test_netcdf_cf_5():
         assert lat_origin == 60, ('Latitude of origin in %s does not match expected: %f'
                                  % (ifile, lat_origin))
 
-    return 'success'
-
+    
 ###############################################################################
 
 

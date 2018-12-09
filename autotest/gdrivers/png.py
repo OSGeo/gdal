@@ -84,8 +84,7 @@ def test_png_3():
             print('got:', gt)
             pytest.fail('Mixed locale world file read improperly.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test RGB mode creation and reading.
 
@@ -138,8 +137,6 @@ def test_png_7():
 
     drv.Delete('tmp/png7.png')
 
-    return 'success'
-
 ###############################################################################
 # Test PNG file with broken IDAT chunk. This poor man test of clean
 # recovery from errors caused by reading broken file..
@@ -180,8 +177,6 @@ def test_png_8():
 
     os.remove('tmp/idat_broken.png')
 
-    return 'success'
-
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -209,8 +204,6 @@ def test_png_10():
     assert ds.GetRasterBand(1).Checksum() == 4672
 
     gdal.Unlink('/vsimem/tmp.png')
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy() interruption
@@ -253,8 +246,6 @@ def test_png_12():
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     assert cs == got_cs
 
-    return 'success'
-
 ###############################################################################
 # Test metadata
 
@@ -272,7 +263,6 @@ def test_png_13():
     # check that no PAM file is created
     assert gdal.VSIStatL('/vsimem/tmp.png.aux.xml') != 0
     gdal.Unlink('/vsimem/tmp.png')
-    return 'success'
 
 ###############################################################################
 # Test support for nbits < 8
@@ -309,8 +299,6 @@ def test_png_14():
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')
     assert nbits is None
-
-    return 'success'
 
 
 gdaltest_list = [

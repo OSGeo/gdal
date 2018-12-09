@@ -105,8 +105,6 @@ def test_hdf4_read_online_2():
     assert md['X_DATASET'] == 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":11', \
         'Did not get expected X_DATASET'
 
-    return 'success'
-
 
 ###############################################################################
 # Test HDF4_EOS:EOS_GRID
@@ -134,8 +132,6 @@ def test_hdf4_read_online_3():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test HDF4_SDS:SEAWIFS_L1A
 
@@ -157,8 +153,6 @@ def test_hdf4_read_online_4():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test fix for #2208
 
@@ -175,8 +169,6 @@ def test_hdf4_read_online_5():
     tst = gdaltest.GDALTest('HDF4Image', 'tmp/cache/199101.s04m1pfv50-sst-16b.hdf', 1, 41173, filename_absolute=1)
 
     ret = tst.testOpen()
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #3386 where block size is dataset size
@@ -207,8 +199,6 @@ def test_hdf4_read_online_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test fix for #3386 where block size is smaller than dataset size
 
@@ -236,8 +226,6 @@ def test_hdf4_read_online_7():
     assert cs == 54894, 'did not get expected checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -270,8 +258,6 @@ def test_hdf4_read_online_8():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading L1G MTL metadata metadata
 
@@ -296,8 +282,6 @@ def test_hdf4_read_online_9():
 
     assert gcp_count == 4, 'did not get expected gcp count'
 
-    return 'success'
-
 ###############################################################################
 # Test that non-tiled access works (#4672)
 
@@ -320,8 +304,6 @@ def test_hdf4_read_online_10():
     assert cs == 20976, 'did not get expected checksum'
 
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

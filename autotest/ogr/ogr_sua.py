@@ -62,8 +62,7 @@ def test_ogr_sua_1():
         print('did not get expected second geom')
         pytest.fail(geom.ExportToWkt())
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_sua_1]

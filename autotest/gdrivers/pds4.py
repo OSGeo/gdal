@@ -74,7 +74,6 @@ def validate_xml(filename):
         'FAIL_IF_VALIDATION_ERROR=YES',
         'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
     assert ds is not None
-    return 'success'
 
 ###############################################################################
 # Perform simple read test on PDS4 dataset.
@@ -239,7 +238,6 @@ def test_pds4_8():
     ds = None
 
     gdal.GetDriverByName('PDS4').Delete(filename)
-    return 'success'
 
 ###############################################################################
 # Test nodata / mask
@@ -463,8 +461,6 @@ def test_pds4_9():
     gdal.GetDriverByName('PDS4').Delete(filename)
     gdal.Unlink(template)
 
-    return 'success'
-
 ###############################################################################
 # Test scale / offset
 
@@ -492,8 +488,7 @@ def test_pds4_10():
         gdal.GetDriverByName('PDS4').Delete(filename)
         gdal.GetDriverByName('PDS4').Delete(filename2)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test various data types
 
@@ -525,8 +520,6 @@ def test_pds4_11():
         ds = None
 
     gdal.GetDriverByName('PDS4').Delete(filename)
-
-    return 'success'
 
 ###############################################################################
 # Test various creation options
@@ -567,8 +560,6 @@ def test_pds4_12():
     assert data.find('<file_name>myimage.raw</file_name>') >= 0
 
     gdal.GetDriverByName('PDS4').Delete(filename)
-
-    return 'success'
 
 ###############################################################################
 # Test subdatasets
@@ -622,8 +613,6 @@ def test_pds4_13():
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:3')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test error cases
@@ -921,8 +910,6 @@ def test_pds4_14():
     gdal.Unlink(filename)
     gdal.Unlink('/vsimem/test.img')
 
-    return 'success'
-
 ###############################################################################
 # Test Create() without geospatial info but from a geospatial enabled template
 
@@ -944,8 +931,6 @@ def test_pds4_15():
     assert data.find('<cart:Cartography>') < 0
 
     gdal.GetDriverByName('PDS4').Delete(filename)
-
-    return 'success'
 
 ###############################################################################
 # Test Create() with geospatial info but from a template without Discipline_Area
@@ -1022,8 +1007,6 @@ def test_pds4_16():
     gdal.GetDriverByName('PDS4').Delete(filename)
     gdal.Unlink(template)
 
-    return 'success'
-
 ###############################################################################
 # Test ARRAY_TYPE creation option
 
@@ -1068,8 +1051,6 @@ def test_pds4_17():
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
-    return 'success'
-
 ###############################################################################
 # Test RADII creation option
 
@@ -1095,8 +1076,6 @@ def test_pds4_18():
        data.find('<cart:polar_radius unit="m">2</cart:polar_radius>') >= 0)
 
     gdal.GetDriverByName('PDS4').Delete(filename)
-
-    return 'success'
 
 
 gdaltest_list = [

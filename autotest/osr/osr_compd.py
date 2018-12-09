@@ -69,8 +69,6 @@ def test_osr_compd_1():
 
     assert srs.Validate() == 0, 'Validate() failed.'
 
-    return 'success'
-
 ###############################################################################
 # Test SetFromUserInput()
 
@@ -83,8 +81,6 @@ def test_osr_compd_2():
     assert srs.Validate() == 0, 'Does not validate'
 
     assert srs.IsProjected(), 'Projected COMPD_CS not recognised as projected.'
-
-    return 'success'
 
 ###############################################################################
 # Test expansion of compound coordinate systems from EPSG definition.
@@ -132,11 +128,6 @@ def test_osr_compd_3():
     wkt = srs.ExportToPrettyWkt()
     assert gdaltest.equal_srs_from_wkt(exp_wkt, wkt) != 0, \
         'did not get expected compound cs for EPSG:7401'
-    # elif exp_wkt != wkt:
-    #    print('warning they are equivalent, but not completely the same')
-    #    print(wkt)
-
-    return 'success'
 
 ###############################################################################
 # Test expansion of GCS+VERTCS compound coordinate system.
@@ -173,11 +164,6 @@ def test_osr_compd_4():
 
     assert gdaltest.equal_srs_from_wkt(exp_wkt, wkt) != 0, \
         'did not get expected compound cs for EPSG:7400'
-    # elif exp_wkt != wkt:
-    #    print('warning they are equivalent, but not completely the same')
-    #    print(wkt)
-
-    return 'success'
 
 ###############################################################################
 # Test that compound coordinate systems with grid shift files are
@@ -237,8 +223,6 @@ def test_osr_compd_5():
     proj4 = srs.ExportToProj4()
     assert proj4 == exp_proj4, ('Did not get expected proj.4 string, got:' + proj4)
 
-    return 'success'
-
 ###############################################################################
 # Test conversion from PROJ.4 to WKT including vertical units.
 
@@ -287,8 +271,6 @@ def test_osr_compd_6():
     exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs '
     proj4 = srs.ExportToProj4()
     assert proj4 == exp_proj4, ('Did not get expected proj.4 string, got:' + proj4)
-
-    return 'success'
 
 ###############################################################################
 # Test SetCompound()
@@ -343,8 +325,7 @@ def test_osr_compd_7():
         print('%.16g' % srs.GetTargetLinearUnits(None))
         pytest.fail('Didnt get expected linear units')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ImportFromURN()
 
@@ -358,8 +339,6 @@ def test_osr_compd_8():
 
     wkt = srs.ExportToWkt()
     assert wkt.find('COMPD_CS') == 0, 'COMPD_CS not recognised as compound.'
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -52,8 +52,7 @@ def test_ogr_carto_init():
     if ogrtest.carto_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 
 ###############################################################################
 #
@@ -814,11 +813,6 @@ Error""")
                 ds = ogr.Open('CARTO:foo')
     assert ds.GetLayerByName('a_layer') is not None
 
-
-
-
-    return 'success'
-
 ###############################################################################
 #
 
@@ -836,8 +830,7 @@ def test_ogr_carto_vsimem_cleanup():
     for f in gdal.ReadDir('/vsimem/'):
         gdal.Unlink('/vsimem/' + f)
 
-    return 'success'
-
+    
 ###############################################################################
 #  Run test_ogrsf
 
@@ -863,8 +856,6 @@ def test_ogr_carto_test_ogrsf():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Test if driver is available
 
@@ -883,8 +874,7 @@ def ogr_carto_rw_init():
     if ogrtest.carto_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read/write/update test
 
@@ -1047,8 +1037,6 @@ def ogr_carto_rw_1():
         ds.ExecuteSQL("DELLAYER:" + lyr_name)
         pytest.fail()
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -53,8 +53,6 @@ def test_osr_pci_1():
     assert pci_parms[0] == 'EC          E015' and pci_parms[1] == 'METRE' and pci_parms[2] == prj_parms, \
         'ExportToPCI result wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Test the osr.SpatialReference.ExportToPCI() function.
 #
@@ -80,8 +78,6 @@ def test_osr_pci_2():
 
     assert proj == 'LCC         D-01' and units == 'METRE' and abs(parms[2] - -117.4745429) <= 0.0000005 and abs(parms[3] - 33.76446203) <= 0.0000005 and abs(parms[4] - 33.90363403) <= 0.0000005 and abs(parms[5] - 33.62529003) <= 0.0000005, \
         'Can not import Lambert Conformal Conic projection.'
-
-    return 'success'
 
 ###############################################################################
 # Test MGRS interpretation. (#3379)
@@ -120,8 +116,7 @@ def test_osr_pci_3():
     if wkt.find('13, Northern Hemi') == -1:
         gdaltest.post_reason('did get southern  hemisphere!')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Datum lookup in pci_datum.txt
 #
@@ -141,8 +136,6 @@ def test_osr_pci_4():
     pci_parms = srs.ExportToPCI()
     assert pci_parms[0] == 'LONG/LAT    D506' and pci_parms[1] == 'DEGREE' and pci_parms[2] == prj_parms, \
         'ExportToPCI result wrong.'
-
-    return 'success'
 
 ###############################################################################
 # Test Datum ellisoid lookup in pci_ellpis.txt
@@ -164,8 +157,6 @@ def test_osr_pci_5():
     assert pci_parms[0] == 'LONG/LAT    E224' and pci_parms[1] == 'DEGREE' and pci_parms[2] == prj_parms, \
         'ExportToPCI result wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Test Datum lookup in pci_datum.txt
 #
@@ -186,8 +177,6 @@ def test_osr_pci_6():
     assert pci_parms[0] == 'LONG/LAT    D030' and pci_parms[1] == 'DEGREE' and pci_parms[2] == prj_parms, \
         'ExportToPCI result wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Make sure we can translate a datum with only the TOWGS84 parameters to
 # to identify it.
@@ -204,8 +193,6 @@ def test_osr_pci_7():
     pci_parms = srs.ExportToPCI()
     assert pci_parms[0] == 'LONG/LAT    D506' and pci_parms[1] == 'DEGREE' and pci_parms[2] == prj_parms, \
         'ExportToPCI result wrong.'
-
-    return 'success'
 
 
 gdaltest_list = [

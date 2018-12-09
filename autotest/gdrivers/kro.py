@@ -96,8 +96,6 @@ def test_kro_5():
 
     gdal.Unlink('tmp/kro_5.kro')
 
-    return 'success'
-
 
 gdaltest_list = [
     test_kro_1,

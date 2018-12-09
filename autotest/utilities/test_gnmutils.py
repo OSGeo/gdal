@@ -56,8 +56,7 @@ def test_gnmmanage_1():
     except OSError:
         pytest.fail('Expected create tmp/test_gnm')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test import
 # gnmmanage import /home/bishop/tmp/data/pipes.shp /home/bishop/tmp/test_gnm --config CPL_DEBUG ON
@@ -74,8 +73,6 @@ def test_gnmmanage_2():
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/wells.shp tmp/test_gnm')
     assert (err is None or err == ''), 'got error/warning'
 
-    return 'success'
-
 ###############################################################################
 # Test info
 # gnmmanage info /home/bishop/tmp/test_gnm
@@ -91,8 +88,6 @@ def test_gnmmanage_3():
     assert ret.find('Network name: test_gnm.') != -1
     assert ret.find('Network description') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test autoconect
 # gnmmanage autoconnect 0.000001 /home/bishop/tmp/test_gnm --config CPL_DEBUG ON
@@ -104,8 +99,6 @@ def test_gnmmanage_4():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' autoconnect 0.000001 tmp/test_gnm')
     assert ret.find('success') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test dijkstra
@@ -121,8 +114,6 @@ def test_gnmanalyse_1():
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' dijkstra 61 50 tmp/test_gnm')
     assert ret.find('Feature Count: 19') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test kpaths
 # gnmanalyse kpaths 61 50 3 -alo "fetch_vertex=OFF" -ds /home/bishop/tmp/kp.shp -lco "SHPT=ARC" /home/bishop/tmp/test_gnm --config CPL_DEBUG ON
@@ -136,8 +127,6 @@ def test_gnmanalyse_2():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' kpaths 61 50 3 tmp/test_gnm')
     assert ret.find('Feature Count: 61') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test cleanup
@@ -156,8 +145,7 @@ def test_gnm_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gnmmanage_1,

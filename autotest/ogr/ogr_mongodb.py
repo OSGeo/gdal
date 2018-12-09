@@ -94,8 +94,7 @@ def test_ogr_mongodb_init():
         ogrtest.mongodb_drv = None
         pytest.skip('cannot open %s' % ogrtest.mongodb_test_uri)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test various open methods
 
@@ -244,8 +243,7 @@ def test_ogr_mongodb_1():
         ds = gdal.OpenEx('mongodb:', open_options=open_options)
         assert ds is not None
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic tests
 
@@ -769,8 +767,6 @@ def test_ogr_mongodb_2():
     gdal.PopErrorHandler()
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # test_ogrsf
 
@@ -785,8 +781,6 @@ def test_ogr_mongodb_3():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + ogrtest.mongodb_test_uri)
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -813,8 +807,6 @@ def test_ogr_mongodb_cleanup():
         ogrtest.mongodb_ds.ExecuteSQL('DELLAYER:' + ogrtest.mongodb_layer_name_no_spatial_index)
 
     ogrtest.mongodb_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -72,7 +72,6 @@ def test_gnm_filenetwork_create():
 
     dn = None
     ogrtest.have_gnm = 1
-    return 'success'
 
 ###############################################################################
 # Open file base network
@@ -93,7 +92,6 @@ def test_gnm_filenetwork_open():
         'GNM: Check GNM description failed'
 
     dn = None
-    return 'success'
 
 ###############################################################################
 # Import layers into file base network
@@ -125,7 +123,6 @@ def test_gnm_import():
     assert ds.GetLayerCount() == 2, 'expected 2 layers'
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # autoconnect
@@ -144,7 +141,6 @@ def test_gnm_autoconnect():
     assert ret == 0, 'failed to connect'
 
     dgn = None
-    return 'success'
 
 ###############################################################################
 # Dijkstra shortest path
@@ -168,7 +164,6 @@ def test_gnm_graph_dijkstra():
 
     dn.ReleaseResultSet(lyr)
     dn = None
-    return 'success'
 
 
 import ogrtest
@@ -194,7 +189,6 @@ def test_gnm_graph_kshortest():
 
     dn.ReleaseResultSet(lyr)
     dn = None
-    return 'success'
 
 ###############################################################################
 # ConnectedComponents
@@ -218,7 +212,6 @@ def test_gnm_graph_connectedcomponents():
 
     dn.ReleaseResultSet(lyr)
     dn = None
-    return 'success'
 
 ###############################################################################
 # Network deleting
@@ -237,8 +230,7 @@ def test_gnm_delete():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gnm_filenetwork_create,

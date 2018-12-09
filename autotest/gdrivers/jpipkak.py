@@ -58,8 +58,6 @@ def test_jpipkak_1():
     assert abs(stats[2] - 6791.121) <= 1.0 and abs(stats[3] - 3046.536) <= 1.0, \
         'did not get expected mean/stddev'
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -87,8 +85,6 @@ def test_jpipkak_2():
     assert abs(stats[2] - 43.429) <= 1.0 and abs(stats[3] - 18.526) <= 1.0, \
         'did not get expected mean/stddev'
 
-    return 'success'
-
 ###############################################################################
 # Test an 11bit image.
 
@@ -110,8 +106,6 @@ def test_jpipkak_3():
 
     assert abs(stats[2] - 483.501) <= 1.0 and abs(stats[3] - 117.972) <= 1.0, \
         'did not get expected mean/stddev'
-
-    return 'success'
 
 ###############################################################################
 # Test a 20bit image, reduced to 16bit during processing.
@@ -135,8 +129,6 @@ def test_jpipkak_4():
     assert abs(stats[2] - 5333.148) <= 1.0 and abs(stats[3] - 2522.023) <= 1.0, \
         'did not get expected mean/stddev'
 
-    return 'success'
-
 ###############################################################################
 # Test an overview level that will result in multiple fetches with subwindows.
 
@@ -158,8 +150,6 @@ def test_jpipkak_5():
 
     assert abs(stats[2] - 42.462) <= 1.0 and abs(stats[3] - 20.611) <= 1.0, \
         'did not get expected mean/stddev'
-
-    return 'success'
 
 
 gdaltest_list = [

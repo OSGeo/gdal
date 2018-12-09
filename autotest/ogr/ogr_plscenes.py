@@ -47,7 +47,7 @@ def test_ogr_plscenes_init():
     gdaltest.plscenes_drv = ogr.GetDriverByName('PLScenes')
 
     if gdaltest.plscenes_drv is not None:
-        return 'success'
+        return
     pytest.skip()
 
 ###############################################################################
@@ -72,8 +72,6 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
         assert ds.GetLayerByName('non_existing') is None
 
     gdal.Unlink('/vsimem/data_v1/item-types')
-
-    return 'success'
 
 ###############################################################################
 # Test Data V1 API catalog listing with catalog paging
@@ -103,8 +101,6 @@ def test_ogr_plscenes_data_v1_catalog_paging():
     gdal.Unlink('/vsimem/data_v1/item-types')
     gdal.Unlink('/vsimem/data_v1/item-types/page_2')
     gdal.Unlink('/vsimem/data_v1/item-types/PSScene4Band')
-
-    return 'success'
 
 ###############################################################################
 # Test Data V1 API
@@ -522,8 +518,7 @@ def test_ogr_plscenes_data_v1_nominal():
     for filename in fl:
         gdal.Unlink(filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test robustness to errors in Data V1 API
 
@@ -624,8 +619,6 @@ def test_ogr_plscenes_data_v1_errors():
     gdal.Unlink('/vsimem/data_v1/item-types')
     gdal.Unlink('/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSScene3Band"],"filter":{"type":"AndFilter","config":[]}}')
 
-    return 'success'
-
 ###############################################################################
 # Test Data V1 API against real server
 
@@ -711,8 +704,6 @@ def test_ogr_plscenes_data_v1_live():
     ds = gdal.Open('PLScenes:version=data_v1,itemtypes=%s,scene=%s,asset=%s' % (catalog, scene, asset_name))
     assert ds is not None
     assert ds.RasterCount != 0
-
-    return 'success'
 
 
 gdaltest_list = [

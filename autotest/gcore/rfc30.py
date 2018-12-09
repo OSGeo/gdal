@@ -67,8 +67,6 @@ def test_rfc30_1():
 
     assert ds is not None, 'failed to open utf filename (2).'
 
-    return 'success'
-
 ###############################################################################
 # Try creating, then renaming a utf-8 named file.
 
@@ -116,8 +114,6 @@ def test_rfc30_2():
 
     fd = gdal.VSIFOpenL(new_filename, 'r')
     assert fd is None, 'did unlink fail on utf8 filename?'
-
-    return 'success'
 
 
 gdaltest_list = [test_rfc30_1, test_rfc30_2]

@@ -76,8 +76,6 @@ def test_ogr_mssqlspatial_1():
     # available since SQL Server 2012
     gdaltest.mssqlspatial_has_z_m = (gdaltest.mssqlspatial_version_major >= 11)
 
-    return 'success'
-
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -132,8 +130,6 @@ def test_ogr_mssqlspatial_2():
     assert gdaltest.mssqlspatial_lyr.GetSpatialRef().IsSame(shp_lyr.GetSpatialRef()), \
         'not matching spatial ref'
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -174,7 +170,7 @@ def test_ogr_mssqlspatial_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -232,8 +228,6 @@ def test_ogr_mssqlspatial_4():
     dst_feat.Destroy()
     gdaltest.mssqlspatial_lyr.ResetReading()  # to close implicit transaction
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -250,8 +244,6 @@ def test_ogr_mssqlspatial_test_ogrsf():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " -ro '" + gdaltest.mssqlspatial_dsname + "' tpoly")
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Verify features can be created in an existing table that includes a geometry
@@ -323,8 +315,6 @@ def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
     test_ds.Destroy()
     feature.Destroy()
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -341,8 +331,6 @@ def test_ogr_mssqlspatial_cleanup():
     gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE tpoly')
 
     gdaltest.mssqlspatial_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

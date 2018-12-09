@@ -55,8 +55,6 @@ def test_ogr_sql_1():
     assert count == 10, \
         ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
-    return 'success'
-
 ###############################################################################
 # Test DISTINCT handling
 
@@ -71,7 +69,7 @@ def test_ogr_sql_2():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ORDER BY handling
@@ -87,7 +85,7 @@ def test_ogr_sql_3():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ORDER BY DESC handling
@@ -103,7 +101,7 @@ def test_ogr_sql_3_desc():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test DISTINCT and ORDER BY on strings.
@@ -119,7 +117,7 @@ def test_ogr_sql_4():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test column functions.
@@ -146,8 +144,6 @@ def test_ogr_sql_5():
         pytest.fail()
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test simple COUNT() function.
 
@@ -162,7 +158,7 @@ def test_ogr_sql_6():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that selecting the FID works properly.
@@ -178,7 +174,7 @@ def test_ogr_sql_7():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that wildcard expansion works properly.
@@ -194,7 +190,7 @@ def test_ogr_sql_8():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that quoted table names work.
@@ -210,7 +206,7 @@ def test_ogr_sql_9():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test the ILIKE operator.
@@ -226,7 +222,7 @@ def test_ogr_sql_10():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test MAX() on empty dataset.
@@ -242,7 +238,7 @@ def test_ogr_sql_11():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test DISTINCT on empty dataset.
@@ -258,7 +254,7 @@ def test_ogr_sql_12():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify selection of, and on ogr_geometry.
@@ -275,7 +271,7 @@ def test_ogr_sql_13():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify selection of, and on ogr_style and ogr_geom_wkt.
@@ -295,7 +291,7 @@ def test_ogr_sql_14():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that selecting with filtering by FID works properly.
@@ -311,7 +307,7 @@ def test_ogr_sql_15():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 
@@ -328,7 +324,7 @@ def test_ogr_sql_16():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -374,7 +370,7 @@ def test_ogr_sql_17():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -414,8 +410,6 @@ def test_ogr_sql_18():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test empty request string
 
@@ -427,8 +421,6 @@ def test_ogr_sql_19():
     gdal.PopErrorHandler()
 
     assert sql_lyr is None
-
-    return 'success'
 
 ###############################################################################
 # Test query "SELECT * from my_layer" on layer without any field (#2788)
@@ -452,8 +444,6 @@ def test_ogr_sql_20():
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test query "SELECT *, fid from my_layer" on layer without any field (#2788)
 
@@ -468,8 +458,6 @@ def test_ogr_sql_21():
     assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == 'fid'
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test multiple expansion of '*' as in "SELECT *, fid, *, my_layer.* from my_layer" (#2788)
@@ -493,8 +481,6 @@ def test_ogr_sql_22():
     assert sql_lyr.GetLayerDefn().GetFieldDefn(3).GetName() == 'my_layer.test'
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test query "SELECT DISTINCT test from my_layer" (#2788)
@@ -520,8 +506,6 @@ def test_ogr_sql_23():
     assert sql_lyr.GetFeatureCount() == 2
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that style strings get carried with OGR SQL SELECT results. (#2808)
@@ -575,8 +559,6 @@ def test_ogr_sql_25():
 
     mem_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test query 'SELECT 'literal_value' AS column_name FROM a_table'
 #
@@ -598,8 +580,6 @@ def test_ogr_sql_26():
     mem_ds.ReleaseResultSet(sql_lyr)
 
     mem_ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -623,7 +603,7 @@ def test_ogr_sql_27():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -796,8 +776,6 @@ def test_ogr_sql_28():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that IS NULL and IS NOT NULL are working
 
@@ -834,8 +812,6 @@ def test_ogr_sql_29():
 
     assert count_is_not_null == 2, 'IS NOT NULL failed'
 
-    return 'success'
-
 ###############################################################################
 # Verify a select mixing a count(*) with something else works without errors
 
@@ -853,7 +829,7 @@ def test_ogr_sql_30():
 
     assert gdal.GetLastErrorMsg() == ''
 
-    return 'success' if val_count == 10 else 'fail'
+    assert val_count == 10
 
 ###############################################################################
 # Regression test for #4022
@@ -872,7 +848,7 @@ def test_ogr_sql_31():
 
     assert gdal.GetLastErrorMsg() == ''
 
-    return 'success' if val is None else 'fail'
+    assert val is None
 
 ###############################################################################
 # Regression test for #4022 (same as above, but with dialect = 'OGRSQL')
@@ -892,7 +868,7 @@ def test_ogr_sql_32():
 
     assert gdal.GetLastErrorMsg() == ''
 
-    return 'success' if val is None else 'fail'
+    assert val is None
 
 ###############################################################################
 # Check ALTER TABLE commands
@@ -935,8 +911,6 @@ def test_ogr_sql_33():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test implicit conversion from string to numeric (#4259)
 
@@ -957,8 +931,6 @@ def test_ogr_sql_34():
     gdal.PopErrorHandler()
     assert sql_lyr is None
 
-    return 'success'
-
 ###############################################################################
 # Test huge SQL queries (#4262)
 
@@ -974,7 +946,7 @@ def test_ogr_sql_35():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if count_cols == 1024 else 'fail'
+    assert count_cols == 1024
 
 ###############################################################################
 # Test select distinct on null values (#4353)
@@ -1022,8 +994,7 @@ def test_ogr_sql_36():
             pytest.fail('field %s' % fieldname)
         ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test select count([distinct] column) with null values (#4354)
 
@@ -1105,8 +1076,6 @@ def test_ogr_sql_37():
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test "SELECT MAX(OGR_GEOM_AREA) FROM XXXX" (#4633)
 
@@ -1121,7 +1090,7 @@ def test_ogr_sql_38():
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if abs(val - 1634833.39062) < 1e-5:
-        return 'success'
+        return
     pytest.fail(val)
 
 ###############################################################################
@@ -1138,7 +1107,7 @@ def test_ogr_sql_39():
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if abs(val - 5268.813) < 1e-5:
-        return 'success'
+        return
     pytest.fail(val)
 
 ###############################################################################
@@ -1153,7 +1122,7 @@ def test_ogr_sql_40():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if feat.GetFID() == 9 else 'fail'
+    assert feat.GetFID() == 9
 
 ###############################################################################
 # Test ORDER BY on a string special field
@@ -1167,7 +1136,7 @@ def test_ogr_sql_41():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if feat.GetFID() == 0 else 'fail'
+    assert feat.GetFID() == 0
 
 ###############################################################################
 # Test comparing to empty string
@@ -1185,8 +1154,6 @@ def test_ogr_sql_42():
     feat = sql_lyr.GetNextFeature()
     gdaltest.ds.ReleaseResultSet(sql_lyr)
     assert feat is not None
-
-    return 'success'
 
 ###############################################################################
 # Test escape sequences
@@ -1259,8 +1226,7 @@ def test_ogr_sql_44():
             pytest.fail(sql)
         gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test 64 bit GetFeatureCount()
 
@@ -1294,8 +1260,6 @@ def test_ogr_sql_45():
     assert f.GetField(0) == 10
     f = None
     ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test strict SQL quoting
@@ -1357,8 +1321,6 @@ def test_ogr_sql_46():
     gdal.PopErrorHandler()
     assert sql_lyr is None
 
-    return 'success'
-
 ###############################################################################
 # Test NULL sorting (#6155)
 
@@ -1376,8 +1338,6 @@ def test_ogr_sql_47():
         assert new_val >= prec_val, ("new_val = '%s', prec_val = '%s'" % (new_val, prec_val))
         prec_val = new_val
     ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test sorting of more than 100 elements
@@ -1405,14 +1365,10 @@ def test_ogr_sql_48():
     ds.ReleaseResultSet(sql_lyr)
     assert i == 1001
 
-    return 'success'
-
 
 def test_ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

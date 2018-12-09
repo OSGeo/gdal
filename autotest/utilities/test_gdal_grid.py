@@ -116,8 +116,6 @@ def test_gdal_grid_1():
     ds = None
     ds2 = None
 
-    return 'success'
-
 ###############################################################################
 # Test Nearest Neighbour gridding algorithm
 
@@ -241,8 +239,6 @@ def test_gdal_grid_2():
               (ds.GetRasterBand(1).Checksum(), checksum_ref))
         pytest.fail('bad checksum')
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test Inverse Distance to a Power gridding algorithm
@@ -398,8 +394,6 @@ def test_gdal_grid_3():
     ds_ref = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test Moving Average gridding algorithm
 
@@ -493,8 +487,6 @@ def test_gdal_grid_4():
         pytest.fail('Image too different from the reference')
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test Minimum data metric
 
@@ -543,8 +535,6 @@ def test_gdal_grid_5():
     ds_ref = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test Maximum data metric
 
@@ -592,8 +582,6 @@ def test_gdal_grid_6():
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
     ds_ref = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test Range data metric
@@ -644,8 +632,6 @@ def test_gdal_grid_7():
     ds_ref = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test Count data metric
 
@@ -691,8 +677,6 @@ def test_gdal_grid_8():
               (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
     ds_ref = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test Average Distance data metric
@@ -746,8 +730,6 @@ def test_gdal_grid_9():
         pytest.fail('Image too different from the reference')
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test Average Distance Between Points data metric
 
@@ -778,8 +760,6 @@ def test_gdal_grid_10():
         pytest.fail('Image too different from the reference')
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test linear
 
@@ -802,8 +782,6 @@ def test_gdal_grid_11():
 
     ds = None
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # Test Inverse Distance to a Power with Nearest Neighbor gridding algorithm
@@ -876,8 +854,6 @@ def test_gdal_grid_12():
     ds_ref = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -clipsrc
 
@@ -911,8 +887,6 @@ def test_gdal_grid_clipsrc():
     assert not (cs == 0 or cs == 4672), 'bad checksum'
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -924,8 +898,7 @@ def test_gdal_grid_cleanup():
     for outfile in outfiles:
         drv.Delete(outfile)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_grid_1,

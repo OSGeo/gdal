@@ -81,8 +81,7 @@ def test_hf2_4():
 
 def test_hf2_cleanup():
 
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_hf2_1,

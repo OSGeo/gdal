@@ -85,8 +85,6 @@ def test_ozi_online_1():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 16025, 'bad checksum'
 
-    return 'success'
-
 
 gdaltest_list = [
     test_ozi_online_1]

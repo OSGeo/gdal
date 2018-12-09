@@ -128,8 +128,6 @@ def test_lcp_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # test test_USGS_LFNM_Alb83.lcp
 
@@ -218,8 +216,6 @@ def test_lcp_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 #  Test for empty prj
 
@@ -230,7 +226,6 @@ def test_lcp_3():
     assert ds is not None
     wkt = ds.GetProjection()
     assert wkt is not None, 'Got None from GetProjection()'
-    return 'success'
 
 ###############################################################################
 #  Test that the prj file isn't added to the sibling list if it isn't there.
@@ -242,7 +237,6 @@ def test_lcp_4():
     assert ds is not None
     fl = ds.GetFileList()
     assert len(fl) == 1, 'Invalid file list'
-    return 'success'
 
 ###############################################################################
 #  Test for valid prj
@@ -254,7 +248,6 @@ def test_lcp_5():
     assert ds is not None
     wkt = ds.GetProjection()
     assert not (wkt is None or wkt == ''), 'Got invalid wkt from GetProjection()'
-    return 'success'
 
 ###############################################################################
 #  Test for valid sibling list

@@ -52,8 +52,7 @@ def test_ogr_cad_1():
     if gdaltest.cad_dr is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Check driver properly opens simple file, reads correct feature (ellipse).
 
@@ -111,7 +110,6 @@ def test_ogr_cad_2():
         'did not get expected geometry type.'
 
     gdaltest.cad_ds = None
-    return 'success'
 
 ###############################################################################
 # Check proper read of 3 layers (one circle on each) with different parameters.
@@ -240,7 +238,6 @@ def test_ogr_cad_3():
         'did not get expected geometry type.'
 
     gdaltest.cad_ds = None
-    return 'success'
 
 ###############################################################################
 # Check reading of a single point.
@@ -264,7 +261,6 @@ def test_ogr_cad_4():
         'got feature which does not fit expectations.'
 
     gdaltest.cad_ds = None
-    return 'success'
 
 ###############################################################################
 # Check reading of a simple line.
@@ -288,7 +284,6 @@ def test_ogr_cad_5():
         'got feature which does not fit expectations.'
 
     gdaltest.cad_ds = None
-    return 'success'
 
 ###############################################################################
 # Check reading of a text (point with attached 'text' attribute, and set up
@@ -318,8 +313,7 @@ def test_ogr_cad_6():
                              % (feat.GetStyleString(), expected_style))
         return 'expected_fail'  # cannot sure iconv is buildin
 
-    return 'success'
-
+    
 ###############################################################################
 # Check MTEXT as TEXT geometry.
 
@@ -336,8 +330,6 @@ def test_ogr_cad_7():
     assert feat.GetStyleString() == expected_style, \
         ('Got unexpected style string:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
-
-    return 'success'
 
 ###############################################################################
 # Check ATTDEF as TEXT geometry.
@@ -356,8 +348,6 @@ def test_ogr_cad_8():
         ('Got unexpected style string:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
 
-    return 'success'
-
 ###############################################################################
 # Open a not handled DWG version
 
@@ -372,8 +362,6 @@ def test_ogr_cad_9():
     msg = gdal.GetLastErrorMsg()
     assert msg.find('does not support this version') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -381,8 +369,6 @@ def test_ogr_cad_9():
 def test_ogr_cad_cleanup():
     gdaltest.cad_layer = None
     gdaltest.cad_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

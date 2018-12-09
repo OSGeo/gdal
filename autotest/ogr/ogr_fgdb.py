@@ -62,8 +62,7 @@ def test_ogr_fgdb_init():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -228,8 +227,6 @@ def test_ogr_fgdb_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test DeleteField()
 
@@ -282,8 +279,6 @@ def test_ogr_fgdb_DeleteField():
     assert feat.GetFieldAsString("str2") == "foo2_\xc3\xa9"
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -299,8 +294,6 @@ def test_ogr_fgdb_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.gdb --config OGR_SKIP OpenFileGDB')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Run ogr2ogr
@@ -333,8 +326,6 @@ def test_ogr_fgdb_3():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Test SQL support
 
@@ -359,8 +350,6 @@ def test_ogr_fgdb_sql():
     feat = None
     ds.ReleaseResultSet(sql_lyr)
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test delete layer
@@ -400,8 +389,7 @@ def test_ogr_fgdb_4():
 
         assert lyr is None, ('failed at iteration %d' % j)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test DeleteDataSource()
 
@@ -419,8 +407,7 @@ def test_ogr_fgdb_5():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test adding a layer to an existing feature dataset
 
@@ -440,8 +427,6 @@ def test_ogr_fgdb_6():
     ds = ogr.Open('tmp/test.gdb')
     assert ds.GetLayerCount() == 2
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test bulk loading (#4420)
@@ -477,8 +462,6 @@ def test_ogr_fgdb_7():
     ds = None
 
     gdal.SetConfigOption('FGDB_BULK_LOAD', None)
-
-    return 'success'
 
 ###############################################################################
 # Test field name laundering (#4458)
@@ -516,8 +499,7 @@ def test_ogr_fgdb_8():
         assert lyr_defn.GetFieldIndex(expected_names[i]) == i, \
             ('did not find %s' % expected_names[i])
 
-    return 'success'
-
+    
 ###############################################################################
 # Test layer name laundering (#4466)
 
@@ -562,8 +544,7 @@ def test_ogr_fgdb_9():
     for i, exp_name in enumerate(expected_names):
         assert ds.GetLayerByIndex(i).GetName() == exp_name, ('did not find %s' % exp_name)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SRS support
 
@@ -655,8 +636,6 @@ def test_ogr_fgdb_10():
     assert lyr.GetSpatialRef().ExportToWkt().find('4230') != -1
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test all data types
 
@@ -728,8 +707,6 @@ def test_ogr_fgdb_11():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test failed Open()
 
@@ -763,8 +740,6 @@ def test_ogr_fgdb_12():
     assert ds is None
 
     shutil.rmtree('tmp/dummy.gdb')
-
-    return 'success'
 
 ###############################################################################
 # Test failed CreateDataSource() and DeleteDataSource()
@@ -806,8 +781,6 @@ def test_ogr_fgdb_13():
     gdal.PopErrorHandler()
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # Test interleaved opening and closing of databases (#4270)
 
@@ -824,8 +797,7 @@ def test_ogr_fgdb_14():
         ds2 = None
         ds1 = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
 
@@ -847,8 +819,6 @@ def test_ogr_fgdb_15():
     expected_wkt = sr.ExportToWkt()
     assert got_wkt == expected_wkt
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #5674
@@ -946,8 +916,6 @@ def test_ogr_fgdb_17():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test default values
 
@@ -1027,8 +995,6 @@ def ogr_fgdb_18_test_results():
         f.DumpReadable()
         pytest.fail()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test transaction support
@@ -1589,8 +1555,7 @@ def test_ogr_fgdb_19():
     if ogrtest.openfilegdb_drv is not None:
         ogrtest.openfilegdb_drv.Deregister()
 
-    return 'success'
-
+    
 # Same, but retry without per-layer copying optimization (in the case
 # this was what was tested in previous step)
 
@@ -2010,8 +1975,7 @@ def test_ogr_fgdb_20():
 
     # sys.exit(0)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test M support
 
@@ -2090,8 +2054,7 @@ def test_ogr_fgdb_21():
             feat.DumpReadable()
             pytest.fail(data)
 
-    return 'success'
-
+    
 ###############################################################################
 # Read curves
 
@@ -2130,8 +2093,7 @@ def test_ogr_fgdb_22():
             print(f.GetGeometryRef().ExportToWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening '.'
 
@@ -2145,8 +2107,6 @@ def test_ogr_fgdb_23():
     ds = ogr.Open('.')
     os.chdir('../..')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Read polygons with M component where the M of the closing point is not the
@@ -2175,8 +2135,7 @@ def test_ogr_fgdb_24():
             print(f.GetGeometryRef().ExportToIsoWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToIsoWkt())
 
-    return 'success'
-
+    
 ###############################################################################
 # Test selecting FID column with OGRSQL
 
@@ -2201,8 +2160,7 @@ def test_ogr_fgdb_25():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -2235,8 +2193,7 @@ def test_ogr_fgdb_cleanup():
         ogrtest.openfilegdb_drv.Register()
         ogrtest.fgdb_drv.Register()
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_fgdb_init,

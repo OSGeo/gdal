@@ -91,8 +91,6 @@ def test_gdal_edit_py_1():
 
     assert md[val] == 'UTF8'
 
-    return 'success'
-
 ###############################################################################
 # Test -unsetgt
 
@@ -116,8 +114,6 @@ def test_gdal_edit_py_2():
 
     assert wkt != ''
 
-    return 'success'
-
 ###############################################################################
 # Test -a_srs ''
 
@@ -140,8 +136,6 @@ def test_gdal_edit_py_3():
     assert gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 
     assert wkt == ''
-
-    return 'success'
 
 ###############################################################################
 # Test -unsetstats
@@ -180,8 +174,7 @@ def test_gdal_edit_py_4():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -stats
 
@@ -236,8 +229,6 @@ def test_gdal_edit_py_5():
     assert stat_min is not None and float(stat_min) == 26
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -setstats
 
@@ -278,8 +269,6 @@ def test_gdal_edit_py_6():
     assert stat_stddev is not None and float(stat_stddev) == 30
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -scale and -offset
 
@@ -296,8 +285,6 @@ def test_gdal_edit_py_7():
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     assert ds.GetRasterBand(1).GetScale() == 2
     assert ds.GetRasterBand(1).GetOffset() == 3
-
-    return 'success'
 
 ###############################################################################
 # Test -colorinterp_X
@@ -323,8 +310,6 @@ def test_gdal_edit_py_8():
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_Undefined
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -342,8 +327,6 @@ def test_gdal_edit_py_unsetrpc():
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     assert not ds.GetMetadata('RPC')
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -351,8 +334,6 @@ def test_gdal_edit_py_unsetrpc():
 def test_gdal_edit_py_cleanup():
 
     gdal.Unlink('tmp/test_gdal_edit_py.tif')
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -56,8 +56,7 @@ def pdf_init():
         gdaltest.pdf_drv = None
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Returns True if we run with poppler
 
@@ -153,8 +152,7 @@ def pdf_online_1():
         cs = ds.GetRasterBand(1).Checksum()
         assert cs != 0, 'bad checksum'
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -189,8 +187,6 @@ def pdf_online_2():
                 assert abs(gt[j] - other_expected_gt[j]) <= 1e-15, 'bad geotransform'
 
     assert wkt.find('GEOGCS["WGS 84"') == 0
-
-    return 'success'
 
 ###############################################################################
 # Test Adobe style geospatial pdf
@@ -236,8 +232,7 @@ def pdf_1():
         print(neatline)
         pytest.fail('bad neatline')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test write support with ISO32000 geo encoding
 
@@ -342,8 +337,7 @@ def pdf_ogcbp_lcc():
         print(sr2.ExportToPrettyWkt())
         pytest.fail('wrong wkt')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test no compression
 
@@ -499,8 +493,7 @@ def pdf_rgba_default_compression(options_param=None):
         print(src_cs3)
         print(src_cs4)
 
-    return 'success'
-
+    
 
 def pdf_rgba_default_compression_tiled():
     return pdf_rgba_default_compression(['BLOCKXSIZE=32', 'BLOCKYSIZE=32'])
@@ -605,8 +598,6 @@ def pdf_xmp():
 
     assert len(base_md) == 2
 
-    return 'success'
-
 ###############################################################################
 # Test Info
 
@@ -649,8 +640,6 @@ def pdf_info():
        md['PRODUCER'] == 'producer' and \
        md['SUBJECT'] == 'subject' and \
        md['TITLE'] == 'title'), "metadata doesn't match"
-
-    return 'success'
 
 ###############################################################################
 # Check SetGeoTransform() / SetProjection()
@@ -716,8 +705,6 @@ def pdf_update_gt():
 
     gdaltest.pdf_drv.Delete('tmp/pdf_update_gt.pdf')
 
-    return 'success'
-
 ###############################################################################
 # Check SetMetadataItem() for Info
 
@@ -775,8 +762,6 @@ def pdf_update_info():
 
     gdaltest.pdf_drv.Delete('tmp/pdf_update_info.pdf')
 
-    return 'success'
-
 ###############################################################################
 # Check SetMetadataItem() for xml:XMP
 
@@ -832,8 +817,6 @@ def pdf_update_xmp():
     assert xmp is None, 'did not get expected metadata'
 
     gdaltest.pdf_drv.Delete('tmp/pdf_update_xmp.pdf')
-
-    return 'success'
 
 ###############################################################################
 # Check SetGCPs() but with GCPs that resolve to a geotransform
@@ -928,8 +911,6 @@ def pdf_update_gcps(dpi=300):
         pytest.fail('bad neatline')
 
     gdaltest.pdf_drv.Delete(out_filename)
-
-    return 'success'
 
 
 def pdf_update_gcps_iso32000():
@@ -1042,8 +1023,6 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
 
     gdaltest.pdf_drv.Delete(out_filename)
 
-    return 'success'
-
 
 ###############################################################################
 # Check NEATLINE support
@@ -1125,8 +1104,6 @@ def pdf_set_neatline(geo_encoding, dpi=300):
 
     gdaltest.pdf_drv.Delete(out_filename)
 
-    return 'success'
-
 
 def pdf_set_neatline_iso32000():
     return pdf_set_neatline('ISO32000')
@@ -1163,8 +1140,6 @@ def pdf_check_identity_iso32000():
 
     assert data_ref == data_got, 'content does not match reference content'
 
-    return 'success'
-
 ###############################################################################
 # Check that we can generate identical file
 
@@ -1194,8 +1169,6 @@ def pdf_check_identity_ogc_bp():
     gdaltest.pdf_drv.Delete(out_filename)
 
     assert data_ref == data_got, 'content does not match reference content'
-
-    return 'success'
 
 ###############################################################################
 # Check layers support
@@ -1247,8 +1220,6 @@ def pdf_layers():
 
     assert not (cs4 == cs1 or cs4 == cs2), 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test MARGIN, EXTRA_STREAM, EXTRA_LAYER_NAME and EXTRA_IMAGES options
 
@@ -1289,8 +1260,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
         assert layers == ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo'], \
             'did not get expected layers'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CLIPPING_EXTENT, EXTRA_RASTERS, EXTRA_RASTERS_LAYER_NAME, OFF_LAYERS, EXCLUSIVE_LAYERS options
 
@@ -1355,8 +1325,6 @@ def pdf_extra_rasters():
             'did not get expected layers'
     assert not (pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174 and cs != 8165)), \
         'bad checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test adding a OGR datasource
@@ -1449,8 +1417,6 @@ def pdf_write_ogr():
     # Should have filtered out id = 4
     assert feature_count == 3, 'did not get expected feature count'
 
-    return 'success'
-
 ###############################################################################
 # Test adding a OGR datasource with reprojection of OGR SRS to GDAL SRS
 
@@ -1512,8 +1478,6 @@ def pdf_write_ogr_with_reprojection():
     # Should have filtered out id = 6
     assert feature_count == 5, 'did not get expected feature count'
 
-    return 'success'
-
 ###############################################################################
 # Test direct copy of source JPEG file
 
@@ -1547,8 +1511,6 @@ def pdf_jpeg_direct_copy():
     gdal.Unlink('tmp/pdf_jpeg_direct_copy.pdf')
 
     assert offset != -1
-
-    return 'success'
 
 ###############################################################################
 # Test direct copy of source JPEG file within VRT file
@@ -1596,8 +1558,6 @@ def pdf_jpeg_in_vrt_direct_copy():
 
     assert offset != -1
 
-    return 'success'
-
 ###############################################################################
 # Test reading georeferencing attached to an image, and not to the page (#4695)
 
@@ -1635,8 +1595,6 @@ def pdf_georef_on_image(src_filename='data/byte.tif'):
     assert got_wkt != '', 'did not get projection'
 
     assert not pdf_checksum_available() or src_cs == got_cs, 'did not get same checksum'
-
-    return 'success'
 
 
 def pdf_georef_on_image_rgb():
@@ -1696,8 +1654,6 @@ def pdf_write_huge():
 
     gdal.Unlink(tmp_filename)
 
-    return 'success'
-
 ###############################################################################
 # Test creating overviews
 
@@ -1735,8 +1691,6 @@ def pdf_overviews():
     ds = None
 
     gdaltest.pdf_drv.Delete(tmp_filename)
-
-    return 'success'
 
 ###############################################################################
 # Test password
@@ -1784,8 +1738,6 @@ def pdf_password():
     os.unlink('tmp/password.txt')
     assert ret == 0
 
-    return 'success'
-
 ###############################################################################
 # Test multi page support
 
@@ -1824,8 +1776,6 @@ def pdf_multipage():
         ds = gdal.Open('PDF:1:/does/not/exist.pdf')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test PAM metadata support
 
@@ -1845,8 +1795,6 @@ def pdf_metadata():
     ds = None
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_metadata.pdf')
-
-    return 'success'
 
 ###############################################################################
 # Test PAM georef support
@@ -1873,8 +1821,6 @@ def pdf_pam_georef():
     ds = None
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_pam_georef.pdf')
-
-    return 'success'
 
 
 gdaltest_list_for_full_backend = [
@@ -1974,8 +1920,7 @@ def test_pdf_run_all():
                 gdaltest.pdf_is_checksum_available = None
                 gdaltest.run_tests(gdaltest_list_for_short_backend)
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_pdf_run_all]
 # gdaltest_list = [ pdf_init, pdf_metadata ]

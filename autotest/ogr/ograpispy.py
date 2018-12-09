@@ -70,8 +70,7 @@ def test_ograpispy_1():
             print(line)
         pytest.fail('did not get expected script')
 
-    return 'success'
-
+    
 ###############################################################################
 # With snapshoting
 
@@ -123,8 +122,6 @@ def test_ograpispy_2():
 
     shutil.rmtree('tmp/snapshot_1/working')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -143,8 +140,6 @@ def test_ograpispy_cleanup():
     except (OSError, AttributeError):
         pass
     gdal.Unlink('/vsimem/test2.csv')
-
-    return 'success'
 
 
 gdaltest_list = [

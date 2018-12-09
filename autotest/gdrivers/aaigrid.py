@@ -70,8 +70,6 @@ def test_aaigrid_2():
 
     assert band1.DataType == gdal.GDT_Float32, 'Data type is not Float32!'
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading a file where decimal separator is comma (#3668)
@@ -91,8 +89,6 @@ def test_aaigrid_comma():
     assert band1.GetNoDataValue() == -99999, 'Grid NODATA value wrong or missing.'
 
     assert band1.DataType == gdal.GDT_Float32, 'Data type is not Float32!'
-
-    return 'success'
 
 ###############################################################################
 # Create simple copy and check.
@@ -165,8 +161,6 @@ def test_aaigrid_6():
 
     assert b.DataType == gdal.GDT_Float32, 'Data type is not Float32!'
 
-    return 'success'
-
 ###############################################################################
 # Verify data type determination from type of nodata
 
@@ -179,8 +173,6 @@ def test_aaigrid_6bis():
     assert b.GetNoDataValue() == -99999, 'Grid NODATA value wrong or missing.'
 
     assert b.DataType == gdal.GDT_Int32, 'Data type is not Int32!'
-
-    return 'success'
 
 ###############################################################################
 # Verify writing files with non-square pixels.
@@ -216,7 +208,7 @@ def test_aaigrid_9():
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -259,8 +251,7 @@ def test_aaigrid_10():
         except OSError:
             pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SIGNIFICANT_DIGITS creation option (same as DECIMAL_PRECISION test)
 
@@ -275,7 +266,7 @@ def test_aaigrid_11():
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -298,7 +289,6 @@ def test_aaigrid_12():
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
     assert ndv.startswith('nodata_value')
     assert ndv.endswith('-99999.000')
-    return 'success'
 
 ###############################################################################
 # Test no data is written to correct precision WITH SIGNIFICANT_DIGITS.
@@ -320,7 +310,6 @@ def test_aaigrid_13():
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
     assert ndv.startswith('nodata_value')
     assert ndv.endswith('-1e+05') or ndv.endswith('-1e+005')
-    return 'success'
 
 ###############################################################################
 # Test fix for #6060
@@ -342,8 +331,6 @@ def test_aaigrid_14():
 
     assert data.find('107.0 123') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test Float64 detection when nodata = DBL_MIN
 
@@ -364,8 +351,6 @@ NODATA_value  2.2250738585072014e-308
     ds = None
 
     gdal.Unlink('/vsimem/aaigrid_15.asc')
-
-    return 'success'
 
 ###############################################################################
 

@@ -52,8 +52,6 @@ def test_rasterlite_1():
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a rasterlite DB without overviews
 
@@ -117,8 +115,6 @@ def test_rasterlite_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test opening a rasterlite DB with overviews
 
@@ -151,8 +147,6 @@ def test_rasterlite_3():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test opening a rasterlite DB with color table and user-defined spatial extent
 
@@ -177,8 +171,6 @@ def test_rasterlite_4():
         ('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening a rasterlite DB with color table and do color table expansion
@@ -212,8 +204,6 @@ def test_rasterlite_5():
         ('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy()
@@ -260,8 +250,6 @@ def test_rasterlite_6():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test BuildOverviews()
 
@@ -295,8 +283,6 @@ def test_rasterlite_7():
     assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 233, \
         'Wrong checksum for overview 1'
 
-    return 'success'
-
 ###############################################################################
 # Test CleanOverviews()
 
@@ -314,8 +300,6 @@ def test_rasterlite_8():
     ds.BuildOverviews(overviewlist=[])
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
-
-    return 'success'
 
 ###############################################################################
 # Create a rasterlite dataset with EPSILON tiles
@@ -384,8 +368,6 @@ def test_rasterlite_11():
     assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 215, \
         'Wrong checksum for overview 1'
 
-    return 'success'
-
 ###############################################################################
 # Test opening a .rasterlite file
 
@@ -400,7 +382,6 @@ def test_rasterlite_12():
 
     ds = gdal.Open('data/byte.rasterlite')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
-    return 'success'
 
 ###############################################################################
 # Test opening a .rasterlite.sql file
@@ -419,7 +400,6 @@ def test_rasterlite_13():
 
     ds = gdal.Open('data/byte.rasterlite.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -450,8 +430,7 @@ def test_rasterlite_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_rasterlite_1,

@@ -79,8 +79,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
         os.system('diff -u ' + reffile + ' ' + tmpfilename)
         # os.unlink(tmpfilename)
         pytest.fail('Got:')
-    return 'success'
-
+    
 ###############################################################################
 # Basic test
 
@@ -130,8 +129,6 @@ def test_ogr_gmlas_test_ogrsf():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Test virtual file support
 
@@ -160,8 +157,6 @@ def test_ogr_gmlas_virtual_file():
     gdal.Unlink('/vsimem/ogr_gmlas_8.xml')
     gdal.Unlink('/vsimem/ogr_gmlas_8.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test opening with XSD option
 
@@ -174,8 +169,6 @@ def test_ogr_gmlas_datafile_with_xsd_option():
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['XSD=data/gmlas/gmlas_test1.xsd'])
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Test opening with just XSD option
 
@@ -187,8 +180,6 @@ def test_ogr_gmlas_no_datafile_with_xsd_option():
 
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_test1.xsd'])
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test opening with just XSD option but pointing to a non-xsd filename
@@ -204,8 +195,6 @@ def test_ogr_gmlas_no_datafile_xsd_which_is_not_xsd():
     assert ds is None
     assert gdal.GetLastErrorMsg().find("invalid content in 'schema' element") >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test opening with nothing
 
@@ -219,8 +208,6 @@ def test_ogr_gmlas_no_datafile_no_xsd():
         ds = gdal.OpenEx('GMLAS:')
     assert ds is None
     assert gdal.GetLastErrorMsg().find('XSD open option must be provided when no XML data file is passed') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test opening an inexisting GML file
@@ -236,8 +223,6 @@ def test_ogr_gmlas_non_existing_gml():
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Cannot open /vsimem/i_do_not_exist.gml') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test opening with just XSD option but pointing to a non existing file
 
@@ -251,8 +236,6 @@ def test_ogr_gmlas_non_existing_xsd():
         ds = gdal.OpenEx('GMLAS:', open_options=['XSD=/vsimem/i_do_not_exist.xsd'])
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Cannot resolve /vsimem/i_do_not_exist.xsd') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test opening a GML file without schemaLocation
@@ -273,8 +256,6 @@ def test_ogr_gmlas_gml_without_schema_location():
 
     gdal.Unlink('/vsimem/ogr_gmlas_gml_without_schema_location.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test invalid schema
 
@@ -288,8 +269,6 @@ def test_ogr_gmlas_invalid_schema():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_invalid_schema.xml')
     assert ds is None
     assert gdal.GetLastErrorMsg().find('invalid content') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test invalid XML
@@ -306,8 +285,6 @@ def test_ogr_gmlas_invalid_xml():
         f = lyr.GetNextFeature()
     assert f is None
     assert gdal.GetLastErrorMsg().find('input ended before all started tags were ended') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test links with gml:ReferenceType
@@ -334,8 +311,7 @@ def test_ogr_gmlas_gml_Reference():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we fix ambiguities in class names
 
@@ -361,8 +337,6 @@ def test_ogr_gmlas_same_element_in_different_ns():
     assert ds.GetLayerByName('elt_elt2_abstractElt_myns_realizationOfAbstractElt') is not None
     assert ds.GetLayerByName('elt_elt2_abstractElt_other_ns_realizationOfAbstractElt') is not None
 
-    return 'success'
-
 ###############################################################################
 # Test a corner case of relative path resolution
 
@@ -374,8 +348,6 @@ def test_ogr_gmlas_corner_case_relative_path():
 
     ds = ogr.Open('GMLAS:../ogr/data/gmlas/gmlas_test1.xml')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test unexpected repeated element
@@ -398,8 +370,6 @@ def test_ogr_gmlas_unexpected_repeated_element():
     assert f is None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test unexpected repeated element
 
@@ -420,8 +390,6 @@ def test_ogr_gmlas_unexpected_repeated_element_variant():
     f = lyr.GetNextFeature()
     assert f is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading geometries embedded in a geometry property element
@@ -547,8 +515,7 @@ def test_ogr_gmlas_geometryproperty():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading geometries referenced by a AbstractGeometry element
 
@@ -580,8 +547,7 @@ def test_ogr_gmlas_abstractgeometry():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test validation against schema
 
@@ -666,8 +632,6 @@ def test_ogr_gmlas_validate():
     assert ds is not None, myhandler.error_list
     assert not myhandler.error_list
 
-    return 'success'
-
 ###############################################################################
 # Test correct namespace prefix handling
 
@@ -686,8 +650,7 @@ def test_ogr_gmlas_test_ns_prefix():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test parsing documents without namespace
 
@@ -704,8 +667,7 @@ def test_ogr_gmlas_no_namespace():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CONFIG_FILE
 
@@ -782,8 +744,6 @@ def test_ogr_gmlas_conf():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate.xml', open_options=[
             'CONFIG_FILE=<Configuration><Validation enabled="true"><FailIfError>true</FailIfError></Validation></Configuration>'])
     assert ds is None and gdal.GetLastErrorMsg().find('Validation') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test IgnoredXPaths aspect of config file
@@ -892,8 +852,6 @@ def test_ogr_gmlas_conf_ignored_xpath():
     # Present fields
     assert lyr.GetLayerDefn().GetFieldIndex('int_array') >= 0
     assert lyr.GetLayerDefn().GetFieldIndex('long') >= 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1066,8 +1024,6 @@ def test_ogr_gmlas_cache():
     gdal.Rmdir('/vsimem/my/gmlas_cache')
     gdal.Rmdir('/vsimem/my')
 
-    return 'success'
-
 
 ###############################################################################
 # Test good working of linking to a child through its id attribute
@@ -1084,8 +1040,7 @@ def test_ogr_gmlas_link_nested_independant_child():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test some pattern found in geosciml schemas
 
@@ -1117,8 +1072,7 @@ def test_ogr_gmlas_composition_compositionPart():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that when importing GML we expose by default only elements deriving
 # from _Feature/AbstractFeature
@@ -1133,8 +1087,6 @@ def test_ogr_gmlas_instantiate_only_gml_feature():
                      open_options=['XSD=data/gmlas/gmlas_instantiate_only_gml_feature.xsd'])
     assert ds.GetLayerCount() == 1
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that WFS style timeStamp are ignored for hash generation
@@ -1157,8 +1109,7 @@ def test_ogr_gmlas_timestamp_ignored_for_hash():
         f.DumpReadable()
         pytest.fail(pkid)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test dataset GetNextFeature()
 
@@ -1281,8 +1232,6 @@ def test_ogr_gmlas_dataset_getnextfeature():
 
     assert count != 0
 
-    return 'success'
-
 ###############################################################################
 #  Test that with schemas that have a structure like a base:identifier, we
 # will inline it.
@@ -1301,8 +1250,6 @@ def test_ogr_gmlas_inline_identifier():
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldIndex('identifier_foo') >= 0
 
-    return 'success'
-
 ###############################################################################
 #  Test that we can handle things like gml:name and au:name
 
@@ -1318,8 +1265,6 @@ def test_ogr_gmlas_avoid_same_name_inlined_classes():
     assert lyr is not None
     lyr = ds.GetLayerByName('myFeature_ns2_dt')
     assert lyr is not None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1337,8 +1282,6 @@ def test_ogr_gmlas_validate_ignored_fixed_attribute():
                               'CONFIG_FILE=<Configuration><IgnoredXPaths><XPath>@bar</XPath></IgnoredXPaths></Configuration>'])
     gdal.PopErrorHandler()
     assert not myhandler.error_list
-
-    return 'success'
 
 
 ###############################################################################
@@ -1378,8 +1321,7 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
             f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #  Test xlink resolution
 
@@ -1836,8 +1778,6 @@ bar""" or \
     gdal.Unlink('/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml')
     gdal.Unlink('/vsimem/non_matching_resource.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test UTF-8 support
 
@@ -1860,8 +1800,7 @@ def test_ogr_gmlas_recoding():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test schema without namespace prefix
 
@@ -1901,8 +1840,7 @@ def test_ogr_gmlas_schema_without_namespace_prefix():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test parsing truncated XML
 
@@ -1920,8 +1858,7 @@ def test_ogr_gmlas_truncated_xml():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test identifier truncation
 
@@ -1958,8 +1895,6 @@ def test_ogr_gmlas_identifier_truncation():
     assert lyr is not None, ds.GetLayer(3).GetName()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test behaviour when identifiers have same case
 
@@ -1981,8 +1916,6 @@ def test_ogr_gmlas_identifier_case_ambiguity():
     lyr = ds.GetLayerByName('DifferentCASE2')
     assert lyr is not None, ds.GetLayer(0).GetName()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test writing support
@@ -2006,8 +1939,6 @@ def test_ogr_gmlas_writer():
     gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
 
     assert ret_ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Check the generated .xml and .xsd
@@ -2059,8 +1990,7 @@ def test_ogr_gmlas_writer_check_xml_xsd():
         os.system('diff -u data/gmlas/gmlas_test1_generated.xsd tmp/gmlas_test1_generated.xsd')
         pytest.fail('Got:')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check that the .xml read back by the GMLAS driver has the same content
 # as the original one.
@@ -2125,8 +2055,6 @@ def test_ogr_gmlas_writer_check_xml_read_back():
     gdal.Unlink('tmp/gmlas_test1_generated.xml')
     gdal.Unlink('tmp/gmlas_test1_generated.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test writing support with geometries
 
@@ -2167,8 +2095,6 @@ def test_ogr_gmlas_writer_gml():
     assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.0"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
 
     assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.1"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test writing support with geometries and -a_srs
@@ -2227,8 +2153,6 @@ def test_ogr_gmlas_writer_gml_assign_srs():
     gdal.Unlink('/vsimem/gmlas_test1_generated_asrs.xml')
     gdal.Unlink('/vsimem/gmlas_test1_generated_asrs.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test writing support with geometries with original XML content preserved
 
@@ -2267,8 +2191,6 @@ def test_ogr_gmlas_writer_gml_original_xml():
     assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.1"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
 
     assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.2"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test writing support with XSD, INDENT_SIZE, COMMENT, OUTPUT_XSD_FILENAME, TIMESTAMP options
@@ -2386,8 +2308,6 @@ def test_ogr_gmlas_writer_options():
 
     assert content.find('xsi:schemaLocation="http://www.opengis.net/wfs/2.0 /vsimem/fake_wfs.xsd ') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test writing support error handle
 
@@ -2489,8 +2409,6 @@ def test_ogr_gmlas_writer_errors():
     gdal.Unlink('/vsimem/valid.xml')
     gdal.Unlink('/vsimem/valid.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a particular construct with group, etc... that could cause
 # crashes
@@ -2512,8 +2430,6 @@ def test_ogr_gmlas_read_fake_gmljp2():
         count += 1
 
     assert count == 5
-
-    return 'success'
 
 ###############################################################################
 #  Test TypingConstraints
@@ -2611,8 +2527,6 @@ def test_ogr_gmlas_typing_constraints():
         pytest.fail()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 #  Test swe:DataArray
 
@@ -2684,8 +2598,6 @@ def test_ogr_gmlas_swe_dataarray():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 #  Test swe:DataRecord
@@ -2716,8 +2628,6 @@ def test_ogr_gmlas_swe_datarecord():
         pytest.fail()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 #  Test a xs:any field at end of a type declaration
 
@@ -2745,8 +2655,7 @@ def test_ogr_gmlas_any_field_at_end_of_declaration():
     if f.GetField('value') != '<something>baz</something>':
         print('Expected fail: value != <something>baz</something>')
 
-    return 'success'
-
+    
 ###############################################################################
 #  Test auxiliary schema without namespace prefix
 
@@ -2763,8 +2672,7 @@ def test_ogr_gmlas_aux_schema_without_namespace_prefix():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test importing a GML geometry that is in an element that is a substitutionGroup
 # of another one (#6990)
@@ -2782,8 +2690,6 @@ def test_ogr_gmlas_geometry_as_substitutiongroup():
         f.DumpReadable()
         pytest.fail()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2826,8 +2732,7 @@ def test_ogr_gmlas_no_element_in_first_choice_schema():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test cross-layer links with xlink:href="#my_id"
@@ -2965,8 +2870,7 @@ def test_ogr_gmlas_internal_xlink_href():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #  Cleanup
 
@@ -2982,8 +2886,6 @@ def test_ogr_gmlas_cleanup():
 
     gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', None)
     gdal.SetConfigOption('GDAL_XML_VALIDATION', ogrtest.old_val_GDAL_XML_VALIDATION)
-
-    return 'success'
 
 
 gdaltest_list = [

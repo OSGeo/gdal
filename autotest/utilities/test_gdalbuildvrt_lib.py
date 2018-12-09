@@ -65,8 +65,6 @@ def test_gdalbuildvrt_lib_1():
 
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test callback
 
@@ -88,8 +86,6 @@ def test_gdalbuildvrt_lib_2():
     assert tab[0] == 1.0, 'Bad percentage'
 
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

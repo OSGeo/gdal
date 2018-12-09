@@ -81,8 +81,6 @@ def test_ogr_htf_1():
 
     assert feat.GetField('other3') == 'other3', 'did not get expected other3 val'
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -100,8 +98,6 @@ def test_ogr_htf_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.htf metadata')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 
 gdaltest_list = [

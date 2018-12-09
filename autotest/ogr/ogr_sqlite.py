@@ -75,7 +75,7 @@ def test_ogr_sqlite_1():
     gdaltest.sl_ds = sqlite_dr.CreateDataSource('tmp/sqlite_test.db')
 
     if gdaltest.sl_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -177,8 +177,6 @@ def test_ogr_sqlite_2():
 
     gdaltest.sl_lyr.CommitTransaction()
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -218,7 +216,7 @@ def test_ogr_sqlite_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -256,8 +254,7 @@ def test_ogr_sqlite_4():
 
         assert ogrtest.check_feature_geometry(feat_read, geom) == 0
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -277,7 +274,7 @@ def test_ogr_sqlite_5():
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -299,7 +296,7 @@ def test_ogr_sqlite_6():
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
@@ -330,7 +327,7 @@ def test_ogr_sqlite_7():
 
     gdaltest.sl_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test transactions with rollback.
@@ -384,8 +381,6 @@ def test_ogr_sqlite_8():
     feat_read.Destroy()
     dst_feat.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test SetFeature()
 
@@ -436,8 +431,6 @@ def test_ogr_sqlite_9():
     feat_read.Destroy()
     feat_read_2.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test GetFeature()
 
@@ -468,8 +461,7 @@ def test_ogr_sqlite_10():
         feat_read_2.DumpReadable()
         pytest.fail('GetFeature() result seems to not match expected.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test FORMAT=WKB creation option
 
@@ -502,8 +494,6 @@ def test_ogr_sqlite_11():
     assert ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001) == 0
 
     gdaltest.sl_lyr.ResetReading()
-
-    return 'success'
 
 ###############################################################################
 # Test FORMAT=WKT creation option
@@ -551,8 +541,6 @@ def test_ogr_sqlite_12():
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test SRID support
 
@@ -587,8 +575,6 @@ def test_ogr_sqlite_13():
     feat = sql_lyr.GetNextFeature()
     assert feat.GetFieldAsInteger('count') == 1
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 
 ###############################################################################
@@ -638,8 +624,6 @@ def test_ogr_sqlite_14():
            feat_read.GetFieldAsString('BLOB') == '0001FF')
 
     gdaltest.sl_lyr.ResetReading()
-
-    return 'success'
 
 ###############################################################################
 # Test FORMAT=SPATIALITE layer creation option
@@ -708,8 +692,6 @@ def test_ogr_sqlite_15():
     assert ogrtest.check_feature_geometry(feat_read, geoms[0], max_error=0.001) == 0
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 
 ###############################################################################
@@ -788,8 +770,6 @@ def test_ogr_sqlite_16():
 
     gdaltest.sl_lyr.ResetReading()
 
-    return 'success'
-
 ###############################################################################
 # Test SPATIALITE dataset creation option
 
@@ -807,7 +787,7 @@ def test_ogr_sqlite_17():
 
     if not gdaltest.has_spatialite:
         assert ds is None
-        return 'success'
+        return
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = ds.CreateLayer('will_fail', options=['FORMAT=WKB'])
@@ -836,8 +816,6 @@ def test_ogr_sqlite_17():
     srs = lyr.GetSpatialRef()
     wkt = srs.ExportToWkt()
     assert wkt.find('4326') != -1, 'did not identify correctly SRS'
-
-    return 'success'
 
 ###############################################################################
 # Create a layer with a non EPSG SRS into a SPATIALITE DB (#3506)
@@ -873,8 +851,6 @@ def test_ogr_sqlite_18():
         feat.DumpReadable()
         pytest.fail()
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Create a SpatiaLite DB with INIT_WITH_EPSG=YES
@@ -912,8 +888,6 @@ def test_ogr_sqlite_19():
     # Currently the injection of the EPSG DB as proj.4 strings adds 3915 entries
     assert nb_srs >= 3915, 'did not get expected SRS count'
 
-    return 'success'
-
 ###############################################################################
 # Create a SpatiaLite DB with INIT_WITH_EPSG=NO
 
@@ -948,8 +922,6 @@ def test_ogr_sqlite_19_bis():
 
     gdal.Unlink('/vsimem/spatialite_test_without_epsg.db')
 
-    return 'success'
-
 ###############################################################################
 # Create a regular DB with INIT_WITH_EPSG=YES
 
@@ -979,8 +951,6 @@ def test_ogr_sqlite_20():
     # Currently the injection of the EPSG DB as proj.4 strings adds 3945 entries
     assert nb_srs >= 3945, 'did not get expected SRS count'
 
-    return 'success'
-
 ###############################################################################
 # Test CopyLayer() from a table layer (#3617)
 
@@ -996,8 +966,6 @@ def test_ogr_sqlite_21():
     src_lyr_count = src_lyr.GetFeatureCount()
     copy_lyr_count = copy_lyr.GetFeatureCount()
     assert src_lyr_count == copy_lyr_count, 'did not get same number of features'
-
-    return 'success'
 
 ###############################################################################
 # Test CopyLayer() from a result layer (#3617)
@@ -1016,8 +984,6 @@ def test_ogr_sqlite_22():
     assert src_lyr_count == copy_lyr_count, 'did not get same number of features'
 
     gdaltest.sl_ds.ReleaseResultSet(src_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test ignored fields works ok
@@ -1063,8 +1029,6 @@ def test_ogr_sqlite_23():
     assert not feat.IsFieldSet('AREA'), 'got area despite request to ignore it.'
 
     assert feat.GetFieldAsInteger('EAS_ID') == 179, 'missing or wrong eas_id'
-
-    return 'success'
 
 ###############################################################################
 # Test that ExecuteSQL() with OGRSQL dialect doesn't forward the where clause to sqlite (#4022)
@@ -1127,8 +1091,6 @@ def test_ogr_sqlite_24():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test opening a /vsicurl/ DB
 
@@ -1172,8 +1134,6 @@ def test_ogr_sqlite_25():
 
     assert lyr.GetLayerDefn().GetFieldCount() != 0
 
-    return 'success'
-
 ###############################################################################
 # Test creating a :memory: DB
 
@@ -1192,8 +1152,6 @@ def test_ogr_sqlite_26():
     ds = None
 
     assert count == 1, 'expected existing geometry_columns'
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
@@ -1238,8 +1196,6 @@ def test_ogr_sqlite_27():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf on a spatialite enabled DB
 
@@ -1277,8 +1233,6 @@ def test_ogr_sqlite_28():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Test CreateFeature() with empty feature
 
@@ -1300,8 +1254,6 @@ def test_ogr_sqlite_29():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test ExecuteSQL() with empty result set (#4684)
 
@@ -1320,8 +1272,6 @@ def test_ogr_sqlite_30():
     assert feat is None
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test if SpatiaLite is available
@@ -1499,8 +1449,6 @@ def test_ogr_spatialite_2():
 
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test VirtualShape feature of SpatiaLite
 
@@ -1525,7 +1473,7 @@ def test_ogr_spatialite_3():
 
     ds.Destroy()
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test updating a spatialite DB (#3471 and #3474)
@@ -1578,8 +1526,6 @@ def test_ogr_spatialite_4():
 
     assert nb_idx_before + 1 == nb_idx_after, \
         ('nb_idx_before=%d, nb_idx_after=%d' % (nb_idx_before, nb_idx_after))
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading back spatialite geometries (#4092)
@@ -1709,8 +1655,6 @@ def test_ogr_spatialite_5(bUseComprGeom=False):
             num_layer = num_layer + 1
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1851,8 +1795,6 @@ def test_ogr_spatialite_6():
         pytest.fail()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test VirtualShape:xxx.shp
 
@@ -1872,8 +1814,6 @@ def test_ogr_spatialite_7():
 
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
-
-    return 'success'
 
 ###############################################################################
 # Test tables with multiple geometry columns (#4768)
@@ -2025,8 +1965,6 @@ def test_ogr_spatialite_8():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test tables with multiple geometry columns (#4768)
 
@@ -2091,8 +2029,6 @@ def test_ogr_sqlite_31():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test datetime support
 
@@ -2141,8 +2077,6 @@ def test_ogr_sqlite_32():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test SRID layer creation option
 
@@ -2161,9 +2095,9 @@ def test_ogr_sqlite_33():
             options = []
         else:
             if not gdaltest.has_spatialite:
-                return 'success'
+                return
             if gdaltest.spatialite_version.find('2.3') == 0:
-                return 'success'
+                return
             options = ['SPATIALITE=YES']
 
         ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_33.sqlite', options=options)
@@ -2208,8 +2142,7 @@ def test_ogr_sqlite_33():
 
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test REGEXP support (#4823)
 
@@ -2272,8 +2205,7 @@ def test_ogr_sqlite_34():
             gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
             assert val == 1
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SetAttributeFilter() on SQL result layer
 
@@ -2357,8 +2289,6 @@ def test_ogr_sqlite_35():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test FID64 support
 
@@ -2391,8 +2321,6 @@ def test_ogr_sqlite_36():
     assert lyr.GetMetadataItem(ogr.OLMD_FID64) is not None
     f = lyr.GetNextFeature()
     assert f.GetFID() == 1234567890123
-
-    return 'success'
 
 ###############################################################################
 # Test not nullable fields
@@ -2478,8 +2406,6 @@ def test_ogr_sqlite_37():
     assert lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() == 0
     assert lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() == 1
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test  default values
@@ -2587,8 +2513,6 @@ def test_ogr_sqlite_38():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test spatial filters with point extent
 
@@ -2609,8 +2533,6 @@ def test_ogr_spatialite_9():
     assert feat is not None
     ds = None
     ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_spatialite_9.sqlite')
-
-    return 'success'
 
 ###############################################################################
 # Test not nullable fields
@@ -2651,8 +2573,6 @@ def test_ogr_spatialite_10():
     assert lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() == 0
     assert lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() == 1
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -2728,8 +2648,6 @@ def test_ogr_sqlite_39():
     ds = None
 
     ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_39.sqlite')
-
-    return 'success'
 
 ###############################################################################
 # Test dataset transactions
@@ -2851,8 +2769,6 @@ def test_ogr_sqlite_40():
 
     ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_40.sqlite')
 
-    return 'success'
-
 ###############################################################################
 # Test reading dates from Julian day floating point representation
 
@@ -2874,8 +2790,6 @@ def test_ogr_sqlite_41():
     ds = None
 
     ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_41.sqlite')
-
-    return 'success'
 
 ###############################################################################
 # Test ExecuteSQL() heuristics (#6107)
@@ -2930,8 +2844,6 @@ def test_ogr_sqlite_42():
 
     ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_42.sqlite')
 
-    return 'success'
-
 ###############################################################################
 # Test file:foo?mode=memory&cache=shared (#6150)
 
@@ -2948,8 +2860,6 @@ def test_ogr_sqlite_43():
 
     ds = ogr.Open('file:foo?mode=memory&cache=shared')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test reading/writing StringList, etc..
@@ -2988,8 +2898,6 @@ def test_ogr_sqlite_44():
     gdal.Unlink('/vsimem/ogr_sqlite_44_out.csv')
     gdal.Unlink('/vsimem/ogr_sqlite_44_out.csvt')
 
-    return 'success'
-
 ###############################################################################
 # Test WAL and opening in read-only (#6776)
 
@@ -3023,8 +2931,6 @@ def test_ogr_sqlite_45():
     gdal.Unlink('tmp/ogr_sqlite_45.db')
     gdal.Unlink('tmp/ogr_sqlite_45_bis.db')
 
-    return 'success'
-
 
 ###############################################################################
 # Test creating unsupported geometry types
@@ -3051,8 +2957,6 @@ def test_ogr_spatialite_11():
 
     gdal.Unlink('/vsimem/ogr_spatialite_11.sqlite')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a .sql file
 
@@ -3069,8 +2973,6 @@ def test_ogr_spatialite_12():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
-
-    return 'success'
 
 
 ###############################################################################
@@ -3100,7 +3002,6 @@ def test_ogr_sqlite_iterate_and_update():
     ds = None
 
     gdal.Unlink(filename)
-    return 'success'
 
 ###############################################################################
 #
@@ -3213,8 +3114,7 @@ def test_ogr_sqlite_cleanup():
         os.remove('tmp/ogr_spatialite_10.sqlite')
     except OSError:
         pass
-    return 'success'
-
+    
 ###############################################################################
 # Ask to run again tests in a new python process without libspatialite loaded
 
@@ -3228,8 +3128,6 @@ def test_ogr_sqlite_without_spatialite():
     ret = test_py_scripts.run_py_script_as_external_script('.', 'ogr_sqlite', ' -without_spatialite', display_live_on_parent_stdout=True)
 
     assert ret.find('Failed:    0') != -1
-
-    return 'success'
 
 
 gdaltest_list = [

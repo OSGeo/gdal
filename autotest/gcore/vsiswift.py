@@ -56,8 +56,7 @@ def test_vsiswift_init():
         if gdaltest.swift_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
-    return 'success'
-
+    
 ###############################################################################
 # Error cases
 
@@ -101,8 +100,6 @@ def test_vsiswift_real_server_errors():
         f = open_for_read('/vsiswift_streaming/foo/bar.baz')
     assert f is None, gdal.VSIGetLastErrorMsg()
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -118,8 +115,7 @@ def test_vsiswift_start_webserver():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test authentication with SWIFT_AUTH_V1_URL + SWIFT_USER + SWIFT_KEY
 
@@ -210,8 +206,6 @@ def test_vsiswift_fake_auth_v1_url():
 
     assert data == 'bar'
 
-    return 'success'
-
 ###############################################################################
 # Test authentication with SWIFT_STORAGE_URL + SWIFT_AUTH_TOKEN
 
@@ -266,8 +260,6 @@ def test_vsiswift_fake_auth_storage_url_and_auth_token():
 
     assert data == 'foo'
 
-    return 'success'
-
 ###############################################################################
 # Test VSIStatL()
 
@@ -311,8 +303,7 @@ def test_vsiswift_stat():
         stat_res = gdal.VSIStatL('/vsiswift/foo')
         assert stat_res is not None and stat.S_ISDIR(stat_res.mode)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ReadDir()
 
@@ -414,8 +405,6 @@ def test_vsiswift_fake_readdir():
         dir_contents = gdal.ReadDir('/vsiswift/foo/')
     assert dir_contents == ['.']
 
-    return 'success'
-
 ###############################################################################
 # Test write
 
@@ -470,8 +459,7 @@ def test_vsiswift_fake_write():
             pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Unlink()
 
@@ -501,8 +489,6 @@ def test_vsiswift_fake_unlink():
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsiswift/foo/bar')
     assert ret == -1
-
-    return 'success'
 
 ###############################################################################
 # Test Mkdir() / Rmdir()
@@ -593,8 +579,6 @@ def test_vsiswift_fake_mkdir_rmdir():
         ret = gdal.Rmdir('/vsiswift/foo/dir_nonempty')
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -608,8 +592,6 @@ def test_vsiswift_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 # Nominal cases (require valid credentials)
@@ -685,7 +667,7 @@ def vsiswift_extra_1():
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
-        return 'success'
+        return
 
     f = open_for_read('/vsiswift/' + swift_resource)
     assert f is not None
@@ -707,8 +689,6 @@ def vsiswift_extra_1():
     f = open_for_read('/vsiswift_streaming/' + swift_resource + '/invalid_resource.baz')
     assert f is None, gdal.VSIGetLastErrorMsg()
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -717,8 +697,7 @@ def test_vsiswift_cleanup():
     for var in gdaltest.swift_vars:
         gdal.SetConfigOption(var, gdaltest.swift_vars[var])
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_vsiswift_init,
                  test_vsiswift_real_server_errors,

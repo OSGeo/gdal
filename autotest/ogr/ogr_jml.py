@@ -49,8 +49,7 @@ def test_ogr_jml_init():
         gdaltest.jml_read_support = 1
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading
 
@@ -111,8 +110,7 @@ def test_ogr_jml_1():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creating a file
 
@@ -394,8 +392,6 @@ def test_ogr_jml_2():
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -412,8 +408,6 @@ def test_ogr_jml_3():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.jml')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test a few error cases
@@ -594,8 +588,6 @@ def test_ogr_jml_4():
     lyr.GetNextFeature()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading SRS
 
@@ -611,8 +603,6 @@ def test_ogr_jml_read_srs():
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -620,8 +610,6 @@ def test_ogr_jml_read_srs():
 def test_ogr_jml_cleanup():
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
-
-    return 'success'
 
 
 gdaltest_list = [

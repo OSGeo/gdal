@@ -117,8 +117,6 @@ def test_cutline_4():
 
     gdal.Unlink('/vsimem/utmsmall.tif')
 
-    return 'success'
-
 ###############################################################################
 
 

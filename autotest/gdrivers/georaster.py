@@ -85,8 +85,7 @@ def test_georaster_init():
         pytest.skip('ALL_SDO_GEOR_SYSDATA inaccessible, '
                              'likely georaster unavailable.')
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -469,8 +468,6 @@ def test_georaster_cleanup():
 
     gdaltest.oci_ds.Destroy()
     gdaltest.oci_ds = None
-
-    return 'success'
 
 ###############################################################################
 #

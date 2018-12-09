@@ -55,8 +55,6 @@ def test_rgb2pct_1():
     assert ds.GetRasterBand(1).Checksum() == 31231
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test pct2rgb
 
@@ -84,8 +82,6 @@ def test_pct2rgb_1():
     ds = None
     ori_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test rgb2pct -n option
 
@@ -109,8 +105,6 @@ def test_rgb2pct_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test rgb2pct -pct option
 
@@ -133,8 +127,6 @@ def test_rgb2pct_3():
             'Color table has more than 16 entries'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test pct2rgb with big CT (>256 entries)
@@ -170,8 +162,6 @@ def test_pct2rgb_4():
     ds = None
     ori_ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup
@@ -190,8 +180,7 @@ def test_rgb2pct_cleanup():
         except OSError:
             pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_rgb2pct_1,

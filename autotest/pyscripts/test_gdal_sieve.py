@@ -72,8 +72,7 @@ def test_gdal_sieve_1():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_sieve_1,

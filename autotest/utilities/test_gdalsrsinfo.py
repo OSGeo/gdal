@@ -50,8 +50,6 @@ def test_gdalsrsinfo_1():
     assert ret.find('PROJ.4 :') != -1
     assert ret.find('OGC WKT :') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -o proj4 option
 
@@ -64,8 +62,6 @@ def test_gdalsrsinfo_2():
                                ' -o proj4 ../gcore/data/byte.tif')
 
     assert ret.strip() == "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs"
-
-    return 'success'
 
 ###############################################################################
 # Test -o wkt option
@@ -83,8 +79,6 @@ def test_gdalsrsinfo_3():
     third_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]'
     assert ret.strip() == first_val or ret.strip() == second_val or ret.strip() == third_val
 
-    return 'success'
-
 ###############################################################################
 # Test -o wkt_esri option
 
@@ -97,8 +91,6 @@ def test_gdalsrsinfo_4():
                                ' -o wkt_esri ../gcore/data/byte.tif')
 
     assert ret.strip() == 'PROJCS["NAD_1927_UTM_Zone_11N",GEOGCS["GCS_North_American_1927",DATUM["D_North_American_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
-
-    return 'success'
 
 ###############################################################################
 # Test -o wkt_old option
@@ -114,8 +106,6 @@ def test_gdalsrsinfo_5():
     first_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1]]'
     second_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1]]'
     assert ret.strip() == first_val or ret.strip() == second_val
-
-    return 'success'
 
 ###############################################################################
 # Test -o wkt_simple option
@@ -158,8 +148,6 @@ def test_gdalsrsinfo_6():
 
     assert ret.strip() == first_val or ret.strip() == second_val
 
-    return 'success'
-
 ###############################################################################
 # Test -o mapinfo option
 
@@ -172,8 +160,6 @@ def test_gdalsrsinfo_7():
                                ' -o mapinfo ../gcore/data/byte.tif')
 
     assert ret.strip() == """'Earth Projection 8, 62, "m", -117, 0, 0.9996, 500000, 0'"""
-
-    return 'success'
 
 
 ###############################################################################
@@ -198,8 +184,6 @@ def test_gdalsrsinfo_8():
         AUTHORITY["EPSG","9122"]],
     AUTHORITY["EPSG","4326"]]"""
 
-    return 'success'
-
 
 ###############################################################################
 # Test nonexistent file.
@@ -212,8 +196,6 @@ def test_gdalsrsinfo_9():
         test_cli_utilities.get_gdalsrsinfo_path() + ' nonexistent_file')
 
     assert err.strip() == "ERROR 1: ERROR - failed to load SRS definition from nonexistent_file"
-
-    return 'success'
 
 
 ###############################################################################
@@ -235,8 +217,6 @@ def test_gdalsrsinfo_10():
 
     assert ret.find('Validate Succeeds') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -V option - invalid
 
@@ -257,8 +237,6 @@ def test_gdalsrsinfo_11():
 
     assert ret.find('Validate Fails') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test EPSG:epsg format
 
@@ -271,8 +249,6 @@ def test_gdalsrsinfo_12():
                                ' -o wkt EPSG:4326')
 
     assert ret.strip() == """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
-
-    return 'success'
 
 
 ###############################################################################
@@ -287,8 +263,6 @@ def test_gdalsrsinfo_13():
 
     assert ret.strip() == """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
 
-    return 'success'
-
 ###############################################################################
 # Test VSILFILE format
 
@@ -301,8 +275,6 @@ def test_gdalsrsinfo_14():
                                ' -o proj4 /vsizip/../gcore/data/byte.tif.zip')
 
     assert ret.strip() == "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs"
-
-    return 'success'
 
 ###############################################################################
 # Test .shp format
@@ -317,8 +289,6 @@ def test_gdalsrsinfo_14bis():
 
     assert ret.strip() == "+proj=lcc +lat_1=30.28333333333333 +lat_2=28.38333333333333 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000 +y_0=3999999.9998984 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs"
 
-    return 'success'
-
 ###############################################################################
 # Test .prj format
 
@@ -331,8 +301,6 @@ def test_gdalsrsinfo_15():
                                ' -o proj4 ../osr/data/lcc_esri.prj')
 
     assert ret.strip() == "+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs"
-
-    return 'success'
 
 ###############################################################################
 # Test DRIVER:file syntax (bug #4493) -  similar test should be done with OGR
@@ -351,8 +319,6 @@ def test_gdalsrsinfo_16():
         pytest.fail('gdalsrsinfo execution failed')
 
     assert err == ''
-
-    return 'success'
 
 ###############################################################################
 # Test -e
@@ -378,8 +344,6 @@ def test_gdalsrsinfo_17():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                """ -e "GEOGCS[\"myLKS94\",DATUM[\"Lithuania_1994_ETRS89\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" """)
     assert ret.find('EPSG:4126') >= 0 and ret.find('EPSG:4669') >= 0
-
-    return 'success'
 
 ###############################################################################
 #

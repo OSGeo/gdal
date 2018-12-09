@@ -78,8 +78,7 @@ def test_ogr_dxf_1():
         gdaltest.sample_text += '"abc"'
         gdaltest.sample_text = gdaltest.sample_text.encode('utf-8')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read the first feature, an ellipse and see if it generally meets expectations.
 
@@ -122,8 +121,6 @@ def test_ogr_dxf_2():
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
 
-    return 'success'
-
 ###############################################################################
 # Second feature should be a partial ellipse.
 
@@ -145,8 +142,6 @@ def test_ogr_dxf_3():
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
 
-    return 'success'
-
 ###############################################################################
 # Third feature: point.
 
@@ -156,8 +151,6 @@ def test_ogr_dxf_4():
     feat = gdaltest.dxf_layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT (83.5 160.0 0)')
-
-    return 'success'
 
 ###############################################################################
 # Fourth feature: LINE
@@ -171,8 +164,6 @@ def test_ogr_dxf_5():
 
     assert feat.GetGeometryRef().GetGeometryType() != ogr.wkbLineString, \
         'not keeping 3D linestring as 3D'
-
-    return 'success'
 
 ###############################################################################
 # Fourth feature: MTEXT
@@ -189,8 +180,6 @@ def test_ogr_dxf_6():
 
     assert feat.GetStyleString() == 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)', \
         'got wrong style string'
-
-    return 'success'
 
 ###############################################################################
 # Partial CIRCLE
@@ -213,8 +202,6 @@ def test_ogr_dxf_7():
     assert abs(geom.GetX(0) - 115.258) <= 0.01 and abs(geom.GetY(0) - 107.791) <= 0.01, \
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
-
-    return 'success'
 
 ###############################################################################
 # PaperSpace and dimension
@@ -263,8 +250,6 @@ def test_ogr_dxf_8():
     assert feat.GetStyleString() == expected_style, \
         ('Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(), expected_style))
 
-    return 'success'
-
 ###############################################################################
 # BLOCK (inlined)
 
@@ -304,8 +289,6 @@ def test_ogr_dxf_9():
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT (79.977331629005178 119.698291706738644 0)')
 
-    return 'success'
-
 ###############################################################################
 # LWPOLYLINE in an Object Coordinate System.
 
@@ -336,8 +319,6 @@ def test_ogr_dxf_10():
     ocs_lyr = None
     ocs_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading from an entities-only dxf file (#3412)
 
@@ -361,8 +342,6 @@ def test_ogr_dxf_11():
 
     eo_lyr = None
     eo_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Write a simple file with a polygon and a line, and read back.
@@ -447,8 +426,6 @@ def test_ogr_dxf_12():
 
     os.unlink('tmp/dxf_11.dxf')
 
-    return 'success'
-
 
 ###############################################################################
 # Check smoothed polyline.
@@ -500,8 +477,6 @@ def test_ogr_dxf_13():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Check smooth LWPOLYLINE entity.
@@ -539,8 +514,6 @@ def test_ogr_dxf_14():
                              % (geom.GetX(0), geom.GetY(0)))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Write a file with dynamic layer creation and confirm that the
@@ -622,8 +595,6 @@ def test_ogr_dxf_15():
 
     os.unlink('tmp/dxf_14.dxf')
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading without DXF blocks inlined.
@@ -697,8 +668,6 @@ def test_ogr_dxf_16():
     # cleanup
 
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'TRUE')
-
-    return 'success'
 
 ###############################################################################
 # Write a file with blocks defined from a source blocks layer.
@@ -832,8 +801,6 @@ def test_ogr_dxf_17():
 
     os.unlink('tmp/dxf_17.dxf')
 
-    return 'success'
-
 ###############################################################################
 # Write a file with line patterns, and make sure corresponding Linetypes are
 # created.
@@ -935,8 +902,6 @@ def test_ogr_dxf_18():
 
     os.unlink('tmp/dxf_18.dxf')
 
-    return 'success'
-
 ###############################################################################
 # Test writing a file using references to blocks defined entirely in the
 # template - no blocks layer transferred.
@@ -978,8 +943,6 @@ def test_ogr_dxf_19():
 
     os.unlink('tmp/dxf_19.dxf')
 
-    return 'success'
-
 ###############################################################################
 # SPLINE
 
@@ -994,8 +957,6 @@ def test_ogr_dxf_20():
     assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (10.75 62.75,20.637752769146068 63.434832501489716,29.283239084385464 63.396838394381845,36.766943814562865 62.711565975596599,43.169351828522906 61.454563542054103,48.570947995110252 59.70137939067456,53.05221718316956 57.527561818378146,56.693644261545501 55.008659122085049,59.575714099082703 52.220219598715438,61.778911564625851 49.237791545189509,63.383721527019588 46.136923258427423,64.470628855108572 42.993163035349369,65.120118417737459 39.882059172875508,65.412419131869868 36.878358785215056,65.417809785093752 34.025663008687722,65.193643595004147 31.327113252708507,64.796409941597645 28.783146935042897,64.282598204870823 26.394201473456341,63.708697764820236 24.16071428571431,63.131198001442392 22.083122789582241,62.606588294733939 20.161864402825621,62.191358024691354 18.397376543209894,61.941996571311265 16.790096628500525,61.914993314590184 15.340462076462975,62.166837634524704 14.0489103048627,62.754018911111373 12.915878731465167,63.723652286703427 11.940700981548817,65.053571428571416 11.114552964042769,66.690557841792398 10.424954275262921,68.581246558980226 9.859407264767562,70.672272612748785 9.405414282114966,72.910271035711943 9.050477676863418,75.241876860483572 8.782099798571203,77.613725119677511 8.587782996796603,79.97245084590763 8.4550296210979,82.264689071787842 8.371342021033378,84.437074829931987 8.324222546161321,86.436243152953921 8.301173546040012,88.208926721776336 8.289771106365336,89.722559658784164 8.293223374005688,90.990763736417563 8.349615688917151,92.033410218878885 8.501752503862612,92.870370370370395 8.792438271604945,93.521515455094473 9.264477444907039,94.006716737253413 9.960674476531764,94.345845481049565 10.923833819242011,94.558772950685281 12.196759925800654,94.665370410362868 13.82225724897058,94.685509124284636 15.843130241514663,94.639060356652948 18.302183356195791,94.545895371670113 21.242221045776841,94.421471763308503 24.702030018356666,94.215205541358216 28.660279617432039,93.825673773330607 33.049360720184715,93.15014577259474 37.800473760933045,92.085890852519697 42.844819173995376,90.530178326474584 48.113597393690064,88.380277507828495 53.538008854335445,85.533457709950525 59.049253990249873,81.886988246209697 64.578533235751706,77.338138429975174 70.057047025159264,71.784177574615995 75.415995792790937,65.122374993501282 80.586579972965055,57.25 85.5)')
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # CIRCLE
 
@@ -1009,8 +970,6 @@ def test_ogr_dxf_21():
 
     assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (5 2 3,4.990256201039297 1.720974105023499 3,4.961072274966281 1.443307596159738 3,4.912590402935223 1.168353236728963 3,4.845046783753276 0.897450576732003 3,4.758770483143634 0.631919426697325 3,4.654181830570403 0.373053427696799 3,4.531790371435708 0.122113748856437 3,4.392192384625703 -0.11967705693282 3,4.23606797749979 -0.351141009169893 3,4.064177772475912 -0.571150438746157 3,3.877359201354605 -0.778633481835989 3,3.676522425435433 -0.972579301909577 3,3.462645901302633 -1.152043014426888 3,3.236771613882987 -1.316150290220167 3,3.0 -1.464101615137754 3,2.75348458715631 -1.595176185196668 3,2.498426373663648 -1.70873541826715 3,2.23606797749979 -1.804226065180614 3,1.967687582398672 -1.881182905103986 3,1.694592710667722 -1.939231012048832 3,1.418113853070614 -1.978087581473093 3,1.139597986810004 -1.997563308076383 3,0.860402013189997 -1.997563308076383 3,0.581886146929387 -1.978087581473094 3,0.305407289332279 -1.939231012048832 3,0.032312417601329 -1.881182905103986 3,-0.236067977499789 -1.804226065180615 3,-0.498426373663648 -1.70873541826715 3,-0.75348458715631 -1.595176185196668 3,-1.0 -1.464101615137755 3,-1.236771613882987 -1.316150290220167 3,-1.462645901302633 -1.152043014426888 3,-1.676522425435433 -0.972579301909577 3,-1.877359201354605 -0.778633481835989 3,-2.064177772475912 -0.571150438746158 3,-2.236067977499789 -0.351141009169893 3,-2.392192384625704 -0.11967705693282 3,-2.531790371435707 0.122113748856436 3,-2.654181830570403 0.373053427696798 3,-2.758770483143633 0.631919426697324 3,-2.845046783753275 0.897450576732001 3,-2.912590402935223 1.168353236728963 3,-2.961072274966281 1.443307596159737 3,-2.990256201039297 1.720974105023498 3,-3.0 2.0 3,-2.990256201039297 2.279025894976499 3,-2.961072274966281 2.556692403840262 3,-2.912590402935223 2.831646763271036 3,-2.845046783753276 3.102549423267996 3,-2.758770483143634 3.368080573302675 3,-2.654181830570404 3.626946572303199 3,-2.531790371435708 3.877886251143563 3,-2.392192384625704 4.119677056932819 3,-2.23606797749979 4.351141009169892 3,-2.064177772475912 4.571150438746157 3,-1.877359201354604 4.778633481835989 3,-1.676522425435434 4.972579301909576 3,-1.462645901302632 5.152043014426889 3,-1.236771613882989 5.316150290220166 3,-1.0 5.464101615137753 3,-0.753484587156311 5.595176185196667 3,-0.498426373663649 5.70873541826715 3,-0.23606797749979 5.804226065180615 3,0.032312417601329 5.881182905103985 3,0.305407289332279 5.939231012048833 3,0.581886146929387 5.978087581473094 3,0.860402013189993 5.997563308076383 3,1.139597986810005 5.997563308076383 3,1.418113853070612 5.978087581473094 3,1.69459271066772 5.939231012048833 3,1.96768758239867 5.881182905103986 3,2.236067977499789 5.804226065180615 3,2.498426373663648 5.70873541826715 3,2.75348458715631 5.595176185196668 3,3.0 5.464101615137754 3,3.236771613882985 5.316150290220168 3,3.462645901302634 5.152043014426887 3,3.676522425435431 4.972579301909578 3,3.877359201354603 4.778633481835991 3,4.064177772475912 4.571150438746159 3,4.23606797749979 4.351141009169893 3,4.392192384625702 4.119677056932823 3,4.531790371435708 3.877886251143563 3,4.654181830570404 3.626946572303201 3,4.758770483143634 3.368080573302675 3,4.845046783753275 3.102549423267999 3,4.912590402935223 2.831646763271039 3,4.961072274966281 2.556692403840263 3,4.990256201039298 2.279025894976499 3,5.0 2.0 3)')
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1088,8 +1047,6 @@ def test_ogr_dxf_22():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # POLYGON with hole
@@ -1123,8 +1080,6 @@ def test_ogr_dxf_23():
 
     gdal.Unlink('/vsimem/ogr_dxf_23.dxf')
 
-    return 'success'
-
 ###############################################################################
 # HATCH
 
@@ -1148,8 +1103,6 @@ def test_ogr_dxf_24():
     assert not ogrtest.check_feature_geometry(feat, 'POLYGON ((-1 -1,-1 0,0 0,-1 -1))')
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # 3DFACE
 
@@ -1171,8 +1124,6 @@ def test_ogr_dxf_25():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # SOLID (#5380)
 
@@ -1189,8 +1140,6 @@ def test_ogr_dxf_26():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading a DXF file without .dxf extensions (#5994)
 
@@ -1203,8 +1152,6 @@ def test_ogr_dxf_27():
     assert ds is not None
 
     gdal.Unlink('/vsimem/a_dxf_without_extension')
-
-    return 'success'
 
 ###############################################################################
 # Test reading a ELLIPSE with Z extrusion axis value of -1.0 (#5075)
@@ -1226,8 +1173,6 @@ def test_ogr_dxf_28():
         pytest.fail()
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # SPLINE with weights
@@ -1258,8 +1203,6 @@ def test_ogr_dxf_29():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # SPLINE closed
 
@@ -1282,8 +1225,6 @@ def test_ogr_dxf_30():
         pytest.fail()
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # OCS2WCS transformations 1
@@ -1723,8 +1664,7 @@ def test_ogr_dxf_31():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # OCS2WCS transformations 2. Also test RawCodeValues
 
@@ -2296,8 +2236,7 @@ def test_ogr_dxf_32():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test 3D entities (polyface mesh, cylinder, 3D solid)
 
@@ -2378,8 +2317,7 @@ def test_ogr_dxf_33():
         feat.DumpReadable()
         pytest.fail('wrong style string on second 3DSOLID')
 
-    return 'success'
-
+    
 ###############################################################################
 # Writing Triangle geometry and checking if it is written properly
 
@@ -2411,8 +2349,6 @@ def test_ogr_dxf_34():
     ds = None
 
     gdal.Unlink('tmp/triangle_test.dxf')
-
-    return 'success'
 
 ###############################################################################
 # Test reading hatch with elliptical harts
@@ -2519,8 +2455,6 @@ def test_ogr_dxf_35():
         "10.0 5.0 0))"""
     assert ogrtest.check_feature_geometry(feat, expected_wkt) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test reading files with only INSERT content (#7006)
 
@@ -2532,8 +2466,6 @@ def test_ogr_dxf_36():
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 5
-
-    return 'success'
 
 ###############################################################################
 # Create a blocks layer only
@@ -2566,8 +2498,6 @@ def test_ogr_dxf_37():
 
     gdal.Unlink('/vsimem/ogr_dxf_37.dxf')
 
-    return 'success'
-
 ###############################################################################
 # Test degenerated cases of SOLID (#7038)
 
@@ -2588,8 +2518,7 @@ def test_ogr_dxf_38():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test correct reordering of vertices in SOLID (#7038, #7089)
 
@@ -2609,8 +2538,7 @@ def test_ogr_dxf_39():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test handing of OCS vs WCS for MTEXT (#7049)
 
@@ -2624,8 +2552,7 @@ def test_ogr_dxf_40():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test handing of OCS vs WCS for SOLID, HATCH and INSERT (#7077, #7098)
 
@@ -2720,8 +2647,7 @@ def test_ogr_dxf_41():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test insertion of blocks within blocks (#7106)
 
@@ -2784,8 +2710,6 @@ def test_ogr_dxf_42():
     assert lyr.GetFeatureCount() == 4, \
         ('Merging: Expected 4 features, found %d' % lyr.GetFeatureCount())
 
-    return 'success'
-
 ###############################################################################
 # Ensure recursively-included blocks don't fail badly
 
@@ -2795,8 +2719,6 @@ def test_ogr_dxf_43():
     ds = ogr.Open('data/insert-recursive-pair.dxf')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
-
-    return 'success'
 
 ###############################################################################
 # General tests of LEADER and MULTILEADER entities (#7111)
@@ -3018,8 +2940,7 @@ def test_ogr_dxf_44():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test linetype scaling (#7129) and parsing of complex linetypes (#7134)
 
@@ -3052,8 +2973,6 @@ def test_ogr_dxf_45():
 
     assert feat.GetStyleString() == 'PEN(c:#000000,p:"35g 22.5g")', \
         'Got wrong style string (4)'
-
-    return 'success'
 
 ###############################################################################
 # Test handling of DIMENSION anonymous block insertion (#7120)
@@ -3103,8 +3022,7 @@ def test_ogr_dxf_46():
         f.DumpReadable()
         pytest.fail('Wrong style string on DIMENSION text from block')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test handling of DIMENSION fallback when there is no anonymous block (#7120)
 
@@ -3195,8 +3113,7 @@ def test_ogr_dxf_47():
         f.DumpReadable()
         pytest.fail('Wrong style string on third DIMENSION text')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ByLayer and ByBlock color values (#7130)
 
@@ -3287,8 +3204,7 @@ def test_ogr_dxf_48():
         f.DumpReadable()
         pytest.fail('Wrong style string on feature 15')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test block attributes (ATTRIB entities) (#7139)
 
@@ -3347,8 +3263,7 @@ def test_ogr_dxf_49():
         f.DumpReadable()
         pytest.fail('Wrong AttributeTag value on second ATTDEF')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test extended text styling (#7151) and additional ByBlock/ByLayer tests (#7130)
 
@@ -3400,8 +3315,7 @@ def test_ogr_dxf_50():
         f.DumpReadable()
         pytest.fail('Wrong style string on feature 5')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test transformation of text inside blocks (ACAdjustText function)
 
@@ -3426,8 +3340,7 @@ def test_ogr_dxf_51():
             f.DumpReadable()
             pytest.fail('Wrong style string on feature %d' % x)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test HELIX, TRACE, HATCH with spline boundary, MLINE, and INSERT with rows/columns
 
@@ -3529,8 +3442,7 @@ def test_ogr_dxf_52():
         f.DumpReadable()
         pytest.fail('Wrong geometry on SPLINE')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test block base points
 
@@ -3545,8 +3457,7 @@ def test_ogr_dxf_53():
         f.DumpReadable()
         pytest.fail('Wrong feature geometry')
 
-    return 'success'
-
+    
 
 ###############################################################################
 def test_ogr_dxf_insert_too_many_errors():
@@ -3554,8 +3465,7 @@ def test_ogr_dxf_insert_too_many_errors():
     with gdaltest.error_handler():
         ogr.Open('data/insert-too-many-errors.dxf')
 
-    return 'success'
-
+    
 
 ###############################################################################
 
@@ -3574,8 +3484,6 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
     ds = None
     gdal.Unlink(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 # cleanup
 
@@ -3583,8 +3491,6 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
 def test_ogr_dxf_cleanup():
     gdaltest.dxf_layer = None
     gdaltest.dxf_ds = None
-
-    return 'success'
 
 ###############################################################################
 #

@@ -76,8 +76,6 @@ def test_ogr_mysql_1():
     gdaltest.is_mysql_8_or_later = int(f.GetField(0).split('.')[0]) >= 8 and f.GetField(0).find('MariaDB') < 0
     gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -131,8 +129,6 @@ def test_ogr_mysql_2():
     assert gdaltest.mysql_lyr.GetSpatialRef().IsSame(shp_lyr.GetSpatialRef()), \
         'not matching spatial ref'
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -173,7 +169,7 @@ def test_ogr_mysql_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -235,8 +231,7 @@ def test_ogr_mysql_4():
 
         feat_read.Destroy()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -257,7 +252,7 @@ def test_ogr_mysql_5():
 
     gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -290,7 +285,7 @@ def test_ogr_mysql_6():
 
     gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
@@ -321,7 +316,7 @@ def test_ogr_mysql_7():
 
     gdaltest.mysql_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write a feature with too long a text value for a fixed length text field.
@@ -356,8 +351,6 @@ def test_ogr_mysql_8():
                              feat_read.GetField('shortname'))
 
     feat_read.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Verify inplace update of a feature with SetFeature().
@@ -409,8 +402,6 @@ def test_ogr_mysql_9():
 
     feat.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Verify that DeleteFeature() works properly.
 
@@ -434,7 +425,7 @@ def test_ogr_mysql_10():
     gdaltest.mysql_lyr.SetAttributeFilter(None)
 
     if feat is None:
-        return 'success'
+        return
 
     feat.Destroy()
     pytest.fail('DeleteFeature() seems to have had no effect.')
@@ -460,7 +451,7 @@ def test_ogr_mysql_15():
                                              'eas_id', expect)
     gdaltest.mysql_lyr.SetAttributeFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -486,7 +477,7 @@ def test_ogr_mysql_16():
 
     gdaltest.mysql_ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test requesting a non-existent table by name (bug 1480).
@@ -504,8 +495,6 @@ def test_ogr_mysql_17():
     assert count == gdaltest.mysql_ds.GetLayerCount(), \
         'layer count changed unexpectedly.'
 
-    return 'success'
-
 ###############################################################################
 # Test getting a layer by name that was not previously a layer.
 
@@ -521,8 +510,6 @@ def ogr_mysql_18():
 
     assert count + 1 == gdaltest.mysql_ds.GetLayerCount(), \
         'layer count unexpectedly unchanged.'
-
-    return 'success'
 
 ###############################################################################
 # Test reading a layer extent
@@ -548,8 +535,7 @@ def test_ogr_mysql_19():
         print(extent)
         pytest.fail('Extents do not match')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test using reserved keywords as column names and table names
 
@@ -576,7 +562,7 @@ def test_ogr_mysql_20():
     layer.ResetReading()
     feat = layer.GetNextFeature()
     if feat.desc == 'desc' and feat.select == 'select':
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -604,8 +590,6 @@ def test_ogr_mysql_21():
     feat = layer.GetNextFeature()
     assert feat is None
 
-    return 'success'
-
 ###############################################################################
 # Test inserting NULL geometries into a table without a spatial index
 
@@ -628,8 +612,6 @@ def test_ogr_mysql_22():
     layer.ResetReading()
     feat = layer.GetNextFeature()
     assert feat is not None
-
-    return 'success'
 
 ###############################################################################
 # Check for right precision
@@ -667,8 +649,6 @@ def test_ogr_mysql_23():
     gdaltest.mysql_ds.ReleaseResultSet(gdaltest.mysql_lyr)
     gdaltest.mysql_lyr = None
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -685,8 +665,6 @@ def test_ogr_mysql_24():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " '" + gdaltest.mysql_connection_string + "' tpoly")
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test 64 bit FID
@@ -727,8 +705,7 @@ def test_ogr_mysql_72():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test nullable
 
@@ -777,8 +754,6 @@ def test_ogr_mysql_25():
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() == 1
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() == 0
-
-    return 'success'
 
 ###############################################################################
 # Test default values
@@ -859,8 +834,6 @@ def test_ogr_mysql_26():
 
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -898,8 +871,7 @@ def test_ogr_mysql_longlat():
         pytest.fail('Extents do not match')
 
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -924,8 +896,6 @@ def test_ogr_mysql_cleanup():
 
     gdaltest.mysql_ds.Destroy()
     gdaltest.mysql_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

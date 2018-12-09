@@ -51,8 +51,7 @@ def test_misc_1():
         name = 'mem_%d' % i
         tab_ds[i] = drv.Create(name, 1, 1, 1)
         assert tab_ds[i] is not None
-    return 'success'
-
+    
 ###############################################################################
 # Test that OpenShared() works as expected by opening a big number of times
 # the same dataset with it. If it did not work, that would exhaust the system
@@ -66,8 +65,7 @@ def test_misc_2():
         tab_ds[i] = gdal.OpenShared('data/byte.tif')
         assert tab_ds[i] is not None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test OpenShared() with a dataset whose filename != description (#2797)
 
@@ -90,8 +88,6 @@ def test_misc_3():
     ds = None
     ds2 = None
 
-    return 'success'
-
 ###############################################################################
 # Test Create() with invalid arguments
 
@@ -108,8 +104,6 @@ def test_misc_4():
     drv.Delete('tmp/foo')
 
     gdal.PopErrorHandler()
-
-    return 'success'
 
 
 ###############################################################################
@@ -378,8 +372,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                             pytest.fail(reason)
     ds = None
 
-    return 'success'
-
 
 def test_misc_6():
 
@@ -430,8 +422,6 @@ def test_misc_6():
 
     gdal.PopErrorHandler()
 
-    return 'success'
-
 ###############################################################################
 # Test gdal.InvGeoTransform()
 
@@ -449,8 +439,7 @@ def test_misc_7():
     for i in range(6):
         assert abs(res[i] - expected_inv_gt[i]) <= 1e-6
 
-    return 'success'
-
+    
 ###############################################################################
 # Test gdal.ApplyGeoTransform()
 
@@ -466,8 +455,6 @@ def test_misc_8():
     res = gdal.ApplyGeoTransform(gt, 10, 1)
     assert res == [11.0, 19.0]
 
-    return 'success'
-
 ###############################################################################
 # Test setting and retrieving > 2 GB values for GDAL max cache (#3689)
 
@@ -480,8 +467,6 @@ def test_misc_9():
     gdal.SetCacheMax(old_val)
 
     assert ret_val == 3000000000, 'did not get expected value'
-
-    return 'success'
 
 
 ###############################################################################
@@ -510,8 +495,7 @@ def test_misc_10():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test that we can open a symlink whose pointed filename isn't a real
@@ -535,8 +519,6 @@ def test_misc_11():
     os.remove('tmp/symlink.tif')
 
     assert desc == 'GTIFF_DIR:1:data/byte.tif', 'did not get expected description'
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy() with a target filename in a non-existing dir
@@ -603,8 +585,7 @@ def test_misc_12():
 
             gdal.Unlink('/vsimem/misc_12_src.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateCopy() with incompatible driver types (#5912)
 
@@ -624,8 +605,6 @@ def test_misc_13():
     out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', ds)
     gdal.PopErrorHandler()
     assert out_ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test ConfigureLogging()
@@ -691,8 +670,7 @@ def test_misc_14():
         gdal.SetConfigOption('CPL_DEBUG', prev_debug)
         logger.removeHandler(handler)
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test SetErrorHandler
@@ -753,8 +731,7 @@ def test_misc_15():
         gdal.SetErrorHandler('CPLDefaultErrorHandler')
         gdal.SetConfigOption('CPL_DEBUG', prev_debug)
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -765,8 +742,7 @@ def test_misc_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_misc_1,
                  test_misc_2,

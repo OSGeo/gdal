@@ -82,8 +82,7 @@ def test_osr_basic_1():
                                  % (utm_srs.GetAuthorityName(auth[0]),
                                      auth[1], auth[0]))
 
-    return 'success'
-
+    
 ###############################################################################
 # Simple default NAD83 State Plane zone.
 
@@ -124,8 +123,7 @@ def test_osr_basic_2():
                                  % (srs.GetAuthorityCode(auth[0]),
                                     auth[1], auth[0]))
 
-    return 'success'
-
+    
 ###############################################################################
 # NAD83 State Plane zone, but overridden to be in Feet.
 
@@ -186,8 +184,7 @@ def test_osr_basic_3():
         print('%.16g' % srs.GetTargetLinearUnits(None))
         pytest.fail('Didnt get Foot linear units')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Translate a coordinate system with nad shift into to PROJ.4 and back
@@ -212,8 +209,6 @@ def test_osr_basic_4():
     assert srs2.GetTOWGS84() == (1, 2, 3, 0, 0, 0, 0), \
         'GetTOWGS84() result is wrong after PROJ.4 conversion.'
 
-    return 'success'
-
 ###############################################################################
 # Test URN support for OGC:CRS84.
 
@@ -223,8 +218,6 @@ def test_osr_basic_5():
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC:1.3:CRS84')
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
     assert wkt_1 == wkt_2, 'CRS84 lookup not as expected.'
-
-    return 'success'
 
 ###############################################################################
 # Test URN support for EPSG
@@ -251,8 +244,7 @@ def test_osr_basic_6():
         print(wkt_1)
         pytest.fail('EPSG:4326 urn lookup not as expected.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test URN support for auto projection.
 
@@ -262,8 +254,6 @@ def test_osr_basic_7():
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
     wkt_2 = 'PROJCS["UTM Zone 11, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]]]'
     assert wkt_1 == wkt_2, 'AUTO42001 urn lookup not as expected.'
-
-    return 'success'
 
 ###############################################################################
 # Test the SetLinearUnitsAndUpdateParameters() method.
@@ -290,8 +280,6 @@ def test_osr_basic_8():
 
     assert abs(fe - 3280.840) <= 0.01, 'wrong updated false easting value.'
 
-    return 'success'
-
 ###############################################################################
 # Test the Validate() method.
 
@@ -301,8 +289,6 @@ def test_osr_basic_9():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("PROJCS[\"unnamed\",GEOGCS[\"unnamed ellipse\",DATUM[\"unknown\",SPHEROID[\"unnamed\",6378137,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Mercator_2SP\"],PARAMETER[\"standard_parallel_1\",0],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"]]")
     assert srs.Validate() == 0
-
-    return 'success'
 
 
 ###############################################################################
@@ -336,8 +322,6 @@ def test_osr_basic_10():
     AUTHORITY["EPSG","2038"]]""")
 
     assert srs.Validate() == 0
-
-    return 'success'
 
 ###############################################################################
 # Test the IsSame() method (and the IsSameGeogCS() method through that)
@@ -391,7 +375,7 @@ def test_osr_basic_11():
     AXIS["Northing",NORTH]]""")
 
     if srs1.IsSame(srs2):
-        return 'success'
+        return
 
     pytest.fail()
 
@@ -404,8 +388,6 @@ def test_osr_basic_12():
     wkt_1 = osr.GetUserInputAsWKT('CRS:84')
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
     assert wkt_1 == wkt_2, 'CRS:84 lookup not as expected.'
-
-    return 'success'
 
 ###############################################################################
 # Test GEOCCS lookup in supporting data files.
@@ -424,8 +406,6 @@ def test_osr_basic_13():
     assert srs.IsGeocentric(), 'srs not recognised as geocentric.'
 
     assert srs.Validate() == 0, 'epsg geoccs import does not validate!'
-
-    return 'success'
 
 ###############################################################################
 # Manually setup a simple geocentric/wgs84 srs.
@@ -446,8 +426,6 @@ def test_osr_basic_14():
     assert srs.IsGeocentric(), 'srs not recognised as geocentric.'
 
     assert srs.Validate() == 0, 'geocentric srs not recognised as valid.'
-
-    return 'success'
 
 ###############################################################################
 # Test validation and fixup methods.
@@ -475,8 +453,6 @@ def test_osr_basic_15():
     srs.Fixup()
 
     assert srs.Validate() == 0, 'Fixup() failed to correct srs.'
-
-    return 'success'
 
 ###############################################################################
 # Test OSRSetGeocCS()
@@ -551,8 +527,7 @@ def test_osr_basic_16():
         print('Expected:%s' % expect_wkt)
         pytest.fail('Did not get expected result.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test OGC URL support
 
@@ -563,8 +538,6 @@ def test_osr_basic_17():
     wkt_2 = osr.GetUserInputAsWKT('http://www.opengis.net/def/crs/EPSG/0/4326')
     assert wkt_1 == wkt_2, 'CRS URL parsing not as expected.'
 
-    return 'success'
-
 ###############################################################################
 # Test OGC URL support for compound CRS
 
@@ -574,8 +547,6 @@ def test_osr_basic_18():
     # This is a dummy one, but who cares
     wkt = osr.GetUserInputAsWKT('http://www.opengis.net/def/crs-compound?1=http://www.opengis.net/def/crs/EPSG/0/4326&2=http://www.opengis.net/def/crs/EPSG/0/4326')
     assert wkt.find('COMPD_CS') == 0, 'CRS URL parsing not as expected.'
-
-    return 'success'
 
 ###############################################################################
 # Test well known GCS names against their corresponding EPSG definitions (#6080)
@@ -615,8 +586,6 @@ def test_osr_basic_19():
 
     assert sr.ExportToWkt() == sr_ref.ExportToWkt()
 
-    return 'success'
-
 ###############################################################################
 # Test GetAxisName() and GetAxisOrientation() and GetAngularUnitsName()
 
@@ -635,8 +604,6 @@ def test_osr_basic_20():
     assert sr.GetAxisOrientation('GEOGCS', 1) == osr.OAO_East
 
     assert sr.GetAngularUnitsName() == 'degree'
-
-    return 'success'
 
 ###############################################################################
 # Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
@@ -693,8 +660,6 @@ def test_osr_basic_21():
     sr2_not_equivalent.ImportFromWkt(wkt2_not_equivalent)
 
     assert sr1.IsSame(sr2_not_equivalent) != 1
-
-    return 'success'
 
 ###############################################################################
 # Test LCC_2SP -> LCC_1SP -> LCC_2SP
@@ -873,8 +838,6 @@ def test_osr_basic_22():
     expected_sr3.ImportFromWkt(expected_sr3_wkt)
     assert sr3.IsSame(expected_sr3) != 0
 
-    return 'success'
-
 ###############################################################################
 # Test LCC_1SP -> LCC_2SP -> LCC_1SP
 
@@ -935,8 +898,6 @@ def test_osr_basic_23():
     sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
     assert sr3.IsSame(sr) != 0
 
-    return 'success'
-
 ###############################################################################
 # Test Mercator_1SP -> Mercator_2SP -> Mercator_1SP
 
@@ -986,8 +947,6 @@ def test_osr_basic_24():
     # Back to LCC_2SP
     sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_MERCATOR_1SP)
     assert sr3.IsSame(sr) != 0
-
-    return 'success'
 
 ###############################################################################
 # Test corner cases of ConvertToOtherProjection()
@@ -1247,8 +1206,6 @@ def test_osr_basic_25():
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     assert sr2 is None
 
-    return 'success'
-
 ###############################################################################
 # Test corner cases of osr.SetGeocCS()
 
@@ -1269,8 +1226,6 @@ def test_osr_basic_setgeogcs():
     sr.ImportFromWkt('FOO["bar",GEOGCS[]]')
     assert sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0) != 0, sr.ExportToWkt()
     assert sr.ExportToWkt() == 'FOO["bar",GEOGCS[]]'
-
-    return 'success'
 
 ###############################################################################
 

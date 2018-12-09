@@ -47,8 +47,7 @@ def test_vrtlut_1():
 # Cleanup.
 
 def test_vrtlut_cleanup():
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_vrtlut_1,

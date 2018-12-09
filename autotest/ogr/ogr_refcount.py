@@ -52,8 +52,7 @@ def test_ogr_refcount_1():
         gdaltest.post_reason('Reference count not 1 on one of datasources.')
         return 'failed'
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that reopening one of the datasets returns the existing shared handle.
 
@@ -80,8 +79,6 @@ def test_ogr_refcount_2():
 
     gdaltest.ds_3 = ds_3
 
-    return 'success'
-
 ###############################################################################
 # Verify that releasing the datasources has the expected behaviour.
 
@@ -95,12 +92,6 @@ def test_ogr_refcount_3():
         return 'failed'
 
     gdaltest.ds_1.Release()
-
-    # if ogr.GetOpenDSCount() != 1:
-    #    gdaltest.post_reason( 'Open DS count not back to one.' )
-    #    return 'failed'
-
-    return 'success'
 
 ###############################################################################
 # Verify that we can walk the open datasource list.
@@ -117,19 +108,12 @@ def test_ogr_refcount_4():
     except:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 
 
 def test_ogr_refcount_cleanup():
     gdaltest.ds_2.Release()
-
-    # if ogr.GetOpenDSCount() != 0:
-    #    gdaltest.post_reason( 'Open DS count not back to zero.' )
-    #    return 'failed'
-
-    return 'success'
 
 
 gdaltest_list = [

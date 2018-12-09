@@ -55,8 +55,7 @@ def test_vsiwebhdfs_init():
         if gdaltest.webhdfs_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -77,8 +76,6 @@ def test_vsiwebhdfs_start_webserver():
         str(gdaltest.webserver_port) + '/webhdfs/v1'
     gdaltest.webhdfs_redirected_url = 'http://non_existing_host:' + \
         str(gdaltest.webserver_port) + '/redirected'
-
-    return 'success'
 
 ###############################################################################
 # Test VSIFOpenL()
@@ -137,8 +134,6 @@ def test_vsiwebhdfs_open():
 
     gdal.VSIFCloseL(f)
 
-    return 'success'
-
 ###############################################################################
 # Test VSIStatL()
 
@@ -175,8 +170,6 @@ def test_vsiwebhdfs_stat():
             gdaltest.webhdfs_base_connection + '/unexisting')
     assert stat_res is None
 
-    return 'success'
-
 ###############################################################################
 # Test ReadDir()
 
@@ -210,8 +203,6 @@ def test_vsiwebhdfs_readdir():
         dir_contents = gdal.ReadDir(
             gdaltest.webhdfs_base_connection + 'foo/error_test/')
     assert dir_contents is None
-
-    return 'success'
 
 ###############################################################################
 # Test write
@@ -340,8 +331,7 @@ def test_vsiwebhdfs_write():
         with webserver.install_http_handler(handler):
             assert gdal.VSIFCloseL(f) != 0
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Unlink()
 
@@ -396,8 +386,6 @@ def test_vsiwebhdfs_unlink():
         with gdaltest.error_handler():
             ret = gdal.Unlink(gdaltest.webhdfs_base_connection + '/foo/bar')
     assert ret == -1
-
-    return 'success'
 
 ###############################################################################
 # Test Mkdir() / Rmdir()
@@ -465,8 +453,6 @@ def test_vsiwebhdfs_mkdir_rmdir():
         ret = gdal.Rmdir(gdaltest.webhdfs_base_connection + '/foo/dir_error')
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -480,8 +466,6 @@ def test_vsiwebhdfs_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 # Nominal cases (require valid credentials)
@@ -560,7 +544,7 @@ def vsiwebhdfs_extra_1():
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
-        return 'success'
+        return
 
     f = open_for_read('/vsiwebhdfs/' + webhdfs_url)
     assert f is not None
@@ -568,8 +552,6 @@ def vsiwebhdfs_extra_1():
     gdal.VSIFCloseL(f)
 
     assert len(ret) == 1
-
-    return 'success'
 
 ###############################################################################
 
@@ -579,8 +561,7 @@ def test_vsiwebhdfs_cleanup():
     for var in gdaltest.webhdfs_vars:
         gdal.SetConfigOption(var, gdaltest.webhdfs_vars[var])
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_vsiwebhdfs_init,
                  test_vsiwebhdfs_start_webserver,

@@ -67,8 +67,7 @@ def test_gdal_proximity_1():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Try several options
 
@@ -93,8 +92,7 @@ def test_gdal_proximity_2():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Try input nodata option
 
@@ -119,8 +117,7 @@ def test_gdal_proximity_3():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -136,8 +133,7 @@ def test_gdal_proximity_cleanup():
         except OSError:
             pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_proximity_1,

@@ -54,8 +54,7 @@ def test_osr_micoordsys_1():
         print(srs.ExportToPrettyWkt())
         pytest.fail('Can not export Lambert Conformal Conic projection.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test the osr.SpatialReference.ExportToMICoordSys() function.
 #
@@ -82,8 +81,6 @@ def test_osr_micoordsys_2():
     assert proj == 'Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0', \
         'Can not import Lambert Conformal Conic projection.'
 
-    return 'success'
-
 ###############################################################################
 # Test EPSG:3857
 #
@@ -107,8 +104,6 @@ def test_osr_micoordsys_3():
     proj = srs.ExportToMICoordSys()
 
     assert proj == 'Earth Projection 10, 157, "m", 0'
-
-    return 'success'
 
 
 gdaltest_list = [

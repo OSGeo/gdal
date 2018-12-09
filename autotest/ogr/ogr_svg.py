@@ -52,8 +52,6 @@ def test_ogr_svg_init():
 
     assert gdaltest.svg_ds.GetLayerCount() == 3, 'wrong number of layers'
 
-    return 'success'
-
 ###############################################################################
 # Test
 
@@ -98,8 +96,7 @@ def test_ogr_svg_1():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -107,7 +104,6 @@ def test_ogr_svg_1():
 def test_ogr_svg_cleanup():
 
     gdaltest.svg_ds = None
-    return 'success'
 
 
 gdaltest_list = [

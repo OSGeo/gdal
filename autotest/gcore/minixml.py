@@ -80,8 +80,6 @@ def test_minixml_1():
 
     assert node[2][1] == 'abc', 'Wrong element content.'
 
-    return 'success'
-
 ###############################################################################
 # Serialize an XML Tree
 
@@ -92,7 +90,6 @@ def test_minixml_2():
     doc_target = '<TestDoc style="123">\n  <sub1 />\n  <sub2>abc</sub2>\n</TestDoc>\n'
     doc_got = gdal.SerializeXMLTree(tree)
     assert doc_got == doc_target, 'serialize xml tree failed.'
-    return 'success'
 
 ###############################################################################
 # Read XML document with complex DOCTYPE element.
@@ -135,8 +132,6 @@ def test_minixml_3():
 
     assert len(subnode) == 3, 'Wrong number of children.'
 
-    return 'success'
-
 ###############################################################################
 # Parse and serialize an XML Tree with a <?xml> prolog
 
@@ -146,8 +141,6 @@ def test_minixml_4():
     xml = """<?xml encoding="utf-8"?>\n<foo />\n"""
     got_xml = gdal.SerializeXMLTree(gdal.ParseXMLString(xml))
     assert xml == got_xml, 'serialize xml tree failed.'
-
-    return 'success'
 
 ###############################################################################
 # Parse malformed XML.  Complains, but still makes a tree.
@@ -171,8 +164,7 @@ def test_minixml_5():
 
         assert tree is not None, ('Tree is None: "%s"' % tree)
 
-    return 'success'
-
+    
 ###############################################################################
 # Parse malformed XML.
 
@@ -205,8 +197,7 @@ def test_minixml_6():
 
         assert tree is None, ('Tree is not None: "%s"' % tree)
 
-    return 'success'
-
+    
 ###############################################################################
 # Parse malformed XML.  Pass without warning, but should not pass.
 
@@ -229,8 +220,7 @@ def test_minixml_7():
 
         assert tree is not None, ('Tree is None: "%s"' % tree)
 
-    return 'success'
-
+    
 ###############################################################################
 # Parse XML with too many nesting
 
@@ -246,15 +236,12 @@ def test_minixml_8():
     assert tree is None, 'expected None tree'
     assert gdal.GetLastErrorMsg() != '', 'expected error message'
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup
 
 def test_minixml_cleanup():
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_minixml_1,

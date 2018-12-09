@@ -55,7 +55,7 @@ def test_wmts_1():
         gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
         gdal.SetConfigOption('GDAL_DEFAULT_WMS_CACHE_PATH', '/vsimem/cache')
 
-        return 'success'
+        return
     pytest.skip()
 
 ###############################################################################
@@ -87,8 +87,6 @@ def test_wmts_2():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Error: invalid URL
 
@@ -103,8 +101,6 @@ def test_wmts_3():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Error: invalid URL
 
@@ -118,8 +114,6 @@ def test_wmts_4():
     ds = gdal.Open('WMTS:/vsimem/non_existing')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error: invalid XML in GetCapabilities response
@@ -137,8 +131,6 @@ def test_wmts_5():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Error: invalid content in GetCapabilities response
 
@@ -155,8 +147,6 @@ def test_wmts_6():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Error: no layers
 
@@ -172,8 +162,6 @@ def test_wmts_7():
     ds = gdal.Open('WMTS:/vsimem/empty_getcapabilities.xml')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error: missing TileMatrixSetLink and Style
@@ -196,8 +184,6 @@ def test_wmts_8():
     ds = gdal.Open('WMTS:/vsimem/missing.xml')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error: missing TileMatrixSet
@@ -227,8 +213,6 @@ def test_wmts_9():
     ds = gdal.Open('WMTS:/vsimem/missing_tms.xml')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error: Missing SupportedCRS
@@ -261,8 +245,6 @@ def test_wmts_10():
     ds = gdal.Open('WMTS:/vsimem/missing_SupportedCRS.xml')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error: Cannot find TileMatrix in TileMatrixSet
@@ -297,8 +279,6 @@ def test_wmts_11():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Error: Missing required element in TileMatrix element
 
@@ -332,8 +312,6 @@ def test_wmts_12():
     ds = gdal.Open('WMTS:/vsimem/missing_required_element_in_tilematrix.xml')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error: Missing ResourceURL
@@ -375,8 +353,6 @@ def test_wmts_12bis():
     ds = gdal.Open('WMTS:/vsimem/wmts_12bis.xml')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Minimal
@@ -477,8 +453,6 @@ def test_wmts_13():
 
     ds = None
     wmts_CleanCache()
-
-    return 'success'
 
 ###############################################################################
 # Nominal RESTful
@@ -712,8 +686,6 @@ def test_wmts_14():
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    return 'success'
-
 ###############################################################################
 # Nominal KVP
 
@@ -856,8 +828,6 @@ def test_wmts_15():
     ds = None
     wmts_CleanCache()
 
-    return 'success'
-
 ###############################################################################
 # AOI from layer WGS84BoundingBox
 
@@ -931,8 +901,6 @@ def test_wmts_16():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
     assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
-
-    return 'success'
 
 ###############################################################################
 # AOI from layer BoundingBox
@@ -1008,8 +976,6 @@ def test_wmts_17():
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
     assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
 
-    return 'success'
-
 ###############################################################################
 # AOI from TileMatrixSet BoundingBox
 
@@ -1083,8 +1049,6 @@ def test_wmts_18():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
     assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
-
-    return 'success'
 
 ###############################################################################
 # AOI from TileMatrixSetLimits
@@ -1164,8 +1128,6 @@ def test_wmts_19():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
     assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
-
-    return 'success'
 
 ###############################################################################
 # AOI from layer BoundingBox but restricted with TileMatrixSetLimits
@@ -1249,8 +1211,6 @@ def test_wmts_20():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
     assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
-
-    return 'success'
 
 ###############################################################################
 # Test ExtendBeyondDateLine
@@ -1345,8 +1305,6 @@ def test_wmts_21():
 
     assert ds.GetRasterBand(1).ReadRaster(256, 0, 256, 256) == tmp0_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
 
-    return 'success'
-
 ###############################################################################
 # Test when WGS84BoundingBox is a densified reprojection of the tile matrix bbox
 
@@ -1402,8 +1360,6 @@ def test_wmts_22():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
     assert ds.GetProjectionRef().find('3067') >= 0
-
-    return 'success'
 ###############################################################################
 #
 
@@ -1459,8 +1415,7 @@ def wmts_23(imagetype, expected_cs):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == expected_cs[i]
 
-    return 'success'
-
+    
 
 def test_wmts_23_gray():
     return wmts_23('gray', [60137, 60137, 60137, 4428])
@@ -1535,8 +1490,6 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
     ds = None
 
     gdal.Unlink(inputXml)
-
-    return 'success'
 
 ###############################################################################
 #
@@ -1805,8 +1758,6 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
 
     gdal.Unlink(inputXml)
 
-    return 'success'
-
 
 
 ###############################################################################
@@ -1846,8 +1797,7 @@ def test_wmts_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_wmts_1,

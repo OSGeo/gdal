@@ -52,8 +52,6 @@ def test_ogr_geos_union():
 
     assert not ogrtest.check_feature_geometry(result, 'MULTIPOINT (10 20,30 20)')
 
-    return 'success'
-
 ###############################################################################
 # Test polygon intersection.
 
@@ -70,8 +68,6 @@ def test_ogr_geos_intersection():
 
     assert not ogrtest.check_feature_geometry(result, 'POLYGON ((0 0,5 5,10 0,0 0))'), \
         ('Got: %s' % result.ExportToWkt())
-
-    return 'success'
 
 ###############################################################################
 # Test polygon difference.
@@ -91,8 +87,6 @@ def test_ogr_geos_difference():
                                       'POLYGON ((5 5,10 10,10 0,5 5))')), \
         ('Got: %s' % result.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 # Test polygon symmetric difference.
 
@@ -111,8 +105,6 @@ def test_ogr_geos_symmetric_difference():
                                       'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))')), \
         ('Got: %s' % result.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 # Test polygon symmetric difference.
 
@@ -130,8 +122,6 @@ def test_ogr_geos_sym_difference():
     assert (not ogrtest.check_feature_geometry(result,
                                       'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))')), \
         ('Got: %s' % result.ExportToWkt())
-
-    return 'success'
 
 ###############################################################################
 # Test Intersect().
@@ -156,8 +146,6 @@ def test_ogr_geos_intersect():
 
     assert result == 0, 'wrong result (got true)'
 
-    return 'success'
-
 ###############################################################################
 # Test disjoint().
 
@@ -180,8 +168,6 @@ def test_ogr_geos_disjoint():
     result = g1.Disjoint(g2)
 
     assert result != 0, 'wrong result (got false)'
-
-    return 'success'
 
 ###############################################################################
 # Test touches.
@@ -206,8 +192,6 @@ def test_ogr_geos_touches():
 
     assert result == 0, 'wrong result (got true)'
 
-    return 'success'
-
 ###############################################################################
 # Test crosses.
 
@@ -231,8 +215,6 @@ def test_ogr_geos_crosses():
 
     assert result == 0, 'wrong result (got true)'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -252,8 +234,6 @@ def test_ogr_geos_within():
 
     assert result == 0, 'wrong result (got true)'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -272,8 +252,6 @@ def test_ogr_geos_contains():
     result = g1.Contains(g2)
 
     assert result == 0, 'wrong result (got true)'
-
-    return 'success'
 
 ###############################################################################
 
@@ -298,8 +276,6 @@ def test_ogr_geos_overlaps():
 
     assert result != 0, 'wrong result (got false)'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -315,8 +291,6 @@ def test_ogr_geos_buffer():
     assert (ogrtest.check_feature_geometry(result,
                                       'POLYGON ((0 -1,-0.555570233019607 -0.831469612302542,-0.923879532511288 -0.382683432365087,-0.98078528040323 0.19509032201613,-0.707106781186547 0.707106781186547,9.292893218813452 10.707106781186548,9.690983005625053 10.951056516295154,10.156434465040231 10.987688340595138,10.587785252292473 10.809016994374947,10.891006524188368 10.453990499739547,11 10,11 0,10.866025403784439 -0.5,10.5 -0.866025403784439,10 -1,0 -1))') == 0), \
         ('Got: %s' % result.ExportToWkt())
-
-    return 'success'
 
 ###############################################################################
 
@@ -342,8 +316,6 @@ def test_ogr_geos_centroid():
     assert ogrtest.check_feature_geometry(centroid2, 'POINT (8.0 1.0)') == 0, \
         ('Got: %s' % centroid2.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -360,8 +332,6 @@ def test_ogr_geos_centroid_multipolygon():
                                       'POINT (1.5 0.5)') == 0), \
         ('Got: %s' % centroid.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -375,8 +345,6 @@ def test_ogr_geos_centroid_point_empty():
     centroid = g1.Centroid()
 
     assert centroid.ExportToWkt() == 'POINT EMPTY', ('Got: %s' % centroid.ExportToWkt())
-
-    return 'success'
 
 ###############################################################################
 
@@ -394,8 +362,6 @@ def test_ogr_geos_simplify_linestring():
     assert simplify.ExportToWkt() == 'LINESTRING (0 0,10 0)', \
         ('Got: %s' % simplify.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -411,8 +377,6 @@ def test_ogr_geos_simplifypreservetopology_linestring():
 
     assert simplify.ExportToWkt() == 'LINESTRING (0 0,10 0)', \
         ('Got: %s' % simplify.ExportToWkt())
-
-    return 'success'
 
 ###############################################################################
 
@@ -430,8 +394,6 @@ def test_ogr_geos_unioncascaded():
     assert cascadedunion.ExportToWkt() == 'POLYGON ((0 0,0 1,0.5 1.0,0.5 1.5,1.5 1.5,1.5 0.5,1.0 0.5,1 0,0 0))', \
         ('Got: %s' % cascadedunion.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -446,8 +408,6 @@ def test_ogr_geos_convexhull():
 
     assert convexhull.ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,1 0,0 0))', \
         ('Got: %s' % convexhull.ExportToWkt())
-
-    return 'success'
 
 ###############################################################################
 
@@ -465,8 +425,6 @@ def test_ogr_geos_distance():
     assert abs(distance - 1) <= 0.00000000001, \
         ('Distance() result wrong, got %g.' % distance)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -480,8 +438,6 @@ def test_ogr_geos_isring():
     isring = g1.IsRing()
 
     assert isring == 1
-
-    return 'success'
 
 ###############################################################################
 
@@ -497,8 +453,6 @@ def test_ogr_geos_issimple_true():
 
     assert isring == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -512,8 +466,6 @@ def test_ogr_geos_issimple_false():
     isring = g1.IsSimple()
 
     assert isring == 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -529,8 +481,6 @@ def test_ogr_geos_isvalid_true():
 
     assert isring == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -544,8 +494,6 @@ def test_ogr_geos_isvalid_true_linestringM():
     isring = g1.IsValid()
 
     assert isring == 1
-
-    return 'success'
 
 ###############################################################################
 
@@ -561,8 +509,6 @@ def test_ogr_geos_isvalid_true_circularStringM():
 
     assert isring == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -576,8 +522,6 @@ def test_ogr_geos_isvalid_true_triangle():
     isring = g1.IsValid()
 
     assert isring == 1
-
-    return 'success'
 
 ###############################################################################
 
@@ -594,8 +538,6 @@ def test_ogr_geos_isvalid_false():
 
     assert isring == 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -609,8 +551,6 @@ def test_ogr_geos_pointonsurface():
     pointonsurface = g1.PointOnSurface()
 
     assert pointonsurface.Within(g1) == 1
-
-    return 'success'
 
 ###############################################################################
 
@@ -630,8 +570,6 @@ def test_ogr_geos_DelaunayTriangulation():
 
     assert triangulation.ExportToWkt() == 'GEOMETRYCOLLECTION (POLYGON ((0 1,0 0,1 0,0 1)),POLYGON ((0 1,1 0,1 1,0 1)))', \
         ('Got: %s' % triangulation.ExportToWkt())
-
-    return 'success'
 
 ###############################################################################
 
@@ -653,8 +591,6 @@ def test_ogr_geos_polygonize():
     g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT EMPTY)')
     got = g.Polygonize()
     assert got is None, ('Got: %s' % got.ExportToWkt())
-
-    return 'success'
 
 
 gdaltest_list = [

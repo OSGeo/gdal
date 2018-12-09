@@ -90,8 +90,6 @@ def test_vrtfilt_3():
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'vrt_sources')
     assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
-    return 'success'
-
 ###############################################################################
 # Variant for SetMetadataItem('source_0', xml, 'vrt_sources')
 
@@ -119,8 +117,6 @@ def test_vrtfilt_4():
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'new_vrt_sources')
     assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
-    return 'success'
-
 ###############################################################################
 # Variant for SetMetadata(md, 'vrt_sources')
 
@@ -146,8 +142,6 @@ def test_vrtfilt_5():
     vrt_ds.GetRasterBand(1).SetMetadata(md, 'vrt_sources')
     assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
-    return 'success'
-
 ###############################################################################
 # Verify separable Gaussian blur filter.
 
@@ -162,8 +156,7 @@ def test_vrtfilt_6():
 
 
 def test_vrtfilt_cleanup():
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_vrtfilt_1,

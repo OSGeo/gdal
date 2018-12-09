@@ -42,8 +42,6 @@ import pytest
 def test_kea_init():
     gdaltest.kea_driver = gdal.GetDriverByName('KEA')
 
-    return 'success'
-
 ###############################################################################
 # Test copying a reference sample with CreateCopy()
 
@@ -75,8 +73,7 @@ def test_kea_2():
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
         ret = tst.testCreateCopy(check_minmax=1)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Create() for various data types
 
@@ -97,8 +94,7 @@ def test_kea_3():
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
         ret = tst.testCreate(out_bands=1, check_minmax=1)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Create()/CreateCopy() error cases or limit cases
 
@@ -181,8 +177,6 @@ def test_kea_4():
     gdaltest.kea_driver.Delete('tmp/src.kea')
     gdaltest.kea_driver.Delete('tmp/out.kea')
 
-    return 'success'
-
 ###############################################################################
 # Test Create() creation options
 
@@ -205,8 +199,6 @@ def test_kea_5():
     assert ds.GetProjectionRef() == ''
     ds = None
     gdaltest.kea_driver.Delete('tmp/out.kea')
-
-    return 'success'
 
 ###############################################################################
 # Test metadata
@@ -258,8 +250,6 @@ def test_kea_6():
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
     gdaltest.kea_driver.Delete('tmp/out2.kea')
-
-    return 'success'
 
 ###############################################################################
 # Test georef
@@ -314,8 +304,6 @@ def test_kea_7():
     gdaltest.kea_driver.Delete('tmp/out.kea')
     gdaltest.kea_driver.Delete('tmp/out2.kea')
 
-    return 'success'
-
 ###############################################################################
 # Test colortable
 
@@ -351,8 +339,7 @@ def test_kea_8():
         gdaltest.kea_driver.Delete('tmp/out.kea')
         gdaltest.kea_driver.Delete('tmp/out2.kea')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test color interpretation
 
@@ -378,8 +365,6 @@ def test_kea_9():
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
     gdaltest.kea_driver.Delete('tmp/out2.kea')
-
-    return 'success'
 
 ###############################################################################
 # Test nodata
@@ -436,8 +421,7 @@ def test_kea_10():
         gdaltest.kea_driver.Delete('tmp/out.kea')
         gdaltest.kea_driver.Delete('tmp/out2.kea')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test AddBand
 
@@ -461,8 +445,6 @@ def test_kea_11():
     ds = None
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
-
-    return 'success'
 
 ###############################################################################
 # Test RAT
@@ -570,8 +552,6 @@ def test_kea_12():
     gdaltest.kea_driver.Delete('tmp/out.kea')
     gdaltest.kea_driver.Delete('tmp/out2.kea')
 
-    return 'success'
-
 ###############################################################################
 # Test overviews
 
@@ -598,8 +578,6 @@ def test_kea_13():
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
     gdaltest.kea_driver.Delete('tmp/out2.kea')
-
-    return 'success'
 
 ###############################################################################
 # Test mask bands
@@ -628,8 +606,6 @@ def test_kea_14():
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
     gdaltest.kea_driver.Delete('tmp/out2.kea')
-
-    return 'success'
 
 
 gdaltest_list = [

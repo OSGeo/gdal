@@ -54,8 +54,6 @@ def test_jp2openjpeg_1():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
-    return 'success'
-
 ###############################################################################
 # Open byte.jp2
 
@@ -114,8 +112,6 @@ def test_jp2openjpeg_3():
     ds = ogr.Open('data/int16.jp2')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test copying byte.jp2
 
@@ -173,8 +169,6 @@ def test_jp2openjpeg_4(out_filename='tmp/jp2openjpeg_4.jp2'):
 
     assert cs == 50054, 'bad checksum'
 
-    return 'success'
-
 
 def test_jp2openjpeg_4_vsimem():
     return test_jp2openjpeg_4('/vsimem/jp2openjpeg_4.jp2')
@@ -208,8 +202,6 @@ def test_jp2openjpeg_6():
     ds.GetRasterBand(1).Checksum()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
@@ -241,8 +233,6 @@ def test_jp2openjpeg_8():
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
-    return 'success'
-
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
@@ -259,8 +249,6 @@ def test_jp2openjpeg_9():
         'geotransform differs from expected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test YCBCR420 creation option
@@ -283,8 +271,6 @@ def test_jp2openjpeg_10():
 
     # Quite a bit of difference...
     assert maxdiff <= 12, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
@@ -321,8 +307,6 @@ def test_jp2openjpeg_11():
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
-
-    return 'success'
 
 ###############################################################################
 # Check that PAM overrides internal georeferencing (#5279)
@@ -364,8 +348,6 @@ def test_jp2openjpeg_12():
     gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_12.jp2')
 
     assert gt == (1000, 1, 0, 2000, 0, -1)
-
-    return 'success'
 
 ###############################################################################
 # Check that PAM overrides internal GCPs (#5279)
@@ -413,8 +395,6 @@ def test_jp2openjpeg_13():
     assert len(gcps) == 1
     assert wkt.find('32631') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Check that we get GCPs even there's no projection info
 
@@ -426,8 +406,6 @@ def test_jp2openjpeg_14():
 
     ds = gdal.Open('data/byte_2gcps.jp2')
     assert ds.GetGCPCount() == 2
-
-    return 'success'
 
 ###############################################################################
 # Test multi-threading reading
@@ -447,8 +425,6 @@ def test_jp2openjpeg_15():
     ds = None
     gdaltest.jp2openjpeg_drv.Delete('/vsimem/jp2openjpeg_15.jp2')
     assert got_data == data
-
-    return 'success'
 
 ###############################################################################
 # Test reading PixelIsPoint file (#5437)
@@ -482,8 +458,6 @@ def test_jp2openjpeg_16():
     assert gt == gt_expected, \
         'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE'
 
-    return 'success'
-
 ###############################################################################
 # Test writing PixelIsPoint file (#5437)
 
@@ -512,8 +486,6 @@ def test_jp2openjpeg_17():
 
     gdal.Unlink('/vsimem/jp2openjpeg_17.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test when using the decode_area API when one dimension of the dataset is not a
 # multiple of 1024 (#5480)
@@ -536,8 +508,6 @@ def test_jp2openjpeg_18():
 
     gdal.Unlink('/vsimem/jp2openjpeg_18.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test reading file where GMLJP2 has nul character instead of \n (#5760)
 
@@ -550,8 +520,6 @@ def test_jp2openjpeg_19():
     ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
     assert ds.GetProjectionRef() != ''
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Validate GMLJP2 content against schema
@@ -618,8 +586,6 @@ def test_jp2openjpeg_20():
 
     assert xmlvalidate.validate(gmljp2, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET')
 
-    return 'success'
-
 ###############################################################################
 # Test YCC=NO creation option
 
@@ -638,8 +604,6 @@ def test_jp2openjpeg_21():
 
     # Quite a bit of difference...
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # Test RGBA support
@@ -743,8 +707,6 @@ def test_jp2openjpeg_22():
 
     assert maxdiff <= 0, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 # Test NBITS support
 
@@ -772,8 +734,6 @@ def test_jp2openjpeg_23():
     gdal.Unlink('/vsimem/jp2openjpeg_23_2.jp2')
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # Test Grey+alpha support
@@ -816,8 +776,6 @@ def test_jp2openjpeg_24():
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_24.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test multiband support
 
@@ -846,8 +804,6 @@ def test_jp2openjpeg_25():
     gdal.Unlink('/vsimem/jp2openjpeg_25.jp2')
 
     assert maxdiff <= 0, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 
@@ -878,7 +834,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     if return_error_count:
         return (res.error_count, res.warning_count)
     if res.error_count == 0 and res.warning_count == 0:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -1025,8 +981,6 @@ def test_jp2openjpeg_26():
     gdal.PopErrorHandler()
     assert out_ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test CreateCopy() from a JPEG2000 with a 2048x2048 tiling
 
@@ -1048,8 +1002,6 @@ def test_jp2openjpeg_27():
     del out2_ds
     gdal.Unlink('/vsimem/jp2openjpeg_27.jp2')
     gdal.Unlink('/vsimem/jp2openjpeg_27.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test CODEBLOCK_WIDTH/_HEIGHT
@@ -1148,8 +1100,6 @@ def test_jp2openjpeg_28():
 
     gdal.Unlink('/vsimem/jp2openjpeg_28.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test TILEPARTS option
 
@@ -1184,8 +1134,6 @@ def test_jp2openjpeg_29():
         # print gdal.GetJPEG2000StructureAsString('/vsimem/jp2openjpeg_29.jp2', ['ALL=YES'])
 
     gdal.Unlink('/vsimem/jp2openjpeg_29.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test color table support
@@ -1276,8 +1224,6 @@ def test_jp2openjpeg_30():
     gdal.PopErrorHandler()
     assert out_ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test unusual band color interpretation order
 
@@ -1318,8 +1264,6 @@ def test_jp2openjpeg_31():
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_31.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test creation of "XLBoxes" for JP2C
 
@@ -1336,8 +1280,6 @@ def test_jp2openjpeg_32():
     assert out_ds.GetRasterBand(1).Checksum() == 0
     out_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_32.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test crazy tile size
@@ -1361,8 +1303,6 @@ def test_jp2openjpeg_33():
     out_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_33.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a file whose dimensions are > 2^31-1
 
@@ -1376,8 +1316,6 @@ def test_jp2openjpeg_34():
     ds = gdal.Open('data/dimensions_above_31bit.jp2')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1393,8 +1331,6 @@ def test_jp2openjpeg_35():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test we cannot create files with more than 16384 bands
 
@@ -1409,8 +1345,6 @@ def test_jp2openjpeg_36():
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_36.jp2', src_ds)
     gdal.PopErrorHandler()
     assert out_ds is None and gdal.VSIStatL('/vsimem/jp2openjpeg_36.jp2') is None
-
-    return 'success'
 
 ###############################################################################
 # Test metadata reading & writing
@@ -1506,8 +1440,7 @@ def test_jp2openjpeg_37():
         assert validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2=False) != 'fail'
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test non-EPSG SRS (so written with a GML dictionary)
 
@@ -1544,8 +1477,7 @@ def test_jp2openjpeg_38():
     if do_validate:
         assert xmlvalidate.validate(crsdictionary, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
 
@@ -1614,8 +1546,6 @@ def test_jp2openjpeg_39():
     assert ds.GetProjectionRef().find('4326') >= 0
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_39.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test we can parse GMLJP2 v2.0
@@ -1693,8 +1623,6 @@ def test_jp2openjpeg_40():
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_40.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test USE_SRC_CODESTREAM=YES
 
@@ -1734,8 +1662,6 @@ def test_jp2openjpeg_41():
     del out_ds
     assert gdal.GetLastErrorMsg() != ''
     gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test update of existing file
@@ -1872,8 +1798,6 @@ def test_jp2openjpeg_42():
 
     gdal.Unlink('/vsimem/jp2openjpeg_42.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Get structure of a JPEG2000 file
 
@@ -1882,8 +1806,6 @@ def test_jp2openjpeg_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
     assert ret is not None
-
-    return 'success'
 
 ###############################################################################
 # Check a file against a OrthoimageryCoverage document
@@ -2601,8 +2523,6 @@ def test_jp2openjpeg_45():
 
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test GMLJP2v2 metadata generator / XPath
 
@@ -2765,8 +2685,6 @@ yeah: """) < 0:
     # ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test writing & reading RPC in GeoJP2 box
 
@@ -2787,8 +2705,6 @@ def test_jp2openjpeg_47():
 
     gdal.Unlink('/vsimem/jp2openjpeg_47.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a dataset whose tile dimensions are larger than dataset ones
 
@@ -2803,8 +2719,6 @@ def test_jp2openjpeg_48():
     assert (blockxsize, blockysize) == (20, 20)
     assert ds.GetRasterBand(1).Checksum() == 4610
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2825,8 +2739,6 @@ def test_jp2openjpeg_online_1():
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2852,8 +2764,6 @@ def test_jp2openjpeg_online_2():
     assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2884,8 +2794,6 @@ def test_jp2openjpeg_online_3():
     # Difference between the image before and after compression
     assert maxdiff <= 17, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2915,8 +2823,6 @@ def test_jp2openjpeg_online_4():
     # Difference between the image before and after compression
     assert maxdiff <= 10, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 # Try reading JP2OpenJPEG with color table
 
@@ -2935,8 +2841,6 @@ def test_jp2openjpeg_online_5():
     assert ds.GetRasterBand(1).GetColorTable() is not None, \
         'Did not get expected color table'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Try reading YCbCr JP2OpenJPEG as RGB
@@ -2958,8 +2862,6 @@ def test_jp2openjpeg_online_6():
         'Did not get expected checksums'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
@@ -3082,8 +2984,7 @@ def test_jp2openjpeg_49():
         gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
         assert gdal.GetLastErrorMsg() != '', 'expected warning'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening an image of small dimension with very small tiles (#7012)
 
@@ -3099,8 +3000,6 @@ def test_jp2openjpeg_50():
         'expected warning'
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 2046, 'expected warning'
-
-    return 'success'
 
 ###############################################################################
 # Test CODEBLOCK_STYLE
@@ -3138,8 +3037,6 @@ def test_jp2openjpeg_codeblock_style():
 
     gdaltest.jp2openjpeg_drv.Delete(filename)
 
-    return 'success'
-
 ###############################################################################
 # Test external overviews
 
@@ -3164,8 +3061,6 @@ def test_jp2openjpeg_external_overviews_single_band():
     gdaltest.jp2openjpeg_drv.Delete(filename)
 
     assert cs == 28926
-
-    return 'success'
 
 ###############################################################################
 # Test external overviews
@@ -3192,16 +3087,12 @@ def test_jp2openjpeg_external_overviews_multiple_band():
 
     assert cs == [6233, 7706, 26085]
 
-    return 'success'
-
 ###############################################################################
 
 
 def test_jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return 'success'
 
 
 gdaltest_list = [

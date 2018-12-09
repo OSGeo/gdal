@@ -73,8 +73,6 @@ def test_ogr_gml_1():
     feat = lyr.GetNextFeature()
     assert feat is None, 'got unexpected feature.'
 
-    return 'success'
-
 ###############################################################################
 # Do the same test somewhere without a .gfs file.
 
@@ -102,8 +100,6 @@ def test_ogr_gml_2():
     feat = lyr.GetNextFeature()
     assert feat is None, 'got unexpected feature.'
 
-    return 'success'
-
 ###############################################################################
 # Similar test for RNF style line data.
 
@@ -129,8 +125,6 @@ def test_ogr_gml_3():
 
     feat = lyr.GetNextFeature()
     assert feat is None, 'got unexpected feature.'
-
-    return 'success'
 
 ###############################################################################
 # Test of read GML file with UTF-8 BOM indicator.
@@ -169,8 +163,6 @@ def test_ogr_gml_4():
 
     assert not ogrtest.check_feature_geometry(feat, wkt)
 
-    return 'success'
-
 
 ###############################################################################
 # Test of read GML file that triggeered bug #2349
@@ -187,8 +179,6 @@ def test_ogr_gml_5():
     lyr.SetAttributeFilter('height > 300')
 
     lyr.GetNextFeature()
-
-    return 'success'
 
 ###############################################################################
 # Test of various FIDs (various prefixes and lengths) (Ticket#1017)
@@ -217,8 +207,7 @@ def test_ogr_gml_6():
         gml_ds = None
         os.remove('data' + os.sep + filename + '.gfs')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test of colon terminated prefixes for attribute values (Ticket#2493)
 
@@ -246,8 +235,6 @@ def test_ogr_gml_7():
     assert ldefn.GetFieldDefn(1).GetFieldTypeName(ldefn.GetFieldDefn(1).GetType()) == 'Integer'
     assert ldefn.GetFieldDefn(2).GetFieldTypeName(ldefn.GetFieldDefn(2).GetType()) == 'String'
 
-    return 'success'
-
 ###############################################################################
 # Test a GML file with some non-ASCII UTF-8 content that triggered a bug (Ticket#2948)
 
@@ -265,8 +252,7 @@ def test_ogr_gml_8():
     else:
         assert feat.GetFieldAsString('name') == '\xc4\x80liamanu'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test writing invalid UTF-8 content in a GML file (ticket #2971)
 
@@ -301,8 +287,6 @@ def test_ogr_gml_9():
 
     os.remove('tmp/broken_utf8.gml')
     os.remove('tmp/broken_utf8.xsd')
-
-    return 'success'
 
 ###############################################################################
 # Test writing different data types in a GML file (ticket #2857)
@@ -379,8 +363,6 @@ def test_ogr_gml_10():
     os.remove('tmp/fields.gml')
     os.remove('tmp/fields.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a geometry element specified with <GeometryElementPath>
 
@@ -418,7 +400,6 @@ def test_ogr_gml_11():
     geom = feat.GetGeometryRef()
     assert geom.ExportToWkt() == 'POINT (3 50)', 'did not get expected geometry'
     ds = None
-    return 'success'
 
 ###############################################################################
 # Test reading a virtual GML file
@@ -442,7 +423,6 @@ def test_ogr_gml_12():
     geom = feat.GetGeometryRef()
     assert geom.ExportToWkt() == 'POINT (3 50)', 'did not get expected geometry'
     ds = None
-    return 'success'
 
 ###############################################################################
 # Test reading GML with StringList, IntegerList and RealList fields
@@ -467,8 +447,6 @@ def test_ogr_gml_13():
             'did not get expected value for attrib4'
         ds = None
     gdal.Unlink('data/testlistfields.gfs')
-
-    return 'success'
 
 ###############################################################################
 # Test xlink resolution
@@ -531,8 +509,6 @@ def test_ogr_gml_14():
 
     assert text == expectedtext, 'Problem with file 2'
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -549,8 +525,6 @@ def test_ogr_gml_15():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_point.gml')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Read CityGML generic attributes
@@ -571,8 +545,7 @@ def test_ogr_gml_16():
         feat.DumpReadable()
         pytest.fail('did not get expected values')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read layer SRS for WFS 1.0.0 return
 
@@ -593,8 +566,6 @@ def test_ogr_gml_17():
     got_wkt = geom.ExportToWkt()
     assert got_wkt == 'POINT (2.09 34.12)', 'did not get expected geometry'
 
-    return 'success'
-
 ###############################################################################
 # Read layer SRS for WFS 1.1.0 return
 
@@ -614,8 +585,6 @@ def test_ogr_gml_18():
     geom = feat.GetGeometryRef()
     got_wkt = geom.ExportToWkt()
     assert got_wkt == 'POINT (2.09 34.12)', 'did not get expected geometry'
-
-    return 'success'
 
 ###############################################################################
 # Read layer SRS for WFS 1.1.0 return, but without trying to restore
@@ -647,8 +616,6 @@ def test_ogr_gml_19():
     geom = feat.GetGeometryRef()
     got_wkt = geom.ExportToWkt()
     assert got_wkt == 'POINT (34.12 2.09)', 'did not get expected geometry'
-
-    return 'success'
 
 ###############################################################################
 # Test parsing a .xsd where the type definition is before its reference
@@ -696,7 +663,7 @@ def test_ogr_gml_20():
         os.stat('data/archsites.gfs')
         pytest.fail('did not expected .gfs -> XSD parsing failed')
     except OSError:
-        return 'success'
+        return
 
 ###############################################################################
 # Test writing GML3
@@ -781,8 +748,6 @@ def test_ogr_gml_21(frmt='GML3'):
     f1.close()
     f2.close()
 
-    return 'success'
-
 
 def test_ogr_gml_21_deegree3():
     return test_ogr_gml_21('GML3Deegree')
@@ -809,7 +774,6 @@ def test_ogr_gml_22():
     assert count == 9, 'did not get expected feature count'
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Test that use SRS defined in global gml:Envelope if no SRS is set for any
@@ -845,8 +809,6 @@ def test_ogr_gml_23():
 
     extent = lyr.GetExtent()
     assert extent == (2.0, 3.0, 49.0, 50.0), 'did not get expected layer extent'
-
-    return 'success'
 
 ###############################################################################
 # Test that use SRS defined in global gml:Envelope if no SRS is set for any
@@ -886,8 +848,6 @@ def test_ogr_gml_24():
     extent = lyr.GetExtent()
     assert extent == (2.0, 3.0, 49.0, 50.0), 'did not get expected layer extent'
 
-    return 'success'
-
 ###############################################################################
 # Test fixes for #3934 and #3935
 
@@ -917,8 +877,6 @@ def test_ogr_gml_25():
     assert got_wkt == 'POLYGON ((14 21,6 21,6 9,14 9,22 9,22 21,14 21))', \
         'did not get expected geometry'
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading 3D geoms (GML2)
 
@@ -947,8 +905,6 @@ def test_ogr_gml_26():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading 3D geoms (GML3)
 
@@ -976,8 +932,6 @@ def test_ogr_gml_27():
     assert lyr.GetGeomType() == ogr.wkbPolygon25D
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading layers of type wkbNone (#4154)
@@ -1013,8 +967,6 @@ def test_ogr_gml_28():
     assert lyr.GetGeomType() == ogr.wkbNone
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading FME GMLs
 
@@ -1043,8 +995,6 @@ def test_ogr_gml_29():
                 ('layer %d, did not get expected geometry' % j)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading a big field and a big geometry
@@ -1088,8 +1038,6 @@ def test_ogr_gml_30():
 
     assert len(geom_wkt) == 2060, 'did not get expected len(geom_wkt)'
 
-    return 'success'
-
 ###############################################################################
 # Test SEQUENTIAL_LAYERS
 
@@ -1117,8 +1065,6 @@ def test_ogr_gml_31():
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     assert feat.GetFID() == 1, 'did not get feature when reading back first layer'
-
-    return 'success'
 
 ###############################################################################
 # Test SEQUENTIAL_LAYERS without a .gfs
@@ -1159,8 +1105,6 @@ def test_ogr_gml_32():
     gdal.Unlink("/vsimem/ogr_gml_31.gml")
     gdal.Unlink("/vsimem/ogr_gml_31.gfs")
 
-    return 'success'
-
 ###############################################################################
 # Test INTERLEAVED_LAYERS
 
@@ -1199,8 +1143,7 @@ def test_ogr_gml_33():
         expected_fid = read_seq[1]
         assert fid == expected_fid, ('failed at step %d' % i)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test writing non-ASCII UTF-8 content (#4117, #4299)
 
@@ -1228,8 +1171,6 @@ def test_ogr_gml_34():
 
     gdal.Unlink('/vsimem/ogr_gml_34.gml')
     gdal.Unlink('/vsimem/ogr_gml_34.xsd')
-
-    return 'success'
 
 ###############################################################################
 # Test GML_SKIP_RESOLVE_ELEMS=HUGE (#4380)
@@ -1288,8 +1229,6 @@ def test_ogr_gml_35():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test GML_SKIP_RESOLVE_ELEMS=NONE (and new GMLTopoSurface interpretation)
 
@@ -1339,8 +1278,6 @@ def test_ogr_gml_36(GML_FACE_HOLE_NEGATIVE='NO'):
     assert not ogrtest.check_feature_geometry(feat, wkt), feat.GetGeometryRef()
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test GML_SKIP_RESOLVE_ELEMS=NONE with old GMLTopoSurface interpretation
@@ -1401,8 +1338,6 @@ def test_ogr_gml_38(resolver='HUGE'):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test new GMLTopoSurface interpretation (#3934) with standard xlink resolver
 
@@ -1423,8 +1358,6 @@ def test_ogr_gml_40():
     lyr = ds.GetLayer(0)
     fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('CITYNAME'))
     assert fld_defn.GetWidth() == 26
-
-    return 'success'
 
 ###############################################################################
 # Test validating against .xsd
@@ -1457,8 +1390,6 @@ def test_ogr_gml_41():
         pytest.skip()
 
     gdaltest.have_gml_validation = True
-
-    return 'success'
 
 ###############################################################################
 # Test validating against .xsd
@@ -1493,8 +1424,6 @@ def test_ogr_gml_42():
 
     assert val != 0
 
-    return 'success'
-
 ###############################################################################
 # Test automated downloading of WFS schema
 
@@ -1526,8 +1455,7 @@ def test_ogr_gml_43():
 
         assert not can_download_schema, '.gfs found, but schema could be downloaded'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test providing a custom XSD filename
 
@@ -1580,8 +1508,6 @@ def test_ogr_gml_44():
 
     gdal.Unlink('/vsimem/ogr_gml_44.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test PREFIX and TARGET_NAMESPACE creation options
 
@@ -1632,8 +1558,6 @@ def test_ogr_gml_45():
     gdal.Unlink('/vsimem/ogr_gml_45.xsd')
 
     assert val != 0
-
-    return 'success'
 
 
 ###############################################################################
@@ -1746,8 +1670,7 @@ def test_ogr_gml_46():
         if frmt == 'GML3Deegree':
             break
 
-    return 'success'
-
+    
 ###############################################################################
 # Test validation of WFS GML documents
 
@@ -1778,8 +1701,7 @@ def test_ogr_gml_47():
 
         assert val != 0, ('validation failed for file=%s' % filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we can parse some particular .xsd files that have the geometry
 # field declared as :
@@ -1807,8 +1729,6 @@ def test_ogr_gml_48():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test a pseudo Inspire GML file
@@ -1846,8 +1766,6 @@ def test_ogr_gml_49():
 
     gdal.Unlink('/vsimem/ogr_gml_49.gml')
     gdal.Unlink('/vsimem/ogr_gml_49.gfs')
-
-    return 'success'
 
 ###############################################################################
 # Test support for StringList, IntegerList, RealList
@@ -1891,8 +1809,6 @@ def test_ogr_gml_50():
     gdal.Unlink('/vsimem/ogr_gml_50.gml')
     gdal.Unlink('/vsimem/ogr_gml_50.xsd')
 
-    return 'success'
-
 ###############################################################################
 # Test -dsco WRITE_FEATURE_BOUNDED_BY=no -dsco STRIP_PREFIX=YES
 
@@ -1927,8 +1843,7 @@ def test_ogr_gml_51():
         assert feat is not None
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading MTKGML files
 
@@ -1984,8 +1899,6 @@ def test_ogr_gml_52():
 
     os.remove('data/fake_mtkgml.gfs')
 
-    return 'success'
-
 ###############################################################################
 # Test that we don't recognize .xsd files themselves
 
@@ -1998,8 +1911,6 @@ def test_ogr_gml_53():
     ds = ogr.Open('data/archsites.xsd')
     assert ds is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that we can open an empty GML datasource (#249, #5205)
@@ -2023,8 +1934,6 @@ def test_ogr_gml_54():
 
     gdal.Unlink('data/empty.gfs')
 
-    return 'success'
-
 ###############################################################################
 # Test support for <xs:include> in schemas
 # Necessary for Finnish NLS data
@@ -2046,8 +1955,7 @@ def test_ogr_gml_55():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test support for gml:FeaturePropertyType and multiple geometry field
 # Necessary for Finnish NLS data
@@ -2093,8 +2001,7 @@ def test_ogr_gml_56():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test write support for multiple geometry field
 
@@ -2153,8 +2060,7 @@ def test_ogr_gml_57():
         gdal.Unlink('/vsimem/ogr_gml_57.gml')
         gdal.Unlink('/vsimem/ogr_gml_57.xsd')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test support for Inspire Cadastral schemas
 
@@ -2362,8 +2268,6 @@ def test_ogr_gml_58():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test GFS conditions
 
@@ -2401,8 +2305,6 @@ def test_ogr_gml_59():
     lyr = None
     ds = None
 
-    return 'success'
-
 ########################################################
 # Test reading WFS 2.0 GetFeature documents with wfs:FeatureCollection
 # as a wfs:member of the top wfs:FeatureCollection
@@ -2429,8 +2331,6 @@ def test_ogr_gml_60():
         ds = None
 
     gdal.Unlink('data/wfs_200_multiplelayers.gfs')
-
-    return 'success'
 
 ###############################################################################
 # Test reading a element specified with a full path in <ElementPath>
@@ -2479,7 +2379,6 @@ def test_ogr_gml_61():
         pytest.fail()
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Test GML_ATTRIBUTES_TO_OGR_FIELDS option
@@ -2536,8 +2435,7 @@ def test_ogr_gml_62():
         feat = None
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading RUIAN VFR files
 
@@ -2577,8 +2475,6 @@ def test_ogr_gml_63():
         nfeatures += lyr.GetFeatureCount()
     assert nfeatures == 7
 
-    return 'success'
-
 ###############################################################################
 # Test multiple instances of parsers (#5571)
 
@@ -2597,8 +2493,7 @@ def test_ogr_gml_64():
             feat = lyr.GetNextFeature()
             assert feat is not None, parser
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SRSDIMENSION_LOC=GEOMETRY option (#5606)
 
@@ -2639,8 +2534,7 @@ def test_ogr_gml_65():
         gdal.Unlink(filename)
         gdal.Unlink(filename[0:-3] + "xsd")
 
-    return 'success'
-
+    
 ###############################################################################
 # Test curve geometries
 
@@ -2935,8 +2829,6 @@ def test_ogr_gml_66():
     gdal.Unlink(filename)
     gdal.Unlink(filename[0:-3] + "gfs")
 
-    return 'success'
-
 ###############################################################################
 # Test boolean, int16, integer64 type
 
@@ -3025,8 +2917,6 @@ def test_ogr_gml_67():
     gdal.Unlink(filename)
     gdal.Unlink(filename[0:-3] + "gfs")
 
-    return 'success'
-
 ###############################################################################
 # Test reading GML with xsd with a choice of geometry properites
 
@@ -3051,8 +2941,6 @@ def test_ogr_gml_68():
         assert got_wkt == expected_results[i], 'did not get expected geometry'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test not nullable fields
@@ -3112,8 +3000,6 @@ def test_ogr_gml_69():
     gdal.Unlink("/vsimem/ogr_gml_69.gml")
     gdal.Unlink("/vsimem/ogr_gml_69.xsd")
 
-    return 'success'
-
 ###############################################################################
 # Test default fields (not really supported, but we must do something as we
 # support not nullable fields)
@@ -3148,8 +3034,6 @@ def test_ogr_gml_70():
 
     gdal.Unlink("/vsimem/ogr_gml_70.gml")
     gdal.Unlink("/vsimem/ogr_gml_70.xsd")
-
-    return 'success'
 
 ###############################################################################
 # Test reading WFS 2.0 layer resulting from a join operation
@@ -3198,8 +3082,7 @@ def ogr_gml_71_helper(ds):
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 def test_ogr_gml_71():
 
@@ -3245,8 +3128,6 @@ def test_ogr_gml_71():
     ogr_gml_71_helper(ds)
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test name and description
 
@@ -3279,8 +3160,6 @@ def test_ogr_gml_72():
     gdal.Unlink("/vsimem/ogr_gml_72.gml")
     gdal.Unlink("/vsimem/ogr_gml_72.xsd")
     gdal.Unlink("/vsimem/ogr_gml_72.gfs")
-
-    return 'success'
 
 ###############################################################################
 # Read a CSW GetRecordsResponse document
@@ -3316,8 +3195,7 @@ def test_ogr_gml_73():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test FORCE_SRS_DETECTION open option
 
@@ -3352,8 +3230,6 @@ def test_ogr_gml_74():
 
     os.unlink('tmp/ogr_gml_74.gml')
     os.unlink('tmp/ogr_gml_74.gfs')
-
-    return 'success'
 
 ###############################################################################
 # Test we don't open a WMTS Capabilities doc
@@ -3395,8 +3271,6 @@ version="1.0.0">
     assert ds is None
     gdal.Unlink('/vsimem/ogr_gml_75.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test we are robust to content of XML elements bigger than 2 GB
 
@@ -3420,8 +3294,7 @@ def test_ogr_gml_76():
             lyr = ds.GetLayer(0)
             lyr.GetNextFeature()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test interpretation of http://www.opengis.net/def/crs/EPSG/0/ URLs (#6678)
 
@@ -3467,8 +3340,6 @@ def test_ogr_gml_77():
 
     gdal.Unlink('/vsimem/ogr_gml_77.xml')
     gdal.Unlink('/vsimem/ogr_gml_77.gfs')
-
-    return 'success'
 
 ###############################################################################
 # Test effect of SWAP_COORDINATES (#6678)
@@ -3516,8 +3387,6 @@ def test_ogr_gml_78():
     gdal.Unlink('/vsimem/ogr_gml_78.xml')
     gdal.Unlink('/vsimem/ogr_gml_78.gfs')
 
-    return 'success'
-
 ###############################################################################
 # Test SRSNAME_FORMAT
 
@@ -3552,8 +3421,6 @@ def test_ogr_gml_79():
 
     gdal.Unlink('/vsimem/ogr_gml_79.xml')
     gdal.Unlink('/vsimem/ogr_gml_79.xsd')
-
-    return 'success'
 
 ###############################################################################
 # Test null / unset
@@ -3603,8 +3470,6 @@ def test_ogr_gml_80():
     gdal.Unlink('/vsimem/ogr_gml_80.xml')
     gdal.Unlink('/vsimem/ogr_gml_80.xsd')
 
-    return 'success'
-
 
 ###############################################################################
 # Test building a .gfs with a field with xsi:nil="true" (#7027)
@@ -3624,8 +3489,6 @@ def test_ogr_gml_81():
     ds = None
 
     gdal.Unlink('data/test_xsi_nil_gfs.gfs')
-
-    return 'success'
 
 ###############################################################################
 # Test GML_FEATURE_COLLECTION=YES
@@ -3662,8 +3525,6 @@ def test_ogr_gml_82():
     gdal.Unlink('/vsimem/ogr_gml_82.gml')
     gdal.Unlink('/vsimem/ogr_gml_82.xsd')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3679,8 +3540,6 @@ def test_ogr_gml_gml2_write_geometry_error():
 
     gdal.Unlink('/vsimem/ogr_gml_83.gml')
     gdal.Unlink('/vsimem/ogr_gml_83.xsd')
-
-    return 'success'
 
 ###############################################################################
 #  Cleanup
@@ -3813,8 +3672,6 @@ def test_ogr_gml_clean_files():
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
             os.unlink('data/' + filename)
     gdal.Unlink('data/test_xsi_nil_gfs.gfs')
-
-    return 'success'
 
 
 gdaltest_list = [

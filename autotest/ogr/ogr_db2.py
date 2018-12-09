@@ -60,8 +60,7 @@ def test_ogr_db2_check_driver():
     if ogrtest.db2_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test if environment variable for DB2 connection is set and we can connect
 
@@ -77,8 +76,7 @@ def test_ogr_db2_init():
         ogrtest.db2_drv = None
         pytest.skip('Environment variable DB2_TEST_SERVER not found')
 
-    return 'success'
-###############################################################################
+    ###############################################################################
 # Test GetFeatureCount()
 
 
@@ -97,8 +95,6 @@ def test_ogr_db2_GetFeatureCount():
 
     count = lyr.GetFeatureCount()
     assert count == 5, 'did not get expected feature count'
-
-    return 'success'
 
 ###############################################################################
 # Test GetSpatialRef()
@@ -125,8 +121,6 @@ def test_ogr_db2_GetSpatialRef():
 
     assert txt.find('GEOGCS[\"GCS_WGS_1984') != -1, 'did not get expected srs'
 
-    return 'success'
-
 
 ###############################################################################
 # Test GetExtent()
@@ -148,8 +142,6 @@ def test_ogr_db2_GetExtent():
 
     assert extent == (-122.030745, -121.95672, 37.278665, 37.440885), \
         'did not get expected extent'
-
-    return 'success'
 
 ###############################################################################
 # Test GetFeature()
@@ -175,8 +167,7 @@ def test_ogr_db2_GetFeature():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SetSpatialFilter()
 
@@ -225,8 +216,6 @@ def test_ogr_db2_SetSpatialFilter():
 
     assert count == 3, 'did not get expected feature count (3)'
 
-    return 'success'
-
 #
 # test what capabilities the DB2 driver provides
 #
@@ -263,8 +252,7 @@ def test_ogr_db2_capabilities():
     print("Layer Capabilities:")
     for cap in capabilities:
         print("  %s = %s" % (cap, layer.TestCapability(cap)))
-    return 'success'
-
+    
 
 def ogr_db2_listdrivers():
     cnt = ogr.GetDriverCount()
@@ -282,8 +270,7 @@ def ogr_db2_listdrivers():
     for i in formatsList:
         print(i)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_db2_check_driver,

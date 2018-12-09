@@ -70,8 +70,7 @@ def test_gml_geom(unit):
         gml_wkt = geom_gml.ExportToWkt()
         pytest.fail('WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test geometries with extra spaces at the end, as sometimes are generated
 # by ESRI WFS software.
@@ -82,8 +81,6 @@ def test_gml_space_test():
     geom = ogr.CreateGeometryFromGML(gml)
     assert geom is not None and geom.GetGeometryType() is ogr.wkbLineString and geom.GetPointCount() == 8, \
         'GML not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML 3.x "pos" element for a point.
@@ -96,8 +93,6 @@ def test_gml_pos_point():
     geom = ogr.CreateGeometryFromGML(gml)
 
     assert geom.ExportToWkt() == 'POINT (31 29 16)', '<gml:pos> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML 3.1.1 "pos" element for a polygon. (ticket #3244)
@@ -131,8 +126,6 @@ def test_gml_pos_polygon():
     assert geom.ExportToWkt() == 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))', \
         '<gml:Polygon> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML 3.x "posList" element for a linestring.
 
@@ -146,8 +139,6 @@ def test_gml_posList_line():
     assert geom.ExportToWkt() == 'LINESTRING (31 42,53 64,55 76)', \
         '<gml:posList> not correctly parsed'
 
-    return 'success'
-
 
 ###############################################################################
 # Test GML 3.x "posList" element for a 3D linestring.
@@ -160,8 +151,6 @@ def test_gml_posList_line3d():
 
     assert geom.ExportToWkt() == 'LINESTRING (31 42 1,53 64 2,55 76 3)', \
         '<gml:posList> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML 3.x "posList" element for a 3D linestring, but with srsDimension
@@ -177,8 +166,6 @@ def test_gml_posList_line3d_2():
     assert geom.ExportToWkt() == 'LINESTRING (31 42 1,53 64 2,55 76 3)', \
         '<gml:posList> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML 3.x "polygon" element for a point.
 
@@ -190,8 +177,6 @@ def test_gml_polygon():
 
     assert geom.ExportToWkt() == 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))', \
         '<gml:Polygon> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Private utility function to convert WKT to GML with assigned WGS 84 as SRS.
@@ -232,8 +217,6 @@ def test_gml_out_point_srs():
     assert gml[0:31] == '<gml:Point srsName="EPSG:4326">', \
         'No srsName attribute in GML output'
 
-    return 'success'
-
 ###############################################################################
 # Test of Point 3D geometry with SRS assigned
 
@@ -248,8 +231,6 @@ def test_gml_out_point3d_srs():
 
     assert gml[0:31] == '<gml:Point srsName="EPSG:4326">', \
         'No srsName attribute in GML output'
-
-    return 'success'
 
 ###############################################################################
 # Test of LineString geometry with SRS assigned
@@ -266,8 +247,6 @@ def test_gml_out_linestring_srs():
     assert gml[0:36] == '<gml:LineString srsName="EPSG:4326">', \
         'No srsName attribute in GML output'
 
-    return 'success'
-
 ###############################################################################
 # Test of Polygon geometry with SRS assigned
 
@@ -282,8 +261,6 @@ def test_gml_out_polygon_srs():
 
     assert gml[0:33] == '<gml:Polygon srsName="EPSG:4326">', \
         'No srsName attribute in GML output'
-
-    return 'success'
 
 ###############################################################################
 # Test of MultiPoint geometry with SRS assigned
@@ -300,8 +277,6 @@ def test_gml_out_multipoint_srs():
     assert gml[0:36] == '<gml:MultiPoint srsName="EPSG:4326">', \
         'No srsName attribute in GML output'
 
-    return 'success'
-
 ###############################################################################
 # Test of MultiLineString geometry with SRS assigned
 
@@ -316,8 +291,6 @@ def test_gml_out_multilinestring_srs():
 
     assert gml[0:41] == '<gml:MultiLineString srsName="EPSG:4326">', \
         'No srsName attribute in GML output'
-
-    return 'success'
 
 ###############################################################################
 # Test of MultiPolygon geometry with SRS assigned
@@ -338,8 +311,6 @@ def test_gml_out_multipolygon_srs():
     assert gml[39:].find('srsName') == -1, \
         'Got extra srsName attributes on subelements.'
 
-    return 'success'
-
 ###############################################################################
 # Test of GeometryCollection with SRS assigned
 
@@ -354,8 +325,6 @@ def test_gml_out_geometrycollection_srs():
 
     assert gml[0:39] == '<gml:MultiGeometry srsName="EPSG:4326">', \
         'No srsName attribute in GML output'
-
-    return 'success'
 
 ###############################################################################
 # Test GML Box
@@ -379,8 +348,6 @@ def test_gml_Box():
     assert geom.ExportToWkt() == 'POLYGON ((1 2 0,3 2 0,3 4 0,1 4 0,1 2 0))', \
         '<gml:Box> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML Envelope
 
@@ -396,8 +363,6 @@ def test_gml_Envelope():
 
     assert geom.ExportToWkt() == 'POLYGON ((1 2,3 2,3 4,1 4,1 2))', \
         '<gml:Envelope> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML Curve
@@ -417,8 +382,6 @@ def test_gml_Curve():
 
     assert geom.ExportToWkt() == 'LINESTRING (1 2,3 4)', \
         '<gml:Curve> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML Curve with pointProperty elements
@@ -444,8 +407,6 @@ def test_gml_Curve_with_pointProperty():
     assert geom.ExportToWkt() == 'LINESTRING (1 2,3 4)', \
         '<gml:Curve> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML MultiCurve
 
@@ -469,8 +430,6 @@ def test_gml_MultiCurve():
 
     assert geom.ExportToWkt() == 'MULTILINESTRING ((1 2,2 3),(3 4,4 5))', \
         '<gml:MultiCurve> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML MultiSurface with PolygonPatch
@@ -551,8 +510,6 @@ def test_gml_MultiSurface():
     assert geom.ExportToWkt() == 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3),(3 4,5 6,7 8,3 4)),((4 5,6 7,8 9,4 5)))', \
         '<gml:MultiSurface> not correctly parsed'
 
-    return 'success'
-
 
 ###############################################################################
 # Test GML MultiSurface with surfaceMembers
@@ -603,8 +560,6 @@ def test_gml_MultiSurface_surfaceMembers():
     assert geom.ExportToWkt() == 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3)),((3 4,5 6,7 8,3 4)),((30 40,50 60,70 80,30 40)))', \
         '<gml:MultiSurface> not correctly parsed'
 
-    return 'success'
-
 
 ###############################################################################
 # Test GML MultiCurve with curveMembers
@@ -624,8 +579,6 @@ def test_gml_MultiCurve_curveMembers():
     assert geom.ExportToWkt() == 'MULTILINESTRING ((0 0,1 1))', \
         '<gml:MultiCurve> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML MultiGeometry with geometryMembers
 
@@ -643,8 +596,6 @@ def test_gml_MultiGeometry_geometryMembers():
 
     assert geom.ExportToWkt() == 'GEOMETRYCOLLECTION (LINESTRING (0 0,1 1))', \
         '<gml:MultiGeometry> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML CompositeCurve with curveMembers
@@ -668,8 +619,6 @@ def test_gml_CompositeCurve_curveMembers():
     assert geom.ExportToWkt() == 'LINESTRING (0 0,1 1,2 2)', \
         '<gml:CompositeCurve> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML MultiPoint with pointMembers
 
@@ -691,8 +640,6 @@ def test_gml_MultiCurve_pointMembers():
 
     assert geom.ExportToWkt() == 'MULTIPOINT (0 0,1 1)', \
         '<gml:MultiPoint> not correctly parsed'
-
-    return 'success'
 ###############################################################################
 # Test GML Solid
 
@@ -720,8 +667,6 @@ def test_gml_Solid():
     assert geom.ExportToWkt() == 'POLYHEDRALSURFACE Z (((1 2 0,3 4 0,5 6 0,1 2 0)))', \
         '<gml:Solid> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML OrientableSurface
 
@@ -746,8 +691,6 @@ def test_gml_OrientableSurface():
 
     assert geom.ExportToWkt() == 'POLYGON ((-213.475 24.989 0,-213.475 24.989 8,-215.704 25.077 8,-215.704 25.077 0,-213.475 24.989 0))', \
         '<gml:OrientableSurface> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML Triangle
@@ -778,8 +721,7 @@ def test_gml_Triangle():
         print(geom.ExportToWkt())
         pytest.fail('incorrect conversion from OGR -> GML for OGRTriangle')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GML Rectangle
 
@@ -798,8 +740,6 @@ def test_gml_Rectangle():
 
     assert geom.ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,1 0,0 0))', \
         '<gml:Rectangle> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML PolyhedralSurface
@@ -970,8 +910,6 @@ def test_gml_PolyhedralSurface():
     assert geom.ExportToWkt().find('POLYHEDRALSURFACE (((0 -1,0 1,') >= 0, \
         '<gml:PolyhedralSurface> not correctly parsed'
 
-    return 'success'
-
 
 ###############################################################################
 # Test GML Tin
@@ -1058,8 +996,7 @@ def test_gml_Tin():
         print(geom.ExportToWkt())
         pytest.fail('OGRGeometry::TriangulatedSurface incorrectly converted')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test concatenated sections (#4451)
 
@@ -1098,8 +1035,6 @@ def test_gml_ConcatenatedDeduplication():
 
     assert not ogrtest.have_geos() or geom.IsValid(), 'geometry not valid'
 
-    return 'success'
-
 ###############################################################################
 # Test OGRFormatDouble() to check for rounding errors (would also apply for KML output, or ogrinfo output)
 
@@ -1115,8 +1050,6 @@ def gml_out_precision():
     expected_gml = '<gml:Point><gml:coordinates>93538.55,1234567.89</gml:coordinates></gml:Point>'
     got_gml = geom.ExportToGML()
     assert got_gml == expected_gml, 'did not get expected gml'
-
-    return 'success'
 
 ###############################################################################
 # Test various error cases of gml2ogrgeometry.cpp
@@ -1290,8 +1223,7 @@ def test_gml_invalid_geoms():
                 assert wkt == expected_wkt, \
                     ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test write support for GML3
 
@@ -1320,8 +1252,7 @@ def test_gml_write_gml3_geometries():
             gml_out = geom.ExportToGML(['FORMAT=GML3'])
         assert gml_out == gml_in, ('got %s, instead of %s' % (gml_out, gml_in))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test write support for GML3 SRS
 
@@ -1385,8 +1316,6 @@ def test_gml_write_gml3_srs():
     expected_gml = '<gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>49 2</gml:pos></gml:Point>'
     assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
-    return 'success'
-
 ###############################################################################
 # Test that importing too nested GML doesn't cause stack overflows
 
@@ -1409,8 +1338,6 @@ def test_gml_nested():
     gdal.PopErrorHandler()
     assert geom is None, 'expected None'
 
-    return 'success'
-
 ###############################################################################
 # Test GML 3.3 SimplePolygon
 
@@ -1423,8 +1350,6 @@ def test_gml_SimplePolygon():
 
     assert geom.ExportToWkt() == 'POLYGON ((0 0,1 0,1 1,0 1,0 0))', \
         '<gmlce:SimplePolygon> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test GML 3.3 SimpleRectangle
@@ -1439,8 +1364,6 @@ def test_gml_SimpleRectangle():
     assert geom.ExportToWkt() == 'POLYGON ((0 0,1 0,1 1,0 1,0 0))', \
         '<gmlce:SimpleRectangle> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML 3.3 SimpleTriangle
 
@@ -1454,8 +1377,6 @@ def test_gml_SimpleTriangle():
     assert geom.ExportToWkt() == 'TRIANGLE ((0 0,1 0,1 1,0 0))', \
         '<gmlce:SimpleTriangle> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test GML 3.3 SimpleMultiPoint
 
@@ -1468,8 +1389,6 @@ def test_gml_SimpleMultiPoint():
 
     assert geom.ExportToWkt() == 'MULTIPOINT (0 1,2 3)', \
         '<gmlce:SimpleMultiPoint> not correctly parsed'
-
-    return 'success'
 
 ###############################################################################
 # Test  gml:CompositeCurve> in <gml:Ring>
@@ -1526,8 +1445,6 @@ def test_gml_CompositeCurveInRing():
 
     assert geom.ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,0 0))'
 
-    return 'success'
-
 ###############################################################################
 # Test <gml:CompositeSurface> in <gml:surfaceMembers> (#5369)
 
@@ -1562,8 +1479,6 @@ def test_gml_CompositeSurface_in_surfaceMembers():
     geom = ogr.CreateGeometryFromGML(gml)
 
     assert geom.ExportToWkt() == 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((2 0,2 1,3 1,3 0,2 0)))'
-
-    return 'success'
 
 ###############################################################################
 # Test <gml:PolygonPatch> with only Interior ring (#5421)
@@ -1617,8 +1532,6 @@ def test_gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
 
     assert geom.ExportToWkt() == 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25)),((0 0,0 -1,-1 -1,-1 0,0 0)))'
 
-    return 'success'
-
 ###############################################################################
 # Test ts, cs and decimal attributes of gml:coordinates
 
@@ -1651,8 +1564,7 @@ def test_gml_Coordinates_ts_cs_decimal():
             assert wkt == expected_wkt, \
                 ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test gml with XML header and comments
 
@@ -1693,8 +1605,7 @@ def test_gml_with_xml_header_and_comments():
             assert wkt == expected_wkt, \
                 ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test srsDimension attribute on top-level geometry and not on posList (#5606)
 
@@ -1719,8 +1630,6 @@ def test_gml_srsDimension_topgeometry():
 
     assert geom.ExportToWkt() == 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))'
 
-    return 'success'
-
 ###############################################################################
 # Test GML Arc
 
@@ -1739,8 +1648,6 @@ def test_gml_Arc():
     geom2 = ogr.CreateGeometryFromGML(gml2)
     assert geom.Equals(geom2)
 
-    return 'success'
-
 ###############################################################################
 # Test GML ArcByBulge
 
@@ -1752,8 +1659,6 @@ def test_gml_ArcByBulge():
 
     assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (2 0,0 2,-2 0)')) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test GML ArcByCenterPoint
 
@@ -1764,8 +1669,6 @@ def test_gml_ArcByCenterPoint():
     geom = ogr.CreateGeometryFromGML(gml)
 
     assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 4,-1 2,1 0)')) == 0
-
-    return 'success'
 
 
 ###############################################################################
@@ -1825,8 +1728,6 @@ def test_gml_CompoundCurve_of_ArcByCenterPoint():
 
     assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('POLYGON ((-80.4 33.86,-80.27 33.63,-80.305028054229538 33.622017309598967,-80.335422529369936 33.613343178471617,-80.366464292754429 33.606448070493634,-80.398003921948742 33.601365147653873,-80.429889693662162 33.598118851265042,-80.461968286017793 33.596724788982847,-80.494085487001527 33.597189662699385,-80.52608690656875 33.599511237590342,-80.557818688893789 33.603678352435914,-80.589128223167393 33.609670971175497,-80.619864849221443 33.617460275496377,-80.63 33.62,-80.39 33.85))')) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test GML CircleByCenterPoint
 
@@ -1837,8 +1738,6 @@ def test_gml_CircleByCenterPoint():
     geom = ogr.CreateGeometryFromGML(gml)
 
     assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (-1 2,3 2,-1 2)')) == 0
-
-    return 'success'
 
 ###############################################################################
 # Test GML Circle
@@ -1889,8 +1788,6 @@ def test_gml_Circle():
     expected_wkt = 'CURVEPOLYGON ( CIRCULARSTRING (-1 0,0 1,-0.707106781186547 -0.707106781186548,-0.923879532511287 -0.38268343236509,-1 0))'
     assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test ArcString
 
@@ -1911,8 +1808,6 @@ def test_gml_ArcString():
 
     geom2 = ogr.CreateGeometryFromGML(gml2)
     assert geom2.ExportToWkt() == 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)'
-
-    return 'success'
 
 ###############################################################################
 # Test OGRCompoundCurve
@@ -1979,8 +1874,6 @@ def test_gml_OGRCompoundCurve():
     geom = ogr.CreateGeometryFromGML(gml)
     assert geom.ExportToWkt() == 'COMPOUNDCURVE ((0 0,1 0,0 0),CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,0 0))'
 
-    return 'success'
-
 ###############################################################################
 # Test OGRCurvePolygon
 
@@ -2017,8 +1910,6 @@ def test_gml_OGRCurvePolygon():
     expected_gml2 = '<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:ArcString><gml:posList>-1 0 1 2 3 0 1 -2 -1 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:exterior><gml:interior><gml:LineString><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LineString></gml:interior></gml:Polygon>'
     expected_geom2 = ogr.CreateGeometryFromGML(expected_gml2)
     assert ogrtest.check_feature_geometry(geom2, expected_geom2) == 0, gml2
-
-    return 'success'
 
 ###############################################################################
 # Test OGRMultiSurface
@@ -2094,8 +1985,6 @@ def test_gml_OGRMultiSurface():
     expected_gml2 = '<gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>'
     assert gml2 == expected_gml2
 
-    return 'success'
-
 ###############################################################################
 # Test OGRMultiCurve
 
@@ -2164,8 +2053,6 @@ def test_gml_OGRMultiCurve():
     assert geom.ExportToWkt() == 'MULTICURVE (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1),(1 -1,1 1,1 -1)))', \
         '<gml:MultiCurve> not correctly parsed'
 
-    return 'success'
-
 ###############################################################################
 # Test write support for GML namespace declaration
 
@@ -2186,8 +2073,6 @@ def test_gml_write_gml_ns():
     gml = geom.ExportToGML(options=['FORMAT=GML32', 'GMLID=foo', 'NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml/3.2" gml:id="foo"><gml:pos>500000 4500000</gml:pos></gml:Point>'
     assert gml == expected_gml, ('got %s, instead of %s' % (gml, expected_gml))
-
-    return 'success'
 
 ###############################################################################
 # When imported build a list of units based on the files available.

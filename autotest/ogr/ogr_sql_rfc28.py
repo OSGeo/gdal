@@ -54,8 +54,6 @@ def test_ogr_rfc28_1():
     assert count == 3, \
         ('Got wrong count with GetFeatureCount() - %d, expecting 3' % count)
 
-    return 'success'
-
 ###############################################################################
 # Test CONCAT operator in the context of a WHERE clause.
 
@@ -68,7 +66,6 @@ def test_ogr_rfc28_2():
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test '+' operator on strings.
@@ -82,7 +79,6 @@ def test_ogr_rfc28_3():
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test '%' operator.
@@ -96,7 +92,6 @@ def test_ogr_rfc28_4():
         ('Got wrong count with GetFeatureCount() - %d, expecting 2' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test '%' operator.
@@ -110,7 +105,6 @@ def test_ogr_rfc28_5():
         ('Got wrong count with GetFeatureCount() - %d, expecting 2' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test support for a quoted field name.
@@ -124,7 +118,6 @@ def test_ogr_rfc28_6():
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # test with distinguished name for field in where clause.
@@ -139,7 +132,6 @@ def test_ogr_rfc28_7_wrong_quoting():
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.ds.ReleaseResultSet(ql)
-    return 'success'
 
 
 def test_ogr_rfc28_7_good_quoting():
@@ -150,7 +142,6 @@ def test_ogr_rfc28_7_good_quoting():
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.ds.ReleaseResultSet(ql)
-    return 'success'
 
 ###############################################################################
 # test with distinguished name for field in target columns.
@@ -169,7 +160,7 @@ def test_ogr_rfc28_8_wrong_quoting():
 
     gdaltest.ds.ReleaseResultSet(ql)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 def test_ogr_rfc28_8_good_quoting():
@@ -184,7 +175,7 @@ def test_ogr_rfc28_8_good_quoting():
 
     gdaltest.ds.ReleaseResultSet(ql)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test with quoted funky (non-identifier) name.
@@ -201,7 +192,7 @@ def test_ogr_rfc28_9():
 
     expect = ['8902']
     tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
-    return 'success' if tr else 'fail'
+    assert tr
 
 # TODO: unparse quoting?
 ###############################################################################
@@ -220,7 +211,7 @@ def test_ogr_rfc28_10():
     tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
     ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # test quoted funky names in output columns list.
@@ -238,7 +229,7 @@ def test_ogr_rfc28_11():
     tr = ogrtest.check_features_against_list(lyr, 'Funky @Name', expect)
     ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # test selecting fixed string fields.
@@ -266,7 +257,7 @@ def test_ogr_rfc28_12():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test SUBSTR operator in the context of a WHERE clause.
@@ -280,7 +271,6 @@ def test_ogr_rfc28_13():
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # test selecting fixed string fields.
@@ -294,7 +284,7 @@ def test_ogr_rfc28_14():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test CONCAT with more than two arguments.
@@ -308,7 +298,7 @@ def test_ogr_rfc28_15():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test parse support for negative numbers (#3724)
@@ -338,7 +328,7 @@ def test_ogr_rfc28_16():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test evaluation of division - had a problem with type conversion.
@@ -364,7 +354,7 @@ def test_ogr_rfc28_17():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -382,7 +372,7 @@ def test_ogr_rfc28_18():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -398,8 +388,6 @@ def test_ogr_rfc28_19():
 
     assert count == 8, \
         ('Got wrong count with GetFeatureCount() - %d, expecting 8' % count)
-
-    return 'success'
 
 
 ###############################################################################
@@ -422,8 +410,6 @@ def test_ogr_rfc28_20():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that BETWEEN works
 
@@ -444,8 +430,6 @@ def test_ogr_rfc28_21():
 
     assert count_between == count_ge_and_le, \
         ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_between, count_ge_and_le))
-
-    return 'success'
 
 ###############################################################################
 # Verify that NOT BETWEEN works
@@ -468,8 +452,6 @@ def test_ogr_rfc28_22():
     assert count_not_between == count_not_ge_and_le, \
         ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_between, count_not_ge_and_le))
 
-    return 'success'
-
 ###############################################################################
 # Verify that NOT LIKE works
 
@@ -490,8 +472,6 @@ def test_ogr_rfc28_23():
 
     assert count_not_like1 == count_not_like2, \
         ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_like1, count_not_like2))
-
-    return 'success'
 
 ###############################################################################
 # Verify that NULL works
@@ -525,8 +505,6 @@ def test_ogr_rfc28_24():
     assert count == 10, \
         ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count, 10))
 
-    return 'success'
-
 ###############################################################################
 # Verify that LIKE pattern ESCAPE escape_char works
 
@@ -542,8 +520,6 @@ def test_ogr_rfc28_25():
     assert count == 1, \
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
-    return 'success'
-
 ###############################################################################
 # Test SUBSTR with negative offsets
 
@@ -556,7 +532,7 @@ def test_ogr_rfc28_26():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test that we correctly let floating point values as floating point, and not as integer (#4634)"
@@ -570,7 +546,7 @@ def test_ogr_rfc28_27():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count == 10 else 'fail'
+    assert count == 10
 
 ###############################################################################
 # Extensive test of the evaluation of arithmetic and logical operators
@@ -584,8 +560,6 @@ def ogr_rfc28_28_test(formula, expected_val):
 
     assert got == expected_val, \
         ('bad result for %s : %s' % (formula, str(expected_val)))
-
-    return 'success'
 
 
 def test_ogr_rfc28_28():
@@ -667,8 +641,7 @@ def test_ogr_rfc28_28():
         if ret == 'fail':
             return ret
 
-    return 'success'
-
+    
 ###############################################################################
 # Test behaviour of binary operations when one operand is a NULL value
 
@@ -681,7 +654,7 @@ def test_ogr_rfc28_29():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count == 0 else 'fail'
+    assert count == 0
 
 ###############################################################################
 # Test behaviour of binary operations on strings when one operand is a NULL value
@@ -695,7 +668,7 @@ def test_ogr_rfc28_30():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count == 0 else 'fail'
+    assert count == 0
 
 ###############################################################################
 # Test UNION ALL
@@ -709,7 +682,7 @@ def test_ogr_rfc28_31():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count != 6 + 7 else 'fail'
+    assert count != 6 + 7
 
 ###############################################################################
 # Test UNION ALL with parenthesis
@@ -723,7 +696,7 @@ def test_ogr_rfc28_32():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count != 6 + 7 else 'fail'
+    assert count != 6 + 7
 
 ###############################################################################
 # Test lack of end-of-string character
@@ -735,7 +708,7 @@ def test_ogr_rfc28_33():
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink where name='foo")
     gdal.PopErrorHandler()
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test wildcard expansion of an unknown table.
@@ -749,7 +722,7 @@ def test_ogr_rfc28_34():
     assert (gdal.GetLastErrorMsg().find(
             'Table foo not recognised from foo.* definition') == 0)
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test selecting more than one distinct
@@ -762,7 +735,7 @@ def test_ogr_rfc28_35():
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') == 0
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test selecting more than one distinct
@@ -775,7 +748,7 @@ def test_ogr_rfc28_35_bis():
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') == 0
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test selecting more than one distinct
@@ -788,7 +761,7 @@ def test_ogr_rfc28_35_ter():
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') == 0
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test ORDER BY a DISTINCT list by more than one key
@@ -804,7 +777,6 @@ def test_ogr_rfc28_36():
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg().find("Can't ORDER BY a DISTINCT list by more than one key") == 0
     gdaltest.ds.ReleaseResultSet(lyr)
-    return 'success'
 
 ###############################################################################
 # Test different fields for ORDER BY and DISTINCT
@@ -820,7 +792,6 @@ def test_ogr_rfc28_37():
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg().find("Only selected DISTINCT field can be used for ORDER BY") == 0
     gdaltest.ds.ReleaseResultSet(lyr)
-    return 'success'
 
 ###############################################################################
 # Test invalid SUBSTR
@@ -842,8 +813,6 @@ def test_ogr_rfc28_38():
     assert gdal.GetLastErrorMsg().find("Wrong argument type for SUBSTR()") == 0
     assert lyr is None
 
-    return 'success'
-
 ###############################################################################
 # Test COUNT() on a 0-row result
 
@@ -856,7 +825,7 @@ def test_ogr_rfc28_39():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test MIN(), MAX() and AVG() on a date (#5333)
@@ -888,7 +857,6 @@ def test_ogr_rfc28_40():
     assert tr2
 
     assert tr3
-    return 'success'
 
 
 ###############################################################################
@@ -915,8 +883,6 @@ def test_ogr_rfc28_41():
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test boolean and int16 support
@@ -972,8 +938,6 @@ def test_ogr_rfc28_42():
     assert f.GetField('SUM_b') == 1
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test integer64 support
 
@@ -1023,7 +987,6 @@ def test_ogr_rfc28_43():
         f.DumpReadable()
         pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
-    return 'success'
 
 ###############################################################################
 # Test crazy quoting of table and fields
@@ -1091,8 +1054,6 @@ def test_ogr_rfc28_44():
     assert f is not None
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test 'FROM table_name AS alias'
 
@@ -1106,7 +1067,6 @@ def test_ogr_rfc28_45():
         ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.ds.ReleaseResultSet(ql)
-    return 'success'
 
 ###############################################################################
 # Test fid special column and 64 bit
@@ -1161,8 +1121,6 @@ def test_ogr_rfc28_46():
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test LIMIT and OFFSET
@@ -1255,8 +1213,6 @@ def test_ogr_rfc28_47():
     gdaltest.ds.ReleaseResultSet(lyr)
     assert tr
 
-    return 'success'
-
 ###############################################################################
 # Test date/datetime comparisons (#6810)
 
@@ -1331,8 +1287,6 @@ def test_ogr_rfc28_48():
     lyr.SetAttributeFilter("dt BETWEEN dt AND '2017/02/17 11:06:33.999'")
     assert lyr.GetFeatureCount() == 0
 
-    return 'success'
-
 
 ###############################################################################
 def test_ogr_rfc28_int_overflows():
@@ -1380,8 +1334,7 @@ def test_ogr_rfc28_int_overflows():
         assert f.GetField(0) == res, (sql, res, f.GetField(0))
         ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
+    
 
 ###############################################################################
 
@@ -1389,8 +1342,6 @@ def test_ogr_rfc28_int_overflows():
 def test_ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

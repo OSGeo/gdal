@@ -57,8 +57,6 @@ def test_visoss_init():
 
     assert gdal.GetSignedURL('/vsioss/foo/bar') is None
 
-    return 'success'
-
 ###############################################################################
 # Error cases
 
@@ -89,8 +87,6 @@ def test_visoss_1():
 
     gdal.SetConfigOption('OSS_ACCESS_KEY_ID', 'OSS_ACCESS_KEY_ID')
 
-    return 'success'
-
 
 def test_visoss_real_test():
 
@@ -108,15 +104,13 @@ def test_visoss_real_test():
         if f is not None:
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
-            return 'success'
+            return
         pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsioss_streaming/foo/bar.baz')
     assert f is None and gdal.VSIGetLastErrorMsg() != ''
-
-    return 'success'
 
 ###############################################################################
 
@@ -139,8 +133,6 @@ def test_visoss_start_webserver():
     gdal.SetConfigOption('OSS_HTTPS', 'NO')
     gdal.SetConfigOption('OSS_VIRTUAL_HOSTING', 'NO')
     gdal.SetConfigOption('OSS_ENDPOINT', '127.0.0.1:%d' % gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 
@@ -352,8 +344,6 @@ def test_visoss_2():
             f = open_for_read('/vsioss_streaming/oss_fake_bucket/no_message_in_error')
     assert f is None and gdal.VSIGetLastErrorMsg().find('<Error>') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test ReadDir() with a fake OSS server
 
@@ -545,8 +535,6 @@ def test_visoss_3():
         dir_contents = gdal.ReadDir('/vsioss/')
     assert dir_contents == ['mybucket']
 
-    return 'success'
-
 ###############################################################################
 # Test simple PUT support with a fake OSS server
 
@@ -666,8 +654,6 @@ def test_visoss_4():
         gdal.VSIFCloseL(f)
     assert gdal.GetLastErrorMsg() == ''
 
-    return 'success'
-
 ###############################################################################
 # Test simple DELETE support with a fake OSS server
 
@@ -709,8 +695,6 @@ def test_visoss_5():
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsioss/oss_delete_bucket/delete_file_error')
     assert ret != 0
-
-    return 'success'
 
 ###############################################################################
 # Test multipart upload with a fake OSS server
@@ -891,8 +875,7 @@ def test_visoss_6():
                 gdal.VSIFCloseL(f)
             assert gdal.GetLastErrorMsg() != '', filename
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Mkdir() / Rmdir()
 
@@ -950,8 +933,6 @@ def test_visoss_7():
         ret = gdal.Rmdir('/vsioss/oss_bucket_test_mkdir/dir_nonempty')
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # Test handling of file and directory with same name
 
@@ -990,8 +971,7 @@ def test_visoss_8():
     with webserver.install_http_handler(handler):
         assert stat.S_ISDIR(gdal.VSIStatL('/vsioss/visoss_8/test/').mode)
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -1005,8 +985,6 @@ def test_visoss_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 # Nominal cases (require valid credentials)
@@ -1088,7 +1066,7 @@ def visoss_extra_1():
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
-        return 'success'
+        return
 
     f = open_for_read('/vsioss/' + OSS_RESOURCE)
     assert f is not None, ('cannot open %s' % ('/vsioss/' + OSS_RESOURCE))
@@ -1129,8 +1107,6 @@ def visoss_extra_1():
 
     assert len(ret) == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1139,8 +1115,7 @@ def test_visoss_cleanup():
     for var in gdaltest.oss_vars:
         gdal.SetConfigOption(var, gdaltest.oss_vars[var])
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_visoss_init,
                  test_visoss_1,

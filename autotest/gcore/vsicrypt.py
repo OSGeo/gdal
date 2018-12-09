@@ -249,8 +249,6 @@ def test_vsicrypt_2():
 
     gdal.Unlink('/vsimem/file.bin')
 
-    return 'success'
-
 ###############################################################################
 # Test various options
 
@@ -342,8 +340,6 @@ def test_vsicrypt_3():
 
     gdal.Unlink('/vsimem/subdir_crypt/file2.bin')
 
-    return 'success'
-
 ###############################################################################
 # Test "random" operations against reference filesystem
 
@@ -405,8 +401,6 @@ def test_vsicrypt_4():
     gdal.Unlink(test_file)
     gdal.Unlink(ref_file)
 
-    return 'success'
-
 ###############################################################################
 # Test random filling of last sector
 
@@ -460,8 +454,6 @@ def test_vsicrypt_5():
     assert content == (97, 98, 0, 100, 0, 102, 0, 104)
 
     gdal.Unlink(test_file)
-
-    return 'success'
 
 ###############################################################################
 # Test VSISetCryptKey
@@ -528,8 +520,6 @@ def test_vsicrypt_6():
     assert fp is None
 
     gdal.Unlink('/vsimem/file.bin')
-
-    return 'success'
 
 
 gdaltest_list = [test_vsicrypt_1,

@@ -117,8 +117,7 @@ def test_grib_grib2_read_nodata():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    return 'success'
-
+    
 ###############################################################################
 # Check grib units (#3606)
 
@@ -135,11 +134,11 @@ def test_grib_read_units():
     md = ds.GetRasterBand(1).GetMetadata()
     if md['GRIB_UNIT'] != '[C]' or md['GRIB_COMMENT'] != 'Minimum temperature [C]':
         print(md)
-        return 'success'
+        return
     ds.GetRasterBand(1).ComputeStatistics(False)
     if abs(ds.GetRasterBand(1).GetMinimum() - 13) > 1:
         print(ds.GetRasterBand(1).GetMinimum())
-        return 'success'
+        return
     ds = None
 
     os.unlink('tmp/ds.mint.bin.aux.xml')
@@ -150,16 +149,14 @@ def test_grib_read_units():
     md = ds.GetRasterBand(1).GetMetadata()
     if md['GRIB_UNIT'] != '[K]' or md['GRIB_COMMENT'] != 'Minimum temperature [K]':
         print(md)
-        return 'success'
+        return
     ds.GetRasterBand(1).ComputeStatistics(False)
     if abs(ds.GetRasterBand(1).GetMinimum() - 286) > 1:
         print(ds.GetRasterBand(1).GetMinimum())
-        return 'success'
+        return
     ds = None
 
     gdal.GetDriverByName('GRIB').Delete('tmp/ds.mint.bin')
-
-    return 'success'
 
 ###############################################################################
 # Handle geotransform for 1xn or nx1 grids.  The geotransform was faulty when
@@ -179,8 +176,7 @@ def test_grib_read_geotransform_one_n_or_n_one():
     if gt != egt:
         print(gt, '!=', egt)
         pytest.fail('Invalid geotransform')
-    return 'success'
-
+    
 ###############################################################################
 # This is more a /vsizip/ file test than a GRIB one, but could not easily
 # come up with a pure /vsizip/ test case, so here's a real world use
@@ -194,8 +190,6 @@ def test_grib_read_vsizip():
 
     ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Write PDS numbers to all bands
@@ -220,7 +214,6 @@ def test_grib_grib2_test_grib_pds_all_bands():
     ds = None
 
     assert md is None, 'Got pds numbers, when disabled (#5144)'
-    return 'success'
 
 ###############################################################################
 # Test support for template 4.15 (#5768)
@@ -241,12 +234,6 @@ def test_grib_grib2_read_template_4_15():
     assert ret.find('Checksum=') >= 0 or err.find('Is the JPEG2000 driver available?') >= 0, \
         'Could not open file'
 
-    # ds = gdal.Open('data/template4_15.grib')
-    # if ds is None:
-    #    return 'fail'
-
-    return 'success'
-
 ###############################################################################
 # Test support for PNG compressed
 
@@ -262,8 +249,6 @@ def test_grib_grib2_read_png():
     ds = gdal.Open('data/grib/MRMS_EchoTop_18_00.50_20161015-133230.grib2')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 41854, 'Could not open file'
-
-    return 'success'
 
 ###############################################################################
 # Test support for GRIB2 Section 4 Template 32, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for synthetic satellite data.
@@ -283,8 +268,7 @@ def test_grib_grib2_read_template_4_32():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    return 'success'
-
+    
 ###############################################################################
 # GRIB2 file with all 0 data
 
@@ -303,8 +287,7 @@ def test_grib_grib2_read_all_zero_data():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    return 'success'
-
+    
 ###############################################################################
 # GRIB1 file with rotate pole lonlat
 
@@ -333,8 +316,7 @@ def test_grib_grib2_read_rotated_pole_lonlat():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test support for GRIB2 Section 4 Template 40, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for atmospheric chemical constituents
 
@@ -356,8 +338,7 @@ def test_grib_grib2_read_template_4_40():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test support for a unhandled GRIB2 Section 4 Template
 
@@ -374,8 +355,7 @@ def test_grib_grib2_read_template_4_unhandled():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading GRIB2 Transverse Mercator grid
 
@@ -395,8 +375,6 @@ def test_grib_grib2_read_transverse_mercator():
     expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
-
-    return 'success'
 
 ###############################################################################
 # Test reading GRIB2 Mercator grid
@@ -421,8 +399,6 @@ def test_grib_grib2_read_mercator():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
-    return 'success'
-
 ###############################################################################
 # Test reading GRIB2 Mercator grid
 
@@ -445,8 +421,6 @@ def test_grib_grib2_read_mercator_2sp():
     expected_gt = (-10931598.94836207, 60.299, 0.0, 3332168.629121481, 0.0, -60.299)
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
-
-    return 'success'
 
 ###############################################################################
 # Test reading GRIB2 Lambert Conformal Conic grid
@@ -471,8 +445,6 @@ def test_grib_grib2_read_lcc():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
-    return 'success'
-
 ###############################################################################
 # Test reading GRIB2 Polar Stereographic grid
 
@@ -495,8 +467,6 @@ def test_grib_grib2_read_polar_stereo():
     expected_gt = (-5621962.072511509, 71.86, 0.0, 2943991.8007649644, 0.0, -71.86)
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
-
-    return 'success'
 
 ###############################################################################
 # Test reading GRIB2 Albers Equal Area grid
@@ -521,8 +491,6 @@ def test_grib_grib2_read_aea():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
-    return 'success'
-
 ###############################################################################
 # Test reading GRIB2 Lambert Azimuthal Equal Area grid
 
@@ -546,8 +514,6 @@ def test_grib_grib2_read_laea():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
-    return 'success'
-
 ###############################################################################
 # Test reading GRIB2 with Grid point data - IEEE Floating Point Data (template 5.4)
 
@@ -564,8 +530,6 @@ def test_grib_grib2_read_template_5_4_grid_point_ieee_floating_point():
     ds = gdal.Open('data/grib/ieee754_double.grb2')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4727, 'Did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test reading GRIB2 with NBITS=0 and DECIMAL_SCALE !=0
@@ -590,8 +554,7 @@ def test_grib_grib2_read_section_5_nbits_zero_decimal_scaled():
         cs = ds.GetRasterBand(1).Checksum()
         assert cs == 5, 'Did not get expected checksum'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading GRIB2 with complex packing and spatial differencing of order 1
 
@@ -607,8 +570,7 @@ def test_grib_grib2_read_spatial_differencing_order_1():
         gdaltest.post_reason('Did not get expected checksum')
         print(cs)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GRIB2 creation options
 
@@ -828,8 +790,6 @@ def test_grib_grib2_write_creation_options():
     assert out_ds is None
     gdal.Unlink(tmpfilename)
 
-    return 'success'
-
 ###############################################################################
 # Test GRIB2 write support for projections
 
@@ -952,8 +912,6 @@ def test_grib_grib2_write_projections():
         'did not get expected geotransform for LCC_1SP'
     out_ds = None
     gdal.Unlink(tmpfilename)
-
-    return 'success'
 
 ###############################################################################
 
@@ -1215,8 +1173,7 @@ def test_grib_grib2_write_data_encodings():
             gdaltest.post_reason('did not get expected checksum for lossy JPEG2000 with ' + drvname)
             print(cs)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GRIB2 write support with warnings/errors
 
@@ -1293,8 +1250,6 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
         out_ds = gdal.Translate('/i/do_not/exist.grb2', 'data/byte.tif', format='GRIB')
     assert out_ds is None, 'expected null return'
 
-    return 'success'
-
 ###############################################################################
 # Test writing temperatures with automatic Celsius -> Kelvin conversion
 
@@ -1338,8 +1293,7 @@ def test_grib_grib2_write_temperatures():
         assert max([abs((got_vals[i] - expected_vals[i]) / expected_vals[i]) for i in range(4)]) <= 1e-4, \
             ('fail with data_encoding = %s and type = %s' % (data_encoding, str(src_type)))
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -1366,8 +1320,7 @@ def test_grib_grib2_write_nodata():
         ds = None
         gdal.Unlink(tmpfilename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 
@@ -1394,8 +1347,7 @@ def test_grib_online_grib2_jpeg2000_single_line():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_grib_1,

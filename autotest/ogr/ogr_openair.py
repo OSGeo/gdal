@@ -69,8 +69,7 @@ def test_ogr_openair_1():
         print('did not get expected geom on labels layer')
         pytest.fail(geom.ExportToWkt())
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_openair_1]

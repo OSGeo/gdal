@@ -107,8 +107,6 @@ def netcdf_setup():
           '  has_nc2: ' + str(gdaltest.netcdf_drv_has_nc2) + '  has_nc4: ' +
           str(gdaltest.netcdf_drv_has_nc4))
 
-    return 'success'
-
 ###############################################################################
 # test file copy
 # helper function needed so we can call Process() on it from netcdf_test_copy_timeout()
@@ -198,8 +196,6 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
     assert size2 < size1, \
         'Compressed file is not smaller than reference, check your netcdf-4, HDF5 and zlib installation'
 
-    return 'success'
-
 ###############################################################################
 # check support for reading attributes (single values and array values)
 
@@ -241,8 +237,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
         assert mk == v, ("invalid value [%s] for metadata [%s]=[%s]"
                                  % (str(mk), str(k), str(v)))
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Netcdf Tests
@@ -316,8 +311,6 @@ def test_netcdf_2():
 
     gdaltest.clean_tmp()
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -335,8 +328,6 @@ def test_netcdf_3():
 
     bnd = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # In #2582 5dimensional files were causing problems.  Verify use ok.
@@ -405,8 +396,6 @@ def test_netcdf_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
 # 2 standard parallels.
@@ -431,8 +420,6 @@ def test_netcdf_7():
 
     ds = None
     sr = None
-
-    return 'success'
 
 ###############################################################################
 # check for cf convention read of albers equal area
@@ -462,8 +449,6 @@ def test_netcdf_8():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # check to see if projected systems default to wgs84 if no spheroid def
 
@@ -486,8 +471,6 @@ def test_netcdf_9():
 
     ds = None
     sr = None
-
-    return 'success'
 
 ###############################################################################
 # check if km pixel size makes it through to gt
@@ -520,8 +503,6 @@ def test_netcdf_10():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # check if ll gets caught in km pixel size check
 
@@ -538,8 +519,6 @@ def test_netcdf_11():
     assert gt == (-0.5, 1.0, 0.0, 10.5, 0.0, -1.0), 'Incorrect geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # check for scale/offset set/get.
@@ -560,8 +539,6 @@ def test_netcdf_12():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # check for scale/offset = None if no scale or offset is available
 
@@ -579,8 +556,6 @@ def test_netcdf_13():
     assert scale is None and offset is None, 'Incorrect scale or offset'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # check for scale/offset for two variables
@@ -612,8 +587,6 @@ def test_netcdf_14():
     assert scale == 0.1 and offset == 2.5, \
         ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
 
-    return 'success'
-
 ###############################################################################
 # check support for netcdf-2 (64 bit)
 # This test fails in 1.8.1, because the driver does not support NC2 (bug #3890)
@@ -628,12 +601,11 @@ def test_netcdf_15():
         ds = gdal.Open('data/trmm-nc2.nc')
         assert ds is not None
         ds = None
-        return 'success'
+        return
     else:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # check support for netcdf-4
 
@@ -664,8 +636,7 @@ def test_netcdf_16():
     else:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
 
@@ -701,8 +672,7 @@ def test_netcdf_17():
     else:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # check support for netcdf-4 classic (NC4C)
 
@@ -733,8 +703,7 @@ def test_netcdf_18():
     else:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # check support for reading with DEFLATE compression, requires NC4
 
@@ -838,8 +807,7 @@ def test_netcdf_22():
     else:
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
 
@@ -872,8 +840,6 @@ def test_netcdf_23():
     # test with Identify()
     name = gdal.IdentifyDriver(ifile).GetDescription()
     assert name != 'netCDF', 'netcdf driver was identified for hdf4 file'
-
-    return 'success'
 
 ###############################################################################
 # check support for reading attributes (single values and array values)
@@ -1023,8 +989,7 @@ def test_netcdf_26():
         print('failed create copy with WRITE_BOTTOMUP=NO')
         return result
 
-    return 'success'
-
+    
 ###############################################################################
 # check support for GDAL_NETCDF_BOTTOMUP configuration option
 
@@ -1056,8 +1021,7 @@ def test_netcdf_27():
         print('failed open with GDAL_NETCDF_BOTTOMUP')
         return result
 
-    return 'success'
-
+    
 ###############################################################################
 # check support for writing multi-dimensional files (helper function)
 
@@ -1081,10 +1045,10 @@ def netcdf_test_4dfile(ofile):
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
     except OSError:
         print('NOTICE: ncdump not found')
-        return 'success'
+        return
     if err is None or 'netcdf library version' not in err:
         print('NOTICE: ncdump not found')
-        return 'success'
+        return
     (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h ' + ofile)
     assert ret != '' and err == '', 'ncdump failed'
 
@@ -1104,8 +1068,6 @@ def netcdf_test_4dfile(ofile):
     # if err != '':
     #    err = err + ret
     assert err == ''
-
-    return 'success'
 
 ###############################################################################
 # check support for writing multi-dimensional files using CreateCopy()
@@ -1209,8 +1171,6 @@ def test_netcdf_31():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test NC_UBYTE write/read - netcdf-4 (FORMAT=NC4) only (#5053)
 
@@ -1231,8 +1191,6 @@ def test_netcdf_32():
     # test basic read/write
     result = netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4'])
     result = netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4C'])
-
-    return 'success'
 
 ###############################################################################
 # TEST NC_UBYTE metadata read - netcdf-4 (FORMAT=NC4) only (#5053)
@@ -1296,8 +1254,7 @@ def test_netcdf_34():
         proc.terminate()
         pytest.fail('testOpen() for file %s has reached timeout limit of %d seconds' % (filename, timeout))
 
-    return 'success'
-
+    
 ###############################################################################
 # test writing a long metadata > 8196 chars (bug #5113)
 
@@ -1324,8 +1281,6 @@ def test_netcdf_35():
     assert bla[-4:] == '_bla', \
         ('U#bla metadata ends with [%s], expecting [%s]' % (bla[-4:], '_bla'))
 
-    return 'success'
-
 ###############################################################################
 # test for correct geotransform (bug #5114)
 
@@ -1345,8 +1300,6 @@ def test_netcdf_36():
     gt_expected = (-3.498749944898817, 0.0025000042385525173, 0.0, 46.61749818589952, 0.0, -0.001666598849826389)
     assert gt == gt_expected, \
         ('got GeoTransform %s, expected %s' % (str(gt), str(gt_expected)))
-
-    return 'success'
 
 
 ###############################################################################
@@ -1368,8 +1321,6 @@ def test_netcdf_36_lonwrap():
     gt_expected = (-2.25, 2.5, 0.0, 16.25, 0.0, -2.5)
     assert gt == gt_expected, \
         ('got GeoTransform %s, expected %s' % (str(gt), str(gt_expected)))
-
-    return 'success'
 
 
 ###############################################################################
@@ -1400,8 +1351,6 @@ def test_netcdf_37():
     assert y_vals.startswith('{-87.15909455586265,-83.47893666931698,') and y_vals.endswith(',83.47893666931698,87.15909455586265}'), \
         'got incorrect values in 1D geolocation'
 
-    return 'success'
-
 ###############################################################################
 # test for correct geotransform of projected data in km units (bug #5118)
 
@@ -1423,8 +1372,6 @@ def test_netcdf_38():
     gt_expected = (-1659.3478178136488, 13.545000861672793, 0.0, 2330.054725283668, 0.0, -13.54499744233631)
     assert gt == gt_expected, \
         ('got GeoTransform %s, expected %s' % (str(gt), str(gt_expected)))
-
-    return 'success'
 
 ###############################################################################
 # Test VRT and NETCDF:
@@ -1489,8 +1436,6 @@ def test_netcdf_39():
     gdal.Unlink('tmp/netcdf_39.vrt')
     assert cs == 65463
 
-    return 'success'
-
 ###############################################################################
 # Check support of reading of chunked bottom-up files.
 
@@ -1515,8 +1460,6 @@ def test_netcdf_41():
         ds = gdal.Open('data/byte_no_cf.nc')
     assert ds.GetGeoTransform() == (440720, 60, 0, 3751320, 0, -60)
     assert ds.GetProjectionRef().find('26711') >= 0, ds.GetGeoTransform()
-
-    return 'success'
 
 ###############################################################################
 # Test writing & reading GEOLOCATION array
@@ -1562,8 +1505,6 @@ def test_netcdf_42():
     ds = gdal.Open('NETCDF:"tmp/netcdf_42.nc":lat')
     assert ds.GetRasterBand(1).Checksum() == 33501
 
-    return 'success'
-
 ###############################################################################
 # Test reading GEOLOCATION array from geotransform (non default)
 
@@ -1588,8 +1529,6 @@ def test_netcdf_43():
         'Y_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lat',
             'Y_BAND': '1'})
 
-    return 'success'
-
 ###############################################################################
 # Test NC_USHORT/UINT read/write - netcdf-4 only (#6337)
 
@@ -1606,8 +1545,7 @@ def test_netcdf_44():
         assert (not (netcdf_test_copy(f, 1, md5, 'tmp/netcdf_44.nc', ['FORMAT=NC4']) !=
                 'success'))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a vector NetCDF 3 file
 
@@ -1652,8 +1590,6 @@ def test_netcdf_45():
     gdal.Unlink('/vsimem/netcdf_45.csvt')
     gdal.Unlink('/vsimem/netcdf_45.prj')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a vector NetCDF 3 file
 
@@ -1669,8 +1605,6 @@ def test_netcdf_46():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_ogr_nc3.nc')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test reading a vector NetCDF 4 file
@@ -1716,8 +1650,6 @@ def test_netcdf_47():
     gdal.Unlink('/vsimem/netcdf_47.csvt')
     gdal.Unlink('/vsimem/netcdf_47.prj')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a vector NetCDF 3 file without any geometry
 
@@ -1733,8 +1665,6 @@ def test_netcdf_48():
     assert lyr.GetGeomType() == ogr.wkbNone
     f = lyr.GetNextFeature()
     assert f['int32'] == 1
-
-    return 'success'
 
 ###############################################################################
 # Test reading a vector NetCDF 3 file with X,Y,Z vars as float
@@ -1761,8 +1691,6 @@ def test_netcdf_49():
     assert content == expected_content
 
     gdal.Unlink('/vsimem/netcdf_49.csv')
-
-    return 'success'
 
 ###############################################################################
 # Test creating a vector NetCDF 3 file with WKT geometry field
@@ -1799,8 +1727,6 @@ def test_netcdf_50():
     out_ds = None
 
     gdal.Unlink('tmp/netcdf_50.nc')
-
-    return 'success'
 
 ###############################################################################
 # Test creating a vector NetCDF 3 file with X,Y,Z fields
@@ -1869,8 +1795,6 @@ def test_netcdf_51():
     gdal.Unlink('/vsimem/netcdf_51.csvt')
     gdal.Unlink('/vsimem/netcdf_51.prj')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a vector NetCDF 3 file with X,Y,Z fields with WRITE_GDAL_TAGS=NO
 
@@ -1913,8 +1837,6 @@ def test_netcdf_51_no_gdal_tags():
     gdal.Unlink('/vsimem/netcdf_51_no_gdal_tags.csv')
     gdal.Unlink('/vsimem/netcdf_51_no_gdal_tags.csvt')
     gdal.Unlink('/vsimem/netcdf_51_no_gdal_tags.prj')
-
-    return 'success'
 
 ###############################################################################
 # Test creating a vector NetCDF 4 file with X,Y,Z fields
@@ -1983,8 +1905,6 @@ def test_netcdf_52():
     gdal.Unlink('/vsimem/netcdf_52.csvt')
     gdal.Unlink('/vsimem/netcdf_52.prj')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a vector NetCDF 4 file with WKT geometry field
 
@@ -2024,8 +1944,6 @@ def test_netcdf_53():
 
     gdal.Unlink('tmp/netcdf_53.nc')
 
-    return 'success'
-
 ###############################################################################
 # Test appending to a vector NetCDF 4 file with unusual types (ubyte, ushort...)
 
@@ -2062,8 +1980,6 @@ def test_netcdf_54():
     gdal.Unlink('tmp/netcdf_54.nc')
 
     assert src_json == out_json
-
-    return 'success'
 
 ###############################################################################
 # Test auto-grow of bidimensional char variables in a vector NetCDF 4 file
@@ -2102,8 +2018,6 @@ def test_netcdf_55():
 
     assert src_json == out_json
 
-    return 'success'
-
 ###############################################################################
 # Test truncation of bidimensional char variables and WKT in a vector NetCDF 3 file
 
@@ -2134,8 +2048,6 @@ def test_netcdf_56():
     ds = None
 
     gdal.Unlink('tmp/netcdf_56.nc')
-
-    return 'success'
 
 ###############################################################################
 # Test one layer per file creation
@@ -2181,8 +2093,6 @@ def test_netcdf_57():
 
     shutil.rmtree('tmp/netcdf_57')
 
-    return 'success'
-
 ###############################################################################
 # Test one layer per group (NC4)
 
@@ -2213,8 +2123,6 @@ def test_netcdf_58():
     ds = None
 
     gdal.Unlink('tmp/netcdf_58.nc')
-
-    return 'success'
 
 ###############################################################################
 # check for UnitType set/get.
@@ -2273,8 +2181,6 @@ def test_netcdf_60():
 
     gdal.Unlink('/vsimem/netcdf_60.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test appending to a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
@@ -2307,8 +2213,6 @@ def test_netcdf_61():
     gdal.Unlink('/vsimem/netcdf_61.csv')
     gdal.Unlink('/vsimem/netcdf_61.nc')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
@@ -2336,8 +2240,6 @@ def test_netcdf_62():
 
     gdal.Unlink('/vsimem/netcdf_62.csv')
 
-    return 'success'
-
 
 def test_netcdf_62_ncdump_check():
 
@@ -2361,8 +2263,7 @@ def test_netcdf_62_ncdump_check():
     else:
         pytest.skip()
 
-    return 'success'
-
+    
 
 def test_netcdf_62_cf_check():
 
@@ -2375,8 +2276,6 @@ def test_netcdf_62_cf_check():
         result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc', 'auto', False)
 
     gdal.Unlink('/vsimem/netcdf_62.nc')
-
-    return 'success'
 
 ###############################################################################
 # Test creating a NC4 "Indexed ragged array representation of profiles" v1.6.0 H3.5
@@ -2409,8 +2308,6 @@ def test_netcdf_63():
 
     gdal.Unlink('/vsimem/netcdf_63.csv')
 
-    return 'success'
-
 
 def test_netcdf_63_ncdump_check():
 
@@ -2438,8 +2335,6 @@ def test_netcdf_63_ncdump_check():
         pytest.skip()
 
     gdal.Unlink('/vsimem/netcdf_63.nc')
-
-    return 'success'
 
 ###############################################################################
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
@@ -2470,8 +2365,6 @@ def test_netcdf_64():
     gdal.Unlink('/vsimem/netcdf_64.csv')
     gdal.Unlink('/vsimem/netcdf_64.nc')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a NC4 file with empty string fields / WKT fields
 # (they must be filled as empty strings to avoid crashes in netcdf lib)
@@ -2501,8 +2394,6 @@ def test_netcdf_65():
     ds = None
 
     gdal.Unlink('tmp/netcdf_65.nc')
-
-    return 'success'
 
 ###############################################################################
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
@@ -2606,8 +2497,6 @@ def test_netcdf_66():
 
     gdal.Unlink('/vsimem/netcdf_66.csv')
 
-    return 'success'
-
 
 def test_netcdf_66_ncdump_check():
 
@@ -2634,8 +2523,6 @@ def test_netcdf_66_ncdump_check():
         pytest.skip()
 
     gdal.Unlink('/vsimem/netcdf_66.nc')
-
-    return 'success'
 
 ###############################################################################
 # ticket #5950: optimize IReadBlock() and CheckData() handling of partial
@@ -2686,8 +2573,6 @@ def test_netcdf_68():
     wkt = ds.GetProjectionRef()
     assert wkt.find('6933') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test opening a dataset with a 1D variable with 0 record (#6645)
 
@@ -2699,8 +2584,6 @@ def test_netcdf_69():
 
     ds = gdal.Open('data/test6645.nc')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test that we don't erroneously identify non-longitude axis as longitude (#6759)
@@ -2716,8 +2599,6 @@ def test_netcdf_70():
     expected_gt = [304250.0, 250.0, 0.0, 4952500.0, 0.0, -250.0]
     assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-3
 
-    return 'success'
-
 ###############################################################################
 # Test that we take into account x and y offset and scaling
 # (https://github.com/OSGeo/gdal/pull/200)
@@ -2732,8 +2613,6 @@ def test_netcdf_71():
     gt = ds.GetGeoTransform()
     expected_gt = (-690769.999174516, 1015.8812500000931, 0.0, 2040932.1838741193, 0.0, 1015.8812499996275)
     assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-3
-
-    return 'success'
 
 ###############################################################################
 # test int64 attributes / dim
@@ -2751,8 +2630,6 @@ def test_netcdf_72():
     mdi = ds.GetRasterBand(1).GetMetadataItem('NETCDF_DIM_TIME')
     assert mdi == '123456789012'
 
-    return 'success'
-
 ###############################################################################
 # test geostationary with radian units (https://github.com/OSGeo/gdal/pull/220)
 
@@ -2767,8 +2644,6 @@ def test_netcdf_73():
     expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, -5979487.123448145, 0.0, 1087179.4077774752)
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1
 
-    return 'success'
-
 ###############################################################################
 # test geostationary with microradian units (https://github.com/OSGeo/gdal/pull/220)
 
@@ -2782,8 +2657,6 @@ def test_netcdf_74():
     gt = ds.GetGeoTransform()
     expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, -1032263.7666924844, 0.0, 615630.8078590936)
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1
-
-    return 'success'
 
 ###############################################################################
 # test opening a ncdump file
@@ -2840,8 +2713,7 @@ def test_netcdf_76():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # test opening a raster file that used to be confused with a vector file (#6974)
 
@@ -2857,8 +2729,6 @@ def test_netcdf_77():
 
     ds = gdal.Open('NETCDF:"data/fake_Oa01_radiance.nc":Oa01_radiance')
     assert not ds.GetMetadata('GEOLOCATION')
-
-    return 'success'
 
 
 ###############################################################################
@@ -2876,8 +2746,6 @@ def test_netcdf_78():
     data = struct.unpack('B' * 4, data)
     assert data == (128, 129, 126, 127)
 
-    return 'success'
-
 ###############################################################################
 # test we handle correctly _Unsigned="true" for a byte dataset with
 # negative nodata value
@@ -2893,8 +2761,6 @@ def test_netcdf_79():
     data = ds.GetRasterBand(1).ReadRaster()
     data = struct.unpack('B' * 4, data)
     assert data == (128, 129, 126, 127)
-
-    return 'success'
 
 ###############################################################################
 # Test creating and opening with accent
@@ -2931,8 +2797,6 @@ def test_netcdf_81():
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
         'Did not get expected geotransform'
 
-    return 'success'
-
 ###############################################################################
 # netCDF file with extra dimensions that are oddly indexed (1D variable
 # corresponding to the dimension but with a differentn ame, no corresponding
@@ -2966,8 +2830,6 @@ def test_netcdf_82():
     }
     assert md == expected_md, 'Did not get expected metadata'
 
-    return 'success'
-
 
 ###############################################################################
 def test_netcdf_uffd():
@@ -2989,8 +2851,7 @@ def test_netcdf_uffd():
     for netcdf_file in netcdf_files:
         assert uffd_compare(netcdf_file) is True
 
-    return 'success'
-
+    
 
 ###############################################################################
 

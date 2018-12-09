@@ -119,7 +119,6 @@ def test_ilwis_5():
 
 def test_ilwis_cleanup():
     gdaltest.clean_tmp()
-    return 'success'
 
 
 gdaltest_list = [

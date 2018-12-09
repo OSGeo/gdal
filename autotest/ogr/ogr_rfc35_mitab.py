@@ -56,8 +56,6 @@ def CheckFileSize(src_filename):
     assert statBufSrc.size == statBufDst.size, \
         ('src_size = %d, dst_size = %d', statBufSrc.size, statBufDst.size)
 
-    return 'success'
-
 ###############################################################################
 # Initiate the test file
 
@@ -103,8 +101,6 @@ def test_ogr_rfc35_mitab_1():
     fd.SetWidth(20)
     lyr.CreateField(fd)
 
-    return 'success'
-
 ###############################################################################
 # Test ReorderField()
 
@@ -140,8 +136,7 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
         feat = lyr.GetNextFeature()
         i = i + 1
 
-    return 'success'
-
+    
 
 def CheckColumnOrder(lyr, expected_order):
 
@@ -149,8 +144,7 @@ def CheckColumnOrder(lyr, expected_order):
     for i, exp_order in enumerate(expected_order):
         assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
-    return 'success'
-
+    
 
 def Check(lyr, expected_order):
 
@@ -164,8 +158,6 @@ def Check(lyr, expected_order):
     ret = CheckColumnOrder(lyr_reopen, expected_order)
 
     ret = CheckFeatures(lyr_reopen)
-
-    return 'success'
 
 
 def test_ogr_rfc35_mitab_2():
@@ -275,8 +267,7 @@ def test_ogr_rfc35_mitab_2():
         gdaltest.post_reason(ret)
         return ret
 
-    return 'success'
-
+    
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
@@ -328,8 +319,6 @@ def test_ogr_rfc35_mitab_3():
     assert fld_defn.GetWidth() == 5
 
     ret = CheckFeatures(lyr, field3='baz5')
-
-    return 'success'
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
@@ -490,8 +479,7 @@ def test_ogr_rfc35_mitab_4():
         gdaltest.post_reason(ret)
         return ret
 
-    return 'success'
-
+    
 ###############################################################################
 # Test DeleteField()
 
@@ -571,8 +559,7 @@ def test_ogr_rfc35_mitab_5():
         gdaltest.post_reason(ret)
         return ret
 
-    return 'success'
-
+    
 ###############################################################################
 # Initiate the test file
 
@@ -580,8 +567,6 @@ def test_ogr_rfc35_mitab_5():
 def test_ogr_rfc35_mitab_cleanup():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/rfc35_test.tab')
-
-    return 'success'
 
 
 gdaltest_list = [

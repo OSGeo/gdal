@@ -55,8 +55,6 @@ def check_content(ds):
     assert (ogrtest.check_feature_geometry(feat, 'LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)',
                                       max_error=0.01) == 0)
 
-    return 'success'
-
 ###############################################################################
 # Open AVCE00 datasource.
 
@@ -99,8 +97,6 @@ def test_ogr_avc_3():
 
     assert last_error_msg != '', 'expected error message'
 
-    return 'success'
-
 ###############################################################################
 # Open larger AVCBin datasource.
 
@@ -129,8 +125,7 @@ def test_ogr_avc_4():
             f.DumpReadable()
             pytest.fail(filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Open AVCBin datasource with polygon
 
@@ -163,8 +158,7 @@ def test_ogr_avc_5():
             f.DumpReadable()
             pytest.fail(filename)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_avc_1,

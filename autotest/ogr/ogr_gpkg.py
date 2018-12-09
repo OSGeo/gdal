@@ -115,8 +115,6 @@ def test_ogr_gpkg_1():
 
     assert validate('tmp/gpkg_test.gpkg'), 'validation failed'
 
-    return 'success'
-
 ###############################################################################
 # Re-open database to test validity
 
@@ -148,8 +146,6 @@ def test_ogr_gpkg_2():
         pytest.fail()
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 
 ###############################################################################
 # Create a layer
@@ -173,8 +169,6 @@ def test_ogr_gpkg_3():
     lyr = gdaltest.gpkg_ds.CreateLayer('a_layer', options=['SPATIAL_INDEX=NO'])
     gdal.PopErrorHandler()
     assert lyr is None, 'layer creation should have failed'
-
-    return 'success'
 
 ###############################################################################
 # Close and re-open to test the layer registration
@@ -229,8 +223,6 @@ def test_ogr_gpkg_4():
     assert sql_lyr.GetFeatureCount() == 0
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 
 ###############################################################################
 # Delete a layer
@@ -255,8 +247,6 @@ def test_ogr_gpkg_5():
     assert gdaltest.gpkg_ds.DeleteLayer(0) == 0, 'got error code from DeleteLayer(0)'
 
     assert gdaltest.gpkg_ds.GetLayerCount() == 0, 'unexpected number of layers (not 0)'
-
-    return 'success'
 
 
 ###############################################################################
@@ -297,8 +287,6 @@ def test_ogr_gpkg_6():
     assert field_defn_out.GetType() == ogr.OFTString, 'wrong field type after reopen'
 
     assert field_defn_out.GetName() == 'dummy', 'wrong field name after reopen'
-
-    return 'success'
 
 
 ###############################################################################
@@ -374,8 +362,7 @@ def test_ogr_gpkg_7():
     if gdaltest.gpkg_ds.DeleteLayer('field_test_layer') != 0:
         gdaltest.post_reason('got error code from DeleteLayer(field_test_layer)')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test a variety of geometry feature types and attribute types
@@ -498,8 +485,6 @@ def test_ogr_gpkg_8():
     assert geom.ExportToWkt() == geom_read.ExportToWkt(), \
         '3d geom output not equal to geom input'
 
-    return 'success'
-
 ###############################################################################
 # Test support for extents and counts
 
@@ -515,8 +500,6 @@ def test_ogr_gpkg_9():
 
     fcount = lyr.GetFeatureCount()
     assert fcount == 11, 'got bad featurecount'
-
-    return 'success'
 
 ###############################################################################
 # Test non-SELECT SQL commands
@@ -539,8 +522,6 @@ def test_ogr_gpkg_11():
     assert lyr is not None
     lyr.SetAttributeFilter('fld_integer = 10')
     assert lyr.GetFeatureCount() == 1
-
-    return 'success'
 
 ###############################################################################
 # Test SELECT SQL commands
@@ -617,8 +598,6 @@ def test_ogr_gpkg_12():
     assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 0
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test non-spatial tables
 
@@ -666,8 +645,6 @@ def test_ogr_gpkg_13():
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name IS NULL AND extension_name = 'gdal_aspatial'")
     assert sql_lyr.GetFeatureCount() == 1
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Add various geometries to test spatial filtering
@@ -752,8 +729,6 @@ def test_ogr_gpkg_14():
     assert f is not None
     f = lyr.GetNextFeature()
     assert f is None
-
-    return 'success'
 
 ###############################################################################
 # Test SQL functions
@@ -1118,8 +1093,6 @@ def test_ogr_gpkg_15():
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
 
-    return 'success'
-
 ###############################################################################
 # Test unknown extensions
 
@@ -1225,8 +1198,6 @@ def test_ogr_gpkg_16():
 
     gdal.Unlink('/vsimem/ogr_gpk_16.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Run INDIRECT_SQLITE dialect
 
@@ -1244,7 +1215,6 @@ def test_ogr_gpkg_17():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_17.gpkg')
-    return 'success'
 
 ###############################################################################
 # Test geometry type extension
@@ -1341,8 +1311,6 @@ def test_ogr_gpkg_18():
 
     gdal.Unlink('/vsimem/ogr_gpkg_18.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test metadata
 
@@ -1429,8 +1397,6 @@ def test_ogr_gpkg_19():
 
     gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg')
     gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg.aux.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test spatial reference system
@@ -1528,8 +1494,6 @@ def test_ogr_gpkg_20():
 
     gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test maximum width of text fields
 
@@ -1605,8 +1569,7 @@ def test_ogr_gpkg_21():
     if f.GetField(0) != 'ab':
         gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test FID64 support
 
@@ -1636,8 +1599,6 @@ def test_ogr_gpkg_22():
     assert f.GetFID() == 1234567890123
 
     gdal.Unlink('/vsimem/ogr_gpkg_22.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test not nullable fields
@@ -1791,8 +1752,6 @@ def test_ogr_gpkg_23():
 
     gdal.Unlink('/vsimem/ogr_gpkg_23.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test default values
 
@@ -1902,8 +1861,6 @@ def test_ogr_gpkg_24():
 
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a field with the fid name
 
@@ -1982,8 +1939,6 @@ def test_ogr_gpkg_25():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_25.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test dataset transactions
@@ -2104,8 +2059,6 @@ def test_ogr_gpkg_26():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_26.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test interface with Spatialite
 
@@ -2139,8 +2092,6 @@ def test_ogr_gpkg_27():
     ds = None
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_27.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test ogr2ogr -a_srs (as the geopackage driver doesn't clone the passed SRS
 # but inc/dec its ref count, which can exhibit issues in GDALVectorTanslate())
@@ -2157,8 +2108,6 @@ def test_ogr_gpkg_28():
 
     ds = None
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_28.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test XYM / XYZM support
@@ -2226,8 +2175,6 @@ def test_ogr_gpkg_29():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_29.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test non standard file extension (#6396)
 
@@ -2252,8 +2199,7 @@ def test_ogr_gpkg_30():
     with gdaltest.error_handler():
         gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_30.geopkg')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CURVE and SURFACE types
 
@@ -2291,8 +2237,6 @@ def test_ogr_gpkg_31():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_31.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Run creating a non-spatial layer that isn't registered as 'aspatial' and
 # read it back
@@ -2324,8 +2268,6 @@ def test_ogr_gpkg_32():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_32.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test OGR_CURRENT_DATE
 
@@ -2348,8 +2290,6 @@ def test_ogr_gpkg_33():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_33.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
@@ -2379,8 +2319,6 @@ def test_ogr_gpkg_test_ogrsf():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg -sql "select * from tbl_linestring_renamed" --config OGR_SQLITE_SYNCHRONOUS OFF')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 
 ###############################################################################
@@ -2492,8 +2430,6 @@ def test_ogr_gpkg_34():
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
-    return 'success'
-
 ###############################################################################
 # Test DeleteField()
 
@@ -2592,8 +2528,6 @@ def test_ogr_gpkg_35():
     assert content.find('bar_i_will_disappear') < 0
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
-
-    return 'success'
 
 ###############################################################################
 # Test AlterFieldDefn()
@@ -2721,8 +2655,6 @@ def test_ogr_gpkg_36():
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
-    return 'success'
-
 ###############################################################################
 # Test ReorderFields()
 
@@ -2792,8 +2724,6 @@ def test_ogr_gpkg_37():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
-
-    return 'success'
 
 ###############################################################################
 # Test GetExtent() and RECOMPUTE EXTENT ON
@@ -2872,8 +2802,6 @@ def test_ogr_gpkg_38(options=['SPATIAL_INDEX=YES']):
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
-    return 'success'
-
 
 def test_ogr_gpkg_38_nospi():
     return test_ogr_gpkg_38(options=['SPATIAL_INDEX=NO'])
@@ -2916,8 +2844,6 @@ def test_ogr_gpkg_39():
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
-    return 'success'
-
 ###############################################################################
 # Run creating a non-spatial layer that is registered as 'attributes' and
 # read it back
@@ -2948,8 +2874,6 @@ def test_ogr_gpkg_40():
     assert validate('/vsimem/ogr_gpkg_40.gpkg'), 'validation failed'
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_40.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test tables without integer primary key (#6799), and unrecognized column type
@@ -2985,8 +2909,6 @@ def test_ogr_gpkg_41():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_41.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test feature_count
@@ -3141,8 +3063,6 @@ def test_ogr_gpkg_42():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_42.gpkg')
 
-    return 'success'
-
 
 ###############################################################################
 # Test limitations on number of tables
@@ -3178,8 +3098,6 @@ def test_ogr_gpkg_43():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_43.gpkg')
-
-    return 'success'
 
 
 ###############################################################################
@@ -3220,8 +3138,6 @@ def test_ogr_gpkg_44():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_44.gpkg')
 
-    return 'success'
-
 
 ###############################################################################
 # Test non conformant GeoPackage: table with non INTEGER PRIMARY KEY
@@ -3242,8 +3158,6 @@ def test_ogr_gpkg_45():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_45.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test spatial view and spatial index
@@ -3337,8 +3251,6 @@ def test_ogr_gpkg_46():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test corner case of Identify()
@@ -3460,8 +3372,6 @@ def test_ogr_gpkg_47():
     gdal.Unlink('/vsimem/ogr_gpkg_47.zip')
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_47.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test insertion of features with unset fields
 
@@ -3517,8 +3427,6 @@ def test_ogr_gpkg_48():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_48.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test CreateGeomField() on a attributes layer
 
@@ -3542,8 +3450,6 @@ def test_ogr_gpkg_49():
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_49.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test minimalistic support of definition_12_063
@@ -3587,8 +3493,6 @@ def test_ogr_gpkg_50():
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_50.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a .gpkg.sql file
 
@@ -3606,8 +3510,6 @@ def test_ogr_gpkg_51():
     f = lyr.GetNextFeature()
     assert f is not None
 
-    return 'success'
-
 ###############################################################################
 # Test opening a .gpkg file
 
@@ -3622,8 +3524,6 @@ def test_ogr_gpkg_52():
     with gdaltest.error_handler():
         f = lyr.GetNextFeature()
     assert f is not None
-
-    return 'success'
 
 ###############################################################################
 # Test opening a .gpkg file with inconsistency regarding table case (#6916)
@@ -3649,8 +3549,7 @@ def test_ogr_gpkg_53():
 
         assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
+    
 ###############################################################################
 # Test editing of a database with 2 layers (https://issues.qgis.org/issues/17034)
 
@@ -3716,8 +3615,6 @@ def test_ogr_gpkg_54():
 
     gdal.Unlink(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 # Test inserting geometries incompatible with declared layer geometry type
 
@@ -3747,8 +3644,6 @@ def test_ogr_gpkg_55():
 
     gdal.Unlink(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 # Test FID identification on SQL result layer
 
@@ -3768,8 +3663,6 @@ def test_ogr_gpkg_56():
     ds.ReleaseResultSet(lyr)
     ds = None
     gdal.Unlink('/vsimem/ogr_gpkg_56.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a corrupted gpkg with duplicated layer names
@@ -3805,8 +3698,6 @@ CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
 
     gdal.Unlink(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 # Test overwriting a layer
 
@@ -3830,8 +3721,6 @@ def test_ogr_gpkg_58():
 
     gdal.Unlink(out_filename)
 
-    return 'success'
-
 ###############################################################################
 # Test CreateSpatialIndex()
 
@@ -3853,8 +3742,6 @@ def test_ogr_gpkg_59():
     ds = None
 
     gdal.Unlink(out_filename)
-
-    return 'success'
 
 ###############################################################################
 # Test savepoints
@@ -3892,8 +3779,6 @@ def test_ogr_gpkg_savepoint():
     ds = None
 
     gdal.Unlink(filename)
-
-    return 'success'
 
 ###############################################################################
 # Test that we don't open file handles behind the back of sqlite3
@@ -3936,8 +3821,6 @@ def test_ogr_gpkg_wal():
     gdal.Unlink(filename)
     gdal.Unlink(filename + '-wal')
     gdal.Unlink(filename + '-shm')
-
-    return 'success'
 
 ###############################################################################
 # Test JSon subtype support
@@ -4006,8 +3889,6 @@ def test_ogr_gpkg_json():
 
     gdal.Unlink(filename)
 
-    return 'success'
-
 ###############################################################################
 # Remove the test db from the tmp directory
 
@@ -4029,8 +3910,7 @@ def test_ogr_gpkg_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 
 

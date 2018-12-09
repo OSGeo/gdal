@@ -164,8 +164,6 @@ def test_vsizip_1():
     # Test ReadDir on a non existing file
     assert gdal.ReadDir('/vsizip//vsimem/foo.zip') is None
 
-    return 'success'
-
 ###############################################################################
 # Test writing 2 files in the ZIP by closing it completely between the 2
 
@@ -216,8 +214,6 @@ def test_vsizip_2():
 
     gdal.Unlink(zip_name)
 
-    return 'success'
-
 
 ###############################################################################
 # Test opening in write mode a file inside a zip archive whose content has been listed before (testcase for fix of r22625)
@@ -247,8 +243,6 @@ def test_vsizip_3():
 
     assert res == ['foo', 'bar', 'baz']
 
-    return 'success'
-
 ###############################################################################
 # Test ReadRecursive on valid zip
 
@@ -261,8 +255,6 @@ def test_vsizip_4():
     assert (res == ['subdir/', 'subdir/subdir/', 'subdir/subdir/uint16.tif',
                'subdir/subdir/test_rpc.txt', 'subdir/test_rpc.txt',
                'test_rpc.txt', 'uint16.tif']), 'bad content'
-
-    return 'success'
 
 ###############################################################################
 # Test ReadRecursive on deep zip
@@ -287,8 +279,6 @@ def test_vsizip_5():
     assert res[10] == 'a/a/a/a/a/a/a/a/a/a/a/', ('bad content: ' + res[10])
 
     gdal.Unlink("/vsimem/bigdepthzip.zip")
-
-    return 'success'
 
 ###############################################################################
 # Test writing 2 files with same name in a ZIP (#4785)
@@ -331,8 +321,6 @@ def test_vsizip_6():
 
     gdal.Unlink("/vsimem/test6.zip")
 
-    return 'success'
-
 ###############################################################################
 # Test that we use the extended field for UTF-8 filenames (#5361).
 
@@ -353,8 +341,7 @@ def test_vsizip_7():
         print(content)
         pytest.fail('bad content')
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic test for ZIP64 support (5 GB file that compresses in less than 4 GB)
 
@@ -362,8 +349,6 @@ def test_vsizip_7():
 def test_vsizip_8():
 
     assert gdal.VSIStatL('/vsizip/vsizip/data/zero.bin.zip.zip/zero.bin.zip').size == 5000 * 1000 * 1000 + 1
-
-    return 'success'
 
 ###############################################################################
 # Basic test for ZIP64 support (5 GB file that is stored)
@@ -385,8 +370,6 @@ def test_vsizip_9():
     data = gdal.VSIFReadL(1, 6, f)
     gdal.VSIFCloseL(f)
     assert data.decode('ascii') == 'HELLO\n'
-
-    return 'success'
 
 ###############################################################################
 # Test that we recode filenames in ZIP (#5361)
@@ -413,8 +396,7 @@ def test_vsizip_10():
         print(content)
         pytest.fail('bad content')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we don't do anything with ZIP with filenames in UTF-8 already (#5361)
 
@@ -435,8 +417,7 @@ def test_vsizip_11():
         print(content)
         pytest.fail('bad content')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test changing the content of a zip file (#6005)
 
@@ -485,8 +466,6 @@ def test_vsizip_12():
 
     assert content == ['bar.baz']
 
-    return 'success'
-
 ###############################################################################
 # Test ReadDir() truncation
 
@@ -506,8 +485,6 @@ def test_vsizip_13():
     assert len(lst_truncated) > int(len(lst) / 2)
 
     gdal.Unlink('/vsimem/vsizip_13.zip')
-
-    return 'success'
 
 ###############################################################################
 # Test that we can recode filenames in ZIP when writing (#6631)
@@ -539,8 +516,6 @@ def test_vsizip_14():
 
     gdal.Unlink('/vsimem/vsizip_14.zip')
 
-    return 'success'
-
 ###############################################################################
 # Test multithreaded compression
 
@@ -570,8 +545,7 @@ def test_vsizip_multi_thread():
 
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test multithreaded compression, below the threshold where it triggers
 
@@ -592,8 +566,6 @@ def test_vsizip_multi_thread_below_threshold():
     gdal.Unlink('/vsimem/vsizip_multi_thread.zip')
 
     assert data == 'hello'
-
-    return 'success'
 
 ###############################################################################
 # Test creating ZIP64 file: uncompressed larger than 4GB, but compressed
@@ -629,8 +601,6 @@ def test_vsizip_create_zip64():
 
     gdal.Unlink(zip_name)
 
-    return 'success'
-
 ###############################################################################
 # Test creating ZIP64 file: compressed data stream > 4 GB
 
@@ -665,16 +635,12 @@ def test_vsizip_create_zip64_stream_larger_than_4G():
 
     gdal.Unlink(zip_name)
 
-    return 'success'
-
 
 ###############################################################################
 def test_vsizip_byte_zip64_local_header_zeroed():
 
     size = gdal.VSIStatL('/vsizip/data/byte_zip64_local_header_zeroed.zip/byte.tif').size
     assert size == 736
-
-    return 'success'
 
 gdaltest_list = [test_vsizip_1,
                  test_vsizip_2,

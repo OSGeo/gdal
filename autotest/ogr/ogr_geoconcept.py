@@ -83,8 +83,6 @@ def test_ogr_gxt_1():
 
     assert lyr.GetSpatialRef().IsSame(srs), 'SRS is not the one expected.'
 
-    return 'success'
-
 ###############################################################################
 # Similar test than previous one with TAB separator.
 
@@ -118,8 +116,6 @@ def test_ogr_gxt_2():
     assert (ogrtest.check_feature_geometry(feat,
                                       'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
                                       max_error=0.000000001) == 0)
-
-    return 'success'
 
 ###############################################################################
 # Read a GXT file containing 2 points, duplicate it, and check the newly written file
@@ -200,8 +196,6 @@ def test_ogr_gxt_3():
     assert (ogrtest.check_feature_geometry(feat, 'POINT(2 3)',
                                       max_error=0.000000001) == 0)
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -217,8 +211,7 @@ def test_ogr_gxt_multipolygon_singlepart_nohole():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -237,8 +230,7 @@ def test_ogr_gxt_multipolygon_singlepart_hole():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -257,8 +249,7 @@ def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -277,8 +268,7 @@ def test_ogr_gxt_line():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -290,8 +280,7 @@ def test_ogr_gxt_cleanup():
         os.remove('tmp/tmp.gxt')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_gxt_1,

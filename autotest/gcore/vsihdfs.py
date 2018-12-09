@@ -55,7 +55,6 @@ def test_vsihdfs_1():
     assert data and data.decode('ascii') == ' ipsum'
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Seek test
 def test_vsihdfs_2():
@@ -80,7 +79,6 @@ def test_vsihdfs_2():
     assert data and data.decode('ascii') == 'laborum'
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Tell test
 def test_vsihdfs_3():
@@ -98,7 +96,6 @@ def test_vsihdfs_3():
     assert offset == 5
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Write test
 def test_vsihdfs_4():
@@ -130,7 +127,6 @@ def test_vsihdfs_5():
     assert eof == 0
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Stat test
 def test_vsihdfs_6():
@@ -145,8 +141,6 @@ def test_vsihdfs_6():
     statBuf = gdal.VSIStatL(filename, 0)
     assert not statBuf
 
-    return 'success'
-
 # ReadDir test
 def test_vsihdfs_7():
     if gdaltest.have_vsihdfs == False:
@@ -155,8 +149,6 @@ def test_vsihdfs_7():
     dirname = '/vsihdfs/file:' + os.getcwd() + '/data/'
     lst = gdal.ReadDir(dirname)
     assert len(lst) >= 360
-
-    return 'success'
 
 
 gdaltest_list = [test_vsihdfs_1,

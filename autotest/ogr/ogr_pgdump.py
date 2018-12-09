@@ -103,8 +103,6 @@ def test_ogr_pgdump_1():
        sql.find("""INSERT INTO "public"."tpoly" ("wkb_geometry" , "area", "eas_id", "prfedea") VALUES ('01030000800100000005000000000000C01A481D4100000080072D5241000000000000000000000060AA461D4100000080FF2C524100000000000000000000006060461D41000000400C2D52410000000000000000000000A0DF471D4100000000142D52410000000000000000000000C01A481D4100000080072D52410000000000000000', 5268.813, 170, '35043413');""") == -1 or \
        sql.find("""COMMIT;""") == -1))
 
-    return 'success'
-
 ###############################################################################
 # Create table from data/poly.shp with PG_USE_COPY=YES
 
@@ -174,8 +172,6 @@ def test_ogr_pgdump_2():
        sql.find("0103000020E61000000100000005000000000000C01A481D4100000080072D524100000060AA461D4100000080FF2C52410000006060461D41000000400C2D5241000000A0DF471D4100000000142D5241000000C01A481D4100000080072D5241	5268.813	170	35043413	\\N") == -1 or \
        sql.find("""\.""") == -1 or \
        sql.find("""COMMIT;""") == -1))
-
-    return 'success'
 
 
 ###############################################################################
@@ -259,8 +255,6 @@ def test_ogr_pgdump_3():
        sql.find("""\\.""") == -1 or \
        sql.find("""COMMIT;""") == -1))
 
-    return 'success'
-
 ###############################################################################
 # Test multi-geometry support
 
@@ -305,8 +299,6 @@ def test_ogr_pgdump_4():
        sql.find("""CREATE INDEX "test_poly_geom_idx" ON "public"."test" USING GIST ("poly")""") == -1 or \
        sql.find("""INSERT INTO "public"."test" DEFAULT VALUES""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=-1;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1))
-
-    return 'success'
 
 ###############################################################################
 # Test non nullable field support
@@ -361,8 +353,6 @@ def test_ogr_pgdump_5():
     assert (not (sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_not_nullable" VARCHAR NOT NULL;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_nullable" VARCHAR;""") == -1 or \
        sql.find("""ALTER TABLE "test" ALTER COLUMN "geomfield_not_nullable" SET NOT NULL;""") == -1))
-
-    return 'success'
 
 ###############################################################################
 # Test default values
@@ -454,8 +444,6 @@ def test_ogr_pgdump_6():
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_time" time DEFAULT CURRENT_TIME;""") == -1 or \
        sql.find("""b\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""") < 0))
 
-    return 'success'
-
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
@@ -544,8 +532,6 @@ def test_ogr_pgdump_7():
        sql.find("""INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (10, 'first string', 'second string');""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("str2") VALUES ('second string');""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (12, 'first string', 'second string');""") == -1))
-
-    return 'success'
 
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
@@ -644,8 +630,6 @@ def test_ogr_pgdump_8():
        sql.find("""INSERT INTO "public"."test" ("str2") VALUES ('second string');""") == -1 or \
        sql.find("""12\tfirst string\tsecond string""") == -1))
 
-    return 'success'
-
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
@@ -707,8 +691,6 @@ def test_ogr_pgdump_9(pg_use_copy='YES'):
        sql.find("""%s%s""" % (val5, eofield)) >= 0 and \
        sql.find("""%s%s""" % ('a' + val4, eofield)) >= 0)
 
-    return 'success'
-
 
 def test_ogr_pgdump_10():
     return test_ogr_pgdump_9('NO')
@@ -737,8 +719,6 @@ def test_ogr_pgdump_11():
     assert (sql.find('0101000000000000000000F87F000000000000F87F') >= 0 or \
        sql.find('0101000000000000000000F8FF000000000000F8FF') >= 0)
 
-    return 'success'
-
 ###############################################################################
 # Test that GEOMETRY_NAME works even when the geometry column creation is
 # done through CreateGeomField (#6366)
@@ -760,8 +740,6 @@ def test_ogr_pgdump_12():
     gdal.Unlink('/vsimem/ogr_pgdump_12.sql')
 
     assert sql.find('another_name') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test ZM support
@@ -827,8 +805,7 @@ def test_ogr_pgdump_13():
         for expected_string in expected_strings:
             assert sql.find(expected_string) >= 0, (geom_type, options, wkt, expected_string)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test description
 
@@ -877,8 +854,6 @@ def test_ogr_pgdump_14():
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
     assert sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""") >= 0
 
-    return 'success'
-
 ###############################################################################
 # NULL vs unset
 
@@ -904,8 +879,6 @@ def test_ogr_pgdump_15():
 
     assert (sql.find('INSERT INTO "public"."test" ("str") VALUES (NULL)') >= 0 or \
        sql.find('INSERT INTO "public"."test" DEFAULT VALUES') >= 0)
-
-    return 'success'
 
 ###############################################################################
 # Test sequence updating
@@ -935,8 +908,6 @@ def test_ogr_pgdump_16():
 
     gdal.SetConfigOption('PG_USE_COPY', None)
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -951,8 +922,7 @@ def test_ogr_pgdump_cleanup():
         os.remove('tmp/ogr_pgdump_4.sql')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_pgdump_1,

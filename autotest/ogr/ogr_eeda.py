@@ -52,8 +52,6 @@ def test_eeda_1():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
-    return 'success'
-
 ###############################################################################
 # Nominal case
 
@@ -303,8 +301,6 @@ def test_eeda_2():
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-    return 'success'
-
 ###############################################################################
 # Nominal case where collection is in eedaconf.json
 
@@ -325,8 +321,6 @@ def test_eeda_3():
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
-
-    return 'success'
 
 ###############################################################################
 # Test that name and id variants are handled correctly.
@@ -411,8 +405,6 @@ def test_eeda_4():
     gdal.SetConfigOption('EEDA_BEARER', None)
     gdal.SetConfigOption('EEDA_URL', None)
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -434,8 +426,6 @@ def test_eeda_cleanup():
     gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageSize=1')
     gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageToken=myToken')
     gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?filter=raw%5Ffilter')
-
-    return 'success'
 
 
 gdaltest_list = [

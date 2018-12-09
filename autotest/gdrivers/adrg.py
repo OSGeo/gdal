@@ -83,8 +83,6 @@ def test_adrg_copy():
 
     drv.Delete('tmp/ABCDEF01.GEN')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a fake 2 subdataset image and reading it.
 
@@ -121,8 +119,6 @@ def test_adrg_2subdatasets():
     os.remove('tmp/XXXXXX02.IMG')
     os.remove('tmp/TRANSH01.THF')
 
-    return 'success'
-
 ###############################################################################
 # Test creating an in memory copy.
 
@@ -151,8 +147,6 @@ def test_adrg_copy_vsimem():
     drv.Delete('/vsimem/ABCDEF01.GEN')
     gdal.Unlink('/vsimem/TRANSH01.THF')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a fake North Polar dataset (#6560)
 
@@ -168,8 +162,6 @@ def test_adrg_zna_9():
     assert wkt == """PROJCS["ARC_System_Zone_09",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
         'Wrong WKT'
 
-    return 'success'
-
 ###############################################################################
 # Test reading a fake South Polar dataset (#6560)
 
@@ -184,8 +176,6 @@ def test_adrg_zna_18():
     wkt = ds.GetProjectionRef()
     assert wkt == """PROJCS["ARC_System_Zone_18",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
         'Wrong WKT'
-
-    return 'success'
 
 
 ###############################################################################

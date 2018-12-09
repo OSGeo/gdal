@@ -56,8 +56,7 @@ def test_gif_1():
         gdaltest.post_reason('mime type is wrong')
         return 'false'
 
-    return 'success'
-
+    
 ###############################################################################
 # Read test of simple byte reference data.
 
@@ -96,8 +95,6 @@ def test_gif_4():
     md = ds.GetRasterBand(1).GetMetadata()
     assert 'GIF_BACKGROUND' in md and md['GIF_BACKGROUND'] == '0', \
         'background metadata missing.'
-
-    return 'success'
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -149,8 +146,6 @@ def test_gif_6():
 
     gdaltest.gif_drv.Delete('tmp/nodata_byte.gif')
 
-    return 'success'
-
 
 ###############################################################################
 # Confirm reading with the BIGGIF driver.
@@ -171,8 +166,6 @@ def test_gif_7():
 
     assert ds.GetDriver().ShortName == 'BIGGIF'
 
-    return 'success'
-
 ###############################################################################
 # Confirm that BIGGIF driver is selected for huge gifs
 
@@ -188,8 +181,6 @@ def test_gif_8():
     assert ds is not None
 
     assert ds.GetDriver().ShortName == 'BIGGIF'
-
-    return 'success'
 
 ###############################################################################
 # Test writing to /vsistdout/
@@ -210,8 +201,6 @@ def test_gif_9():
 
     gdal.Unlink('/vsimem/tmp.gif')
 
-    return 'success'
-
 ###############################################################################
 # Test interlacing
 
@@ -229,7 +218,6 @@ def test_gif_10():
 
 def test_gif_cleanup():
     gdaltest.clean_tmp()
-    return 'success'
 
 
 gdaltest_list = [

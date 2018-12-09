@@ -49,8 +49,6 @@ def test_gdalinfo_py_1():
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
     assert ret.find('Driver: GTiff/GeoTIFF') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -checksum option
 
@@ -62,8 +60,6 @@ def test_gdalinfo_py_2():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-checksum ../gcore/data/byte.tif')
     assert ret.find('Checksum=4672') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test -nomd option
@@ -80,8 +76,6 @@ def test_gdalinfo_py_3():
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-nomd ../gcore/data/byte.tif')
     assert ret.find('Metadata') == -1
 
-    return 'success'
-
 ###############################################################################
 # Test -noct option
 
@@ -96,8 +90,6 @@ def test_gdalinfo_py_4():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-noct ../gdrivers/data/bug407.gif')
     assert ret.find('0: 255,255,255,255') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test -stats option
@@ -122,8 +114,6 @@ def test_gdalinfo_py_5():
     # We will blow an exception if the file does not exist now!
     os.remove('../gcore/data/byte.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test a dataset with overviews and RAT
 
@@ -135,10 +125,6 @@ def test_gdalinfo_py_6():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/int.img')
     assert ret.find('Overviews') != -1
-    # if ret.find('GDALRasterAttributeTable') == -1:
-    #    return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Test a dataset with GCPs
@@ -159,8 +145,6 @@ def test_gdalinfo_py_7():
     assert ret.find('GCP Projection =') == -1
     assert ret.find('PROJCS["NAD27 / UTM zone 11N"') == -1
     assert ret.find('(100,100) -> (446720,3745320,0)') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test -hist option
@@ -187,8 +171,6 @@ def test_gdalinfo_py_8():
     # We will blow an exception if the file does not exist now!
     os.remove('../gcore/data/byte.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test -mdd option
 
@@ -204,8 +186,6 @@ def test_gdalinfo_py_9():
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mdd TRE ../gdrivers/data/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') != -1, 'did not get extra MD.'
 
-    return 'success'
-
 ###############################################################################
 # Test -mm option
 
@@ -220,8 +200,6 @@ def test_gdalinfo_py_10():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mm ../gcore/data/byte.tif')
     assert ret.find('Computed Min/Max=74.000,255.000') != -1
-
-    return 'success'
 
 
 gdaltest_list = [

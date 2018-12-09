@@ -96,8 +96,6 @@ def test_ogr_nas_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading a sample NAS file from PostNAS
 #
@@ -150,8 +148,6 @@ def test_ogr_nas_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test that we can open and read empty files successfully.
 #
@@ -169,8 +165,6 @@ def test_ogr_nas_3():
     assert ds.GetLayerCount() == 1, 'did not get expected layer count'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that we can read files with wfs:Delete transactions in them properly.
@@ -216,8 +210,7 @@ def test_ogr_nas_4():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we can read files with wfsext:Replace transactions properly
 #
@@ -285,8 +278,7 @@ def test_ogr_nas_5():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_nas_1,

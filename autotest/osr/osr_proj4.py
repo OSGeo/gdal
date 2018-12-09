@@ -101,8 +101,6 @@ def test_osr_proj4_1():
     assert abs(srs.GetProjParm(osr.SRS_PP_SCALE_FACTOR) - 1.000035) <= 0.0000005, \
         '+k_0 not supported on import from PROJ.4?'
 
-    return 'success'
-
 ###############################################################################
 # Verify that we can import strings with parameter values that are exponents
 # and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla.
@@ -121,8 +119,7 @@ def test_osr_proj4_2():
         print(srs.ExportToPrettyWkt())
         pytest.fail('does not validate')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that empty srs'es don't cause a crash (#1718).
 #
@@ -141,7 +138,7 @@ def test_osr_proj4_3():
         gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('No translation') != -1:
-        return 'success'
+        return
 
     pytest.fail('empty srs not handled properly')
 
@@ -166,7 +163,7 @@ def test_osr_proj4_4():
         gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('No translation') != -1:
-        return 'success'
+        return
 
     pytest.fail('unknown srs not handled properly')
 
@@ -195,8 +192,7 @@ def test_osr_proj4_5():
         print(srs.ExportToPrettyWkt())
         print(srs2.ExportToPrettyWkt())
 
-    return 'success'
-
+    
 ###############################################################################
 # Confirm handling of non-zero latitude of origin mercator (#3026)
 #
@@ -260,8 +256,7 @@ def test_osr_proj4_6():
         print('Expect:%s' % expect_wkt)
         pytest.fail('did not get expected mercator_2sp result.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Confirm handling of somerc (#3032).
 #
@@ -304,8 +299,7 @@ def test_osr_proj4_7():
         print('Got: %s' % srs.ExportToPrettyWkt())
         pytest.fail('did not get expected wkt.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check EPSG:3857, confirm Google Mercator hackery.
 
@@ -324,8 +318,6 @@ def test_osr_proj4_8():
 
     proj4 = srs.ExportToProj4()
     assert proj4 == expected, 'did not get expected EPSG:3785 (google mercator) result.'
-
-    return 'success'
 
 ###############################################################################
 # NAD27 is a bit special - make sure no towgs84 values come through.
@@ -346,8 +338,6 @@ def test_osr_proj4_9():
 
     proj4 = srs.ExportToProj4()
     assert proj4 == expected, 'did not get expected "NAD27"'
-
-    return 'success'
 
 ###############################################################################
 # Does geocentric work okay?
@@ -373,8 +363,7 @@ def test_osr_proj4_10():
         print(srs2.ExportToPrettyWkt())
         pytest.fail('round trip via PROJ.4 damaged srs?')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test round-tripping of all supported projection methods
 #
@@ -467,8 +456,7 @@ def test_osr_proj4_11():
 
         assert out == proj4str, 'round trip via PROJ.4 failed'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test importing +init=epsg:XXX
 #
@@ -496,8 +484,7 @@ def test_osr_proj4_12():
         print('Expected:%s' % expect_wkt)
         pytest.fail('Did not get expected result.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test error cases
 #
@@ -523,8 +510,6 @@ def test_osr_proj4_13():
             pytest.fail()
 
     gdal.PopErrorHandler()
-
-    return 'success'
 
 ###############################################################################
 # Test etmerc (#4853)
@@ -594,8 +579,7 @@ def test_osr_proj4_14():
         print('Expected:%s' % expect_proj4str)
         pytest.fail('Did not get expected result.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test other authorities than EPSG, e.g. IGNF:XXXX
 #
@@ -610,8 +594,6 @@ def test_osr_proj4_15():
     assert srs.GetAuthorityName(None) == 'IGNF' and srs.GetAuthorityCode(None) == 'LAMB93'
 
     assert srs.Validate() == 0
-
-    return 'success'
 
 ###############################################################################
 # Test unit parsing
@@ -652,8 +634,7 @@ def test_osr_proj4_16():
         to_met = srs.GetLinearUnits()
         assert almost(to_met, u[1]), \
             ('Did not get expected units: %s vs %s' % (str(u), str(to_met)))
-    return 'success'
-
+    
 ###############################################################################
 # Test unit parsing for name assignment
 #
@@ -689,8 +670,7 @@ def test_osr_proj4_17():
         unit_name = srs.GetLinearUnitsName()
         assert unit_name == u[1], \
             ('Did not get expected unit name: %s vs %s' % (str(u), str(unit_name)))
-    return 'success'
-
+    
 ###############################################################################
 # Test fix for #5511
 #
@@ -710,8 +690,7 @@ def test_osr_proj4_18():
             print(p)
             pytest.fail('round trip via PROJ.4 failed')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test EXTENSION and AUTHORITY in DATUM
 
@@ -727,8 +706,7 @@ def test_osr_proj4_19():
         print(srs.ExportToPrettyWkt())
         pytest.fail('does not validate')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test EXTENSION in GOGCS
 
@@ -745,8 +723,7 @@ def test_osr_proj4_20():
         print(srs.ExportToPrettyWkt())
         pytest.fail('does not validate')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test importing datum other than WGS84, WGS72, NAD27 or NAD83
 
@@ -762,8 +739,6 @@ def test_osr_proj4_21():
 
     assert got.find('+proj=longlat +datum=nzgd49') == 0
 
-    return 'success'
-
 ###############################################################################
 # Test importing ellipsoid defined with +R
 
@@ -775,8 +750,6 @@ def test_osr_proj4_22():
     got = srs.ExportToProj4()
 
     assert got.find('+proj=longlat +a=1 +b=1') == 0
-
-    return 'success'
 
 ###############################################################################
 # Test importing ellipsoid defined with +a and +f
@@ -796,8 +769,6 @@ def test_osr_proj4_23():
     got = srs.ExportToProj4()
 
     assert got.find('+proj=longlat +a=2 +b=1') == 0
-
-    return 'success'
 
 ###############################################################################
 # Test importing linear units defined with +to_meter
@@ -831,8 +802,6 @@ def test_osr_proj4_24():
     got = srs.ExportToProj4()
 
     assert got.find('+to_meter=0.4') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test importing linear units defined with +vto_meter
@@ -870,8 +839,6 @@ def test_osr_proj4_25():
 
     assert got.find('+vto_meter=0.4') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test importing linear units defined with +vunits
 
@@ -901,8 +868,6 @@ def test_osr_proj4_26():
 
     assert got.find('+vunits=us-yd') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test geostationary +sweep (#6030)
 
@@ -918,8 +883,6 @@ def test_osr_proj4_27():
 
     assert got.find('+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test importing +init=epsg: with an override
 
@@ -932,8 +895,6 @@ def test_osr_proj4_28():
 
     assert got.find('32631') < 0
 
-    return 'success'
-
 
 def test_osr_proj4_28_missing_proj_epsg_dict():
 
@@ -943,7 +904,6 @@ def test_osr_proj4_28_missing_proj_epsg_dict():
 
     ret = gdaltest.runexternal(python_exe + ' osr_proj4.py osr_proj4_28')
     assert ret.find('fail') < 0
-    return 'success'
 
 
 def test_osr_proj4_error_cases_export_mercator():
@@ -961,8 +921,6 @@ def test_osr_proj4_error_cases_export_mercator():
     with gdaltest.error_handler():
         got = srs.ExportToProj4()
     assert got == ''
-
-    return 'success'
 
 
 gdaltest_list = [

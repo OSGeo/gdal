@@ -82,8 +82,6 @@ def test_gdal_ls_py_1():
 
     assert ret_str.find('poly.shp') != -1
 
-    return 'success'
-
 ###############################################################################
 # List one dir
 
@@ -93,8 +91,6 @@ def test_gdal_ls_py_2():
 
     assert ret_str.find('poly.shp') != -1
 
-    return 'success'
-
 ###############################################################################
 # List recursively
 
@@ -103,8 +99,6 @@ def test_gdal_ls_py_3():
     ret, ret_str = run_gdal_ls(['', '-R', '../ogr/data'])
 
     assert ret_str.find('PROJ_UNITS') != -1
-
-    return 'success'
 
 ###############################################################################
 # List in a .zip
@@ -121,8 +115,7 @@ def test_gdal_ls_py_4():
             pytest.skip()
         pytest.fail(ret_str)
 
-    return 'success'
-
+    
 ###############################################################################
 # List dir in /vsicurl/
 
@@ -153,8 +146,7 @@ def test_gdal_ls_py_5():
     #    print(ret_str)
     #    return 'fail'
 
-    return 'success'
-
+    
 ###############################################################################
 # List in a .zip in /vsicurl/
 
@@ -183,8 +175,7 @@ def test_gdal_ls_py_6():
             pytest.skip()
         pytest.fail(ret_str)
 
-    return 'success'
-
+    
 ###############################################################################
 # List dir in /vsicurl/ and recurse in zip
 
@@ -219,8 +210,7 @@ def test_gdal_ls_py_7():
     #    print(ret_str)
     #    return 'fail'
 
-    return 'success'
-
+    
 ###############################################################################
 # List FTP dir in /vsicurl/
 
@@ -249,8 +239,6 @@ def test_gdal_ls_py_8():
     assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001') != -1
 
     assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') != -1
-
-    return 'success'
 
 
 gdaltest_list = [

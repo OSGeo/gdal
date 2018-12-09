@@ -54,8 +54,6 @@ def test_numpy_rw_1():
     gdaltest.numpy_drv = gdal.GetDriverByName('NUMPY')
     assert gdaltest.numpy_drv is not None, 'NUMPY driver not found!'
 
-    return 'success'
-
 ###############################################################################
 # Load a test file into a memory Numpy array, and verify the checksum.
 
@@ -77,8 +75,6 @@ def test_numpy_rw_2():
     assert bnd.Checksum() == 50054, 'Didnt get expected checksum on reopened file'
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test loading complex data.
 
@@ -92,8 +88,6 @@ def test_numpy_rw_3():
     array = ds.ReadAsArray()
 
     assert array[2][3] == 116 - 16j, 'complex value read improperly.'
-
-    return 'success'
 
 ###############################################################################
 # Test a band read with downsampling.
@@ -109,8 +103,6 @@ def test_numpy_rw_4():
 
     assert array[2][3] == 123, \
         'Read wrong value - perhaps downsampling algorithm has changed subtly?'
-
-    return 'success'
 
 ###############################################################################
 # Test reading a multi-band file.
@@ -144,8 +136,6 @@ def test_numpy_rw_5():
     assert array[0][0][0] == 70 and array[1][0][0] == 97 and array[2][0][0] == 29, \
         'value read improperly.'
 
-    return 'success'
-
 ###############################################################################
 # Check that Band.ReadAsArray() can accept an already allocated array (#2658, #3028)
 
@@ -166,8 +156,6 @@ def test_numpy_rw_6():
 
     ds2 = gdalnumeric.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
-
-    return 'success'
 
 ###############################################################################
 # Check that Dataset.ReadAsArray() can accept an already allocated array (#2658, #3028)
@@ -209,8 +197,6 @@ def test_numpy_rw_7():
     ds2 = gdalnumeric.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
-    return 'success'
-
 ###############################################################################
 # Check that Dataset.ReadAsArray() with multi-band data
 
@@ -231,8 +217,7 @@ def test_numpy_rw_8():
     for i in range(1, ds.RasterCount):
         assert ds2.GetRasterBand(i).Checksum() == ds.GetRasterBand(i).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Band.WriteArray()
 
@@ -252,8 +237,6 @@ def test_numpy_rw_9():
     ds = None
 
     assert cs == 4672, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test signed byte handling
@@ -284,8 +267,6 @@ def test_numpy_rw_10():
     assert ar2[0][0] == -128 and ar2[0][1] == 127, 'did not get expected result (1)'
 
     assert ar3[0][0] == -128 and ar3[0][1] == 127, 'did not get expected result (2)'
-
-    return 'success'
 
 ###############################################################################
 # Test all datatypes
@@ -348,8 +329,7 @@ def test_numpy_rw_11():
            (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3])), \
             'did not get expected result (2)'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test array with slices (#3542)
 
@@ -378,8 +358,6 @@ def test_numpy_rw_12():
     ds = None
 
     assert slice_read[0][0] == 1 and slice_read[1][0] == 3
-
-    return 'success'
 
 ###############################################################################
 # Test expected errors
@@ -552,8 +530,6 @@ def test_numpy_rw_13():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test callback of ReadAsArray()
 
@@ -644,8 +620,6 @@ def test_numpy_rw_14():
                           callback_data=last_pct)
     assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
 
-    return 'success'
-
 ###############################################################################
 # Test NumPy GetGeoTransform/SetGeoTransform
 
@@ -665,8 +639,6 @@ def test_numpy_rw_15():
     ds.SetGeoTransform([1, 2, 3, 4, 5, -6])
     gt = ds.GetGeoTransform()
     assert gt == (1, 2, 3, 4, 5, -6)
-
-    return 'success'
 
 ###############################################################################
 # Test errors of OpenArray()
@@ -698,8 +670,6 @@ def test_numpy_rw_16():
         ds = gdal_array.OpenArray(array)
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test old deprecated way with gdal_array.GetArrayFilename()
 
@@ -728,8 +698,6 @@ def test_numpy_rw_17():
         ds = gdal.Open('NUMPY:::invalid')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test the pixel interleave options
 
@@ -757,13 +725,9 @@ def test_numpy_rw_18():
     res = ds.ReadAsArray(interleave='pixel')
     assert numpy.all(img == res)
 
-    return 'success'
-
 
 def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None
-
-    return 'success'
 
 
 gdaltest_list = [

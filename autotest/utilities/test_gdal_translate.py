@@ -56,8 +56,6 @@ def test_gdal_translate_1():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test -of option
@@ -74,8 +72,6 @@ def test_gdal_translate_2():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -95,8 +91,6 @@ def test_gdal_translate_3():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -b option
@@ -118,8 +112,6 @@ def test_gdal_translate_4():
     assert ds.GetRasterBand(3).Checksum() == 21212, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -expand option
@@ -151,8 +143,6 @@ def test_gdal_translate_5():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test -outsize option in absolute mode
@@ -170,8 +160,6 @@ def test_gdal_translate_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -outsize option in percentage mode
 
@@ -188,8 +176,6 @@ def test_gdal_translate_7():
     assert ds.GetRasterBand(1).Checksum() == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -a_srs and -gcp options
@@ -213,8 +199,6 @@ def test_gdal_translate_8():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test -a_nodata option
@@ -232,8 +216,6 @@ def test_gdal_translate_9():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test -srcwin option
@@ -250,8 +232,6 @@ def test_gdal_translate_10():
     assert ds.GetRasterBand(1).Checksum() == 2, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -projwin option
@@ -273,8 +253,6 @@ def test_gdal_translate_11():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -a_ullr option
 
@@ -295,8 +273,6 @@ def test_gdal_translate_12():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -mo option
 
@@ -314,8 +290,6 @@ def test_gdal_translate_13():
     assert 'TIFFTAG_DOCUMENTNAME' in md, 'Did not get TIFFTAG_DOCUMENTNAME'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -co option
@@ -335,8 +309,6 @@ def test_gdal_translate_14():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -sds option
 
@@ -351,8 +323,6 @@ def test_gdal_translate_15():
     assert ds is not None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -of VRT which is a special case
@@ -370,8 +340,6 @@ def test_gdal_translate_16():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -expand option to VRT
@@ -408,8 +376,6 @@ def test_gdal_translate_17():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test translation of a VRT made of VRT
@@ -431,8 +397,6 @@ def test_gdal_translate_18():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -462,8 +426,6 @@ def test_gdal_translate_19():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -a_nodata None
 
@@ -482,8 +444,6 @@ def test_gdal_translate_20():
     assert nodata is None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that statistics are copied only when appropriate (#3889)
@@ -505,8 +465,6 @@ def test_gdal_translate_21():
     assert md['STATISTICS_HISTOBINVALUES'] == '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|', \
         'STATISTICS_HISTOBINVALUES is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Test that statistics are copied only when appropriate (#3889)
 # in that case, they must *NOT* be copied
@@ -527,8 +485,6 @@ def test_gdal_translate_22():
 
     assert 'STATISTICS_HISTOBINVALUES' not in md, \
         'did not expected a STATISTICS_HISTOBINVALUES value.'
-
-    return 'success'
 
 ###############################################################################
 # Test -stats option (#3889)
@@ -554,8 +510,6 @@ def test_gdal_translate_23():
 
     gdal.Unlink('../gcore/data/byte.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test -srcwin option when partially outside
 
@@ -574,8 +528,6 @@ def test_gdal_translate_24():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -norat
 
@@ -590,8 +542,6 @@ def test_gdal_translate_25():
     assert ds.GetRasterBand(1).GetDefaultRAT() is None, 'RAT unexpected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -a_nodata and -stats (#5463)
@@ -615,8 +565,6 @@ def test_gdal_translate_26():
     assert ds.GetRasterBand(1).GetNoDataValue() == -999
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that we don't preserve statistics when we ought not.
@@ -661,8 +609,6 @@ cellsize     60.000000000000
     assert ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -oo
 
@@ -676,8 +622,6 @@ def test_gdal_translate_28():
     ds = gdal.Open('tmp/test_gdal_translate_28.tif')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -r
@@ -711,8 +655,6 @@ def test_gdal_translate_29():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -tr option
 
@@ -730,8 +672,6 @@ def test_gdal_translate_30():
     assert cs == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -projwin_srs option
@@ -752,8 +692,6 @@ def test_gdal_translate_31():
         'Bad geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test subsetting a file with a RPC
@@ -778,8 +716,6 @@ def test_gdal_translate_32():
        abs(float(md['LINE_SCALE']) - 15834) <= 1e-5 and \
        abs(float(md['SAMP_OFF']) - (13464 - -10)) <= 1e-5 and \
        abs(float(md['SAMP_SCALE']) - 13464) <= 1e-5)
-
-    return 'success'
 
 ###############################################################################
 # Test -outsize option in auto mode
@@ -806,8 +742,6 @@ def test_gdal_translate_33():
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
     assert err.find('-outsize 0 0 invalid') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test NBITS is preserved
 
@@ -823,8 +757,6 @@ def test_gdal_translate_34():
     ds = None
 
     os.unlink('tmp/test_gdal_translate_34.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test various errors (missing source or dest...)
@@ -845,8 +777,6 @@ def test_gdal_translate_35():
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif /non_existing_path/non_existing.tif')
     assert err.find('Attempt to create new tiff file') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test RAT is copied from hfa to gtiff - continuous/athematic
@@ -869,8 +799,6 @@ def test_gdal_translate_36():
     rat = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test RAT is copied from hfa to gtiff - thematic
 
@@ -892,8 +820,6 @@ def test_gdal_translate_37():
     rat = None
     ds = None
 
-    return 'success'
-
 # Test RAT is copied round trip back to hfa
 
 def test_gdal_translate_38():
@@ -913,8 +839,6 @@ def test_gdal_translate_38():
     assert rat.GetTableType() == 0, 'RAT not thematic'
     rat = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -1044,8 +968,7 @@ def test_gdal_translate_cleanup():
         gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_38.img')
     except:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_translate_1,

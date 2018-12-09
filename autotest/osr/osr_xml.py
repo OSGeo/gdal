@@ -182,8 +182,6 @@ def test_osr_xml_1():
 
     assert got == expected
 
-    return 'success'
-
 ###############################################################################
 # Test the osr.SpatialReference.ExportToXML() function.
 #
@@ -203,8 +201,6 @@ def test_osr_xml_2():
     expected = re.sub(r' gml:id="[^"]*"', '', expected, 0)
 
     assert got == expected
-
-    return 'success'
 
 
 gdaltest_list = [

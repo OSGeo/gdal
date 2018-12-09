@@ -64,8 +64,6 @@ def test_vsis3_init():
 
     assert gdal.GetSignedURL('/vsis3/foo/bar') is None
 
-    return 'success'
-
 ###############################################################################
 # Test AWS_NO_SIGN_REQUEST=YES
 
@@ -89,7 +87,6 @@ def test_vsis3_no_sign_request():
             pytest.skip('cannot open URL')
         pytest.fail()
     gdal.VSIFCloseL(f)
-    return 'success'
 
 ###############################################################################
 # Error cases
@@ -129,15 +126,13 @@ def test_vsis3_1():
         if f is not None:
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
-            return 'success'
+            return
         pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsis3_streaming/foo/bar.baz')
     assert f is None and gdal.VSIGetLastErrorMsg() != ''
-
-    return 'success'
 
 ###############################################################################
 
@@ -160,8 +155,6 @@ def test_vsis3_start_webserver():
     gdal.SetConfigOption('AWS_HTTPS', 'NO')
     gdal.SetConfigOption('AWS_VIRTUAL_HOSTING', 'NO')
     gdal.SetConfigOption('AWS_S3_ENDPOINT', '127.0.0.1:%d' % gdaltest.webserver_port)
-
-    return 'success'
 
 
 def get_s3_fake_bucket_resource_method(request):
@@ -575,8 +568,6 @@ def test_vsis3_2():
 
     assert data == 'bar'
 
-    return 'success'
-
 ###############################################################################
 # Test ReadDir() with a fake AWS server
 
@@ -945,8 +936,6 @@ def test_vsis3_readdir():
         dir_contents = gdal.ReadDir('/vsis3/s3_test_temporary_redirect_read_dir/test')
     assert dir_contents == ['test2']
 
-    return 'success'
-
 ###############################################################################
 # Test OpenDir() with a fake AWS server
 
@@ -1090,10 +1079,6 @@ def test_vsis3_opendir():
     assert entry is None
 
     gdal.CloseDir(d)
-
-
-
-    return 'success'
 
 ###############################################################################
 # Test simple PUT support with a fake AWS server
@@ -1264,8 +1249,6 @@ def test_vsis3_4():
         gdal.VSIFCloseL(f)
     assert gdal.GetLastErrorMsg() == ''
 
-    return 'success'
-
 ###############################################################################
 # Test simple DELETE support with a fake AWS server
 
@@ -1339,8 +1322,6 @@ def test_vsis3_5():
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsis3/s3_delete_bucket/redirect')
     assert ret == 0
-
-    return 'success'
 
 ###############################################################################
 # Test multipart upload with a fake AWS server
@@ -1536,8 +1517,7 @@ def test_vsis3_6():
                 gdal.VSIFCloseL(f)
             assert gdal.GetLastErrorMsg() != '', filename
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Mkdir() / Rmdir()
 
@@ -1670,8 +1650,7 @@ def test_vsis3_7():
     with webserver.install_http_handler(handler):
         assert gdal.ReadDir('/vsis3/s3_bucket_test_readdir2/test_dirread') is not None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test handling of file and directory with same name
 
@@ -1710,8 +1689,7 @@ def test_vsis3_8():
     with webserver.install_http_handler(handler):
         assert stat.S_ISDIR(gdal.VSIStatL('/vsis3/vsis3_8/test/').mode)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test vsisync() with SYNC_STRATEGY=ETAG
 
@@ -1856,8 +1834,6 @@ def test_vsis3_sync_etag():
         assert gdal.Sync('/vsimem/subdir/', '/vsis3/out', options=options)
     gdal.RmdirRecursive('/vsimem/subdir')
 
-    return 'success'
-
 ###############################################################################
 # Test vsisync() with SYNC_STRATEGY=TIMESTAMP
 
@@ -1923,8 +1899,6 @@ def test_vsis3_sync_timestamp():
 
     gdal.Unlink('/vsimem/testsync.txt')
 
-    return 'success'
-
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials
 
@@ -1965,8 +1939,6 @@ aws_secret_access_key = bar
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
     gdal.Unlink('/vsimem/aws_credentials')
-
-    return 'success'
 
 ###############################################################################
 # Read credentials from simulated  ~/.aws/config
@@ -2009,8 +1981,6 @@ aws_secret_access_key = bar
 
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
     gdal.Unlink('/vsimem/aws_config')
-
-    return 'success'
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
@@ -2069,8 +2039,6 @@ aws_secret_access_key = bar
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
     gdal.Unlink('/vsimem/aws_config')
 
-    return 'success'
-
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config with
 # a non default profile
@@ -2128,8 +2096,6 @@ aws_secret_access_key = bar
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
     gdal.Unlink('/vsimem/aws_config')
     gdal.SetConfigOption('AWS_DEFAULT_PROFILE', '')
-
-    return 'success'
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
@@ -2191,8 +2157,6 @@ aws_secret_access_key = bar
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
     gdal.Unlink('/vsimem/aws_config')
 
-    return 'success'
-
 ###############################################################################
 # Read credentials from simulated EC2 instance
 
@@ -2250,8 +2214,6 @@ def test_vsis3_read_credentials_ec2():
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
-    return 'success'
-
 ###############################################################################
 # Read credentials from simulated EC2 instance with expiration of the
 # cached credentials
@@ -2304,8 +2266,6 @@ def test_vsis3_read_credentials_ec2_expiration():
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2319,8 +2279,6 @@ def test_vsis3_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 # Nominal cases (require valid credentials)
@@ -2406,7 +2364,7 @@ def vsis3_extra_1():
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
-        return 'success'
+        return
 
     f = open_for_read('/vsis3/' + s3_resource)
     assert f is not None, ('cannot open %s' % ('/vsis3/' + s3_resource))
@@ -2447,8 +2405,6 @@ def vsis3_extra_1():
 
     assert len(ret) == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2460,8 +2416,6 @@ def test_vsis3_cleanup():
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
     gdal.SetConfigOption('AWS_CONFIG_FILE', None)
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', None)
-
-    return 'success'
 
 
 gdaltest_list = [test_vsis3_init,

@@ -73,8 +73,7 @@ def test_vicar_1():
     for key in expected_md:
         assert md[key] == expected_md[key]
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_vicar_1]

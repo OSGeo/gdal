@@ -79,8 +79,6 @@ def test_ogr_index_1():
     gdaltest.p_ds = ogr.OpenShared('index_p.mif', update=0)
     gdaltest.p_lyr = gdaltest.p_ds.GetLayerByName('index_p')
 
-    return 'success'
-
 ###############################################################################
 # Create a dbf file to be our secondary table.  Close it, and reopen shared.
 
@@ -108,8 +106,6 @@ def test_ogr_index_2():
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName('join_t')
 
-    return 'success'
-
 ###############################################################################
 # Verify a simple join without indexing.
 
@@ -127,7 +123,7 @@ def test_ogr_index_3():
 
     gdaltest.p_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Create an INDEX on the SKEY and VALUE field in the join table.
@@ -137,8 +133,6 @@ def test_ogr_index_4():
 
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING skey')
-
-    return 'success'
 
 ###############################################################################
 # Check that indexable single int lookup works.
@@ -151,7 +145,7 @@ def test_ogr_index_5():
     expect = ['Value 5']
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'VALUE', expect)
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Check that indexable single string lookup works.
@@ -171,7 +165,7 @@ def test_ogr_index_6():
     expect = [5]
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'SKEY', expect)
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -186,7 +180,7 @@ def test_ogr_index_7():
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'SKEY', expect)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Try join again.
@@ -205,7 +199,7 @@ def test_ogr_index_8():
 
     gdaltest.p_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that dropping both indexes gets rid of them, and that results still
@@ -264,8 +258,6 @@ def test_ogr_index_9():
     f.close()
     assert xml.find('VALUE') != -1, 'VALUE column is not indexed (2)'
     assert xml.find('SKEY') != -1, 'SKEY column is not indexed (2)'
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #4326
@@ -374,8 +366,6 @@ def test_ogr_index_10():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test support for OR and AND expression
 
@@ -388,8 +378,7 @@ def ogr_index_11_check(lyr, expected_fids):
         assert feat is not None
         assert feat.GetFID() == expected_fid
 
-    return 'success'
-
+    
 
 def test_ogr_index_11():
 
@@ -424,8 +413,6 @@ def test_ogr_index_11():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -455,8 +442,6 @@ def test_ogr_index_cleanup():
         'tmp/ogr_index_10.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
         'tmp/ogr_index_11.dbf')
-
-    return 'success'
 
 
 gdaltest_list = [

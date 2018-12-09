@@ -88,8 +88,6 @@ def test_pds_2():
     ds = gdal.Open('data/fl73n003_alt_truncated.img')
     assert ds.GetRasterBand(1).GetNoDataValue() == 7
 
-    return 'success'
-
 ###############################################################################
 # Read a truncated and modified version of ftp://pdsimage2.wr.usgs.gov/cdroms/messenger/MSGRMDS_1001/DATA/2004_232/EN0001426030M.IMG
 # 16bits image
@@ -109,8 +107,6 @@ def test_pds_3():
     assert ds.GetRasterBand(1).GetNoDataValue() == 0
 
     gdal.PopErrorHandler()
-
-    return 'success'
 
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3177.
@@ -167,8 +163,7 @@ def test_pds_6():
         print('Exp: ', expected_wkt)
         pytest.fail('did not get expected coordinate system.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read an uncompressed image via the PDS label. (#3943)
 
@@ -197,8 +192,6 @@ def test_pds_7():
                        check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-
-    return 'success'
 
 ###############################################################################
 # Test applying adjustment offsets via configuration variables for the
@@ -245,8 +238,6 @@ def test_pds_9():
     assert abs((got_nd - expected_nd) / expected_nd) <= 1e-5
 
     assert ds.GetProjectionRef()
-
-    return 'success'
 
 ###############################################################################
 # Test PDS label with nested arrays (#6970)
@@ -303,8 +294,6 @@ END
         gdal.Open('/vsimem/pds_10')
 
     gdal.Unlink('/vsimem/pds_10')
-
-    return 'success'
 
 ###############################################################################
 # Read a hacked example of reading an image where the line offset is not

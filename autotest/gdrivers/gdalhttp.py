@@ -107,8 +107,7 @@ def test_http_3():
         conn.close()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify /vsicurl (ftp)
 
@@ -136,8 +135,6 @@ def http_4_old():
 
     filelist = ds.GetFileList()
     assert filelist[0] == '/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif'
-
-    return 'success'
 
 ###############################################################################
 # Verify /vsicurl (ftp)
@@ -170,8 +167,6 @@ def test_http_4():
     filelist = ds.GetFileList()
     assert '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' in filelist
 
-    return 'success'
-
 ###############################################################################
 # Test HTTP driver with non VSIL driver
 
@@ -202,8 +197,7 @@ def test_http_5():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test HTTP driver with OGR driver
 
@@ -227,8 +221,6 @@ def test_http_6():
         pytest.fail()
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 
@@ -250,8 +242,7 @@ def test_http_test_ssl_verifystatus():
 
         pytest.fail(last_err)
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -269,16 +260,13 @@ def test_http_test_use_capi_store():
 
     assert ret.find('Failed:    0') != -1
 
-    return 'success'
-
 
 def test_http_test_use_capi_store_sub():
 
     with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
         gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -287,8 +275,6 @@ def test_http_cleanup():
     if gdaltest.dods_drv is not None:
         gdaltest.dods_drv.Register()
     gdaltest.dods_drv = None
-
-    return 'success'
 
 
 gdaltest_list = [test_http_1,

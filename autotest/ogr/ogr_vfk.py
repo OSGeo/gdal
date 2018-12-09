@@ -75,8 +75,6 @@ def test_ogr_vfk_1():
     fc = gdaltest.vfk_layer_par.GetFeatureCount()
     assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
-    return 'success'
-
 ###############################################################################
 # Read the first feature from layer 'PAR', check envelope
 
@@ -102,8 +100,6 @@ def test_ogr_vfk_2():
 
     assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
         ('envelope area not as expected, got %g.' % area)
-
-    return 'success'
 
 ###############################################################################
 # Read features from layer 'SOBR', test attribute query
@@ -131,8 +127,6 @@ def test_ogr_vfk_3():
 
     assert count == 1, ('did not get expected number of features, got %d' % count)
 
-    return 'success'
-
 ###############################################################################
 # Read features from layer 'SBP', test random access, check length
 
@@ -151,8 +145,6 @@ def test_ogr_vfk_4():
 
     assert length == 10, ('did not get expected length, got %d' % length)
 
-    return 'success'
-
 ###############################################################################
 # Read features from layer 'HP', check geometry type
 
@@ -170,8 +162,6 @@ def test_ogr_vfk_5():
 
     assert geom_type == ogr.wkbLineString, \
         ('did not get expected geometry type, got %d' % geom_type)
-
-    return 'success'
 
 ###############################################################################
 # Re-Open file (test .db persistence)
@@ -205,8 +195,6 @@ def test_ogr_vfk_6():
     fc = gdaltest.vfk_layer_par.GetFeatureCount()
     assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
-    return 'success'
-
 ###############################################################################
 # Read PAR layer, check data types (Integer64 new in GDAL 2.2)
 
@@ -226,8 +214,7 @@ def test_ogr_vfk_7():
         assert col.GetName() == name and col.GetType() == ctype, \
             "PAR: '{}' column name/type mismatch".format(name)
 
-    return 'success'
-
+    
 ###############################################################################
 # Open DB file as datasource (new in GDAL 2.2)
 
@@ -253,8 +240,6 @@ def test_ogr_vfk_8():
 
     del os.environ['OGR_VFK_DB_READ']
 
-    return 'success'
-
 ###############################################################################
 # Open datasource with SUPPRESS_GEOMETRY open option (new in GDAL 2.3)
 
@@ -278,8 +263,6 @@ def test_ogr_vfk_9():
 
     assert geom_type == ogr.wkbNone, \
         ('did not get expected geometry type, got %d' % geom_type)
-
-    return 'success'
 
 ###############################################################################
 # Open datasource with FILE_FIELD open option (new in GDAL 2.4)
@@ -305,8 +288,6 @@ def test_ogr_vfk_10():
     vfk_ds = None
 
     assert file_field == 'bylany.vfk', 'did not get expected file field value'
-
-    return 'success'
 
 ###############################################################################
 # Read PAR layer, check sequential feature access consistency
@@ -334,8 +315,7 @@ def test_ogr_vfk_11():
             feat.DumpReadable()
             pytest.fail('did not get expected number of features')
 
-    return 'success'
-
+    
 ###############################################################################
 # cleanup
 
@@ -355,8 +335,7 @@ def test_ogr_vfk_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 #
 

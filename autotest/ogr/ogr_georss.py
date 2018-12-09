@@ -78,8 +78,6 @@ def test_ogr_georss_init():
                                   ('content_xml_lang', 'en', ogr.OFTString),
                                   ('content_xml_base', 'http://diveintomark.org/', ogr.OFTString)]
 
-    return 'success'
-
 ###############################################################################
 # Used by ogr_georss_1 and ogr_georss_1ter
 
@@ -102,8 +100,6 @@ def ogr_georss_test_atom(filename):
 
     assert feat.GetFieldAsString('content').find('<div xmlns="http://www.w3.org/1999/xhtml">') != -1, \
         ('For field "%s", got "%s"' % ('content', feat.GetFieldAsString('content')))
-
-    return 'success'
 
 ###############################################################################
 # Test reading an ATOM document without any geometry
@@ -147,8 +143,6 @@ def test_ogr_georss_1bis():
     assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -212,8 +206,6 @@ def ogr_georss_test_rss(filename, only_first_feature):
     assert only_first_feature is not False or feat.GetGeometryRef().ExportToWkt() == expected_wkt, \
         ('%s' % feat.GetGeometryRef().ExportToWkt())
     assert feat.GetFieldAsString('title') == 'A box'
-
-    return 'success'
 
 ###############################################################################
 # Test reading a RSS 2.0 document with GeoRSS simple geometries
@@ -299,8 +291,6 @@ def ogr_georss_create(filename, options):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test writing a RSS 2.0 document in Simple dialect (doesn't need read support)
 
@@ -311,8 +301,6 @@ def test_ogr_georss_4():
 
     content = open('tmp/test_rss2.xml').read()
     assert content.find('<georss:point>49 2') != -1, ('%s' % content)
-
-    return 'success'
 
 ###############################################################################
 # Test reading document created at previous step
@@ -333,8 +321,6 @@ def test_ogr_georss_6():
     content = open('tmp/test_rss2.xml').read()
     assert content.find('<georss:where><gml:Point><gml:pos>49 2') != -1, \
         ('%s' % content)
-
-    return 'success'
 
 ###############################################################################
 # Test reading document created at previous step
@@ -357,8 +343,6 @@ def test_ogr_georss_8():
     content = open('tmp/test_rss2.xml').read()
     assert not (content.find('<geo:lat>49') == -1 or content.find('<geo:long>2') == -1), \
         ('%s' % content)
-
-    return 'success'
 
 ###############################################################################
 # Test reading document created at previous step
@@ -411,8 +395,6 @@ def test_ogr_georss_10():
     assert content.find('<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4000000') != -1, \
         ('%s' % content)
 
-    return 'success'
-
 ###############################################################################
 # Test reading document created at previous step
 
@@ -442,8 +424,6 @@ def test_ogr_georss_11():
     assert feat.GetGeometryRef().ExportToWkt() == expected_wkt, \
         ('%s' % feat.GetGeometryRef().ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 # Test various broken documents
 
@@ -472,8 +452,6 @@ def test_ogr_georss_12():
     feat = ds.GetLayer(0).GetNextFeature()
     gdal.PopErrorHandler()
     assert feat.GetGeometryRef() is None
-
-    return 'success'
 
 ###############################################################################
 # Test writing non standard fields
@@ -505,8 +483,6 @@ def test_ogr_georss_13():
     assert content.find('<ogr:field2>val2</ogr:field2>') != -1, ('%s' % content)
     assert content.find('<ogr:field3>val3</ogr:field3>') != -1, ('%s' % content)
 
-    return 'success'
-
 ###############################################################################
 # Test reading document created at previous step
 
@@ -527,8 +503,6 @@ def test_ogr_georss_14():
         ('Expected %s. Got %s' % ('val2', feat.GetFieldAsString('ogr_field2')))
     assert feat.GetFieldAsString('ogr_field3') == 'val3', \
         ('Expected %s. Got %s' % ('val3', feat.GetFieldAsString('ogr_field3')))
-
-    return 'success'
 
 ###############################################################################
 # Test reading an in memory file (#2931)
@@ -572,8 +546,6 @@ def test_ogr_georss_15():
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/georssinmem')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -592,8 +564,7 @@ def test_ogr_georss_cleanup():
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
             os.unlink('data/' + filename)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_georss_init,

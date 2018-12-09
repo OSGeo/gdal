@@ -73,8 +73,6 @@ def test_isce_2():
     val = ds.GetMetadataItem('IMAGE_TYPE', 'ISCE')
     assert val == 'slc'
 
-    return 'success'
-
 ###############################################################################
 # Verify this can be exported losslessly.
 

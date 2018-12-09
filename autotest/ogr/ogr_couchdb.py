@@ -62,8 +62,7 @@ def test_ogr_couchdb_init():
         ogrtest.couchdb_drv = None
         pytest.skip('cannot open %s' % ogrtest.couchdb_test_server)
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic test
 
@@ -84,8 +83,6 @@ def test_ogr_couchdb_1():
         f.DumpReadable()
         pytest.fail()
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
-
-    return 'success'
 
 ###############################################################################
 # Test null / unset
@@ -126,8 +123,7 @@ def test_ogr_couchdb_2():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Cleanup
@@ -139,8 +135,6 @@ def test_ogr_couchdb_cleanup():
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
     assert ds is not None
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
-
-    return 'success'
 
 
 gdaltest_list = [

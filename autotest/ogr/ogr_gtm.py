@@ -54,8 +54,6 @@ def test_ogr_gtm_init():
 
     assert gdaltest.gtm_ds.GetLayerCount() == 2, 'wrong number of layers'
 
-    return 'success'
-
 ###############################################################################
 # Test waypoints gtm layer.
 
@@ -112,8 +110,6 @@ def test_ogr_gtm_read_1():
 
     wkt = 'POINT (-47.806097491943362 -21.176849600708007)'
     assert not ogrtest.check_feature_geometry(feat, wkt), 'Unexpected geometry'
-
-    return 'success'
 
 ###############################################################################
 # Test tracks gtm layer.
@@ -190,8 +186,6 @@ def test_ogr_gtm_read_2():
 
     assert not ogrtest.check_feature_geometry(feat, wkt), 'Unexpected geometry'
 
-    return 'success'
-
 
 ###############################################################################
 # Write test
@@ -243,8 +237,6 @@ def test_ogr_gtm_write_1():
     assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check previous test
@@ -338,8 +330,6 @@ def test_ogr_gtm_check_write_1():
     wkt = 'LINESTRING (-21.12 -47.1, -21.02 -47.0, -20.92 -46.9)'
     assert not ogrtest.check_feature_geometry(feat, wkt), 'Unexpected geometry'
 
-    return 'success'
-
 
 ###############################################################################
 #
@@ -348,7 +338,6 @@ def test_ogr_gtm_cleanup():
 
     gdaltest.gtm_ds = None
     os.remove('tmp/gtm.gtm')
-    return 'success'
 
 
 gdaltest_list = [

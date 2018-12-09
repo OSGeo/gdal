@@ -77,8 +77,6 @@ def test_vrtrawlink_2():
     # Force it to be written to disk.
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Confirm that the newly written file is was saved properly
 
@@ -93,8 +91,6 @@ def test_vrtrawlink_3():
     assert chksum == 12481, 'Wrong checksum'
 
     assert len(filelist) == 2, 'Wrong filelist'
-
-    return 'success'
 
 ###############################################################################
 # Add a new band, and we will test if we can write to it.
@@ -149,8 +145,6 @@ def test_vrtrawlink_4():
     statinfo = os.stat('tmp/rawlink.dat')
     assert statinfo.st_size == 3354, 'data file is wrong size'
 
-    return 'success'
-
 ###############################################################################
 # Add a new band, and check the relativeToVRT property.
 
@@ -191,8 +185,6 @@ def test_vrtrawlink_5():
        xmlstring.find('<PixelOffset>3</PixelOffset>') >= 0 and \
        xmlstring.find('<LineOffset>93</LineOffset>') >= 0)
 
-    return 'success'
-
 ###############################################################################
 # Add a new band with relativeToVRT=1, and re-open the dataset.
 
@@ -229,8 +221,6 @@ def test_vrtrawlink_6():
 
     assert os.path.exists('tmp/rawlink6.dat'), \
         'tha raw file is not in the expected location ("tmp/rawlink6.dat")'
-
-    return 'success'
 
 ###############################################################################
 # Add a new band with relativeToVRT=1, change directory and re-open the dataset.
@@ -270,8 +260,7 @@ def test_vrtrawlink_7():
     finally:
         os.chdir('..')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test error case (too much memory allocation)
 
@@ -291,8 +280,7 @@ def test_vrtrawlink_8():
         </VRTDataset>""")
         assert not (ds or gdal.GetLastErrorMsg().find('Image file is too small') < 0)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test error case (inexisting file)
 
@@ -306,8 +294,6 @@ def test_vrtrawlink_9():
     </VRTRasterBand>
     </VRTDataset>""")
     assert not (ds or gdal.GetLastErrorMsg().find('Unable to open') < 0)
-
-    return 'success'
 
 ###############################################################################
 # Test error case (invalid byte order)
@@ -324,8 +310,6 @@ def test_vrtrawlink_10():
     </VRTDataset>""")
     assert not (ds or gdal.GetLastErrorMsg().find('ByteOrder') < 0)
 
-    return 'success'
-
 ###############################################################################
 # Cleanup.
 
@@ -341,8 +325,7 @@ def test_vrtrawlink_cleanup():
         os.remove('tmp/rawlink7.dat')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_vrtrawlink_1,

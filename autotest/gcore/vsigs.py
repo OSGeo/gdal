@@ -70,8 +70,7 @@ def test_vsigs_init():
     with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
         assert gdal.GetSignedURL('/vsigs/foo/bar') is None
 
-    return 'success'
-
+    
 ###############################################################################
 # Error cases
 
@@ -132,15 +131,13 @@ def test_vsigs_1():
         if f is not None:
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
-            return 'success'
+            return
         pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsigs_streaming/foo/bar.baz')
     assert f is None and gdal.VSIGetLastErrorMsg() != ''
-
-    return 'success'
 
 ###############################################################################
 
@@ -160,8 +157,6 @@ def test_vsigs_start_webserver():
     gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
-
-    return 'success'
 
 ###############################################################################
 # Test with a fake Google Cloud Storage server
@@ -245,8 +240,7 @@ def test_vsigs_2():
                 print(stat_res)
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
 
@@ -320,8 +314,6 @@ def test_vsigs_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsigs/')
     assert dir_contents == ['mybucket']
-
-    return 'success'
 
 ###############################################################################
 # Test write
@@ -419,8 +411,7 @@ def test_vsigs_write():
             ret = gdal.VSIFCloseL(f)
         assert ret != 0
 
-    return 'success'
-
+    
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
 
@@ -493,8 +484,6 @@ def test_vsigs_read_credentials_refresh_token_default_gdal_app():
 
     gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
-
-    return 'success'
 
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
@@ -569,8 +558,6 @@ def test_vsigs_read_credentials_refresh_token_custom_app():
     gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', '')
-
-    return 'success'
 
 ###############################################################################
 # Read credentials with OAuth2 service account
@@ -683,8 +670,6 @@ gwE6fxOLyJDxuWRf
 
     gdal.Unlink('/vsimem/pkey')
 
-    return 'success'
-
 ###############################################################################
 # Read credentials with OAuth2 service account through a json configuration file
 
@@ -780,8 +765,6 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file():
 
     assert data == 'foo'
 
-    return 'success'
-
 ###############################################################################
 # Read credentials from simulated ~/.boto
 
@@ -839,8 +822,6 @@ gs_secret_access_key = bar
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
     gdal.Unlink('/vsimem/.boto')
-
-    return 'success'
 
 ###############################################################################
 # Read credentials from simulated ~/.boto
@@ -920,8 +901,6 @@ client_secret = CLIENT_SECRET
     gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.Unlink('/vsimem/.boto')
 
-    return 'success'
-
 ###############################################################################
 # Read credentials from simulated GCE instance
 
@@ -997,8 +976,6 @@ def test_vsigs_read_credentials_gce():
     gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
 
-    return 'success'
-
 ###############################################################################
 # Read credentials from simulated GCE instance with expiration of the
 # cached credentials
@@ -1067,8 +1044,6 @@ def test_vsigs_read_credentials_gce_expiration():
     gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1082,8 +1057,6 @@ def test_vsigs_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 # Nominal cases (require valid credentials)
@@ -1166,7 +1139,7 @@ def vsigs_extra_1():
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
-        return 'success'
+        return
 
     f = open_for_read('/vsigs/' + gs_resource)
     assert f is not None
@@ -1207,8 +1180,6 @@ def vsigs_extra_1():
 
     assert len(ret) == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1217,8 +1188,7 @@ def test_vsigs_cleanup():
     for var in gdaltest.gs_vars:
         gdal.SetConfigOption(var, gdaltest.gs_vars[var])
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_vsigs_init,
                  test_vsigs_1,

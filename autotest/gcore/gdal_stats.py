@@ -110,8 +110,6 @@ def test_stats_dont_force():
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     assert stats == [0, 0, 0, -1], 'did not get expected stats'
 
-    return 'success'
-
 
 ###############################################################################
 # Test statistics when stored nodata value doesn't accurately match the nodata
@@ -150,8 +148,6 @@ def test_stats_approx_nodata():
 
     assert minmax == (-3.0, 5.0), 'did not get expected minmax'
 
-    return 'success'
-
 
 ###############################################################################
 # Test read and copy of dataset with nan as nodata value (#3576)
@@ -179,8 +175,6 @@ def test_stats_nan_3():
     gdaltest.gtiff_drv.Delete('tmp/nan32_nodata.tif')
     assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
 
-    return 'success'
-
 ###############################################################################
 # Test reading a VRT with a complex source that define nan as band nodata
 # and complex source nodata (#3576)
@@ -196,8 +190,6 @@ def test_stats_nan_4():
     assert cs == 874, 'did not get expected checksum'
 
     assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
-
-    return 'success'
 
 ###############################################################################
 # Test reading a VRT with a complex source that define 0 as band nodata
@@ -215,8 +207,6 @@ def test_stats_nan_5():
 
     assert nodata == 0, ('expected nan, got %f' % nodata)
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading a warped VRT with nan as src nodata and dest nodata (#3576)
@@ -231,8 +221,6 @@ def test_stats_nan_6():
     assert cs == 874, 'did not get expected checksum'
 
     assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
-
-    return 'success'
 
 ###############################################################################
 # Test reading a warped VRT with nan as src nodata and 0 as dest nodata (#3576)
@@ -249,8 +237,6 @@ def test_stats_nan_7():
 
     assert nodata == 0, ('expected nan, got %f' % nodata)
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading a warped VRT with zero as src nodata and nan as dest nodata (#3576)
@@ -265,8 +251,6 @@ def test_stats_nan_8():
     assert cs == 874, 'did not get expected checksum'
 
     assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
-
-    return 'success'
 
 ###############################################################################
 # Test statistics computation when nodata = +/- inf
@@ -295,8 +279,6 @@ def test_stats_nodata_inf():
 
     assert stats == [-2.0, 1.0, -0.5, 1.5], 'did not get expected stats'
 
-    return 'success'
-
 
 ###############################################################################
 # Test deserialization of +inf/-inf values written by Linux and Windows
@@ -307,8 +289,6 @@ def stats_nodata_check(filename, expected_nodata):
     ds = None
 
     assert nodata == expected_nodata, 'did not get expected nodata value'
-
-    return 'success'
 
 
 def test_stats_nodata_neginf_linux():
@@ -349,8 +329,6 @@ cellsize     1
     ds = None
     gdal.GetDriverByName('AAIGRID').Delete('/vsimem/stats_stddev_huge_values.asc')
 
-    return 'success'
-
 ###############################################################################
 # Test approximate statistics computation on a square shaped raster whose first column
 # of blocks is nodata only
@@ -374,8 +352,7 @@ def test_stats_square_shape():
         print(hist)
         pytest.fail('did not get expected minmax')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test when nodata = FLT_MIN (#6578)
 
@@ -411,8 +388,6 @@ def test_stats_flt_min():
 
     assert minmax == (0.0, 1.0), 'did not get expected minmax'
 
-    return 'success'
-
 ###############################################################################
 # Test when nodata = DBL_MIN (#6578)
 
@@ -447,8 +422,6 @@ def test_stats_dbl_min():
         'did not get expected stats'
 
     assert minmax == (0.0, 1.0), 'did not get expected minmax'
-
-    return 'success'
 
 ###############################################################################
 # Test stats on a tiled Byte with partial tiles
@@ -546,8 +519,6 @@ def test_stats_byte_partial_tiles():
     expected_stats = [0.0, 255.0, 4.7205882352941178, 30.576733555893391]
     assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
         'did not get expected stats'
-
-    return 'success'
 
 ###############################################################################
 # Test stats on uint16
@@ -648,8 +619,6 @@ def test_stats_uint16():
     assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
         'did not get expected stats'
 
-    return 'success'
-
 ###############################################################################
 # Test a case where the nodata value is almost the maximum value of float32
 
@@ -669,8 +638,6 @@ def test_stats_nodata_almost_max_float32():
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/float32_almost_nodata_max_float32.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -702,8 +669,6 @@ def test_stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
     md = ds.GetRasterBand(1).GetMetadata()
     assert 'STATISTICS_APPROXIMATE' not in md, 'did not get expected metadata'
 
-    return 'success'
-
 
 def test_stats_approx_stats_flag_float():
     return test_stats_approx_stats_flag(dt=gdal.GDT_Float32, struct_frmt='f')
@@ -728,8 +693,6 @@ def test_stats_all_nodata():
         stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
     assert stats == [0.0, 0.0, 0.0, 0.0], 'did not get expected stats'
 
-    return 'success'
-
 
 def test_stats_float32_with_nodata_slightly_above_float_max():
 
@@ -737,8 +700,6 @@ def test_stats_float32_with_nodata_slightly_above_float_max():
     my_min, my_max = ds.GetRasterBand(1).ComputeRasterMinMax()
     assert (my_min, my_max) == (-1.0989999771118164, 0.703338623046875), \
         'did not get expected stats'
-
-    return 'success'
 
 
 ###############################################################################

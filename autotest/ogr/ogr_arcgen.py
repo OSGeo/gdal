@@ -61,8 +61,7 @@ def test_ogr_arcgen_points():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read points25d
 
@@ -88,8 +87,7 @@ def test_ogr_arcgen_points25d():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read lines
 
@@ -113,8 +111,7 @@ def test_ogr_arcgen_lines():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read lines25d
 
@@ -138,8 +135,7 @@ def test_ogr_arcgen_lines25d():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read polygons
 
@@ -163,8 +159,7 @@ def test_ogr_arcgen_polygons():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read polygons25d
 
@@ -188,8 +183,7 @@ def test_ogr_arcgen_polygons25d():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_arcgen_points,

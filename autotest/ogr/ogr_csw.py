@@ -55,8 +55,7 @@ def ogr_csw_init():
             pytest.skip()
         pytest.skip('failed to open test file.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a pyCSW server
 
@@ -72,8 +71,6 @@ def test_ogr_csw_pycsw():
     f = lyr.GetNextFeature()
     assert f is not None, 'did not get expected layer name'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -82,8 +79,6 @@ def test_ogr_csw_vsimem_fail_because_not_enabled():
     ds = ogr.Open('CSW:/vsimem/csw_endpoint')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 
 ###############################################################################
@@ -94,8 +89,6 @@ def test_ogr_csw_vsimem_fail_because_no_get_capabilities():
     ds = ogr.Open('CSW:/vsimem/csw_endpoint')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -111,8 +104,6 @@ def test_ogr_csw_vsimem_fail_because_empty_response():
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Empty content returned by server') >= 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -126,8 +117,6 @@ def test_ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
     gdal.PopErrorHandler()
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Cannot find Capabilities.version') >= 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -143,8 +132,6 @@ def test_ogr_csw_vsimem_fail_because_exception():
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Error returned by server : <ServiceExceptionReport/>') >= 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -158,8 +145,6 @@ def test_ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
     gdal.PopErrorHandler()
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Invalid XML content : <invalid_xml') >= 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -176,8 +161,6 @@ def test_ogr_csw_vsimem_fail_because_missing_version():
     gdal.PopErrorHandler()
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Cannot find Capabilities.version') >= 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -439,8 +422,6 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
     lyr.SetAttributeFilter(None)
     lyr.SetSpatialFilter(None)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -495,8 +476,7 @@ def test_ogr_csw_vsimem_csw_output_schema_csw():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -536,8 +516,7 @@ def test_ogr_csw_vsimem_csw_output_schema_gmd():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -579,8 +558,7 @@ def test_ogr_csw_vsimem_csw_output_schema_fgdc():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -590,8 +568,7 @@ def test_ogr_csw_vsimem_cleanup():
     for f in gdal.ReadDir('/vsimem/'):
         gdal.Unlink('/vsimem/' + f)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_csw_vsimem_fail_because_not_enabled,

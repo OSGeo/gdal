@@ -57,8 +57,6 @@ def test_transformer_1():
     assert success and abs(pnt[0] - 20) <= 0.00000001 and abs(pnt[1] - 10) <= 0.00000001 and pnt[2] == 0.0, \
         'got wrong reverse transform result.'
 
-    return 'success'
-
 ###############################################################################
 # Test GCP based transformer with polynomials.
 
@@ -77,8 +75,6 @@ def test_transformer_2():
 
     assert success and abs(pnt[0] - 20) <= 0.001 and abs(pnt[1] - 10) <= 0.001 and pnt[2] == 0, \
         'got wrong reverse transform result.'
-
-    return 'success'
 
 ###############################################################################
 # Test GCP based transformer with thin plate splines.
@@ -99,8 +95,6 @@ def test_transformer_3():
     assert success and abs(pnt[0] - 20) <= 0.001 and abs(pnt[1] - 10) <= 0.001 and pnt[2] == 0, \
         'got wrong reverse transform result.'
 
-    return 'success'
-
 ###############################################################################
 # Test geolocation based transformer.
 
@@ -119,8 +113,6 @@ def test_transformer_4():
 
     assert success and abs(pnt[0] - 20.436627518907024) <= 0.001 and abs(pnt[1] - 10.484599774610549) <= 0.001 and pnt[2] == 0, \
         'got wrong reverse transform result.'
-
-    return 'success'
 
 ###############################################################################
 # Test RPC based transformer.
@@ -254,8 +246,6 @@ def test_transformer_5():
 
     gdal.Unlink('/vsimem/dem.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Test RPC convergence bug (bug # 5395)
@@ -270,8 +260,6 @@ def test_transformer_6():
     assert success and abs(pnt[0] - 28.26163232) <= 0.0001 and abs(pnt[1] - -27.79853245) <= 0.0001 and pnt[2] == 0, \
         'got wrong forward transform result.'
 
-    return 'success'
-
 ###############################################################################
 # Test Transformer.TransformPoints
 
@@ -285,8 +273,6 @@ def test_transformer_7():
 
     assert success[0] != 0 and abs(pnt[0][0] - 441920) <= 0.00000001 and abs(pnt[0][1] - 3750720) <= 0.00000001 and pnt[0][2] == 0.0, \
         'got wrong forward transform result.'
-
-    return 'success'
 
 ###############################################################################
 # Test handling of nodata in RPC DEM (#5680)
@@ -323,8 +309,6 @@ def test_transformer_8():
 
     gdal.Unlink('/vsimem/dem.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test RPC DEM line optimization
 
@@ -359,8 +343,6 @@ def test_transformer_9():
         assert pnt == pnt_optimized, method
 
     gdal.Unlink('/vsimem/dem.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test RPC DEM transform from geoid height to ellipsoidal height
@@ -436,8 +418,6 @@ def test_transformer_10():
     gdal.Unlink('/vsimem/dem.tif')
     gdal.Unlink('/vsimem/dem.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test failed inverse RPC transform (#6162)
 
@@ -471,8 +451,6 @@ def test_transformer_11():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT=1150'])
     (success, pnt) = tr.TransformPoint(0, 0, 0, 0)
     assert success and abs(pnt[0] - 77.350939956024618) <= 1e-7 and abs(pnt[1] - 38.739703990877814) <= 1e-7
-
-    return 'success'
 
 ###############################################################################
 # Test degenerate cases of TPS transformer
@@ -544,8 +522,6 @@ def test_transformer_12():
         tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     assert gdal.GetLastErrorMsg() != ''
 
-    return 'success'
-
 ###############################################################################
 # Test inverse RPC transform at DEM edge (#6377)
 
@@ -574,8 +550,6 @@ def test_transformer_13():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=data/transformer_13_dem.tif'])
     (success, pnt) = tr.TransformPoint(0, 6600, 24)
     assert success and abs(pnt[0] - -108.00066000065341) <= 1e-7 and abs(pnt[1] - 39.157694013439489) <= 1e-7
-
-    return 'success'
 
 ###############################################################################
 # Test inverse RPC transform when iterations do oscillations (#6377)
@@ -629,8 +603,6 @@ def test_transformer_14():
 
     gdal.Unlink('/vsimem/transformer_14.csvt')
     gdal.Unlink('/vsimem/transformer_14.csv')
-
-    return 'success'
 
 ###############################################################################
 # Test inverse RPC transform with DEM in [-180,180] but guessed longitude going
@@ -707,8 +679,6 @@ def test_transformer_15():
     gdal.Unlink('/vsimem/transformer_15_dem.tif')
     gdal.Unlink('/vsimem/transformer_15_dem.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test approximate sub-transformers in GenImgProjTransformer
 # (we mostly test that the parameters are well recognized and serialized)
@@ -732,8 +702,6 @@ def test_transformer_16():
     gdal.Unlink('/vsimem/transformer_16.tif')
     gdal.Unlink('/vsimem/transformer_16.vrt')
 
-    return 'success'
-
 
 ###############################################################################
 # Test RPC DEM with unexisting RPC DEM file
@@ -744,7 +712,6 @@ def test_transformer_17():
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif'])
     assert tr is None
-    return 'success'
 
 
 gdaltest_list = [

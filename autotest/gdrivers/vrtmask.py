@@ -76,8 +76,6 @@ def test_vrtmask_1():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test with a per band mask band
@@ -116,8 +114,6 @@ def test_vrtmask_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Translate a RGB dataset with a mask into a VRT
 
@@ -147,8 +143,6 @@ def test_vrtmask_3():
 
     assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
-    return 'success'
-
 ###############################################################################
 # Same with gdalbuildvrt
 
@@ -177,8 +171,6 @@ def test_vrtmask_4():
 
     assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
-    return 'success'
-
 ###############################################################################
 # Same with gdal_translate
 
@@ -203,8 +195,6 @@ def test_vrtmask_5():
     os.remove('tmp/vrtmask_5.vrt')
 
     assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
-
-    return 'success'
 
 ###############################################################################
 # Same with gdal_translate with explicit -b and -mask arguments
@@ -231,8 +221,6 @@ def test_vrtmask_6():
     os.remove('tmp/vrtmask_6.vrt')
 
     assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
-
-    return 'success'
 
 ###############################################################################
 # gdal_translate with RGBmask -> RGBA and then RGBA->RGBmask
@@ -280,8 +268,6 @@ def test_vrtmask_7():
 
     assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
-    return 'success'
-
 ###############################################################################
 # gdal_translate with RGBmask -> RGB
 
@@ -303,8 +289,6 @@ def test_vrtmask_8():
     os.remove('tmp/vrtmask_8.vrt')
 
     assert flags == gdal.GMF_ALL_VALID
-
-    return 'success'
 
 ###############################################################################
 # gdal_translate with RGBA -> RGB
@@ -330,8 +314,6 @@ def test_vrtmask_9():
 
     assert flags == gdal.GMF_ALL_VALID
 
-    return 'success'
-
 ###############################################################################
 # Test fix for #5120 (VRTSourcedRasterBand::AddMaskBandSource() ignores specified window)
 
@@ -356,8 +338,6 @@ def test_vrtmask_10():
     os.remove('tmp/vrtmask_10_3.tif')
 
     assert cs_ref == cs_got
-
-    return 'success'
 
 ###############################################################################
 
@@ -389,15 +369,12 @@ def test_vrtmask_11():
     ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     assert ret == 0
 
-    return 'success'
-
 ###############################################################################
 # Cleanup.
 
 
 def test_vrtmask_cleanup():
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_vrtmask_1,

@@ -53,8 +53,6 @@ def test_ogr_gpx_init():
 
     assert gdaltest.gpx_ds.GetLayerCount() == 5, 'wrong number of layers'
 
-    return 'success'
-
 ###############################################################################
 # Test waypoints gpx layer.
 
@@ -138,8 +136,6 @@ def test_ogr_gpx_1():
     assert (ogrtest.check_feature_geometry(feat, 'POINT (4 3)',
                                       max_error=0.0001) == 0)
 
-    return 'success'
-
 ###############################################################################
 # Test routes gpx layer.
 
@@ -158,8 +154,6 @@ def test_ogr_gpx_2():
 
     feat = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(feat, 'LINESTRING EMPTY', max_error=0.0001) == 0
-
-    return 'success'
 
 
 ###############################################################################
@@ -181,8 +175,6 @@ def test_ogr_gpx_3():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(feat, 'POINT (6 5)', max_error=0.0001) == 0
-
-    return 'success'
 
 ###############################################################################
 # Test tracks gpx layer.
@@ -207,8 +199,6 @@ def test_ogr_gpx_4():
     f_geom = feat.GetGeometryRef()
     assert f_geom.ExportToWkt() == 'MULTILINESTRING EMPTY'
 
-    return 'success'
-
 ###############################################################################
 # Test route_points gpx layer.
 
@@ -229,8 +219,6 @@ def test_ogr_gpx_5():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(feat, 'POINT (15 14)', max_error=0.0001) == 0
-
-    return 'success'
 
 ###############################################################################
 # Copy our small gpx file to a new gpx file.
@@ -311,8 +299,6 @@ def test_ogr_gpx_6():
 
     gdaltest.gpx_ds = ogr.Open('tmp/gpx.gpx')
 
-    return 'success'
-
 ###############################################################################
 # Output extra fields as <extensions>.
 
@@ -379,8 +365,6 @@ def test_ogr_gpx_7():
 
     tr = ogrtest.check_features_against_list(gpx_lyr, 'ogr_Third_ID', expect)
     assert tr
-
-    return 'success'
 
 ###############################################################################
 # Output extra fields as <extensions>.
@@ -472,8 +456,6 @@ def test_ogr_gpx_8():
 
     assert f_content.find(f_ref_content) != -1, 'did not get expected result'
 
-    return 'success'
-
 ###############################################################################
 # Parse file with a <time> extension at track level (#6237)
 
@@ -489,8 +471,7 @@ def test_ogr_gpx_9():
         f.DumpReadable()
         pytest.fail('did not get expected result')
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -502,8 +483,7 @@ def test_ogr_gpx_cleanup():
         os.remove('tmp/gpx.gpx')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_gpx_init,

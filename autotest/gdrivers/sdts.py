@@ -55,8 +55,6 @@ def test_sdts_1():
 
     assert md['TITLE'] == 'ALANSON, MI-24000'
 
-    return 'success'
-
 
 gdaltest_list = [test_sdts_1]
 

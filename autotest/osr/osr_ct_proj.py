@@ -212,5 +212,3 @@ def test_proj(src_srs, src_xyz, src_error,
 
     assert error <= src_error, \
         ('Back to source error is %g.%s' % (error, additionnal_error_str))
-
-    return 'success'

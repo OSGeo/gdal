@@ -57,8 +57,6 @@ def test_gdalwarp_1():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test -of option
@@ -75,8 +73,6 @@ def test_gdalwarp_2():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -97,8 +93,6 @@ def test_gdalwarp_3():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -t_srs option
 
@@ -115,8 +109,6 @@ def test_gdalwarp_4():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping from GCPs without any explicit option
@@ -143,8 +135,6 @@ def test_gdalwarp_5():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test warping from GCPs with -tps
@@ -165,8 +155,6 @@ def test_gdalwarp_6():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test -tr
@@ -185,8 +173,6 @@ def test_gdalwarp_7():
         'Bad geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -ts
@@ -207,8 +193,6 @@ def test_gdalwarp_8():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -te
 
@@ -227,8 +211,6 @@ def test_gdalwarp_9():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -rn
 
@@ -245,8 +227,6 @@ def test_gdalwarp_10():
     assert ds.GetRasterBand(1).Checksum() == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -rb
@@ -270,8 +250,6 @@ def test_gdalwarp_11():
         pytest.fail('Image too different from reference')
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -297,8 +275,6 @@ def test_gdalwarp_12():
     ds = None
     ref_ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test -rcs
@@ -319,8 +295,6 @@ def test_gdalwarp_13():
     assert maxdiff <= 1, 'Image too different from reference'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -343,8 +317,6 @@ def test_gdalwarp_14():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -dstnodata
 
@@ -364,8 +336,6 @@ def test_gdalwarp_15():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -of VRT which is a special case
 
@@ -383,8 +353,6 @@ def test_gdalwarp_16():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -dstalpha
 
@@ -401,8 +369,6 @@ def test_gdalwarp_17():
     assert ds.GetRasterBand(4) is not None, 'No alpha band generated'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -wm -multi
@@ -425,8 +391,6 @@ def test_gdalwarp_18():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -et 0 which is a special case
 
@@ -443,8 +407,6 @@ def test_gdalwarp_19():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -of VRT -et 0 which is a special case
@@ -463,8 +425,6 @@ def test_gdalwarp_20():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test cutline from OGR datasource.
@@ -481,8 +441,6 @@ def test_gdalwarp_21():
     assert ds.GetRasterBand(1).Checksum() == 19139, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -501,8 +459,6 @@ def test_gdalwarp_22():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test cutline with ALL_TOUCHED enabled.
@@ -519,8 +475,6 @@ def test_gdalwarp_23():
     assert ds.GetRasterBand(1).Checksum() == 20123, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping an image crossing the 180E/180W longitude (#3206)
@@ -545,8 +499,6 @@ def test_gdalwarp_24():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=sinu (#2305)
 
@@ -569,8 +521,6 @@ def test_gdalwarp_25():
         assert abs(gt[i] - expected_gt[i]) <= 1, 'Bad gt'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=eck4 (#2305)
@@ -595,8 +545,6 @@ def test_gdalwarp_26():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=vandg (#2305)
 
@@ -619,8 +567,6 @@ def test_gdalwarp_27():
         assert abs(gt[i] - expected_gt[i]) <= 1, 'Bad gt'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=aeqd +lat_0=45 +lon_0=90 (#2305)
@@ -655,8 +601,6 @@ def test_gdalwarp_28():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test warping a full EPSG:4326 extent to EPSG:3785 (#2305)
 
@@ -679,8 +623,6 @@ def test_gdalwarp_29():
         assert abs(gt[i] - expected_gt[i]) <= 1, 'Bad gt'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test the effect of the -wo OPTIMIZE_SIZE=TRUE and -wo STREAMABLE_OUTPUT=TRUE options (#3459, #1866)
@@ -733,8 +675,6 @@ def test_gdalwarp_30():
     assert file_size1 > file_size3, \
         'Size with -wo STREAMABLE_OUTPUT=TRUE larger than without !'
 
-    return 'success'
-
 ###############################################################################
 # Test -overwrite (#3759)
 
@@ -763,8 +703,6 @@ def test_gdalwarp_31():
 
     assert cs1 == 4672 and cs2 == 4672 and cs3 == 4727 and err != '' and err2 == ''
 
-    return 'success'
-
 ###############################################################################
 # Test -tap
 
@@ -791,8 +729,6 @@ def test_gdalwarp_32():
         ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping a JPEG compressed image with a mask into a RGBA image
@@ -828,8 +764,6 @@ def test_gdalwarp_33():
     ds = None
 
     assert cs == expected_cs, 'did not get expected checksum on alpha band'
-
-    return 'success'
 
 ###############################################################################
 # Test warping multiple sources
@@ -869,8 +803,7 @@ def test_gdalwarp_34():
     for i in range(6):
         assert abs(gt[i] - expected_gt[i]) <= 1e-5, 'bad gt'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -ts and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
 
@@ -889,8 +822,6 @@ def test_gdalwarp_35():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -tr and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
 
@@ -908,8 +839,6 @@ def test_gdalwarp_36():
         'Bad geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test metadata copying - stats should not be copied (#5319)
@@ -937,8 +866,6 @@ def test_gdalwarp_37():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test implicit nodata setting (#5675)
 
@@ -954,8 +881,6 @@ def test_gdalwarp_38():
     assert ds.GetRasterBand(1).GetNoDataValue() == -999
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -oo
 
@@ -969,8 +894,6 @@ def test_gdalwarp_39():
     ds = gdal.Open('tmp/test_gdalwarp_39.tif')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -ovr
@@ -1097,8 +1020,6 @@ def test_gdalwarp_40():
     assert ds.GetRasterBand(1).Checksum() == expected_cs
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test source fill ratio heuristics (#3120)
 
@@ -1142,8 +1063,6 @@ def test_gdalwarp_41():
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
     assert ds.GetRasterBand(1).Checksum() == 65068
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping multiple source images, in one step or several, with INIT_DEST/nodata (#5909, #5387)
@@ -1195,8 +1114,6 @@ def test_gdalwarp_42():
     assert got_cs == expected_cs
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test that NODATA_VALUES is honoured, but not transferred when adding an alpha channel.
 
@@ -1217,8 +1134,6 @@ def test_gdalwarp_43():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [30106, 32285, 40022, 64261]
     assert got_cs == expected_cs
-
-    return 'success'
 
 ###############################################################################
 # Test effect of -wo SRC_COORD_PRECISION
@@ -1255,8 +1170,6 @@ def test_gdalwarp_44():
 
     assert cs3 == cs4
 
-    return 'success'
-
 ###############################################################################
 # Test -te_srs
 
@@ -1278,8 +1191,6 @@ def test_gdalwarp_45():
     assert ds.GetRasterBand(1).Checksum() == 4672
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1321,8 +1232,6 @@ def test_gdalwarp_46():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup
@@ -1331,7 +1240,7 @@ def test_gdalwarp_cleanup():
 
     # We don't clean up when run in debug mode.
     if gdal.GetConfigOption('CPL_DEBUG', 'OFF') == 'ON':
-        return 'success'
+        return
 
     for i in range(37):
         try:
@@ -1428,8 +1337,7 @@ def test_gdalwarp_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdalwarp_cleanup,

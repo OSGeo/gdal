@@ -159,8 +159,7 @@ def test_ogr_pg_1():
         gdaltest.pg_has_postgis = False
         print('PostGIS NOT available !')
 
-    return 'success'
-
+    
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -241,8 +240,6 @@ def test_ogr_pg_2(with_and_without_postgis):
 
     dst_feat.Destroy()
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading a layer extent
@@ -280,8 +277,7 @@ def test_ogr_pg_19(with_and_without_postgis):
             print(extent)
             pytest.fail('Wrong estimated extent')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a SQL result layer extent
 
@@ -342,7 +338,7 @@ def test_ogr_pg_3(with_and_without_postgis):
 
     gdaltest.poly_feat = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -387,8 +383,6 @@ def test_ogr_pg_4(with_and_without_postgis):
     dst_feat.Destroy()
     gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
 
-    return 'success'
-
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -408,7 +402,7 @@ def test_ogr_pg_5(with_and_without_postgis):
 
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -442,7 +436,7 @@ def test_ogr_pg_6(with_and_without_postgis):
 
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
@@ -473,7 +467,7 @@ def test_ogr_pg_7(with_and_without_postgis):
 
     gdaltest.pg_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write a feature with too long a text value for a fixed length text field.
@@ -506,8 +500,6 @@ def test_ogr_pg_8(with_and_without_postgis):
                              feat_read.GetField('shortname'))
 
     feat_read.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Verify inplace update of a feature with SetFeature().
@@ -571,8 +563,6 @@ def test_ogr_pg_9(with_and_without_postgis):
 
     feat.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Verify that DeleteFeature() works properly.
 
@@ -602,8 +592,6 @@ def test_ogr_pg_10(with_and_without_postgis):
     # Test deleting non-existing feature
     assert gdaltest.pg_lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
         'Expected failure of DeleteFeature().'
-
-    return 'success'
 
 ###############################################################################
 # Create table from data/poly.shp in INSERT mode.
@@ -657,8 +645,6 @@ def test_ogr_pg_11(with_and_without_postgis):
 
     gdal.SetConfigOption('PG_USE_COPY', gdaltest.pg_use_copy)
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -686,8 +672,6 @@ def test_ogr_pg_12(with_and_without_postgis):
 
     gdaltest.poly_feat = None
     gdaltest.pgc_lyr.ResetReading()  # to close implicit transaction
-
-    return 'success'
 
 ###############################################################################
 # Create a table with some date fields.
@@ -722,8 +706,6 @@ def test_ogr_pg_13(with_and_without_postgis):
     ######################################################
     # Create a populated records.
     gdaltest.pg_ds.ExecuteSQL("INSERT INTO datetest ( ogrdate, ogrtime, ogrdatetime, tsz, ts, dt, tm) VALUES ( '2005-10-12 10:41:33-05', '2005-10-12 10:41:33-05', '2005-10-12 10:41:33-05', '2005-10-12 10:41:33-05','2005-10-12 10:41:33-05','2005-10-12 10:41:33-05','2005-10-12 10:41:33-05' )")
-
-    return 'success'
 
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
@@ -786,8 +768,6 @@ def test_ogr_pg_14(with_and_without_postgis):
     feat = None
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test very large query.
 
@@ -809,7 +789,7 @@ def test_ogr_pg_15(with_and_without_postgis):
                                              'eas_id', expect)
     gdaltest.pg_lyr.SetAttributeFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
@@ -835,7 +815,7 @@ def test_ogr_pg_16(with_and_without_postgis):
 
     gdaltest.pg_ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test requesting a non-existent table by name (bug 1480).
@@ -856,8 +836,6 @@ def test_ogr_pg_17(with_and_without_postgis):
 
     assert count == gdaltest.pg_ds.GetLayerCount(), 'layer count changed unexpectedly.'
 
-    return 'success'
-
 ###############################################################################
 # Test getting a layer by name that was not previously a layer.
 
@@ -873,8 +851,6 @@ def test_ogr_pg_18(with_and_without_postgis):
 
     assert count + 1 == gdaltest.pg_ds.GetLayerCount(), \
         'layer count unexpectedly unchanged.'
-
-    return 'success'
 
 
 ###############################################################################
@@ -956,8 +932,6 @@ def test_ogr_pg_20(with_and_without_postgis):
 
     layer = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading 4-dimension geometries in EWKB format
 
@@ -986,8 +960,6 @@ def test_ogr_pg_21(with_and_without_postgis):
     feat = None
     gdaltest.pg_ds.ReleaseResultSet(layer)
     layer = None
-
-    return 'success'
 
 ###############################################################################
 # Check if the sub geometries of TIN and POLYHEDRALSURFACE are valid
@@ -1028,8 +1000,7 @@ def test_ogr_pg_21_subgeoms(with_and_without_postgis):
         feat.Destroy()
         feat = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Check if the 3d geometries of TIN, Triangle and POLYHEDRALSURFACE are valid
 
@@ -1074,7 +1045,6 @@ def test_ogr_pg_21_3d_geometries():
             ('Unexpected WKT, expected %s and got %s' % (wkt_expected[i], wkt))
 
     gdaltest.pg_ds.ExecuteSQL("DROP TABLE zgeoms")
-    return 'success'
 
 ###############################################################################
 # Create table from data/poly.shp under specified SCHEMA
@@ -1131,8 +1101,6 @@ def test_ogr_pg_22(with_and_without_postgis):
     found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, layer_name)
 
     assert found is not False, ('layer from schema \'' + schema_name + '\' not listed')
-
-    return 'success'
 
 ###############################################################################
 # Create table with all data types
@@ -1225,8 +1193,6 @@ def test_ogr_pg_23(with_and_without_postgis):
     sql += "'{100.1,200.1}', '{100.12,200.12}', ARRAY[100.12,200.12], ARRAY[10,20], ARRAY[10.12,20.12], '{1,0}', " + geom_str + " )"
     gdaltest.pg_ds.ExecuteSQL(sql)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1308,8 +1274,6 @@ def check_value_23(layer_defn, feat):
     wkt = geom.ExportToWkt()
     assert wkt == 'POINT (10 20)', ('Wrong WKT :' + wkt)
 
-    return 'success'
-
 ###############################################################################
 # Test with PG: connection
 
@@ -1331,8 +1295,6 @@ def test_ogr_pg_24(with_and_without_postgis):
     feat = None
 
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test with PG: connection and SELECT query
@@ -1357,8 +1319,6 @@ def test_ogr_pg_25(with_and_without_postgis):
     feat = None
 
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Duplicate all data types in INSERT mode
@@ -1406,8 +1366,6 @@ def test_ogr_pg_28(with_and_without_postgis):
 
     gdal.SetConfigOption('PG_USE_COPY', gdaltest.pg_use_copy)
 
-    return 'success'
-
 ###############################################################################
 # Test with PG: connection
 
@@ -1434,8 +1392,6 @@ def test_ogr_pg_29(with_and_without_postgis):
     feat = None
 
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Duplicate all data types in PG_USE_COPY mode
@@ -1480,8 +1436,6 @@ def test_ogr_pg_30(with_and_without_postgis):
 
     gdal.SetConfigOption('PG_USE_COPY', gdaltest.pg_use_copy)
 
-    return 'success'
-
 
 ###############################################################################
 # Test the tables= connection string option
@@ -1516,8 +1470,6 @@ def test_ogr_pg_31(with_and_without_postgis):
     assert i == 501
 
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test approximate srtext (#2123, #3508)
@@ -1645,8 +1597,6 @@ def test_ogr_pg_32(with_and_without_postgis):
         pytest.fail('did not get expected count after step (5)')
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test encoding as UTF8
 
@@ -1664,8 +1614,6 @@ def test_ogr_pg_33(with_and_without_postgis):
     dst_feat.SetField('SHORTNAME', '\xc3\xa9')
     gdaltest.pg_lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test encoding as Latin1
@@ -1701,8 +1649,6 @@ def test_ogr_pg_34(with_and_without_postgis):
     gdaltest.pg_lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
 
-    return 'success'
-
 
 ###############################################################################
 # Test for buffer overflows
@@ -1733,8 +1679,7 @@ def test_ogr_pg_35(with_and_without_postgis):
     finally:
         gdal.PopErrorHandler()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test support for inherited tables : tables inherited from a Postgis Table
 
@@ -1782,8 +1727,6 @@ def test_ogr_pg_36(with_and_without_postgis):
 
     ds.Destroy()
 
-    return 'success'
-
 
 def test_ogr_pg_36_bis(with_and_without_postgis):
 
@@ -1800,8 +1743,6 @@ def test_ogr_pg_36_bis(with_and_without_postgis):
     assert not gdaltest.pg_has_postgis or lyr.GetGeomType() == ogr.wkbPoint
 
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test support for inherited tables : Postgis table inherited from a non-Postgis table
@@ -1827,8 +1768,6 @@ def test_ogr_pg_37(with_and_without_postgis):
     assert not gdaltest.pg_has_postgis or lyr.GetGeomType() == ogr.wkbPoint
 
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test support for multiple geometry columns (RFC 41)
@@ -1886,8 +1825,6 @@ def test_ogr_pg_38(with_and_without_postgis):
 
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test support for named views
 
@@ -1902,7 +1839,7 @@ def test_ogr_pg_39(with_and_without_postgis):
         found = ogr_pg_check_layer_in_list(ds, 'testview')
         assert found is not False, 'layer testview not listed'
         ds.Destroy()
-        return 'success'
+        return
 
     gdaltest.pg_ds.ExecuteSQL("CREATE VIEW testview AS SELECT * FROM table37_inherited")
     if not gdaltest.pg_has_postgis_2:
@@ -1956,8 +1893,6 @@ def test_ogr_pg_39(with_and_without_postgis):
 
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test GetFeature() with an invalid id
 
@@ -1968,8 +1903,6 @@ def test_ogr_pg_40(with_and_without_postgis):
 
     layer = gdaltest.pg_ds.GetLayerByName('tpoly')
     assert layer.GetFeature(0) is None
-
-    return 'success'
 
 ###############################################################################
 # Test active_schema= option
@@ -2017,8 +1950,6 @@ def test_ogr_pg_41(with_and_without_postgis):
 
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test schemas= option
 
@@ -2059,8 +1990,6 @@ def test_ogr_pg_42(with_and_without_postgis):
 
     ds.Destroy()
 
-    return 'success'
-
 
 ###############################################################################
 # Test schemas= option
@@ -2085,8 +2014,6 @@ def test_ogr_pg_43(with_and_without_postgis):
     assert layer.GetFeatureCount() == 3, 'wrong feature count'
 
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test for table and column names that need quoting (#2945)
@@ -2129,8 +2056,6 @@ def test_ogr_pg_44(with_and_without_postgis):
 
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test SetNextByIndex (#3117)
 
@@ -2157,8 +2082,6 @@ def test_ogr_pg_45(with_and_without_postgis):
 
     feat = lyr.GetNextFeature()
     assert feat.GetFID() == tab_feat[3].GetFID(), 'did not get expected feature'
-
-    return 'success'
 
 ###############################################################################
 # Test that we can read more than 500 features and update each one
@@ -2216,8 +2139,6 @@ def test_ogr_pg_46(with_and_without_postgis):
     feat.Destroy()
 
     gdaltest.pg_ds.ReleaseResultSet(sqllyr)
-
-    return 'success'
 
 ###############################################################################
 # Test that we can handle 'geography' column type introduced in PostGIS 1.5
@@ -2321,8 +2242,6 @@ def test_ogr_pg_47(with_and_without_postgis):
     feat.Destroy()
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test that we can read a table without any primary key (#2082)
 # Test also the effect of PG_LIST_ALL_TABLES with a non spatial table in a
@@ -2388,8 +2307,7 @@ def test_ogr_pg_48(with_and_without_postgis):
         feat.DumpReadable()
         pytest.fail('did not get expected other_id')
 
-    return 'success'
-
+    
 ###############################################################################
 # Go on with previous test but set PGSQL_OGR_FID this time
 
@@ -2414,8 +2332,7 @@ def test_ogr_pg_49(with_and_without_postgis):
         feat.DumpReadable()
         pytest.fail('did not get expected FID')
 
-    return 'success'
-
+    
 ###############################################################################
 # Write and read NaN values (#3667)
 # This tests writing using COPY and INSERT
@@ -2478,8 +2395,6 @@ def test_ogr_pg_50(with_and_without_postgis):
 
     gdaltest.pg_lyr.ResetReading()  # to close implicit transaction
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -2497,8 +2412,6 @@ def test_ogr_pg_51(with_and_without_postgis):
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf with -sql
 
@@ -2515,8 +2428,6 @@ def test_ogr_pg_52(with_and_without_postgis):
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" -sql "SELECT * FROM tpoly"')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test creating a layer with explicitly wkbNone geometry type.
@@ -2571,8 +2482,6 @@ def test_ogr_pg_53(with_and_without_postgis):
     lyr = ds.GetLayerByName('no_geometry_table')
     assert lyr.GetLayerDefn().GetFieldCount() == 2
 
-    return 'success'
-
 ###############################################################################
 # Check that we can overwrite a non-spatial geometry table (#4012)
 
@@ -2595,8 +2504,6 @@ def test_ogr_pg_53_bis(with_and_without_postgis):
     feat = lyr.GetNextFeature()
     assert feat.GetField(0) == 'baz'
 
-    return 'success'
-
 ###############################################################################
 # Test reading AsEWKB()
 
@@ -2618,8 +2525,6 @@ def test_ogr_pg_54(with_and_without_postgis):
 
     geom = feat.GetGeometryRef()
     assert geom.ExportToWkt() == 'POINT (0 1 2)'
-
-    return 'success'
 
 ###############################################################################
 # Test reading geoms as Base64 encoded strings
@@ -2649,8 +2554,6 @@ def test_ogr_pg_55(with_and_without_postgis):
     gdal.SetConfigOption('PG_USE_BASE64', old_val)
     assert feat.GetGeometryRef().ExportToWkt() == 'POINT (1 2 3)'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test insertion of features with first field being a 0-character string in a
@@ -2734,8 +2637,6 @@ def test_ogr_pg_56(with_and_without_postgis):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test inserting an empty feature
 
@@ -2752,8 +2653,6 @@ def test_ogr_pg_57(with_and_without_postgis):
     feat = None
 
     assert ret == 0
-
-    return 'success'
 
 ###############################################################################
 # Test RFC35
@@ -2803,8 +2702,6 @@ def test_ogr_pg_58(with_and_without_postgis):
 
     assert lyr.GetLayerDefn().GetFieldCount() == 1, 'failed (4)'
 
-    return 'success'
-
 ###############################################################################
 # Check that we can use -nln with a layer name that is recognized by GetLayerByName()
 # but which is not the layer name.
@@ -2830,8 +2727,6 @@ def test_ogr_pg_59(with_and_without_postgis):
     ds = None
 
     assert fc == 35, 'did not get expected feature count'
-
-    return 'success'
 
 ###############################################################################
 # Test that we can insert a feature that has a FID on a table with a
@@ -2862,8 +2757,6 @@ def test_ogr_pg_60(with_and_without_postgis):
 
     feat = lyr.GetFeature(100)
     assert feat is not None, 'did not get feature'
-
-    return 'success'
 
 ###############################################################################
 # Test insertion of features with FID set in COPY mode (#4495)
@@ -2909,8 +2802,6 @@ def test_ogr_pg_61(with_and_without_postgis):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test ExecuteSQL() and getting SRID of the request (#4699)
 
@@ -2939,8 +2830,6 @@ def test_ogr_pg_62(with_and_without_postgis):
     got_srs = sql_lyr.GetSpatialRef()
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
     assert not (got_srs is None or got_srs.ExportToWkt().find('4326') == -1)
-
-    return 'success'
 
 ###############################################################################
 # Test COLUMN_TYPES layer creation option (#4788)
@@ -2977,8 +2866,6 @@ def test_ogr_pg_63(with_and_without_postgis):
     assert feat.GetField('foo') == 123
     assert feat.GetField('baw') == 123456789012345
 
-    return 'success'
-
 ###############################################################################
 # Test OGR_TRUNCATE config. option (#5091)
 
@@ -3013,8 +2900,6 @@ def test_ogr_pg_64(with_and_without_postgis):
 
     # Just one feature because of truncation
     assert lyr.GetFeatureCount() == 1
-
-    return 'success'
 
 ###############################################################################
 # Test RFC 41
@@ -3132,8 +3017,7 @@ def test_ogr_pg_65(with_and_without_postgis):
         assert lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef() is None
         assert lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().ExportToWkt().find('32631') >= 0
 
-    return 'success'
-
+    
 ###############################################################################
 # Run test_ogrsf
 
@@ -3153,8 +3037,6 @@ def test_ogr_pg_66(with_and_without_postgis):
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" ogr_pg_65')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test retrieving SRID from values (#5131)
@@ -3196,8 +3078,6 @@ def test_ogr_pg_67(with_and_without_postgis):
     lyr = ds.GetLayerByName('ogr_pg_67')
     assert lyr.GetSpatialRef() is not None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test retrieving SRID from values even if we don't have select rights on geometry_columns (#5131)
@@ -3247,8 +3127,6 @@ def test_ogr_pg_68(with_and_without_postgis):
 
     assert got_srs2 is not None
 
-    return 'success'
-
 ###############################################################################
 # Test deferred loading of tables (#5450)
 
@@ -3281,8 +3159,6 @@ def test_ogr_pg_69(with_and_without_postgis):
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     assert gdaltest.pg_ds.GetLayerByName('TPOLY') is not None
-
-    return 'success'
 
 ###############################################################################
 # Test historical non-differed creation of tables (#5547)
@@ -3334,8 +3210,7 @@ def test_ogr_pg_70(with_and_without_postgis):
         ds.ReleaseResultSet(geography_columns_lyr)
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test interoperability of WKT/WKB with PostGIS.
 
@@ -3456,8 +3331,7 @@ def test_ogr_pg_71(with_and_without_postgis):
 
         assert out_wkt == wkt
 
-    return 'success'
-
+    
 ###############################################################################
 # Test 64 bit FID
 
@@ -3509,8 +3383,6 @@ def test_ogr_pg_72(with_and_without_postgis):
         pytest.fail()
 
     lyr.ResetReading()  # to close implicit transaction
-
-    return 'success'
 
 ###############################################################################
 # Test not nullable fields
@@ -3594,8 +3466,6 @@ def test_ogr_pg_73(with_and_without_postgis):
     assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(sql_lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() == 0
     assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(sql_lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() == 1
     ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test default values
@@ -3734,8 +3604,6 @@ def test_ogr_pg_74(with_and_without_postgis):
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() == "'c'"
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() is None
 
-    return 'success'
-
 ###############################################################################
 # Test creating a field with the fid name
 
@@ -3821,8 +3689,6 @@ def test_ogr_pg_75(with_and_without_postgis):
         pytest.fail()
     f = None
     lyr.ResetReading()  # to close implicit transaction
-
-    return 'success'
 
 ###############################################################################
 # Test transactions RFC 54
@@ -3938,8 +3804,6 @@ def ogr_pg_76_scenario1(lyr1, lyr2):
     assert (lastcmd, level, savepoint, usertransac) == ('COMMIT', 0, 0, 0)
     assert lyr1.GetFeatureCount() == 4
 
-    return 'success'
-
 
 # Scenario 2 : a CreateFeature done in the middle of GetNextFeature(), themselves between a user transaction
 def ogr_pg_76_scenario2(lyr1, lyr2with_and_without_postgis):
@@ -4014,8 +3878,6 @@ def ogr_pg_76_scenario2(lyr1, lyr2with_and_without_postgis):
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ('', 0, 0, 0)
 
-    return 'success'
-
 # Scenario 3 : StartTransaction(), GetNextFeature(), CommitTransaction(), GetNextFeature()
 
 
@@ -4053,8 +3915,6 @@ def ogr_pg_76_scenario3(lyr1, lyr2with_and_without_postgis):
     assert (lastcmd, level, savepoint, usertransac) == ('COMMIT', 0, 0, 0)
 
     lyr2.ResetReading()
-
-    return 'success'
 
 # Scenario 4 : GetNextFeature(), StartTransaction(), CreateFeature(), CommitTransaction(), GetNextFeature(), ResetReading()
 
@@ -4114,8 +3974,6 @@ def ogr_pg_76_scenario4(lyr1, lyr2with_and_without_postgis):
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ('COMMIT', 0, 0, 0)
 
-    return 'success'
-
 ###############################################################################
 # Test ogr2ogr can insert multiple layers at once
 
@@ -4169,8 +4027,7 @@ def test_ogr_pg_77(with_and_without_postgis):
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test manually added geometry constraints
 
@@ -4249,8 +4106,6 @@ def test_ogr_pg_78(with_and_without_postgis):
     assert ogr_pg_78_found
     assert ogr_pg_78_2_found
 
-    return 'success'
-
 ###############################################################################
 # Test PRELUDE_STATEMENTS and CLOSING_STATEMENTS open options
 
@@ -4315,8 +4170,6 @@ def test_ogr_pg_79(with_and_without_postgis):
         ds = None
     assert gdal.GetLastErrorMsg() != ''
 
-    return 'success'
-
 ###############################################################################
 # Test retrieving an error from ExecuteSQL() (#6194)
 
@@ -4331,8 +4184,6 @@ def test_ogr_pg_80():
         sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT FROM')
     assert gdal.GetLastErrorMsg() != ''
     assert sql_lyr is None
-
-    return 'success'
 
 ###############################################################################
 # Test that ogr2ogr -skip properly rollbacks transactions (#6328)
@@ -4377,8 +4228,6 @@ def test_ogr_pg_81():
         pytest.fail()
     lyr.ResetReading()  # flushes implicit transaction
 
-    return 'success'
-
 ###############################################################################
 # Test that GEOMETRY_NAME works even when the geometry column creation is
 # done through CreateGeomField (#6366)
@@ -4394,8 +4243,6 @@ def test_ogr_pg_82():
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_82', geom_type=ogr.wkbNone, options=['GEOMETRY_NAME=another_name'])
     lyr.CreateGeomField(ogr.GeomFieldDefn('my_geom', ogr.wkbPoint))
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == 'another_name'
-
-    return 'success'
 
 ###############################################################################
 # Test ZM support
@@ -4458,8 +4305,7 @@ def test_ogr_pg_83():
         assert got_wkt == expected_wkt, (geom_type, options, wkt, expected_wkt, got_wkt)
         lyr.ResetReading()  # flushes implicit transaction
 
-    return 'success'
-
+    
 ###############################################################################
 # Test description
 
@@ -4515,8 +4361,6 @@ def test_ogr_pg_84():
     assert lyr.GetMetadataItem('DESCRIPTION') is None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test append of several layers in PG_USE_COPY mode (#6411)
 
@@ -4569,8 +4413,6 @@ def test_ogr_pg_85():
     lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_85_2')
     assert lyr.GetFeatureCount() == 2
 
-    return 'success'
-
 ###############################################################################
 # Test OFTBinary
 
@@ -4610,8 +4452,6 @@ def test_ogr_pg_86():
 
     gdal.SetConfigOption('PG_USE_COPY', old_val)
 
-    return 'success'
-
 ###############################################################################
 # Test sequence updating (#7032)
 
@@ -4641,8 +4481,6 @@ def test_ogr_pg_87():
     lyr.CreateFeature(f)
     assert f.GetFID() == 12
 
-    return 'success'
-
 ###############################################################################
 # Test JSON subtype
 
@@ -4671,8 +4509,6 @@ def test_ogr_pg_json():
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM ogr_pg_json')
     assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 #
@@ -4754,8 +4590,6 @@ def test_ogr_pg_table_cleanup(with_and_without_postgis):
     gdaltest.pg_ds.ExecuteSQL('DROP SCHEMA \"AutoTest-schema\" CASCADE')
     gdal.PopErrorHandler()
 
-    return 'success'
-
 
 def test_ogr_pg_cleanup(with_and_without_postgis):
 
@@ -4767,8 +4601,6 @@ def test_ogr_pg_cleanup(with_and_without_postgis):
 
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
-
-    return 'success'
 
 # NOTE: The ogr_pg_19 intentionally executed after ogr_pg_2
 

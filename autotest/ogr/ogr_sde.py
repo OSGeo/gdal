@@ -71,8 +71,6 @@ def test_ogr_sde_1():
     ds = ogr.Open(base, update=1)
     ds.Destroy()
 
-    return 'success'
-
 
 def test_ogr_sde_2():
     "Test creation of a layer"
@@ -112,7 +110,6 @@ def test_ogr_sde_2():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-    return 'success'
 
 
 def test_ogr_sde_3():
@@ -127,8 +124,6 @@ def test_ogr_sde_3():
     assert ds2 is None, 'A locked version was able to be opened'
 
     ds.Destroy()
-
-    return 'success'
 
 
 def test_ogr_sde_4():
@@ -148,8 +143,6 @@ def test_ogr_sde_4():
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
     ds = ogr.Open(base, update=1)
     ds.Destroy()
-
-    return 'success'
 
 
 def test_ogr_sde_5():
@@ -211,7 +204,6 @@ def test_ogr_sde_5():
         gdaltest.post_reason("datetime handling did not work -- expected '2008/03/19 16:15:00' got '%s' " % df)
     ds4.Destroy()
     del ds4
-    return 'success'
 
 
 def test_ogr_sde_6():
@@ -232,8 +224,7 @@ def test_ogr_sde_6():
     extent = l1.GetExtent(force=1)
     if extent != (478316.0, 481645.0, 4762881.0, 4765611.0):
         gdaltest.post_reason("forced extent did not equal expected value")
-    return 'success'
-
+    
 
 def test_ogr_sde_7():
     "Bad layer test"
@@ -274,8 +265,6 @@ def test_ogr_sde_7():
     if l1:
         gdaltest.post_reason("we got a layer when we should not have")
     ds.Destroy()
-
-    return 'success'
 
 
 def test_ogr_sde_8():
@@ -319,7 +308,6 @@ def test_ogr_sde_8():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-    return 'success'
 
 
 def test_ogr_sde_cleanup():
@@ -329,8 +317,6 @@ def test_ogr_sde_cleanup():
     ds = ogr.Open(base, update=1)
     ds.DeleteLayer('%s.%s' % (sde_user.upper(), 'TPOLY'))
     ds.Destroy()
-
-    return 'success'
 
 
 gdaltest_list = [

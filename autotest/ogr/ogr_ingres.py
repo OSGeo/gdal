@@ -52,8 +52,7 @@ def test_ogr_ingres_1():
     if gdaltest.ingres_ds is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -97,8 +96,7 @@ def test_ogr_ingres_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -132,7 +130,7 @@ def test_ogr_ingres_3():
     # automating this in the driver.
     read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
@@ -151,7 +149,7 @@ def test_ogr_ingres_4():
 
     gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -183,7 +181,7 @@ def test_ogr_ingres_5():
 
     gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
@@ -206,7 +204,7 @@ def test_ogr_ingres_6():
 
     gdaltest.ingres_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test adding a new field.
@@ -249,7 +247,7 @@ def test_ogr_ingres_7():
 
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test deleting a feature.
@@ -282,8 +280,6 @@ def test_ogr_ingres_8():
 
     assert gdaltest.ingres_lyr.GetFeature(target_fid) is None, 'Got deleted feature!'
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -295,8 +291,6 @@ def test_ogr_ingres_cleanup():
 
     gdaltest.ingres_ds.Destroy()
     gdaltest.ingres_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

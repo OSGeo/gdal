@@ -57,8 +57,6 @@ def test_ogr_interlis1_1():
 
     gdaltest.have_ili_reader = 1
 
-    return 'success'
-
 ###############################################################################
 # Check that Ili1 point layer is properly read.
 
@@ -107,8 +105,6 @@ def test_ogr_interlis1_2():
     geom = feat.GetGeometryRef()
     assert geom.GetGeometryName() == 'POLYGON', 'Geometry of wrong type.'
 
-    return 'success'
-
 ###############################################################################
 # Ili1 FORMAT DEFAULT test.
 
@@ -142,8 +138,7 @@ def test_ogr_interlis1_3():
             print(feat.GetFieldAsString(i))
             pytest.fail('field value wrong.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Ili1 FORMAT test.
 
@@ -177,8 +172,7 @@ def test_ogr_interlis1_4():
             print(feat.GetFieldAsString(i))
             pytest.fail('field value wrong.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Write Ili1 transfer file without model.
 
@@ -224,8 +218,7 @@ EMOD
 ENDE"""
         assert expected in itf, "Interlis output doesn't match."
 
-    return 'success'
-
+    
 ###############################################################################
 # Write Ili1 transfer file.
 
@@ -267,8 +260,7 @@ EMOD
 ENDE"""
         assert expected in itf, "Interlis output doesn't match."
 
-    return 'success'
-
+    
 ###############################################################################
 # Ili1 character encoding test.
 
@@ -341,8 +333,6 @@ ENDE"""
         pass
     assert expected in itf, "Interlis output doesn't match."
 
-    return 'success'
-
 ###############################################################################
 # Ili1 VRT rename
 
@@ -378,8 +368,7 @@ def test_ogr_interlis1_9():
             print(feat.GetFieldAsString(i))
             pytest.fail('field value wrong.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Ili1 Area with polygonizing
 
@@ -409,8 +398,7 @@ def test_ogr_interlis1_10():
             feat.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Ili1 multi-geom test (RFC41)
 
@@ -452,8 +440,7 @@ def test_ogr_interlis1_11():
         defn = lyr.GetLayerDefn().GetGeomFieldDefn(i)
         assert defn.GetName() == str(geom_columns[i]), ("Geom field: " + defn.GetName())
 
-    return 'success'
-
+    
 ###############################################################################
 # Ili1 multi-geom test (RFC41)
 
@@ -489,8 +476,7 @@ def test_ogr_interlis1_12():
         defn = lyr.GetLayerDefn().GetGeomFieldDefn(i)
         assert defn.GetName() == str(geom_columns[i]), ("Geom field: " + defn.GetName())
 
-    return 'success'
-
+    
 ###############################################################################
 # Ili1 Surface test.
 
@@ -718,8 +704,7 @@ def test_ogr_interlis1_13():
             feat.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Ili1 Surface test with linear conversion.
 
@@ -862,8 +847,6 @@ def test_ogr_interlis1_13_linear():
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', None)
 
-    return 'success'
-
 ###############################################################################
 # Write Ili1 Arcs.
 
@@ -911,8 +894,7 @@ ENDE
 """
         assert expected in itf, "Interlis output doesn't match."
 
-    return 'success'
-
+    
 ###############################################################################
 # Reading Ili2 without model
 
@@ -936,8 +918,7 @@ def test_ogr_interlis2_1():
     for i in range(ds.GetLayerCount()):
         assert ds.GetLayer(i).GetName() in layers, 'Did not get right layers'
 
-    return 'success'
-
+    
 ###############################################################################
 # Reading Ili2
 
@@ -1022,8 +1003,7 @@ def test_ogr_interlis2_2():
             feat.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Write Ili2 transfer file.
@@ -1114,8 +1094,7 @@ def test_ogr_interlis2_3():
         expected = expected.replace('.11499999999999', '.115')
         xtf = xtf.replace('.11499999999999', '.115')
         assert expected in xtf, "Interlis output doesn't match."
-    return 'success'
-
+    
 ###############################################################################
 # Ili2 Oereb model
 
@@ -1194,8 +1173,7 @@ def test_ogr_interlis2_4():
             print(geom)
             pytest.fail('geom check failed.')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Check arc segmentation
@@ -1247,8 +1225,6 @@ def test_ogr_interlis_arc1():
     points = line.GetPoints()
     assert len(points) == 81, 'line point count wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Check polyline with arc
 
@@ -1274,8 +1250,7 @@ def test_ogr_interlis_arc2():
             feat.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -1288,8 +1263,6 @@ def test_ogr_interlis_cleanup():
     gdal.SetConfigOption('OGR_STROKE_CURVE', None)
 
     gdaltest.clean_tmp()
-
-    return 'success'
 
 
 gdaltest_list = [

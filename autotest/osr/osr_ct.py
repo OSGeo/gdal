@@ -72,8 +72,6 @@ def test_osr_ct_1():
 
     gdaltest.have_proj4 = 1
 
-    return 'success'
-
 ###############################################################################
 # Actually perform a simple LL to UTM conversion.
 
@@ -95,7 +93,6 @@ def test_osr_ct_2():
     result = gdaltest.ct.TransformPoint(-117.5, 32.0, 0.0)
     assert abs(result[0] - 452772.06) <= 0.01 and abs(result[1] - 3540544.89) <= 0.01 and abs(result[2] - 0.0) <= 0.01, \
         'Wrong LL to UTM result'
-    return 'success'
 
 ###############################################################################
 # Transform an OGR geometry ... this is mostly aimed at ensuring that
@@ -130,8 +127,6 @@ def test_osr_ct_3():
 
     pnt = None
 
-    return 'success'
-
 ###############################################################################
 # Actually perform a simple LL to UTM conversion.
 # Works for both OG and NG bindings
@@ -157,8 +152,7 @@ def test_osr_ct_4():
         assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
             'Wrong LL to UTM result'
 
-    return 'success'
-
+    
 ###############################################################################
 # Same test, but with any sequence of tuples instead of a tuple of tuple
 # New in NG bindings (#3020)
@@ -184,8 +178,7 @@ def test_osr_ct_5():
         assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
             'Wrong LL to UTM result'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test osr.CreateCoordinateTransformation() method
 
@@ -214,8 +207,7 @@ def test_osr_ct_6():
         assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
             'Wrong LL to UTM result'
 
-    return 'success'
-
+    
 ###############################################################################
 # Actually perform a simple Pseudo Mercator to LL conversion.
 
@@ -255,8 +247,7 @@ def test_osr_ct_7():
         print('Expected: %s' % expected_pnt.ExportToWkt())
         pytest.fail('Failed to transform from Pseudo Mercator to LL')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test WebMercator -> WGS84 optimized transform
 
@@ -296,8 +287,7 @@ def test_osr_ct_8():
                 print('Expected: %s' % str(expected_result))
                 pytest.fail('Failed to transform from Pseudo Mercator to LL')
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -308,8 +298,6 @@ def test_osr_ct_cleanup():
         pytest.skip()
 
     gdaltest.ct = None
-
-    return 'success'
 
 
 gdaltest_list = [

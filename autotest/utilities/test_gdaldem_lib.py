@@ -64,8 +64,6 @@ def test_gdaldem_lib_hillshade():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade with source being floating point
 
@@ -91,8 +89,6 @@ def test_gdaldem_lib_hillshade_float():
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade with source being floating point
@@ -122,8 +118,6 @@ def test_gdaldem_lib_hillshade_float_png():
 
     gdal.GetDriverByName('PNG').Delete('/vsimem/test_gdaldem_lib_hillshade_float_png.png')
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade -combined
 
@@ -149,8 +143,6 @@ def test_gdaldem_lib_hillshade_combined():
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade -alg ZevenbergenThorne
@@ -178,8 +170,6 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade -alg ZevenbergenThorne -combined
 
@@ -206,8 +196,6 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges
 
@@ -223,8 +211,6 @@ def test_gdaldem_lib_hillshade_compute_edges():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges with floating point
 
@@ -239,8 +225,6 @@ def test_gdaldem_lib_hillshade_compute_edges_float():
     assert cs == 50239, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade with -az parameter
@@ -271,8 +255,6 @@ def test_gdaldem_lib_hillshade_azimuth():
     ds = None
     ds_ref = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade -multidirectional
 
@@ -288,8 +270,6 @@ def test_gdaldem_lib_hillshade_multidirectional():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade -multidirectional
 
@@ -304,8 +284,6 @@ def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
     assert cs == 50860, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief
@@ -337,8 +315,6 @@ def test_gdaldem_lib_color_relief():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem tpi
 
@@ -353,8 +329,6 @@ def test_gdaldem_lib_tpi():
     assert cs == 60504, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem tri
@@ -371,8 +345,6 @@ def test_gdaldem_lib_tri():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem roughness
 
@@ -388,8 +360,6 @@ def test_gdaldem_lib_roughness():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem slope -alg ZevenbergenThorne
 
@@ -403,8 +373,6 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 64393, 'Bad checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem aspect -alg ZevenbergenThorne
 
@@ -417,8 +385,6 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 50539, 'Bad checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade with nodata values
@@ -481,8 +447,7 @@ def test_gdaldem_lib_nodata():
         print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         pytest.fail('Bad checksum')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdaldem_lib_hillshade,

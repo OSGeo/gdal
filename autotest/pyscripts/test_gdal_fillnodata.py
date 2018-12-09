@@ -54,8 +54,6 @@ def test_gdal_fillnodata_1():
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Make sure we copy the no data value to the dst when created
 # No data value for nodata_byte.tif is 0.
@@ -74,8 +72,6 @@ def test_gdal_fillnodata_2():
         'Failed to copy No Data Value to dst dataset.'
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup
@@ -89,8 +85,7 @@ def test_gdal_fillnodata_cleanup():
         except OSError:
             pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_fillnodata_1,

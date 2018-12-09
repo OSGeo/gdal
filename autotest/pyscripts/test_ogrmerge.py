@@ -56,8 +56,6 @@ def test_ogrmerge_1():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test -append and glob
 
@@ -78,8 +76,6 @@ def test_ogrmerge_2():
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -overwrite_ds
@@ -102,8 +98,6 @@ def test_ogrmerge_3():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test -f VRT
 
@@ -123,8 +117,6 @@ def test_ogrmerge_4():
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test -nln
@@ -150,8 +142,6 @@ def test_ogrmerge_5():
 
     gdal.Unlink('/vsimem/out.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test -src_layer_field_name -src_layer_field_content
 
@@ -175,8 +165,6 @@ def test_ogrmerge_6():
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test -src_geom_type
@@ -231,8 +219,6 @@ def test_ogrmerge_7():
 
     gdal.Unlink('/vsimem/out.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test -s_srs -t_srs in -single mode
 
@@ -260,8 +246,6 @@ def test_ogrmerge_8():
     assert content.find('<SrcSRS>EPSG:32630</SrcSRS>') >= 0
 
     assert content.find('<TargetSRS>EPSG:4326</TargetSRS>') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test -s_srs -t_srs in default mode
@@ -291,8 +275,6 @@ def test_ogrmerge_9():
 
     assert content.find('<TargetSRS>EPSG:4326</TargetSRS>') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test -a_srs in -single mode
 
@@ -318,8 +300,6 @@ def test_ogrmerge_10():
     gdal.Unlink('/vsimem/out.vrt')
 
     assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test -a_srs in default mode
@@ -347,8 +327,6 @@ def test_ogrmerge_11():
 
     assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test layer names with accents
 
@@ -370,8 +348,6 @@ def test_ogrmerge_12():
 
     gdal.Unlink('tmp/tmp.json')
     gdal.Unlink('/vsimem/out.vrt')
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -54,8 +54,6 @@ def test_gdal_api_proxy_1():
 
     assert ret.find('Failed:    0') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test connection to TCP server
 
@@ -69,8 +67,6 @@ def test_gdal_api_proxy_2():
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -2' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
 
     assert ret.find('Failed:    0') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test connection to Unix socket server
@@ -92,8 +88,6 @@ def test_gdal_api_proxy_3():
 
     assert ret.find('Failed:    0') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -nofork mode
 
@@ -113,8 +107,6 @@ def test_gdal_api_proxy_4():
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -4' % gdaltest.gdalserver_path, display_live_on_parent_stdout=True)
 
     assert ret.find('Failed:    0') != -1
-
-    return 'success'
 
 ###############################################################################
 #
@@ -398,8 +390,6 @@ def test_gdal_api_proxy_sub():
 
     gdal.GetDriverByName('GTiff').Delete('tmp/byte.tif')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -412,8 +402,6 @@ def test_gdal_api_proxy_sub_clean():
             pass
         gdaltest.api_proxy_server_p.wait()
     gdal.Unlink('tmp/gdalapiproxysocket')
-
-    return 'success'
 
 
 gdaltest_list = [test_gdal_api_proxy_1,

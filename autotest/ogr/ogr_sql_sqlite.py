@@ -269,8 +269,6 @@ def test_ogr_sql_sqlite_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Tests that involve geometry  (but without needing Spatialite)
 
@@ -377,8 +375,6 @@ def test_ogr_sql_sqlite_2():
 
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test that involves a join
 
@@ -408,8 +404,6 @@ def test_ogr_sql_sqlite_3():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test that involves a self-join (to check that we can open twice the same table)
 
@@ -428,8 +422,6 @@ def test_ogr_sql_sqlite_4():
     assert count == 10
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that involves spatialite
@@ -465,8 +457,6 @@ def test_ogr_sql_sqlite_5():
 
     assert count == 1
 
-    return 'success'
-
 ###############################################################################
 # If Spatialite available, retry some tests without it, to check that
 # we are fully compatible with regular SQLite
@@ -489,8 +479,6 @@ def test_ogr_sql_sqlite_6():
     ret = test_ogr_sql_sqlite_4()
 
     gdal.SetConfigOption('OGR_SQLITE_DIALECT_USE_SPATIALITE', None)
-
-    return 'success'
 
 ###############################################################################
 # Test if there's a text column called GEOMETRY already in the table
@@ -539,8 +527,6 @@ def test_ogr_sql_sqlite_7():
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test join with an external datasource
 
@@ -563,7 +549,7 @@ def test_ogr_sql_sqlite_8():
 
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Check parsing of sub-selects
@@ -587,8 +573,7 @@ def test_ogr_sql_sqlite_9():
     if cnt != 7:
         return' fail'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test optimized count(*)
 
@@ -611,8 +596,7 @@ def test_ogr_sql_sqlite_10():
     if cnt != 10:
         return' fail'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test correct parsing of litterals
 
@@ -641,8 +625,7 @@ def test_ogr_sql_sqlite_11():
     if cnt != 1:
         return' fail'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test various error conditions
 
@@ -673,8 +656,6 @@ def test_ogr_sql_sqlite_12():
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test ogr_layer_Extent(), ogr_layer_SRID() and ogr_layer_GeometryType()
@@ -802,8 +783,6 @@ def test_ogr_sql_sqlite_13():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -867,8 +846,6 @@ def ogr_sql_sqlite_14_and_15(sql):
     ds.ReleaseResultSet(sql_lyr)
 
     assert (got_one and got_two)
-
-    return 'success'
 
 ###############################################################################
 # Test 'idx_layername_geometryname' spatial index recognition
@@ -1192,8 +1169,7 @@ def test_ogr_sql_sqlite_start_webserver():
     if ogrtest.webserver_port == 0:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ogr_geocode()
 
@@ -1562,8 +1538,6 @@ def test_ogr_sql_sqlite_24():
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1573,8 +1547,6 @@ def test_ogr_sql_sqlite_stop_webserver():
         pytest.skip()
 
     webserver.server_stop(ogrtest.webserver_process, ogrtest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 # If Spatialite is NOT available, test some of the minimal spatial functions
@@ -1641,8 +1613,6 @@ def test_ogr_sql_sqlite_25():
     assert val1_sql is None
 
     assert val2_sql is None
-
-    return 'success'
 
 
 def test_ogr_sql_sqlite_26():
@@ -1766,8 +1736,7 @@ def test_ogr_sql_sqlite_26():
         ds.ReleaseResultSet(sql_lyr)
         assert geom_sql is None, ('fail with %s' % op_str)
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test MIN(), MAX() on a date
@@ -1798,8 +1767,6 @@ def test_ogr_sql_sqlite_27():
     assert tr
 
     assert tr2
-
-    return 'success'
 
 ###############################################################################
 # Test hstore_get_value()
@@ -1841,8 +1808,7 @@ def test_ogr_sql_sqlite_28():
             pytest.fail(sql)
         ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test compat with curve geometries
 
@@ -1868,8 +1834,6 @@ def test_ogr_sql_sqlite_29():
     assert geom_type == ogr.wkbCircularString
 
     assert got_wkt == 'CIRCULARSTRING (0 0,1 0,0 0)'
-
-    return 'success'
 
 ###############################################################################
 # Test compat with M geometries
@@ -1911,8 +1875,6 @@ def test_ogr_sql_sqlite_30():
 
     assert got_wkt == 'LINESTRING ZM (1 2 3 4)'
 
-    return 'success'
-
 ###############################################################################
 # Test filtering complex field name
 
@@ -1936,8 +1898,6 @@ def test_ogr_sql_sqlite_31():
     ds.ReleaseResultSet(sql_lyr)
 
     assert value == 25
-
-    return 'success'
 
 
 gdaltest_list = [

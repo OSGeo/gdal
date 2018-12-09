@@ -81,8 +81,6 @@ def test_pcidsk_4():
     cs = band.GetOverview(0).Checksum()
     assert cs == 8368, ('wrong overview checksum (%d)' % cs)
 
-    return 'success'
-
 ###############################################################################
 # Test writing metadata to a newly created file.
 
@@ -128,8 +126,7 @@ def test_pcidsk_5():
         print(mdalt)
         gdaltest.post_reason('file alt domain metadata broken. ')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test writing metadata to a band.
 
@@ -164,8 +161,7 @@ def test_pcidsk_6():
         print(mdalt)
         gdaltest.post_reason('channel alt domain metadata broken. ')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creating a color table and reading it back.
 
@@ -216,8 +212,6 @@ def test_pcidsk_7():
 
     assert band.GetColorInterpretation() == gdal.GCI_Undefined, 'Paletted?'
 
-    return 'success'
-
 ###############################################################################
 # Test FILE interleaving.
 
@@ -255,8 +249,6 @@ def pcidsk_9():
 
     gdal.Unlink('/vsimem/pcidsk_9.pix')
 
-    return 'success'
-
 ###############################################################################
 # Test overview creation.
 
@@ -283,8 +275,6 @@ def test_pcidsk_10():
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_10.pix')
-
-    return 'success'
 
 ###############################################################################
 # Test INTERLEAVING=TILED interleaving.
@@ -340,8 +330,6 @@ def test_pcidsk_13():
 
     assert cs == 4645, 'bad checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test SetDescription()
 
@@ -365,8 +353,6 @@ def test_pcidsk_14():
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_14.pix')
 
     assert desc == 'mydescription', 'bad description'
-
-    return 'success'
 
 ###############################################################################
 # Test mixed raster and vector
@@ -432,8 +418,6 @@ def test_pcidsk_15():
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_15.pix')
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_15_2.pix')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -449,8 +433,6 @@ def test_pcidsk_external_ovr():
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
-
-    return 'success'
 
 ###############################################################################
 
@@ -468,8 +450,6 @@ def test_pcidsk_external_ovr_rrd():
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
-
-    return 'success'
 
 ###############################################################################
 # Check various items from a modern irvine.pix
@@ -506,8 +486,6 @@ def test_pcidsk_online_1():
     md = band.GetMetadata('IMAGE_STRUCTURE')
     assert md['NBITS'] == '1', 'did not get expected NBITS=1 metadata.'
 
-    return 'success'
-
 ###############################################################################
 # Cleanup.
 
@@ -515,7 +493,6 @@ def test_pcidsk_online_1():
 def test_pcidsk_cleanup():
     gdaltest.pcidsk_ds = None
     gdaltest.clean_tmp()
-    return 'success'
 
 
 gdaltest_list = [

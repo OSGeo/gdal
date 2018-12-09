@@ -49,8 +49,6 @@ def test_ogr_mem_1():
 
     assert gdaltest.mem_ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -97,8 +95,7 @@ def test_ogr_mem_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -128,7 +125,7 @@ def test_ogr_mem_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -163,8 +160,7 @@ def test_ogr_mem_4():
 
         assert ogrtest.check_feature_geometry(feat_read, geom) == 0
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -182,7 +178,7 @@ def test_ogr_mem_5():
 
     gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -205,7 +201,7 @@ def test_ogr_mem_6():
 
     gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
@@ -231,7 +227,7 @@ def test_ogr_mem_7():
 
     gdaltest.mem_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test adding a new field.
@@ -271,7 +267,7 @@ def test_ogr_mem_8():
 
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test deleting a feature.
@@ -314,8 +310,6 @@ def test_ogr_mem_9():
 
     assert gdaltest.mem_lyr.GetFeature(1000) is None, 'GetFeature() should have failed'
 
-    return 'success'
-
 ###############################################################################
 # Test GetDriver() / name bug (#1674)
 #
@@ -330,8 +324,6 @@ def test_ogr_mem_10():
     d2 = ds.GetDriver()
     assert d2 is not None and d2.GetName() == 'Memory', \
         'Did not get expected driver name.'
-
-    return 'success'
 
 ###############################################################################
 # Verify that we can delete layers properly
@@ -364,8 +356,6 @@ def test_ogr_mem_11():
 
     assert lyr.GetName() == 'extra2', 'delete layer seems iffy'
 
-    return 'success'
-
 ###############################################################################
 # Test some date handling
 
@@ -390,8 +380,7 @@ def test_ogr_mem_12():
     result = f.GetFieldAsDateTime(idx)
     for i, value in enumerate(result):
         assert value == expected[i], ('%s != %s' % (result, expected))
-    return 'success'
-
+    
 ###############################################################################
 # Test Get/Set on StringList, IntegerList, RealList
 
@@ -424,8 +413,6 @@ def test_ogr_mem_13():
 
     feat.SetFieldDoubleList(2, [4., 5.])
     assert feat.GetFieldAsDoubleList(2) == [4., 5.]
-
-    return 'success'
 
 ###############################################################################
 # Test SetNextByIndex
@@ -469,8 +456,6 @@ def test_ogr_mem_14():
     feat = lyr.GetNextFeature()
     assert feat.GetFieldAsString(0) == 'third feature', 'did not get expected feature'
 
-    return 'success'
-
 ###############################################################################
 # Test non-linear geometries
 
@@ -506,8 +491,6 @@ def test_ogr_mem_15():
     g = f.GetGeomFieldRef(0)
     assert g.GetGeometryType() == ogr.wkbLineString
     ogr.SetNonLinearGeometriesEnabledFlag(old_val)
-
-    return 'success'
 
 ###############################################################################
 # Test map implementation
@@ -583,8 +566,6 @@ def test_ogr_mem_16():
     # Create a field so as to test OGRMemLayerIteratorMap
     lyr.CreateField(ogr.FieldDefn('foo'))
 
-    return 'success'
-
 ###############################################################################
 # Test Dataset.GetNextFeature() implementation
 
@@ -657,8 +638,6 @@ def test_ogr_mem_17():
     f = ds.GetNextFeature(include_layer=False)
     assert f is not None
 
-    return 'success'
-
 
 def test_ogr_mem_cleanup():
 
@@ -667,8 +646,6 @@ def test_ogr_mem_cleanup():
 
     ogr.SetNonLinearGeometriesEnabledFlag(True)
     gdaltest.mem_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -61,8 +61,6 @@ def test_gdalbuildvrt_check():
 
     assert ds.GetRasterBand(1).Checksum() == 3508, 'Wrong checksum'
 
-    return 'success'
-
 
 ###############################################################################
 # Simple test
@@ -221,8 +219,6 @@ def test_gdalbuildvrt_6():
 
     assert ds.GetRasterBand(1).Checksum() == 0, 'Wrong checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test source rasters with nodata
 
@@ -277,8 +273,6 @@ def test_gdalbuildvrt_7():
     assert ds.GetRasterBand(3).Checksum() == 0, 'Wrong checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -tr option
@@ -364,8 +358,6 @@ def test_gdalbuildvrt_10():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test that we can stack ungeoreference single band images with -separate (#3432)
 
@@ -394,8 +386,6 @@ def test_gdalbuildvrt_11():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -tap option
 
@@ -422,8 +412,6 @@ def test_gdalbuildvrt_12():
     assert ds.RasterXSize == 13 and ds.RasterYSize == 25, \
         ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
-    return 'success'
-
 ###############################################################################
 # Test -a_srs
 
@@ -437,8 +425,6 @@ def test_gdalbuildvrt_13():
     ds = gdal.Open('tmp/gdalbuildvrt13.vrt')
     assert ds.GetProjectionRef().find('4326') != -1
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -r
@@ -463,8 +449,6 @@ def test_gdalbuildvrt_14():
 
     assert cs == cs_ref
 
-    return 'success'
-
 ###############################################################################
 # Test -b
 
@@ -480,8 +464,6 @@ def test_gdalbuildvrt_15():
     ds = None
 
     assert cs == 4672
-
-    return 'success'
 
 ###############################################################################
 # Test output to non writable file
@@ -499,8 +481,7 @@ def test_gdalbuildvrt_16():
         # We don't get the error code on Travis mingw
         assert err.find('ERROR') >= 0, out
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -542,8 +523,7 @@ def test_gdalbuildvrt_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdalbuildvrt_1,

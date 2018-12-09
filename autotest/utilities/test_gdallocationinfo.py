@@ -56,8 +56,6 @@ def test_gdallocationinfo_1():
     Value: 107"""
     assert ret.find(expected_ret) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test -xml
 
@@ -75,8 +73,6 @@ def test_gdallocationinfo_2():
 </Report>"""
     assert ret.find(expected_ret) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test -valonly
 
@@ -88,8 +84,6 @@ def test_gdallocationinfo_3():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -b 1 -valonly ../gcore/data/byte.tif 0 0')
     expected_ret = """107"""
     assert ret.find(expected_ret) == 0
-
-    return 'success'
 
 ###############################################################################
 # Test -geoloc
@@ -107,8 +101,6 @@ def test_gdallocationinfo_4():
     Value: 107"""
     assert ret.find(expected_ret) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test -lifonly
 
@@ -121,8 +113,6 @@ def test_gdallocationinfo_5():
     expected_ret1 = """../gcore/data/byte.tif"""
     expected_ret2 = """../gcore/data\\byte.tif"""
     assert ret.find(expected_ret1) >= 0 or ret.find(expected_ret2) >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test -overview
@@ -143,8 +133,6 @@ def test_gdallocationinfo_6():
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdallocationinfo_6.tif')
     expected_ret = """Value: 130"""
     assert ret.find(expected_ret) >= 0
-
-    return 'success'
 
 
 gdaltest_list = [

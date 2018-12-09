@@ -119,8 +119,7 @@ def test_ogr_mvt_datatypes():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -139,8 +138,7 @@ def test_ogr_mvt_datatype_promotion():
         assert fld_defn.GetType() == dt, layer_name
         assert fld_defn.GetSubType() == ogr.OFSTNone, layer_name
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -176,8 +174,6 @@ def test_ogr_mvt_limit_cases():
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == 'POINT (2070 2690)'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -190,8 +186,7 @@ def test_ogr_mvt_with_extension_fields():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -208,8 +203,7 @@ def test_ogr_mvt_mixed():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -229,8 +223,7 @@ def test_ogr_mvt_linestring():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -250,8 +243,7 @@ def test_ogr_mvt_multilinestring():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 
@@ -271,8 +263,7 @@ def test_ogr_mvt_polygon():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -290,8 +281,7 @@ def test_ogr_mvt_point_polygon():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -313,8 +303,7 @@ def test_ogr_mvt_point_polygon_clip():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -326,8 +315,6 @@ def test_ogr_mvt_tileset_without_readdir():
     f = lyr.GetNextFeature()
     assert f is not None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -338,8 +325,6 @@ def test_ogr_mvt_tileset_tilegl():
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     f = lyr.GetNextFeature()
     assert f is not None
-
-    return 'success'
 
 ###############################################################################
 
@@ -354,8 +339,6 @@ def test_ogr_mvt_tileset_without_metadata_file():
     lyr = ds.GetLayerByName('polygon2')
     assert lyr.GetGeomType() == ogr.wkbMultiPolygon
     assert lyr.GetLayerDefn().GetFieldCount() == 2
-
-    return 'success'
 
 ###############################################################################
 
@@ -385,8 +368,6 @@ def test_ogr_mvt_tileset_json_field():
             "real_value": 1.23456789,
             "string_value": "str"
     }), f.GetFieldAsString("json")
-
-    return 'success'
 
 ###############################################################################
 
@@ -423,8 +404,7 @@ def test_ogr_mvt_open_variants():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -438,8 +418,7 @@ def test_ogr_mvt_xyz_options():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -454,8 +433,6 @@ def test_ogr_mvt_test_ogrsf_pbf():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -469,8 +446,6 @@ def test_ogr_mvt_test_ogrsf_directory():
                                ' -ro data/mvt/datatypes/0')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 
@@ -494,8 +469,7 @@ def test_ogr_mvt_mbtiles():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -519,8 +493,6 @@ def test_ogr_mvt_mbtiles_json_field():
              'bool_true': True,
              'float_value': 1.25
              }), f.GetFieldAsString("json")
-
-    return 'success'
 
 ###############################################################################
 
@@ -546,8 +518,6 @@ def test_ogr_mvt_mbtiles_json_field_auto():
              'float_value': 1.25
              }), f.GetFieldAsString("json")
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -565,8 +535,6 @@ def test_ogr_mvt_mbtiles_test_ogrsf():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -577,8 +545,6 @@ def test_ogr_mvt_mbtiles_open_vector_in_raster_mode():
 
     ds = gdal.OpenEx('data/mvt/datatypes.mbtiles', gdal.OF_RASTER)
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -597,8 +563,6 @@ def test_ogr_mvt_x_y_z_filename_scheme():
     ds = None
     gdal.Unlink(tmpfilename)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -609,8 +573,6 @@ def test_ogr_mvt_polygon_larger_than_header():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
-
-    return 'success'
 
 ###############################################################################
 
@@ -665,8 +627,6 @@ def test_ogr_mvt_errors():
     gdal.Unlink(tmpfilename)
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -682,8 +642,7 @@ def test_ogr_mvt_http_start():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -764,8 +723,7 @@ def test_ogr_mvt_http():
         f = lyr.GetNextFeature()
         assert f is not None
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -775,8 +733,6 @@ def test_ogr_mvt_http_stop():
         pytest.skip()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 
@@ -1070,8 +1026,6 @@ def test_ogr_mvt_write_one_layer():
 
     gdal.RmdirRecursive('/vsimem/outmvt')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1140,8 +1094,6 @@ def test_ogr_mvt_write_conf():
 
     gdal.RmdirRecursive('/vsimem/outmvt')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1171,8 +1123,6 @@ def test_ogr_mvt_write_mbtiles():
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 
@@ -1216,8 +1166,6 @@ def test_ogr_mvt_write_limitations_max_size():
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 
@@ -1267,8 +1215,6 @@ def test_ogr_mvt_write_polygon_repaired():
 
     gdal.Unlink('/vsimem/out.mbtiles')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1300,8 +1246,6 @@ def test_ogr_mvt_write_conflicting_innner_ring():
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 
@@ -1335,8 +1279,6 @@ def test_ogr_mvt_write_limitations_max_size_polygon():
     out_ds = None
 
     gdal.Unlink('/vsimem/out.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 
@@ -1377,8 +1319,6 @@ def test_ogr_mvt_write_limitations_max_features():
 
     gdal.Unlink('/vsimem/out.mbtiles')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1412,8 +1352,6 @@ def test_ogr_mvt_write_custom_tiling_scheme():
     out_ds = None
 
     gdal.RmdirRecursive('/vsimem/out')
-
-    return 'success'
 
 ###############################################################################
 
@@ -1568,8 +1506,6 @@ def test_ogr_mvt_write_errors():
 
     gdal.RmdirRecursive('/vsimem/foo')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -1605,8 +1541,6 @@ def test_ogr_mvt_write_reuse_temp_db():
 
     gdal.RmdirRecursive('/vsimem/out')
     gdal.Unlink('/vsimem/out.temp.db')
-
-    return 'success'
 
 
 ###############################################################################

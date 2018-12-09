@@ -71,8 +71,6 @@ def test_osr_esri_1():
         ('Got wrong DATUM name (%s) after ESRI unmorph.' %
                              srs.GetAttrValue('DATUM'))
 
-    return 'success'
-
 ###############################################################################
 # Verify that exact correct form of UTM names is established when
 # translating certain GEOGCSes to ESRI format.
@@ -93,8 +91,6 @@ def test_osr_esri_2():
         ('Got wrong PROJCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJCS'))
 
-    return 'success'
-
 ###############################################################################
 # Verify that Unnamed is changed to Unknown in morphToESRI().
 
@@ -109,8 +105,6 @@ def test_osr_esri_3():
     assert srs.GetAttrValue('PROJCS') == 'Miller_Cylindrical', \
         ('Got wrong PROJCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJCS'))
-
-    return 'success'
 
 ###############################################################################
 # Verify Polar Stereographic translations work properly OGR to ESRI.
@@ -131,8 +125,6 @@ def test_osr_esri_4():
         ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
 
-    return 'success'
-
 ###############################################################################
 # Verify Polar Stereographic translations work properly ESRI to OGR.
 
@@ -152,8 +144,6 @@ def test_osr_esri_5():
         ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('latitude_of_origin'))
 
-    return 'success'
-
 ###############################################################################
 # Verify Lambert 2SP with a 1.0 scale factor still gets translated to 2SP
 # per bug 187.
@@ -169,8 +159,6 @@ def test_osr_esri_6():
     assert srs.GetAttrValue('PROJECTION') == 'Lambert_Conformal_Conic_2SP', \
         ('Got wrong PROJECTION name (%s) after ESRI morph, expected 2SP' %
             srs.GetAttrValue('PROJECTION'))
-
-    return 'success'
 
 ###############################################################################
 # Verify that FEET is treated as US survey feet per bug #1533.
@@ -220,8 +208,7 @@ def test_osr_esri_7():
         print('got: ', srs_prj.ExportToPrettyWkt())
         pytest.fail('old style ESRI projection imported wrong, perhaps linear units?')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that handling of numerically specified units (see bug #1533)
 
@@ -268,8 +255,6 @@ def test_osr_esri_8():
     assert srs_prj.IsSame(srs_wkt), \
         'old style ESRI projection imported wrong, perhaps linear units?'
 
-    return 'success'
-
 ###############################################################################
 # Verify Equidistant Conic handling.
 
@@ -299,8 +284,7 @@ def test_osr_esri_9():
         print('Expected: ', expected)
         pytest.fail('Did not get expected Equidistant Conic SRS after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify Plate_Carree handling.
 
@@ -330,8 +314,7 @@ def test_osr_esri_10():
         print('Expected: ', expected)
         pytest.fail('Did not get expected Equidistant_Cylindrical SRS after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify arc/info style TM handling.
 
@@ -363,8 +346,7 @@ def test_osr_esri_11():
         print('Expected: ', expected)
         pytest.fail('Did not get expected TM SRS after morphFromESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
 
@@ -391,8 +373,6 @@ def test_osr_esri_12():
     assert srs.GetAttrValue('UNIT') == 'Meter', \
         ('Got wrong UNIT name (%s) after ESRI morph.' %
                              srs.GetAttrValue('UNIT'))
-
-    return 'success'
 
 ###############################################################################
 # Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
@@ -422,8 +402,6 @@ def test_osr_esri_13():
         ('Got wrong UNIT name (%s) after ESRI morph.' %
                              srs.GetAttrValue('UNIT'))
 
-    return 'success'
-
 
 ###############################################################################
 # Verify that state plane epsg authority values are not applied if the
@@ -448,8 +426,6 @@ def test_osr_esri_14():
                         'PARAMETERS'])
     assert srs.GetAuthorityCode('PROJCS') == '32104', \
         'Did not get epsg authority code when expected.'
-
-    return 'success'
 
 ###############################################################################
 # Verify hotine oblique mercator handling, particularly handling
@@ -480,8 +456,7 @@ def test_osr_esri_15():
         print('Expected: ', expected)
         pytest.fail('Did not get expected HOM projection after morphing')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify translation of equirectangular to equidistant cylindrical with
 # cleanup of parameters.
@@ -498,8 +473,6 @@ def test_osr_esri_16():
     wkt = srs.ExportToWkt()
 
     assert expected == wkt, 'Did not get expected equidistant cylindrical.'
-
-    return 'success'
 
 
 ###############################################################################
@@ -531,8 +504,7 @@ def test_osr_esri_17():
         print('Expected: ', expected)
         pytest.fail('Did not get expected LAEA SRS after morphFromESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test EC morphing.
 
@@ -576,8 +548,7 @@ def test_osr_esri_18():
         print('Expected: ', srs_expected.ExportToPrettyWkt())
         pytest.fail('Did not get expected EC SRS after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test spheroid remapping (per #3904)
 
@@ -605,8 +576,7 @@ def test_osr_esri_19():
         print('Got:      ', srs.ExportToPrettyWkt())
         pytest.fail('Did not get expected spheroid name after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test esri->ogc, esri->proj / ogc->esri, ogc->proj / proj->esri, proj->ogc
 
@@ -1136,8 +1106,6 @@ def test_osr_esri_24():
     assert srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN, 1000.0) != 1000.0, \
         'Failed to set latitude_of_origin'
 
-    return 'success'
-
 ###############################################################################
 # Test Pseudo-Mercator (#3962)
 #
@@ -1180,8 +1148,7 @@ def test_osr_esri_25():
         print('Got:      (%f, %f, %f)' % (x, y, z))
         pytest.fail('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test LCC_1SP (#2072)
 #
@@ -1192,8 +1159,6 @@ def test_osr_esri_26():
     srs.SetFromUserInput("""PROJCS["NAD_1983_HARN_WISCRS_Washburn_County_Meters",GEOGCS["GCS_North_American_1983_HARN",DATUM["D_North_American_1983_HARN",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",234086.8682],PARAMETER["False_Northing",188358.6058],PARAMETER["Central_Meridian",-91.78333333333333],PARAMETER["Standard_Parallel_1",45.96121983333334],PARAMETER["Scale_Factor",1.0000475376],PARAMETER["Latitude_Of_Origin",45.96121983333334],UNIT["Meter",1.0]]""")
     srs.MorphFromESRI()
     assert srs.Validate() == 0, srs.ExportToWkt()
-
-    return 'success'
 
 ###############################################################################
 # Test Mercator_2SP (#4861)
@@ -1246,8 +1211,6 @@ def test_osr_esri_27():
     PARAMETER["Central_Meridian",110.0],
     PARAMETER["Standard_Parallel_1",4.45405154589751],
     UNIT["Meter",1.0]]"""
-
-    return 'success'
 
 
 ###############################################################################
@@ -1311,8 +1274,6 @@ def test_osr_esri_28():
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
     PARAMETER["standard_parallel_1",4.45405154""") == 0
-
-    return 'success'
 
 ###############################################################################
 # Test Web Mercator
@@ -1391,8 +1352,6 @@ def test_osr_esri_29():
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],
     AUTHORITY["EPSG","3857"]]"""
 
-    return 'success'
-
 ###############################################################################
 # Verify import of custom ellipsoid
 
@@ -1415,8 +1374,6 @@ def test_osr_esri_30():
     srs_wkt = osr.SpatialReference(wkt=wkt)
 
     assert srs_prj.IsSame(srs_wkt)
-
-    return 'success'
 
 ###############################################################################
 # Verify import of old-style Mercator
@@ -1464,8 +1421,6 @@ def test_osr_esri_31():
 
     assert srs_prj.IsSame(srs_wkt)
 
-    return 'success'
-
 ###############################################################################
 # Bad Equidistant Conic
 
@@ -1483,8 +1438,7 @@ def test_osr_esri_32():
         assert result == ogr.OGRERR_CORRUPT_DATA, \
             'Corrupt EQUIDISTANT_CONIC not marked corrupt'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test morphing invalid PROJCS WKT does not crash
 
@@ -1495,8 +1449,6 @@ def test_osr_esri_33():
     sr.ImportFromWkt('PROJCS[]')
     sr.MorphFromESRI()
     sr.MorphToESRI()
-
-    return 'success'
 
 ###############################################################################
 #

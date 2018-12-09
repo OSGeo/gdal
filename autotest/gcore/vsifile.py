@@ -102,8 +102,6 @@ def vsifile_generic(filename):
 
     assert gdal.Unlink(filename) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test /vsimem
 
@@ -159,8 +157,6 @@ def test_vsifile_3():
 
     assert statBuf.size == 10 * 1024 * 1024 * 1024
 
-    return 'success'
-
 ###############################################################################
 # Test fix for #4583 (short reads)
 
@@ -174,8 +170,6 @@ def test_vsifile_4():
     data = gdal.VSIFReadL(1, 1000000, fp)
     assert data
     gdal.VSIFCloseL(fp)
-
-    return 'success'
 
 ###############################################################################
 # Test vsicache
@@ -245,8 +239,6 @@ def test_vsifile_5():
     gdal.SetConfigOption('VSI_CACHE', None)
     gdal.Unlink('tmp/vsifile_5.bin')
 
-    return 'success'
-
 ###############################################################################
 # Test vsicache above 2 GB
 
@@ -284,8 +276,6 @@ def test_vsifile_6():
 
     gdal.Unlink('tmp/vsifile_6.bin')
 
-    return 'success'
-
 ###############################################################################
 # Test limit cases on /vsimem
 
@@ -317,8 +307,6 @@ def test_vsifile_7():
 
     gdal.Unlink('/vsimem/vsifile_7.bin')
 
-    return 'success'
-
 ###############################################################################
 # Test renaming directory in /vsimem
 
@@ -334,8 +322,6 @@ def test_vsifile_8():
     assert gdal.VSIStatL('/vsimem/newdir/a') is not None
     gdal.Unlink('/vsimem/newdir/a')
     gdal.Rmdir('/vsimem/newdir')
-
-    return 'success'
 
 ###############################################################################
 # Test ReadDir()
@@ -363,8 +349,6 @@ def test_vsifile_9():
     for i in range(10):
         gdal.Unlink('/vsimem/mydir/%d' % i)
     gdal.Rmdir('/vsimem/mydir')
-
-    return 'success'
 
 ###############################################################################
 # Test fuzzer friendly archive
@@ -451,8 +435,6 @@ abc***NEWFILE***:""")
 
     gdal.Unlink('/vsimem/vsifile_10.tar')
 
-    return 'success'
-
 ###############################################################################
 # Test generic Truncate implementation for file extension
 
@@ -476,8 +458,6 @@ def test_vsifile_11():
     assert data[0] == 48 and data[9] == 57 and data[10] == 0 and data[10 + 4096 + 2 - 1] == 0
 
     gdal.Unlink('/vsimem/vsifile_11')
-
-    return 'success'
 
 ###############################################################################
 # Test regular file system sparse file support
@@ -506,8 +486,6 @@ def test_vsifile_12():
     gdal.VSIFCloseL(f)
 
     gdal.Unlink(target_dir + '/vsifile_12')
-
-    return 'success'
 
 ###############################################################################
 # Test reading filename with prefixes without terminating slash
@@ -544,8 +522,6 @@ def test_vsifile_13():
     gdal.VSIStatL('/vsistdin')
     gdal.VSIStatL('/vsistdout')
 
-    return 'success'
-
 ###############################################################################
 # Check performance issue (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1673)
 
@@ -554,8 +530,7 @@ def test_vsifile_14():
 
     with gdaltest.error_handler():
         gdal.VSIFOpenL('/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz', 'rb')
-    return 'success'
-
+    
 ###############################################################################
 # Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
 
@@ -584,8 +559,6 @@ def test_vsifile_15():
 
     gdal.VSIFCloseL(fp)
 
-    return 'success'
-
 ###############################################################################
 # Test failed gdal.Rename() with exceptions enabled
 
@@ -613,8 +586,6 @@ def test_vsifile_17():
 
     assert gdal.GetSignedURL('foo') is None
 
-    return 'success'
-
 ###############################################################################
 # Test gdal.GetFileSystemsPrefixes()
 
@@ -623,8 +594,6 @@ def test_vsifile_18():
 
     prefixes = gdal.GetFileSystemsPrefixes()
     assert '/vsimem/' in prefixes
-
-    return 'success'
 
 ###############################################################################
 # Test gdal.GetFileSystemOptions()
@@ -639,8 +608,7 @@ def test_vsifile_19():
             ret = gdal.ParseXMLString(options)
             assert ret is not None, (prefix, options)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test gdal.VSIFReadL with None fp
 
@@ -650,7 +618,7 @@ def test_vsifile_20():
     try:
         gdal.VSIFReadL(1, 1, None)
     except ValueError:
-        return 'success'
+        return
 
     pytest.fail()
 
@@ -685,8 +653,7 @@ def test_vsifile_21():
         data3 = gdal.VSIGetMemFileBuffer_unsafe(filename)
         assert data3 == None
 
-    return 'success'
-
+    
 
 def test_vsifile_22():
     # VSIOpenL doesn't set errorno
@@ -709,8 +676,6 @@ def test_vsifile_22():
     assert gdal.VSIGetLastErrorNo() == 0, \
         ("Expected Err=0 after VSIErrorReset(), got %d" % gdal.VSIGetLastErrorNo())
 
-    return 'success'
-
 
 ###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/675
@@ -720,7 +685,6 @@ def test_vsitar_bug_675():
 
     content = gdal.ReadDir('/vsitar/data/tar_with_star_base256_fields.tar')
     assert len(content) == 1
-    return 'success'
 
 ###############################################################################
 # Test multithreaded compression
@@ -749,8 +713,7 @@ def test_vsigzip_multi_thread():
 
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test vsisync()
 
@@ -801,8 +764,6 @@ def test_vsisync():
 
     gdal.RmdirRecursive('/vsimem/test_sync')
     gdal.RmdirRecursive('/vsimem/out')
-
-    return 'success'
 
 ###############################################################################
 # Test gdal.OpenDir()
@@ -871,8 +832,6 @@ def test_vsifile_opendir():
     assert files == ['subdir', 'subdir/subdir2', 'test']
 
     gdal.RmdirRecursive('/vsimem/vsifile_opendir')
-
-    return 'success'
 
 
 gdaltest_list = [test_vsifile_1,

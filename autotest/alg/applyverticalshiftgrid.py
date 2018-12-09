@@ -75,8 +75,6 @@ def test_applyverticalshiftgrid_1():
     cs = out_ds.GetRasterBand(1).Checksum()
     assert cs == 0
 
-    return 'success'
-
 ###############################################################################
 # Error cases
 
@@ -163,8 +161,6 @@ def test_applyverticalshiftgrid_2():
                                              options=['DATATYPE=x'])
     assert out_ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test with grid and src not in same projection
 
@@ -192,8 +188,6 @@ def test_applyverticalshiftgrid_3():
                                          options=['RESAMPLING=CUBIC'])
     cs = out_ds.GetRasterBand(1).Checksum()
     assert cs == 4841 or cs == 4854
-
-    return 'success'
 
 ###############################################################################
 # Test nodata
@@ -263,8 +257,6 @@ def test_applyverticalshiftgrid_4():
         data = out_ds.GetRasterBand(1).ReadRaster()
     assert data is None
 
-    return 'success'
-
 ###############################################################################
 # Test scaling parameters
 
@@ -291,8 +283,6 @@ def test_applyverticalshiftgrid_5():
     cs = out_ds.GetRasterBand(1).Checksum()
     assert cs == 4672
 
-    return 'success'
-
 ###############################################################################
 # Simulate EGM grids
 
@@ -312,8 +302,6 @@ def test_applyverticalshiftgrid_6():
 
     gdal.Unlink('/vsimem/applyverticalshiftgrid_6.gtx')
 
-    return 'success'
-
 ###############################################################################
 # Simulate USA geoid grids with long origin > 180
 
@@ -332,8 +320,6 @@ def test_applyverticalshiftgrid_7():
     assert cs == 4783
 
     gdal.Unlink('/vsimem/applyverticalshiftgrid_7.gtx')
-
-    return 'success'
 
 
 gdaltest_list = [

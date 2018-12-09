@@ -46,8 +46,7 @@ def test_fast_1():
     if gdaltest.fast_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Perform simple read test.
 
@@ -99,8 +98,7 @@ def test_fast_3():
         print('expected:', gb_expected[1])
         print('got:', bias)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test geotransform data.
 
@@ -123,8 +121,6 @@ def test_fast_4():
        abs(gt[2] - 0.0) <= tolerance and abs(gt[3] - 3621457.5) <= tolerance and \
        abs(gt[4] - 0.0) <= tolerance and abs(gt[5] + 15.0) <= tolerance), \
         'FAST geotransform wrong'
-
-    return 'success'
 
 
 ###############################################################################
@@ -266,8 +262,6 @@ def test_fast_9():
     assert ds.GetMetadataItem('SENSOR') == '', 'Did not get expected SENSOR value.'
 
     assert ds.RasterCount == 7, 'Did not get expected band count.'
-
-    return 'success'
 
 ###############################################################################
 #

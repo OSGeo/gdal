@@ -53,8 +53,6 @@ def test_osr_ozi_1():
 
     assert gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 # Test with another datum known by OZI and whose EPSG code is known
 
@@ -75,8 +73,6 @@ def test_osr_ozi_2():
 
     assert gdaltest.equal_srs_from_wkt(srs_ref.ExportToWkt(), srs.ExportToWkt())
 
-    return 'success'
-
 ###############################################################################
 # Test with another datum known by OZI and whose EPSG code is unknown
 
@@ -95,8 +91,6 @@ def test_osr_ozi_3():
     expected = 'GEOGCS["European 1950 (Mean France)",DATUM["European 1950 (Mean France)",SPHEROID["International 1924",6378388,297],TOWGS84[-87,-96,-120,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
 
     assert gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt())
-
-    return 'success'
 
 
 gdaltest_list = [

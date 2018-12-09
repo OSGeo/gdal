@@ -63,8 +63,6 @@ def test_hfa_histread():
 
     assert md['STATISTICS_EXCLUDEDVALUES'] == '0', 'STATISTICS_EXCLUDEDVALUE is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Verify that if we copy this test image to a new Imagine file the histogram
 # info is preserved.
@@ -97,8 +95,6 @@ def test_hfa_histwrite():
 
     assert md['STATISTICS_HISTOBINVALUES'] == '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|', \
         'STATISTICS_HISTOBINVALUES is wrong.'
-
-    return 'success'
 
 ###############################################################################
 # Verify that if we copy this test image to a new Imagine file and then re-write the
@@ -138,8 +134,6 @@ def test_hfa_histrewrite():
 
     assert histStr == newHist, 'Rewritten STATISTICS_HISTOBINVALUES is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Verify we can read metadata of int.img.
 
@@ -164,8 +158,6 @@ def test_hfa_int_stats_1():
 
     assert md['LAYER_TYPE'] == 'athematic', 'LAYER_TYPE is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Verify we can read band statistics of int.img.
 
@@ -185,8 +177,6 @@ def test_hfa_int_stats_2():
     assert abs(stats[2] - 41019.784218148) <= tolerance, 'Mean value is wrong.'
 
     assert abs(stats[3] - 44.637237445468) <= tolerance, 'StdDev value is wrong.'
-
-    return 'success'
 
 ###############################################################################
 # Verify we can read metadata of float.img.
@@ -220,8 +210,6 @@ def test_hfa_float_stats_1():
 
     assert md['LAYER_TYPE'] == 'athematic', 'LAYER_TYPE is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Verify we can read band statistics of float.img.
 
@@ -242,8 +230,6 @@ def test_hfa_float_stats_2():
 
     assert abs(stats[3] - 0.044636441749041) <= tolerance, 'StdDev value is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Verify we can read image data.
 
@@ -257,8 +243,6 @@ def test_hfa_int_read():
     ds = None
 
     assert cs == 6691, 'Checksum value is wrong.'
-
-    return 'success'
 
 ###############################################################################
 # Verify we can read image data.
@@ -280,8 +264,6 @@ def test_hfa_float_read():
 
     assert abs(value - 41.021659851074219) <= 0.0001, 'Pixel value is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # verify we can read PE_STRING coordinate system.
 
@@ -293,8 +275,6 @@ def test_hfa_pe_read():
     expected = 'PROJCS["World_Cube",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Cube"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Option",1.0],UNIT["Meter",1.0]]'
 
     assert wkt == expected, 'failed to read pe string as expected.'
-
-    return 'success'
 
 ###############################################################################
 # Verify we can write PE_STRING nodes.
@@ -319,7 +299,6 @@ def test_hfa_pe_write():
 
     ds = None
     drv.Delete('tmp/87test.img')
-    return 'success'
 
 ###############################################################################
 # Verify we can write and read large metadata items.
@@ -339,8 +318,6 @@ def test_hfa_metadata_1():
     md = ds.GetRasterBand(1).GetMetadata()
     assert md['test'] == md_val, 'got wrong metadata back'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify that writing metadata multiple times does not result in duplicate
@@ -364,8 +341,6 @@ def test_hfa_metadata_2():
 
     ds = None
     gdal.GetDriverByName('HFA').Delete('tmp/md_1.img')
-
-    return 'success'
 
 ###############################################################################
 # Verify we can grow the RRD list in cases where this requires
@@ -392,8 +367,6 @@ def test_hfa_grow_rrdlist():
 
     ds = None
     gdal.GetDriverByName('HFA').Delete('tmp/bug_1109.img')
-
-    return 'success'
 
 ###############################################################################
 # Make sure an old .ige file is deleted when creating a new dataset. (#1784)
@@ -442,8 +415,6 @@ def test_hfa_clean_ige():
 
     drv.Delete('tmp/igetest.img')
 
-    return 'success'
-
 ###############################################################################
 # Verify that we can read this corrupt .aux file without hanging (#1907)
 
@@ -464,8 +435,6 @@ def test_hfa_corrupt_aux():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # support MapInformation for units (#1967)
 
@@ -483,7 +452,7 @@ def test_hfa_mapinformation_units():
     expected_wkt = """PROJCS["NAD_1983_StatePlane_Virginia_North_FIPS_4501_Feet",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199432955],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["False_Easting",11482916.66666666],PARAMETER["False_Northing",6561666.666666666],PARAMETER["Central_Meridian",-78.5],PARAMETER["Standard_Parallel_1",38.03333333333333],PARAMETER["Standard_Parallel_2",39.2],PARAMETER["Latitude_Of_Origin",37.66666666666666],UNIT["Foot_US",0.304800609601219241]]"""
 
     if gdaltest.equal_srs_from_wkt(expected_wkt, wkt):
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -506,8 +475,6 @@ def test_hfa_nodata_write():
     b.SetNoDataValue(1)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify written nodata value.
@@ -537,8 +504,6 @@ def test_hfa_nodata_read():
 
     gdal.GetDriverByName('HFA').Delete('tmp/nodata.img')
 
-    return 'success'
-
 ###############################################################################
 # Verify we read simple affine geotransforms properly.
 
@@ -561,7 +526,6 @@ def test_hfa_rotated_read():
             pytest.fail('Geotransform differs.')
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Verify we can write affine geotransforms.
@@ -629,8 +593,6 @@ def test_hfa_rotated_write():
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('tmp/rot.img')
-
-    return 'success'
 
 
 ###############################################################################
@@ -718,8 +680,6 @@ def test_hfa_unique_values_color_table():
     ct = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify "unique values" based histogram.
 
@@ -753,8 +713,6 @@ def test_hfa_unique_values_hist():
     rat = None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify reading of 3rd order XFORM polynomials.
@@ -799,8 +757,6 @@ def test_hfa_xforms_3rd():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that we can clear an existing color table
 
@@ -832,8 +788,6 @@ def test_hfa_delete_colortable():
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('tmp/i8u.img')
-
-    return 'success'
 
 ###############################################################################
 # Verify that we can clear an existing color table (#2842)
@@ -871,8 +825,6 @@ def test_hfa_delete_colortable2():
 
     gdal.GetDriverByName('HFA').Delete('tmp/hfa_delete_colortable2.img')
 
-    return 'success'
-
 ###############################################################################
 # Verify we can read the special histogram metadata from a provided image.
 
@@ -885,8 +837,6 @@ def test_hfa_excluded_values():
 
     assert md['STATISTICS_EXCLUDEDVALUES'] == '0,8,9', \
         'STATISTICS_EXCLUDEDVALUE is wrong.'
-
-    return 'success'
 
 ###############################################################################
 # verify that we propagate nodata to overviews in .img/.rrd format.
@@ -923,8 +873,6 @@ def test_hfa_ov_nodata():
     wrk2_ds = None
     drv.Delete('/vsimem/ov_nodata.img')
 
-    return 'success'
-
 ###############################################################################
 # Confirm that we can read 8bit grayscale overviews for 1bit images.
 
@@ -940,8 +888,6 @@ def test_hfa_read_bit2grayscale():
     ds_md = ds.GetMetadata()
     assert ds_md['PyramidResamplingType'] == 'AVERAGE_BIT2GRAYSCALE', \
         'wrong pyramid resampling type metadata.'
-
-    return 'success'
 
 ###############################################################################
 # Confirm that we can create overviews in rrd format for an .img file with
@@ -980,8 +926,7 @@ def test_hfa_write_bit2grayscale():
     except IOError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify handling of camera model metadata (#2675)
 
@@ -1014,7 +959,6 @@ def test_hfa_camera_md():
     assert gdaltest.equal_srs_from_wkt(srs_wkt, exp_wkt), 'wrong outputProjection'
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Verify dataset's projection matches expected
@@ -1027,7 +971,6 @@ def hfa_verify_dataset_projection(dataset_path, exp_wkt):
     assert gdaltest.equal_srs_from_wkt(exp_wkt, srs_wkt), 'wrong outputProjection'
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Verify can read Transverse Mercator (South Orientated) projections
@@ -1106,8 +1049,6 @@ def test_hfa_rde_overviews():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Check that we can copy and rename a complex file set, and that the internal filenames
 # in the .img and .rrd seem to be updated properly.
@@ -1150,8 +1091,6 @@ def test_hfa_copyfiles():
 
     drv.Delete('tmp/newnamexxx.img')
 
-    return 'success'
-
 
 ###############################################################################
 # Test the ability to write a RAT (#999)
@@ -1188,8 +1127,6 @@ def test_hfa_write_rat():
 
     drv.Delete('tmp/write_rat.img')
 
-    return 'success'
-
 ###############################################################################
 # Test STATISTICS creation option
 
@@ -1218,8 +1155,6 @@ def test_hfa_createcopy_statistics():
 
     assert md['STATISTICS_MINIMUM'] == '74', 'STATISTICS_MINIMUM is wrong.'
 
-    return 'success'
-
 ###############################################################################
 # Test GetUnitType()
 
@@ -1240,8 +1175,6 @@ def test_hfa_read_elevation_units():
     unittype = ds.GetRasterBand(1).GetUnitType()
     assert unittype == 'meters', 'Failed to read elevation units'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 #

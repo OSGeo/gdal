@@ -68,8 +68,7 @@ def test_ogr_cloudant_init():
         ogrtest.cloudant_drv = None
         pytest.skip('cannot open %s' % ogrtest.cloudant_test_url)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GetFeatureCount()
 
@@ -86,8 +85,6 @@ def test_ogr_cloudant_GetFeatureCount():
 
     count = lyr.GetFeatureCount()
     assert count == 52, 'did not get expected feature count'
-
-    return 'success'
 
 ###############################################################################
 # Test GetNextFeature()
@@ -109,8 +106,7 @@ def test_ogr_cloudant_GetNextFeature():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GetSpatialRef()
 
@@ -128,10 +124,9 @@ def test_ogr_cloudant_GetSpatialRef():
     sr = lyr.GetSpatialRef()
 
     if sr is None:
-        return 'success'
+        return
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GetExtent()
 
@@ -151,8 +146,6 @@ def test_ogr_cloudant_GetExtent():
 
     assert extent == (-179.14734, 179.77847, 17.884813, 71.352561), \
         'did not get expected extent'
-
-    return 'success'
 
 ###############################################################################
 # Test SetSpatialFilter()
@@ -179,8 +172,7 @@ def test_ogr_cloudant_SetSpatialFilter():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_cloudant_init,

@@ -51,8 +51,6 @@ def test_ogr_dgnv8_1():
     ds = ogr.Open('data/test_dgnv8.dgn')
     assert ds is not None, 'failed to open test file.'
 
-    return 'success'
-
 ###############################################################################
 # Compare with a reference CSV dump
 
@@ -97,8 +95,6 @@ def test_ogr_dgnv8_3():
     os.unlink('tmp/test_dgnv8.dgn')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test creation code
@@ -189,16 +185,13 @@ def test_ogr_dgnv8_5():
     gdal.Unlink(tmp_dgn)
     gdal.Unlink(tmp2_dgn)
 
-    return 'success'
-
 
 ###############################################################################
 #  Cleanup
 
 def test_ogr_dgnv8_cleanup():
 
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_ogr_dgnv8_1,

@@ -73,8 +73,7 @@ def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
         (key, value) = md.split('=')
         assert key in got_md and got_md[key] == value, ('did not find %s' % md)
 
-    return 'success'
-
+    
 ###############################################################################
 # Read USRP dataset with PCB=4
 
@@ -124,8 +123,7 @@ def test_srp_5():
         (key, value) = md.split('=')
         assert key in got_md and got_md[key] == value, ('did not find %s' % md)
 
-    return 'success'
-
+    
 ###############################################################################
 # Read with subdataset syntax
 
@@ -143,7 +141,6 @@ def test_srp_cleanup():
 
     # FIXME ?
     os.unlink('data/USRP_PCB0/TRANSH01.THF.aux.xml')
-    return 'success'
 
 ###############################################################################
 

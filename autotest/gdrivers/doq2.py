@@ -63,8 +63,6 @@ def test_doq2_1():
     mem_ds = None
     ds = None
 
-    return 'success'
-
 
 gdaltest_list = [
     test_doq2_1]

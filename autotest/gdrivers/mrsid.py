@@ -128,8 +128,7 @@ def test_mrsid_1():
     if got_prj != prj:
         print('Warning: did not get exactly expected projection. Got %s' % got_prj)
 
-    return 'success'
-
+    
 ###############################################################################
 # Do a direct IO to read the image at a resolution for which there is no
 # builtin overview.  Checks for the bug Steve L found in the optimized
@@ -164,8 +163,6 @@ def test_mrsid_2():
 
     assert mean >= 95 and mean <= 105, 'image mean out of range.'
 
-    return 'success'
-
 ###############################################################################
 # Test overview reading.
 
@@ -192,8 +189,7 @@ def test_mrsid_3():
             print('new = ', new_stat)
             pytest.fail('Statistics differ.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check a new (V3) file which uses a different form for coordinate sys.
 
@@ -250,8 +246,6 @@ def test_mrsid_5():
         pytest.skip()
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
-
-    return 'success'
 
 ###############################################################################
 # Open byte.jp2
@@ -311,8 +305,6 @@ def test_mrsid_7():
     ds = None
     ds_ref = None
 
-    return 'success'
-
 ###############################################################################
 # Test PAM override for nodata, coordsys, and geotransform.
 
@@ -350,8 +342,6 @@ def test_mrsid_8():
 
     gdal.GetDriverByName('MrSID').Delete('tmp/mercator.sid')
 
-    return 'success'
-
 ###############################################################################
 # Test VSI*L IO with .sid
 
@@ -374,7 +364,6 @@ def test_mrsid_9():
     ds = None
 
     gdal.Unlink('/vsimem/mrsid_9.sid')
-    return 'success'
 
 ###############################################################################
 # Test VSI*L IO with .jp2
@@ -398,7 +387,6 @@ def test_mrsid_10():
     ds = None
 
     gdal.Unlink('/vsimem/mrsid_10.jp2')
-    return 'success'
 
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
@@ -416,8 +404,6 @@ def test_mrsid_11():
         'geotransform differs from expected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -438,8 +424,6 @@ def test_mrsid_online_1():
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -470,8 +454,6 @@ def test_mrsid_online_2():
     #    return 'fail'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -506,8 +488,7 @@ def test_mrsid_online_3():
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
         pytest.fail('Image too different from reference')
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -539,8 +520,7 @@ def test_mrsid_online_4():
         print(ds_ref.GetRasterBand(1).Checksum())
         pytest.fail('Image too different from reference')
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup.
 
@@ -554,8 +534,6 @@ def test_mrsid_cleanup():
         pass
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return 'success'
 
 
 gdaltest_list = [

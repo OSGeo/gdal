@@ -89,8 +89,6 @@ def test_ogr_xls_1():
     feat = lyr.GetNextFeature()
     assert feat is None
 
-    return 'success'
-
 ###############################################################################
 # Test OGR_XLS_HEADERS = DISABLE
 
@@ -109,8 +107,6 @@ def test_ogr_xls_2():
     assert lyr.GetFeatureCount() == 4
 
     gdal.SetConfigOption('OGR_XLS_HEADERS', None)
-
-    return 'success'
 
 ###############################################################################
 # Test OGR_XLS_FIELD_TYPES = STRING
@@ -131,8 +127,6 @@ def test_ogr_xls_3():
 
     gdal.SetConfigOption('OGR_XLS_FIELD_TYPES', None)
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -150,8 +144,6 @@ def test_ogr_xls_4():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test972000xp.xls')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 
 gdaltest_list = [

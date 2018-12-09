@@ -72,8 +72,6 @@ def test_rpftoc_3():
     assert 'FILENAME_0' in md and not (md['FILENAME_0'] != 'data/RPFTOC01.ON2' and md['FILENAME_0'] != 'data\\RPFTOC01.ON2'), \
         'missing SUBDATASET_1_NAME metadata'
 
-    return 'success'
-
 ###############################################################################
 # Add an overview
 
@@ -104,8 +102,6 @@ def test_rpftoc_4():
     os.unlink('tmp/A.TOC')
     os.unlink('tmp/A.TOC.1.ovr')
     os.unlink('tmp/RPFTOC01.ON2')
-
-    return 'success'
 
 
 gdaltest_list = [

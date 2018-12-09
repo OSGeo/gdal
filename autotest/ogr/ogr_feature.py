@@ -178,8 +178,6 @@ def test_ogr_feature_cp_integer():
     assert (vals == [17, 2147483647, 18, 0, None, None, None, None, 15,
                 2147483647, 17, None])
 
-    return 'success'
-
 ###############################################################################
 # Copy to Integer64
 
@@ -221,8 +219,6 @@ def test_ogr_feature_cp_integer64():
 
     assert check(dst_feature, 'field_stringlist', None)
 
-    return 'success'
-
 ###############################################################################
 # Copy to Real
 
@@ -255,8 +251,6 @@ def test_ogr_feature_cp_real():
     assert check(dst_feature, 'field_reallist', 17.5)
 
     assert check(dst_feature, 'field_stringlist', None)
-
-    return 'success'
 
 ###############################################################################
 # Copy to String
@@ -291,8 +285,6 @@ def test_ogr_feature_cp_string():
     assert check(dst_feature, 'field_reallist', '(2:123.5,567)')
 
     assert check(dst_feature, 'field_stringlist', '(2:abc,def)')
-
-    return 'success'
 
 ###############################################################################
 # Copy to Binary
@@ -334,8 +326,6 @@ def test_ogr_feature_cp_binary():
 
     assert check(dst_feature, 'field_stringlist', None)
 
-    return 'success'
-
 ###############################################################################
 # Copy to date
 
@@ -369,8 +359,6 @@ def test_ogr_feature_cp_date():
     assert check(dst_feature, 'field_reallist', None)
 
     assert check(dst_feature, 'field_stringlist', None)
-
-    return 'success'
 
 ###############################################################################
 # Copy to time
@@ -406,8 +394,6 @@ def test_ogr_feature_cp_time():
 
     assert check(dst_feature, 'field_stringlist', None)
 
-    return 'success'
-
 ###############################################################################
 # Copy to datetime
 
@@ -441,8 +427,6 @@ def test_ogr_feature_cp_datetime():
     assert check(dst_feature, 'field_reallist', None)
 
     assert check(dst_feature, 'field_stringlist', None)
-
-    return 'success'
 
 ###############################################################################
 # Copy to integerlist
@@ -480,8 +464,6 @@ def test_ogr_feature_cp_integerlist():
 
     assert check(dst_feature, 'field_stringlist', None)
 
-    return 'success'
-
 ###############################################################################
 # Copy to integer64list
 
@@ -515,8 +497,6 @@ def test_ogr_feature_cp_integer64list():
     assert check(dst_feature, 'field_reallist', [123, 567])
 
     assert check(dst_feature, 'field_stringlist', None)
-
-    return 'success'
 
 ###############################################################################
 # Copy to reallist
@@ -552,8 +532,6 @@ def test_ogr_feature_cp_reallist():
 
     assert check(dst_feature, 'field_stringlist', None)
 
-    return 'success'
-
 ###############################################################################
 # Copy to stringlist
 
@@ -588,8 +566,6 @@ def test_ogr_feature_cp_stringlist():
 
     assert check(dst_feature, 'field_stringlist', ['abc', 'def'])
 
-    return 'success'
-
 
 ###############################################################################
 # Test SetField() / GetField() with unicode string
@@ -619,8 +595,6 @@ def test_ogr_feature_unicode():
     src_feature.SetField('field_integer64'.decode('utf-8'), 1)
     assert src_feature.GetField('field_integer64') == 1
 
-    return 'success'
-
 ###############################################################################
 # Test 64bit FID
 
@@ -631,7 +605,6 @@ def test_ogr_feature_64bit_fid():
     f = ogr.Feature(feat_def)
     f.SetFID(123456789012345)
     assert f.GetFID() == 123456789012345
-    return 'success'
 
 ###############################################################################
 # Test 64bit integer
@@ -654,8 +627,7 @@ def test_ogr_feature_overflow_64bit_integer():
     if f.GetField(0) != -9223372036854775808:
         f.DumpReadable()
         pytest.fail()
-    return 'success'
-
+    
 ###############################################################################
 # Test SetNullable(), IsNullable() and Validate()
 
@@ -757,8 +729,6 @@ def test_ogr_feature_nullable_validate():
     gdal.PopErrorHandler()
     assert ret == 0
 
-    return 'success'
-
 ###############################################################################
 # Test SetDefault(), GetDefault(), IsDefaultDriverSpecific() and FillUnsetWithDefault()
 
@@ -825,8 +795,7 @@ def test_ogr_feature_default():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GetNativeData(), SetNativeData(), GetNativeMediaType(), SetNativeMediaType():
 
@@ -880,8 +849,7 @@ def test_ogr_feature_native_data():
         assert f.GetNativeMediaType() == 'native_media_type', dialect
         ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test assigning our geometry to ourselves
 
@@ -896,8 +864,6 @@ def test_ogr_feature_set_geometry_self():
     f.SetGeometry(f.GetGeometryRef())
     f.SetGeometry(f.GetGeometryRef())
     assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 49)'
-
-    return 'success'
 
 ###############################################################################
 # Test SetFieldNull(), IsFieldNull()
@@ -962,14 +928,10 @@ def test_ogr_feature_null_field():
 
     f = None
 
-    return 'success'
-
 
 def test_ogr_feature_cleanup():
 
     gdaltest.src_feature = None
-
-    return 'success'
 
 
 gdaltest_list = [

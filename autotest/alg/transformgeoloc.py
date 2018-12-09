@@ -82,8 +82,6 @@ def test_transformgeoloc_1():
 
     print(geoloc_ds.ReadAsArray())
 
-    return 'success'
-
 
 gdaltest_list = [
     test_transformgeoloc_1,

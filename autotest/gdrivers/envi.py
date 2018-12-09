@@ -200,8 +200,6 @@ def test_envi_8():
 
     gdal.GetDriverByName('ENVI').Delete('/vsimem/foo.bsq')
 
-    return 'success'
-
 ###############################################################################
 # Verify reading a compressed file
 
@@ -232,8 +230,6 @@ def test_envi_10():
 
     assert md['HEIGHT_OFF'] == '3355'
 
-    return 'success'
-
 ###############################################################################
 # Check .sta reading
 
@@ -245,8 +241,6 @@ def test_envi_11():
     ds = None
 
     assert val == [1.0, 3.0, 2.0, 0.5], 'bad stats'
-
-    return 'success'
 
 ###############################################################################
 # Test category names reading and writing
@@ -274,8 +268,6 @@ def test_envi_12():
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/testenviclasses')
 
-    return 'success'
-
 ###############################################################################
 # Test writing of metadata from the ENVI metadata domain and read it back (#4957)
 
@@ -298,8 +290,6 @@ def test_envi_13():
 
     assert val == 'Landsat TM'
 
-    return 'success'
-
 ###############################################################################
 # Test that the image file is at the expected size on closing (#6662)
 
@@ -313,8 +303,6 @@ def test_envi_14():
     assert gdal.VSIStatL('/vsimem/envi_14.dat').size == 3 * 4 * 5 * 2
 
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_14.dat')
-
-    return 'success'
 
 ###############################################################################
 # Test reading and writing geotransform matrix with rotation
@@ -338,8 +326,6 @@ def test_envi_15():
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_15.dat')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a truncated ENVI dataset (see #915)
 
@@ -360,8 +346,6 @@ def test_envi_truncated():
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_truncated.dat')
 
     assert cs == 2315
-
-    return 'success'
 
 
 gdaltest_list = [

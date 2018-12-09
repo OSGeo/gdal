@@ -52,8 +52,6 @@ def test_ogr_join_1():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Check the values we are actually getting back (restricting the search a bit)
 
@@ -71,7 +69,7 @@ def test_ogr_join_2():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Try various naming conversions for the selected fields.
@@ -90,7 +88,7 @@ def test_ogr_join_3():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that records for which a join can't be found work ok.
@@ -109,7 +107,7 @@ def test_ogr_join_4():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that table aliases work
@@ -128,7 +126,7 @@ def test_ogr_join_5():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Again, ordering by a primary field.
@@ -147,7 +145,7 @@ def test_ogr_join_6():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test joining to an external datasource.
@@ -166,7 +164,7 @@ def test_ogr_join_7():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test doing two joins at once.
@@ -186,7 +184,7 @@ def test_ogr_join_8():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify fix for #2788 (memory corruption on wildcard expansion in SQL request
@@ -206,7 +204,7 @@ def test_ogr_join_9():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 
@@ -223,7 +221,7 @@ def test_ogr_join_10():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test join on string field
@@ -240,7 +238,7 @@ def test_ogr_join_11():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test fix for #4112 (join between 2 datasources)
@@ -258,8 +256,6 @@ def test_ogr_join_12():
 
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test joining a float column with a string column (#4321)
 
@@ -276,7 +272,7 @@ def test_ogr_join_13():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test joining a string column with a float column (#4321, actually addressed by #4259)
@@ -294,7 +290,7 @@ def test_ogr_join_14():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test multiple joins with expressions (#4521)
@@ -332,8 +328,6 @@ def test_ogr_join_15():
 
     assert val2 == 'c2'
 
-    return 'success'
-
 ###############################################################################
 # Test non-support of a secondarytable.fieldname in a where clause
 
@@ -351,7 +345,7 @@ def test_ogr_join_16():
     assert gdal.GetLastErrorMsg().find('Cannot use field') == 0
 
     if sql_lyr is None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -371,7 +365,7 @@ def test_ogr_join_17():
     assert gdal.GetLastErrorMsg().find('Cannot use field') == 0
 
     if sql_lyr is None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -389,8 +383,6 @@ def test_ogr_join_18():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test unrecognized primary field
 
@@ -406,7 +398,7 @@ def test_ogr_join_19():
     assert gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field') == 0
 
     if sql_lyr is None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -424,7 +416,7 @@ def test_ogr_join_20():
     assert gdal.GetLastErrorMsg().find('"idlink"."foo" not recognised as an available field') == 0
 
     if sql_lyr is None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -444,7 +436,7 @@ def test_ogr_join_21():
     assert gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') == 0
 
     if sql_lyr is None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -472,8 +464,6 @@ def test_ogr_join_22():
     ds = None
 
     assert val == '2'
-
-    return 'success'
 
 ###############################################################################
 # Test join with NULL keys
@@ -505,16 +495,12 @@ def test_ogr_join_23():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
 def test_ogr_join_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

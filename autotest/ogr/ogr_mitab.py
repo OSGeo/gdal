@@ -52,7 +52,7 @@ def test_ogr_mitab_1():
     gdaltest.mapinfo_ds = gdaltest.mapinfo_drv.CreateDataSource('tmp')
 
     if gdaltest.mapinfo_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -106,8 +106,6 @@ def test_ogr_mitab_2():
 
     gdaltest.mapinfo_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 #
@@ -145,7 +143,7 @@ def test_ogr_mitab_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -168,7 +166,7 @@ def test_ogr_mitab_4():
 
     gdaltest.mapinfo_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
@@ -189,7 +187,7 @@ def test_ogr_mitab_5():
 
     gdaltest.mapinfo_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that Non-WGS84 datums are populated correctly
@@ -206,8 +204,6 @@ def test_ogr_mitab_6():
     assert datum_name == "New_Zealand_GD49", \
         ("Datum name does not match (expected 'New_Zealand_GD49', got '%s')" % datum_name)
 
-    return 'success'
-
 ###############################################################################
 # Create MIF file.
 
@@ -220,7 +216,7 @@ def test_ogr_mitab_7():
     gdaltest.mapinfo_ds = gdaltest.mapinfo_drv.CreateDataSource('tmp/wrk.mif')
 
     if gdaltest.mapinfo_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -269,8 +265,6 @@ def test_ogr_mitab_8():
 
     gdaltest.mapinfo_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -303,7 +297,7 @@ def test_ogr_mitab_9():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Read mif file with 2 character .mid delimiter and verify operation.
@@ -333,8 +327,6 @@ def test_ogr_mitab_10():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify support for NTF datum with non-greenwich datum per
 #    http://trac.osgeo.org/gdal/ticket/1416
@@ -356,8 +348,6 @@ def test_ogr_mitab_11():
     assert pm_value[:6] == '2.3372', \
         ('got unexpected prime meridian, not paris: ' + pm_value)
 
-    return 'success'
-
 ###############################################################################
 # Verify that a newly created mif layer returns a non null layer definition
 
@@ -376,7 +366,6 @@ def test_ogr_mitab_12():
     ogrtest.quick_create_layer_def(lyr, [('AREA', ogr.OFTReal)])
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Verify that field widths and precisions are propagated correctly in TAB.
@@ -422,8 +411,6 @@ def test_ogr_mitab_13():
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.tab')
-
-    return 'success'
 
 ###############################################################################
 # Verify that field widths and precisions are propagated correctly in MIF.
@@ -473,8 +460,6 @@ def test_ogr_mitab_14():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.mif')
 
-    return 'success'
-
 ###############################################################################
 # Test .mif without .mid (#5141)
 
@@ -509,8 +494,6 @@ def test_ogr_mitab_15():
         pytest.fail()
     gdal.Unlink('/vsimem/nomid.mif')
 
-    return 'success'
-
 ###############################################################################
 # Test empty .mif
 
@@ -528,8 +511,6 @@ def test_ogr_mitab_16():
     ds = ogr.Open('tmp/empty.mif')
     assert ds is not None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
@@ -551,8 +532,6 @@ def test_ogr_mitab_17():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/wrk.mif')
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test EPSG:2154
@@ -586,8 +565,6 @@ def test_ogr_mitab_18():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_18.tab')
 
-    return 'success'
-
 ###############################################################################
 # Check that we correctly round coordinate to the appropriate precision
 # (https://github.com/mapgears/mitab/issues/2)
@@ -606,8 +583,7 @@ def test_ogr_mitab_19():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Check that we take into account the user defined bound file
@@ -746,8 +722,6 @@ Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 7
     gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
     os.unlink('tmp/mitab_bounds.txt')
 
-    return 'success'
-
 ###############################################################################
 # Create .tab without explicit field
 
@@ -775,8 +749,6 @@ def test_ogr_mitab_21():
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_21.tab')
-
-    return 'success'
 
 ###############################################################################
 # Test append in update mode
@@ -827,8 +799,6 @@ def test_ogr_mitab_22():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
 ###############################################################################
 # Test creating features then reading
 
@@ -857,8 +827,7 @@ def test_ogr_mitab_23():
 
         ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creating features then reading then creating again then reading
 
@@ -901,8 +870,7 @@ def test_ogr_mitab_24():
 
         ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that opening in update mode without doing any change does not alter
 # file
@@ -966,8 +934,7 @@ def test_ogr_mitab_25():
 
         ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test DeleteFeature()
 
@@ -1036,8 +1003,7 @@ def test_ogr_mitab_26():
 
             ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SetFeature()
 
@@ -1172,8 +1138,6 @@ def test_ogr_mitab_27():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1255,8 +1219,6 @@ def test_ogr_mitab_28():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
 
 ###############################################################################
 # Test updating a file with compressed geometries.
@@ -1309,8 +1271,6 @@ def test_ogr_mitab_29():
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/compr_symb_deleted_records.tab')
-
-    return 'success'
 
 ###############################################################################
 # Test SyncToDisk() in create mode
@@ -1396,8 +1356,6 @@ def test_ogr_mitab_30(update=0):
     ds = None
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
 ###############################################################################
 # Test SyncToDisk() in update mode
 
@@ -1422,8 +1380,6 @@ def test_ogr_mitab_32():
         f = lyr.GetFeature(2)
         assert f.GetField('a') == 4, update
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening and modifying a file created with MapInfo that consists of
@@ -1487,8 +1443,6 @@ def test_ogr_mitab_33():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/single_point_mapinfo.tab')
 
-    return 'success'
-
 ###############################################################################
 # Test updating a line that spans over several coordinate blocks
 
@@ -1532,8 +1486,6 @@ def test_ogr_mitab_34():
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
-
-    return 'success'
 
 ###############################################################################
 # Test SRS support
@@ -1736,8 +1688,6 @@ def test_ogr_mitab_35():
     wkt = srs.ExportToWkt()
     assert wkt == 'GEOGCS["unnamed",DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,-4,-5,-6,7]],PRIMEM["non-Greenwich",3],UNIT["degree",0.0174532925199433]]'
 
-    return 'success'
-
 ###############################################################################
 # Test opening and modifying a file with polygons created with MapInfo that consists of
 # a single object block, without index block
@@ -1778,8 +1728,6 @@ def test_ogr_mitab_36():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/polygon_without_index.tab')
 
-    return 'success'
-
 ###############################################################################
 # Simple testing of Seamless tables
 
@@ -1814,8 +1762,6 @@ def test_ogr_mitab_37():
     f = lyr.GetFeature(4294967297 * 2 + 1)
     assert f is None
 
-    return 'success'
-
 ###############################################################################
 # Open MIF with MID with TAB delimiter and empty first field (#5405)
 
@@ -1829,8 +1775,7 @@ def test_ogr_mitab_38():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read various geometry types from .mif
 
@@ -1854,8 +1799,7 @@ def test_ogr_mitab_39():
             f_ref.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read various geometry types from .mif but potentially truncated
 
@@ -1874,8 +1818,6 @@ def test_ogr_mitab_40():
                     pass
 
     gdal.Unlink('/vsimem/ogr_mitab_40.mif')
-
-    return 'success'
 
 ###############################################################################
 # Read various geometry types from .tab
@@ -1900,8 +1842,7 @@ def test_ogr_mitab_41():
             f_ref.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read various geometry types from .tab with block size = 32256
 
@@ -1925,8 +1866,7 @@ def test_ogr_mitab_42():
             f_ref.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creating tab with block size = 32256
 
@@ -1969,8 +1909,6 @@ def test_ogr_mitab_43():
     gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/all_geoms_block_32256.tab')
     gdal.Unlink('/vsimem/all_geoms_block_32768.dat')
 
-    return 'success'
-
 ###############################################################################
 # Test limitation on width and precision of numeric fields in creation (#6392)
 
@@ -1992,8 +1930,6 @@ def test_ogr_mitab_44():
     ds = None
 
     gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/ogr_mitab_44.mif')
-
-    return 'success'
 
 ###############################################################################
 # Test read/write MapInfo layers with encoding specified
@@ -2081,8 +2017,7 @@ def test_ogr_mitab_45():
 
         gdaltest.mapinfo_drv.DeleteDataSource(dsName)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test read MapInfo layers with encoding specified
 
@@ -2131,8 +2066,7 @@ def test_ogr_mitab_46():
                                          ' expected value: "' + expectedValue + '"\n'
                                          ' from dataset :' + dsName)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a dataset with a .ind file
 
@@ -2155,8 +2089,7 @@ def test_ogr_mitab_47():
     for ext in ('tab', 'dat', 'map', 'id'):
         gdal.Unlink('/vsimem/poly_indexed.' + ext)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test writing and reading LCC_1SP
 
@@ -2215,8 +2148,6 @@ def test_ogr_mitab_48():
 
     assert sr_got.IsSame(sr_expected) != 0
 
-    return 'success'
-
 ###############################################################################
 # Test reading an aspatial TAB file.
 
@@ -2232,8 +2163,6 @@ def test_ogr_mitab_49_aspatial():
     assert lyr.GetSpatialRef() is None
 
     assert lyr.GetExtent(can_return_null=True) is None
-
-    return 'success'
 
 ###############################################################################
 # Test creating an indexed field
@@ -2272,8 +2201,6 @@ def test_ogr_mitab_tab_field_index_creation():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
-    return 'success'
-
 ###############################################################################
 # Test reading a tab_view file
 
@@ -2297,8 +2224,6 @@ def test_ogr_mitab_tab_view():
         f.DumpReadable()
         pytest.fail('bad feature')
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -2342,8 +2267,6 @@ def test_ogr_mitab_style():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2368,8 +2291,6 @@ def test_ogr_mitab_tab_write_field_name_with_dot():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -2385,8 +2306,6 @@ def test_ogr_mitab_cleanup():
 
     gdaltest.mapinfo_ds = None
     gdaltest.mapinfo_drv.DeleteDataSource('tmp')
-
-    return 'success'
 
 
 gdaltest_list = [

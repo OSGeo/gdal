@@ -62,8 +62,7 @@ def test_asyncreader_1():
     for i, csum in enumerate(cs):
         assert csum == expected_cs[i], ('did not get expected checksum for band %d' % (i + 1))
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_asyncreader_1]
 

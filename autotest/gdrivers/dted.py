@@ -70,8 +70,6 @@ def test_dted_2():
 
     assert band1.DataType == gdal.GDT_Int16, 'Data type is not Int16!'
 
-    return 'success'
-
 ###############################################################################
 # Create simple copy and check.
 
@@ -115,8 +113,6 @@ def test_dted_5():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test a DTED Level 2 (made from a DTED Level 0)
 
@@ -138,8 +134,6 @@ def test_dted_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test a WGS72 georeferenced DTED
 
@@ -156,8 +150,6 @@ def test_dted_7():
 
     assert prj == 'GEOGCS["WGS 72",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4322"]]', \
         ('Projection does not match expected:\n%s' % prj)
-
-    return 'success'
 
 ###############################################################################
 # Test a file whose checksum is corrupted
@@ -182,8 +174,6 @@ def test_dted_8():
     # 49187 is the checksum of data is the DTED is read without checking its checksum
     # so we should not get this value
     assert chksum != 49187, 'DTED_VERIFY_CHECKSUM=YES has had no effect!'
-
-    return 'success'
 
 ###############################################################################
 # Test a DTED Level 1 above latitude 50 (made from a DTED Level 0)
@@ -219,8 +209,6 @@ def test_dted_9():
     chksum = band.Checksum()
 
     assert chksum == 36542, ('Wrong checksum. Checksum found %d' % chksum)
-
-    return 'success'
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -258,8 +246,6 @@ def test_dted_11():
 
     assert band1.DataType == gdal.GDT_Int16, 'Data type is not Int16!'
 
-    return 'success'
-
 ###############################################################################
 # Test a DTED file that begins with a HDR record, and not directly the UHL record (#2951)
 
@@ -268,8 +254,6 @@ def test_dted_12():
 
     ds = gdal.Open('data/w118n033_trunc.dt1')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test a DTED file that has only a few (sequential) columns. Derived from
@@ -320,8 +304,7 @@ def test_dted_cleanup():
         os.remove('tmp/n43.dt2')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_dted_1,

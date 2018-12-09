@@ -126,8 +126,6 @@ def test_ogr_ntf_1():
 
     ds.Destroy()
 
-    return 'success'
-
 
 ###############################################################################
 def test_ogr_ntf_2():
@@ -172,8 +170,6 @@ def test_ogr_ntf_2():
     assert feat.GetGeometryRef().ExportToWkt() == 'LINESTRING (275324 189274,275233 189114,275153 189048)'
 
     ds.Destroy()
-
-    return 'success'
 
 
 gdaltest_list = [

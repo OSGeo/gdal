@@ -90,8 +90,6 @@ def test_ogr_tiger_1():
     assert feat.MODULE == 'TGR01001' and feat.TLMINID == 2822718, \
         'got wrong TLIDRange attributes'
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -108,8 +106,6 @@ def test_ogr_tiger_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/cache/TGR01001')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test TIGER writing
@@ -216,8 +212,7 @@ def test_ogr_tiger_4():
 
         gdal.Unlink('/vsimem/tigertest/' + filename)
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -227,7 +222,6 @@ def test_ogr_tiger_cleanup():
         pytest.skip()
 
     ogrtest.tiger_ds = None
-    return 'success'
 
 
 gdaltest_list = [

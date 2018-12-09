@@ -65,8 +65,7 @@ def test_jp2lura_1():
         gdaltest.jp2lura_drv = None
         pytest.skip('Driver JP2Lura is registered, but issue with license')
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -87,8 +86,6 @@ def test_jp2lura_missing_license_num():
 
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -108,8 +105,6 @@ def test_jp2lura_invalid_license_num():
     gdal.SetConfigOption('LURA_LICENSE_NUM_2', old_num_2)
 
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -140,7 +135,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     if return_error_count:
         return (res.error_count, res.warning_count)
     if res.error_count == 0 and res.warning_count == 0:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -201,8 +196,6 @@ def test_jp2lura_3():
     ds = ogr.Open('data/int16.jp2')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test copying byte.jp2
 
@@ -262,8 +255,6 @@ def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
 
     assert cs == 50054, 'bad checksum'
 
-    return 'success'
-
 
 def test_jp2lura_4_vsimem():
     return test_jp2lura_4('/vsimem/jp2lura_4.jp2')
@@ -297,8 +288,6 @@ def test_jp2lura_6():
     ds.GetRasterBand(1).Checksum()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
@@ -330,8 +319,6 @@ def test_jp2lura_8():
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
-    return 'success'
-
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
@@ -348,8 +335,6 @@ def test_jp2lura_9():
         'geotransform differs from expected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test YCBCR420 creation option
@@ -372,8 +357,6 @@ def DISABLED_jp2lura_10():
 
     # Quite a bit of difference...
     assert maxdiff <= 12, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
@@ -410,8 +393,6 @@ def DISABLED_jp2lura_11():
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
-
-    return 'success'
 
 ###############################################################################
 # Check that PAM overrides internal georeferencing (#5279)
@@ -453,8 +434,6 @@ def test_jp2lura_12():
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_12.jp2')
 
     assert gt == (1000, 1, 0, 2000, 0, -1)
-
-    return 'success'
 
 ###############################################################################
 # Check that PAM overrides internal GCPs (#5279)
@@ -502,8 +481,6 @@ def test_jp2lura_13():
     assert len(gcps) == 1
     assert wkt.find('32631') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Check that we get GCPs even there's no projection info
 
@@ -515,8 +492,6 @@ def test_jp2lura_14():
 
     ds = gdal.Open('data/byte_2gcps.jp2')
     assert ds.GetGCPCount() == 2
-
-    return 'success'
 
 ###############################################################################
 # Test reading PixelIsPoint file (#5437)
@@ -550,8 +525,6 @@ def test_jp2lura_16():
     assert gt == gt_expected, \
         'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE'
 
-    return 'success'
-
 ###############################################################################
 # Test writing PixelIsPoint file (#5437)
 
@@ -580,8 +553,6 @@ def test_jp2lura_17():
 
     gdal.Unlink('/vsimem/jp2lura_17.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test when using the decode_area API when one dimension of the dataset is not a
 # multiple of 1024 (#5480)
@@ -604,8 +575,6 @@ def test_jp2lura_18():
 
     gdal.Unlink('/vsimem/jp2lura_18.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test reading file where GMLJP2 has nul character instead of \n (#5760)
 
@@ -618,8 +587,6 @@ def test_jp2lura_19():
     ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
     assert ds.GetProjectionRef() != ''
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Validate GMLJP2 content against schema
@@ -685,8 +652,6 @@ def test_jp2lura_20():
     gdal.Unlink('/vsimem/jp2lura_20.jp2')
 
     assert xmlvalidate.validate(gmljp2, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET')
-
-    return 'success'
 
 ###############################################################################
 # Test RGBA support
@@ -794,8 +759,7 @@ def test_jp2lura_22():
 
         assert maxdiff <= 0, 'Image too different from reference'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test NBITS support
 
@@ -823,8 +787,6 @@ def DISABLED_jp2lura_23():
     gdal.Unlink('/vsimem/jp2lura_23_2.jp2')
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # Test Grey+alpha support
@@ -871,8 +833,7 @@ def test_jp2lura_24():
         ds = None
         gdal.Unlink('/vsimem/jp2lura_24.jp2')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test multiband support
 
@@ -902,8 +863,6 @@ def test_jp2lura_25():
 
     assert maxdiff <= 0, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 # Test CreateCopy() from a JPEG2000 with a 2048x2048 tiling
 
@@ -925,8 +884,6 @@ def test_jp2lura_27():
     del out2_ds
     gdal.Unlink('/vsimem/jp2lura_27.jp2')
     gdal.Unlink('/vsimem/jp2lura_27.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test CODEBLOCK_WIDTH/_HEIGHT
@@ -1025,8 +982,6 @@ def test_jp2lura_28():
 
     gdal.Unlink('/vsimem/jp2lura_28.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test color table support
 
@@ -1049,8 +1004,6 @@ def test_jp2lura_30():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_30.jp2', src_ds)
     gdal.PopErrorHandler()
     assert out_ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test unusual band color interpretation order
@@ -1092,8 +1045,6 @@ def DISABLED_jp2lura_31():
     ds = None
     gdal.Unlink('/vsimem/jp2lura_31.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test crazy tile size
 
@@ -1114,8 +1065,6 @@ def DISABLED_jp2lura_33():
     out_ds = None
     gdal.Unlink('/vsimem/jp2lura_33.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a file whose dimensions are > 2^31-1
 
@@ -1129,8 +1078,6 @@ def test_jp2lura_34():
     ds = gdal.Open('data/dimensions_above_31bit.jp2')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1146,8 +1093,6 @@ def test_jp2lura_35():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test we cannot create files with more than 16384 bands
 
@@ -1162,8 +1107,6 @@ def test_jp2lura_36():
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_36.jp2', src_ds)
     gdal.PopErrorHandler()
     assert out_ds is None and gdal.VSIStatL('/vsimem/jp2lura_36.jp2') is None
-
-    return 'success'
 
 ###############################################################################
 # Test metadata reading & writing
@@ -1258,8 +1201,7 @@ def test_jp2lura_37():
 
         gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test non-EPSG SRS (so written with a GML dictionary)
 
@@ -1295,8 +1237,7 @@ def test_jp2lura_38():
     if do_validate:
         assert xmlvalidate.validate(crsdictionary, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
 
@@ -1365,8 +1306,6 @@ def test_jp2lura_39():
     assert ds.GetProjectionRef().find('4326') >= 0
     ds = None
     gdal.Unlink('/vsimem/jp2lura_39.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test we can parse GMLJP2 v2.0
@@ -1444,8 +1383,6 @@ def test_jp2lura_40():
     ds = None
     gdal.Unlink('/vsimem/jp2lura_40.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test USE_SRC_CODESTREAM=YES
 
@@ -1488,8 +1425,6 @@ def test_jp2lura_41():
     assert gdal.GetLastErrorMsg() != ''
     gdal.Unlink('/vsimem/jp2lura_41.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Get structure of a JPEG2000 file
 
@@ -1498,8 +1433,6 @@ def test_jp2lura_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
     assert ret is not None
-
-    return 'success'
 
 ###############################################################################
 # Test GMLJP2v2
@@ -1585,8 +1518,6 @@ def test_jp2lura_45():
 
     gdal.Unlink('/vsimem/jp2lura_45.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test writing & reading RPC in GeoJP2 box
 
@@ -1607,8 +1538,6 @@ def test_jp2lura_47():
 
     gdal.Unlink('/vsimem/jp2lura_47.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a dataset whose tile dimensions are larger than dataset ones
 
@@ -1623,8 +1552,6 @@ def test_jp2lura_48():
     assert (blockxsize, blockysize) == (20, 20)
     assert ds.GetRasterBand(1).Checksum() == 4610
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1645,8 +1572,6 @@ def test_jp2lura_online_1():
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1672,8 +1597,6 @@ def test_jp2lura_online_2():
     assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1704,8 +1627,6 @@ def test_jp2lura_online_3():
     # Difference between the image before and after compression
     assert maxdiff <= 17, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1735,8 +1656,6 @@ def test_jp2lura_online_4():
     # Difference between the image before and after compression
     assert maxdiff <= 10, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 # Try reading JP2Lura with color table
 
@@ -1755,8 +1674,6 @@ def test_jp2lura_online_5():
     assert ds.GetRasterBand(1).GetColorTable() is not None, \
         'Did not get expected color table'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Try reading YCbCr JP2Lura as RGB
@@ -1780,8 +1697,6 @@ def test_jp2lura_online_6():
     #    return 'fail'
     assert ds is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
@@ -1904,8 +1819,7 @@ def test_jp2lura_49():
         gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
         assert gdal.GetLastErrorMsg() != '', 'expected warning'
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test reading split IEEE-754 Float32
@@ -1979,8 +1893,6 @@ def test_jp2lura_51():
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test other data types
 
@@ -2014,8 +1926,6 @@ def test_jp2lura_52():
             (val, dt, fmt)
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_52.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test RATE and QUALITY
@@ -2062,8 +1972,6 @@ def test_jp2lura_53():
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test RasterIO edge cases
 
@@ -2093,15 +2001,11 @@ def test_jp2lura_54():
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_54.jp2')
 
-    return 'success'
-
 
 ###############################################################################
 def test_jp2lura_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return 'success'
 
 
 gdaltest_list = [

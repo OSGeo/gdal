@@ -68,8 +68,6 @@ def test_aigrid_2():
 
     assert band1.DataType == gdal.GDT_Byte, 'Data type is not Byte!'
 
-    return 'success'
-
 ###############################################################################
 # Verify the colormap, and nodata setting for test file.
 
@@ -84,8 +82,6 @@ def test_aigrid_3():
     cm = None
 
     assert ds.GetRasterBand(1).GetNoDataValue() == 255.0, 'Wrong nodata value.'
-
-    return 'success'
 ###############################################################################
 # Read test of simple byte reference data with data directory name in all uppercase
 
@@ -110,8 +106,6 @@ def test_aigrid_5():
 
     assert ds.GetRasterBand(1).GetNoDataValue() == 255.0, 'Wrong nodata value.'
 
-    return 'success'
-
 ###############################################################################
 # Verify dataset whose sta.adf is 24 bytes
 
@@ -123,8 +117,6 @@ def test_aigrid_6():
     assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 
     assert ds.GetRasterBand(1).GetMaximum() == 2.0, 'Wrong maximum'
-
-    return 'success'
 
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
@@ -168,7 +160,7 @@ def test_aigrid_online_1():
         rat = ds.GetRasterBand(1).GetDefaultRAT()
     except:
         print('Skipping RAT checking... OG Python bindings have no RAT API')
-        return 'success'
+        return
 
     assert rat is not None, 'No RAT found'
 
@@ -193,8 +185,6 @@ def test_aigrid_online_1():
     assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 
     assert ds.GetRasterBand(1).GetMaximum() == 3627.0, 'Wrong maximum'
-
-    return 'success'
 
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem

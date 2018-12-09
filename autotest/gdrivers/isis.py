@@ -158,8 +158,6 @@ def test_isis_4():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    return 'success'
-
 # Label+image creation + WRITE_BOUNDING_DEGREES=NO option
 
 
@@ -176,7 +174,6 @@ def test_isis_5():
     assert lbl.find('MinimumLongitude') < 0
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Detached label creation and COMMENT option
 
@@ -202,7 +199,6 @@ def test_isis_6():
     assert ds.GetRasterBand(1).Checksum() == 0
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Uncompressed GeoTIFF creation
 
@@ -235,8 +231,6 @@ def test_isis_7():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    return 'success'
-
 # Compressed GeoTIFF creation
 
 
@@ -260,7 +254,6 @@ def test_isis_8():
     assert ds.GetRasterBand(1).Checksum() == 0
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Tiled creation + EXTERNAL_FILENAME
 
@@ -282,7 +275,6 @@ def test_isis_9():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
     assert gdal.VSIStatL('/vsimem/foo.bin') is None
-    return 'success'
 
 # Tiled creation + regular GeoTIFF + EXTERNAL_FILENAME
 
@@ -302,7 +294,6 @@ def test_isis_10():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
     assert gdal.VSIStatL('/vsimem/foo.tif') is None
-    return 'success'
 
 # Tiled creation + compressed GeoTIFF
 
@@ -320,7 +311,6 @@ def test_isis_11():
     assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Multiband
 
@@ -336,7 +326,6 @@ def test_isis_12():
         assert cs == expected_cs, (i + 1, cs, expected_cs)
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Multiband tiled
 
@@ -354,7 +343,6 @@ def test_isis_13():
         assert cs == expected_cs, (i + 1, cs, expected_cs)
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Multiband with uncompressed GeoTIFF
 
@@ -371,7 +359,6 @@ def test_isis_14():
         assert cs == expected_cs, (i + 1, cs, expected_cs)
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Multiband with uncompressed tiled GeoTIFF
 
@@ -389,7 +376,6 @@ def test_isis_15():
         assert cs == expected_cs, (i + 1, cs, expected_cs)
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-    return 'success'
 
 # Test Create() without anything else
 
@@ -432,8 +418,7 @@ def test_isis_16():
                 ds = None
                 gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    return 'success'
-
+    
 # Test create copy through Create()
 
 
@@ -594,8 +579,6 @@ def test_isis_18():
 
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    return 'success'
-
 # Test gdal.Info() with json:ISIS3 metadata domain
 
 
@@ -608,8 +591,6 @@ def test_isis_19():
     ds = gdal.Open('data/isis3_detached.lbl')
     res = gdal.Info(ds, extraMDDomains=['json:ISIS3'])
     assert res.find('IsisCube') >= 0
-
-    return 'success'
 
 # Test gdal.Translate() subsetting and label preservation
 
@@ -625,8 +606,6 @@ def test_isis_20():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    return 'success'
-
 # Test gdal.Warp() and label preservation
 
 
@@ -641,8 +620,6 @@ def test_isis_21():
     assert lbl.find('AMadeUpValue') >= 0
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
-
-    return 'success'
 
 # Test source JSon use
 
@@ -722,8 +699,6 @@ def test_isis_22():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    return 'success'
-
 # Test nodata remapping
 
 
@@ -768,8 +743,7 @@ def test_isis_23():
         ds = None
         gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    return 'success'
-
+    
 
 def cancel_cbk(pct, msg, user_data):
     # pylint: disable=unused-argument
@@ -1106,8 +1080,6 @@ End""")
     # Delete would fail since ds is None
     gdal.Unlink('/vsimem/out.lbl')
 
-    return 'success'
-
 # Test CreateCopy() and scale and offset
 
 
@@ -1122,8 +1094,6 @@ def test_isis_25():
     assert ds.GetRasterBand(1).GetOffset() == 20
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
-
-    return 'success'
 
 # Test objects with same name
 
@@ -1200,8 +1170,6 @@ End_Object
     gdal.Unlink('/vsimem/in.lbl')
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
 
-    return 'success'
-
 # Test history
 
 
@@ -1271,8 +1239,6 @@ def test_isis_27():
     assert content.find('foo') >= 0
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
 
-    return 'success'
-
 # Test preservation of non-pixel sections
 
 
@@ -1309,7 +1275,7 @@ End""")
     fl = ds.GetFileList()
     if fl != ['/vsimem/in.lbl', '/vsimem/in_table']:
         print(fl)
-        return 'success'
+        return
     ds = None
 
     gdal.Translate('/vsimem/in_label.lbl', '/vsimem/in.lbl', format='ISIS3')
@@ -1366,7 +1332,6 @@ End""")
 
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/in_label.lbl')
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/in.lbl')
-    return 'success'
 
 # Test complete removal of history
 
@@ -1400,8 +1365,6 @@ def test_isis_29():
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/in.lbl')
 
-    return 'success'
-
 # Test Fill() on a GeoTIFF file
 
 
@@ -1417,8 +1380,6 @@ def test_isis_30():
 
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/test.lbl')
     assert cs == 1
-
-    return 'success'
 
 # Test correct working of block caching with a GeoTIFF file
 
@@ -1437,8 +1398,6 @@ def test_isis_31():
 
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/test.lbl')
     assert cs == 1
-
-    return 'success'
 
 
 gdaltest_list = [

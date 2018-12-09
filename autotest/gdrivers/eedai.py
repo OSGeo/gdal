@@ -61,8 +61,6 @@ def test_eedai_1():
     gdaltest.GOOGLE_APPLICATION_CREDENTIALS = gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS')
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
 
-    return 'success'
-
 ###############################################################################
 # Nominal case
 
@@ -337,8 +335,6 @@ def test_eedai_2():
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-    return 'success'
-
 ###############################################################################
 # Test OAuth2 with ServiceAccount
 
@@ -388,8 +384,6 @@ gwE6fxOLyJDxuWRf
         pytest.skip()
 
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test OAuth2 with GOOGLE_APPLICATION_CREDENTIALS
@@ -445,8 +439,6 @@ gwE6fxOLyJDxuWRf\n
         pytest.skip()
 
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Read credentials from simulated GCE instance
@@ -513,8 +505,6 @@ def test_eedai_gce_credentials():
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Request in PNG mode
@@ -648,8 +638,6 @@ def test_eedai_4():
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-    return 'success'
-
 ###############################################################################
 # Request in AUTO GTIFF mode
 
@@ -711,8 +699,6 @@ def test_eedai_geotiff():
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -744,8 +730,6 @@ def test_eedai_real_service():
     assert expected == res
     assert ds.ReadRaster(0, 0, 1, 1) is not None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -766,8 +750,6 @@ def test_eedai_cleanup():
 
     gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/image')
     gdal.RmdirRecursive('/vsimem/ee/')
-
-    return 'success'
 
 
 gdaltest_list = [

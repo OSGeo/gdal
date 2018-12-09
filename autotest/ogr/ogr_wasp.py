@@ -52,7 +52,7 @@ def test_ogr_wasp_create_ds():
     gdaltest.wasp_ds = wasp_drv.CreateDataSource('tmp.map')
 
     if gdaltest.wasp_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -102,8 +102,6 @@ def test_ogr_wasp_elevation_from_linestring_z():
         i += 1
 
     assert j == 10, ('nb of feature should be 10 and is %d' % j)
-
-    return 'success'
 
 ###############################################################################
 # Create elevation .map from linestrings z with simplification
@@ -162,8 +160,6 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
 
     assert j == 10, ('nb of feature should be 10 and is %d' % j)
 
-    return 'success'
-
 
 ###############################################################################
 # Create elevation .map from linestrings field
@@ -208,8 +204,7 @@ def test_ogr_wasp_elevation_from_linestring_field():
             j += 1
         i += 1
 
-    return 'success'
-
+    
 ###############################################################################
 # Create roughness .map from linestrings fields
 
@@ -261,8 +256,6 @@ def test_ogr_wasp_roughness_from_linestring_fields():
 
     assert j == 10, ('nb of feature should be 10 and is %d' % j)
 
-    return 'success'
-
 ###############################################################################
 # Create .map from polygons z
 
@@ -280,7 +273,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
 
     if layer is None:
         assert not ogrtest.have_geos(), 'unable to create layer'
-        return 'success'
+        return
 
     dfn = ogr.FeatureDefn()
 
@@ -320,7 +313,6 @@ def test_ogr_wasp_roughness_from_polygon_z():
 
     assert res == set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]), \
         'wrong values f=in boundaries'
-    return 'success'
 
 ###############################################################################
 # Create .map from polygons field
@@ -340,7 +332,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
 
     if layer is None:
         assert not ogrtest.have_geos(), 'unable to create layer'
-        return 'success'
+        return
 
     layer.CreateField(ogr.FieldDefn('roughness', ogr.OFTReal))
     layer.CreateField(ogr.FieldDefn('dummy', ogr.OFTString))
@@ -382,7 +374,6 @@ def test_ogr_wasp_roughness_from_polygon_field():
 
     assert res == set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]), \
         'wrong values f=in boundaries'
-    return 'success'
 
 ###############################################################################
 # Test merging of linestrings
@@ -403,7 +394,7 @@ def test_ogr_wasp_merge():
 
     if layer is None:
         assert not ogrtest.have_geos(), 'unable to create layer'
-        return 'success'
+        return
 
     dfn = ogr.FeatureDefn()
 
@@ -444,7 +435,6 @@ def test_ogr_wasp_merge():
     assert j == 6, ('there should be 6 boundaries and there are %d' % j)
 
     assert res == [(0, 1)] * 6, 'wrong values f=in boundaries'
-    return 'success'
 ###############################################################################
 # Read map file
 
@@ -467,7 +457,6 @@ def test_ogr_wasp_reading():
         i += 1
 
     assert i == 10
-    return 'success'
 ###############################################################################
 # Cleanup
 
@@ -476,7 +465,6 @@ def test_ogr_wasp_cleanup():
 
     wasp_drv = ogr.GetDriverByName('WAsP')
     wasp_drv.DeleteDataSource('tmp.map')
-    return 'success'
 
 
 gdaltest_list = [

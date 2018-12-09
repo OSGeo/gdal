@@ -82,8 +82,6 @@ def test_ogr_gml_fgd_1():
 
     assert feat.GetField('devDate') == '2015-01-07', 'Wrong attribute value'
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading Japanese FGD GML (v4) BldA file
@@ -112,8 +110,6 @@ def test_ogr_gml_fgd_2():
     assert not ogrtest.check_feature_geometry(feat, wkt), 'Wrong geometry'
 
     assert feat.GetField('devDate') == '2017-03-07', 'Wrong attribute value'
-
-    return 'success'
 
 ###############################################################################
 # List test cases

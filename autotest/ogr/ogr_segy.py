@@ -82,8 +82,6 @@ def test_ogr_segy_1():
     feat = lyr.GetNextFeature()
     assert feat is None
 
-    return 'success'
-
 ###############################################################################
 # Read ASCII header SEG-Y
 
@@ -96,10 +94,6 @@ def test_ogr_segy_2():
 
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
-
-    # TODO(schwehr): Test the values of fields and data.
-
-    return 'success'
 
 
 gdaltest_list = [

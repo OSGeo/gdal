@@ -95,8 +95,7 @@ def test_rasterize_1():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test rasterization with ALL_TOUCHED.
 
@@ -136,8 +135,7 @@ def test_rasterize_2():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Rasterization with BURN_VALUE_FROM.
 
@@ -188,8 +186,7 @@ def test_rasterize_3():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_3.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Rasterization with ATTRIBUTE.
 
@@ -243,8 +240,7 @@ def test_rasterize_4():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_4.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Rasterization with MERGE_ALG=ADD.
 
@@ -309,8 +305,7 @@ def test_rasterize_5():
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif', target_ds)
         pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test bug fix for #5580 (used to hang)
@@ -334,8 +329,6 @@ def test_rasterize_6():
     mask_ds.SetProjection(sr_wkt)
 
     gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1], options=["ALL_TOUCHED"])
-
-    return 'success'
 
 
 gdaltest_list = [

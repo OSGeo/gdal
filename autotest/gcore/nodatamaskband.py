@@ -91,8 +91,7 @@ def test_nodatamaskband_1():
                        0, 255, 255)
         assert data_ar == expected_ar, dt
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_nodatamaskband_1,

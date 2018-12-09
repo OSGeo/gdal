@@ -76,8 +76,6 @@ def test_jpeg_copy_icc():
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
 
@@ -114,8 +112,6 @@ def test_jpeg_copy_options_icc():
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading of 64K+ ICC profile in CreateCopy()
@@ -186,8 +182,6 @@ def test_jpeg_copy_icc_64K():
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
-
-    return 'success'
 
 ###############################################################################################
 

@@ -55,8 +55,6 @@ def test_ogr_elasticsearch_init():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
-    return 'success'
-
 ###############################################################################
 # Test writing into an nonexistent ElasticSearch datastore.
 
@@ -98,8 +96,6 @@ def test_ogr_elasticsearch_nonexistent_server():
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.Open('ES:/vsimem/fakeelasticsearch')
     assert ds is None, 'managed to open invalid ElasticSearch datastore.'
-
-    return 'success'
 
 ###############################################################################
 # Simple test
@@ -339,8 +335,6 @@ def test_ogr_elasticsearch_1():
     gdal.Unlink('/vsimem/map.txt')
     assert lyr is not None
 
-    return 'success'
-
 ###############################################################################
 # Geo_shape geometries
 
@@ -384,8 +378,6 @@ def test_ogr_elasticsearch_2():
     assert ret == 0
     feat = None
 
-    return 'success'
-
 ###############################################################################
 # Test bulk insert and layer name laundering
 
@@ -427,8 +419,6 @@ def test_ogr_elasticsearch_3():
     assert ret == 0
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test basic read functionality
@@ -971,8 +961,6 @@ def test_ogr_elasticsearch_4():
         ret = ds.DeleteLayer(0)
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # Write documents with non geojson structure
 
@@ -1207,8 +1195,6 @@ def test_ogr_elasticsearch_5():
     ret = lyr.SetFeature(f)
     assert ret == 0
 
-    return 'success'
-
 ###############################################################################
 # Test reading circle and envelope geometries
 
@@ -1304,8 +1290,7 @@ def test_ogr_elasticsearch_6():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test WRITE_MAPPING option
 
@@ -1336,8 +1321,6 @@ def test_ogr_elasticsearch_7():
     gdal.Unlink('/vsimem/map.txt')
 
     assert data == '{ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }'
-
-    return 'success'
 
 ###############################################################################
 # Test SRS support
@@ -1392,8 +1375,6 @@ def test_ogr_elasticsearch_8():
 """, "{}")
     ret = lyr.CreateFeature(f)
     assert ret == 0
-
-    return 'success'
 
 ###############################################################################
 # Test ElasticSearch 5.X
@@ -1500,8 +1481,6 @@ def test_ogr_elasticsearch_9():
 }""")
     f = lyr.GetNextFeature()
     assert f is not None
-
-    return 'success'
 
 ###############################################################################
 # Test SQL
@@ -2094,8 +2073,6 @@ def test_ogr_elasticsearch_10():
     assert f is not None
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test isnull and unset
 
@@ -2225,8 +2202,6 @@ def test_ogr_elasticsearch_11():
     f = None
     assert lyr.SyncToDisk() == 0
 
-    return 'success'
-
 ###############################################################################
 # Test authentication
 
@@ -2271,8 +2246,6 @@ def test_ogr_elasticsearch_authentication():
                      open_options=['USERPWD=user:pwd'])
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -2308,8 +2281,6 @@ def test_ogr_elasticsearch_cleanup():
     ogr_elasticsearch_delete_files()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-
-    return 'success'
 
 
 gdaltest_list = [

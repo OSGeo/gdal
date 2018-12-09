@@ -113,8 +113,6 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test direction creation of an non-compressed NITF file.
 
@@ -157,8 +155,6 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
             'Got wrong color interpretation.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify file created by nitf_4()
@@ -206,8 +202,6 @@ def test_nitf_8():
     assert md['NITF_BLOCKA_BLOCK_INSTANCE_01'] == '01' and md['NITF_BLOCKA_BLOCK_COUNT'] == '01' and md['NITF_BLOCKA_N_GRAY_01'] == '00000' and md['NITF_BLOCKA_L_LINES_01'] == '01000' and md['NITF_BLOCKA_LAYOVER_ANGLE_01'] == '000' and md['NITF_BLOCKA_SHADOW_ANGLE_01'] == '000' and md['NITF_BLOCKA_FRLC_LOC_01'] == '+41.319331+020.078400' and md['NITF_BLOCKA_LRLC_LOC_01'] == '+41.317083+020.126072' and md['NITF_BLOCKA_LRFC_LOC_01'] == '+41.281634+020.122570' and md['NITF_BLOCKA_FRFC_LOC_01'] == '+41.283881+020.074924', \
         'BLOCKA metadata has unexpected value.'
 
-    return 'success'
-
 ###############################################################################
 # Create and read a JPEG encoded NITF file.
 
@@ -230,8 +224,6 @@ def test_nitf_9():
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
     assert md['COMPRESSION'] == 'JPEG', 'Did not get expected compression value.'
-
-    return 'success'
 
 ###############################################################################
 # For esoteric reasons, createcopy from jpeg compressed nitf files can be
@@ -295,8 +287,6 @@ def test_nitf_12():
     assert segmentCount == '0', \
         'did not find expected SEGMENT_COUNT from metadata item.'
 
-    return 'success'
-
 
 ###############################################################################
 # Test creation of an NITF file in UTM Zone 11, Southern Hemisphere.
@@ -318,8 +308,6 @@ def test_nitf_13():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify previous file
 
@@ -340,8 +328,6 @@ def test_nitf_14():
         'Coordinate system not UTM Zone 11, Southern Hemisphere'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -388,8 +374,6 @@ def test_nitf_18():
 
     assert ds.RasterCount == 0
 
-    return 'success'
-
 ###############################################################################
 # Test BILEVEL (C1) decompression
 
@@ -414,8 +398,6 @@ def test_nitf_20():
     gdal.PopErrorHandler()
 
     assert ds is None
-
-    return 'success'
 
 
 ###############################################################################
@@ -442,8 +424,6 @@ def test_nitf_21():
     assert mdTEXT['DATA_0'] == 'A', 'did not find expected DATA_0 from metadata.'
 
     assert data0 == 'A', 'did not find expected DATA_0 from metadata item.'
-
-    return 'success'
 
 
 ###############################################################################
@@ -681,8 +661,6 @@ def test_nitf_29():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify we can write a file with BLOCKA TRE and read it back properly.
 
@@ -757,8 +735,6 @@ def test_nitf_30():
     gdal.GetDriverByName('NITF').Delete('/vsimem/nitf30_no_src_md.ntf')
     assert 'NITF_BLOCKA_BLOCK_INSTANCE_01' not in md, \
         'unexpectdly found BLOCKA metadata.'
-
-    return 'success'
 
 ###############################################################################
 # Verify we can write a file with a custom TRE and read it back properly.
@@ -851,7 +827,6 @@ with a newline."""
     ds = None
 
     gdal.GetDriverByName('NITF').Delete('tmp/nitf_35.ntf')
-    return 'success'
 
 ###############################################################################
 # Create and read a JPEG encoded NITF file (C3) with several blocks
@@ -897,8 +872,6 @@ def test_nitf_36():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Create and read a NITF file with 69999 bands
 
@@ -917,8 +890,6 @@ def test_nitf_37():
     ds = gdal.Open('tmp/nitf37.ntf')
     assert ds.RasterCount == 69999
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Create and read a NITF file with 999 images
@@ -990,8 +961,6 @@ def test_nitf_38():
     gdal.Unlink('tmp/nitf38.vrt')
     assert cs == expected_cs
 
-    return 'success'
-
 ###############################################################################
 # Create and read a JPEG encoded NITF file (M3) with several blocks
 
@@ -1016,8 +985,6 @@ def test_nitf_39():
     assert md['COMPRESSION'] == 'JPEG', 'Did not get expected compression value.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Create a 10 GB NITF file
@@ -1071,8 +1038,6 @@ def test_nitf_40():
     val = struct.unpack('B' * 1, bytes_read)[0]
     assert val == 123, ('Bad value at offset %d : %d' % (offset, val))
 
-    return 'success'
-
 
 ###############################################################################
 # Check reading a 12-bit JPEG compressed NITF
@@ -1107,8 +1072,7 @@ def test_nitf_41():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check creating a 12-bit JPEG compressed NITF
 
@@ -1134,8 +1098,6 @@ def test_nitf_42():
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 2385 and stats[2] <= 2386
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy() in IC=C8 with various JPEG2000 drivers
@@ -1210,8 +1172,6 @@ def test_nitf_44():
     assert ds.GetRasterBand(1).Checksum() == 57182
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Check overviews on a JPEG compressed subdataset
 
@@ -1235,8 +1195,6 @@ def test_nitf_45():
     assert cs == 1086, 'did not get expected checksum for overview of subdataset'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check overviews on a JPEG2000 compressed subdataset
@@ -1324,8 +1282,6 @@ def test_nitf_47():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Check building of standard overviews in place of rset overviews.
 
@@ -1365,8 +1321,7 @@ def test_nitf_48():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test TEXT and CGM creation options with CreateCopy() (#3376)
 
@@ -1396,20 +1351,18 @@ def test_nitf_49():
        'HEADER_0' not in md or md['HEADER_0'].find('ABC  ') == -1:
         gdaltest.post_reason('did not get expected TEXT metadata')
         print(md)
-        return 'success'
+        return
 
     md = ds2.GetMetadata('CGM')
     if 'SEGMENT_COUNT' not in md or md['SEGMENT_COUNT'] != '1' or \
        'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ':
         gdaltest.post_reason('did not get expected CGM metadata')
         print(md)
-        return 'success'
+        return
 
     src_ds = None
     ds = None
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # Test TEXT and CGM creation options with Create() (#3376)
@@ -1454,18 +1407,16 @@ def test_nitf_50():
        'HEADER_0' not in md or md['HEADER_0'].find('ABC  ') == -1:
         gdaltest.post_reason('did not get expected TEXT metadata')
         print(md)
-        return 'success'
+        return
 
     md = ds.GetMetadata('CGM')
     if 'SEGMENT_COUNT' not in md or md['SEGMENT_COUNT'] != '1' or \
        'SEGMENT_0_DATA' not in md or md['SEGMENT_0_DATA'] != 'XYZ':
         gdaltest.post_reason('did not get expected CGM metadata')
         print(md)
-        return 'success'
+        return
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading very small images with NBPP < 8 or NBPP == 12
@@ -1505,8 +1456,7 @@ def test_nitf_51():
                     print('xsize = %d, nbpp = %d' % (xsize, nbpp))
                     pytest.fail('did not get expected data')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading GeoSDE TREs
 
@@ -1529,8 +1479,6 @@ def test_nitf_52():
 
     assert gt == (100000.0, 10.0, 0.0, 5000000.0, 0.0, -10.0), \
         'did not get expected geotransform'
-
-    return 'success'
 
 ###############################################################################
 # Test reading UTM MGRS
@@ -1564,8 +1512,6 @@ def test_nitf_53():
     assert gt == (205000.0, 10000.0, 0.0, 5445000.0, 0.0, -10000.0), \
         'did not get expected geotransform'
 
-    return 'success'
-
 ###############################################################################
 # Test reading RPC00B
 
@@ -1583,8 +1529,6 @@ def test_nitf_54():
     ds = None
 
     assert md is not None and 'HEIGHT_OFF' in md
-
-    return 'success'
 
 ###############################################################################
 # Test reading ICHIPB
@@ -1604,8 +1548,6 @@ def test_nitf_55():
 
     assert md is not None and 'ICHIP_SCALE_FACTOR' in md
 
-    return 'success'
-
 ###############################################################################
 # Test reading USE00A
 
@@ -1623,8 +1565,6 @@ def test_nitf_56():
     ds = None
 
     assert md is not None and 'NITF_USE00A_ANGLE_TO_NORTH' in md
-
-    return 'success'
 
 ###############################################################################
 # Test reading GEOLOB
@@ -1645,10 +1585,9 @@ def test_nitf_57():
     if gt != (-180.0, 1.0, 0.0, 90.0, 0.0, -1.0):
         gdaltest.post_reason('did not get expected geotransform')
         print(gt)
-        return 'success'
+        return
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading STDIDC
 
@@ -1666,8 +1605,6 @@ def test_nitf_58():
     ds = None
 
     assert md is not None and 'NITF_STDIDC_ACQUISITION_DATE' in md
-
-    return 'success'
 
 ###############################################################################
 # Test reading IMRFCA and IMASDA
@@ -1721,8 +1658,6 @@ def test_nitf_read_IMRFCA_IMASDA():
     gdal.Unlink(tmpfile)
     assert md == {}
 
-    return 'success'
-
 ###############################################################################
 # Test georeferencing through .nfw and .hdr files
 
@@ -1745,8 +1680,6 @@ def test_nitf_59():
     assert gt == (149999.5, 1.0, 0.0, 4500000.5, 0.0, -1.0), \
         'did not get expected geotransform'
 
-    return 'success'
-
 ###############################################################################
 # Test reading CADRG polar tile georeferencing (#2940)
 
@@ -1768,8 +1701,7 @@ def test_nitf_60():
     for i in range(6):
         assert abs(gt[i] - ref_gt[i]) <= 1e-6, 'did not get expected geotransform'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading TRE from DE segment
 
@@ -1786,8 +1718,6 @@ def test_nitf_61():
     assert md is not None and 'RSMDCA' in md and 'RSMECA' in md and 'RSMPCA' in md and 'RSMIDA' in md
 
     assert xml_tre.find('<tre name="RSMDCA"') != -1, 'did not get expected xml:TRE'
-
-    return 'success'
 
 ###############################################################################
 # Test creating & reading image comments
@@ -1810,8 +1740,7 @@ def test_nitf_62():
         print("'%s'" % got_comments)
         pytest.fail('did not get expected comments')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test NITFReadImageLine() and NITFWriteImageLine() when nCols < nBlockWidth (#3551)
 
@@ -1848,8 +1777,6 @@ def test_nitf_63():
 
     assert cs1 == 0 and cs2 == 14186 and cs3 == 15301, \
         ('did not get expected checksums : (%d, %d, %d) instead of (0, 14186, 15301)' % (cs1, cs2, cs3))
-
-    return 'success'
 
 ###############################################################################
 # Test SDE_TRE creation option
@@ -1903,8 +1830,6 @@ def test_nitf_64():
     gdal.Unlink('/vsimem/nitf_64.tif')
     gdal.Unlink('/vsimem/nitf_64.ntf')
 
-    return 'success'
-
 ###############################################################################
 # Test creating an image with block_width = image_width > 8192 (#3922)
 
@@ -1923,8 +1848,6 @@ def test_nitf_65():
 
     assert block_xsize == 10000
 
-    return 'success'
-
 ###############################################################################
 # Test creating an image with block_height = image_height > 8192 (#3922)
 
@@ -1942,8 +1865,6 @@ def test_nitf_66():
     gdal.Unlink('/vsimem/nitf_66.ntf')
 
     assert block_ysize == 10000
-
-    return 'success'
 
 ###############################################################################
 # Test that we don't use scanline access in illegal cases (#3926)
@@ -1967,8 +1888,6 @@ def test_nitf_67():
 
     assert cs == 4672
 
-    return 'success'
-
 ###############################################################################
 # Test reading NITF_METADATA domain
 
@@ -1982,8 +1901,6 @@ def test_nitf_68():
     ds = gdal.Open('data/rgb.ntf')
     assert ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA')
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test SetGCPs() support
@@ -2054,8 +1971,6 @@ def test_nitf_69():
        abs(got_gcps[3].GCPX - 2) <= 1e-5 and abs(got_gcps[3].GCPY - 48) <= 1e-5), \
         'wrong gcp'
 
-    return 'success'
-
 ###############################################################################
 # Create and read a JPEG encoded NITF file with NITF dimensions != JPEG dimensions
 
@@ -2086,8 +2001,6 @@ def test_nitf_70():
     gdal.GetDriverByName('GTiff').Delete('tmp/nitf_70.tif')
 
     assert cs == cs_ref
-
-    return 'success'
 
 ###############################################################################
 # Test reading ENGRDA TRE (#6285)
@@ -2137,8 +2050,6 @@ def test_nitf_71():
 """
     assert data == expected_data
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading RPC00B
 
@@ -2158,8 +2069,7 @@ def compare_rpc(src_md, md):
         elif float(src_md[key]) != float(md[key]):
             print(md)
             pytest.fail('fail: %s value is not the one expected' % key)
-    return 'success'
-
+    
 
 def test_nitf_72():
 
@@ -2417,8 +2327,6 @@ def test_nitf_72():
         ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
     assert ds is None, 'fail: expected failure'
 
-    return 'success'
-
 ###############################################################################
 # Test case for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1525
 
@@ -2428,8 +2336,7 @@ def test_nitf_73():
     with gdaltest.error_handler():
         gdal.Open('data/oss_fuzz_1525.ntf')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test cases for CCLSTA
 #  - Simple case
@@ -2463,8 +2370,6 @@ def test_nitf_74():
 </tres>
 """
     assert data == expected_data
-
-    return 'success'
 
 #  - TABLE AG.2 case
 
@@ -2660,8 +2565,6 @@ def test_nitf_75():
 
     assert data == expected_data
 
-    return 'success'
-
 ###############################################################################
 # Test reading C4 compressed file
 
@@ -2671,8 +2574,6 @@ def test_nitf_read_C4():
     ds = gdal.Open('data/RPFTOC01.ON2')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 53599
-
-    return 'success'
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -2706,8 +2607,6 @@ def test_nitf_online_2():
     md = ds.GetMetadata('SUBDATASETS')
     assert 'SUBDATASET_1_NAME' in md, 'missing SUBDATASET_1_NAME metadata'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test ARIDPCM (C2) image
@@ -2795,8 +2694,7 @@ def test_nitf_online_7():
                                      % filename)
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test JPEG-compressed multi-block mono-band image with a data mask subheader (IC=M3, IMODE=B)
 
@@ -2873,8 +2771,7 @@ def test_nitf_online_10():
     for item in tab:
         assert mdCGM[item[0]] == item[1], ('wrong value for %s.' % item[0])
 
-    return 'success'
-
+    
 ###############################################################################
 # 5 text files
 
@@ -2900,8 +2797,6 @@ def test_nitf_online_11():
         'did not find expected DATA_3 from metadata.'
     assert mdTEXT['DATA_4'] == 'This is test text file 05.\r\n', \
         'did not find expected DATA_4 from metadata.'
-
-    return 'success'
 
 
 ###############################################################################
@@ -2961,8 +2856,7 @@ def test_nitf_online_13():
         assert md[item[0]] == item[1], ('wrong value for %s, got %s instead of %s.'
                                  % (item[0], md[item[0]], item[1]))
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Check reading a 12-bit JPEG compressed NITF (multi-block)
@@ -2998,8 +2892,7 @@ def test_nitf_online_14():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a IC=C8 NITF file with the various JPEG2000 drivers
 
@@ -3198,8 +3091,6 @@ def test_nitf_online_18():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test CADRG tile crossing dateline (#3383)
 
@@ -3234,8 +3125,6 @@ def test_nitf_online_20():
     assert md['NITF_RPF_CurrencyDate'] == '19941201' and md['NITF_RPF_ProductionDate'] == '19980511' and md['NITF_RPF_SignificantDate'] == '19850305', \
         'RPF attribute metadata not captured (#3413)'
 
-    return 'success'
-
 ###############################################################################
 # Check that we can read NITF header located in STREAMING_FILE_HEADER DE
 # segment when header at beginning of file is incomplete
@@ -3253,8 +3142,6 @@ def test_nitf_online_21():
     # If we get NS3321A, it means we are not exploiting the header from the STREAMING_FILE_HEADER DE segment
     assert md['NITF_OSTAID'] == 'I_3321A', \
         'did not get expected OSTAID value'
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #3002 (reconcile NITF file with LA segments)
@@ -3334,8 +3221,7 @@ def test_nitf_online_22():
         assert md[item[0]] == item[1], ('(4) wrong value for %s, got %s instead of %s.'
                                  % (item[0], md[item[0]], item[1]))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a M4 compressed file (fixed for #3848)
 
@@ -3378,8 +3264,6 @@ def test_nitf_online_24():
        xml_tre.find('<tre name="ACCPOB"') == -1 or \
        xml_tre.find('<tre name="SOURCB"') == -1)), 'did not get expected xml:TRE'
 
-    return 'success'
-
 ###############################################################################
 # Test reading a HRE file
 
@@ -3398,8 +3282,6 @@ def test_nitf_online_25():
     ds = None
 
     assert xml_tre.find('<tre name="PIAPRD"') != -1, 'did not get expected xml:TRE'
-
-    return 'success'
 
 ###############################################################################
 # Cleanup.
@@ -3553,8 +3435,7 @@ def test_nitf_cleanup():
     except RuntimeError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_nitf_1,

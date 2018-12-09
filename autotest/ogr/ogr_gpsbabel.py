@@ -62,8 +62,6 @@ def test_ogr_gpsbabel_init():
 
     ogrtest.have_gpsbabel = True
 
-    return 'success'
-
 ###############################################################################
 # Test reading with explicit subdriver
 
@@ -78,8 +76,6 @@ def test_ogr_gpsbabel_1():
 
     assert ds.GetLayerCount() == 2
 
-    return 'success'
-
 ###############################################################################
 # Test reading with implicit subdriver
 
@@ -93,8 +89,6 @@ def test_ogr_gpsbabel_2():
     assert ds is not None
 
     assert ds.GetLayerCount() == 2
-
-    return 'success'
 
 ###############################################################################
 # Test writing
@@ -136,8 +130,6 @@ def test_ogr_gpsbabel_3():
     assert (not (res.find('$GPRMC') == -1 or \
        res.find('$GPGGA') == -1 or \
        res.find('$GPGSA') == -1)), 'did not get expected result'
-
-    return 'success'
 
 
 gdaltest_list = [

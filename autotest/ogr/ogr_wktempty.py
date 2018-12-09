@@ -139,8 +139,6 @@ def test_ogr_wktempty_test_partial_empty_geoms():
     assert geom.ExportToWkt() == wkt, \
         ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
-    return 'success'
-
 
 gdaltest_list = [test_ogr_wktempty_test_partial_empty_geoms]
 

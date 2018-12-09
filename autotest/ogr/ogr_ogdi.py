@@ -97,8 +97,6 @@ def test_ogr_ogdi_1():
     assert ogrtest.check_feature_geometry(feat, ref_geom) == 0, \
         feat.GetGeometryRef().ExportToWkt()
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -117,8 +115,6 @@ def test_ogr_ogdi_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_OGDI_LAUNDER_LAYER_NAMES YES -ro "' + url_name + '" markersp_bnd contourl_elev polbnda_bnd extractp_ind')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test GetFeature()
@@ -155,8 +151,6 @@ def test_ogr_ogdi_3():
     assert feat10.Equal(feat10_ref), 'features not equal'
 
     assert feat11.Equal(feat11_ref), 'features not equal'
-
-    return 'success'
 
 ###############################################################################
 # Extract of full dataset
@@ -200,8 +194,6 @@ def test_ogr_ogdi_4():
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'did not get expected layer count'
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -221,8 +213,6 @@ def test_ogr_ogdi_5():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -232,7 +222,6 @@ def test_ogr_ogdi_cleanup():
         pytest.skip()
 
     ogrtest.ogdi_ds = None
-    return 'success'
 
 
 gdaltest_list = [

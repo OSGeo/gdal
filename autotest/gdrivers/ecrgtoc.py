@@ -115,8 +115,6 @@ def test_ecrgtoc_1():
 
     assert cs == 5966, 'bad checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test overviews
 
@@ -133,8 +131,6 @@ def test_ecrgtoc_2():
     assert len(filelist) == 4, 'did not get expected filelist'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening subdataset
@@ -173,8 +169,6 @@ def test_ecrgtoc_3():
     gdal.Unlink('/vsimem/TOC.xml.1.ovr')
     gdal.Unlink('/vsimem/clfc/2/000000009s0013.lf2')
     gdal.Unlink('/vsimem/clfc/2/000000009t0013.lf2')
-
-    return 'success'
 
 ###############################################################################
 # Test dataset with 3 subdatasets
@@ -275,8 +269,6 @@ def test_ecrgtoc_4():
 
     gdal.Unlink('/vsimem/TOC.xml')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -305,8 +297,6 @@ def test_ecrgtoc_online_1():
 
     filelist = ds.GetFileList()
     assert len(filelist) == 7, 'did not get expected filelist'
-
-    return 'success'
 
 
 gdaltest_list = [

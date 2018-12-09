@@ -67,8 +67,6 @@ def test_hfa_write_desc():
 
     gdal.GetDriverByName('HFA').Delete('tmp/test_desc.img')
 
-    return 'success'
-
 ###############################################################################
 # test writing 4 bit files.
 
@@ -88,8 +86,6 @@ def test_hfa_write_4bit():
     ds = None
 
     drv.Delete('tmp/4bit.img')
-
-    return 'success'
 
 ###############################################################################
 # test writing 4 bit files compressed.
@@ -112,8 +108,6 @@ def test_hfa_write_4bit_compressed():
 
     drv.Delete('tmp/4bitc.img')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a file with a nodata value, and fetching otherwise unread
 # blocks and verifying they are the nodata value.  (#2427)
@@ -135,8 +129,6 @@ def test_hfa_write_nd_invalid():
 
     drv.Delete('tmp/ndinvalid.img')
 
-    return 'success'
-
 ###############################################################################
 # Test updating .rrd overviews in place (#2524).
 
@@ -151,8 +143,6 @@ def test_hfa_update_overviews():
 
     assert result == 0, 'BuildOverviews() failed.'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test cleaning external overviews.
@@ -180,8 +170,6 @@ def test_hfa_clean_external_overviews():
 
     gdal.GetDriverByName('HFA').Delete('tmp/small.img')
 
-    return 'success'
-
 ###############################################################################
 # Test writing high frequency data (#2525).
 
@@ -196,8 +184,6 @@ def test_hfa_bug_2525():
     ds = None
 
     drv.Delete('tmp/test_hfa.img')
-
-    return 'success'
 
 ###############################################################################
 # Test building external overviews with HFA_USE_RRD=YES
@@ -228,8 +214,6 @@ def test_hfa_use_rrd():
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('tmp/small.img')
-
-    return 'success'
 
 
 ###############################################################################
@@ -304,8 +288,6 @@ def test_hfa_update_existing_aux_overviews():
 
     gdal.SetConfigOption('USE_RRD', None)
 
-    return 'success'
-
 ###############################################################################
 # Test writing invalid WKT (#5258)
 
@@ -363,8 +345,6 @@ def test_hfa_write_invalid_wkt():
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('/vsimem/hfa_write_invalid_wkt.img')
-
-    return 'success'
 
 ###############################################################################
 # Get the driver, and verify a few things about it.

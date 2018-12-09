@@ -56,7 +56,6 @@ def test_rraster_1(filename='data/byte_rraster.grd', check_prj=None):
     md = ds.GetMetadata()
     assert md == {'CREATOR': "R package 'raster'", 'CREATED': '2016-06-25 17:32:47'}
     assert ds.GetRasterBand(1).GetDescription() == 'byte'
-    return 'success'
 
 ###############################################################################
 
@@ -140,8 +139,6 @@ def test_rraster_rgba(filename='data/rgba_rraster.grd'):
     }
     assert _is_dict_included_in_dict(info, expected_info)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -159,8 +156,7 @@ def test_rraster_rgba_copy():
             print(creationOptions)
             return ret
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -178,8 +174,6 @@ def test_rraster_ct_rgb(filename='data/byte_rraster_ct_rgb.grd'):
                    'type': 'Byte'}]
     }
     assert _is_dict_included_in_dict(info, expected_info)
-
-    return 'success'
 
 ###############################################################################
 
@@ -211,8 +205,6 @@ def test_rraster_ct_rgba(filename='data/byte_rraster_ct_rgba.grd'):
                    'type': 'Byte'}]
     }
     assert _is_dict_included_in_dict(info, expected_info)
-
-    return 'success'
 
 ###############################################################################
 
@@ -305,8 +297,6 @@ def test_rraster_rat(filename='data/byte_rraster_rat.grd'):
     }
     assert _is_dict_included_in_dict(info, expected_info)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -339,8 +329,6 @@ def test_rraster_signedbyte():
     gdal.GetDriverByName('RRASTER').Delete(filename)
     gdal.GetDriverByName('RRASTER').Delete(filename2)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -364,8 +352,6 @@ def test_rraster_datatypes():
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -386,8 +372,6 @@ def test_rraster_nodata_and_metadata():
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -405,8 +389,6 @@ def test_rraster_update():
     ds = None
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
-
-    return 'success'
 
 ###############################################################################
 
@@ -428,8 +410,6 @@ def test_rraster_colorinterpretation():
     ds = None
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
-
-    return 'success'
 
 
 gdaltest_list = [

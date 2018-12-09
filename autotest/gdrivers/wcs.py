@@ -67,8 +67,7 @@ def test_wcs_1():
     gdaltest.wcs_ds = None
     if gdaltest.wcs_drv is None:
         pytest.skip()
-    return 'success'
-
+    
 ###############################################################################
 # Open the GeoServer WCS service.
 
@@ -85,7 +84,7 @@ def wcs_2():
     gdaltest.wcs_ds = gdal.Open('tmp/geoserver.wcs')
 
     if gdaltest.wcs_ds is not None:
-        return 'success'
+        return
     pytest.fail('open failed.')
 
 ###############################################################################
@@ -113,8 +112,6 @@ def test_wcs_3():
     assert gdaltest.wcs_ds.GetRasterBand(1).DataType == gdal.GDT_Byte, \
         'wrong band data type'
 
-    return 'success'
-
 ###############################################################################
 # Check checksum
 
@@ -126,8 +123,6 @@ def test_wcs_4():
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum()
     assert cs == 58765, ('Wrong checksum: ' + str(cs))
-
-    return 'success'
 
 ###############################################################################
 # Open the service using XML as filename.
@@ -152,8 +147,6 @@ def wcs_5():
         'wrong size or bands'
 
     ds = None
-
-    return 'success'
 ###############################################################################
 # Open the srtm plus service.
 
@@ -170,7 +163,7 @@ def old_wcs_2():
     gdaltest.wcs_ds = gdal.Open('tmp/srtmplus.wcs')
 
     if gdaltest.wcs_ds is not None:
-        return 'success'
+        return
     pytest.fail('open failed.')
 
 ###############################################################################
@@ -197,8 +190,6 @@ def old_wcs_3():
     assert gdaltest.wcs_ds.GetRasterBand(1).DataType >= gdal.GDT_Int16, \
         'wrong band data type'
 
-    return 'success'
-
 ###############################################################################
 # Check checksum for a small region.
 
@@ -210,8 +201,6 @@ def old_wcs_4():
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
     assert cs == 10469, ('Wrong checksum: ' + str(cs))
-
-    return 'success'
 
 ###############################################################################
 # Open the srtm plus service using XML as filename.
@@ -232,8 +221,6 @@ def old_wcs_5():
         'wrong size or bands'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -518,7 +505,7 @@ def test_wcs_6():
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
 
-    return 'success' if wcs_6_ok else 'fail'
+    assert wcs_6_ok
 
 ###############################################################################
 
@@ -545,8 +532,7 @@ def test_wcs_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_wcs_1,

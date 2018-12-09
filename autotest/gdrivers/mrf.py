@@ -160,8 +160,7 @@ def test_mrf_overview_near_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
+    
 
 def test_mrf_overview_near_with_nodata_fact_2():
 
@@ -189,8 +188,7 @@ def test_mrf_overview_near_with_nodata_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
+    
 
 def test_mrf_overview_avg_fact_2():
 
@@ -218,8 +216,7 @@ def test_mrf_overview_avg_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
+    
 
 def test_mrf_overview_avg_with_nodata_fact_2():
 
@@ -248,8 +245,7 @@ def test_mrf_overview_avg_with_nodata_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
+    
 
 def test_mrf_overview_near_fact_3():
 
@@ -271,8 +267,6 @@ def test_mrf_overview_near_fact_3():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
 
 def test_mrf_overview_avg_fact_3():
 
@@ -293,8 +287,6 @@ def test_mrf_overview_avg_fact_3():
     gdal.Unlink('/vsimem/out.idx')
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
-
-    return 'success'
 
 
 def test_mrf_overview_avg_with_nodata_fact_3():
@@ -324,8 +316,7 @@ def test_mrf_overview_avg_with_nodata_fact_3():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
+    
 
 def test_mrf_overview_partial_block():
 
@@ -344,8 +335,6 @@ def test_mrf_overview_partial_block():
     gdal.Unlink('/vsimem/out.idx')
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
-
-    return 'success'
 
 
 def test_mrf_overview_near_implicit_level():
@@ -377,8 +366,6 @@ def test_mrf_overview_near_implicit_level():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
 
 def test_mrf_overview_external():
 
@@ -400,8 +387,6 @@ def test_mrf_overview_external():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
 
 def test_mrf_lerc_nodata():
 
@@ -421,8 +406,6 @@ def test_mrf_lerc_nodata():
     gdal.Unlink('/vsimem/out.lrc')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
 
 def test_mrf_lerc_with_huffman():
 
@@ -439,8 +422,6 @@ def test_mrf_lerc_with_huffman():
     gdal.Unlink('/vsimem/out.idx')
     gdal.Unlink('/vsimem/out.lrc')
     gdal.Unlink('/vsimem/out.til')
-
-    return 'success'
 
 
 def test_mrf_cached_source():
@@ -555,8 +536,6 @@ def test_mrf_cached_source():
     gdal.Unlink('tmp/cloning.ppg')
     gdal.Unlink('tmp/cloning.til')
 
-    return 'success'
-
 
 def test_mrf_versioned():
 
@@ -611,8 +590,6 @@ def test_mrf_versioned():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
-
 
 def test_mrf_cleanup():
 
@@ -642,8 +619,6 @@ def test_mrf_cleanup():
     gdal.Unlink('/vsimem/out.idx')
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
-
-    return 'success'
 
 
 gdaltest_list = [

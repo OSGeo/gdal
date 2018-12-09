@@ -127,8 +127,6 @@ def test_ogr_odbc_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -145,8 +143,6 @@ def test_ogr_odbc_2():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -156,8 +152,6 @@ def test_ogr_odbc_cleanup():
         pytest.skip()
 
     gdal.Unlink('tmp/odbc.mdb')
-
-    return 'success'
 
 
 gdaltest_list = [

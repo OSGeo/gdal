@@ -53,8 +53,6 @@ def test_ogr2ogr_lib_1():
     assert feat0.GetFieldAsString('PRFEDEA') == '35043411', \
         'Did not get expected value for field PRFEDEA'
 
-    return 'success'
-
 ###############################################################################
 # Test SQLStatement
 
@@ -80,8 +78,6 @@ def test_ogr2ogr_lib_2():
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     gdal.Unlink('/vsimem/sql.txt')
 
-    return 'success'
-
 ###############################################################################
 # Test WHERE
 
@@ -97,8 +93,6 @@ def test_ogr2ogr_lib_3():
     ds = gdal.VectorTranslate('', srcDS, format='Memory', where='@/vsimem/filter.txt')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
     gdal.Unlink('/vsimem/filter.txt')
-
-    return 'success'
 
 ###############################################################################
 # Test accessMode
@@ -128,8 +122,6 @@ def test_ogr2ogr_lib_4():
     ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test dstSRS
 
@@ -139,8 +131,6 @@ def test_ogr2ogr_lib_5():
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', dstSRS='EPSG:4326')
     assert str(ds.GetLayer(0).GetSpatialRef()).find('1984') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test selFields
@@ -179,8 +169,6 @@ def test_ogr2ogr_lib_7():
     ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/poly.shp')
 
-    return 'success'
-
 ###############################################################################
 # Add explicit source layer name
 
@@ -195,8 +183,6 @@ def test_ogr2ogr_lib_8():
     ds = gdal.VectorTranslate('', srcDS, format='Memory', layers='poly')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
-    return 'success'
-
 ###############################################################################
 # Test -segmentize
 
@@ -208,8 +194,6 @@ def test_ogr2ogr_lib_9():
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     feat = ds.GetLayer(0).GetNextFeature()
     assert feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 36
-
-    return 'success'
 
 ###############################################################################
 # Test overwrite with a shapefile
@@ -228,7 +212,6 @@ def test_ogr2ogr_lib_10():
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp')
-    return 'success'
 
 ###############################################################################
 # Test filter
@@ -243,8 +226,7 @@ def test_ogr2ogr_lib_11():
     else:
         assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 5
 
-    return 'success'
-
+    
 ###############################################################################
 # Test callback
 
@@ -263,8 +245,6 @@ def test_ogr2ogr_lib_12():
 
     assert tab[0] == 1.0, 'Bad percentage'
 
-    return 'success'
-
 ###############################################################################
 # Test callback with failure
 
@@ -282,8 +262,6 @@ def test_ogr2ogr_lib_13():
         ds = gdal.VectorTranslate('', '../ogr/data/poly.shp', format='Memory', callback=mycallback_with_failure)
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test internal wrappers
 
@@ -296,8 +274,7 @@ def test_ogr2ogr_lib_14():
     except RuntimeError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test non existing zfield
 
@@ -309,8 +286,6 @@ def test_ogr2ogr_lib_15():
         ds = gdal.VectorTranslate('', srcDS, format='Memory', zField='foo')
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPolygon
-
-    return 'success'
 
 ###############################################################################
 # Test -dim
@@ -346,8 +321,7 @@ def test_ogr2ogr_lib_16():
             print(wkt_before)
             pytest.fail(dim)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test gdal.VectorTranslate(dst_ds, ...) without accessMode specified (#6612)
 
@@ -360,8 +334,6 @@ def test_ogr2ogr_lib_17():
     assert lyr.GetFeatureCount() == 10
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -limit
 
@@ -373,8 +345,6 @@ def test_ogr2ogr_lib_18():
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -addFields + -select
@@ -403,8 +373,6 @@ def test_ogr2ogr_lib_19():
         f.DumpReadable()
         pytest.fail()
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -436,8 +404,6 @@ def test_ogr2ogr_lib_20():
     ds = None
     gdal.Unlink('/vsimem/out.gpkg')
 
-    return 'success'
-
 
 ###############################################################################
 # Verify -append and -select options are an invalid combination
@@ -465,8 +431,6 @@ def test_ogr2ogr_lib_21():
     assert gdal.GetLastErrorNo() == gdalconst.CPLE_IllegalArg, \
         'expected use of -select and -append together to be invalid'
 
-    return 'success'
-
 
 ###############################################################################
 
@@ -486,8 +450,6 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     ds = None
 
     gdal.Unlink(tmpfilename)
-
-    return 'success'
 
 gdaltest_list = [
     test_ogr2ogr_lib_1,

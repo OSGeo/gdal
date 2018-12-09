@@ -100,7 +100,6 @@ def test_ignfheightasciigrid_description_multiword():
     ds = gdal.OpenEx(filename)
     desc = ds.GetMetadataItem('DESCRIPTION')
     assert desc == 'MULTI WORD'
-    return 'success'
 
 
 def test_ignfheightasciigrid_invalid():
@@ -146,8 +145,7 @@ def test_ignfheightasciigrid_invalid():
         with gdaltest.error_handler():
             assert not gdal.OpenEx(filename, gdal.OF_RASTER), content
         gdal.Unlink(filename)
-    return 'success'
-
+    
 
 def test_ignfheightasciigrid_huge():
 
@@ -163,7 +161,6 @@ def test_ignfheightasciigrid_huge():
     ds = gdal.OpenEx(filename, gdal.OF_RASTER)
     gdal.Unlink(filename)
     assert ds is None
-    return 'success'
 
 
 def test_ignfheightasciigrid_gra():
@@ -175,7 +172,6 @@ def test_ignfheightasciigrid_gra():
 
     ds = gdal.OpenEx('data/ignfheightasciigrid.gra', gdal.OF_RASTER)
     assert ds.GetRasterBand(1).GetNoDataValue() == 9999
-    return 'success'
 
 
 def test_ignfheightasciigrid_gra_invalid():
@@ -192,8 +188,7 @@ def test_ignfheightasciigrid_gra_invalid():
         with gdaltest.error_handler():
             assert not gdal.OpenEx(filename, gdal.OF_RASTER), content
         gdal.Unlink(filename)
-    return 'success'
-
+    
 
 
 gdaltest_list = [

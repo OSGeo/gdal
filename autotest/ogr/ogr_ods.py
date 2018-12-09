@@ -95,8 +95,7 @@ def ogr_ods_check(ds):
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic tests
 
@@ -181,8 +180,7 @@ def test_ogr_ods_kspread_1():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test OGR_ODS_HEADERS = DISABLE
 
@@ -201,8 +199,6 @@ def test_ogr_ods_2():
     assert lyr.GetFeatureCount() == 3
 
     gdal.SetConfigOption('OGR_ODS_HEADERS', None)
-
-    return 'success'
 
 ###############################################################################
 # Test OGR_ODS_FIELD_TYPES = STRING
@@ -223,8 +219,6 @@ def test_ogr_ods_3():
 
     gdal.SetConfigOption('OGR_ODS_FIELD_TYPES', None)
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -242,8 +236,6 @@ def test_ogr_ods_4():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.ods')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test write support
@@ -310,8 +302,6 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
     assert res == expected_res, ('did not get expected result: %s' % res)
 
-    return 'success'
-
 ###############################################################################
 # Test update support
 
@@ -352,8 +342,6 @@ def test_ogr_ods_7():
 
     os.unlink(filepath)
 
-    return 'success'
-
 ###############################################################################
 # Test Integer64
 
@@ -388,8 +376,6 @@ def test_ogr_ods_8():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_ods_8.ods')
-
-    return 'success'
 
 ###############################################################################
 # Test DateTime with milliseconds
@@ -432,8 +418,6 @@ def test_ogr_ods_9():
 
     gdal.Unlink('/vsimem/ogr_ods_9.ods')
 
-    return 'success'
-
 ###############################################################################
 # Test Boolean
 
@@ -470,8 +454,6 @@ def test_ogr_ods_boolean():
     ds = None
 
     gdal.Unlink(out_filename)
-
-    return 'success'
 
 
 gdaltest_list = [

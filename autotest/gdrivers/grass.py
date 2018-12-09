@@ -45,8 +45,7 @@ def test_grass_1():
     if gdaltest.grass_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read existing simple 1 band GRASS dataset.
 

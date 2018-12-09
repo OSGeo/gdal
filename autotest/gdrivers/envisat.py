@@ -105,8 +105,6 @@ class EnvisatTestBase(object):
         assert (ds.RasterXSize, ds.RasterYSize) == self.size, \
             ('Bad size. Expected %s, got %s' % (self.size, (ds.RasterXSize, ds.RasterYSize)))
 
-        return 'success'
-
     def test_envisat_2(self):
         if not self.download_file():
             pytest.skip()
@@ -116,8 +114,6 @@ class EnvisatTestBase(object):
 
         assert ds.GetRasterBand(1).Checksum() == self.checksum, \
             ('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-
-        return 'success'
 
     def test_envisat_3(self):
         # Regression test for #3160 and #3709.
@@ -136,8 +132,7 @@ class EnvisatTestBase(object):
             else:
                 d[lp] = (gcp.GCPX, gcp.GCPY, gcp.GCPZ)
 
-        return 'success'
-
+        
     def test_envisat_4(self):
         # test number of bands
 
@@ -151,8 +146,6 @@ class EnvisatTestBase(object):
         assert ds is not None
 
         assert ds.RasterCount >= mds_num, 'Not all bands have been detected'
-
-        return 'success'
 
     def test_envisat_5(self):
         # test metadata in RECORDS domain
@@ -168,8 +161,6 @@ class EnvisatTestBase(object):
 
         assert product[:3] in ('ASA', 'SAR', 'MER') or not record_md, \
             'Unexpected metadata in the "RECORDS" domain.'
-
-        return 'success'
 
 ###############################################################################
 #
@@ -193,8 +184,6 @@ class TestEnvisatASAR(EnvisatTestBase):
         product = ds.GetMetadataItem('MPH_PRODUCT')
 
         assert product[:3] in ('ASA', 'SAR'), 'Wrong sensor ID.'
-
-        return 'success'
 
     def test_envisat_asar_2(self):
         # test metadata in RECORDS domain
@@ -232,8 +221,7 @@ class TestEnvisatASAR(EnvisatTestBase):
                         ('No "%s" or "%s" key in "RECORDS" domain.' %
                             (key0, key1))
 
-        return 'success'
-
+        
 ###############################################################################
 #
 
@@ -257,8 +245,6 @@ class TestEnvisatMERIS(EnvisatTestBase):
 
         assert product[:3] in ('MER',), 'Wrong sensor ID.'
 
-        return 'success'
-
     def test_envisat_meris_2(self):
         # test metadata in RECORDS domain
 
@@ -281,8 +267,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
                 ('No "%s" or "%s" key in "RECORDS" domain.' %
                     (key0, key1))
 
-        return 'success'
-
+        
     def test_envisat_meris_3(self):
         # test Flag bands
 
@@ -329,8 +314,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
         else:
             pytest.fail('Invalid product level: %s.' % level)
 
-        return 'success'
-
+        
     def test_envisat_meris_4(self):
         # test DEM corrections (see #5423)
 
@@ -364,4 +348,4 @@ class TestEnvisatMERIS(EnvisatTestBase):
                     print(r)
                     pytest.fail('Wrong GCP coordinates.')
 
-        return 'success'
+        

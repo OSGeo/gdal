@@ -176,8 +176,7 @@ def test_rmf_11():
                   (i, ovr_band.Checksum())
             pytest.fail(msg)
 
-    return 'success'
-
+    
 ###############################################################################
 # Check file open with cucled header offsets .
 
@@ -268,8 +267,6 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
 
     src_ds = None
     os.remove(test_ds_name)
-
-    return 'success'
 
 ###############################################################################
 # Build overviews on newly created RSW file
@@ -454,8 +451,6 @@ def test_rmf_25():
 
     test_ds = None
     os.remove(test_ds_name)
-
-    return 'success'
 ###############################################################################
 # Unit write test
 
@@ -496,8 +491,6 @@ def test_rmf_26():
     test_ds = None
     os.remove(test_ds_name)
 
-    return 'success'
-
 ###############################################################################
 # Test read JPEG compressed RMF dataset
 
@@ -526,8 +519,6 @@ def test_rmf_27():
     assert cs == cs1 or cs == cs2, ('Invalid checksum %s expected %s or %s.' %
                              (str(cs), str(cs1), str(cs2)))
 
-    return 'success'
-
 
 ###############################################################################
 # Check compression metadata
@@ -543,8 +534,6 @@ def test_rmf_28a():
         ('"COMPRESSION" value is "%s" but expected "LZW"' %
                               md['COMPRESSION'])
 
-    return 'success'
-
 
 def test_rmf_28b():
 
@@ -555,8 +544,6 @@ def test_rmf_28b():
     assert md['COMPRESSION'] == 'RMF_DEM', \
         ('"COMPRESSION" value is "%s" but expected "RMF_DEM"' %
                               md['COMPRESSION'])
-
-    return 'success'
 
 
 ###############################################################################
@@ -589,8 +576,6 @@ def test_rmf_29():
     assert str(sr.GetAuthorityCode(None)) == '3388', ('EPSG code is %s expected 3388.' %
                              str(sr.GetAuthorityCode(None)))
 
-    return 'success'
-
 
 ###############################################################################
 # Check interleaved access
@@ -609,7 +594,6 @@ def test_rmf_30():
           ds.GetRasterBand(3).Checksum()]
     assert cs == expected_cs, ('Invalid checksum %s expected %s.' %
                              (str(cs), str(expected_cs)))
-    return 'success'
 
 
 ###############################################################################
@@ -649,7 +633,6 @@ def test_rmf_31c():
     assert cs == expected_cs1 or cs == expected_cs2, \
         ('Invalid checksum %s expected %s or %s.' %
                              (str(cs), str(expected_cs1), str(expected_cs2)))
-    return 'success'
 
 
 def test_rmf_31d():

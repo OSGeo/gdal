@@ -46,8 +46,7 @@ def test_webp_1():
     if gdaltest.webp_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Open() test
 
@@ -61,8 +60,6 @@ def test_webp_2():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 21464 or cs == 21450 or cs == 21459, \
         'did not get expected checksum on band 1'
-
-    return 'success'
 
 ###############################################################################
 # CreateCopy() test
@@ -84,8 +81,6 @@ def test_webp_3():
     # 21502 is for libwebp 0.3.0
     assert cs1 == 21464 or cs1 == 21502 or cs1 == 21695 or cs1 == 21700, \
         'did not get expected checksum on band 1'
-
-    return 'success'
 
 ###############################################################################
 # CreateCopy() on RGBA
@@ -114,8 +109,6 @@ def test_webp_4():
 
     assert cs4 == 10807, 'did not get expected checksum on band 4'
 
-    return 'success'
-
 ###############################################################################
 # CreateCopy() on RGBA with lossless compression
 
@@ -141,8 +134,6 @@ def test_webp_5():
         'did not get expected checksum on band 1'
 
     assert cs4 == 10807, 'did not get expected checksum on band 4'
-
-    return 'success'
 
 
 gdaltest_list = [

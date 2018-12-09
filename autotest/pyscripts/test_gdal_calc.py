@@ -85,8 +85,6 @@ def test_gdal_calc_py_1():
     ds2 = None
     ds3 = None
 
-    return 'success'
-
 ###############################################################################
 # test simple formulas
 
@@ -118,8 +116,6 @@ def test_gdal_calc_py_2():
     ds2 = None
     ds3 = None
 
-    return 'success'
-
 
 ###############################################################################
 # test --allBands option (simple copy)
@@ -144,8 +140,6 @@ def test_gdal_calc_py_3():
     assert ds.GetRasterBand(4).Checksum() == 10807, 'band 4 wrong checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # test --allBands option (simple calc)
@@ -184,8 +178,6 @@ def test_gdal_calc_py_4():
     assert ds2.GetRasterBand(3).Checksum() == 10621, 'ds2 band 3 wrong checksum'
 
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # test python interface, basic copy
@@ -228,8 +220,6 @@ def test_gdal_calc_py_5():
     ds2 = None
     ds3 = None
 
-    return 'success'
-
 ###############################################################################
 # test nodata
 
@@ -258,8 +248,6 @@ def test_gdal_calc_py_6():
     assert cs == 4673
     result = ds.GetRasterBand(1).ComputeRasterMinMax()
     assert result == (90, 255)
-
-    return 'success'
 
 ###############################################################################
 # test --optfile
@@ -319,8 +307,6 @@ def test_gdal_calc_py_7():
     ds3 = None
     ds4 = None
 
-    return 'success'
-
 def test_gdal_calc_py_cleanup():
 
     lst = ['tmp/test_gdal_calc_py.tif',
@@ -352,8 +338,7 @@ def test_gdal_calc_py_cleanup():
         except OSError:
             pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_calc_py_1,

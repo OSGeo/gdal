@@ -70,7 +70,6 @@ def test_paux_3():
 def test_paux_cleanup():
     gdaltest.clean_tmp()
     gdal.Unlink('/vsimem/byte.tif.tst.aux.xml')
-    return 'success'
 
 
 gdaltest_list = [

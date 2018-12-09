@@ -108,8 +108,6 @@ def test_bt_cleanup():
     gdal.Unlink('tmp/int32.tif.prj')
     gdal.Unlink('tmp/float32.tif.prj')
 
-    return 'success'
-
 
 gdaltest_list = [
     test_bt_1,

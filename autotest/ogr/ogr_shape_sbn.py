@@ -98,8 +98,6 @@ def search_all_features(lyr):
 
     assert fc == fc_ref, ('layer %s: expected %d. got %d' % (lyr.GetName(), fc_ref, fc))
 
-    return 'success'
-
 ###############################################################################
 # Test
 
@@ -126,8 +124,7 @@ def test_ogr_shape_sbn_1():
         lyr = ds.GetLayer(i)
         ret = search_all_features(lyr)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test
 

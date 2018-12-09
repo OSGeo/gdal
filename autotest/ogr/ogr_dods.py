@@ -68,8 +68,7 @@ def ogr_dods_1():
     if gdaltest.dods_profiles is None:
         gdaltest.dods_ds = None
         pytest.fail('profiles layer missing, likely AIS stuff not working.')
-    return 'success'
-
+    
 ###############################################################################
 # Read a single feature from the profiles layer and verify a few things.
 #
@@ -96,8 +95,7 @@ def ogr_dods_2():
         feat.Destroy()
         pytest.fail('got more than expected number of features.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read the normalized form of the same profile, and verify some values.
 #
@@ -134,8 +132,7 @@ def ogr_dods_3():
         feat.Destroy()
         pytest.fail('got more than expected number of features.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read the "lines" from from the same server and verify some values.
 #
@@ -165,8 +162,7 @@ def ogr_dods_4():
         feat.Destroy()
         pytest.fail('got more than expected number of features.')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Simple 1D Grid.
@@ -190,8 +186,6 @@ def ogr_dods_5():
     tr = ogrtest.check_features_against_list(lat_lyr, 'latitude', expect)
     assert tr != 0
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -206,8 +200,6 @@ def ogr_dods_cleanup():
     gdaltest.dods_normalized = None
     gdaltest.dods_ds.Destroy()
     gdaltest.dods_ds = None
-
-    return 'success'
 
 
 gdaltest_list = []

@@ -108,8 +108,6 @@ def test_virtualmem_1():
     ar_bsq = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test write mode
 
@@ -137,8 +135,6 @@ def test_virtualmem_2():
     ds = None
 
     assert cs == 57182
-
-    return 'success'
 
 ###############################################################################
 # Test virtual mem auto with a raw driver
@@ -185,8 +181,7 @@ def test_virtualmem_3():
 
         gdal.GetDriverByName('EHdr').Delete(tmpfile)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test virtual mem auto with GTiff
 
@@ -253,8 +248,7 @@ def test_virtualmem_4():
 
         gdal.GetDriverByName('GTiff').Delete(tmpfile)
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_virtualmem_1,
                  test_virtualmem_2,

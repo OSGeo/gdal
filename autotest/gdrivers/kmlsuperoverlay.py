@@ -89,8 +89,6 @@ def test_kmlsuperoverlay_3():
     shutil.rmtree('tmp/0')
     shutil.rmtree('tmp/1')
 
-    return 'success'
-
 ###############################################################################
 # Test overviews
 
@@ -184,8 +182,6 @@ def test_kmlsuperoverlay_4():
     gdal.Unlink("/vsimem/src.vrt")
     gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
 
-    return 'success'
-
 ###############################################################################
 # Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
 
@@ -252,8 +248,6 @@ def test_kmlsuperoverlay_5():
     shutil.rmtree('tmp/1')
     os.remove('tmp/tmp.kml')
 
-    return 'success'
-
 ###############################################################################
 # Test raster KML with alternate structure (such as http://opentopo.sdsc.edu/files/Haiti/NGA_Haiti_LiDAR2.kmz))
 
@@ -274,8 +268,6 @@ def test_kmlsuperoverlay_6():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 61070
 
-    return 'success'
-
 ###############################################################################
 # Test raster KML with single Overlay (such as https://trac.osgeo.org/gdal/ticket/6712)
 
@@ -292,8 +284,6 @@ def test_kmlsuperoverlay_7():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 30111
     assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
-
-    return 'success'
 
 ###############################################################################
 # Test that a raster with lots of blank space doesn't have unnecessary child
@@ -394,8 +384,6 @@ def test_kmlsuperoverlay_8():
     shutil.rmtree('tmp/3')
     os.remove('tmp/tmp.kml')
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -408,8 +396,6 @@ def test_kmlsuperoverlay_cleanup():
     gdal.Unlink('/vsimem/0')
     gdal.Unlink('/vsimem/kmlout.kml')
     gdal.Unlink('/vsimem/kmlout.kmz')
-
-    return 'success'
 
 
 gdaltest_list = [

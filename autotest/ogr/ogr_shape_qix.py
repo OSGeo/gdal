@@ -71,8 +71,6 @@ def check_qix_non_overlapping_geoms(lyr):
     fc = lyr.GetFeatureCount()
     assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -213,8 +211,6 @@ def check_qix_random_geoms(lyr):
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
     assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
-
-    return 'success'
 
 ###############################################################################
 

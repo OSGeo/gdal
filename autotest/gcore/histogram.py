@@ -51,8 +51,6 @@ def test_histogram_1():
 
     assert hist == exp_hist, 'did not get expected histogram.'
 
-    return 'success'
-
 ###############################################################################
 # Fetch histogram with specified sampling, using keywords.
 
@@ -65,8 +63,6 @@ def test_histogram_2():
     exp_hist = [10, 52, 115, 219, 371, 493, 825, 1077, 1279, 1302, 1127, 783, 625, 462, 331, 929]
 
     assert hist == exp_hist, 'did not get expected histogram.'
-
-    return 'success'
 
 ###############################################################################
 # try on a different data type with out of range values included.
@@ -82,8 +78,6 @@ def test_histogram_3():
     exp_hist = [0, 0, 0, 0, 0, 1, 0, 1, 1, 3, 3, 2, 0, 5, 3, 4, 0, 1, 1, 2, 3]
 
     assert hist == exp_hist, 'did not get expected histogram.'
-
-    return 'success'
 
 ###############################################################################
 # try on a different data type without out of range values included.
@@ -104,8 +98,6 @@ def test_histogram_4():
 
     gdal.Unlink('data/int32_withneg.grd.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test GetDefaultHistogram() on the file.
 
@@ -123,8 +115,6 @@ def test_histogram_5():
 
     gdal.Unlink('data/utmsmall.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test GetDefaultHistogram( force = 0 ) on a JPG file (#3304)
 
@@ -137,8 +127,6 @@ def test_histogram_6():
     assert hist is None, 'did not get expected histogram.'
     ds = None
     os.unlink('tmp/albania.jpg')
-
-    return 'success'
 
 
 gdaltest_list = [

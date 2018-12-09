@@ -79,8 +79,7 @@ def test_derived_test1():
                 import pprint
                 pprint.pprint("Expected projection: " + str(expected_prj) + ", got: " + str(gt))
                 pytest.fail()
-    return 'success'
-
+    
 
 def test_derived_test2():
     filename = "../gcore/data/cint_sar.tif"
@@ -127,8 +126,7 @@ def test_derived_test2():
                 pprint.pprint("Expected checksum " + str(expected_cs[key]) + ", got " + str(cs))
                 pytest.fail()
 
-    return 'success'
-
+    
 # Error cases
 
 
@@ -159,8 +157,7 @@ def test_derived_test3():
         with gdaltest.error_handler():
             ds.GetRasterBand(1).Checksum()
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_derived_test1,

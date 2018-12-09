@@ -65,8 +65,7 @@ def test_sieve_1():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Try eight connected.
 
@@ -95,8 +94,7 @@ def test_sieve_2():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Do a sieve resulting in unmergable polygons.
 
@@ -126,8 +124,7 @@ def test_sieve_3():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Try the bug 2634 simplified data.
 
@@ -156,8 +153,7 @@ def test_sieve_4():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 
 ###############################################################################
 # Same as sieve_1, but we provide a mask band
@@ -187,8 +183,7 @@ def test_sieve_5():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Performance test. When increasing the 'size' parameter, performance
 # should stay roughly linear with the number of pixels (i.e. size^2)
@@ -226,8 +221,7 @@ def test_sieve_6():
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test with nodata
 
@@ -282,8 +276,7 @@ NODATA_value 0
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Test propagation in our search of biggest neighbour
 
@@ -330,8 +323,7 @@ cellsize     60.000000000000
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_sieve_1,

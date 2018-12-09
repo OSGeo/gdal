@@ -67,7 +67,6 @@ def has_write_support():
 def test_ecw_init():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
-    return 'success'
 
 ###############################################################################
 # Verify we have the driver.
@@ -103,7 +102,6 @@ def test_ecw_1():
 
     # we set ECW to not resolve projection and datum strings to get 3.x behavior.
     gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
-    return 'success'
 
 ###############################################################################
 # Verify various information about our test image.
@@ -133,8 +131,6 @@ def test_ecw_2():
     assert abs(geotransform[0] - 467498.5) <= 0.1 and abs(geotransform[1] - 16.5475) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 5077883.2825) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -16.5475) <= 0.001, \
         'geotransform differs from expected'
 
-    return 'success'
-
 ###############################################################################
 # Verify that an write the imagery out to a new file.
 
@@ -157,8 +153,6 @@ def test_ecw_3():
             pytest.skip()
 
     gdaltest.b_ecw_has_write_support = True
-
-    return 'success'
 
 ###############################################################################
 # Verify various information about our generated image.
@@ -194,8 +188,6 @@ def test_ecw_4():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Now try writing a JPEG2000 compressed version of the same with the ECW driver
 
@@ -210,8 +202,6 @@ def test_ecw_5():
     version = ds_out.GetMetadataItem('VERSION')
     assert version == '1', 'bad VERSION'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify various information about our generated image.
@@ -256,8 +246,6 @@ def test_ecw_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Write the same image to NITF.
 
@@ -270,8 +258,6 @@ def test_ecw_7():
     drv = gdal.GetDriverByName('NITF')
     drv.CreateCopy('tmp/ecw_7.ntf', ds, options=['IC=C8', 'TARGET=75'], strict=0)
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify various information about our generated image.
@@ -300,8 +286,6 @@ def test_ecw_8():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Try writing 16bit JP2 file directly using Create().
 
@@ -327,8 +311,6 @@ def test_ecw_9():
                        buf_type=gdal.GDT_Int16)
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify previous 16bit file.
 
@@ -352,10 +334,6 @@ def test_ecw_10():
     geotransform = ds.GetGeoTransform()
     assert abs(geotransform[0] - 100) <= 0.1 and abs(geotransform[1] - 0.1) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 30) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -0.1) <= 0.001, \
         'geotransform differs from expected'
-
-    # should check the projection, but I'm too lazy just now.
-
-    return 'success'
 
 ###############################################################################
 # Test direct creation of an NITF/JPEG2000 file.
@@ -384,8 +362,6 @@ def test_ecw_11():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify previous file
 
@@ -410,8 +386,6 @@ def test_ecw_12():
         'Got wrong color interpretation.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # This is intended to verify that the ECWDataset::RasterIO() special case
@@ -443,8 +417,6 @@ def test_ecw_13():
     assert checksums == (19253, 17848, 19127), \
         'Expected checksums do match expected checksums'
 
-    return 'success'
-
 ###############################################################################
 # Write out image with GCPs.
 
@@ -456,8 +428,6 @@ def test_ecw_14():
     ds = gdal.Open('data/rgb_gcp.vrt')
     gdaltest.jp2ecw_drv.CreateCopy('tmp/rgb_gcp.jp2', ds)
     ds = None
-
-    return 'success'
 ###############################################################################
 # Verify various information about our generated image.
 
@@ -479,8 +449,6 @@ def test_ecw_15():
         'GCPs wrong.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Open byte.jp2
@@ -538,8 +506,6 @@ def test_ecw_17():
     # Quite a bit of difference...
     assert maxdiff <= 6, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
@@ -592,8 +558,6 @@ def test_ecw_19():
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
-    return 'success'
-
 ###############################################################################
 # Confirm that we have an overview for this image and that the statistics
 # are as expected.
@@ -628,8 +592,6 @@ def test_ecw_20():
                              'expected(%g,%g)' % (mean, stddev, exp_mean,
                                                   exp_stddev))
 
-    return 'success'
-
 ###############################################################################
 # This test is intended to go through an optimized data path (likely
 # one big interleaved read) in the CreateCopy() instead of the line by
@@ -659,8 +621,6 @@ def test_ecw_21():
     assert abs(mean - exp_mean) <= 0.5 and abs(stddev - exp_stddev) <= 0.5, \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
-    return 'success'
-
 ###############################################################################
 # This tests reading of georeferencing and coordinate system from within an
 # ECW file.
@@ -677,8 +637,6 @@ def test_ecw_22():
     wkt = ds.GetProjectionRef()
 
     assert wkt == expected_wkt, 'did not get expected SRS.'
-
-    return 'success'
 
 ###############################################################################
 # This tests overriding the coordinate system from an .aux.xml file, while
@@ -710,8 +668,7 @@ def test_ecw_23():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we can alter geotransform on existing ECW
 
@@ -756,8 +713,7 @@ def test_ecw_24():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetProjection())
 
@@ -814,8 +770,7 @@ def test_ecw_25():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetMetadataItem())
 
@@ -875,8 +830,7 @@ def test_ecw_26():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
@@ -893,8 +847,6 @@ def test_ecw_27():
         'geotransform differs from expected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check picking use case
@@ -920,11 +872,6 @@ def test_ecw_28():
     import struct
     struct.unpack('B' * 3, multiband_data)
     struct.unpack('B' * 3, data1 + data2 + data3)
-
-    # Due to the nature of ECW, reading one band or several bands does not give
-    # the same results.
-
-    return 'success'
 
 ###############################################################################
 # Test supersampling
@@ -1014,8 +961,6 @@ def test_ecw_30():
 
     assert data_readraster == data_readblock
 
-    return 'success'
-
 ###############################################################################
 # Test async reader interface ( SDK >= 4.x )
 
@@ -1058,8 +1003,6 @@ def test_ecw_31():
 
     assert async_buf == ref_buf, 'async_buf != ref_buf'
 
-    return 'success'
-
 ###############################################################################
 # ECW SDK 3.3 has a bug with the ECW format when we query the
 # number of bands of the dataset, but not in the "natural order".
@@ -1099,8 +1042,6 @@ def test_ecw_32():
     data_vrt = vrt_ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
 
     assert data_321 == data_vrt
-
-    return 'success'
 
 ###############################################################################
 # Test heuristics that detect successive band reading pattern
@@ -1154,8 +1095,6 @@ def test_ecw_33():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Check bugfix for #5262
 
@@ -1191,8 +1130,6 @@ def test_ecw_33_bis():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that an write the imagery out to a new ecw file. Source file is 16 bit.
 
@@ -1219,8 +1156,6 @@ def test_ecw_34():
     assert got_data == ref_data
     assert version == '3', 'bad VERSION'
 
-    return 'success'
-
 ###############################################################################
 # Verify that an write the imagery out to a new JP2 file. Source file is 16 bit.
 
@@ -1241,7 +1176,6 @@ def test_ecw_35():
     ds = None
 
     assert got_data == ref_data
-    return 'success'
 
 ###############################################################################
 # Make sure that band descriptions are preserved for version 3 ECW files.
@@ -1299,8 +1233,6 @@ def test_ecw_36():
         ('Band 3 color interpretation should be Green but is : ' + gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
 
     dsr = None
-
-    return 'success'
 ###############################################################################
 # Make sure that band descriptions are preserved for version 2 ECW files when
 # color space set implicitly to sRGB.
@@ -1337,8 +1269,6 @@ def test_ecw_37():
 
     dsr = None
 
-    return 'success'
-
 ###############################################################################
 # Check opening unicode files.
 
@@ -1372,8 +1302,6 @@ def test_ecw_38():
     # Quite a bit of difference...
     assert maxdiff <= 0, 'Image too different from reference'
 
-    return 'success'
-
 
 ###############################################################################
 # Check writing histograms.
@@ -1400,8 +1328,6 @@ def test_ecw_39():
 
     ds = None
     assert result, 'Default histogram written incorrectly'
-
-    return 'success'
 
 ###############################################################################
 # Check reading a ECW v3 file
@@ -1448,8 +1374,7 @@ def test_ecw_40():
         got_cs = ds.GetRasterBand(i + 1).Checksum()
         assert got_cs == expected_cs_list[i]
 
-    return 'success'
-
+    
 ###############################################################################
 # Check generating statistics & histogram for a ECW v3 file
 
@@ -1524,8 +1449,7 @@ def test_ecw_41():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test setting/unsetting file metadata of a ECW v3 file
 
@@ -1600,8 +1524,6 @@ def test_ecw_42():
         assert item not in got_md or item == 'FILE_METADATA_ACQUISITION_DATE', md[item]
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
 # Note: only works on reversible files like this one
@@ -1638,8 +1560,6 @@ def test_ecw_43():
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
-
-    return 'success'
 
 ###############################################################################
 # Test metadata retrieval from JP2 file
@@ -1678,8 +1598,7 @@ def test_ecw_44():
     for (key, value) in expected_md:
         assert key in got_md and got_md[key] == value
 
-    return 'success'
-
+    
 ###############################################################################
 # Test metadata reading & writing
 
@@ -1763,8 +1682,7 @@ def test_ecw_45():
         assert ds.GetMetadata('xml:XMP')[0] == '<fake_xmp_box/>'
         gdal.Unlink('/vsimem/ecw_45.jp2')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test non nearest upsampling
 
@@ -1792,8 +1710,6 @@ def test_ecw_46():
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
     cs = mem_ds.GetRasterBand(1).Checksum()
     assert cs == ref_cs
-
-    return 'success'
 
 ###############################################################################
 # /vsi reading with ECW (#6482)
@@ -1827,8 +1743,6 @@ def test_ecw_47():
 
     gdal.Unlink('/vsimem/ecw_47.ecw')
 
-    return 'success'
-
 ###############################################################################
 # Test "Upward" orientation is forced by default
 
@@ -1849,8 +1763,6 @@ def test_ecw_48():
     expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, -198.32414964918371)
     assert gt == expected_gt, 'did not get expected geotransform.'
 
-    return 'success'
-
 ###############################################################################
 # Test "Upward" orientation can be overridden with ECW_ALWAYS_UPWARD=FALSE
 
@@ -1870,8 +1782,6 @@ def test_ecw_49():
     expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, 198.32414964918371)
     assert gt == expected_gt, 'did not get expected geotransform.'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1890,8 +1800,6 @@ def test_ecw_online_1():
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1916,8 +1824,6 @@ def test_ecw_online_2():
     assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1949,8 +1855,6 @@ def ecw_online_3():
 
     # Difference between the image before and after compression
     assert maxdiff <= 16, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 
@@ -1985,8 +1889,6 @@ def test_ecw_online_4():
     # Difference between the image before and after compression
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2015,8 +1917,6 @@ def test_ecw_online_5():
 
     assert abs(mean - exp_mean) <= mean_tolerance and abs(stddev - exp_stddev) <= 0.5, \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
-
-    return 'success'
 
 ###############################################################################
 # This tests the HTTP driver in fact. To ensure if keeps the original filename,
@@ -2056,8 +1956,6 @@ def test_ecw_online_6():
         pytest.fail()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # ECWv2 file with alpha channel (#6028)
 
@@ -2077,8 +1975,6 @@ def test_ecw_online_7():
         expected_band_count = 4
     assert ds.RasterCount == expected_band_count, \
         ('Expected %d bands, got %d' % (expected_band_count, ds.RasterCount))
-
-    return 'success'
 
 ###############################################################################
 
@@ -2165,8 +2061,6 @@ def test_ecw_cleanup():
     except OSError:
         pass
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return 'success'
 
 
 gdaltest_list = [

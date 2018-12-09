@@ -63,8 +63,7 @@ def test_reproject_1():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Test a real reprojection case.
 
@@ -95,8 +94,7 @@ def test_reproject_2():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    return 'success'
-
+    
 ###############################################################################
 # Test nodata values
 
@@ -121,8 +119,7 @@ def test_reproject_3():
         import struct
         pytest.fail(struct.unpack('B' * 18, got_data))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test warp options
 
@@ -146,8 +143,7 @@ def test_reproject_4():
         import struct
         pytest.fail(struct.unpack('B' * 18, got_data))
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_reproject_1,

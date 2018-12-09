@@ -159,8 +159,6 @@ def test_jp2kak_10():
 
     assert got == expected, 'did not get expected values.'
 
-    return 'success'
-
 ###############################################################################
 # Test handle of 11bit signed file.
 #
@@ -174,7 +172,6 @@ def test_jp2kak_11():
     ds = gdal.Open('data/gtsmall_11_int16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs in (63475, 63472, 63452, 63471)
-    return 'success'
 
 ###############################################################################
 # Test handle of 10bit unsigned file.
@@ -189,7 +186,6 @@ def test_jp2kak_12():
     ds = gdal.Open('data/gtsmall_10_uint16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 63360 or cs == 63357 or cs == 63358
-    return 'success'
 
 
 ###############################################################################
@@ -218,8 +214,6 @@ def test_jp2kak_13():
     # and in the debug output we see 500x7 -> 500x7 -> 250x4.
     checksum = ov_band.Checksum()
     assert checksum in (11776, 11736, 11801), 'did not get expected overview checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test external overviews.
@@ -256,8 +250,6 @@ def test_jp2kak_14():
     jp2_ds = None
     gdaltest.jp2kak_drv.Delete('tmp/jp2kak_13.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Confirm we can read resolution information.
 #
@@ -277,8 +269,6 @@ def test_jp2kak_15():
         'did not get expected resolution metadata'
 
     jp2_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Confirm we can write and then reread resolution information.
@@ -305,8 +295,6 @@ def test_jp2kak_16():
     jp2_ds = None
 
     gdaltest.jp2kak_drv.Delete('tmp/jp2kak_16.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test reading a file with axis orientation set properly for an alternate
@@ -343,8 +331,6 @@ def test_jp2kak_17():
     ds = None
 
     gdal.SetConfigOption('GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'NO')
-
-    return 'success'
 
 ###############################################################################
 # Test lossless copying of Int16
@@ -419,8 +405,6 @@ def test_jp2kak_20():
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
-    return 'success'
-
 ###############################################################################
 # Test non nearest upsampling
 
@@ -453,8 +437,6 @@ def test_jp2kak_21():
     cs = mem_ds.GetRasterBand(1).Checksum()
     assert cs == ref_cs
 
-    return 'success'
-
 ###############################################################################
 # Test RGBA datasets
 
@@ -477,8 +459,6 @@ def test_jp2kak_22():
 
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup.
@@ -486,8 +466,6 @@ def test_jp2kak_22():
 def test_jp2kak_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return 'success'
 
 
 gdaltest_list = [

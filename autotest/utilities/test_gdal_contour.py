@@ -126,8 +126,6 @@ def test_gdal_contour_1():
     ds.ReleaseResultSet(lyr)
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test with -fl option and -3d option
 
@@ -183,8 +181,6 @@ def test_gdal_contour_2():
     ds.ReleaseResultSet(lyr)
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test on a real DEM
 
@@ -225,8 +221,6 @@ def test_gdal_contour_3():
 
     ds.ReleaseResultSet(lyr)
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test contour orientation
@@ -327,7 +321,7 @@ def test_gdal_contour_4():
     ds.ReleaseResultSet(lyr)
     ds.Destroy()
 
-    return 'fail' if test_failed else 'success'
+    assert not test_failed
 
 ###############################################################################
 # Test contour orientation
@@ -372,7 +366,7 @@ def test_gdal_contour_5():
     ds.ReleaseResultSet(lyr)
     ds.Destroy()
 
-    return 'fail' if test_failed else 'success'
+    assert not test_failed
 
 ###############################################################################
 # Cleanup
@@ -391,8 +385,7 @@ def test_gdal_contour_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_contour_1,

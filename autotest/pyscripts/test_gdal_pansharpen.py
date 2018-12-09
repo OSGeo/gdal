@@ -70,8 +70,6 @@ def test_gdal_pansharpen_1():
 
     assert cs == [4735, 10000, 9742]
 
-    return 'success'
-
 ###############################################################################
 # Full options
 
@@ -91,8 +89,6 @@ def test_gdal_pansharpen_2():
 
     assert cs == [9742, 4735]
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -104,8 +100,6 @@ def test_gdal_pansharpen_cleanup():
         pytest.skip()
 
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world_pan.tif')
-
-    return 'success'
 
 
 gdaltest_list = [

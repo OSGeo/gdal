@@ -59,8 +59,6 @@ def test_tps_1():
                                         'METHOD=GCP_TPS'])
     assert transformer is None
 
-    return 'success'
-
 
 gdaltest_list = [
     test_tps_1,

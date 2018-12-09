@@ -69,8 +69,6 @@ def test_roipac_2():
     val = ds.GetMetadataItem('YMAX', 'ROI_PAC')
     assert val == '9'
 
-    return 'success'
-
 ###############################################################################
 # Verify this can be exported losslessly.
 
@@ -101,8 +99,6 @@ def test_roipac_5():
     assert offset == 1
     scale = band.GetScale()
     assert scale == 2
-
-    return 'success'
 
 ###############################################################################
 # Test .flg

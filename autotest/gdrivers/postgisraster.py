@@ -103,8 +103,7 @@ def test_postgisraster_init():
     if gdaltest.postgisrasterDriver is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -117,7 +116,7 @@ def test_postgisraster_test_open_error1():
         ds = gdal.Open(gdaltest.postgisraster_connection_string +
                        "table='nonexistent'")
     if ds is None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -132,7 +131,6 @@ def test_postgisraster_test_open_error2():
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
     assert ds is not None
-    return 'success'
 
 ###############################################################################
 #
@@ -150,7 +148,7 @@ def test_postgisraster_compare_utm():
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose=1)
-    return 'success' if diff == 0 else 'fail'
+    assert diff == 0
 
 ###############################################################################
 #
@@ -168,7 +166,7 @@ def test_postgisraster_compare_small_world():
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose=1)
-    return 'success' if diff == 0 else 'fail'
+    assert diff == 0
 
 ###############################################################################
 #
@@ -281,7 +279,7 @@ def test_postgisraster_test_create_copy_bad_conn_string():
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy("bogus connection string", src_ds, strict=True)
 
-        return 'success' if new_ds is None else 'fail'
+        assert new_ds is None
 
 
 def test_postgisraster_test_create_copy_no_dbname():
@@ -297,7 +295,7 @@ def test_postgisraster_test_create_copy_no_dbname():
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy("PG: no database name", src_ds, strict=True, options=options)
 
-        return 'success' if new_ds is None else 'fail'
+        assert new_ds is None
 
 
 def test_postgisraster_test_create_copy_no_tablename():
@@ -313,7 +311,7 @@ def test_postgisraster_test_create_copy_no_tablename():
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string, src_ds, strict=True, options=options)
 
-        return 'success' if new_ds is None else 'fail'
+        assert new_ds is None
 
 
 def test_postgisraster_test_create_copy_and_delete():
@@ -333,7 +331,7 @@ def test_postgisraster_test_create_copy_and_delete():
 
     deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
-    return 'fail' if deleted else 'success'
+    assert not deleted
 
 
 def test_postgisraster_test_create_copy_and_delete_phases():
@@ -409,8 +407,7 @@ def test_postgisraster_test_create_copy_and_delete_phases():
 
         assert not deleted, 'Delete returned an error.'
 
-    return 'success'
-
+    
 
 def test_postgisraster_test_norid():
     """
@@ -435,8 +432,6 @@ def test_postgisraster_test_norid():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_noid' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
-
-    return 'success'
 
 
 def test_postgisraster_test_serial():
@@ -466,8 +461,6 @@ def test_postgisraster_test_serial():
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
 
-    return 'success'
-
 
 def test_postgisraster_test_unique():
     """
@@ -496,8 +489,6 @@ def test_postgisraster_test_unique():
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
 
-    return 'success'
-
 
 def test_postgisraster_test_constraint():
 
@@ -507,8 +498,6 @@ def test_postgisraster_test_constraint():
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
 
-    return 'success'
-
 
 def test_postgisraster_test_constraint_with_spi():
 
@@ -517,8 +506,6 @@ def test_postgisraster_test_constraint_with_spi():
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint_with_spi' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
-
-    return 'success'
 
 
 def test_postgisraster_test_outdb():
@@ -543,8 +530,6 @@ def test_postgisraster_test_outdb():
     expected_cs = [30111, 32302, 40026] if has_guc else [0, 0, 0]
     assert cs == expected_cs
 
-    return 'success'
-
 
 def test_postgisraster_test_outdb_client_side():
 
@@ -553,8 +538,6 @@ def test_postgisraster_test_outdb_client_side():
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
-
-    return 'success'
 
 
 def test_postgisraster_test_outdb_client_side_force_ireadblock():
@@ -566,8 +549,6 @@ def test_postgisraster_test_outdb_client_side_force_ireadblock():
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
 
-    return 'success'
-
 
 def test_postgisraster_test_outdb_client_side_if_possible():
 
@@ -577,15 +558,11 @@ def test_postgisraster_test_outdb_client_side_if_possible():
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
 
-    return 'success'
-
 
 def test_postgisraster_cleanup():
 
     gdal.Unlink('data/small_world.tif.aux.xml')
     gdal.Unlink('data/utm.tif.aux.xml')
-
-    return 'success'
 
 
 gdaltest_list = [

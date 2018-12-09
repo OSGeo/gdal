@@ -69,8 +69,6 @@ def test_vrtovr_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test serialization
 
@@ -113,8 +111,6 @@ def test_vrtovr_2():
 
     gdal.Unlink("/vsimem/vrtovr_2.vrt")
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -139,8 +135,6 @@ def test_vrtovr_none():
         'did not get expected overview count'
 
     assert not ds.GetRasterBand(1).GetOverview(0)
-
-    return 'success'
 
 ###############################################################################
 #
@@ -176,15 +170,13 @@ def test_vrtovr_errors():
     with gdaltest.error_handler():
         assert not ds.GetRasterBand(1).GetOverview(0)
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Cleanup.
 
 def test_vrtovr_cleanup():
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_vrtovr_1,

@@ -46,8 +46,6 @@ def test_mbtiles_1():
 
     gdaltest.mbtiles_drv = gdal.GetDriverByName('MBTiles')
 
-    return 'success'
-
 ###############################################################################
 # Basic test
 
@@ -101,8 +99,6 @@ def test_mbtiles_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Open a /vsicurl/ DB
 
@@ -147,8 +143,7 @@ def test_mbtiles_3():
             pytest.skip()
         pytest.fail('did not get expected LocationInfo on overview')
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -165,8 +160,7 @@ def test_mbtiles_start_webserver():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -190,8 +184,6 @@ def test_mbtiles_http_jpeg_three_bands():
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 #
@@ -217,8 +209,6 @@ def test_mbtiles_http_jpeg_single_band():
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -243,8 +233,6 @@ def test_mbtiles_http_png():
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -260,8 +248,7 @@ def test_mbtiles_stop_webserver():
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic test without any option
 
@@ -290,8 +277,6 @@ def test_mbtiles_4():
         assert abs(gt[i] - expected_gt[i]) <= 1e-15, 'bad gt'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test write support of a single band dataset
@@ -329,8 +314,6 @@ def test_mbtiles_5():
 
     gdal.Unlink('/vsimem/mbtiles_5.mbtiles')
 
-    return 'success'
-
 ###############################################################################
 # Test write support with options
 
@@ -365,8 +348,6 @@ def test_mbtiles_6():
     ds = None
 
     gdal.Unlink('tmp/mbtiles_6.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 # Test building overview
@@ -422,8 +403,6 @@ def test_mbtiles_7():
 
     gdal.Unlink('/vsimem/mbtiles_7.mbtiles')
 
-    return 'success'
-
 ###############################################################################
 # Single band with 24 bit color table, PNG
 
@@ -466,7 +445,6 @@ def test_mbtiles_8():
     out_ds = None
 
     gdal.Unlink('/vsimem/mbtiles_8.mbtiles')
-    return 'success'
 
 ###############################################################################
 # Test we are robust to invalid bounds
@@ -494,7 +472,6 @@ def test_mbtiles_9():
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_9.mbtiles')
-    return 'success'
 
 ###############################################################################
 # Test compaction of temporary database
@@ -520,7 +497,6 @@ def test_mbtiles_10():
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_10.mbtiles')
-    return 'success'
 
 ###############################################################################
 # Test opening a .mbtiles.sql file
@@ -539,8 +515,6 @@ def test_mbtiles_11():
     ds = gdal.Open('data/byte.mbtiles.sql')
     assert ds.GetRasterBand(1).Checksum() == 4118, 'validation failed'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -551,8 +525,6 @@ def test_mbtiles_raster_open_in_vector_mode():
 
     ds = ogr.Open('data/byte.mbtiles')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -617,8 +589,6 @@ def test_mbtiles_create():
 
     gdal.Unlink(filename)
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup
@@ -628,8 +598,7 @@ def test_mbtiles_cleanup():
     if gdaltest.mbtiles_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_mbtiles_1,

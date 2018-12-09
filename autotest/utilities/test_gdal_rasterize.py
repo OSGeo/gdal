@@ -116,8 +116,6 @@ def test_gdal_rasterize_1():
 
     target_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test rasterization with ALL_TOUCHED (adapted from alg/rasterize.py).
 
@@ -147,8 +145,6 @@ def test_gdal_rasterize_2():
     assert checksum == expected, 'Did not get expected image checksum'
 
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test creating an output file
@@ -182,8 +178,6 @@ def test_gdal_rasterize_3():
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'
-
-    return 'success'
 
 ###############################################################################
 # Same but with -tr argument
@@ -223,8 +217,6 @@ def test_gdal_rasterize_4():
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'
-
-    return 'success'
 
 ###############################################################################
 # Test point rasterization (#3774)
@@ -272,8 +264,6 @@ def test_gdal_rasterize_5():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test on the fly reprojection of input data
 
@@ -306,8 +296,6 @@ def test_gdal_rasterize_6():
     assert ds.GetRasterBand(1).Checksum() == 39190, 'did not get expected checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test SQLITE dialect in SQL
@@ -359,8 +347,6 @@ def test_gdal_rasterize_7():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Make sure we create output that encompasses all the input points on a point
 # layer, #6058.
@@ -385,8 +371,6 @@ def test_gdal_rasterize_8():
     assert cs == 21, 'Did not rasterize line data properly'
 
     ds = None
-
-    return 'success'
 
 
 ###########################################
@@ -418,8 +402,6 @@ def test_gdal_rasterize_cleanup():
 
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_rasterize_8.tif')
     os.unlink('tmp/test_gdal_rasterize_8.csv')
-
-    return 'success'
 
 
 gdaltest_list = [

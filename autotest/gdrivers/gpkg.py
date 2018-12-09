@@ -104,8 +104,6 @@ def test_gpkg_init():
 
     gdal.SetConfigOption('GPKG_DEBUG', 'ON')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -174,7 +172,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 
     if expected_format is None:
         if mime_type is None:
-            return 'success'
+            return
         pytest.fail()
 
     if expected_format == 'PNG':
@@ -187,7 +185,6 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
     assert mime_type == expected_mime_type
     assert band_count == expected_band_count
     assert expected_ct == has_ct
-    return 'success'
 
 ###############################################################################
 # Single band, PNG
@@ -277,8 +274,6 @@ def test_gpkg_1():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Single band, JPEG
 
@@ -361,8 +356,6 @@ def test_gpkg_2():
     gdaltest.jpeg_dr.Register()
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Single band, WEBP
@@ -466,8 +459,6 @@ def test_gpkg_3():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Three band, PNG
 
@@ -533,8 +524,6 @@ def test_gpkg_4(tile_drv_name='PNG'):
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Three band, JPEG
@@ -641,8 +630,6 @@ def test_gpkg_7(tile_drv_name='PNG'):
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # 4 band, JPEG
@@ -765,8 +752,6 @@ def test_gpkg_10():
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
     assert got_ct is None
 
-    return 'success'
-
 ###############################################################################
 # Single band with 32 bit color table, JPEG
 
@@ -817,8 +802,6 @@ def test_gpkg_11(tile_drv_name='JPEG'):
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Single band with 32 bit color table, WEBP
@@ -881,7 +864,6 @@ def test_gpkg_13():
     ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-    return 'success'
 
 ###############################################################################
 # Test creation and opening options
@@ -1170,7 +1152,6 @@ def test_gpkg_14():
     assert ds is None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-    return 'success'
 
 ###############################################################################
 # Test error cases
@@ -1289,8 +1270,6 @@ def test_gpkg_15():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test block/tile caching
 
@@ -1325,8 +1304,6 @@ def test_gpkg_16():
     assert abs(val2 - 127) <= 1
     assert abs(val3 - 0) <= 1
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test overviews with single band dataset
@@ -1461,8 +1438,6 @@ def test_gpkg_17():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test overviews with 3 band dataset
 
@@ -1564,8 +1539,6 @@ def test_gpkg_18():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test overviews with 24-bit color palette single band dataset
 
@@ -1604,8 +1577,6 @@ def test_gpkg_19():
     check_tile_format(out_ds, 'PNG', 4, False, zoom_level=0)
     out_ds = None
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test PNG8
@@ -1684,8 +1655,6 @@ def test_gpkg_20():
     assert out_ds.GetRasterBand(1).GetColorTable().GetCount() == 1
     out_ds = None
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test metadata
@@ -1923,8 +1892,6 @@ def test_gpkg_21():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Two band, PNG
 
@@ -2001,8 +1968,6 @@ def test_gpkg_22(tile_drv_name='PNG'):
     ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Two band, JPEG
@@ -2138,8 +2103,6 @@ def test_gpkg_26():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test behaviour with low block cache max
 
@@ -2162,8 +2125,6 @@ def test_gpkg_27():
     expected_cs = [src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert got_cs == expected_cs
-
-    return 'success'
 
 ###############################################################################
 # Test that reading a block in a band doesn't wipe another band of the same
@@ -2203,8 +2164,6 @@ def test_gpkg_28():
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=3'])
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert got_cs == expected_cs
-
-    return 'success'
 
 ###############################################################################
 # Variation of gpkg_28 with 2 blocks
@@ -2246,8 +2205,6 @@ def test_gpkg_29(x=0):
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert got_cs == expected_cs
 
-    return 'success'
-
 ###############################################################################
 # Variation of gpkg_29 where the read is done in another block
 
@@ -2281,8 +2238,6 @@ def test_gpkg_31():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     assert got_cs == expected_cs
 
-    return 'success'
-
 ###############################################################################
 # grey-alpha to RGBA
 
@@ -2313,8 +2268,6 @@ def test_gpkg_32():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     assert got_cs == expected_cs
 
-    return 'success'
-
 ###############################################################################
 # Single band with 32 bit color table -> RGBA
 
@@ -2342,8 +2295,6 @@ def test_gpkg_33():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     assert got_cs == expected_cs
 
-    return 'success'
-
 ###############################################################################
 # Test partial tiles with overviews (#6335)
 
@@ -2369,8 +2320,6 @@ def test_gpkg_34():
     ds.BuildOverviews('NEAR', [2])
     ds = None
     assert gdal.GetLastErrorMsg() == ''
-
-    return 'success'
 
 ###############################################################################
 # Test dirty block flushing while reading block (#6365)
@@ -2420,8 +2369,6 @@ def test_gpkg_35():
 
     assert got_data == expected_data
 
-    return 'success'
-
 ###############################################################################
 # Single band with 24 bit color table, PNG, GoogleMapsCompatible
 
@@ -2447,7 +2394,6 @@ def test_gpkg_36():
     out_ds = None
 
     gdal.Unlink('/vsimem/gpkg_36.gpkg')
-    return 'success'
 
 ###############################################################################
 # Test that we don't crash when generating big overview factors on rasters with big dimensions
@@ -2470,7 +2416,6 @@ def test_gpkg_37():
     ds = None
 
     gdal.Unlink('/vsimem/gpkg_37.gpkg')
-    return 'success'
 
 ###############################################################################
 # Test generating more than 1000 tiles
@@ -2506,8 +2451,6 @@ def test_gpkg_38():
         ds = None
     gdal.Unlink(filename)
     assert ds_is_none or gdal.GetLastErrorMsg() != ''
-
-    return 'success'
 
 ###############################################################################
 # Test tile gridded coverage data
@@ -2863,8 +2806,6 @@ cellsize     60
     gdal.Unlink('/vsimem/gpkg_39.gpkg')
     gdal.Unlink('/vsimem/gpkg_39.gpkg.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test VERSION
 
@@ -2946,8 +2887,6 @@ def test_gpkg_40():
 
     gdal.Unlink('/vsimem/gpkg_40.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Robustness test
 
@@ -2966,8 +2905,6 @@ def test_gpkg_41():
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', None)
 
     gdal.Unlink('/vsimem/gpkg_41.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test opening in vector mode a database without gpkg_geometry_columns
@@ -2994,8 +2931,6 @@ def test_gpkg_42():
     ds = None
 
     gdal.Unlink('/vsimem/gpkg_42.gpkg')
-
-    return 'success'
 
 ###############################################################################
 # Test adding raster to a database without pre-existing raster support tables.
@@ -3030,8 +2965,6 @@ def test_gpkg_43():
 
     gdal.Unlink('/vsimem/gpkg_43.gpkg')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a .gpkg.sql file
 
@@ -3046,7 +2979,6 @@ def test_gpkg_44():
 
     ds = gdal.Open('data/byte.gpkg.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
-    return 'success'
 
 ###############################################################################
 # Test opening a .gpkg file
@@ -3059,7 +2991,6 @@ def test_gpkg_45():
 
     ds = gdal.Open('data/byte.gpkg')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
-    return 'success'
 
 ###############################################################################
 # Test fix for #6932
@@ -3100,8 +3031,6 @@ def test_gpkg_46():
 
     assert count == 23
 
-    return 'success'
-
 ###############################################################################
 # Test fix for #6976
 
@@ -3122,8 +3051,6 @@ def test_gpkg_47():
     ds = None
 
     gdal.Unlink(tmpfile)
-
-    return 'success'
 
 ###############################################################################
 # Test fix for https://issues.qgis.org/issues/16997 (opening a file with
@@ -3156,8 +3083,6 @@ def test_gpkg_48():
 
     gdal.Unlink(filename)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3188,8 +3113,6 @@ def test_gpkg_delete_raster_layer():
 
     gdal.Unlink(filename)
 
-    return 'success'
-
 
 ###############################################################################
 
@@ -3216,8 +3139,6 @@ def test_gpkg_delete_gridded_coverage_raster_layer():
 
     gdal.Unlink(filename)
 
-    return 'success'
-
 
 ###############################################################################
 def test_gpkg_open_old_gpkg_elevation_tiles_extension():
@@ -3230,8 +3151,6 @@ def test_gpkg_open_old_gpkg_elevation_tiles_extension():
     assert gdal.GetLastErrorMsg() == ''
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4672
-
-    return 'success'
 
 ###############################################################################
 
@@ -3250,8 +3169,7 @@ def test_gpkg_GeneralCmdLineProcessor():
            ret_gdalinfo.find('scope=') < 0 and \
            ret_ogrinfo.find('scope=') < 0)
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -3269,7 +3187,6 @@ def test_gpkg_match_overview_factor():
     ds = None
 
     gdal.Unlink('/vsimem/gpkg_match_overview_factor.gpkg')
-    return 'success'
 
 ###############################################################################
 #
@@ -3284,8 +3201,6 @@ def test_gpkg_cleanup():
     gdal.Unlink('/vsimem/tmp.gpkg.aux.xml')
 
     gdal.SetConfigOption('GPKG_DEBUG', None)
-
-    return 'success'
 
 ###############################################################################
 

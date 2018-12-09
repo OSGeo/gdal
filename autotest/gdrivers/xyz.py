@@ -58,7 +58,6 @@ def test_xyz_2():
     ds = None
     gdal.GetDriverByName('XYZ').Delete('tmp/float.xyz')
     assert got_cs == expected_cs or got_cs == 24387
-    return 'success'
 
 ###############################################################################
 # Test random access to lines of imagery
@@ -92,7 +91,6 @@ def test_xyz_3():
     assert struct.unpack('B' * 2, buf) == (69, 70)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
-    return 'success'
 
 
 ###############################################################################
@@ -132,7 +130,6 @@ def test_xyz_4():
         assert xyz_4_checkline(ds, i, expected[i])
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
-    return 'success'
 
 
 ###############################################################################
@@ -159,8 +156,7 @@ def test_xyz_5():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test XYZ with comma decimal separator and semi-colon field separator
@@ -186,8 +182,7 @@ def test_xyz_6():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test XYZ with not completely equal stepX and stepY
@@ -226,8 +221,6 @@ def test_xyz_7():
 
     assert cs == 146
 
-    return 'success'
-
 ###############################################################################
 # Test particular case of XYZ file with missed samples (#6934)
 
@@ -250,16 +243,13 @@ def test_xyz_8():
 
     assert cs == 35
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup
 
 def test_xyz_cleanup():
 
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_xyz_1,

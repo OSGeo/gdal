@@ -44,8 +44,6 @@ def test_osr_validate_1():
     empty_srs = osr.SpatialReference()
     assert empty_srs.Validate() != 0
 
-    return 'success'
-
 ###############################################################################
 # Unrecognized root node
 
@@ -55,8 +53,6 @@ def test_osr_validate_2():
     srs = osr.SpatialReference()
     srs.ImportFromWkt("FOO[]")
     assert srs.Validate() != 0
-
-    return 'success'
 
 ###############################################################################
 # COMPD_CS errors
@@ -83,8 +79,6 @@ def test_osr_validate_3():
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""COMPD_CS["MYNAME",FOO[]]""")
     assert srs.Validate() != 0
-
-    return 'success'
 
 ###############################################################################
 # VERT_CS errors
@@ -131,8 +125,6 @@ def test_osr_validate_4():
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""VERT_CS["MYNAME",VERT_DATUM["MYNAME",2005,AUTHORITY["EPSG","0"]],UNIT["metre",1],AXIS["foo",foo],AXIS["bar",bar]]""")
     assert srs.Validate() != 0
-
-    return 'success'
 
 ###############################################################################
 # GEOCCS errors
@@ -186,8 +178,6 @@ def test_osr_validate_5():
     srs = osr.SpatialReference()
     srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],AXIS["foo",foo],UNIT["meter",1]]')
     assert srs.Validate() != 0
-
-    return 'success'
 
 ###############################################################################
 # PROJCS errors
@@ -256,8 +246,6 @@ def test_osr_validate_6():
     srs = osr.SpatialReference()
     srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N"]')
     assert srs.Validate() != 0
-
-    return 'success'
 
 ###############################################################################
 

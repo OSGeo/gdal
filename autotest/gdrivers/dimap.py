@@ -73,8 +73,6 @@ def test_dimap_1():
     os.unlink('tmp/IMAGERY.TIF')
     os.unlink('tmp/rgbsmall.tif')
 
-    return 'success'
-
 ###############################################################################
 # Open DIMAP 2
 
@@ -99,8 +97,7 @@ def test_dimap_2():
 
         ds = None
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_dimap_1,

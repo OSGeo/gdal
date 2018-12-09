@@ -108,8 +108,6 @@ def test_wkbwkt_geom(unit):
 
     geom_wkt.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test geometry with very large exponents of coordinate values.
 
@@ -126,8 +124,6 @@ def test_ogr_wkbwkt_geom_bigexponents():
     wkt = geom.ExportToWkt()
 
     assert str(wkt) == str(expect), 'trimming long float numbers failed.'
-
-    return 'success'
 
 
 ###############################################################################
@@ -365,8 +361,7 @@ def test_ogr_wkbwkt_test_broken_geom():
         gdal.PopErrorHandler()
         assert geom is None, ('geom %s instantiated but not expected' % wkt)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test importing WKT SF1.2
 
@@ -490,8 +485,7 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
             ('in=%s, out=%s, expected=%s.' % (wkt_tuple[0], out_wkt,
                                                  wkt_tuple[1]))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that importing the wkb that would be equivalent to MULTIPOINT(POLYGON((0 0))
 # doesn't work
@@ -505,8 +499,6 @@ def test_ogr_wkbwkt_test_import_bad_multipoint_wkb():
     geom = ogr.CreateGeometryFromWkb(wkb)
     gdal.PopErrorHandler()
     assert geom is None
-
-    return 'success'
 
 ###############################################################################
 # Test WKT -> WKB -> WKT roundtripping for GEOMETRYCOLLECTION
@@ -534,8 +526,7 @@ def test_ogr_wkbwkt_test_geometrycollection_wktwkb():
         wkt2 = g.ExportToWkt()
         assert wkt == wkt2, ('fail for %s' % wkt)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that importing too nested WKT doesn't cause stack overflows
 
@@ -553,8 +544,6 @@ def test_ogr_wkbwkt_test_geometrycollection_wkt_recursion():
     geom = ogr.CreateGeometryFromWkt(wkt)
     gdal.PopErrorHandler()
     assert geom is None, 'expected None'
-
-    return 'success'
 
 ###############################################################################
 # Test that importing too nested WKB doesn't cause stack overflows
@@ -578,8 +567,6 @@ def test_ogr_wkbwkt_test_geometrycollection_wkb_recursion():
     gdal.PopErrorHandler()
     assert geom is None, 'expected None'
 
-    return 'success'
-
 ###############################################################################
 # Test ISO WKT compliant export of MULTIPOINT
 
@@ -590,8 +577,6 @@ def test_ogr_wkbwkt_export_wkt_iso_multipoint():
     g = ogr.CreateGeometryFromWkt(wkt)
     out_wkt = g.ExportToIsoWkt()
     assert out_wkt == wkt
-
-    return 'success'
 
 ###############################################################################
 # Test exporting WKT with non finite values (#6319)
@@ -604,8 +589,6 @@ def test_ogr_wkt_inf_nan():
     out_wkt = g.ExportToWkt()
     assert out_wkt == 'POINT (inf -inf nan)'
 
-    return 'success'
-
 ###############################################################################
 # Test corrupted WKT
 
@@ -616,8 +599,6 @@ def test_ogr_wkt_multicurve_compoundcurve_corrupted():
         g = ogr.CreateGeometryFromWkt('MULTICURVE(COMPOUNDCURVE')
     assert g is None
 
-    return 'success'
-
 ###############################################################################
 # Test corrupted WKT
 
@@ -627,8 +608,6 @@ def test_ogr_wkt_multipolygon_corrupted():
     with gdaltest.error_handler():
         g = ogr.CreateGeometryFromWkt('MULTIPOLYGON(POLYGON((N')
     assert g is None
-
-    return 'success'
 
 ###############################################################################
 # When imported build a list of units based on the files available.

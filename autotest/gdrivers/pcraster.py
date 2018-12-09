@@ -68,8 +68,6 @@ def test_pcraster_2():
     band1 = ds.GetRasterBand(1)
     assert band1.GetNoDataValue() == 255, 'PCRaster NODATA value wrong or missing.'
 
-    return 'success'
-
 
 gdaltest_list = [
     test_pcraster_1,

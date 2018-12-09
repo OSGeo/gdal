@@ -69,7 +69,7 @@ def test_mg4lidar_1():
     if prj.find('NAD83 / UTM zone 12N') == -1:
         gdaltest.post_reason('did not get expected projection')
         print(prj)
-        return 'success'
+        return
 
     gt = ds.GetGeoTransform()
     ref_gt = (504489.919999999983702, 3.078227571115974, 0, 4795848.389999999664724, 0, -3.078259860787739)
@@ -80,17 +80,15 @@ def test_mg4lidar_1():
     if cs != 13216:
         gdaltest.post_reason('did not get expected checksum')
         print(cs)
-        return 'success'
+        return
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 64099:
         gdaltest.post_reason('did not get expected overview checksum')
         print(cs)
-        return 'success'
+        return
 
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

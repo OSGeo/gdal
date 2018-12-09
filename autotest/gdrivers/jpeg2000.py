@@ -70,8 +70,6 @@ def test_jpeg2000_1():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JPEG2000')
 
-    return 'success'
-
 ###############################################################################
 # Open byte.jp2
 
@@ -127,8 +125,6 @@ def test_jpeg2000_3():
     # Quite a bit of difference...
     assert maxdiff <= 6, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 # Test copying byte.jp2
 
@@ -146,8 +142,7 @@ def test_jpeg2000_4():
         gdaltest.post_reason('This is an expected failure if Jasper has not the jp2_encode_uuid function')
         return 'expected_fail'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test copying int16.jp2
 
@@ -176,8 +171,6 @@ def test_jpeg2000_6():
     ds = gdal.Open('data/ll.jp2')
     ds.GetRasterBand(1).Checksum()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
@@ -210,8 +203,6 @@ def test_jpeg2000_8():
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
-    return 'success'
-
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
@@ -228,8 +219,6 @@ def test_jpeg2000_9():
         'geotransform differs from expected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check writing a file with more than 4 bands (#4686)
@@ -257,8 +246,6 @@ def test_jpeg2000_10():
 
     gdal.Unlink('/vsimem/jpeg2000_10_src.tif')
     gdal.Unlink('/vsimem/jpeg2000_10_dst.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
@@ -296,8 +283,6 @@ def test_jpeg2000_11():
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -317,8 +302,6 @@ def test_jpeg2000_online_1():
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -344,8 +327,6 @@ def test_jpeg2000_online_2():
     assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -376,8 +357,6 @@ def test_jpeg2000_online_3():
 
     # Difference between the image before and after compression
     assert maxdiff <= 17, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 
@@ -412,8 +391,6 @@ def test_jpeg2000_online_4():
     # Difference between the image before and after compression
     assert maxdiff <= 17, 'Image too different from reference'
 
-    return 'success'
-
 ###############################################################################
 # Try reading JPEG2000 with color table
 
@@ -434,8 +411,6 @@ def test_jpeg2000_online_5():
         'Did not get expected checksums'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Try reading YCbCr JPEG2000 as RGB
@@ -458,16 +433,12 @@ def test_jpeg2000_online_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
 def test_jpeg2000_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -110,8 +110,6 @@ def test_ogrtindex_1(srs=None):
         feat = ds.GetLayer(0).GetNextFeature()
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Same test but with a SRS set on the different tiles to index
 
@@ -216,8 +214,7 @@ def test_ogrtindex_3():
     if os.path.exists('tmp/tileindex.db'):
         os.unlink('tmp/tileindex.db')
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -235,8 +232,7 @@ def test_ogrtindex_cleanup():
     if os.path.exists('tmp/point4.shp'):
         shape_drv.DeleteDataSource('tmp/point4.shp')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogrtindex_1,

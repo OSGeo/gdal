@@ -101,8 +101,6 @@ def test_jpeg_2():
     assert 'COMPRESSION' in md and md['COMPRESSION'] == 'JPEG', \
         'missing INTERLEAVE metadata'
 
-    return 'success'
-
 ###############################################################################
 # Create simple copy and check (greyscale) using progressive option.
 
@@ -160,8 +158,7 @@ def test_jpeg_3():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify masked jpeg.
 
@@ -181,8 +178,6 @@ def test_jpeg_4():
 
     cs = refband.GetMaskBand().Checksum()
     assert cs == 770, 'Wrong mask checksum'
-
-    return 'success'
 
 ###############################################################################
 # Verify CreateCopy() of masked jpeg.
@@ -209,8 +204,6 @@ def test_jpeg_5():
     refband = None
     ds2 = None
     gdal.GetDriverByName('JPEG').Delete('tmp/masked.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Verify ability to open file with corrupt metadata (#1904).  Note the file
@@ -241,8 +234,6 @@ def test_jpeg_6():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -264,8 +255,6 @@ def test_jpeg_7():
 
     ds = None
     gdal.GetDriverByName('JPEG').Delete('/vsimem/byte.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Read a CMYK image as a RGB image
@@ -303,8 +292,6 @@ def test_jpeg_8():
 
     assert 'SOURCE_COLOR_SPACE' in md and md['SOURCE_COLOR_SPACE'] == 'CMYK', \
         'missing SOURCE_COLOR_SPACE metadata'
-
-    return 'success'
 
 ###############################################################################
 # Read a CMYK image as a CMYK image
@@ -348,8 +335,6 @@ def test_jpeg_9():
     assert ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_BlackBand, \
         'Wrong color interpretation.'
 
-    return 'success'
-
 ###############################################################################
 # Check reading a 12-bit JPEG
 
@@ -382,8 +367,7 @@ def test_jpeg_10():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check creating a 12-bit JPEG
 
@@ -412,8 +396,6 @@ def test_jpeg_11():
 
     gdal.GetDriverByName('JPEG').Delete('tmp/jpeg11.jpg')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a stored JPEG in ZIP (#3908)
 
@@ -433,8 +415,6 @@ def test_jpeg_12():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test writing to /vsistdout/
 
@@ -453,8 +433,6 @@ def test_jpeg_13():
     assert ds is not None
 
     gdal.Unlink('/vsimem/tmp.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test writing to /vsistdout/
@@ -482,8 +460,6 @@ def test_jpeg_14():
     assert ds is not None
 
     gdal.Unlink('/vsimem/tmp.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy() interruption
@@ -543,8 +519,6 @@ def test_jpeg_16():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test bogus files
 
@@ -588,8 +562,6 @@ def test_jpeg_17():
 
     assert (not (gdal.GetLastErrorType() != gdal.CE_Failure or
             gdal.GetLastErrorMsg() == ''))
-
-    return 'success'
 
 ###############################################################################
 # Test situation where we cause a restart and need to reset scale
@@ -644,8 +616,6 @@ def test_jpeg_18():
 
     ds = None
     gdal.Unlink('/vsimem/jpeg_18.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test MSB ordering of bits in mask (#5102)
@@ -712,8 +682,7 @@ def test_jpeg_19():
         gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_19.jpg')
         gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_19_msb.jpg')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test correct GCP reading with PAM (#5352)
 
@@ -731,8 +700,6 @@ def test_jpeg_20():
     ds = None
 
     gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_20.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test implicit and EXIF overviews
@@ -752,8 +719,6 @@ def test_jpeg_21():
                 cs != expected_cs))
         i = i + 1
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test generation of EXIF overviews
@@ -818,8 +783,6 @@ def test_jpeg_22():
 
     gdal.Unlink('/vsimem/jpeg_22.jpg')
 
-    return 'success'
-
 ###############################################################################
 # Test optimized JPEG IRasterIO
 
@@ -856,8 +819,6 @@ def test_jpeg_23():
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == got_cs
 
-    return 'success'
-
 ###############################################################################
 # Test Arithmetic coding (and if not enabled, will trigger error code handling
 # in CreateCopy())
@@ -889,8 +850,7 @@ def test_jpeg_24():
         ds = None
         gdal.GetDriverByName('JPEG').Delete('/vsimem/byte.jpg')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test COMMENT
 
@@ -909,8 +869,6 @@ def test_jpeg_25():
     ds = None
     gdal.GetDriverByName('JPEG').Delete('/vsimem/byte.jpg')
 
-    return 'success'
-
 ###############################################################################
 # Test creation error
 
@@ -923,8 +881,6 @@ def test_jpeg_26():
             '/vsimem/jpeg_26.jpg', src_ds)
     assert ds is None
     gdal.Unlink('/vsimem/jpeg_26.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test reading a file that contains the 2 denial of service
@@ -953,8 +909,7 @@ def test_jpeg_27():
         gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', None)
         assert gdal.GetLastErrorMsg() != ''
 
-    return 'success'
-
+    
 ###############################################################################
 # Test writing of EXIF and GPS tags
 
@@ -1090,8 +1045,6 @@ def test_jpeg_28():
 
     gdal.Unlink(tmpfilename)
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -1099,7 +1052,6 @@ def test_jpeg_28():
 def test_jpeg_cleanup():
     gdal.Unlink('tmp/albania.jpg')
     gdal.Unlink('tmp/albania.jpg.ovr')
-    return 'success'
 
 
 gdaltest_list = [

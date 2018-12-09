@@ -71,8 +71,7 @@ def test_gdal2tiles_py_simple():
         assert os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename), \
             ('%s missing' % filename)
 
-    return 'success'
-
+    
 
 def test_gdal2tiles_py_zoom_option():
 
@@ -104,8 +103,6 @@ def test_gdal2tiles_py_zoom_option():
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
     assert ds is not None, 'did not get kml'
 
-    return 'success'
-
 
 def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     """
@@ -136,8 +133,7 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
             'Case of tile not getting any data not handled properly '
             '(tiles at the border of the image)')
 
-    return 'success'
-
+    
 
 def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
     """
@@ -165,8 +161,7 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
             'Case of low level tile not getting any data not handled properly '
             '(tile at a zoom level too low)')
 
-    return 'success'
-
+    
 
 def test_python2_handles_utf8_by_default():
     if sys.version_info[0] >= 3:
@@ -252,7 +247,7 @@ def _test_utf8(should_raise_unicode=False,
         print(ret)
     except UnicodeEncodeError:
         if should_raise_unicode:
-            return 'success'
+            return
         pytest.fail('Should be handling filenames with utf8 characters in this context')
 
     assert not should_raise_unicode, \
@@ -270,8 +265,7 @@ def _test_utf8(should_raise_unicode=False,
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 def test_gdal2tiles_py_cleanup():
 
@@ -282,8 +276,7 @@ def test_gdal2tiles_py_cleanup():
         except Exception:
             pass
 
-    return 'success'
-
+    
 
 def test_exclude_transparent_tiles():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
@@ -316,7 +309,7 @@ def test_exclude_transparent_tiles():
         assert ['22705.png'] == dir_files, \
             ('Generated empty tiles for row 21900: %s' % dir_files)
 
-        return 'success'
+        return
 
     finally:
         shutil.rmtree(output_folder)

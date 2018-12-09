@@ -96,8 +96,6 @@ def test_tiff_write_icc():
 
     driver.Delete('tmp/icc_test.tiff')
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 
@@ -134,8 +132,6 @@ def test_tiff_copy_icc():
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
 
@@ -171,8 +167,6 @@ def test_tiff_copy_options_icc():
 
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
-
-    return 'success'
 
 
 def cvtTuple2String(t):
@@ -257,8 +251,6 @@ def test_tiff_copy_options_colorimetric_data():
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading of ICC colorimetric data in the file
 
@@ -340,8 +332,6 @@ def test_tiff_copy_colorimetric_data():
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
 
-    return 'success'
-
 ###############################################################################
 # Test updating ICC profile
 
@@ -376,8 +366,6 @@ def test_tiff_update_icc():
     assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver.Delete('tmp/icc_test.tiff')
-
-    return 'success'
 
 ###############################################################################
 # Test updating colorimetric options
@@ -453,8 +441,6 @@ def test_tiff_update_colorimetric():
     assert tifftag_transferfunction2 == tifftag_transferfunction
 
     driver.Delete('tmp/icc_test.tiff')
-
-    return 'success'
 
 ############################################################################
 

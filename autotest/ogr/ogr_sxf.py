@@ -45,7 +45,7 @@ def test_ogr_sxf_1():
         gdaltest.sxf_ds = ogr.Open('data/100_test.sxf')
 
     if gdaltest.sxf_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 
@@ -62,8 +62,6 @@ def test_ogr_sxf_2():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -74,8 +72,6 @@ def test_ogr_sxf_cleanup():
         pytest.skip()
 
     gdaltest.sxf_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -93,8 +93,7 @@ def test_dither_1():
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_dither_1

@@ -119,8 +119,6 @@ def test_vsicurl_streaming_1():
 
     gdal.VSIFCloseL(fp)
 
-    return 'success'
-
 
 gdaltest_list = [test_vsicurl_streaming_1]
 

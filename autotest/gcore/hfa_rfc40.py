@@ -171,8 +171,6 @@ def CreateAndWriteRAT(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def ReadAndCheckValues(fname, numrows):
     ds = gdal.Open(fname)
@@ -224,8 +222,6 @@ def ReadAndCheckValues(fname, numrows):
     # print('succeeded reading')
     ds = None
 
-    return 'success'
-
 
 def CheckSetGetValues(fname):
     # check the 'legacy' get and set value calls
@@ -267,8 +263,6 @@ def CheckSetGetValues(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def ExtendAndWrite(fname):
     # write more data to the end of the RAT - will extend it
@@ -294,8 +288,6 @@ def ExtendAndWrite(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def CheckExtension(fname):
     ds = gdal.Open(fname)
@@ -317,8 +309,6 @@ def CheckExtension(fname):
     # print('extension data ok')
     ds = None
 
-    return 'success'
-
 
 def WriteLongStrings(fname):
     # this will force the string column to be re-written to accommodate
@@ -334,8 +324,6 @@ def WriteLongStrings(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def CheckLongStrings(fname):
     ds = gdal.Open(fname)
@@ -349,8 +337,6 @@ def CheckLongStrings(fname):
     # print("checked long strings ok")
     ds = None
 
-    return 'success'
-
 
 def SetLinearBinning(fname):
     ds = gdal.Open(fname, gdal.GA_Update)
@@ -363,8 +349,6 @@ def SetLinearBinning(fname):
     # print("set linear binning ok")
     # ds.FlushCache()
     ds = None
-
-    return 'success'
 
 
 def CheckLinearBinning(fname):
@@ -385,8 +369,6 @@ def CheckLinearBinning(fname):
     # print('linear binning ok')
     ds = None
 
-    return 'success'
-
 
 def CheckClone(fname):
     ds = gdal.Open(fname)
@@ -406,8 +388,6 @@ def CheckClone(fname):
 
     # print("cloned ok")
     ds = None
-
-    return 'success'
 
 # basic tests
 
@@ -491,7 +471,6 @@ def test_hfa_rfc40_13():
 
 def test_hfa_rfc40_cleanup():
     gdal.GetDriverByName('HFA').Delete("tmp/test.img")
-    return 'success'
 
 
 gdaltest_list = [

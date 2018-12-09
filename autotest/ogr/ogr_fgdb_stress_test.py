@@ -70,8 +70,6 @@ def ogr_fgdb_stress_test_init():
 
     gdal.Unlink("tmp/test." + ogrtest.reference_ext)
 
-    return 'success'
-
 ###############################################################################
 # Generate databases from random operations
 
@@ -161,8 +159,7 @@ def ogr_fgdb_stress_test_1():
     if in_transaction:
         ds_test.CommitTransaction()
 
-    return 'success'
-
+    
 ###############################################################################
 # Compare databases
 
@@ -197,8 +194,7 @@ def ogr_fgdb_stress_test_2():
 
     # sys.exit(0)
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Cleanup
@@ -213,8 +209,6 @@ def ogr_fgdb_stress_test_cleanup():
         pass
 
     gdal.Unlink("tmp/test." + ogrtest.reference_ext)
-
-    return 'success'
 
 
 # Do nothing in whole run of the suite

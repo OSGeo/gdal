@@ -116,8 +116,6 @@ def test_ogr_pcidsk_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading
 
@@ -161,8 +159,6 @@ def test_ogr_pcidsk_2():
             pytest.fail(layername)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check with test_ogrsf
@@ -210,8 +206,6 @@ def test_ogr_pcidsk_4():
     assert ds is None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test that we can open a raster only pcidsk in update mode
 
@@ -227,8 +221,6 @@ def test_ogr_pcidsk_5():
     ds = ogr.Open('../gdrivers/data/utm.pix', update=1)
     assert ds is not None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
@@ -256,8 +248,6 @@ def test_ogr_pcidsk_add_field_to_non_empty_layer():
 
     ogr.GetDriverByName('PCIDSK').DeleteDataSource(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -275,8 +265,6 @@ def test_ogr_pcidsk_too_many_layers():
     ds = None
 
     ogr.GetDriverByName('PCIDSK').DeleteDataSource(tmpfile)
-
-    return 'success'
 
 
 ###############################################################################
@@ -304,8 +292,7 @@ def test_ogr_pcidsk_online_1():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Check a polygon layer
 
@@ -326,8 +313,6 @@ def test_ogr_pcidsk_online_2():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -335,8 +320,6 @@ def test_ogr_pcidsk_online_2():
 def test_ogr_pcidsk_cleanup():
 
     gdal.Unlink('tmp/ogr_pcidsk_1.pix')
-
-    return 'success'
 
 
 gdaltest_list = [

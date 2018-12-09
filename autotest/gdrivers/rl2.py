@@ -49,8 +49,7 @@ def test_rl2_1():
         gdaltest.rl2_drv = None
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a rl2 DB gray level
 
@@ -96,8 +95,6 @@ def test_rl2_2():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 1087
 
-    return 'success'
-
 ###############################################################################
 # Test opening a rl2 DB gray level
 
@@ -138,8 +135,6 @@ def test_rl2_3():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 35686
 
-    return 'success'
-
 ###############################################################################
 # Test opening a rl2 DB paletted
 
@@ -165,8 +160,6 @@ def test_rl2_4():
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 35614
-
-    return 'success'
 
 ###############################################################################
 # Test opening a rl2 DB with various data types
@@ -200,8 +193,7 @@ def test_rl2_5():
         if subds_name == 'RASTERLITE2:data/multi_type.rl2:int8':
             assert ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateCopy() on a grayscale uint8
 
@@ -418,8 +410,6 @@ def test_rl2_20():
 
     gdal.Unlink('/vsimem/rl2_20.rl2')
 
-    return 'success'
-
 ###############################################################################
 # Test compression methods
 
@@ -461,8 +451,6 @@ def test_rl2_21():
 
     gdal.Unlink('/vsimem/rl2_21.rl2')
 
-    return 'success'
-
 ###############################################################################
 # Test APPEND_SUBDATASET
 
@@ -498,8 +486,6 @@ def test_rl2_22():
 
     gdal.Unlink('/vsimem/rl2_22.rl2')
 
-    return 'success'
-
 ###############################################################################
 # Test BuildOverviews
 
@@ -525,8 +511,6 @@ def test_rl2_23():
 
     gdal.Unlink('/vsimem/rl2_23.rl2')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a .rl2.sql file
 
@@ -541,7 +525,6 @@ def test_rl2_24():
 
     ds = gdal.Open('data/byte.rl2.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
-    return 'success'
 
 ###############################################################################
 # Test Create()
@@ -554,8 +537,7 @@ def test_rl2_error_create():
 
     with gdaltest.error_handler():
         assert gdaltest.rl2_drv.Create('/vsimem/out.db', 1, 1) is None
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_rl2_1,

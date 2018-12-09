@@ -115,8 +115,6 @@ def test_ogr_edigeo_1():
 
     ds.Destroy()
 
-    return 'success'
-
 
 gdaltest_list = [
     test_ogr_edigeo_1]

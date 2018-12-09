@@ -45,8 +45,7 @@ def test_ogr_grass_1():
     if gdaltest.ogr_grass_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read 'point' datasource
 
@@ -68,8 +67,6 @@ def test_ogr_grass_2():
     assert feat.GetFieldAsString('name') == 'my point'
 
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

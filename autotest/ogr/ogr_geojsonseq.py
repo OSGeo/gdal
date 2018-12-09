@@ -88,8 +88,6 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
 
     ogr.GetDriverByName('GeoJSONSeq').DeleteDataSource(filename)
 
-    return 'success'
-
 
 def test_ogr_geojsonseq_lf():
     return _ogr_geojsonseq_create('/vsimem/test', [], False)
@@ -109,7 +107,6 @@ def test_ogr_geojsonseq_inline():
 {"type":"Feature","properties":{},"geometry":null}""")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
-    return 'success'
 
 
 def test_ogr_geojsonseq_prefix():
@@ -117,7 +114,6 @@ def test_ogr_geojsonseq_prefix():
     ds = ogr.Open("""GeoJSONSeq:data/test.geojsonl""")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
-    return 'success'
 
 
 def test_ogr_geojsonseq_seq_geometries():
@@ -132,8 +128,7 @@ def test_ogr_geojsonseq_seq_geometries():
             f.DumpReadable()
             pytest.fail()
 
-    return 'success'
-
+    
 
 def test_ogr_geojsonseq_reprojection():
 
@@ -159,8 +154,6 @@ def test_ogr_geojsonseq_reprojection():
 
     ogr.GetDriverByName('GeoJSONSeq').DeleteDataSource(filename)
 
-    return 'success'
-
 
 def test_ogr_geojsonseq_read_rs_json_pretty():
 
@@ -176,7 +169,6 @@ def test_ogr_geojsonseq_read_rs_json_pretty():
         f.DumpReadable()
         pytest.fail()
     assert lyr.GetNextFeature() is None
-    return 'success'
 
 
 def test_ogr_geojsonseq_test_ogrsf():
@@ -189,8 +181,6 @@ def test_ogr_geojsonseq_test_ogrsf():
         test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.geojsonl')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 
 gdaltest_list = [

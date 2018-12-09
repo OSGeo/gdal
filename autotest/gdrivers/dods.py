@@ -53,8 +53,7 @@ def dods_1():
         gdaltest.dods_dr = None
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Simple read test on a single variable.
 
@@ -112,7 +111,6 @@ def dods_6():
     gdaltest.dods_grid_ds = gdal.Open('http://g0dup05u.ecs.nasa.gov/opendap/AIRS/AIRX3STD.003/2004.12.28/AIRS.2004.12.28.L3.RetStd001.v4.0.9.0.G05253115303.hdf?TotH2OVap_A[y][x]')
     nd = gdaltest.dods_grid_ds.GetRasterBand(1).GetNoDataValue()
     assert nd == -9999.0, 'nodata value wrong or missing.'
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -124,8 +122,6 @@ def dods_cleanup():
 
     gdaltest.dods_dr = None
     gdaltest.dods_grid_ds = None
-
-    return 'success'
 
 
 gdaltest_list = []

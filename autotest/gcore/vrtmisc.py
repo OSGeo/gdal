@@ -47,8 +47,6 @@ def test_vrtmisc_1():
 
     assert cs == 4323, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test power scaling
 
@@ -60,8 +58,6 @@ def test_vrtmisc_2():
     ds = None
 
     assert cs == 4159, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test power scaling (not <SrcMin> <SrcMax> in VRT file)
@@ -85,8 +81,6 @@ def test_vrtmisc_3():
 
     assert cs == 4159, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test multi-band linear scaling with a single -scale occurrence.
 
@@ -101,8 +95,6 @@ def test_vrtmisc_4():
 
     assert cs1 == 4323, 'did not get expected checksum'
     assert cs2 == 4323, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test multi-band linear scaling with -scale_XX syntax
@@ -119,8 +111,6 @@ def test_vrtmisc_5():
     assert cs1 == 4672, 'did not get expected checksum'
     assert cs2 == 4323, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test multi-band linear scaling with repeated -scale syntax
 
@@ -135,8 +125,6 @@ def test_vrtmisc_6():
 
     assert cs1 == 4672, 'did not get expected checksum'
     assert cs2 == 4323, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test multi-band power scaling with a single -scale and -exponent occurrence.
@@ -153,8 +141,6 @@ def test_vrtmisc_7():
     assert cs1 == 4159, 'did not get expected checksum'
     assert cs2 == 4159, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test multi-band power scaling with -scale_XX and -exponent_XX syntax
 
@@ -170,8 +156,6 @@ def test_vrtmisc_8():
     assert cs1 == 4672, 'did not get expected checksum'
     assert cs2 == 4159, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test multi-band linear scaling with repeated -scale and -exponent syntax
 
@@ -186,8 +170,6 @@ def test_vrtmisc_9():
 
     assert cs1 == 4672, 'did not get expected checksum'
     assert cs2 == 4159, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test metadata serialization (#5944)
@@ -239,8 +221,6 @@ def test_vrtmisc_10():
 
     gdal.Unlink("/vsimem/vrtmisc_10.vrt")
 
-    return "success"
-
 ###############################################################################
 # Test relativeToVRT is preserved during re-serialization (#5985)
 
@@ -273,8 +253,6 @@ def test_vrtmisc_11():
     gdal.Unlink("tmp/vrtmisc_11.vrt")
 
     assert data.find('<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>') >= 0
-
-    return "success"
 
 ###############################################################################
 # Test set/delete nodata
@@ -311,8 +289,6 @@ def test_vrtmisc_12():
 
     gdal.Unlink("/vsimem/vrtmisc_12.vrt")
 
-    return "success"
-
 ###############################################################################
 # Test CreateCopy() preserve NBITS
 
@@ -322,8 +298,6 @@ def test_vrtmisc_13():
     ds = gdal.Open('data/oddsize1bit.tif')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
     assert out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
-
-    return "success"
 
 ###############################################################################
 # Test SrcRect/DstRect are serialized as integers
@@ -357,8 +331,6 @@ def test_vrtmisc_14():
     assert (content.find('<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"') >= 0 and \
        content.find('<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"') >= 0)
 
-    return "success"
-
 ###############################################################################
 # Test CreateCopy() preserve SIGNEDBYTE
 
@@ -370,8 +342,6 @@ def test_vrtmisc_15():
     assert out_ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
     ds = None
     gdal.Unlink('/vsimem/vrtmisc_15.tif')
-
-    return "success"
 
 ###############################################################################
 # Test rounding to closest int for coordinates
@@ -424,8 +394,6 @@ def test_vrtmisc_16():
     gdal.Unlink('/vsimem/vrtmisc_16.tif')
     gdal.Unlink('/vsimem/vrtmisc_16.vrt')
 
-    return "success"
-
 ###############################################################################
 # Check that the serialized xml:VRT doesn't include itself (#6767)
 
@@ -441,8 +409,6 @@ def test_vrtmisc_17():
 
     assert xml_vrt.find('xml:VRT') < 0
 
-    return "success"
-
 ###############################################################################
 # Check GetMetadata('xml:VRT') behaviour on a in-memory VRT copied from a VRT
 
@@ -457,8 +423,6 @@ def test_vrtmisc_18():
 
     assert (xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') >= 0 or \
        xml_vrt.find('<SourceFilename relativeToVRT="1">data\\byte.tif</SourceFilename>') >= 0)
-
-    return "success"
 
 ###############################################################################
 # Check RAT support
@@ -501,8 +465,6 @@ def test_vrtmisc_rat():
     gdal.Unlink('/vsimem/vrtmisc_rat.vrt')
     gdal.Unlink('/vsimem/vrtmisc_rat.tif')
 
-    return "success"
-
 ###############################################################################
 # Check ColorTable support
 
@@ -516,8 +478,6 @@ def test_vrtmisc_colortable():
     assert ds.GetRasterBand(1).GetColorTable().GetCount() == 1
     ds.GetRasterBand(1).SetColorTable(None)
     assert ds.GetRasterBand(1).GetColorTable() is None
-
-    return 'success'
 
 ###############################################################################
 # Check histogram support
@@ -537,15 +497,13 @@ def test_vrtmisc_histogram():
     assert hist == (1.0, 2.0, 2, [3000000000, 4])
 
     gdal.Unlink(tmpfile)
-    return 'success'
 
 ###############################################################################
 # Cleanup.
 
 
 def test_vrtmisc_cleanup():
-    return 'success'
-
+    pass
 
 gdaltest_list = [
     test_vrtmisc_1,

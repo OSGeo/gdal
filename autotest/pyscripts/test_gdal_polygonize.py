@@ -96,7 +96,7 @@ def test_gdal_polygonize_1():
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
     shp_drv.DeleteDataSource('tmp/poly.shp')
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test a simple case without masking.
@@ -135,7 +135,7 @@ def test_gdal_polygonize_2():
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
     shp_drv.DeleteDataSource('tmp/out.shp')
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 def test_gdal_polygonize_3():
@@ -168,7 +168,7 @@ def test_gdal_polygonize_3():
     drv.DeleteDataSource('tmp/out.gpkg')
 
     if geom_is_polygon:
-        return 'success'
+        return
     pytest.fail('GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon))
 
 ###############################################################################
@@ -198,8 +198,6 @@ def test_gdal_polygonize_4():
     os.unlink('tmp/out.gml')
 
     assert content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') >= 0
-
-    return 'success'
 
 
 gdaltest_list = [

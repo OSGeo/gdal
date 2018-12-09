@@ -61,8 +61,6 @@ def test_ogr_bna_1():
     assert (ogrtest.check_feature_geometry(feat, 'POINT (532.991 429.121)',
                                       max_error=0.0001) == 0)
 
-    return 'success'
-
 ###############################################################################
 # Test lines bna layer.
 
@@ -81,8 +79,6 @@ def test_ogr_bna_2():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(feat, 'LINESTRING (224.598 307.425,333.043 341.461,396.629 304.952)', max_error=0.0001) == 0
-
-    return 'success'
 
 ###############################################################################
 # Test polygons bna layer.
@@ -112,8 +108,6 @@ def test_ogr_bna_3():
     feat = lyr.GetFeature(5)
     assert ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)))', max_error=0.0001) == 0
 
-    return 'success'
-
 ###############################################################################
 # Test ellipses bna layer.
 
@@ -131,8 +125,6 @@ def test_ogr_bna_4():
 
     lyr.ResetReading()
     lyr.GetNextFeature()
-
-    return 'success'
 
 
 ###############################################################################
@@ -154,8 +146,7 @@ def ogr_bna_check_content(lyr1, lyr2):
         feat1 = lyr1.GetNextFeature()
         feat2 = lyr2.GetNextFeature()
 
-    return 'success'
-
+    
 
 def ogr_bna_write(creation_options):
 
@@ -190,8 +181,7 @@ def ogr_bna_write(creation_options):
         dst_lyr = output_ds.GetLayerByName('out_' + layer_name)
         ogr_bna_check_content(src_lyr, dst_lyr)
 
-    return 'success'
-
+    
 
 def test_ogr_bna_5():
 
@@ -217,8 +207,6 @@ def test_ogr_bna_6():
     size = os.stat('tmp/out.bna').st_size
     assert size == 1611, ('Got size %d. Expected %d' % (size, 1611))
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -232,8 +220,7 @@ def test_ogr_bna_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_bna_1,

@@ -61,8 +61,7 @@ def test_gta_1():
     if gdaltest.gta_drv is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test updating existing dataset, check srs, check gt
 
@@ -105,8 +104,6 @@ def test_gta_2():
 
     gdaltest.gta_drv.Delete('/vsimem/byte.gta')
 
-    return 'success'
-
 ###############################################################################
 # Test writing and readings GCPs
 
@@ -138,8 +135,6 @@ def test_gta_3():
     new_ds = None
 
     gdaltest.gta_drv.Delete('/vsimem/gta_3.gta')
-
-    return 'success'
 
 ###############################################################################
 # Test band metadata
@@ -186,8 +181,6 @@ def test_gta_4():
 
     gdaltest.gta_drv.Delete('/vsimem/gta_4.gta')
 
-    return 'success'
-
 ###############################################################################
 # Test compression algorithms
 
@@ -218,8 +211,6 @@ def test_gta_5():
         del out_ds
 
     gdaltest.gta_drv.Delete('/vsimem/gta_5.gta')
-
-    return 'success'
 
 
 @pytest.mark.parametrize(

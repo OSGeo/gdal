@@ -112,8 +112,7 @@ def test_ogr_wfs_mapserver():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test reading a GeoServer WFS server
@@ -206,8 +205,7 @@ def test_ogr_wfs_geoserver():
             feat.DumpReadable()
             pytest.fail('did not get expected feature (4)')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a GeoServer WFS server with OUTPUTFORMAT=json
 
@@ -241,8 +239,7 @@ def test_ogr_wfs_geoserver_json():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test reading a GeoServer WFS server with OUTPUTFORMAT=SHAPE-ZIP
@@ -276,8 +273,7 @@ def test_ogr_wfs_geoserver_shapezip():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test WFS paging
 
@@ -332,8 +328,6 @@ def test_ogr_wfs_geoserver_paging():
     assert feature_count_wfs110 == feature_count_ref, feature_count_wfs100
 
     assert feature_count_wfs110_at_hand == feature_count_ref
-
-    return 'success'
 ###############################################################################
 # Test reading a Deegree WFS server
 
@@ -388,8 +382,7 @@ def test_ogr_wfs_deegree():
     #    gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
     #    print(feat_count)
     #    return 'fail'
-    return 'success'
-
+    
 ###############################################################################
 # Run test_ogrsf
 
@@ -409,8 +402,6 @@ def test_ogr_wfs_test_ogrsf():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro "WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10" app:SGID024_Springs')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 
 ###############################################################################
@@ -512,8 +503,6 @@ def test_ogr_wfs_fake_wfs_server():
 
     webserver.server_stop(process, port)
 
-    return 'success'
-
 ###############################################################################
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() (WFS-T)
 
@@ -589,8 +578,6 @@ def test_ogr_wfs_geoserver_wfst():
     sql_lyr = ds.ExecuteSQL("DELETE FROM za:za_points WHERE type = 'type_set_by_ogr_wfs_8_test' OR type = 'type_set_by_ogr_wfs_8_test_2'")
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 
 ###############################################################################
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() with expected
@@ -629,8 +616,7 @@ def test_ogr_wfs_deegree_wfst():
     if ret != 0:
         print('expected fail on SetFeature')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateFeature() / UpdateFeature() / DeleteFeature() on a WFS 1.0.0 server
 
@@ -667,8 +653,6 @@ def test_ogr_wfs_ionic_wfst():
 
     ds.ExecuteSQL("DELETE FROM wfs:BUSINESS WHERE gml_id = '%s'" % gmlid)
 
-    return 'success'
-
 ###############################################################################
 # Test ExecuteSQL() where SQL should be turned into PROPERTYNAME and FILTER parameters
 
@@ -688,8 +672,6 @@ def test_ogr_wfs_ionic_sql():
     ds.ReleaseResultSet(lyr)
 
     assert count == 1
-
-    return 'success'
 
 ###############################################################################
 # Test opening a datasource from a XML description file
@@ -720,8 +702,6 @@ def test_ogr_wfs_xmldescriptionfile():
         'did not get expected result'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening a datasource from a XML description file that has just the URL
@@ -766,8 +746,6 @@ def test_ogr_wfs_xmldescriptionfile_to_be_updated():
 
     os.unlink('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a datasource directly from a GetCapabilities answer XML file
 # The following test should issue 0 WFS http request
@@ -784,8 +762,6 @@ def test_ogr_wfs_getcapabilitiesfile():
     ds = None
 
     gdal.Unlink('data/getcapabilities_wfs.gfs')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a datastore which only support GML 3.2.1 output
@@ -806,8 +782,6 @@ def test_ogr_wfs_deegree_gml321():
     gdal.ErrorReset()
     lyr.GetFeatureCount()
     assert gdal.GetLastErrorMsg() == ''
-
-    return 'success'
 
 ###############################################################################
 # Test WFS 2.0.0 support
@@ -857,8 +831,6 @@ def test_ogr_wfs_deegree_wfs200():
     assert allcount == spatialfiltercount and allcount != 0, \
         'spatialfiltercount != allcount'
 
-    return 'success'
-
 ###############################################################################
 # Test WFS SORTBY support
 
@@ -886,8 +858,6 @@ def test_ogr_wfs_deegree_sortby():
 
     ds.ReleaseResultSet(lyr)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -907,8 +877,7 @@ def ogr_wfs_get_multiple_layer_defn(url):
         lyr = ds.GetLayer(i)
         print('Layer %s has %d fields' % (lyr.GetName(), lyr.GetLayerDefn().GetFieldCount()))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test a ESRI server
 
@@ -970,8 +939,6 @@ def test_ogr_wfs_vsimem_fail_because_not_enabled(with_and_without_streaming):
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 
 ###############################################################################
 def test_ogr_wfs_vsimem_fail_because_no_get_capabilities(with_and_without_streaming):
@@ -982,8 +949,6 @@ def test_ogr_wfs_vsimem_fail_because_no_get_capabilities(with_and_without_stream
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1000,8 +965,6 @@ def test_ogr_wfs_vsimem_fail_because_empty_response(with_and_without_streaming):
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Empty content returned by server') >= 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1016,8 +979,6 @@ def test_ogr_wfs_vsimem_fail_because_no_WFS_Capabilities(with_and_without_stream
     gdal.PopErrorHandler()
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Cannot find <WFS_Capabilities>') >= 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1034,8 +995,6 @@ def test_ogr_wfs_vsimem_fail_because_exception(with_and_without_streaming):
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Error returned by server : <ServiceExceptionReport/>') >= 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1050,8 +1009,6 @@ def test_ogr_wfs_vsimem_fail_because_invalid_xml_capabilities(with_and_without_s
     gdal.PopErrorHandler()
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Invalid XML content : <invalid_xml') >= 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1069,8 +1026,6 @@ def test_ogr_wfs_vsimem_fail_because_missing_featuretypelist(with_and_without_st
     gdal.PopErrorHandler()
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Cannot find <FeatureTypeList>') >= 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1137,8 +1092,6 @@ def test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file(with_and_without_stream
     assert ds is not None
     assert ds.GetLayerCount() == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1168,8 +1121,6 @@ def test_ogr_wfs_vsimem_wfs110_minimal_instance(with_and_without_streaming):
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1205,8 +1156,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype(with_and_wi
 
     lyr_defn = lyr.GetLayerDefn()
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1228,8 +1177,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype(with_and_wi
     assert gdal.GetLastErrorMsg() != ''
     assert lyr_defn.GetFieldCount() == 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1250,8 +1197,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema(with
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert lyr_defn.GetFieldCount() == 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1315,8 +1260,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(with_and_without_st
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 7
-
-    return 'success'
 
 
 ###############################################################################
@@ -1426,8 +1369,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(with_a
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1444,8 +1385,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits(with_an
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert count == 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1487,8 +1426,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits(with_
     assert gdal.GetLastErrorMsg() != ''
     assert count == 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1508,8 +1445,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits(with_
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert count == 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1531,8 +1466,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_Featu
     assert gdal.GetLastErrorMsg() != ''
     assert count == 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1552,8 +1485,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml(w
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert count == 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1575,8 +1506,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExcept
     assert gdal.GetLastErrorMsg() != ''
     assert count == 0
 
-    return 'success'
-
 
 ###############################################################################
 def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures(with_and_without_streaming):
@@ -1595,8 +1524,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numbe
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert count == 0
-
-    return 'success'
 
 ###############################################################################
 
@@ -1626,8 +1553,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     count = lyr.GetFeatureCount()
     assert count == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1644,8 +1569,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature(with_and_without_str
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert f is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1668,8 +1591,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature(with_and_without_str
     assert gdal.GetLastErrorMsg() != ''
     assert f is None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1690,8 +1611,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature(with_and_without_s
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg().find('Error returned by server') >= 0
     assert f is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -1763,8 +1682,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1775,8 +1692,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent(with_and_without_streaming):
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     lyr = ds.GetLayer(0)
     assert lyr.GetExtent() == (2, 2, 49, 49)
-
-    return 'success'
 
 ###############################################################################
 
@@ -1797,8 +1712,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature(with_and_w
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert extent == (0, 0, 0, 0)
-
-    return 'success'
 
 ###############################################################################
 
@@ -1885,8 +1798,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(with_and_without_st
         for i in range(4):
             assert abs(expected_extent[i] - got_extent[i]) <= 1e-5
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -1982,8 +1894,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2018,8 +1929,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != ''
     assert f is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2068,8 +1977,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     f = lyr.GetNextFeature()
     assert f is not None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2116,8 +2023,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     f = lyr.GetNextFeature()
     assert f is not None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2276,8 +2181,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     assert f is None
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2338,8 +2241,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f = lyr.GetNextFeature()
         assert f is not None
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2387,8 +2289,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     f = lyr.GetNextFeature()
     assert f is not None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2786,8 +2686,6 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.Unlink(wfs_insert_url)
     wfs_insert_url = None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2950,8 +2848,6 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
     ret = lyr.SetFeature(f)
     assert ret == 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3094,8 +2990,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PopErrorHandler()
     assert sql_lyr is None and gdal.GetLastErrorMsg() != ''
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3194,8 +3088,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -3340,8 +3233,6 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 2
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3436,8 +3327,6 @@ xsi:schemaLocation="http://ns1 /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
     lyr = ds.GetLayer(1)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 3
-
-    return 'success'
 
 ###############################################################################
 
@@ -3633,8 +3522,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     #    print(lyr.GetFeatureCount())
     #    return 'fail'
 
-    return 'success'
-
+    
 
 ###############################################################################
 def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
@@ -3767,8 +3655,7 @@ def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 def test_ogr_wfs_vsimem_wfs200_multipart(with_and_without_streaming):
@@ -3892,8 +3779,7 @@ str,"POINT(2 49)"
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -4330,8 +4216,6 @@ xsi:schemaLocation="http://foo blabla
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -4445,8 +4329,6 @@ def test_ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix(with_and_without
         pytest.fail()
 
     ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 
@@ -4608,8 +4490,6 @@ def test_ogr_wfs_vsimem_wfs200_join_distinct(with_and_without_streaming):
 
     ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -4620,8 +4500,7 @@ def test_ogr_wfs_vsimem_cleanup(with_and_without_streaming):
     for f in gdal.ReadDir('/vsimem/'):
         gdal.Unlink('/vsimem/' + f)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_wfs_vsimem_fail_because_not_enabled,

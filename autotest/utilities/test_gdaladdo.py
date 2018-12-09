@@ -87,8 +87,6 @@ def test_gdaladdo_2():
 
     os.remove('tmp/ovr5.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test -ro
 
@@ -114,8 +112,7 @@ def test_gdaladdo_3():
     except OSError:
         pytest.fail('no external overview.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -clean
 
@@ -139,8 +136,6 @@ def test_gdaladdo_4():
         pass
 
     os.remove('tmp/test_gdaladdo_3.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test implicit levels
@@ -182,8 +177,6 @@ def test_gdaladdo_5():
     assert cnt == 1
 
     os.remove('tmp/test_gdaladdo_5.tif')
-
-    return 'success'
 
 
 gdaltest_list = [

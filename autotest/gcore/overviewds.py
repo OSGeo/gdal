@@ -48,8 +48,6 @@ def test_overviewds_1():
     ds = gdal.OpenEx('data/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Nominal cases
 
@@ -91,8 +89,6 @@ def test_overviewds_2():
     assert not ds.GetMetadata('GEOLOCATION')
     assert ds.GetMetadataItem('RPC', 'FOO') is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test GCP
@@ -140,8 +136,6 @@ def test_overviewds_3():
     for i in range(3):
         assert abs(ref_pnt[i] - pnt[i]) <= 1e-5
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test RPC
@@ -193,8 +187,7 @@ def test_overviewds_4():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GEOLOCATION
 
@@ -236,8 +229,6 @@ def test_overviewds_5():
         assert abs(pnt[i] - expected_xyz[i]) <= 0.5
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test VRT
 
@@ -261,8 +252,6 @@ def test_overviewds_6():
     assert got_cs == expected_cs
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -285,8 +274,7 @@ def test_overviewds_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_overviewds_1,
                  test_overviewds_2,

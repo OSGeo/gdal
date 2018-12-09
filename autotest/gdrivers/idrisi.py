@@ -88,8 +88,7 @@ def test_idrisi_cleanup():
         print('FIXME?: data/rgbsmall.tif.aux.xml is produced by those tests')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_idrisi_1,

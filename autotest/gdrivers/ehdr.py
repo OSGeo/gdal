@@ -100,8 +100,6 @@ def test_ehdr_4():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # verify last dataset's colortable and nodata value.
 
@@ -123,8 +121,6 @@ def test_ehdr_5():
     ds = None
 
     gdal.GetDriverByName('EHdr').Delete('tmp/test_4.bil')
-
-    return 'success'
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -169,8 +165,6 @@ def test_ehdr_8():
 
     drv.Delete('tmp/ehdr_8.bil')
 
-    return 'success'
-
 ###############################################################################
 # Test opening worldclim .hdr files that have a few extensions fields in the
 # .hdr file to specify minimum, maximum and projection. Also test that we
@@ -190,8 +184,6 @@ def test_ehdr_9():
     assert wkt.find('GEOGCS["WGS 84') == 0, 'wrong projection'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test detecting floating point file based on image file size (#3933)
@@ -227,8 +219,6 @@ def test_ehdr_12():
     src_ds = None
 
     gdal.GetDriverByName('EHDR').Delete('/vsimem/1bit.bil')
-
-    return 'success'
 
 ###############################################################################
 # Test statistics
@@ -268,8 +258,6 @@ def test_ehdr_13():
     ds = None
 
     gdal.GetDriverByName('EHDR').Delete('/vsimem/byte.bil')
-
-    return 'success'
 
 ###############################################################################
 # Test optimized RasterIO() (#5438)
@@ -316,8 +304,6 @@ def test_ehdr_14():
     gdal.GetDriverByName('EHDR').Delete('/vsimem/byte.bil')
     gdal.GetDriverByName('EHDR').Delete('/vsimem/byte_reduced.bil')
 
-    return 'success'
-
 ###############################################################################
 # Test support for RAT (#3253)
 
@@ -351,8 +337,6 @@ def test_ehdr_rat():
     ds = None
 
     gdal.GetDriverByName('EHDR').Delete(tmpfile)
-
-    return 'success'
 
 
 ###############################################################################
@@ -394,8 +378,6 @@ def test_ehdr_approx_stats_flag():
     ds = None
 
     gdal.GetDriverByName('EHDR').Delete(tmpfile)
-
-    return 'success'
 
 
 gdaltest_list = [

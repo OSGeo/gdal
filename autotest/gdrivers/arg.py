@@ -122,8 +122,7 @@ def test_arg_init():
     if gdaltest.argDriver is None:
         pytest.skip()
 
-    return 'success'
-
+    
 
 def test_arg_unsupported():
     if gdaltest.argDriver is None:
@@ -140,8 +139,7 @@ def test_arg_unsupported():
                 ds = gdal.Open('data/arg-' + name + '.arg')
                 assert ds is not None
 
-    return 'success'
-
+    
 
 def test_arg_getrastercount():
     if gdaltest.argDriver is None:
@@ -156,8 +154,7 @@ def test_arg_getrastercount():
 
             assert ds.RasterCount == 1
 
-    return 'success'
-
+    
 
 def test_arg_getgeotransform():
     if gdaltest.argDriver is None:
@@ -179,8 +176,7 @@ def test_arg_getgeotransform():
                     gt[4] == 0 and \
                     gt[5] == -1)
 
-    return 'success'
-
+    
 
 def test_arg_blocksize():
     if gdaltest.argDriver is None:
@@ -209,8 +205,6 @@ def test_arg_blocksize():
     gdal.GetDriverByName('ARG').Delete('data/utm.arg')
 
     assert stat.st_size == (xsize * ysize)
-
-    return 'success'
 
 
 def test_arg_layername():
@@ -251,8 +245,6 @@ def test_arg_layername():
 
     os.unlink('data/arg-int16.arg.aux.xml')
 
-    return 'success'
-
 
 def test_arg_nodata():
     """
@@ -265,8 +257,6 @@ def test_arg_nodata():
     ds = gdal.Open('data/arg-int8.arg')
 
     assert ds.GetRasterBand(1).GetNoDataValue() == 128
-
-    return 'success'
 
 
 def test_arg_byteorder():
@@ -316,8 +306,7 @@ def test_arg_byteorder():
 
             assert data1 == data2
 
-    return 'success'
-
+    
 
 def test_arg_destroy():
     if gdaltest.argDriver is None:
@@ -328,8 +317,7 @@ def test_arg_destroy():
             os.remove('data/arg-' + name + '.arg')
             os.remove('data/arg-' + name + '.json')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_arg_init,

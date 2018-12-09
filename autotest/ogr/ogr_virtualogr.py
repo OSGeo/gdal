@@ -111,8 +111,6 @@ def test_ogr_virtualogr_1():
     # Too many arguments
     assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1, 1, bla)")
 
-    return 'success'
-
 ###############################################################################
 # Test detection of suspicious use of VirtualOGR
 
@@ -184,8 +182,6 @@ def test_ogr_virtualogr_2():
 
     assert not did_not_get_error, 'expected a failure'
 
-    return 'success'
-
 ###############################################################################
 # Test GDAL as a SQLite3 dynamically loaded extension
 
@@ -220,8 +216,6 @@ def test_ogr_virtualogr_3():
     if ret.find('skip') == 0:
         pytest.skip()
     assert ret.find(gdal.VersionInfo('RELEASE_NAME')) >= 0, ('fail : %s' % ret)
-
-    return 'success'
 
 ###############################################################################
 # Test ogr_datasource_load_layers()
@@ -284,8 +278,6 @@ def test_ogr_virtualogr_4():
     ds = None
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
-    return 'success'
-
 ###############################################################################
 # Test failed CREATE VIRTUAL TABLE USING VirtualOGR
 
@@ -311,8 +303,6 @@ def test_ogr_virtualogr_5():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_virtualogr_5.csv')
-
-    return 'success'
 
 
 gdaltest_list = [

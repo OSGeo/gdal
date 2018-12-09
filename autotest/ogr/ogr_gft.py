@@ -58,8 +58,6 @@ def test_ogr_gft_init():
 
     ogrtest.gft_refresh = '1/woRTxgfN8dLUpRhnOL-BXG-f7VxzXKy_3D5eizH8bS8'
 
-    return 'success'
-
 ###############################################################################
 # Read test on Wikileaks Afgan War Diary 2004-2010 table.
 
@@ -103,8 +101,6 @@ def test_ogr_gft_read():
 
     assert sql_lyr_count == count, \
         ('did not get expected feature count. Got %d, expected %d' % (sql_lyr_count, count))
-
-    return 'success'
 
 ###############################################################################
 # Write test
@@ -167,8 +163,6 @@ def test_ogr_gft_write():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # ogr2ogr test to create a non-spatial GFT table
 
@@ -213,8 +207,6 @@ def test_ogr_gft_ogr2ogr_non_spatial():
     ds.ExecuteSQL('DELLAYER:' + layer_name)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # ogr2ogr test to create a spatial GFT table
@@ -293,8 +285,6 @@ def test_ogr_gft_ogr2ogr_spatial():
     ds.ExecuteSQL('DELLAYER:' + copied_layer_name)
 
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

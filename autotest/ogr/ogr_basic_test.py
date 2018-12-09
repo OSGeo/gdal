@@ -46,8 +46,6 @@ def test_ogr_basic_1():
 
     assert gdaltest.ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Test Feature counting.
 
@@ -77,8 +75,6 @@ def test_ogr_basic_2():
 
     assert count2 == 10, \
         ('Got wrong count with GetNextFeature() - %d, expecting 10' % count2)
-
-    return 'success'
 
 ###############################################################################
 # Test Spatial Query.
@@ -123,8 +119,6 @@ def test_ogr_basic_3():
     assert count == 10, \
         ('Clearing spatial query may not have worked properly, getting\n%d features instead of expected 10 features.' % count)
 
-    return 'success'
-
 ###############################################################################
 # Test GetDriver().
 
@@ -135,8 +129,6 @@ def test_ogr_basic_4():
 
     assert driver.GetName() == 'ESRI Shapefile', \
         ('Got wrong driver name: ' + driver.GetName())
-
-    return 'success'
 
 ###############################################################################
 # Test attribute query on special field fid - per bug 1468.
@@ -156,8 +148,6 @@ def test_ogr_basic_5():
 
     assert feat1.GetFID() == 3, 'got wrong feature.'
 
-    return 'success'
-
 
 ###############################################################################
 # Test opening a dataset with an empty string and a non existing dataset
@@ -167,8 +157,6 @@ def test_ogr_basic_6():
     assert ogr.Open('') is None
 
     assert ogr.Open('non_existing') is None
-
-    return 'success'
 
 ###############################################################################
 # Test ogr.Feature.Equal()
@@ -359,8 +347,7 @@ def test_ogr_basic_7():
         feat_almost_clone.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Issue several RegisterAll() to check that OGR drivers are good citizens
 
@@ -370,8 +357,6 @@ def test_ogr_basic_8():
     ogr.RegisterAll()
     ogr.RegisterAll()
     ogr.RegisterAll()
-
-    return 'success'
 
 ###############################################################################
 # Test ogr.GeometryTypeToName (#4871)
@@ -402,8 +387,7 @@ def test_ogr_basic_9():
     for geom_type_tuple in geom_type_tuples:
         assert ogr.GeometryTypeToName(geom_type_tuple[0]) == geom_type_tuple[1]
 
-    return 'success'
-
+    
 ###############################################################################
 # Run test_ogrsf -all_drivers
 
@@ -417,8 +401,6 @@ def test_ogr_basic_10():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -all_drivers')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test double call to UseExceptions() (#5704)
@@ -438,8 +420,7 @@ def test_ogr_basic_11():
     if used_exceptions_before == 0:
         ogr.DontUseExceptions()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test OFSTBoolean, OFSTInt16 and OFSTFloat32
 
@@ -559,8 +540,6 @@ def test_ogr_basic_12():
     assert gdal.GetLastErrorMsg() != ''
     assert field_def.GetSubType() == ogr.OFSTNone
 
-    return 'success'
-
 ###############################################################################
 # Test OGRParseDate (#6452)
 
@@ -598,8 +577,7 @@ def test_ogr_basic_13():
         f.SetField('date', val)
         assert f.GetField('date') == expected_ret, val
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ogr.Open(.) in an empty directory
 
@@ -614,8 +592,6 @@ def test_ogr_basic_14():
     assert ds is None
 
     os.rmdir('tmp/ogr_basic_14')
-
-    return 'success'
 
 ###############################################################################
 # Test exceptions with OGRErr return code
@@ -633,7 +609,7 @@ def test_ogr_basic_15():
     except RuntimeError as e:
         ok = str(e).find('CreateFeature : unsupported operation on a read-only datasource') >= 0
         assert ok, ('Got: %s' + str(e))
-        return 'success'
+        return
     finally:
         if used_exceptions_before == 0:
             ogr.DontUseExceptions()
@@ -660,8 +636,6 @@ def test_ogr_basic_16():
 
     assert list(ogr_basic_16_gen_list(2)) == [0, 1]
 
-    return 'success'
-
 
 def test_ogr_basic_invalid_unicode():
 
@@ -684,8 +658,7 @@ def test_ogr_basic_invalid_unicode():
     except:
         pass
 
-    return 'success'
-
+    
 
 def test_ogr_basic_dataset_slice():
 
@@ -703,8 +676,6 @@ def test_ogr_basic_dataset_slice():
     lyrs = [lyr.GetName() for lyr in ds[0:3:2]]
     assert lyrs == ['lyr1', 'lyr3']
 
-    return 'success'
-
 
 ###############################################################################
 # cleanup
@@ -713,8 +684,6 @@ def test_ogr_basic_dataset_slice():
 def test_ogr_basic_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -61,8 +61,6 @@ def test_rasterio_1():
     ds = None
     drv.Delete('tmp/rasterio1.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test writing a 5x4 buffer to a 10x6 raster and read it back
 
@@ -86,8 +84,6 @@ def test_rasterio_2():
 
     ds = None
     drv.Delete('tmp/rasterio2.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test extensive read & writes into a non tiled raster
@@ -129,8 +125,6 @@ def test_rasterio_3():
 
     ds = None
     drv.Delete('tmp/rasterio3.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test extensive read & writes into a tiled raster
@@ -178,8 +172,6 @@ def test_rasterio_4():
 
     ds = None
     drv.Delete('tmp/rasterio4.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test error cases of ReadRaster()
@@ -247,8 +239,6 @@ def test_rasterio_5():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test error cases of WriteRaster()
 
@@ -290,8 +280,6 @@ def test_rasterio_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test that default window reading works via ReadRaster()
 
@@ -305,8 +293,6 @@ def test_rasterio_7():
 
     data = ds.ReadRaster()
     assert len(data) == 400, 'did not read expected dataset data via ReadRaster()'
-
-    return 'success'
 
 ###############################################################################
 # Test callback of ReadRaster()
@@ -432,8 +418,6 @@ def test_rasterio_8():
     data = ds.ReadRaster(callback=rasterio_8_progress_interrupt_callback,
                          callback_data=tab)
     assert data is None and tab[0] >= 0.50
-
-    return 'success'
 
 ###############################################################################
 # Test resampling algorithm of ReadRaster()
@@ -638,8 +622,6 @@ def test_rasterio_9():
     assert cs == 30836
     assert abs(tab[0] - 1.0) <= 1e-5
 
-    return 'success'
-
 ###############################################################################
 # Test error when getting a block
 
@@ -664,8 +646,6 @@ def test_rasterio_10():
                                           buf_ysize=10)
     gdal.PopErrorHandler()
     assert data is None
-
-    return 'success'
 
 ###############################################################################
 # Test cubic resampling and nbits
@@ -693,8 +673,6 @@ def test_rasterio_11():
     ar = mem_ds.GetRasterBand(1).ReadAsArray(0, 0, 4, 3, 8, 3, resample_alg=gdal.GRIORA_Cubic)
     # Would overshoot to 129 if NBITS was ignored
     assert ar.max() == 127
-
-    return 'success'
 
 ###############################################################################
 # Test cubic resampling on dataset RasterIO with an alpha channel
@@ -745,8 +723,6 @@ def test_rasterio_12():
     # Alpha band should be different
     assert not numpy.array_equal(ar_ds[0], ar_ds[3])
 
-    return 'success'
-
 ###############################################################################
 # Test cubic resampling with masking
 
@@ -771,8 +747,7 @@ def test_rasterio_13():
         expected_ar = numpy.array([[0, 0, 0, 0, 0, 0, 0, 0], [0, 255, 255, 255, 255, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]])
         assert numpy.array_equal(ar_ds, expected_ar), dt
 
-    return 'success'
-
+    
 ###############################################################################
 # Test average downsampling by a factor of 2 on exact boundaries
 
@@ -819,8 +794,6 @@ cellsize     0
     data = struct.unpack('B' * 1, data)
     assert data[0] == 50
 
-    return 'success'
-
 ###############################################################################
 # Test average oversampling by an integer factor (should behave like nearest)
 
@@ -846,8 +819,6 @@ cellsize     0
 
     gdal.Unlink('/vsimem/rasterio_15.asc')
     gdal.Unlink('/vsimem/rasterio_15_out.asc')
-
-    return 'success'
 
 ###############################################################################
 # Test mode downsampling by a factor of 2 on exact boundaries
@@ -875,8 +846,6 @@ cellsize     0
     gdal.Unlink('/vsimem/rasterio_16.asc')
     gdal.Unlink('/vsimem/rasterio_16_out.asc')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -898,8 +867,6 @@ def test_rasterio_lanczos_nodata():
                    0, 0, 0, 22460, 22460, 22547, 22538, 22456, 22572,
                    0, 0, 0, 0, 22504, 22496, 22564, 22563, 22610)
     assert data_ar == expected_ar
-
-    return 'success'
 
 ###############################################################################
 
@@ -966,8 +933,6 @@ nodata_value 0
     assert data_ar == expected_ar
 
     gdal.Unlink('/vsimem/in.asc')
-
-    return 'success'
 
 gdaltest_list = [
     test_rasterio_1,

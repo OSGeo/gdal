@@ -63,8 +63,6 @@ def test_pixfun_real_c():
 
     assert numpy.alltrue(data == refdata.real)
 
-    return 'success'
-
 
 ###############################################################################
 # Verify real part extraction from a complex dataset.
@@ -85,8 +83,6 @@ def test_pixfun_real_r():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == refdata.real)
-
-    return 'success'
 
 
 ###############################################################################
@@ -116,8 +112,6 @@ def test_pixfun_imag_c():
 
     assert numpy.alltrue(data == data_ds)
 
-    return 'success'
-
 
 ###############################################################################
 # Verify imaginary part extraction from a real dataset.
@@ -133,8 +127,6 @@ def test_pixfun_imag_r():
     data = ds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == 0)
-
-    return 'success'
 
 
 ###############################################################################
@@ -157,8 +149,6 @@ def test_pixfun_complex():
 
     assert numpy.allclose(data, refdata + 1j * refdata)
 
-    return 'success'
-
 
 ###############################################################################
 # Verify modulus extraction from a complex (float) dataset.
@@ -180,8 +170,6 @@ def test_pixfun_mod_c():
 
     assert numpy.alltrue(data == numpy.abs(refdata))
 
-    return 'success'
-
 
 ###############################################################################
 # Verify modulus extraction from a real (integer type) dataset.
@@ -202,8 +190,6 @@ def test_pixfun_mod_r():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == numpy.abs(refdata))
-
-    return 'success'
 
 
 ###############################################################################
@@ -227,8 +213,6 @@ def test_pixfun_phase_c():
 
     assert numpy.allclose(data, numpy.arctan2(refdata.imag, refdata.real))
 
-    return 'success'
-
 
 ###############################################################################
 # Verify phase extraction from a real dataset.
@@ -249,8 +233,6 @@ def test_pixfun_phase_r():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == numpy.arctan2(0, refdata))
-
-    return 'success'
 
 
 ###############################################################################
@@ -273,8 +255,6 @@ def test_pixfun_conj_c():
 
     assert numpy.alltrue(data == numpy.conj(refdata))
 
-    return 'success'
-
 
 ###############################################################################
 # Verify cmplex conjugare computation on a real dataset.
@@ -295,8 +275,6 @@ def test_pixfun_conj_r():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == numpy.conj(refdata))
-
-    return 'success'
 
 
 ###############################################################################
@@ -322,8 +300,7 @@ def test_pixfun_sum_r():
 
         assert numpy.alltrue(data == refdata)
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Verify the sum of 3 (two complex and one real) datasets.
@@ -348,8 +325,7 @@ def test_pixfun_sum_c():
 
         assert numpy.alltrue(data == refdata)
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Verify the difference of 2 (real) datasets.
@@ -375,8 +351,6 @@ def test_pixfun_diff_r():
     refdata2 = refds.GetRasterBand(1).ReadAsArray(10, 10, 5, 6)
 
     assert numpy.alltrue(data == refdata1 - refdata2)
-
-    return 'success'
 
 
 ###############################################################################
@@ -404,8 +378,6 @@ def test_pixfun_diff_c():
 
     assert numpy.alltrue(data == refdata1 - refdata2)
 
-    return 'success'
-
 
 ###############################################################################
 # Verify the product of 3 (real) datasets.
@@ -430,8 +402,7 @@ def test_pixfun_mul_r():
 
         assert numpy.alltrue(data == refdata)
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Verify the product of 2 (complex) datasets.
@@ -453,8 +424,6 @@ def test_pixfun_mul_c():
 
     assert numpy.alltrue(data == refdata * refdata)
 
-    return 'success'
-
 
 ###############################################################################
 # Verify the product with complex conjugate of a complex datasets.
@@ -475,8 +444,6 @@ def test_pixfun_cmul_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == refdata * refdata.conj())
-
-    return 'success'
 
 
 ###############################################################################
@@ -506,8 +473,6 @@ def test_pixfun_cmul_r():
 
     assert numpy.alltrue(data == refdata1 * refdata2.conj())
 
-    return 'success'
-
 
 ###############################################################################
 # Verify computation of the inverse of a real datasets.
@@ -529,8 +494,6 @@ def test_pixfun_inv_r():
     refdata = refdata.astype('float64')
 
     assert numpy.alltrue(data == 1. / refdata)
-
-    return 'success'
 
 
 ###############################################################################
@@ -556,8 +519,6 @@ def test_pixfun_inv_c():
     assert numpy.alltrue(abs(delta.real) < 1e-13)
     assert numpy.alltrue(abs(delta.imag) < 1e-13)
 
-    return 'success'
-
 
 ###############################################################################
 # Verify intensity computation of a complex dataset.
@@ -578,8 +539,6 @@ def test_pixfun_intensity_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == (refdata * refdata.conj()).real)
-
-    return 'success'
 
 
 ###############################################################################
@@ -602,8 +561,6 @@ def test_pixfun_intensity_r():
 
     assert numpy.alltrue(data == (refdata * refdata.conj()).real)
 
-    return 'success'
-
 
 ###############################################################################
 # Verify square root computation.
@@ -624,8 +581,6 @@ def test_pixfun_sqrt():
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
     assert numpy.alltrue(data == numpy.sqrt(refdata))
-
-    return 'success'
 
 
 ###############################################################################
@@ -648,8 +603,6 @@ def test_pixfun_log10_r():
 
     assert numpy.alltrue(data == numpy.log10(refdata))
 
-    return 'success'
-
 
 ###############################################################################
 # Verify logarithm computation of imag dataset.
@@ -669,8 +622,6 @@ def test_pixfun_log10_c():
     assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
     refdata = refds.GetRasterBand(1).ReadAsArray()
     assert numpy.allclose(data, numpy.log10(numpy.abs(refdata)))
-
-    return 'success'
 
 
 ###############################################################################
@@ -693,8 +644,6 @@ def test_pixfun_dB_r():
 
     assert numpy.allclose(data, 20. * numpy.log10(refdata))
 
-    return 'success'
-
 
 ###############################################################################
 # Verify dB computation of imag dataset.
@@ -714,8 +663,6 @@ def test_pixfun_dB_c():
     assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
     refdata = refds.GetRasterBand(1).ReadAsArray()
     assert numpy.allclose(data, 20. * numpy.log10(numpy.abs(refdata)))
-
-    return 'success'
 
 
 ###############################################################################
@@ -739,8 +686,6 @@ def test_pixfun_dB2amp():
     # if not numpy.alltrue(data == 10.**(refdata/20.)):
     assert numpy.allclose(data, 10.**(refdata / 20.))
 
-    return 'success'
-
 
 ###############################################################################
 # Verify conversion from dB to power.
@@ -762,8 +707,6 @@ def test_pixfun_dB2pow():
     refdata = refdata.astype('float64')
 
     assert numpy.allclose(data, 10.**(refdata / 10.))
-
-    return 'success'
 
 
 ###############################################################################

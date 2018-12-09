@@ -49,8 +49,7 @@ def test_colortable_1():
     for i in range(len(gdaltest.test_ct_data)):
         gdaltest.test_ct.SetColorEntry(i, gdaltest.test_ct_data[i])
 
-    return 'success'
-
+    
 ###############################################################################
 # verify contents.
 
@@ -69,8 +68,7 @@ def test_colortable_2():
 
             assert g_data[j] == o_v, 'color table mismatch'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateColorRamp()
 
@@ -89,15 +87,12 @@ def test_colortable_3():
 
     assert ct.GetColorEntry(255) == (0, 0, 255, 255)
 
-    return 'success'
-
 ###############################################################################
 # Cleanup.
 
 
 def test_colortable_cleanup():
     gdaltest.test_ct = None
-    return 'success'
 
 
 gdaltest_list = [

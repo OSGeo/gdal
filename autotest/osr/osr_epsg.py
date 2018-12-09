@@ -51,8 +51,7 @@ def test_osr_epsg_1():
         print(srs.ExportToPrettyWkt())
         pytest.fail('Wrong central meridian, override missed?')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check that EPSG:4312 lookup has the towgs84 values set properly
 # from gcs.override.csv.
@@ -68,8 +67,7 @@ def test_osr_epsg_2():
         print(srs.ExportToPrettyWkt())
         pytest.fail('Wrong TOWGS84, override missed?')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check that various EPSG lookups based on Pulvoko 1942 have the
 # towgs84 values set properly (#3579)
@@ -89,8 +87,7 @@ def test_osr_epsg_3():
                 print(srs.ExportToPrettyWkt())
                 pytest.fail('For EPSG:%d. Wrong TOWGS84, override missed?' % epsg)
 
-    return 'success'
-
+    
 ###############################################################################
 #   Check that EPSG:4326 is *not* considered as lat/long (#3813)
 
@@ -103,8 +100,6 @@ def test_osr_epsg_4():
     assert not srs.EPSGTreatsAsLatLong(), 'not supposed to be treated as lat/long'
 
     assert srs.ExportToWkt().find('AXIS') == -1, 'should not have AXIS node'
-
-    return 'success'
 
 ###############################################################################
 #   Check that EPSGA:4326 is considered as lat/long
@@ -119,8 +114,6 @@ def test_osr_epsg_5():
 
     assert srs.ExportToWkt().find('AXIS') != -1, 'should  have AXIS node'
 
-    return 'success'
-
 ###############################################################################
 #   Test datum shift for OSGB 36
 
@@ -132,8 +125,6 @@ def test_osr_epsg_6():
 
     assert srs.ExportToWkt().find('TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489]') != -1, \
         'did not get expected TOWGS84'
-
-    return 'success'
 
 ###############################################################################
 #   Check that EPSG:2193 is *not* considered as N/E
@@ -148,8 +139,6 @@ def test_osr_epsg_7():
 
     assert srs.ExportToWkt().find('AXIS') == -1, 'should not have AXIS node'
 
-    return 'success'
-
 ###############################################################################
 #   Check that EPSGA:2193 is considered as N/E
 
@@ -163,8 +152,6 @@ def test_osr_epsg_8():
 
     assert srs.ExportToWkt().find('AXIS') != -1, 'should  have AXIS node'
 
-    return 'success'
-
 ###############################################################################
 #   Check EPSG:3857
 
@@ -177,8 +164,6 @@ def test_osr_epsg_9():
     assert srs.ExportToWkt() == 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]'
 
     assert srs.Validate() == 0, 'Does not validate'
-
-    return 'success'
 
 ###############################################################################
 #   Test AutoIdentifyEPSG() on Polar Stereographic
@@ -240,8 +225,6 @@ def test_osr_epsg_10():
     srs_ref.ImportFromEPSG(3995)
     assert srs.IsSame(srs_ref) != 0
 
-    return 'success'
-
 ###############################################################################
 # Test datum shift for EPSG:2065 (PCS based override)
 
@@ -253,8 +236,6 @@ def test_osr_epsg_11():
 
     assert srs.ExportToWkt().find('TOWGS84[570.8,85.7,462.8,4.998,1.587,5.261,3.56]') != -1, \
         'did not get expected TOWGS84'
-
-    return 'success'
 
 ###############################################################################
 # Test IsSame() on SRS that differs only by their PROJ4 EXTENSION (besides
@@ -270,7 +251,6 @@ def test_osr_epsg_12():
     sr2.ImportFromEPSG(3395)
 
     assert not sr1.IsSame(sr2)
-    return 'success'
 
 ###############################################################################
 # Test FindMatches()
@@ -368,8 +348,6 @@ def test_osr_epsg_13():
     assert len(matches) == 1 and matches[0][1] == 50
     assert matches[0][0].IsSame(sr) != 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -378,7 +356,6 @@ def test_osr_epsg_gcs_deprecated():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4268)
     assert sr.ExportToWkt().find('NAD27 Michigan (deprecated)') >= 0
-    return 'success'
 
 ###############################################################################
 
@@ -388,7 +365,6 @@ def test_osr_epsg_geoccs_deprecated():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4346)
     assert sr.ExportToWkt().find('ETRS89 (geocentric) (deprecated)') >= 0
-    return 'success'
 
 ###############################################################################
 

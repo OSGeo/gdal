@@ -67,8 +67,7 @@ def test_ogr_pds_1():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read IEEE_FLOAT columns (see https://github.com/OSGeo/gdal/issues/570)
 
@@ -82,8 +81,7 @@ def test_ogr_pds_2():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_pds_1,

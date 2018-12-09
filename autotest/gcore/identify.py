@@ -46,8 +46,6 @@ def test_identify_1():
     assert dr is not None and dr.GetDescription() == 'GTiff', \
         'Got wrong driver for byte.tif'
 
-    return 'success'
-
 ###############################################################################
 # Test a file that won't be recognised.
 
@@ -59,8 +57,6 @@ def test_identify_2():
     dr = gdal.IdentifyDriver('data/byte.pnm.aux.xml', file_list)
     assert dr is None, 'Got a driver for byte.pnm.aux.xml!'
 
-    return 'success'
-
 ###############################################################################
 # Try identify on a directory.
 
@@ -69,8 +65,6 @@ def test_identify_3():
 
     dr = gdal.IdentifyDriver('data')
     assert dr is None, 'Got a driver for data directory!'
-
-    return 'success'
 
 ###############################################################################
 # Try IdentifyDriverEx
@@ -97,8 +91,6 @@ def test_identify_4():
 
     dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files=['aea.dat', 'aea.hdr'])
     assert dr is not None, 'Did not get a driver!'
-
-    return 'success'
 
 
 gdaltest_list = [

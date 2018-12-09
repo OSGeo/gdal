@@ -75,8 +75,7 @@ def test_til_2():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check GetFileList() & XML
 
@@ -107,8 +106,7 @@ def test_til_3():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_til_1,

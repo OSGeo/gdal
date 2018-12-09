@@ -55,7 +55,6 @@ def test_terragen_2():
     ds = None
     gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.ter')
     gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.tif')
-    return 'success'
 
 
 gdaltest_list = [

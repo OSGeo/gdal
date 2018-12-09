@@ -53,7 +53,7 @@ def test_basic_test_1():
     ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
-        return 'success'
+        return
     pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
@@ -79,14 +79,12 @@ def test_basic_test_strace_non_existing_file():
     # Only 3 calls on the file are legit: open(), stat() and readlink()
     assert len(interesting_lines) <= 3, 'too many system calls accessing file'
 
-    return 'success'
-
 def test_basic_test_2():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
-        return 'success'
+        return
     pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
@@ -95,7 +93,7 @@ def test_basic_test_3():
     ds = gdal.Open('', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
-        return 'success'
+        return
     pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
@@ -104,7 +102,7 @@ def test_basic_test_4():
     ds = gdal.Open('', gdal.GA_Update)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
-        return 'success'
+        return
     pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
@@ -115,7 +113,7 @@ def test_basic_test_5():
     last_error = gdal.GetLastErrorMsg()
     expected = '`data/doctype.xml\' not recognized as a supported file format'
     if ds is None and expected in last_error:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -126,8 +124,6 @@ def test_basic_test_6():
     gdal.AllRegister()
     gdal.AllRegister()
     gdal.AllRegister()
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #3077 (check that errors are cleared when using UseExceptions())
@@ -150,7 +146,7 @@ def basic_test_7_internal():
 
         assert gdal.GetLastErrorType() == 0, 'got unexpected error type'
 
-        return 'success'
+        return
 
 
 def test_basic_test_7():
@@ -184,8 +180,6 @@ def test_basic_test_8():
     os.unlink('tmp/LICENSE.TXT')
     assert ret.find('fake_license') == 0 or ret.find('GDAL/OGR Licensing') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test gdal.PushErrorHandler() with a Python error handler
 
@@ -210,8 +204,6 @@ def test_basic_test_9():
     assert gdaltest.err_no == 2
 
     assert gdaltest.msg == 'test'
-
-    return 'success'
 
 ###############################################################################
 # Test gdal.PushErrorHandler() with a Python error handler as a method (#5186)
@@ -246,8 +238,6 @@ def test_basic_test_10():
     assert error_handler.err_no == 2
 
     assert error_handler.msg == 'test'
-
-    return 'success'
 
 ###############################################################################
 # Test gdal.OpenEx()
@@ -327,8 +317,6 @@ def test_basic_test_11():
         gdal.DontUseExceptions()
     assert got_exception
 
-    return 'success'
-
 ###############################################################################
 # Test GDAL layer API
 
@@ -358,8 +346,6 @@ def test_basic_test_12():
     assert ds.DeleteLayer('bar') == 0
     ds.SetStyleTable(ds.GetStyleTable())
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test correct sorting of StringList / metadata (#5540, #5557)
@@ -395,8 +381,7 @@ def test_basic_test_13():
     for i in range(200):
         assert ds.GetMetadataItem("FILENAME_%d" % i) == '%d' % i
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SetMetadata()
 
@@ -467,8 +452,7 @@ def test_basic_test_14():
     except:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test errors with progress callback
 
@@ -508,8 +492,6 @@ def test_basic_test_15():
         ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_bad_ret)
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test unrecognized and recognized open options prefixed by @
 
@@ -526,8 +508,6 @@ def test_basic_test_16():
         gdal.OpenEx('/vsimem/temp.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
     gdal.Unlink('/vsimem/temp.tif')
     assert gdal.GetLastErrorMsg() == 'Invalid value for NUM_THREADS: INVALID'
-
-    return 'success'
 
 ###############################################################################
 # Test mix of gdal/ogr.UseExceptions()/DontUseExceptions()
@@ -568,8 +548,7 @@ def test_basic_test_17():
         assert not gdal.GetUseExceptions()
         assert not ogr.GetUseExceptions()
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_basic_test_1,
                  test_basic_test_strace_non_existing_file,

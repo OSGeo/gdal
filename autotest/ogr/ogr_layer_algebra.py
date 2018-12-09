@@ -157,8 +157,6 @@ def test_algebra_setup():
 
     empty = ds.CreateLayer('empty')
 
-    return 'success'
-
 
 def test_algebra_intersection():
     if not ogrtest.have_geos():
@@ -242,8 +240,6 @@ def test_algebra_intersection():
 
     assert is_same(D1, C), 'D1 != C'
 
-    return 'success'
-
 
 def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     if not ogrtest.have_geos():
@@ -307,8 +303,6 @@ def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     assert layer3.GetFeatureCount() == 4, \
         'Lower dimension geometries not kept in identity'
 
-    return 'success'
-
 
 def test_algebra_union():
     if not ogrtest.have_geos():
@@ -359,8 +353,7 @@ def test_algebra_union():
         assert C.GetFeatureCount() == 2, \
             ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
 
-    return 'success'
-
+    
 
 def test_algebra_symdifference():
     if not ogrtest.have_geos():
@@ -400,8 +393,6 @@ def test_algebra_symdifference():
     assert C.GetFeatureCount() == 0, \
         ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
 
-    return 'success'
-
 
 def test_algebra_identify():
     if not ogrtest.have_geos():
@@ -440,8 +431,7 @@ def test_algebra_identify():
 
         assert is_same(D1, C), 'D1 != C'
 
-    return 'success'
-
+    
 
 def test_algebra_update():
     if not ogrtest.have_geos():
@@ -480,8 +470,7 @@ def test_algebra_update():
 
         assert is_same(D1, C), 'D1 != C'
 
-    return 'success'
-
+    
 
 def test_algebra_clip():
     if not ogrtest.have_geos():
@@ -520,8 +509,7 @@ def test_algebra_clip():
 
         assert is_same(D1, C), 'D1 != C'
 
-    return 'success'
-
+    
 
 def test_algebra_erase():
     if not ogrtest.have_geos():
@@ -587,8 +575,6 @@ def test_algebra_erase():
 
     recreate_layer_C()
 
-    return 'success'
-
 
 def test_algebra_cleanup():
     if not ogrtest.have_geos():
@@ -604,8 +590,6 @@ def test_algebra_cleanup():
     A = None
     empty = None
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -102,8 +102,6 @@ def test_ogr_style_styletable():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Build tests runner
 

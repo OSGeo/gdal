@@ -72,8 +72,6 @@ def test_srtmhgt_1():
 
     assert chksum == 60918, ('Wrong checksum. Checksum found %d' % chksum)
 
-    return 'success'
-
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -99,8 +97,6 @@ def test_srtmhgt_2():
     assert chksum == 60918, ('Wrong checksum. Checksum found %d' % chksum)
     dsDst = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading from a .hgt.zip file
 
@@ -117,8 +113,6 @@ def test_srtmhgt_3():
     chksum = band.Checksum()
 
     assert chksum == 60918, ('Wrong checksum. Checksum found %d' % chksum)
-
-    return 'success'
 
 ###############################################################################
 # Test reading from a .SRTMSWBD.raw.zip file (GRASS #3246)
@@ -140,8 +134,6 @@ def test_srtmhgt_4():
 
     assert cs == 3636, ('Wrong checksum. Checksum found %d' % cs)
 
-    return 'success'
-
 ###############################################################################
 # Cleanup.
 
@@ -154,8 +146,7 @@ def test_srtmhgt_cleanup():
         os.remove('tmp/n43.dt1.tif')
     except (RuntimeError, OSError):
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_srtmhgt_1,

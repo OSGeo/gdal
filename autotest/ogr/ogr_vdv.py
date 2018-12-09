@@ -70,8 +70,7 @@ def test_ogr_idf_1():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -113,8 +112,7 @@ def test_ogr_idf_3d():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Run test_ogrsf on .idf
 
@@ -128,8 +126,6 @@ def test_ogr_idf_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.idf')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Create a VDV file
@@ -184,8 +180,6 @@ def test_ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
     ds = ogr.Open(filename, update=1)
     ds.CreateLayer('empty2', options=lco)
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Read it
@@ -254,8 +248,6 @@ eof; 4
 
     gdal.Unlink(out_filename)
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf on it
 
@@ -269,8 +261,6 @@ def test_ogr_vdv_3():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.x10')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Create a VDV directory
@@ -299,8 +289,6 @@ def test_ogr_vdv_6():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test_x10')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Run VDV452
@@ -372,8 +360,7 @@ def test_ogr_vdv_7():
 
         gdal.Unlink('/vsimem/vdv/ogr_vdv_7.x10')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test a few error cases
 
@@ -521,8 +508,6 @@ eof; 2
 
     gdal.Unlink(out_filename)
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -538,8 +523,6 @@ def test_ogr_vdv_cleanup():
         for f in files:
             gdal.Unlink('tmp/test_x10/' + f)
     gdal.Rmdir('tmp/test_x10')
-
-    return 'success'
 
 
 gdaltest_list = [

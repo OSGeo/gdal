@@ -99,8 +99,6 @@ def test_gdal_rasterize_lib_1():
 
     target_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test creating an output file
 
@@ -137,8 +135,6 @@ def test_gdal_rasterize_lib_3():
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'
 
-    return 'success'
-
 ###############################################################################
 # Rasterization without georeferencing
 
@@ -170,8 +166,6 @@ def test_gdal_rasterize_lib_100():
 
     target_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Rasterization on empty geometry
 
@@ -202,8 +196,6 @@ def test_gdal_rasterize_lib_101():
     assert checksum == 0, 'Did not get expected image checksum'
 
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Rasterization on raster with RPC
@@ -262,8 +254,6 @@ def test_gdal_rasterize_lib_102():
     checksum = target_ds.GetRasterBand(1).Checksum()
     assert checksum == 2003, 'Did not get expected image checksum'
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Simple rasterization with all values of the optim option
@@ -330,8 +320,7 @@ def test_gdal_rasterize_lib_4():
 
         target_ds = None
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_rasterize_lib_1,

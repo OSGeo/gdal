@@ -60,8 +60,6 @@ def test_validate_jp2_1():
     gdaltest.has_validate_jp2_and_build_jp2 = True
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -148,8 +146,7 @@ def test_validate_jp2_2():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    return 'success'
-
+    
 ###############################################################################
 # Another highly corrupted file
 
@@ -203,8 +200,7 @@ def test_validate_jp2_3():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    return 'success'
-
+    
 ###############################################################################
 # Another highly corrupted file
 
@@ -245,8 +241,7 @@ def test_validate_jp2_4():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    return 'success'
-
+    
 ###############################################################################
 # Slightly less corrupted file. Test mainly issues with JP2boxes and color table
 # Also a RGN marker
@@ -291,8 +286,7 @@ def test_validate_jp2_5():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    return 'success'
-
+    
 ###############################################################################
 # Nominal case with single band data
 
@@ -319,8 +313,7 @@ def test_validate_jp2_6():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    return 'success'
-
+    
 ###############################################################################
 # Nominal case with RGBA data
 
@@ -347,8 +340,7 @@ def test_validate_jp2_7():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    return 'success'
-
+    
 ###############################################################################
 # Nominal case with color table data
 
@@ -375,8 +367,7 @@ def test_validate_jp2_8():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -385,8 +376,7 @@ def test_validate_jp2_cleanup():
     if gdaltest.has_validate_jp2_and_build_jp2:
         gdaltest.reregister_all_jpeg2000_drivers()
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_validate_jp2_1,

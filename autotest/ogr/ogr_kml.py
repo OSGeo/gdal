@@ -73,8 +73,6 @@ def test_ogr_kml_datastore():
 
     assert ogrtest.kml_ds.GetLayerCount() == 6, 'wrong number of layers'
 
-    return 'success'
-
 ###############################################################################
 # Test reading attributes for first layer (point).
 #
@@ -114,8 +112,7 @@ def test_ogr_kml_attributes_1():
         print('got: ', feat.GetField('description'))
         pytest.fail('Wrong description field value')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading attributes for another layer (point).
 #
@@ -137,8 +134,6 @@ def test_ogr_kml_attributes_2():
 
     feat = lyr.GetNextFeature()
     assert feat is None, 'unexpected feature found.'
-
-    return 'success'
 
 ###############################################################################
 # Test reading attributes for another layer (linestring).
@@ -171,8 +166,6 @@ def test_ogr_kml_attributes_3():
     feat = lyr.GetNextFeature()
     assert feat is not None, 'expected feature not found.'
 
-    return 'success'
-
 ###############################################################################
 # Test reading attributes for another layer (polygon).
 #
@@ -200,8 +193,7 @@ def test_ogr_kml_attributes_4():
         i = i + 1
         feat = lyr.GetNextFeature()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading of KML point geometry
 #
@@ -236,8 +228,6 @@ def test_ogr_kml_point_read():
 
     assert not ogrtest.check_feature_geometry(feat, wkt)
 
-    return 'success'
-
 ###############################################################################
 # Test reading of KML linestring geometry
 #
@@ -268,8 +258,6 @@ def test_ogr_kml_linestring_read():
 
     wkt = 'LINESTRING (-112.265654928602004 36.094476726025462 2357,-112.266038452823807 36.093426088386707 2357,-112.266813901345301 36.092510587768807 2357,-112.267782683444494 36.091898273579957 2357,-112.268855751095202 36.091313794118697 2357,-112.269481071721899 36.090367720752099 2357,-112.269526855561097 36.089321714872852 2357,-112.269014456727604 36.088509160604723 2357,-112.268152881533894 36.087538135979557 2357,-112.2670588176031 36.086826852625677 2357,-112.265737458732104 36.086463123013033 2357)'
     assert not ogrtest.check_feature_geometry(feat, wkt)
-
-    return 'success'
 
 ###############################################################################
 # Test reading of KML polygon geometry
@@ -307,8 +295,6 @@ def test_ogr_kml_polygon_read():
 
     wkt = 'POLYGON ((-122.084437112828397 37.421772530030907 19,-122.084511885574599 37.421911115428962 19,-122.0850470999805 37.421787551215353 19,-122.085071991339106 37.421436630231611 19,-122.084916406231997 37.421372378221157 19,-122.084219386816699 37.421372378016258 19,-122.084219386589993 37.421476171614962 19,-122.083808641999099 37.4214613409357 19,-122.083789972856394 37.421313064107963 19,-122.083279653469802 37.421293288405927 19,-122.083260981920702 37.421392139442979 19,-122.082937362173695 37.421372363998763 19,-122.082906242566693 37.421515697788713 19,-122.082850226966499 37.421762825764652 19,-122.082943578863507 37.421767769696352 19,-122.083217411188002 37.421792485526858 19,-122.0835970430103 37.421748007445601 19,-122.083945555677104 37.421693642376027 19,-122.084007789463698 37.421762838158529 19,-122.084113587521003 37.421748011043917 19,-122.084076247378405 37.421713412923751 19,-122.084144704773905 37.421678815345693 19,-122.084144704222993 37.421817206601972 19,-122.084250333307395 37.421817070044597 19,-122.084437112828397 37.421772530030907 19))'
     assert not ogrtest.check_feature_geometry(feat, wkt)
-
-    return 'success'
 
 ###############################################################################
 # Write test
@@ -368,8 +354,6 @@ def test_ogr_kml_write_1():
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Check previous test
@@ -419,8 +403,6 @@ def test_ogr_kml_check_write_1():
     assert feat.GetGeometryRef().ExportToWkt() == 'GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1 0,2 3 0))', \
         'Unexpected geometry.'
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading attributes with XML content in them
@@ -439,8 +421,7 @@ def test_ogr_kml_xml_attributes():
         print('got: ', feat.GetField('description'))
         pytest.fail('Wrong description field value')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading all geometry types (#3558)
 
@@ -457,8 +438,7 @@ def test_ogr_kml_read_geometries():
     while feat is not None:
         feat = lyr.GetNextFeature()
 
-    return 'success'
-
+    
 ###############################################################################
 # Run test_ogrsf
 
@@ -475,8 +455,6 @@ def test_ogr_kml_test_ogrsf():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_SKIP LIBKML -ro data/samples.kml')
 
     assert not (ret.find("using driver `KML'") == -1 or ret.find('INFO') == -1 or ret.find('ERROR') != -1)
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #2772
@@ -497,8 +475,6 @@ def test_ogr_kml_interleaved_writing():
     # CreateFeature() should fail
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # Test reading KML with only Placemark
 
@@ -513,8 +489,6 @@ def test_ogr_kml_read_placemark():
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    return 'success'
-
 ###############################################################################
 # Test reading KML without any layer
 
@@ -526,8 +500,6 @@ def test_ogr_kml_read_empty():
 
     ds = ogr.Open('data/empty.kml')
     assert ds.GetLayerCount() == 0
-
-    return 'success'
 
 ###############################################################################
 # Test reading KML with empty layers
@@ -545,8 +517,6 @@ def test_ogr_kml_read_emptylayers():
 
     assert ds.GetLayer(1).GetFeatureCount() == 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -558,8 +528,7 @@ def compare_output(content, expected_content):
     for i, content_line in enumerate(content_lines):
         assert content_line.strip() == expected_lines[i].strip(), content
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we can write a schema
 
@@ -690,8 +659,7 @@ def test_ogr_kml_cleanup():
         print('Re-register LIBKML driver')
         ogrtest.libkml_drv.Register()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading KML with folder with empty subfolder and placemark
 
@@ -706,8 +674,6 @@ def test_ogr_kml_read_folder_with_subfolder_placemark():
 
     assert ds.GetLayer(0).GetFeatureCount() == 0
 
-    return 'success'
-
 ###############################################################################
 # Test reading invalid KML (#6878)
 
@@ -720,8 +686,6 @@ def test_ogr_kml_read_truncated():
     with gdaltest.error_handler():
         ds = ogr.Open('data/truncated.kml')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1591
@@ -737,8 +701,6 @@ def test_ogr_kml_read_weird_empty_folders():
 
     assert ds.GetLayer(0).GetFeatureCount() == 0
 
-    return 'success'
-
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1683
 
@@ -751,8 +713,6 @@ def test_ogr_kml_read_junk_content_after_valid_doc():
     with gdaltest.error_handler():
         ds = ogr.Open('data/junk_content_after_valid_doc.kml')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test reading KML with kml: prefix
@@ -768,8 +728,6 @@ def test_ogr_kml_read_placemark_with_kml_prefix():
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    return 'success'
-
 ###############################################################################
 # Test reading KML with duplicated folder name
 
@@ -784,8 +742,6 @@ def test_ogr_kml_read_duplicate_folder_name():
     assert lyr.GetName() == 'layer'
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == 'layer (#2)'
-
-    return 'success'
 
 ###############################################################################
 # Test reading KML with a placemark in root document, and a subfolder (#7221)
@@ -804,8 +760,6 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
     lyr = ds.GetLayerByName('SubFolder1')
     assert lyr is not None
     assert lyr.GetFeatureCount() == 1
-
-    return 'success'
 
 ###############################################################################
 # Build tests runner

@@ -50,7 +50,7 @@ def test_ogr_vrt_1():
         gdaltest.vrt_ds = ogr.Open('data/vrt_test.vrt')
 
     if gdaltest.vrt_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -87,8 +87,6 @@ def test_ogr_vrt_2():
 
     assert feat.GetFID() == 1, 'Unexpected fid'
 
-    return 'success'
-
 ###############################################################################
 # Same test on layer 3 derived from WKT column.
 #
@@ -120,8 +118,6 @@ def test_ogr_vrt_3():
 
     assert feat.GetFID() == 2, 'Unexpected fid'
 
-    return 'success'
-
 
 ###############################################################################
 # Test a spatial query.
@@ -148,8 +144,6 @@ def test_ogr_vrt_4():
 
     lyr.SetSpatialFilter(None)
 
-    return 'success'
-
 
 ###############################################################################
 # Test an attribute query.
@@ -174,8 +168,6 @@ def test_ogr_vrt_5():
 
     lyr.SetAttributeFilter(None)
 
-    return 'success'
-
 ###############################################################################
 # Test GetFeature() on layer with FID coming from a column.
 
@@ -190,8 +182,6 @@ def test_ogr_vrt_6():
 
     feat = lyr.GetFeature(2)
     assert feat.GetField('other') == 'Second', 'GetFeature() did not work properly.'
-
-    return 'success'
 
 ###############################################################################
 # Same as test 3, but on the result of an SQL query.
@@ -222,8 +212,6 @@ def test_ogr_vrt_7():
                                       max_error=0.000000001) == 0)
 
     assert feat.GetFID() == 2, 'Unexpected fid'
-
-    return 'success'
 
 ###############################################################################
 # Similar test, but now we put the whole VRT contents directly into the
@@ -258,8 +246,6 @@ def test_ogr_vrt_8():
 
     assert feat.GetFID() == 2, 'Unexpected fid'
 
-    return 'success'
-
 
 ###############################################################################
 # Test that attribute filters are passed through to an underlying layer.
@@ -287,8 +273,6 @@ def test_ogr_vrt_9():
     sub_ds.Release()
     sub_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test capabilities
 #
@@ -307,8 +291,6 @@ def test_ogr_vrt_10():
     assert vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) == src_lyr.TestCapability(ogr.OLCFastFeatureCount)
     assert vrt_lyr.TestCapability(ogr.OLCFastGetExtent) == src_lyr.TestCapability(ogr.OLCFastGetExtent)
     assert vrt_lyr.TestCapability(ogr.OLCRandomRead) == src_lyr.TestCapability(ogr.OLCRandomRead)
-
-    return 'success'
 
 ###############################################################################
 # Test VRT write capabilities with PointFromColumns geometries
@@ -398,8 +380,6 @@ def test_ogr_vrt_11():
     os.remove('tmp/test.csv')
     os.remove('tmp/test.csvt')
 
-    return 'success'
-
 ###############################################################################
 # Test VRT write capabilities with WKT geometries
 
@@ -440,8 +420,6 @@ def test_ogr_vrt_12():
 
     os.remove('tmp/test.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test VRT write capabilities with WKB geometries
 
@@ -480,8 +458,6 @@ def test_ogr_vrt_13():
     vrt_ds = None
 
     os.remove('tmp/test.csv')
-
-    return 'success'
 
 ###############################################################################
 # Test SrcRegion element for VGS_Direct
@@ -569,8 +545,6 @@ def test_ogr_vrt_14():
     vrt_ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
 
-    return 'success'
-
 
 ###############################################################################
 # Test SrcRegion element for VGS_WKT
@@ -621,8 +595,6 @@ def test_ogr_vrt_15():
     vrt_ds = None
 
     os.remove('tmp/test.csv')
-
-    return 'success'
 
 
 ###############################################################################
@@ -686,8 +658,6 @@ def test_ogr_vrt_16():
     os.remove('tmp/test.csv')
     os.remove('tmp/test.csvt')
 
-    return 'success'
-
 
 ###############################################################################
 # Test explicit field definitions.
@@ -735,8 +705,6 @@ def test_ogr_vrt_17():
     assert feat.GetField(0) == 8901 and feat.GetField(1) == "Greenwich" and feat.GetField(2) is None, \
         'did not get expected field value(s).'
 
-    return 'success'
-
 ###############################################################################
 # Test that attribute filters are *not* passed to sublayer by default
 # when explicit fields are defined.
@@ -766,8 +734,6 @@ def test_ogr_vrt_18():
 
     assert feat.GetField(0) == 8904, 'Attribute filter not working properly'
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf (optimized path)
 
@@ -784,8 +750,6 @@ def test_ogr_vrt_19_optimized():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf (non optimized path)
 
@@ -801,8 +765,6 @@ def test_ogr_vrt_19_nonoptimized():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_nonoptimized_vrt.vrt')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test VGS_Direct
@@ -911,8 +873,6 @@ def test_ogr_vrt_20():
     vrt_ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test.shp')
 
-    return 'success'
-
 ###############################################################################
 # Test lazy initialization with valid layer
 
@@ -1013,8 +973,6 @@ def ogr_vrt_21_internal():
     lyr = ds.GetLayerByName('test3')
     lyr.SyncToDisk()
     ds = None
-
-    return 'success'
 
 
 def test_ogr_vrt_21():
@@ -1142,8 +1100,6 @@ def ogr_vrt_22_internal():
     lyr.RollbackTransaction()
     ds = None
 
-    return 'success'
-
 
 def test_ogr_vrt_22():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -1193,8 +1149,6 @@ def test_ogr_vrt_23(shared_ds_flag=''):
     gdal.Unlink('/vsimem/rec1.vrt')
     gdal.Unlink('/vsimem/rec2.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test anti-recursion mechanism on shared DS
 
@@ -1231,8 +1185,6 @@ def test_ogr_vrt_24():
     gdal.Unlink('/vsimem/rec1.vrt')
     gdal.Unlink('/vsimem/rec2.vrt')
 
-    return 'success'
-
 
 ###############################################################################
 # Test GetFIDColumn()
@@ -1261,8 +1213,6 @@ def test_ogr_vrt_25():
     assert lyr.GetFIDColumn() == ''
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test transaction support
@@ -1318,8 +1268,6 @@ def test_ogr_vrt_26():
 
     ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_vrt_26.db')
 
-    return 'success'
-
 ###############################################################################
 # Test shapebin geometry
 
@@ -1358,8 +1306,6 @@ def test_ogr_vrt_27():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_vrt_27.csv')
-
-    return 'success'
 
 ###############################################################################
 # Invalid VRT testing
@@ -1406,8 +1352,6 @@ def test_ogr_vrt_28():
     ds = ogr.Open("data/invalid3.vrt")
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != '', 'expected error message on datasource opening'
-
-    return 'success'
 
 ###############################################################################
 # Test OGRVRTWarpedLayer
@@ -1728,8 +1672,6 @@ def test_ogr_vrt_29():
     gdal.Unlink('tmp/ogr_vrt_29.prj')
     os.unlink('tmp/ogr_vrt_29.vrt')
     os.unlink('tmp/ogr_vrt_29_2.vrt')
-
-    return 'success'
 
 
 ###############################################################################
@@ -2126,8 +2068,6 @@ def test_ogr_vrt_30():
         gdal.Unlink(filename)
     os.unlink('tmp/ogr_vrt_30.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test anti-recursion mechanism with union layer
 
@@ -2171,8 +2111,6 @@ def test_ogr_vrt_31(shared_ds_flag=''):
 
     gdal.Unlink('/vsimem/rec1.vrt')
     gdal.Unlink('/vsimem/rec2.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test anti-recursion mechanism on shared DS
@@ -2774,8 +2712,6 @@ def test_ogr_vrt_33():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test SetIgnoredFields() with with PointFromColumns geometries
 
@@ -2815,8 +2751,6 @@ def test_ogr_vrt_34():
     ds = None
 
     os.unlink('tmp/test.csv')
-
-    return 'success'
 
 ###############################################################################
 # Test nullable fields
@@ -2880,8 +2814,6 @@ def test_ogr_vrt_35():
     os.unlink('tmp/test.vrt')
     os.unlink('tmp/test2.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test editing direct geometries
 
@@ -2926,8 +2858,6 @@ def test_ogr_vrt_36():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_vrt_36.shp')
     gdal.Unlink('/vsimem/ogr_vrt_36.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test implict non-spatial layers (#6336)
 
@@ -2945,8 +2875,6 @@ def test_ogr_vrt_37():
 
     lyr = ds.GetLayerByName('test6')
     assert lyr.GetLayerDefn().GetGeomFieldCount() == 0
-
-    return 'success'
 
 ###############################################################################
 # Test reading geometry type
@@ -2999,8 +2927,6 @@ def test_ogr_vrt_38():
 
     gdal.Unlink('/vsimem/ogr_vrt_38.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test that attribute filtering works with <FID>
 
@@ -3042,8 +2968,6 @@ def test_ogr_vrt_39():
     gdal.Unlink('/vsimem/ogr_vrt_39.csvt')
     gdal.Unlink('/vsimem/ogr_vrt_39.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test PointZM support with encoding="PointFromColumns"
 
@@ -3079,8 +3003,6 @@ def test_ogr_vrt_40():
     gdal.Unlink('/vsimem/ogr_vrt_40.csv')
     gdal.Unlink('/vsimem/ogr_vrt_40.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test GetExtent() on erroneous definition
 
@@ -3096,8 +3018,7 @@ def test_ogr_vrt_41():
     with gdaltest.error_handler():
         lyr.GetExtent()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
@@ -3122,8 +3043,6 @@ def test_ogr_vrt_cleanup():
         pass
 
     gdaltest.vrt_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

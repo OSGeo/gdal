@@ -115,8 +115,6 @@ def test_gdaltindex_1():
         feat = ds.GetLayer(0).GetNextFeature()
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Try adding the same rasters again
 
@@ -136,8 +134,6 @@ def test_gdaltindex_2():
     ds = ogr.Open('tmp/tileindex.shp')
     assert ds.GetLayer(0).GetFeatureCount() == 4
     ds.Destroy()
-
-    return 'success'
 
 
 ###############################################################################
@@ -166,8 +162,6 @@ def test_gdaltindex_3():
     assert ds.GetLayer(0).GetFeatureCount() == 4
     ds.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Try adding a raster in another projection with -t_srs
 # 5th tile should be inserted, will not be if there is a srs transformation error
@@ -191,8 +185,6 @@ def test_gdaltindex_4():
     assert ds.GetLayer(0).GetFeatureCount() == 5, \
         ('got %d features, expecting 5' % ds.GetLayer(0).GetFeatureCount())
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test -src_srs_name, -src_srs_format options
@@ -237,8 +229,7 @@ def test_gdaltindex_5():
                 pytest.fail()
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -f, -lyr_name
 
@@ -258,8 +249,7 @@ def test_gdaltindex_6():
             ('got %d features, expecting 1' % lyr.GetFeatureCount())
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -278,8 +268,6 @@ def test_gdaltindex_cleanup():
     drv.Delete('tmp/gdaltindex4.tif')
     drv.Delete('tmp/gdaltindex5.tif')
     drv.Delete('tmp/gdaltindex6.tif')
-
-    return 'success'
 
 
 gdaltest_list = [

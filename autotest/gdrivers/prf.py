@@ -66,8 +66,6 @@ def test_prf_2():
 
     ds = None
 
-    return 'success'
-
 
 def test_prf_3():
 
@@ -80,8 +78,6 @@ def test_prf_3():
         pytest.fail('did not get expected number of overviews')
 
     ds = None
-
-    return 'success'
 
 
 def test_prf_4():

@@ -69,8 +69,6 @@ def osr_url_test(url, expected_wkt):
     assert gdaltest.equal_srs_from_wkt(expected_wkt,
                                        srs.ExportToWkt())
 
-    return 'success'
-
 
 def test_osr_url_1():
     return osr_url_test('http://spatialreference.org/ref/epsg/4326/', expected_wkt)

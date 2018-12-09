@@ -108,8 +108,7 @@ def test_iris_2():
         value = md[md.find('=') + 1:]
         assert got_metadata[key] == value, ('did not find %s' % key)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_iris_1,

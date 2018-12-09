@@ -97,8 +97,6 @@ def test_blx_5():
     cs = band.GetOverview(3).Checksum()
     assert cs == 12058, ('wrong overview checksum (%d)' % cs)
 
-    return 'success'
-
 
 gdaltest_list = [
     test_blx_1,

@@ -59,8 +59,7 @@ def test_rda_test_presence():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -84,8 +83,6 @@ def test_rda_bad_connection_string():
         ds = gdal.Open('{"graph-id": "node-id"}')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -97,8 +94,6 @@ def test_rda_missing_credentials():
     with gdaltest.error_handler():
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -159,8 +154,6 @@ def test_rda_failed_authentication():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -330,8 +323,6 @@ def test_rda_error_metadata():
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -652,8 +643,6 @@ def test_rda_graph_nominal():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -819,40 +808,6 @@ def test_rda_template_nominal():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    #
-    # # Test ReadBlock directly
-    # handler = webserver.SequentialHandler()
-    # handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    # handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
-    # handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile00_data)
-    # handler.add('GET', '/rda_api/tile/foo/bar/1/0.tif', 200, {}, tile01_data)
-    # handler.add('GET', '/rda_api/tile/foo/bar/0/1.tif', 200, {}, tile10_data)
-    # handler.add('GET', '/rda_api/tile/foo/bar/1/1.tif', 200, {}, tile11_data)
-    # with webserver.install_http_handler(handler):
-    #     with gdaltest.config_options(config_options):
-    #         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-    #     data = ds.GetRasterBand(1).ReadBlock(0,0)
-    #
-    # data = struct.unpack('B' * (256 * 256), data)
-    # if data[0] != 255:
-    #     gdaltest.post_reason('fail')
-    #     return 'fail'
-    # if data[256*(256-2)] != 225:
-    #     gdaltest.post_reason('fail')
-    #     return 'fail'
-    #
-    # # Try IReadBlock() when data for other bands is already cached
-    # ds.GetRasterBand(1).FlushCache()
-    # data = ds.GetRasterBand(1).ReadBlock(0,0)
-    # data = struct.unpack('B' * (256 * 256), data)
-    # if data[0] != 255:
-    #     gdaltest.post_reason('fail')
-    #     return 'fail'
-    #
-    # gdal.RmdirRecursive('/vsimem/cache_dir')
-
-    return 'success'
-
 ###############################################################################
 
 def test_rda_template_image_reference_nominal():
@@ -1017,8 +972,6 @@ def test_rda_template_image_reference_nominal():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    return 'success'
-
 
 def test_rda_read_gbdx_config():
 
@@ -1072,8 +1025,6 @@ idaho_api_url = 127.0.0.1:%d/rda_api
     assert ds is not None
 
     gdal.Unlink('/vsimem/.gbdx-config')
-
-    return 'success'
 
 ###############################################################################
 
@@ -1149,8 +1100,6 @@ def test_rda_download_queue():
     with webserver.install_http_handler(handler):
         data = ds.ReadRaster(0, 1, 4, 2)
     assert data == ref_data
-
-    return 'success'
 
 ###############################################################################
 
@@ -1246,8 +1195,6 @@ def test_rda_rpc():
     ds = None
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1337,8 +1284,6 @@ def test_rda_real_cache_dir():
 
     gdal.RmdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo'))
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -1398,8 +1343,7 @@ def test_rda_real_expired_authentication():
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -1507,8 +1451,6 @@ def test_rda_bad_tile():
         assert data is None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -1522,8 +1464,6 @@ def test_rda_cleanup():
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
-
-    return 'success'
 
 
 gdaltest_list = [

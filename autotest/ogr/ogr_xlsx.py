@@ -95,8 +95,7 @@ def ogr_xlsx_check(ds):
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic tests
 
@@ -133,8 +132,6 @@ def test_ogr_xlsx_2():
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', None)
 
-    return 'success'
-
 ###############################################################################
 # Test OGR_XLSX_FIELD_TYPES = STRING
 
@@ -154,8 +151,6 @@ def test_ogr_xlsx_3():
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -173,8 +168,6 @@ def test_ogr_xlsx_4():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.xlsx')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test write support
@@ -227,8 +220,6 @@ def test_ogr_xlsx_6():
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', None)
 
-    return 'success'
-
 ###############################################################################
 # Test update support
 
@@ -267,8 +258,6 @@ def test_ogr_xlsx_7():
 
     os.unlink('tmp/ogr_xlsx_7.xlsx')
 
-    return 'success'
-
 ###############################################################################
 # Test number of columns > 26 (#5774)
 
@@ -297,8 +286,6 @@ def test_ogr_xlsx_8():
     assert str(content).find('<c r="AA1" t="s">') >= 0
 
     gdal.Unlink('/vsimem/ogr_xlsx_8.xlsx')
-
-    return 'success'
 
 ###############################################################################
 # Test Integer64
@@ -334,8 +321,6 @@ def test_ogr_xlsx_9():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_xlsx_9.xlsx')
-
-    return 'success'
 
 ###############################################################################
 # Test DateTime with milliseconds
@@ -378,8 +363,6 @@ def test_ogr_xlsx_10():
 
     gdal.Unlink('/vsimem/ogr_xlsx_10.xlsx')
 
-    return 'success'
-
 ###############################################################################
 # Test reading sheet with more than 26 columns with holes (#6363)"
 
@@ -399,8 +382,6 @@ def test_ogr_xlsx_11():
             pytest.fail()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading a sheet whose file is stored as "absolute" in
 # workbook.xml.rels (#6733)
@@ -417,8 +398,6 @@ def test_ogr_xlsx_12():
     f = lyr.GetNextFeature()
     assert f is not None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that data types are correctly picked up even if first row is missing data
@@ -465,8 +444,7 @@ def test_ogr_xlsx_13():
         assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ, \
             'invalid type for field {}'.format(i + 1)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that field names are picked up even if last field has no data
 
@@ -512,8 +490,7 @@ def test_ogr_xlsx_14():
         assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ, \
             'invalid type for field {}'.format(i + 1)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test appending a layer to an existing document
 
@@ -534,7 +511,6 @@ def test_ogr_xlsx_15():
     ds = None
 
     gdal.Unlink(out_filename)
-    return 'success'
 
 ###############################################################################
 # Test Boolean
@@ -567,8 +543,6 @@ def test_ogr_xlsx_boolean():
     ds = None
 
     gdal.Unlink(out_filename)
-
-    return 'success'
 
 
 gdaltest_list = [

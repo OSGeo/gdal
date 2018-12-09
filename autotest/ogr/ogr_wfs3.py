@@ -53,8 +53,7 @@ def test_ogr_wfs3_init():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -128,8 +127,6 @@ def test_ogr_wfs3_errors():
     assert ds.GetLayer(-1) is None
     assert ds.GetLayer(0) is None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -158,8 +155,7 @@ def test_ogr_wfs3_empty_layer():
     with webserver.install_http_handler(handler):
         assert lyr.GetLayerDefn().GetFieldCount() == 0
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -230,8 +226,7 @@ def test_ogr_wfs3_fc_links_next_geojson():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -301,8 +296,7 @@ def test_ogr_wfs3_fc_links_next_headers():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -376,8 +370,6 @@ def test_ogr_wfs3_spatial_filter():
         f = lyr.GetNextFeature()
     assert f is not None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -442,8 +434,7 @@ def test_ogr_wfs3_get_feature_count():
     with webserver.install_http_handler(handler):
         assert lyr.GetFeatureCount() == 1234
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -561,8 +552,6 @@ def test_ogr_wfs3_attribute_filter():
         f = lyr.GetNextFeature()
     assert f is not None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -574,8 +563,7 @@ def test_ogr_wfs3_cleanup():
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_wfs3_init,

@@ -59,8 +59,6 @@ def test_gdal_translate_lib_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test format option and callback
 
@@ -84,8 +82,6 @@ def test_gdal_translate_lib_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test outputType option
 
@@ -101,8 +97,6 @@ def test_gdal_translate_lib_3():
     assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test bandList option
@@ -122,8 +116,6 @@ def test_gdal_translate_lib_4():
     assert ds.GetRasterBand(3).Checksum() == 21212, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test rgbExpand option
@@ -152,8 +144,6 @@ def test_gdal_translate_lib_5():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test oXSizePixel and oYSizePixel option
 
@@ -168,8 +158,6 @@ def test_gdal_translate_lib_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test oXSizePct and oYSizePct option
 
@@ -183,8 +171,6 @@ def test_gdal_translate_lib_7():
     assert ds.GetRasterBand(1).Checksum() == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test outputSRS and GCPs options
@@ -206,8 +192,6 @@ def test_gdal_translate_lib_8():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test nodata option
 
@@ -222,8 +206,6 @@ def test_gdal_translate_lib_9():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test srcWin option
 
@@ -237,8 +219,6 @@ def test_gdal_translate_lib_10():
     assert ds.GetRasterBand(1).Checksum() == 2, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test projWin option
@@ -257,8 +237,6 @@ def test_gdal_translate_lib_11():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test outputBounds option
 
@@ -276,8 +254,6 @@ def test_gdal_translate_lib_12():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test metadataOptions
 
@@ -293,8 +269,6 @@ def test_gdal_translate_lib_13():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test creationOptions
 
@@ -309,8 +283,6 @@ def test_gdal_translate_lib_14():
     assert 'COMPRESSION' in md and md['COMPRESSION'] == 'LZW', 'Did not get COMPRESSION'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test internal wrappers
@@ -332,8 +304,7 @@ def test_gdal_translate_lib_100():
     except:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test behaviour with SIGNEDBYTE
 
@@ -350,7 +321,6 @@ def test_gdal_translate_lib_101():
     ds2 = None
     gdal.Unlink('/vsimem/test_gdal_translate_lib_101.tif')
     gdal.Unlink('/vsimem/test_gdal_translate_lib_101_2.tif')
-    return 'success'
 
 ###############################################################################
 # Test -scale
@@ -372,8 +342,7 @@ def test_gdal_translate_lib_102():
     for i in range(4):
         assert abs(stats[i] - expected_stats[i]) <= 1e-3
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that -projwin with nearest neighbor resampling uses integer source
 # pixel boundaries (#6610)
@@ -389,8 +358,6 @@ def test_gdal_translate_lib_103():
     assert gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9), \
         'Bad geotransform'
 
-    return 'success'
-
 ###############################################################################
 # Test translate with a MEM source to a anonymous VRT
 
@@ -401,8 +368,6 @@ def test_gdal_translate_lib_104():
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.Translate('', '../gcore/data/byte.tif', format='VRT', width=1, height=1)
     assert ds.GetRasterBand(1).Checksum() == 3, 'Bad checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test GCPs propagation in "VRT path"
@@ -419,8 +384,7 @@ def test_gdal_translate_lib_gcp_vrt_path():
         assert ds.GetGCPs()[i].GCPPixel == src_ds.GetGCPs()[i].GCPPixel
         assert ds.GetGCPs()[i].GCPLine == src_ds.GetGCPs()[i].GCPLine
 
-    return 'success'
-
+    
 ###############################################################################
 # Test RPC propagation in "VRT path"
 
@@ -430,8 +394,6 @@ def test_gdal_translate_lib_rcp_vrt_path():
     src_ds = gdal.Open('../gcore/data/rpc.vrt')
     ds = gdal.Translate('', src_ds, format='MEM', metadataOptions=['FOO=BAR'])
     assert ds.GetMetadata('RPC') == src_ds.GetMetadata('RPC')
-
-    return 'success'
 
 ###############################################################################
 # Test GeoLocation propagation in "VRT path"
@@ -443,8 +405,6 @@ def test_gdal_translate_lib_geolocation_vrt_path():
     ds = gdal.Translate('/vsimem/temp.vrt', src_ds, format='VRT', metadataOptions=['FOO=BAR'])
     assert ds.GetMetadata('GEOLOCATION') == src_ds.GetMetadata('GEOLOCATION')
     gdal.Unlink('/vsimem/temp.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test -colorinterp and -colorinterp_X
@@ -481,8 +441,7 @@ def test_gdal_translate_lib_colorinterp():
     except:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -498,8 +457,7 @@ def test_gdal_translate_lib_cleanup():
         except OSError:
             pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_translate_lib_1,

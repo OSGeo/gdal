@@ -48,7 +48,7 @@ def test_ogr_csv_1():
     gdaltest.csv_ds = ogr.Open('data/prime_meridian.csv')
 
     if gdaltest.csv_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 
@@ -75,8 +75,6 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
     assert tr
 
     lyr.ResetReading()
-
-    return 'success'
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -174,8 +172,7 @@ def test_ogr_csv_3():
         gdal.PopErrorHandler()
         assert ret != 0
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -200,8 +197,6 @@ def test_ogr_csv_5():
     #######################################################
     # Create layer (.csv file)
     gdaltest.csv_lyr2 = ogr_csv_copy_layer('pm2', ['LINEFORMAT=CRLF', ])
-
-    return 'success'
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -240,8 +235,6 @@ def test_ogr_csv_7():
 
     gdaltest.csv_tmpds = None
 
-    return 'success'
-
 ###############################################################################
 # Reopen and append a record then close.
 #
@@ -263,8 +256,6 @@ def test_ogr_csv_8():
     lyr.CreateFeature(feat)
 
     gdaltest.csv_tmpds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -295,8 +286,6 @@ def test_ogr_csv_9():
     assert tr
 
     lyr.ResetReading()
-
-    return 'success'
 
 ###############################################################################
 # Verify some capabilities and related stuff.
@@ -343,8 +332,6 @@ def test_ogr_csv_10():
 
     assert gdaltest.csv_tmpds.TestCapability('DeleteLayer'), \
         'should have deletelayer on updatable ds.'
-
-    return 'success'
 
 ###############################################################################
 
@@ -412,8 +399,6 @@ def ogr_csv_check_testcsvt(lyr):
         'Field DATETIME : wrong type'
 
     lyr.ResetReading()
-
-    return 'success'
 
 
 ###############################################################################
@@ -645,8 +630,6 @@ def test_ogr_csv_13():
     tr = ogrtest.check_features_against_list(lyr, 'Z', expect)
     assert tr
 
-    return 'success'
-
 ###############################################################################
 # Copy prime_meridian.csv again, with SEMICOLON as separator
 
@@ -662,8 +645,6 @@ def test_ogr_csv_14():
     #######################################################
     # Create layer (.csv file)
     gdaltest.csv_lyr1 = ogr_csv_copy_layer('pm3', ['SEPARATOR=SEMICOLON', ])
-
-    return 'success'
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -717,8 +698,6 @@ def test_ogr_csv_17():
     feat = csv_lyr.GetNextFeature()
     assert not ogrtest.check_feature_geometry(feat, 'POLYGON((1.001 1.001,3.999 3.999,3.2 1.6,1.001 1.001))')
 
-    return 'success'
-
 
 ###############################################################################
 # Write to /vsistdout/
@@ -735,8 +714,6 @@ def test_ogr_csv_18():
     geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
-
-    return 'success'
 
 ###############################################################################
 # Verify handling of non-numeric values in numeric columns
@@ -765,8 +742,6 @@ def test_ogr_csv_19():
     assert ogrtest.check_features_against_list(lyr, 'REALCOL2', [None])
     lyr.ResetReading()
     assert ogrtest.check_features_against_list(lyr, 'STRINGCOL', ['foo'])
-
-    return 'success'
 
 
 ###############################################################################
@@ -811,8 +786,6 @@ def test_ogr_csv_20():
     assert got[1] == expect[1], \
         ('column 1 got name %s expected %s' % (str(got[1]), str(expect[1])))
 
-    return 'success'
-
 ###############################################################################
 # Verify handling of numeric column names with quotes (bug #4361)
 
@@ -852,8 +825,7 @@ def test_ogr_csv_21():
         assert got == expect[i], \
             ('column %d got name %s expected %s' % (i, str(got), str(expect[i])))
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test handling of UTF8 BOM (bug #4623)
@@ -865,8 +837,6 @@ def test_ogr_csv_22():
     fld0_name = lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef()
 
     assert fld0_name == 'id', 'bad field name'
-
-    return 'success'
 
 
 def test_ogr_csv_23():
@@ -913,8 +883,6 @@ def test_ogr_csv_23():
     data = open('tmp/csvwrk/utf8no.csv', 'rb').read()
     assert data[:3] != '\xef\xbb\xbfWKT', "Found UTF8 BOM header on output!"
 
-    return 'success'
-
 ###############################################################################
 # Test single column CSV files
 
@@ -950,8 +918,6 @@ def test_ogr_csv_24():
     gdal.Unlink('/vsimem/single.csv')
     gdal.Unlink('/vsimem/invalid.csv')
 
-    return 'success'
-
 
 ###############################################################################
 # Test newline handling (#4452)
@@ -973,8 +939,6 @@ def test_ogr_csv_25():
     data = open('tmp/csvwrk/newlines.csv', 'rb').read().decode('ascii')
     assert data == EXPECTED, \
         ("Newlines changed:\n\texpected=%s\n\tgot=     %s" % (repr(EXPECTED), repr(data)))
-
-    return 'success'
 
 
 ###############################################################################
@@ -1004,8 +968,6 @@ def test_ogr_csv_26():
 
     data = open('tmp/csvwrk/num_padding.csv', 'rb').read().decode('ascii')
     assert data == EXPECTED, ("expected=%s got= %s" % (repr(EXPECTED), repr(data)))
-
-    return 'success'
 
 ###############################################################################
 # Test Eurostat .TSV files
@@ -1045,8 +1007,7 @@ def test_ogr_csv_27():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Check that we don't rewrite erroneously a file that has no header (#5161).
 
@@ -1067,8 +1028,6 @@ def test_ogr_csv_28():
     os.unlink('tmp/ogr_csv_28.csv')
 
     assert data == '1,2\n'
-
-    return 'success'
 
 ###############################################################################
 # Check multi geometry field support
@@ -1111,8 +1070,6 @@ def test_ogr_csv_29():
         pytest.fail()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -1126,8 +1083,6 @@ def test_ogr_csv_30():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_csv_29')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Read geonames.org allCountries.txt
@@ -1150,8 +1105,6 @@ def test_ogr_csv_31():
         pytest.fail()
 
     assert lyr.GetFeatureCount() == 10
-
-    return 'success'
 
 ###############################################################################
 # Test AUTODETECT_TYPE=YES
@@ -1308,8 +1261,7 @@ def test_ogr_csv_32():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Boolean, Int16 and Float32 support
 
@@ -1365,8 +1317,6 @@ def test_ogr_csv_33():
     gdal.Unlink('/vsimem/subtypes.csv')
     gdal.Unlink('/vsimem/subtypes.csvt')
 
-    return 'success'
-
 ###############################################################################
 # Test Integer64 support
 
@@ -1411,8 +1361,6 @@ def test_ogr_csv_34():
     gdal.Unlink('/vsimem/int64.csv')
     gdal.Unlink('/vsimem/int64.csvt')
 
-    return 'success'
-
 ###############################################################################
 # Test comma separator
 
@@ -1452,8 +1400,6 @@ VAL1   "VAL 2"   "VAL 3"
     assert data.find('FIELD_1 "FIELD 2"') >= 0 and data.find('VAL1 "VAL 2"') >= 0
 
     gdal.Unlink('/vsimem/ogr_csv_35.csv')
-
-    return 'success'
 
 ###############################################################################
 # Test GEOM_POSSIBLE_NAMES open option
@@ -1545,8 +1491,6 @@ def test_ogr_csv_36():
 
     gdal.Unlink('/vsimem/ogr_csv_36.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES and Z_POSSIBLE_NAMES open options
 
@@ -1608,8 +1552,6 @@ def test_ogr_csv_37():
 
     gdal.Unlink('/vsimem/ogr_csv_37.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test GeoCSV WKT type
 
@@ -1641,8 +1583,6 @@ def test_ogr_csv_38():
     gdal.Unlink('/vsimem/ogr_csv_38.csvt')
     gdal.Unlink('/vsimem/ogr_csv_38.prj')
 
-    return 'success'
-
 ###############################################################################
 # Test GeoCSV CoordX and CoordY types
 
@@ -1668,8 +1608,6 @@ def test_ogr_csv_39():
 
     gdal.Unlink('/vsimem/ogr_csv_39.csv')
     gdal.Unlink('/vsimem/ogr_csv_39.csvt')
-
-    return 'success'
 
 ###############################################################################
 # Test X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES, GEOM_POSSIBLE_NAMES and KEEP_GEOM_COLUMNS=NO together (#6137)
@@ -1711,8 +1649,6 @@ def test_ogr_csv_40():
 
     gdal.Unlink('/vsimem/ogr_csv_40.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test GEOM_POSSIBLE_NAMES and KEEP_GEOM_COLUMNS=NO together with empty content in geom column (#6152)
 
@@ -1735,8 +1671,6 @@ def test_ogr_csv_41():
 
     gdal.Unlink('/vsimem/ogr_csv_41.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test writing field with empty content
 
@@ -1753,7 +1687,6 @@ def test_ogr_csv_42():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_42.csv')
-    return 'success'
 
 ###############################################################################
 # Test editing capabilities
@@ -1936,7 +1869,6 @@ def test_ogr_csv_43():
 
     gdal.Unlink('/vsimem/ogr_csv_43.csv')
     gdal.Unlink('/vsimem/ogr_csv_43.csvt')
-    return 'success'
 
 ###############################################################################
 # Test seeking back while creating
@@ -1966,7 +1898,6 @@ def test_ogr_csv_44():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_44.csv')
-    return 'success'
 
 ###############################################################################
 # Test QGIS use case that consists in reopening a file just after calling
@@ -1992,7 +1923,6 @@ def test_ogr_csv_45():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_45.csv')
-    return 'success'
 
 ###############################################################################
 # Test edition of CSV files with X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES open options
@@ -2068,8 +1998,6 @@ def test_ogr_csv_46():
 
     gdal.Unlink('/vsimem/ogr_csv_46.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test writing XYZM
 
@@ -2097,8 +2025,6 @@ def test_ogr_csv_47():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_47.csv')
-
-    return 'success'
 
 ###############################################################################
 # Test reading/writing StringList, etc..
@@ -2131,8 +2057,6 @@ def test_ogr_csv_48():
     gdal.Unlink('/vsimem/ogr_csv_48_out.csv')
     gdal.Unlink('/vsimem/ogr_csv_48_out.csvt')
 
-    return 'success'
-
 ###############################################################################
 # Test EMPTY_STRING_AS_NULL=ES
 
@@ -2153,8 +2077,6 @@ def test_ogr_csv_49():
 
     gdal.Unlink('/vsimem/ogr_csv_49.csv')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2164,8 +2086,6 @@ def test_ogr_csv_more_than_100_geom_fields():
         ds = ogr.Open('data/more_than_100_geom_fields.csv')
     lyr = ds.GetLayer(0)
     lyr.GetNextFeature()
-
-    return 'success'
 
 ###############################################################################
 
@@ -2199,8 +2119,6 @@ def test_ogr_csv_string_quoting_always():
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_always.csvt')
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_always.prj')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2227,8 +2145,6 @@ def test_ogr_csv_string_quoting_if_ambiguous():
     assert data.find('"00123",x,"1.25"') >= 0
 
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_if_ambiguous.csv')
-
-    return 'success'
 
 ###############################################################################
 
@@ -2258,8 +2174,6 @@ def test_ogr_csv_string_quoting_if_needed():
 
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_if_needed.csv')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2282,8 +2196,6 @@ def test_ogr_csv_iter_and_set_feature():
     gdal.Unlink('/vsimem/ogr_csv_iter_and_set_feature.csv')
 
     assert count == 2
-
-    return 'success'
 
 ###############################################################################
 #
@@ -2314,8 +2226,7 @@ def test_ogr_csv_cleanup():
     except:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_csv_1,

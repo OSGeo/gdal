@@ -98,8 +98,6 @@ def test_mem_1():
 
     gdaltest.mem_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Open an in-memory array.
 
@@ -175,8 +173,6 @@ def test_mem_2():
 
     free(p)
 
-    return 'success'
-
 ###############################################################################
 # Test creating a MEM dataset with the "MEM:::" name
 
@@ -187,8 +183,6 @@ def test_mem_3():
     ds = drv.Create('MEM:::', 1, 1, 1)
     assert ds is not None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test creating a band interleaved multi-band MEM dataset
@@ -213,8 +207,6 @@ def test_mem_4():
             ('did not get expected checksum for band %d after fill' % (i + 1))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test creating a pixel interleaved multi-band MEM dataset
@@ -242,8 +234,6 @@ def test_mem_5():
         'did not get expected INTERLEAVE value'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test out-of-memory situations
@@ -297,8 +287,6 @@ def test_mem_6():
         ret = ds.AddBand(gdal.GDT_Float64)
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # Test AddBand()
 
@@ -310,8 +298,6 @@ def test_mem_7():
     ds.AddBand(gdal.GDT_Byte, [])
     assert ds.RasterCount == 2
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test SetDefaultHistogram() / GetDefaultHistogram()
@@ -328,8 +314,6 @@ def test_mem_8():
     ds = None
 
     assert hist == (1.0, 2.0, 2, [3000000000, 4])
-
-    return 'success'
 
 ###############################################################################
 # Test RasterIO()
@@ -412,8 +396,7 @@ def test_mem_9():
         got_data = out_ds.GetRasterBand(1).ReadRaster(10, 11, 8, 10, 4, 5)
         assert ref_data == got_data, interleave
 
-    return 'success'
-
+    
 ###############################################################################
 # Test BuildOverviews()
 
@@ -503,8 +486,6 @@ def test_mem_10():
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test CreateMaskBand()
 
@@ -555,8 +536,6 @@ def test_mem_11():
     cs2 = mask2.Checksum()
     assert cs1 == 0 and cs2 == 3
 
-    return 'success'
-
 ###############################################################################
 # Test CreateMaskBand() and overviews.
 
@@ -585,8 +564,6 @@ def test_mem_12():
     cs2 = ds.GetRasterBand(2).GetOverview(0).GetMaskBand().Checksum()
     assert cs2 == cs
 
-    return 'success'
-
 ###############################################################################
 # Check RAT support
 
@@ -599,8 +576,6 @@ def test_mem_rat():
     ds.GetRasterBand(1).SetDefaultRAT(None)
     assert ds.GetRasterBand(1).GetDefaultRAT() is None
 
-    return 'success'
-
 ###############################################################################
 # Check CategoryNames support
 
@@ -612,8 +587,6 @@ def test_mem_categorynames():
     assert ds.GetRasterBand(1).GetCategoryNames() == ['foo']
     ds.GetRasterBand(1).SetCategoryNames([])
     assert ds.GetRasterBand(1).GetCategoryNames() is None
-
-    return 'success'
 
 
 ###############################################################################
@@ -629,15 +602,12 @@ def test_mem_colortable():
     ds.GetRasterBand(1).SetColorTable(None)
     assert ds.GetRasterBand(1).GetColorTable() is None
 
-    return 'success'
-
 
 ###############################################################################
 # cleanup
 
 def test_mem_cleanup():
     gdaltest.mem_ds = None
-    return 'success'
 
 
 gdaltest_list = [

@@ -49,8 +49,6 @@ def test_envi_1():
 
     assert len(filelist) == 2, 'did not get expected file list.'
 
-    return 'success'
-
 ###############################################################################
 # When imported build a list of units based on the files available.
 

@@ -826,8 +826,6 @@ def test_vrtpansharpen_1():
     gdal.PopErrorHandler()
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # Nominal cases
 
@@ -1022,8 +1020,6 @@ def test_vrtpansharpen_2():
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     assert cs in ([50261, 4735, 10000, 9742], [50261, 4727, 9998, 9732])
 
-    return 'success'
-
 ###############################################################################
 # Test with overviews
 
@@ -1091,8 +1087,6 @@ def test_vrtpansharpen_3():
 
     vrt_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test RasterIO() with various buffer datatypes
 
@@ -1132,8 +1126,7 @@ def test_vrtpansharpen_4():
             expected_cs = [4735, 4731]
         assert cs in expected_cs, gdal.GetDataTypeName(dt)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test RasterIO() with various band datatypes
 
@@ -1208,8 +1201,7 @@ def test_vrtpansharpen_5():
         else:
             assert cs == 4450, gdal.GetDataTypeName(dt)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test BitDepth limitations
 
@@ -1292,8 +1284,7 @@ def test_vrtpansharpen_6():
             gdal.Unlink('/vsimem/ms.tif')
             gdal.Unlink('/vsimem/pan.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test bands with different extents
 
@@ -1432,8 +1423,6 @@ def test_vrtpansharpen_7():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/vrtpansharpen_7_pan.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/vrtpansharpen_7_ms.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test SerializeToXML()
 
@@ -1480,8 +1469,6 @@ def test_vrtpansharpen_8():
     gdal.Unlink('tmp/vrtpansharpen_8.vrt')
 
     assert cs1 == expected_cs1 and cs2 == expected_cs2 and cs3 == expected_cs3
-
-    return 'success'
 
 ###############################################################################
 # Test NoData support
@@ -1554,8 +1541,6 @@ def test_vrtpansharpen_9():
 
     gdal.Unlink('/vsimem/small_world_pan_nodata.tif')
     gdal.Unlink('/vsimem/small_world_nodata.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test UInt16 optimizations
@@ -1681,8 +1666,6 @@ def test_vrtpansharpen_10():
     ref_data = tmp_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
     assert data == ref_data
 
-    return 'success'
-
 ###############################################################################
 # Test gdal.CreatePansharpenedVRT()
 
@@ -1782,8 +1765,6 @@ def test_vrtpansharpen_11():
     gdal.PopErrorHandler()
     assert vrt_ds is None
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -1794,8 +1775,6 @@ def test_vrtpansharpen_cleanup():
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/pan.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/ms.tif')
-
-    return 'success'
 
 
 gdaltest_list = [

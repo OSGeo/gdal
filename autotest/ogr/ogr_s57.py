@@ -56,8 +56,6 @@ def test_ogr_s57_1():
     gdaltest.s57_ds = ogr.Open('data/1B5X02NE.000')
     assert gdaltest.s57_ds is not None, 'failed to open test file.'
 
-    return 'success'
-
 ###############################################################################
 # Verify we have the set of expected layers and that some rough information
 # matches our expectations.
@@ -98,8 +96,7 @@ def test_ogr_s57_2():
         assert lyr.GetLayerDefn().GetGeomType() == lyr_info[1], \
             ('Expected %d layer type in layer %s, but got %d.' % (lyr_info[1], lyr_info[0], lyr.GetLayerDefn().GetGeomType()))
 
-    return 'success'
-
+    
 ###############################################################################
 # Check the COALNE feature.
 
@@ -119,8 +116,6 @@ def test_ogr_s57_3():
 
     assert not ogrtest.check_feature_geometry(feat, wkt)
 
-    return 'success'
-
 ###############################################################################
 # Check the M_QUAL feature.
 
@@ -139,8 +134,6 @@ def test_ogr_s57_4():
     wkt = 'POLYGON ((60.97683400 -32.49534000,60.97683400 -32.49762000,60.97683400 -32.49866600,60.97869000 -32.49866600,60.97942600 -32.49866600,60.98215200 -32.49866600,60.98316600 -32.49866600,60.98316600 -32.49755800,60.98316600 -32.49477000,60.98316600 -32.49350000,60.98146800 -32.49350000,60.98029800 -32.49350000,60.97947400 -32.49350000,60.97901600 -32.49350000,60.97683400 -32.49350000,60.97683400 -32.49442600,60.97683400 -32.49469800,60.97683400 -32.49534000))'
 
     assert not ogrtest.check_feature_geometry(feat, wkt)
-
-    return 'success'
 
 ###############################################################################
 # Check the SOUNDG feature.
@@ -163,8 +156,6 @@ def test_ogr_s57_5():
 
     gdaltest.s57_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading features from dataset with some double byte attributes. (#1526)
 
@@ -179,8 +170,6 @@ def test_ogr_s57_6():
 
     assert feat.GetField('INFORM') == 'During South winds nautophone is not always heard in S direction from lighthouse' and len(feat.GetField('NINFOM')) >= 1, \
         'FOGSIG: did not get expected attributes'
-
-    return 'success'
 
 ###############################################################################
 # Test handling of a dataset with a multilinestring feature (#2147).
@@ -198,8 +187,6 @@ def test_ogr_s57_7():
 
     assert not ogrtest.check_feature_geometry(feat, exp_wkt)
 
-    return 'success'
-
 ###############################################################################
 # Run test_ogrsf
 
@@ -213,8 +200,6 @@ def test_ogr_s57_8():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/1B5X02NE.000')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test S57 to S57 conversion
@@ -268,8 +253,6 @@ def test_ogr_s57_9():
 
     gdal.Unlink('tmp/ogr_s57_9.000')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a fake very small S57 file
 
@@ -280,7 +263,6 @@ def test_ogr_s57_10():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f['DSID_EXPP'] == 2
-    return 'success'
 
 ###############################################################################
 # Test opening a fake very small S57 file with ISO8211 record with zero length,
@@ -293,7 +275,6 @@ def test_ogr_s57_11():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f['DSID_EXPP'] == 2
-    return 'success'
 
 ###############################################################################
 # Test decoding of Dutch inland ENCs (#3881).
@@ -319,8 +300,6 @@ def test_ogr_s57_online_1():
     feat = None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test with ENC 3.0 TDS - tile without updates.
@@ -350,8 +329,6 @@ def test_ogr_s57_online_2():
     feat = None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test with ENC 3.0 TDS - tile with updates.
@@ -384,8 +361,6 @@ def test_ogr_s57_online_3():
 
     gdaltest.clean_tmp()
 
-    return 'success'
-
 ###############################################################################
 # Test ENC LL2 (#5048)
 
@@ -416,8 +391,7 @@ def test_ogr_s57_online_4():
         if mystr and sys.version_info < (3, 0, 0):
             mystr.decode('UTF-8').encode('UTF-8')
 
-    return 'success'
-
+    
 ###############################################################################
 #  Cleanup
 
@@ -425,8 +399,6 @@ def test_ogr_s57_online_4():
 def test_ogr_s57_cleanup():
 
     gdaltest.s57_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

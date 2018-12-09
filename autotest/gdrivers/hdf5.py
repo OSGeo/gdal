@@ -76,8 +76,6 @@ def test_hdf5_2():
 
     assert not gdaltest.is_file_open('data/groups.h5'), 'file still opened.'
 
-    return 'success'
-
 ###############################################################################
 # Confirm that single variable files can be accessed directly without
 # subdataset stuff.
@@ -94,8 +92,6 @@ def test_hdf5_3():
 
     assert not gdaltest.is_file_open('data/u8be.h5'), 'file still opened.'
 
-    return 'success'
-
 ###############################################################################
 # Confirm subdataset access, and checksum.
 
@@ -107,8 +103,6 @@ def test_hdf5_4():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 135, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Similar check on a 16bit dataset.
 
@@ -119,8 +113,6 @@ def test_hdf5_5():
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 18, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test generating an overview on a subdataset.
@@ -151,8 +143,6 @@ def test_hdf5_6():
 
     gdaltest.clean_tmp()
 
-    return 'success'
-
 ###############################################################################
 # Coarse metadata check (regression test for #2412).
 
@@ -174,8 +164,7 @@ def test_hdf5_7():
             metadata.pop(key)
         except KeyError:
             pytest.fail('unable to find "%s" key' % key)
-    return 'success'
-
+    
 ###############################################################################
 # Test metadata names.
 
@@ -228,8 +217,7 @@ def test_hdf5_8():
         for h5dataset in h5datasets:
             assert scanMetadata([h5group, h5dataset]) is None
 
-    return 'success'
-
+    
 ###############################################################################
 # Variable length string metadata check (regression test for #4228).
 
@@ -265,8 +253,7 @@ def test_hdf5_9():
                                  'expected "%s", got "%s" ' %
                                  (key, ref_metadata[key], metadata[key]))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CSK_DGM.h5 (#4160)
 
@@ -291,8 +278,6 @@ def test_hdf5_10():
 
     ds = None
     assert not gdaltest.is_file_open('data/CSK_DGM.h5'), 'file still opened.'
-
-    return 'success'
 
 ###############################################################################
 # Test CSK_GEC.h5 (#4160)
@@ -319,8 +304,6 @@ def test_hdf5_11():
 
     assert not gdaltest.is_file_open('data/CSK_GEC.h5'), 'file still opened.'
 
-    return 'success'
-
 ###############################################################################
 # Test ODIM_H5 (#5032)
 
@@ -342,8 +325,6 @@ def test_hdf5_12():
     assert (max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-5 or \
        max([abs(got_gt[i] - expected_gt2[i]) for i in range(6)]) <= 1e-5)
 
-    return 'success'
-
 ###############################################################################
 # Test MODIS L2 HDF5 GCPs (#6666)
 
@@ -360,8 +341,6 @@ def test_hdf5_13():
 
     assert (abs(got_gcps[0].GCPPixel - 0.5) <= 1e-5 and abs(got_gcps[0].GCPLine - 0.5) <= 1e-5 and \
        abs(got_gcps[0].GCPX - 33.1655693) <= 1e-5 and abs(got_gcps[0].GCPY - 39.3207207) <= 1e-5)
-
-    return 'success'
 
 ###############################################################################
 # Test complex data subsets
@@ -381,8 +360,6 @@ def test_hdf5_14():
 
     assert not gdaltest.is_file_open('data/complex.h5'), 'file still opened.'
 
-    return 'success'
-
 ###############################################################################
 # Confirm complex subset data access and checksum
 # Start with Float32
@@ -395,8 +372,6 @@ def test_hdf5_15():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 523, 'did not get expected checksum'
 
-    return 'success'
-
 # Repeat for Float64
 
 
@@ -406,8 +381,6 @@ def test_hdf5_16():
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 511, 'did not get expected checksum'
-
-    return 'success'
 
 # Repeat for Float16
 
@@ -419,15 +392,11 @@ def test_hdf5_17():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 412, 'did not get expected checksum'
 
-    return 'success'
-
 
 def test_hdf5_single_char_varname():
 
     ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
     assert ds is not None
-
-    return 'success'
 
 
 def test_hdf5_virtual_file():
@@ -444,8 +413,7 @@ def test_hdf5_virtual_file():
     for hdf5_file in hdf5_files:
         assert uffd_compare(hdf5_file) is True
 
-    return 'success'
-
+    
 
 # FIXME: This FTP server seems to have disappeared. Replace with something else?
 hdf5_list = [

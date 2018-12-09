@@ -54,8 +54,6 @@ def ogr_rfc30_1_internal(filename, layer_name):
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
 
-    return 'success'
-
 
 def test_ogr_rfc30_1():
 

@@ -50,7 +50,6 @@ def test_ers_1():
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {'STATISTICS_MEAN': '-4020.25', 'STATISTICS_MINIMUM': '-4315', 'STATISTICS_MAXIMUM': '-3744', 'STATISTICS_MEDIAN': '-4000'}
     assert md == expected_md
-    return 'success'
 
 ###############################################################################
 # Create simple copy and check.
@@ -100,8 +99,6 @@ def test_ers_5():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Confirm a copy preserves the signed byte info.
 
@@ -122,8 +119,6 @@ def test_ers_6():
 
     drv.Delete('tmp/8s.ers')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a file with everything in lower case.
 
@@ -135,8 +130,6 @@ def test_ers_7():
     desc = ds.GetRasterBand(1).GetDescription()
 
     assert desc == 'RTP 1st Vertical Derivative', 'did not get expected values.'
-
-    return 'success'
 
 ###############################################################################
 # Test GCP support
@@ -174,8 +167,6 @@ def test_ers_8():
 
     drv.Delete('/vsimem/ers_8.ers')
 
-    return 'success'
-
 ###############################################################################
 # Test NoData support (#4207)
 
@@ -200,8 +191,6 @@ def test_ers_9():
     drv.Delete('/vsimem/ers_9.ers')
 
     assert val == 123, 'did not get expected nodata value'
-
-    return 'success'
 
 ###############################################################################
 # Test PROJ, DATUM, UNITS support (#4229)
@@ -297,8 +286,6 @@ def test_ers_10():
 
     assert units == 'METERS', 'did not get expected UNITS'
 
-    return 'success'
-
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8744
 
@@ -306,7 +293,6 @@ def test_ers_10():
 def test_ers_recursive_opening():
     ds = gdal.Open('/vsitar/data/test_ers_recursive.tar/test.ers')
     ds.GetFileList()
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -314,7 +300,6 @@ def test_ers_recursive_opening():
 
 def test_ers_cleanup():
     gdaltest.clean_tmp()
-    return 'success'
 
 
 gdaltest_list = [

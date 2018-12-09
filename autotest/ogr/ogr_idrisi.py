@@ -107,8 +107,6 @@ def test_ogr_idrisi_1():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test linestring layer
 
@@ -154,8 +152,6 @@ def test_ogr_idrisi_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test polygon layer
 
@@ -200,8 +196,6 @@ def test_ogr_idrisi_3():
     assert feat is None
 
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

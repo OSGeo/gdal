@@ -100,8 +100,6 @@ def test_png_copy_icc():
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
 
-    return 'success'
-
 
 def cvtTuple2String(t):
     return str(t).lstrip('([').rstrip(')]')
@@ -142,8 +140,6 @@ def test_png_copy_options_icc():
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data from options
@@ -210,8 +206,6 @@ def test_png_copy_options_colorimetric_data():
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data in the file
@@ -282,8 +276,6 @@ def test_png_copy_colorimetric_data():
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
 
-    return 'success'
-
 ###############################################################################
 # Test sRGB
 
@@ -314,8 +306,6 @@ def test_png_sRGB():
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
-
-    return 'success'
 
 ############################################################################
 

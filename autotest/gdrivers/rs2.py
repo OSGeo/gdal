@@ -72,7 +72,6 @@ def test_rs2_3():
                     'SAMP_OFF': 'pixelOffset',
                     'SAMP_SCALE': 'pixelScale'}
     assert got_rpc == expected_rpc
-    return 'success'
 
 
 gdaltest_list = [

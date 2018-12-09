@@ -49,7 +49,7 @@ def test_plmosaic_1():
     gdaltest.plmosaic_drv = gdal.GetDriverByName('PLMosaic')
 
     if gdaltest.plmosaic_drv is not None:
-        return 'success'
+        return
     pytest.skip()
 
 ###############################################################################
@@ -68,8 +68,6 @@ def test_plmosaic_2():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Error case: invalid root URL
 
@@ -85,8 +83,6 @@ def test_plmosaic_3():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error case: invalid JSON
@@ -106,8 +102,6 @@ def test_plmosaic_4():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Error case: not a JSON dictionary
 
@@ -125,8 +119,6 @@ def test_plmosaic_5():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Error case: missing "mosaics" element
@@ -146,8 +138,6 @@ def test_plmosaic_6():
     gdal.PopErrorHandler()
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Valid root but no mosaics
 
@@ -166,8 +156,6 @@ def test_plmosaic_7():
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Valid root with 2 mosaics
@@ -222,8 +210,6 @@ def test_plmosaic_8():
     assert ds.GetMetadata("SUBDATASETS") == {'SUBDATASET_2_NAME': 'PLMOSAIC:mosaic=another_mosaic_name', 'SUBDATASET_2_DESC': 'Mosaic another_mosaic_name', 'SUBDATASET_1_NAME': 'PLMOSAIC:mosaic=my_mosaic_name', 'SUBDATASET_1_DESC': 'Mosaic my_mosaic_name'}
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Error case: invalid mosaic
 
@@ -239,8 +225,6 @@ def test_plmosaic_9():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     assert ds is None and gdal.GetLastErrorMsg().find('/vsimem/root/?name__is=does_not_exist') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Invalid mosaic definition: invalid JSON
@@ -259,8 +243,6 @@ def test_plmosaic_9bis():
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None and gdal.GetLastErrorMsg().find('JSON parsing error') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Invalid mosaic definition: JSON without mosaics array
 
@@ -277,8 +259,6 @@ def test_plmosaic_9ter():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None and gdal.GetLastErrorMsg().find('No mosaic my_mosaic') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Invalid mosaic definition: missing parameters
@@ -301,8 +281,6 @@ def test_plmosaic_10():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None and gdal.GetLastErrorMsg().find('Missing required parameter') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Invalid mosaic definition: unsupported projection
@@ -332,8 +310,6 @@ def test_plmosaic_11():
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None and gdal.GetLastErrorMsg().find('Unsupported coordinate_system') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Invalid mosaic definition: unsupported datatype
 
@@ -361,8 +337,6 @@ def test_plmosaic_12():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None and gdal.GetLastErrorMsg().find('Unsupported data_type') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Invalid mosaic definition: unsupported resolution
@@ -392,8 +366,6 @@ def test_plmosaic_13():
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None and gdal.GetLastErrorMsg().find('Unsupported resolution') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Invalid mosaic definition: unsupported quad_size
 
@@ -421,8 +393,6 @@ def test_plmosaic_14():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     assert ds is None and gdal.GetLastErrorMsg().find('Unsupported quad_size') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Nearly valid mosaic definition. Warning about invalid links.tiles
@@ -460,8 +430,6 @@ def test_plmosaic_15():
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetRasterBand(1).GetOverview(0) is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Valid mosaic definition
@@ -524,8 +492,6 @@ def test_plmosaic_16():
     assert ds.GetMetadata("SUBDATASETS") == {}
     assert ds.GetMetadata() == {'LAST_ACQUIRED': 'last_date', 'NAME': 'my_mosaic', 'FIRST_ACQUIRED': 'first_date'}
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Open with explicit MOSAIC dataset open option
@@ -648,8 +614,6 @@ def test_plmosaic_17():
     val = struct.unpack('B' * 4, val)
     assert val == (254, 0, 0, 0)
 
-    return 'success'
-
 ###############################################################################
 # Test location info
 
@@ -691,8 +655,6 @@ def test_plmosaic_18():
 """
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Try error in saving in cache
 
@@ -716,8 +678,6 @@ def test_plmosaic_19():
     assert val == (254, 0, 0, 0)
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Try disabling cache
 
@@ -738,8 +698,6 @@ def test_plmosaic_20():
     val = struct.unpack('B' * 4, val)
     assert val == (254, 0, 0, 0)
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Try use_tiles
@@ -824,8 +782,6 @@ def test_plmosaic_21():
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg().find('Cannot find tile definition, so use_tiles will be ignored') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Valid mosaic definition with bbox
@@ -916,8 +872,6 @@ def test_plmosaic_with_bbox():
 </LocationInfo>
 """
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -946,8 +900,7 @@ def test_plmosaic_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_plmosaic_1,

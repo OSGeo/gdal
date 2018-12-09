@@ -209,7 +209,7 @@ def test_ogr_geojson_1():
     gdaltest.geojson_drv = ogr.GetDriverByName('GeoJSON')
 
     if gdaltest.geojson_drv is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -236,8 +236,6 @@ def test_ogr_geojson_2():
 
     lyr = None
 
-    return 'success'
-
 ###############################################################################
 # Test file-based DS with standalone "LineString" feature object.
 
@@ -261,8 +259,6 @@ def test_ogr_geojson_3():
     assert rc
 
     lyr = None
-
-    return 'success'
 
 ##############################################################################
 # Test file-based DS with standalone "Polygon" feature object.
@@ -288,8 +284,6 @@ def test_ogr_geojson_4():
 
     lyr = None
 
-    return 'success'
-
 ##############################################################################
 # Test file-based DS with standalone "GeometryCollection" feature object.
 
@@ -313,8 +307,6 @@ def test_ogr_geojson_5():
     assert rc
 
     lyr = None
-
-    return 'success'
 
 ##############################################################################
 # Test file-based DS with standalone "MultiPoint" feature object.
@@ -340,8 +332,6 @@ def test_ogr_geojson_6():
 
     lyr = None
 
-    return 'success'
-
 ##############################################################################
 # Test file-based DS with standalone "MultiLineString" feature object.
 
@@ -366,8 +356,6 @@ def test_ogr_geojson_7():
 
     lyr = None
 
-    return 'success'
-
 ##############################################################################
 # Test file-based DS with standalone "MultiPolygon" feature object.
 
@@ -391,8 +379,6 @@ def test_ogr_geojson_8():
     assert rc
 
     lyr = None
-
-    return 'success'
 
 ##############################################################################
 # Test translation of data/gjpoint.shp to GeoJSON file
@@ -421,8 +407,7 @@ def test_ogr_geojson_9():
         rc = verify_geojson_copy(test[0], test[1], test[2])
         assert rc, ('Verification of copy of ' + test[0] + '.shp failed')
 
-    return 'success'
-
+    
 ##############################################################################
 # Test translation of data/gjpoint.shp to GZip compressed GeoJSON file
 
@@ -450,8 +435,7 @@ def test_ogr_geojson_10():
         rc = verify_geojson_copy(test[0], test[1], test[2])
         assert rc, ('Verification of copy of ' + test[0] + '.shp failed')
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -486,8 +470,6 @@ def test_ogr_geojson_11():
 
     lyr = None
 
-    return 'success'
-
 ###############################################################################
 # Test DS passed as name with standalone "Point" feature object (#3377)
 
@@ -508,8 +490,6 @@ def test_ogr_geojson_12():
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro -al \'{"type": "Point","coordinates": [100.0, 0.0]}\'')
     assert ret.find(' POINT (100 0)') != -1
 
-    return 'success'
-
 
 ###############################################################################
 # Test writing to stdout (#3381)
@@ -523,8 +503,6 @@ def test_ogr_geojson_13():
 
     rc = copy_shape_to_geojson(test[0], '/vsistdout/')
     assert rc, ('Failed making copy of ' + test[0] + '.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test reading & writing various degenerated geometries
@@ -555,8 +533,6 @@ def test_ogr_geojson_14():
                 out_lyr.CreateFeature(out_feat)
 
     out_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test Feature.ExportToJson (#3870)
@@ -594,8 +570,6 @@ def test_ogr_geojson_15():
     expected_out = {'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]}, 'type': 'Feature', 'properties': {'foo': 'bar', "boolfield": True}, 'id': 0}
 
     assert out == expected_out
-
-    return 'success'
 
 ###############################################################################
 # Test reading ESRI point file
@@ -649,8 +623,6 @@ def test_ogr_geojson_16():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading ESRI linestring file
 
@@ -703,8 +675,7 @@ def test_ogr_geojson_17():
         feature.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading ESRI polygon file
 
@@ -746,8 +717,6 @@ def test_ogr_geojson_18():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading ESRI multipoint file
 
@@ -777,8 +746,6 @@ def test_ogr_geojson_19():
 
     lyr = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading files with no extension (#4314)
@@ -813,8 +780,7 @@ def test_ogr_geojson_20():
 
         gdal.Unlink('/vsimem/testgj')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading output of geocouch spatiallist
 
@@ -844,8 +810,6 @@ def test_ogr_geojson_21():
 
     lyr = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Same as ogr_geojson_21 with several features
@@ -891,8 +855,6 @@ def test_ogr_geojson_22():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Write GeoJSON with bbox and test SRS writing&reading back
 
@@ -932,8 +894,6 @@ def test_ogr_geojson_23():
 
     assert data.find('"bbox": [ 1.0, 10.0, 1.0, 10.0 ]') != -1, \
         'did not find first feature bbox'
-
-    return 'success'
 
 ###############################################################################
 # Test alternate form of geojson
@@ -991,8 +951,7 @@ def test_ogr_geojson_24():
 
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test TopoJSON
 
@@ -1080,8 +1039,6 @@ def test_ogr_geojson_25():
     assert ogrtest.check_feature_geometry(feat, 'LINESTRING (0 0,10 0,0 10,10 0,0 0)') == 0
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test 64bit support
 
@@ -1149,8 +1106,6 @@ def test_ogr_geojson_26():
 
     assert data.find('{ "type": "Feature", "id": 1234567890123, "properties": { "int64": 1234567890123, "int64list": [ 1234567890123 ] }, "geometry": null }') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test workaround for 64bit values (returned as strings)
 
@@ -1188,8 +1143,6 @@ def test_ogr_geojson_27():
 
     lyr = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading ESRI point file with z value
@@ -1243,8 +1196,6 @@ def test_ogr_geojson_28():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading ESRI linestring file with z
 
@@ -1275,8 +1226,6 @@ def test_ogr_geojson_29():
 
     lyr = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading ESRI multipoint file with z
@@ -1309,8 +1258,6 @@ def test_ogr_geojson_30():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading ESRI polygon file with z
 
@@ -1342,8 +1289,6 @@ def test_ogr_geojson_31():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading ESRI multipoint file with m, but no z (hasM=true, hasZ omitted)
 
@@ -1373,8 +1318,6 @@ def test_ogr_geojson_32():
 
     lyr = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading ESRI multipoint file with hasZ=true, but only 2 components.
@@ -1406,8 +1349,6 @@ def test_ogr_geojson_33():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading ESRI multipoint file with z and m
 
@@ -1437,8 +1378,6 @@ def test_ogr_geojson_34():
 
     lyr = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test handling of huge coordinates (#5377)
@@ -1536,8 +1475,7 @@ def test_ogr_geojson_35():
     for ident in range(2, 8):
         assert data.find('{ "type": "Feature", "id": %d, "properties": { }, "geometry": null }' % ident) != -1
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading file with UTF-8 BOM (which is supposed to be illegal in JSON...) (#5630)
 
@@ -1550,8 +1488,6 @@ def test_ogr_geojson_36():
     ds = ogr.Open('data/point_with_utf8bom.json')
     assert ds is not None, 'Failed to open datasource'
     ds = None
-
-    return 'success'
 
 #########################################################################
 # Test boolean type support
@@ -1597,8 +1533,6 @@ def test_ogr_geojson_37():
 
     assert data.find('"bool": false, "not_bool": 0, "bool_list": [ false, true ], "notbool_list": [ 0, 3 ]') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test datetime/date/time type support
 
@@ -1632,8 +1566,7 @@ def test_ogr_geojson_38():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test id top-object level
 
@@ -1792,8 +1725,7 @@ def test_ogr_geojson_39():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test nested attributes
 
@@ -1845,8 +1777,7 @@ def test_ogr_geojson_40():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ogr.CreateGeometryFromJson()
 
@@ -1873,8 +1804,6 @@ def test_ogr_geojson_41():
     g = ogr.CreateGeometryFromJson('{ "type": "Point", "coordinates" : [ 2, 49], "crs": null }')
     srs = g.GetSpatialReference()
     assert not srs
-
-    return 'success'
 
 ###############################################################################
 # Test ESRI FeatureService scrolling
@@ -2052,8 +1981,6 @@ def test_ogr_geojson_42():
     gdal.Unlink('/vsimem/geojson/test.json?resultRecordCount=1')
     gdal.Unlink('/vsimem/geojson/test.json?resultRecordCount=1&resultOffset=1')
 
-    return 'success'
-
 ###############################################################################
 # Test Feature without geometry
 
@@ -2076,8 +2003,6 @@ def test_ogr_geojson_43():
     lyr = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test null Feature (#6166)
 
@@ -2089,8 +2014,7 @@ def test_ogr_geojson_44():
     with gdaltest.error_handler():
         ogr.Open("""{"type": "FeatureCollection", "features":[ null ]}""")
 
-    return 'success'
-
+    
 ###############################################################################
 # Test native data support
 
@@ -2214,8 +2138,6 @@ def test_ogr_geojson_45():
 """
     assert json.loads(got) == json.loads(expected)
 
-    return 'success'
-
 ###############################################################################
 # Test that writing JSon content as value of a string field is serialized as it
 
@@ -2239,8 +2161,6 @@ def test_ogr_geojson_46():
     gdal.Unlink('/vsimem/ogr_geojson_46.json')
 
     assert data.find('{ "myprop": { "a": "b" } }') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test update support
@@ -2396,8 +2316,6 @@ def test_ogr_geojson_47():
 
     gdal.Unlink('/vsimem/ogr_geojson_47.json')
 
-    return 'success'
-
 ###############################################################################
 # Test update support with file that has a single feature not in a FeatureCollection
 
@@ -2434,8 +2352,6 @@ def test_ogr_geojson_48():
        data.find('FeatureCollection') < 0 and \
        data.find('"myprop": "another_value"') >= 0)
 
-    return 'success'
-
 ###############################################################################
 # Test ARRAY_AS_STRING
 
@@ -2458,8 +2374,6 @@ def test_ogr_geojson_49():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_geojson_49.json')
-
-    return 'success'
 
 ###############################################################################
 # Test that we serialize floating point values with enough significant figures
@@ -2529,8 +2443,6 @@ def test_ogr_geojson_50():
 
     assert data.find('0.00001234') >= 0 and data.find('1.23456789012456') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test writing empty geometries
 
@@ -2593,8 +2505,6 @@ def test_ogr_geojson_51():
 
     assert data.find('{ "id": 7 }, "geometry": { "type": "GeometryCollection", "geometries": [ ] } }') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test NULL type detection
 
@@ -2621,8 +2531,6 @@ def test_ogr_geojson_52():
     assert fld.GetNameRef() == 'double'
     assert fld.GetType() == ogr.OFTReal
 
-    return 'success'
-
 ###############################################################################
 # Test that M is ignored (this is a test of OGRLayer::CreateFeature() actually)
 
@@ -2645,8 +2553,6 @@ def test_ogr_geojson_53():
     gdal.Unlink('/vsimem/ogr_geojson_53.json')
 
     assert data.find('{ "type": "Point", "coordinates": [ 1.0, 2.0, 3.0 ] }') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test NULL type detection when first value is null
@@ -2681,7 +2587,6 @@ def test_ogr_geojson_54():
     assert fld.GetWidth() == 1
     fld = lyr.GetLayerDefn().GetFieldDefn(5)
     assert fld.GetType() == ogr.OFTString
-    return 'success'
 
 ###############################################################################
 # Test RFC 7946
@@ -2794,8 +2699,6 @@ def test_ogr_geojson_55():
 """
     assert json.loads(got) == json.loads(expected)
 
-    return 'success'
-
 ###############################################################################
 # Test RFC 7946 (that require geos)
 
@@ -2863,8 +2766,6 @@ def test_ogr_geojson_56():
 }
 """
     assert json.loads(got) == json.loads(expected)
-
-    return 'success'
 
 ###############################################################################
 # Test RFC 7946 and reprojection
@@ -3085,8 +2986,6 @@ def test_ogr_geojson_57():
 """
     assert json.loads(got) == json.loads(expected)
 
-    return 'success'
-
 ###############################################################################
 # Test using the name member of FeatureCollection
 
@@ -3109,8 +3008,6 @@ def test_ogr_geojson_58():
     assert ds.GetLayerByName('foo') is not None, 'Missing layer called foo'
     ds = None
     gdal.Unlink('/vsimem/ogr_geojson_58.json')
-
-    return 'success'
 
 ###############################################################################
 # Test using the description member of FeatureCollection
@@ -3136,8 +3033,6 @@ def test_ogr_geojson_59():
     assert lyr.GetMetadataItem('DESCRIPTION') == 'my desc', 'Did not get DESCRIPTION'
     ds = None
     gdal.Unlink('/vsimem/ogr_geojson_59.json')
-
-    return 'success'
 
 ###############################################################################
 # Test null vs unset field
@@ -3177,8 +3072,6 @@ def test_ogr_geojson_60():
        data.find('"properties": { "foo": null }') >= 0 and \
        data.find('"properties": { }') >= 0)
 
-    return 'success'
-
 
 ###############################################################################
 # Test corner cases
@@ -3207,8 +3100,6 @@ def test_ogr_geojson_61():
     assert f.GetField("") == 1
     ds = None
     gdal.Unlink('/vsimem/ogr_geojson_61.json')
-
-    return 'success'
 
 ###############################################################################
 # Test crs object
@@ -3289,8 +3180,6 @@ def test_ogr_geojson_62():
     srs = lyr.GetSpatialRef()
     assert srs.ExportToWkt().find('32631') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Extensive test of field tye promotion
 
@@ -3325,8 +3214,6 @@ def test_ogr_geojson_64():
     assert (ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
                                       ogr.CreateGeometryFromWkt('LINESTRING (1 2,4 5)')) == 0)
 
-    return 'success'
-
 ###############################################################################
 # Test feature geometry CRS when CRS set on the FeatureCollection
 # See https://github.com/r-spatial/sf/issues/449#issuecomment-319369945
@@ -3349,8 +3236,6 @@ def test_ogr_geojson_65():
     srs = f.GetGeometryRef().GetSpatialReference()
     pcs = int(srs.GetAuthorityCode('PROJCS'))
     assert pcs == 32631, 'Spatial reference for individual geometry was not valid'
-
-    return 'success'
 
 ###############################################################################
 # Test features with properties not being a dictionary
@@ -3375,8 +3260,6 @@ def test_ogr_geojson_66():
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 0
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading GeoJSON files starting with {"features":[{"geometry":.... (#7198)
@@ -3388,7 +3271,6 @@ def test_ogr_geojson_67():
     assert ds.GetDriver().GetName() == 'GeoJSON'
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
-    return 'success'
 
 
 ###############################################################################
@@ -3401,7 +3283,6 @@ def test_ogr_geojson_68():
     assert ds.GetDriver().GetName() == 'ESRIJSON'
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
-    return 'success'
 
 ###############################################################################
 
@@ -3480,8 +3361,6 @@ def test_ogr_geojson_id_field_and_id_type():
     gdal.Unlink('/vsimem/out.json')
     assert got.find('"id": 35043411, "properties": { "AREA": 215229.266, "EAS_ID": 168 }') >= 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3518,8 +3397,6 @@ def test_ogr_geojson_geom_export_failure():
         geojson = g.ExportToJson()
     assert geojson is None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3536,8 +3413,6 @@ def test_ogr_geojson_starting_with_crs():
 "properties": {
 }}]}""")
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test we properly flush the file in SyncToDisk() in append situations
@@ -3571,8 +3446,6 @@ def test_ogr_geojson_append_flush():
     ds2 = None
     gdal.Unlink(tmpfilename)
 
-    return 'success'
-
 
 ###############################################################################
 
@@ -3581,7 +3454,6 @@ def test_ogr_geojson_empty_geometrycollection():
 
     g = ogr.CreateGeometryFromJson('{"type": "GeometryCollection", "geometries": []}')
     assert g.ExportToWkt() == 'GEOMETRYCOLLECTION EMPTY'
-    return 'success'
 
 
 ###############################################################################
@@ -3611,8 +3483,6 @@ def test_ogr_esrijson_without_geometryType():
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
 
-    return 'success'
-
 
 ###############################################################################
 
@@ -3632,8 +3502,7 @@ def test_ogr_geojson_read_fields_with_different_case():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1068
 
@@ -3676,7 +3545,6 @@ def test_ogr_geojson_clip_geometries_rfc7946():
     ds = None
 
     gdal.Unlink(tmpfilename)
-    return 'success'
 
 ###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1109
@@ -3737,7 +3605,6 @@ def test_ogr_geojson_non_finite():
     ds = None
 
     gdal.Unlink(tmpfilename)
-    return 'success'
 
 ###############################################################################
 
@@ -3774,8 +3641,7 @@ def test_ogr_geojson_cleanup():
     for f in gdal.ReadDir('/vsimem/geojson'):
         gdal.Unlink('/vsimem/geojson/' + f)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_geojson_1,

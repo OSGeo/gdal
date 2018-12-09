@@ -65,8 +65,7 @@ def test_hfa_read_completedefn_recursion():
 
     with gdaltest.error_handler():
         gdal.Open('data/hfa_completedefn_recursion.img')
-    return 'success'
-
+    
 
 gdaltest_list = [test_hfa_read_completedefn_recursion]
 

@@ -49,8 +49,6 @@ def test_ogrinfo_py_1():
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp')
     assert ret.find('ESRI Shapefile') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -ro option
 
@@ -62,8 +60,6 @@ def test_ogrinfo_py_2():
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-ro ../ogr/data/poly.shp')
     assert ret.find('ESRI Shapefile') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test -al option
@@ -77,8 +73,6 @@ def test_ogrinfo_py_3():
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al ../ogr/data/poly.shp')
     assert ret.find('Feature Count: 10') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test layer name
 
@@ -90,8 +84,6 @@ def test_ogrinfo_py_4():
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly')
     assert ret.find('Feature Count: 10') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test -sql option
@@ -105,8 +97,6 @@ def test_ogrinfo_py_5():
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp -sql "select * from poly"')
     assert ret.find('Feature Count: 10') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -geom=NO option
 
@@ -119,8 +109,6 @@ def test_ogrinfo_py_6():
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -geom=no')
     assert ret.find('Feature Count: 10') != -1
     assert ret.find('POLYGON') == -1
-
-    return 'success'
 
 ###############################################################################
 # Test -geom=SUMMARY option
@@ -136,8 +124,6 @@ def test_ogrinfo_py_7():
     assert ret.find('POLYGON (') == -1
     assert ret.find('POLYGON :') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -spat option
 
@@ -150,10 +136,10 @@ def test_ogrinfo_py_8():
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -spat 479609 4764629 479764 4764817')
     if ogrtest.have_geos():
         assert ret.find('Feature Count: 4') != -1
-        return 'success'
+        return
     else:
         assert ret.find('Feature Count: 5') != -1
-        return 'success'
+        return
 
 ###############################################################################
 # Test -where option
@@ -167,8 +153,6 @@ def test_ogrinfo_py_9():
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -where "EAS_ID=171"')
     assert ret.find('Feature Count: 1') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test -fid option
 
@@ -180,8 +164,6 @@ def test_ogrinfo_py_10():
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -fid 9')
     assert ret.find('OGRFeature(poly):9') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test -fields=no option
@@ -195,8 +177,6 @@ def test_ogrinfo_py_11():
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -fields=no')
     assert ret.find('AREA (Real') == -1
     assert ret.find('POLYGON (') != -1
-
-    return 'success'
 
 ###############################################################################
 # Test RFC 41 support
@@ -276,8 +256,6 @@ OGRFeature(test_ogrinfo_22):1
 
     os.unlink('tmp/test_ogrinfo_22.csv')
 
-    return 'success'
-
 ###############################################################################
 # Test -geomfield (RFC 41) support
 
@@ -353,8 +331,6 @@ OGRFeature(test_ogrinfo_23):2
         assert exp_line == lines[i], ret
 
     os.unlink('tmp/test_ogrinfo_23.csv')
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -55,7 +55,6 @@ def test_ogr_factory_1():
     expected_geom = 'LINESTRING (21.75 33.031088913245533 40,22.374083449152831 32.648634669593925 40,22.972155943227843 32.237161430239802 40,23.537664874825239 31.801177382099848 40,24.064414409750082 31.345459257641004 40,24.546633369868303 30.875 40,24.979038463342047 30.394954059253475 40,25.356892169480634 29.910580919184319 40,25.676054644008637 29.427187473276717 40,25.933029076066084 28.95006988128063 40,26.125 28.484455543377237 40,26.249864142195264 28.035445827688662 40,26.306253464980482 27.607960178621322 40,26.293550155134998 27.206682218403525 40,26.211893392779814 26.836008432340218 40,26.062177826491073 26.5 40)'
 
     assert not ogrtest.check_feature_geometry(geom, expected_geom)
-    return 'success'
 
 ###############################################################################
 # Test forceToPolygon()
@@ -95,8 +94,6 @@ def test_ogr_factory_2():
 
     assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
-    return 'success'
-
 ###############################################################################
 # Test forceToMultiPolygon()
 
@@ -135,8 +132,6 @@ def test_ogr_factory_3():
 
     assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
-    return 'success'
-
 ###############################################################################
 # Test forceToMultiPoint()
 
@@ -158,8 +153,6 @@ def test_ogr_factory_4():
     dst_geom = ogr.ForceToMultiPoint(src_geom)
 
     assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
-
-    return 'success'
 
 ###############################################################################
 # Test forceToMultiLineString()
@@ -198,7 +191,6 @@ def test_ogr_factory_5():
     dst_geom = ogr.ForceToMultiLineString(src_geom)
 
     assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
-    return 'success'
 
 
 ###############################################################################
@@ -265,8 +257,7 @@ def test_ogr_factory_6():
             gdal.PopErrorHandler()
         # print(src_geom.ExportToWkt(), dst_geom1.ExportToWkt(), dst_geom2.ExportToWkt(), dst_geom3.ExportToWkt(), dst_geom4.ExportToWkt())
 
-    return 'success'
-
+    
 ###############################################################################
 # Test forceToLineString()
 
@@ -368,8 +359,6 @@ def test_ogr_factory_7():
     dst_geom = ogr.ForceToLineString(src_geom)
 
     assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
-
-    return 'success'
 
 ###############################################################################
 # Test forceTo()
@@ -541,8 +530,7 @@ def test_ogr_factory_8():
             print(target_type)
             pytest.fail(dst_geom.ExportToWkt())
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_factory_1,

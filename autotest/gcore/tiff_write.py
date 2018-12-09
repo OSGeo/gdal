@@ -54,8 +54,6 @@ def test_tiff_write_1():
     drv_md = gdaltest.tiff_drv.GetMetadata()
     assert drv_md['DMD_MIMETYPE'] == 'image/tiff', 'mime type is wrong'
 
-    return 'success'
-
 ###############################################################################
 # Create a simple file by copying from an existing one.
 
@@ -86,8 +84,6 @@ def test_tiff_write_2():
 
     gdaltest.tiff_drv.Delete('tmp/test_2.tif')
 
-    return 'success'
-
 ###############################################################################
 # Create a simple file by copying from an existing one.
 
@@ -108,8 +104,6 @@ def test_tiff_write_3():
     new_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/test_3.tif')
-
-    return 'success'
 
 ###############################################################################
 # Create a tiled file.
@@ -188,8 +182,6 @@ def test_tiff_write_4():
 
     gdaltest.tiff_drv.Delete('tmp/test_4.tif')
 
-    return 'success'
-
 ###############################################################################
 # Write a file with GCPs.
 
@@ -221,8 +213,6 @@ def test_tiff_write_5():
     new_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/test_5.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test a mixture of reading and writing on a DEFLATE compressed file.
@@ -259,8 +249,6 @@ def test_tiff_write_6():
     gdaltest.tiff_write_6_failed = False
     gdaltest.tiff_drv.Delete('tmp/test_6.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test a mixture of reading and writing on a LZW compressed file.
 # Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
@@ -292,8 +280,6 @@ def test_tiff_write_7():
 
     gdaltest.tiff_drv.Delete('tmp/test_7.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test a mixture of reading and writing on a PACKBITS compressed file.
 
@@ -320,8 +306,6 @@ def test_tiff_write_8():
 
     gdaltest.tiff_drv.Delete('tmp/test_8.tif')
 
-    return 'success'
-
 ###############################################################################
 # Create a simple file by copying from an existing one.
 
@@ -342,8 +326,6 @@ def test_tiff_write_9():
     new_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/test_9.tif')
-
-    return 'success'
 
 ###############################################################################
 # 1bit file but with band interleaving, and odd size (not multiple of 8) #1957
@@ -379,8 +361,6 @@ def test_tiff_write_12():
     cs = ds.GetRasterBand(3).Checksum()
     assert cs == 31952 or cs == 30145
 
-    return 'success'
-
 ###############################################################################
 # Write JPEG Compressed YCbCr subsampled image.
 
@@ -411,8 +391,7 @@ def test_tiff_write_13():
     if md['LIBTIFF'] == 'INTERNAL':
         assert size <= 22816, 'fail: bad size'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creating an in memory copy.
 
@@ -463,8 +442,6 @@ def test_tiff_write_15():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tw_15.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test that we can restrict metadata and georeferencing in the output
@@ -521,8 +498,6 @@ def test_tiff_write_16():
 
     gdaltest.tiff_drv.Delete('tmp/tw_16.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test writing a TIFF with an RPC tag.
 
@@ -578,8 +553,6 @@ def test_tiff_write_17():
     ds = None
 
     gdaltest.tiff_drv.Delete(tmpfilename)
-
-    return 'success'
 
 ###############################################################################
 # Test that above test still work with the optimization in the GDAL_DISABLE_READDIR_ON_OPEN
@@ -655,8 +628,6 @@ def test_tiff_write_18():
 
     gdaltest.tiff_drv.Delete('tmp/tw_18.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test that above test still work with the optimization in the GDAL_DISABLE_READDIR_ON_OPEN
 # case (#3996)
@@ -728,8 +699,7 @@ def test_tiff_write_rpc_txt():
     except IOError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test writing a TIFF with an RPC in .aux.xml
 
@@ -766,8 +736,6 @@ def test_tiff_write_rpc_in_pam():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_rpc_in_pam.tif')
-
-    return 'success'
 ###############################################################################
 # Test the write of a pixel-interleaved image with NBITS = 7
 
@@ -793,8 +761,6 @@ def test_tiff_write_19():
     src_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/contig_strip_7.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test write and read of some TIFF tags
@@ -874,8 +840,6 @@ def test_tiff_write_20():
 
     gdaltest.tiff_drv.Delete('tmp/tags.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_ASSOCALPHA
 
@@ -898,8 +862,6 @@ def test_tiff_write_21():
     src_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/stefan_full_rgba.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNSPECIFIED
@@ -924,8 +886,6 @@ def test_tiff_write_22():
 
     gdaltest.tiff_drv.Delete('tmp/stefan_full_rgba_photometric_rgb.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test grey+alpha images with ALPHA=YES
 
@@ -948,8 +908,6 @@ def test_tiff_write_23():
     src_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/stefan_full_greyalpha.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test grey+alpha images without ALPHA=YES
@@ -974,8 +932,6 @@ def test_tiff_write_24():
 
     gdaltest.tiff_drv.Delete('tmp/stefan_full_greyunspecified.tif')
 
-    return 'success'
-
 ###############################################################################
 # Read a CIELAB image to test the RGBA image TIFF interface
 
@@ -993,8 +949,6 @@ def test_tiff_write_25():
     assert src_ds.GetRasterBand(3).GetRasterColorInterpretation() == gdal.GCI_BlueBand
     assert src_ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_AlphaBand
     src_ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1028,8 +982,6 @@ def test_tiff_write_26():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/ct8.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test color table in a 16 bit image
@@ -1070,8 +1022,6 @@ def test_tiff_write_27():
     gdaltest.tiff_drv.Delete('tmp/ct16.tif')
     gdaltest.tiff_drv.Delete('tmp/ct16_copy.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test SetRasterColorInterpretation on a 2 channel image
 
@@ -1094,8 +1044,6 @@ def test_tiff_write_28():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/greyalpha.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test SetRasterColorInterpretation on a 4 channel image
@@ -1147,8 +1095,6 @@ def test_tiff_write_29():
     gdaltest.tiff_drv.Delete('/vsimem/rgb_no_alpha.tif')
     gdaltest.tiff_drv.Delete('/vsimem/rgb_added_alpha.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Create a BigTIFF image with BigTIFF=YES
@@ -1176,8 +1122,6 @@ def test_tiff_write_30():
     # Check BigTIFF signature
     assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
             (binvalues[3] != 0x2B or binvalues[2] != 0)))
-
-    return 'success'
 
 ###############################################################################
 # Create a BigTIFF image implicitly (more than 4Gb).
@@ -1207,8 +1151,6 @@ def test_tiff_write_31():
     # Check BigTIFF signature
     assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
             (binvalues[3] != 0x2B or binvalues[2] != 0)))
-
-    return 'success'
 
 ###############################################################################
 # Create a rotated image
@@ -1247,8 +1189,6 @@ def test_tiff_write_32():
 
     gdaltest.tiff_drv.Delete('tmp/byte_rotated.tif')
     gdaltest.tiff_drv.Delete('tmp/byte_rotated_copy.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test that metadata is written in .aux.xml file in GeoTIFF profile with CreateCopy
@@ -1295,8 +1235,6 @@ def test_tiff_write_33():
 
     gdaltest.tiff_drv.Delete('tmp/tw_33.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test that metadata is written in .aux.xml file in GeoTIFF profile with Create
 # (BASELINE is tested by tiff_write_16)
@@ -1340,8 +1278,6 @@ def test_tiff_write_34():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tw_34.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test fallback from internal storage of Geotiff metadata to PAM storage
@@ -1397,8 +1333,6 @@ def test_tiff_write_35():
 
     gdaltest.tiff_drv.Delete('tmp/tw_35.tif')
 
-    return 'success'
-
 ###############################################################################
 # Generic functions for the 8 following tests
 
@@ -1431,8 +1365,6 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
     ds = None
 
     gdaltest.tiff_drv.Delete(tmpfilename)
-
-    return 'success'
 
 
 ###############################################################################
@@ -1519,8 +1451,6 @@ def test_tiff_write_44():
     gdaltest.tiff_drv.Delete('tmp/tw_44.tif')
     gdaltest.tiff_drv.Delete('tmp/tw_44_copy.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test create with NBITS=17 and preservation through CreateCopy of NBITS
 
@@ -1549,8 +1479,6 @@ def test_tiff_write_45():
 
     gdaltest.tiff_drv.Delete('tmp/tw_45.tif')
     gdaltest.tiff_drv.Delete('tmp/tw_45_copy.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -1593,8 +1521,6 @@ def test_tiff_write_46():
     gdaltest.tiff_drv.Delete('tmp/tiff_write_46_2.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_46_3.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test #2457
 
@@ -1629,8 +1555,6 @@ def test_tiff_write_48():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_48.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Test copying a CMYK TIFF into another CMYK TIFF
@@ -1658,8 +1582,6 @@ def test_tiff_write_49():
     new_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_49.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -1690,8 +1612,6 @@ def test_tiff_write_50():
     new_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_50.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -1733,8 +1653,6 @@ def test_tiff_write_51():
     gdaltest.tiff_drv.Delete('tmp/tiff_write_51.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_51_ref.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test the ability to update a paletted TIFF files color table.
 
@@ -1761,8 +1679,6 @@ def test_tiff_write_52():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_52.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test the ability to create a paletted image and then update later.
@@ -1794,8 +1710,6 @@ def test_tiff_write_53():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_53.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -1830,8 +1744,6 @@ def test_tiff_write_53_bis():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_53_bis.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test the ability to create a JPEG compressed TIFF, with PHOTOMETRIC=YCBCR
 # and write data into it without closing it and re-opening it (#2645)
@@ -1858,8 +1770,6 @@ def test_tiff_write_54():
 
     assert cs != 0, 'did not get expected checksum'
 
-    return 'success'
-
 
 ###############################################################################
 # Test creating and reading an equirectangular file with all parameters (#2706)
@@ -1883,8 +1793,6 @@ def test_tiff_write_55():
         'failed to preserve Equirectangular projection as expected, old libgeotiff?'
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_55.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test clearing the colormap from an existing paletted TIFF file.
@@ -1925,8 +1833,6 @@ def test_tiff_write_56():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_56.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test replacing normal norm up georef with rotated georef (#2625)
 
@@ -1956,8 +1862,6 @@ def test_tiff_write_57():
 
     gdaltest.tiff_drv.Delete('tmp/tiff57.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test writing partial end strips (#2748)
 
@@ -1981,8 +1885,7 @@ def test_tiff_write_58():
         else:
             print(('Skipping compression method %s' % compression))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test fix for #2759
 
@@ -2085,8 +1988,7 @@ def test_tiff_write_60():
         except OSError:
             pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test BigTIFF=IF_NEEDED creation option
 
@@ -2115,8 +2017,6 @@ def test_tiff_write_61():
     # Check classical TIFF signature
     assert (not ((binvalues[2] != 0x2A or binvalues[3] != 0) and
             (binvalues[3] != 0x2A or binvalues[2] != 0)))
-
-    return 'success'
 
 ###############################################################################
 # Test BigTIFF=IF_SAFER creation option
@@ -2147,8 +2047,6 @@ def test_tiff_write_62():
     assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
             (binvalues[3] != 0x2B or binvalues[2] != 0)))
 
-    return 'success'
-
 ###############################################################################
 # Test BigTIFF=NO creation option when creating a BigTIFF file would be required
 
@@ -2167,7 +2065,7 @@ def test_tiff_write_63():
     gdal.PopErrorHandler()
 
     if ds is None:
-        return 'success'
+        return
 
     pytest.fail()
 
@@ -2193,8 +2091,6 @@ def test_tiff_write_64():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_64.tif')
 
-    return 'success'
-
 ###############################################################################
 # Verify that we can write XML metadata.
 
@@ -2215,8 +2111,6 @@ def test_tiff_write_65():
     assert len(md) == 1 and md[0] == doc, 'did not get xml back clean'
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_65.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -2241,8 +2135,6 @@ def test_tiff_write_66():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_66.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Verify that we can write and read a pixel-interleaved GeoTIFF with 65535 bands (#2838)
@@ -2266,8 +2158,6 @@ def test_tiff_write_67():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_67.tif')
 
-    return 'success'
-
 ###############################################################################
 # Verify that we can set the color table after a Create() (scenario hit by map.tif in #2820)
 
@@ -2290,8 +2180,6 @@ def test_tiff_write_68():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_68.tif')
 
-    return 'success'
-
 ###############################################################################
 # Verify GTiffRasterBand::NullBlock() when reading empty block without any nodata value set
 
@@ -2306,8 +2194,6 @@ def test_tiff_write_69():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_69.tif')
-
-    return 'success'
 
 ###############################################################################
 # Verify GTiffRasterBand::NullBlock() when reading empty block with nodata value set
@@ -2355,8 +2241,6 @@ def test_tiff_write_70():
     gdaltest.tiff_drv.Delete('tmp/tiff_write_70.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_70_ref.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading in a real BigTIFF file (on filesystems supporting sparse files)
@@ -2402,8 +2286,6 @@ def test_tiff_write_71():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_71.tif')
 
-    return 'success'
-
 ###############################################################################
 # With CreateCopy(), check that TIFF directory is in the first bytes of the file
 # and has not been rewritten later (#3021)
@@ -2437,8 +2319,6 @@ def test_tiff_write_72():
 
     gdaltest.tiff_drv.Delete('tmp/byte.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_72.tif')
-
-    return 'success'
 
 ###############################################################################
 # With Create(), check that TIFF directory is in the first bytes of the file
@@ -2487,8 +2367,6 @@ def test_tiff_write_73():
     assert (binvalues[0] == 0x08 and binvalues[1] == 0x00 and binvalues[2] == 0x00 and binvalues[3] == 0x00)
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_73.tif')
-
-    return 'success'
 
 ###############################################################################
 # Verify we can write 12bit jpeg encoded tiff.
@@ -2560,8 +2438,7 @@ def test_tiff_write_74():
 
         gdaltest.tiff_drv.Delete('tmp/test_74.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that FlushCache() alone doesn't cause crash (#3067 )
 
@@ -2573,8 +2450,6 @@ def test_tiff_write_75():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_75.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test generating a G4 band to use the TIFFWriteScanline()
@@ -2595,8 +2470,6 @@ def test_tiff_write_76():
     new_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_76.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test generating & reading a 8bit all-in-one-strip multiband TIFF (#3904)
@@ -2642,8 +2515,6 @@ def test_tiff_write_77():
 
     src_ds = None
     gdaltest.tiff_drv.Delete('tmp/tiff_write_77_src.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test generating & reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259)
@@ -2706,8 +2577,6 @@ def test_tiff_write_78():
 
     src_ds = None
     gdaltest.tiff_drv.Delete('tmp/tiff_write_78_src.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test reading & updating GDALMD_AREA_OR_POINT (#3522)
@@ -2802,8 +2671,6 @@ def test_tiff_write_79():
             ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_79.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test SetOffset() & SetScale()
@@ -2903,8 +2770,6 @@ def test_tiff_write_80():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_80_bis.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test retrieving GCP from PAM
 
@@ -2936,8 +2801,6 @@ def test_tiff_write_81():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_81.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test writing & reading a signedbyte 8 bit geotiff
 
@@ -2955,8 +2818,6 @@ def test_tiff_write_82():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_82.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -2992,8 +2853,6 @@ def test_tiff_write_83():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_83.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_83_2.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test propagation of non-standard JPEG quality when the current directory
@@ -3032,8 +2891,6 @@ def test_tiff_write_84():
     gdaltest.tiff_drv.Delete('tmp/tiff_write_84.tif')
 
     assert cs == 0, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test SetUnitType()
@@ -3120,8 +2977,6 @@ def test_tiff_write_85():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_85_bis.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test special handling of xml:ESRI domain.  When the ESRI_XML_PAM config
 # option is set we want to write this to PAM, not into the geotiff itself.
@@ -3205,8 +3060,6 @@ def test_tiff_write_86():
     gdaltest.tiff_drv.Delete('tmp/tiff_write_86.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_86_cc.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Test COPY_SRC_OVERVIEWS creation option
@@ -3253,8 +3106,6 @@ def test_tiff_write_87():
     assert nodata_ovr_0 == 0 and nodata_ovr_1 == 0, 'did not get expected nodata values'
 
     assert ifd_main == 8 or(ifd_main < ifd_ovr_0 and ifd_ovr_0 < ifd_ovr_1 and ifd_ovr_1 < data_ovr_1 and data_ovr_1 < data_ovr_0 and data_ovr_0 < data_main)
-
-    return 'success'
 
 ###############################################################################
 # Test that COPY_SRC_OVERVIEWS creation option has an influence
@@ -3313,8 +3164,6 @@ def test_tiff_write_88():
     assert ar[4] == 8 and ar[5] == 0 and ar[6] == 0 and ar[7] == 0, \
         'first IFD is not at offset 8'
 
-    return 'success'
-
 ###############################################################################
 # Test JPEG_QUALITY propagation while creating a (default compressed) mask band
 
@@ -3367,8 +3216,6 @@ def test_tiff_write_89():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_89.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test JPEG_QUALITY propagation while creating (internal) overviews
 
@@ -3410,8 +3257,6 @@ def test_tiff_write_90():
         last_size = size
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_90.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -3459,8 +3304,6 @@ def test_tiff_write_91():
         last_size = size
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_91.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -3513,8 +3356,6 @@ def test_tiff_write_92():
         last_size = size
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_92.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test JPEG_QUALITY_OVERVIEW propagation while creating external overviews
@@ -3575,8 +3416,6 @@ def test_tiff_write_93():
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_93.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Test CreateCopy() of a dataset with a mask into a JPEG compressed dataset
@@ -3613,8 +3452,6 @@ def test_tiff_write_94():
 
     assert cs == 3, 'wrong checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test that COPY_SRC_OVERVIEWS deal well with rounding issues when computing
 # overview levels from the overview size
@@ -3635,8 +3472,6 @@ def test_tiff_write_95():
     gdaltest.tiff_drv.Delete('tmp/tiff_write_95_dst.tif')
 
     assert ok
-
-    return 'success'
 
 ###############################################################################
 # Test that COPY_SRC_OVERVIEWS combined with GDAL_TIFF_INTERNAL_MASK=YES work well
@@ -3682,8 +3517,6 @@ def test_tiff_write_96():
     assert [expected_cs, expected_cs_mask, expected_cs_ovr_1, expected_cs_ovr_mask_1, expected_cs_ovr_2, expected_cs_ovr_mask_2] == \
        [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
         'did not get expected checksums'
-
-    return 'success'
 
 ###############################################################################
 # Create a simple file by copying from an existing one - PixelIsPoint
@@ -3746,8 +3579,6 @@ def test_tiff_write_97():
 
     gdaltest.tiff_drv.Delete('tmp/test_97_2.tif')
 
-    return 'success'
-
 ###############################################################################
 # Create a rotated geotiff file (uses a geomatrix) with - PixelIsPoint
 
@@ -3790,8 +3621,6 @@ def test_tiff_write_98():
 
     gdaltest.tiff_drv.Delete('tmp/test_98.tif')
 
-    return 'success'
-
 ###############################################################################
 # Create copy into a RGB JPEG-IN-TIFF (#3887)
 
@@ -3812,8 +3641,6 @@ def test_tiff_write_99():
     gdaltest.tiff_drv.Delete('tmp/test_99.tif')
 
     assert (cs1, cs2, cs3) == (21629, 21651, 21371), ('%d,%d,%d' % (cs1, cs2, cs3))
-
-    return 'success'
 
 ###############################################################################
 # Create copy into a 2 band JPEG-IN-TIFF (#3887)
@@ -3836,8 +3663,6 @@ def test_tiff_write_100():
     gdaltest.tiff_drv.Delete('/vsimem/test_100_dst.tif')
 
     assert (cs1, cs2) == (3118, 0), ('%d,%d' % (cs1, cs2))
-
-    return 'success'
 
 ###############################################################################
 # Test CHUNKY_STRIP_READ_SUPPORT (#3894)
@@ -3916,8 +3741,6 @@ Band 1}""".encode('ascii'))
     src_ds = None
     gdaltest.tiff_drv.Delete('tmp/tiff_write_101.bin')
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading back COMPD_CS
 
@@ -3955,8 +3778,7 @@ def test_tiff_write_102():
         print(wkt2)
         pytest.fail('dit not get expected COMPD_CS name')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -co COPY_SRC_OVERVIEWS=YES on a multiband source with external overviews (#3938)
 
@@ -3982,8 +3804,6 @@ def test_tiff_write_103():
 
     assert src_cs == dst_cs, 'did not get expected checksum'
 
-    return 'success'
-
 
 ###############################################################################
 # Confirm as best we can that we can write geotiff files with detailed
@@ -4006,8 +3826,6 @@ def test_tiff_write_104():
     assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting'
 
     gdaltest.tiff_drv.Delete('tmp/test_104.tif')
-
-    return 'success'
 
 ###############################################################################
 # Confirm as best we can that we can write geotiff files with detailed
@@ -4038,8 +3856,6 @@ def test_tiff_write_105():
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/bug4468.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test the direct copy mechanism of JPEG source
@@ -4078,8 +3894,7 @@ def test_tiff_write_106(filename='../gdrivers/data/byte_with_xmp.jpg', options=N
         for i in range(nbands):
             assert cs[i] != 0, 'did not get expected checksum'
 
-    return 'success'
-
+    
 
 def test_tiff_write_107():
     return test_tiff_write_106(options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
@@ -4180,8 +3995,6 @@ def test_tiff_write_115():
     ds = None
     gdal.Unlink(tmpfilename)
 
-    return 'success'
-
 ###############################################################################
 # Test writing a band interleaved RGBA JPEG-compressed TIFF
 
@@ -4227,8 +4040,6 @@ def test_tiff_write_116():
 
     ds = None
     gdal.Unlink(tmpfilename)
-
-    return 'success'
 
 ###############################################################################
 # Test bugfix for ticket #4771 (rewriting of a deflate compressed tile, libtiff bug)
@@ -4280,8 +4091,6 @@ def test_tiff_write_117():
     assert data is not None, \
         'if GDAL is configured with external libtiff 4.x, it can fail if it is older than 4.0.3. With internal libtiff, should not fail'
 
-    return 'success'
-
 ###############################################################################
 # Test bugfix for ticket #4816
 
@@ -4301,8 +4110,6 @@ def test_tiff_write_118():
 
     assert not md
 
-    return 'success'
-
 ###############################################################################
 # Test bugfix for ticket #4816
 
@@ -4320,8 +4127,6 @@ def test_tiff_write_119():
     gdal.Unlink('/vsimem/tiff_write_119.tif')
 
     assert md['foo'] == 'bar'
-
-    return 'success'
 
 ###############################################################################
 # Test bugfix for ticket #4816
@@ -4341,8 +4146,6 @@ def test_tiff_write_120():
 
     assert len(md) == 1
     assert md[0] == '<foo/>'
-
-    return 'success'
 
 ###############################################################################
 # Test error cases of COPY_SRC_OVERVIEWS creation option
@@ -4423,8 +4226,6 @@ def test_tiff_write_121():
     assert ds is None
     src_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test write and read of some TIFFTAG_RESOLUTIONUNIT tags where '*'/'' is
 # specified (gdalwarp conflicts)
@@ -4453,8 +4254,6 @@ def test_tiff_write_122():
     new_ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tags122.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test implicit photometric interpretation
@@ -4628,8 +4427,6 @@ def test_tiff_write_123():
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgba_to_undefined.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test error cases with palette creation
 
@@ -4668,8 +4465,6 @@ def test_tiff_write_124():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_124.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test out-of-memory conditions with SplitBand and SplitBitmapBand
 
@@ -4700,8 +4495,6 @@ def test_tiff_write_125():
         gdal.PopErrorHandler()
 
     gdal.Unlink('/vsimem/tiff_write_125.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test implicit JPEG-in-TIFF overviews
@@ -4807,7 +4600,7 @@ def test_tiff_write_126():
     # We need libtiff 4.0.4 (unreleased at that time)
     if md['LIBTIFF'] != 'INTERNAL':
         print('skipping tests that will fail without internal libtiff')
-        return 'success'
+        return
 
     # Test with completely sparse file
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, options=['COMPRESS=JPEG', 'SPARSE_OK=YES'])
@@ -4832,8 +4625,6 @@ def test_tiff_write_126():
     assert cs == 0
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test setting/unsetting metadata in update mode (#5628)
@@ -4887,8 +4678,6 @@ def test_tiff_write_127():
             pytest.fail('unexpected PAM file')
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_127.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test lossless copying of a CMYK JPEG into JPEG-in-TIFF (#5712)
@@ -4953,8 +4742,6 @@ def test_tiff_write_128():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
 
-    return 'success'
-
 ###############################################################################
 # Check effective guessing of existing JPEG quality
 
@@ -4997,8 +4784,7 @@ def test_tiff_write_129():
                     print(i)
                     pytest.fail(jpegtablesmode)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test cases where JPEG quality will fail
 
@@ -5035,8 +4821,6 @@ def test_tiff_write_130():
     ds = None
     os.unlink('tmp/byte_jpg_tablesmodezero.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test LZMA compression
 
@@ -5064,8 +4848,6 @@ def test_tiff_write_131(level=1):
     ds = None
 
     gdal.Unlink(filename)
-
-    return 'success'
 
 
 def test_tiff_write_131_level_9():
@@ -5111,8 +4893,7 @@ def test_tiff_write_132():
 
         gdaltest.tiff_drv.Delete('/vsimem/tiff_write_132.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test streaming capabilities
 
@@ -5332,8 +5113,6 @@ def test_tiff_write_133():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test DISCARD_LSB
 
@@ -5380,8 +5159,6 @@ def test_tiff_write_134():
     assert cs1 == 5 and cs2 == 5 and cs3 == 5
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test clearing GCPs (#5945)
@@ -5439,8 +5216,6 @@ def test_tiff_write_135():
 
     gdal.Unlink('/vsimem/tiff_write_135.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test writing a single-strip mono-bit dataset
 
@@ -5460,8 +5235,6 @@ def test_tiff_write_136():
     gdal.Unlink('/vsimem/tiff_write_136_src.tif')
     gdal.Unlink('/vsimem/tiff_write_136.tif')
     gdal.Unlink('/vsimem/tiff_write_136.tif.aux.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test multi-threaded writing
@@ -5530,8 +5303,6 @@ def test_tiff_write_137():
     assert cs == 4672, expected_cs
     gdal.Unlink('/vsimem/tiff_write_137.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test that pixel-interleaved writing generates optimal size
 
@@ -5576,8 +5347,6 @@ def test_tiff_write_138():
 
     gdal.Unlink('/vsimem/tiff_write_138.tif')
     gdal.Unlink('/vsimem/tiff_write_138_saturate.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test that pixel-interleaved writing generates optimal size
@@ -5681,8 +5450,6 @@ def test_tiff_write_139():
 
     gdal.Unlink('/vsimem/tiff_write_139.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test setting a band to alpha
 
@@ -5734,8 +5501,6 @@ def test_tiff_write_140():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_140.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test GEOTIFF_KEYS_FLAVOR=ESRI_PE with EPSG:3857
 
@@ -5757,8 +5522,6 @@ def test_tiff_write_141():
     assert wkt.find('EXTENSION["PROJ4"') >= 0
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_141.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -5788,8 +5551,6 @@ def test_tiff_write_142():
 
     assert md == 'Point', 'did not get expected AREA_OR_POINT value'
 
-    return 'success'
-
 ###############################################################################
 # Check that we detect that free space isn't sufficient
 
@@ -5799,8 +5560,6 @@ def test_tiff_write_143():
     with gdaltest.error_handler():
         ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_143.tif', 1000000000, 1000000000)
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test creating a real BigTIFF file > 4 GB with multiple directories (on filesystems supporting sparse files)
@@ -5839,8 +5598,6 @@ def test_tiff_write_144():
     gdal.Unlink('tmp/tiff_write_144.tif')
 
     assert got_cs == 4873 and got_cs_ovr == 1218
-
-    return 'success'
 
 ###############################################################################
 # Test various warnings / errors of Create()
@@ -5897,8 +5654,7 @@ def test_tiff_write_145():
             pytest.fail('did not get any warning/error')
         gdal.Unlink(filename)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test implicit JPEG-in-TIFF overviews with RGBA (not completely sure this
 # is a legal formulation since 4 bands should probably be seen as CMYK)
@@ -5923,8 +5679,7 @@ def test_tiff_write_146():
             assert i == 2 or j < 2 or abs(original_stats[i][j] - got_stats[i][j]) <= 5, \
                 'did not get expected statistics'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that we don't use implicit JPEG-in-TIFF overviews with CMYK when converting
 # to RGBA
@@ -5945,8 +5700,6 @@ def test_tiff_write_147():
     assert out_ds.GetRasterBand(1).GetOverview(0) is None, 'did not expected overview'
     out_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_write_147.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test that we can use implicit JPEG-in-TIFF overviews with CMYK in raw mode
@@ -5977,8 +5730,7 @@ def test_tiff_write_148():
             assert j < 2 or abs(original_stats[i][j] - got_stats[i][j]) <= 5, \
                 'did not get expected statistics'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test filling missing blocks with nodata
 
@@ -6029,8 +5781,6 @@ def test_tiff_write_149():
     assert cs == expected_cs
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_149.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test failure when loading block from disk in IWriteBlock()
 
@@ -6046,8 +5796,6 @@ def test_tiff_write_150():
     assert gdal.GetLastErrorMsg() != ''
     ds = None
     gdaltest.tiff_drv.Delete('tmp/tiled_bad_offset.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test IWriteBlock() with more than 10 bands
@@ -6072,8 +5820,6 @@ def test_tiff_write_151():
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_151.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test flushing of blocks in a contig multi band file with Create()
 
@@ -6089,8 +5835,6 @@ def test_tiff_write_152():
     assert ds.GetRasterBand(2).Checksum() == 1
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_152.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test that empty blocks are created in a filesystem sparse way
@@ -6112,8 +5856,6 @@ def test_tiff_write_153():
     gdaltest.tiff_drv.Delete(target_dir + '/tiff_write_153.tif')
 
     assert ret != gdal.VSI_RANGE_STATUS_DATA
-
-    return 'success'
 
 ###############################################################################
 # Test empty block writing skipping and SPARSE_OK in CreateCopy() and Open()
@@ -6222,8 +5964,6 @@ def test_tiff_write_154():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
     assert not (offset is None or int(offset) == 0)
 
-    return 'success'
-
 ###############################################################################
 # Test reading and writing band description
 
@@ -6251,8 +5991,6 @@ def test_tiff_write_155():
     assert ds.GetRasterBand(1).GetDescription() == 'foo'
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_155.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test GetDataCoverageStatus()
@@ -6284,8 +6022,6 @@ def test_tiff_write_156():
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_156.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test Float16
@@ -6411,8 +6147,6 @@ def test_tiff_write_157():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test GetActualBlockSize() (perhaps not the best place for that...)
 
@@ -6435,8 +6169,6 @@ def test_tiff_write_158():
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_158.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test that COPY_SRC_OVERVIEWS creation option with JPEG compression
@@ -6502,8 +6234,7 @@ def test_tiff_write_159():
 
         gdaltest.tiff_drv.Delete('/vsimem/tiff_write_159.tif')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test the Create() interface with a BLOCKYSIZE > image height
@@ -6520,8 +6251,6 @@ def test_tiff_write_160():
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_160.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test setting GCPs on an image with already a geotransform and vice-versa (#6751)
@@ -6556,8 +6285,6 @@ def test_tiff_write_161():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_161.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a JPEG compressed file with big tiles (#6757)
 
@@ -6574,8 +6301,6 @@ def test_tiff_write_162():
     assert gdal.GetLastErrorMsg() == ''
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_162.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test creating a file that would trigger strip chopping (#6924)
@@ -6598,8 +6323,6 @@ def test_tiff_write_163():
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_163.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test that we handle [0,1,0,0,0,1] geotransform as a regular geotransform
@@ -6629,8 +6352,6 @@ def test_tiff_write_164():
     assert gt == (0, 1, 0, 0, 0, -1)
 
     gdal.Unlink('/vsimem/test.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test the current behaviour of per-band nodata vs per-dataset serialization
@@ -6662,8 +6383,6 @@ def test_tiff_write_165():
     assert nd == 200
 
     gdal.Unlink('/vsimem/test.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test reading & writing Z dimension for ModelTiepointTag and ModelPixelScaleTag (#7093)
@@ -6749,8 +6468,6 @@ def test_tiff_write_166():
     ds = None
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -6784,8 +6501,6 @@ def test_tiff_write_167_deflate_zlevel():
 
     assert size2 == size2_create
 
-    return 'success'
-
 ###############################################################################
 # Test CCITTFAX3
 
@@ -6818,7 +6533,6 @@ def test_tiff_write_170_invalid_compresion():
                                                  options=['COMPRESS=INVALID'])
     assert gdal.GetLastErrorMsg() != ''
     gdal.Unlink('/vsimem/out.tif')
-    return 'success'
 
 ###############################################################################
 # Test ZSTD compression
@@ -6888,8 +6602,6 @@ def test_tiff_write_tiled_webp():
     gdaltest.tiff_drv.Delete(filename)
     gdal.Unlink('data/md_ge_rgb_0010000.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test WEBP compression with huge single strip
 
@@ -6919,8 +6631,6 @@ def test_tiff_write_webp_huge_single_strip():
     gdaltest.tiff_drv.Delete(filename)
     gdal.Unlink('data/tif_webp_huge_single_strip.tif.aux.xml')
 
-    return 'success'
-
 
 ###############################################################################
 # GeoTIFF DGIWG tags
@@ -6946,7 +6656,6 @@ def test_tiff_write_172_geometadata_tiff_rsid():
     ds = None
 
     gdal.Unlink(tmpfilename)
-    return 'success'
 
 ###############################################################################
 # Test LERC compression
@@ -7051,8 +6760,6 @@ def test_tiff_write_177_lerc_several_bands_tiling():
     gdal.Unlink(filename)
     assert cs == [30111, 32302, 40026]
 
-    return 'success'
-
 ###############################################################################
 # Test LERC compression with alpha band
 
@@ -7072,8 +6779,6 @@ def test_tiff_write_178_lerc_with_alpha():
     gdal.Unlink(filename)
     assert cs == [12603, 58561, 36064, 10807]
 
-    return 'success'
-
 ###############################################################################
 # Test LERC compression with alpha band with only 0 and 255
 
@@ -7092,8 +6797,6 @@ def test_tiff_write_178_lerc_with_alpha_0_and_255():
     ds = None
     gdal.Unlink(filename)
     assert cs == [13, 13, 13, 13]
-
-    return 'success'
 
 ###############################################################################
 # Test LERC compression with different data types
@@ -7133,8 +6836,6 @@ def test_tiff_write_179_lerc_data_types():
     assert gdal.GetLastErrorMsg() != ''
     gdal.Unlink(filename)
 
-    return 'success'
-
 ###############################################################################
 # Test LERC compression with several bands and separate
 
@@ -7153,8 +6854,6 @@ def test_tiff_write_180_lerc_separate():
     ds = None
     gdal.Unlink(filename)
     assert cs == [30111, 32302, 40026]
-
-    return 'success'
 
 ###############################################################################
 # Test set XMP metadata
@@ -7185,8 +6884,6 @@ def test_tiff_write_181_xmp():
 
     gdaltest.tiff_drv.Delete('tmp/test_181.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test delete XMP from a dataset
 
@@ -7209,8 +6906,6 @@ def test_tiff_write_182_xmp_delete():
 
     gdaltest.tiff_drv.Delete('tmp/test_182.tif')
 
-    return 'success'
-
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
@@ -7225,15 +6920,11 @@ def tiff_write_api_proxy():
 
     assert ret.find('Failed:    0') != -1
 
-    return 'success'
-
 ###############################################################################
 
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
-
-    return 'success'
 
 
 gdaltest_list = [

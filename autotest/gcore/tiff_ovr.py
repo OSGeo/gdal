@@ -81,8 +81,7 @@ def tiff_ovr_check(src_ds):
         if ovr_band.Checksum() != 328:
             msg = 'overview wrong checksum: band %d, overview 1, checksum = %d,' % (i, ovr_band.Checksum())
             pytest.fail(msg)
-    return 'success'
-
+    
 ###############################################################################
 # Create a 3 band floating point GeoTIFF file so we can build overviews on it
 # later.  Build overviews on it.
@@ -222,8 +221,6 @@ def test_tiff_ovr_4(both_endian):
 
     wrk_ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test average overview generation with nodata.
@@ -242,8 +239,6 @@ def test_tiff_ovr_5(both_endian):
     exp_cs = 1130
 
     assert cs == exp_cs, 'got wrong overview checksum.'
-
-    return 'success'
 
 ###############################################################################
 # Same as tiff_ovr_5 but with USE_RDD=YES to force external overview
@@ -274,8 +269,6 @@ def test_tiff_ovr_6(both_endian):
 
     assert cs == exp_cs, 'got wrong overview checksum.'
 
-    return 'success'
-
 
 ###############################################################################
 # Check nearest resampling on a dataset with a raster band that has a color table
@@ -298,8 +291,6 @@ def test_tiff_ovr_7(both_endian):
     ds = None
 
     assert cs == exp_cs, 'got wrong overview checksum.'
-
-    return 'success'
 
 ###############################################################################
 # Check average resampling on a dataset with a raster band that has a color table
@@ -324,8 +315,6 @@ def test_tiff_ovr_8(both_endian):
     ds = None
 
     assert cs == exp_cs, 'got wrong overview checksum.'
-
-    return 'success'
 
 ###############################################################################
 # Test --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR -ro
@@ -370,8 +359,6 @@ def test_tiff_ovr_9(both_endian):
 
     assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
 
-    return 'success'
-
 ###############################################################################
 # Similar to tiff_ovr_9 but with internal overviews.
 
@@ -400,8 +387,6 @@ def test_tiff_ovr_10(both_endian):
     ds = None
 
     assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
-
-    return 'success'
 
 ###############################################################################
 # Overview on a dataset with NODATA_VALUES
@@ -439,8 +424,6 @@ def test_tiff_ovr_11(both_endian):
     ds = None
 
     assert cs == exp_cs, 'got wrong overview checksum.'
-
-    return 'success'
 
 ###############################################################################
 # Same as tiff_ovr_11 but with compression to trigger the multiband overview
@@ -480,8 +463,6 @@ def test_tiff_ovr_12(both_endian):
 
     assert cs == exp_cs, 'got wrong overview checksum.'
 
-    return 'success'
-
 
 ###############################################################################
 # Test gaussian resampling
@@ -512,8 +493,6 @@ def test_tiff_ovr_13(both_endian):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Check gauss resampling on a dataset with a raster band that has a color table
 
@@ -534,8 +513,6 @@ def test_tiff_ovr_14(both_endian):
     ds = None
 
     assert cs == exp_cs, 'got wrong overview checksum.'
-
-    return 'success'
 
 ###############################################################################
 # Same as tiff_ovr_11 but with gauss, and compression to trigger the multiband overview
@@ -575,8 +552,6 @@ def test_tiff_ovr_15(both_endian):
 
     assert cs == exp_cs, 'got wrong overview checksum.'
 
-    return 'success'
-
 
 ###############################################################################
 # Test mode resampling on non-byte dataset
@@ -607,8 +582,6 @@ def test_tiff_ovr_16(both_endian):
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test mode resampling on a byte dataset
@@ -631,8 +604,6 @@ def test_tiff_ovr_17(both_endian):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Check mode resampling on a dataset with a raster band that has a color table
 
@@ -653,8 +624,6 @@ def test_tiff_ovr_18(both_endian):
     ds = None
 
     assert cs == exp_cs, 'got wrong overview checksum.'
-
-    return 'success'
 
 ###############################################################################
 # Check that we can create overviews on a newly create file (#2621)
@@ -689,8 +658,6 @@ def test_tiff_ovr_19(both_endian):
 
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test BIGTIFF_OVERVIEW=YES option
@@ -723,8 +690,6 @@ def test_tiff_ovr_20(both_endian):
     # Check BigTIFF signature
     assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
             (binvalues[3] != 0x2B or binvalues[2] != 0)))
-
-    return 'success'
 
 
 ###############################################################################
@@ -759,8 +724,6 @@ def test_tiff_ovr_21(both_endian):
     assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
             (binvalues[3] != 0x2B or binvalues[2] != 0)))
 
-    return 'success'
-
 ###############################################################################
 # Test BIGTIFF_OVERVIEW=NO option when BigTIFF is really needed
 
@@ -790,7 +753,7 @@ def test_tiff_ovr_22(both_endian):
     ds = None
 
     if err != 0:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -829,8 +792,6 @@ def test_tiff_ovr_23(both_endian):
     assert (not ((binvalues[2] != 0x2A or binvalues[3] != 0) and
             (binvalues[3] != 0x2A or binvalues[2] != 0)))
 
-    return 'success'
-
 ###############################################################################
 # Test BIGTIFF_OVERVIEW=IF_SAFER option
 
@@ -866,8 +827,6 @@ def test_tiff_ovr_24(both_endian):
     assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
             (binvalues[3] != 0x2B or binvalues[2] != 0)))
 
-    return 'success'
-
 ###############################################################################
 # Test creating overviews after some blocks have been written in the main
 # band and actually flushed
@@ -890,8 +849,6 @@ def test_tiff_ovr_25(both_endian):
 
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 2500
 
-    return 'success'
-
 ###############################################################################
 # Test gdal.RegenerateOverview()
 
@@ -910,8 +867,6 @@ def test_tiff_ovr_26(both_endian):
     cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == cs_new
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdal.RegenerateOverviews()
@@ -937,8 +892,6 @@ def test_tiff_ovr_27(both_endian):
     assert cs2 == cs2_new
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test cleaning overviews.
 
@@ -957,8 +910,6 @@ def test_tiff_ovr_28(both_endian):
     ds = gdal.Open('tmp/ovr25.tif')
     assert ds.GetRasterBand(1).GetOverviewCount() == 0, \
         'Overview(s) appear to still exist after reopen.'
-
-    return 'success'
 
 ###############################################################################
 # Test cleaning external overviews (ovr) on a non-TIFF format.
@@ -997,8 +948,6 @@ def test_tiff_ovr_29(both_endian):
 
     gdal.GetDriverByName('PNG').Delete('tmp/ovr29.png')
 
-    return 'success'
-
 ###############################################################################
 # Test fix for #2988.
 
@@ -1026,8 +975,6 @@ def test_tiff_ovr_30(both_endian):
     ds = gdal.Open('tmp/ovr30.tif')
     assert ds.GetProjectionRef().find('4326') != -1
 
-    return 'success'
-
 ###############################################################################
 # Test fix for #3033
 
@@ -1045,8 +992,6 @@ def test_tiff_ovr_31(both_endian):
     assert cs == expected_cs, \
         ('Checksum is %d. Expected checksum is %d' % (cs, expected_cs))
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test Cubic sampling.
@@ -1195,8 +1140,6 @@ def test_tiff_ovr_32(both_endian):
 
     gdaltest.tiff_drv.Delete('tmp/ovr32.tif')
 
-    return 'success'
-
 
 ###############################################################################
 # Test creation of overviews on a 1x1 dataset (fix for #3069)
@@ -1215,8 +1158,6 @@ def test_tiff_ovr_33(both_endian):
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/ovr33.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -1241,8 +1182,6 @@ def test_tiff_ovr_34(both_endian):
 
     gdaltest.tiff_drv.Delete('tmp/ovr34.tif')
 
-    return 'success'
-
 ###############################################################################
 # Confirm that overviews are used on a Band.RasterIO().
 
@@ -1265,8 +1204,6 @@ def test_tiff_ovr_35(both_endian):
         pytest.fail('did not get expected cleared overview.')
 
     gdaltest.tiff_drv.Delete('tmp/ovr35.tif')
-
-    return 'success'
 
 ###############################################################################
 # Confirm that overviews are used on a Band.RasterIO() when using BlockBasedRasterIO() (#3124)
@@ -1313,8 +1250,6 @@ def test_tiff_ovr_37(both_endian):
     # XXXX : on big-endian host ??? FIXME: To be updated
     assert predictor2_size == 3957, 'did not get expected file size.'
 
-    return 'success'
-
 ###############################################################################
 # Test that the predictor flag gets well propagated to internal overviews
 
@@ -1334,8 +1269,6 @@ def test_tiff_ovr_38(both_endian):
     file_size = os.stat('tmp/ovr38.tif')[stat.ST_SIZE]
 
     assert file_size <= 21000, 'did not get expected file size.'
-
-    return 'success'
 
 ###############################################################################
 # Test external overviews on all datatypes
@@ -1383,8 +1316,7 @@ def test_tiff_ovr_39(both_endian):
         assert cs == expected_cs, \
             ('did not get expected checksum for datatype %s' % gdal.GetDataTypeName(datatype))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test external overviews on 1 bit datasets with AVERAGE_BIT2GRAYSCALE (similar to tiff_ovr_4)
 
@@ -1449,8 +1381,6 @@ def test_tiff_ovr_40(both_endian):
 
     wrk_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test external overviews on 1 bit datasets with NEAREST
 
@@ -1473,8 +1403,6 @@ def test_tiff_ovr_41(both_endian):
     ds = None
 
     assert cs == 1496, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test external overviews on dataset with color table
@@ -1506,8 +1434,6 @@ def test_tiff_ovr_42(both_endian):
        ct2.GetColorEntry(3) == (255, 255, 255, 255)), 'Wrong color table entry.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Make sure that 16bit overviews with JPEG compression are handled using 12-bit
@@ -1565,8 +1491,6 @@ def test_tiff_ovr_43(both_endian):
 
     gdaltest.tiff_drv.Delete('tmp/ovr43.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test that we can change overview block size through GDAL_TIFF_OVR_BLOCKSIZE configuration
 # option
@@ -1593,8 +1517,6 @@ def test_tiff_ovr_44(both_endian):
 
     assert cs == 1087, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Same as tiff_ovr_44, but with external overviews
 
@@ -1619,8 +1541,6 @@ def test_tiff_ovr_45(both_endian):
     gdaltest.tiff_drv.Delete('tmp/ovr45.tif')
 
     assert cs == 1087, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test overview on a dataset where width * height > 2 billion
@@ -1717,8 +1637,6 @@ def test_tiff_ovr_46():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test workaround with libtiff 3.X when creating interleaved overviews
 
@@ -1744,8 +1662,6 @@ def test_tiff_ovr_47(both_endian):
     gdal.Unlink("/vsimem/tiff_ovr_47.tif")
 
     assert cs == 35721, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test that we don't average 0's in alpha band
@@ -1777,8 +1693,7 @@ def test_tiff_ovr_48(both_endian):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == 0, i
 
-    return 'success'
-
+    
 ###############################################################################
 # Test possible stride computation issue in GDALRegenerateOverviewsMultiBand (#5653)
 
@@ -1802,8 +1717,6 @@ def test_tiff_ovr_49(both_endian):
     ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_49.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test overviews when X dimension is smaller than Y (#5794)
 
@@ -1818,8 +1731,6 @@ def test_tiff_ovr_50(both_endian):
     ds.BuildOverviews('AVERAGE', overviewlist=[2, 4, 8, 16, 32])
     ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_50.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test average overview on a color palette with nodata values (#6371)
@@ -1841,8 +1752,6 @@ def test_tiff_ovr_51():
     ds = None
 
     gdal.GetDriverByName('PNG').Delete('/vsimem/tiff_ovr_51.png')
-
-    return 'success'
 
 ###############################################################################
 # Test unsorted external overview building (#6617)
@@ -1892,8 +1801,6 @@ def test_tiff_ovr_52():
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_52.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test external overviews building in several steps
@@ -1948,8 +1855,6 @@ def test_tiff_ovr_53():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_53.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test external overviews building in several steps with jpeg compression
 
@@ -1986,8 +1891,6 @@ def test_tiff_ovr_54():
 
     assert not (cs0 == 0 or cs1 == 0)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2003,8 +1906,6 @@ def test_tiff_ovr_too_many_levels_contig():
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2018,8 +1919,6 @@ def test_tiff_ovr_too_many_levels_separate():
     assert ds.GetRasterBand(1).GetOverviewCount() == 6
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
-
-    return 'success'
 
 ###############################################################################
 
@@ -2036,8 +1935,6 @@ def test_tiff_ovr_too_many_levels_external():
     assert ds.GetRasterBand(1).GetOverviewCount() == 5
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
-
-    return 'success'
 
 ###############################################################################
 
@@ -2061,8 +1958,6 @@ def test_tiff_ovr_average_multiband_vs_singleband():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_average_multiband_pixel.tif')
 
     assert cs_band == cs_pixel
-
-    return 'success'
 
 
 gdaltest_list = [

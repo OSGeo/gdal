@@ -72,8 +72,7 @@ def test_ogr_xplane_apt_dat():
         for item in layer[2]:
             assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test apt.dat v810 reading
@@ -112,8 +111,7 @@ def test_ogr_xplane_apt_v810_dat():
         for item in layer[2]:
             assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 ###############################################################################
 # Test nav.dat reading
 
@@ -143,8 +141,6 @@ def test_ogr_xplane_nav_dat():
 
     xplane_nav_ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test awy.dat reading
@@ -167,8 +163,7 @@ def test_ogr_xplane_awy_dat():
         for item in layer[2]:
             assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 ###############################################################################
 # Test fix.dat reading
 
@@ -190,8 +185,7 @@ def test_ogr_xplane_fix_dat():
         for item in layer[2]:
             assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 ###############################################################################
 #
 

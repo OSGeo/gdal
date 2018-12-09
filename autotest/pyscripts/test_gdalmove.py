@@ -61,8 +61,6 @@ def test_gdalmove_1():
     assert wkt.find('32611') >= 0, 'bad geotransform'
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -76,8 +74,7 @@ def test_gdalmove_cleanup():
         except OSError:
             pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdalmove_1,

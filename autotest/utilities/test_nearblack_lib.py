@@ -62,8 +62,6 @@ def test_nearblack_lib_1():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Add alpha band
 
@@ -76,8 +74,6 @@ def test_nearblack_lib_2():
     assert ds.GetRasterBand(4).Checksum() == 22002, 'Bad checksum band 0'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Set existing alpha band
@@ -93,8 +89,6 @@ def test_nearblack_lib_3():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -white
 
@@ -108,8 +102,6 @@ def test_nearblack_lib_4():
     assert ds.GetRasterBand(4).Checksum() == 24151, 'Bad checksum band 0'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Add mask band
@@ -128,8 +120,6 @@ def test_nearblack_lib_5():
     gdal.Unlink('/vsimem/test_nearblack_lib_5.tif')
     gdal.Unlink('/vsimem/test_nearblack_lib_5.tif.msk')
 
-    return 'success'
-
 ###############################################################################
 # Test -color
 
@@ -144,8 +134,6 @@ def test_nearblack_lib_7():
        ds.GetRasterBand(3).Checksum() == 0), 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test in-place update
@@ -163,8 +151,6 @@ def test_nearblack_lib_8():
     assert ds.GetRasterBand(2).Checksum() == 20736, 'Bad checksum band 2'
 
     assert ds.GetRasterBand(3).Checksum() == 21309, 'Bad checksum band 3'
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -56,7 +56,7 @@ def test_ogr_oci_1():
     gdaltest.oci_ds = ogr.Open(os.environ['OCI_DSNAME'])
 
     if gdaltest.oci_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -117,8 +117,6 @@ def test_ogr_oci_2():
     assert gdaltest.oci_lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
         'Expected failure of DeleteFeature().'
 
-    return 'success'
-
 ###############################################################################
 # Helper method to reverse ring winding.  This is needed because the
 # winding direction in shapefiles, and in Oracle is opposite for polygons.
@@ -175,7 +173,7 @@ def test_ogr_oci_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
@@ -213,8 +211,6 @@ def test_ogr_oci_4():
 
     dst_feat.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -233,7 +229,7 @@ def test_ogr_oci_5():
 
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -257,7 +253,7 @@ def test_ogr_oci_6():
 
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
@@ -280,7 +276,7 @@ def test_ogr_oci_7():
 
     gdaltest.oci_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test that we can create a layer with a coordinate system that is mapped
@@ -325,8 +321,6 @@ def test_ogr_oci_8():
     assert srs2.GetAttrValue('GEOGCS|DATUM') == 'Kertau 1948', \
         'Did not get expected datum name'
 
-    return 'success'
-
 ###############################################################################
 # This time we create a layer with a EPSG marked GEOGCS, and verify that
 # the coordinate system gets properly remapped to the Oracle WGS84.
@@ -367,8 +361,6 @@ def test_ogr_oci_9():
 
     assert srs2.GetAttrValue('GEOGCS|DATUM') == 'WGS 84', \
         'Did not get expected datum name'
-
-    return 'success'
 
 ###############################################################################
 # Test handling of specialized Oracle Rectangle Geometries.
@@ -416,7 +408,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of specialized Oracle circle Geometries.
@@ -455,7 +447,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of specialized Oracle circular arc linestring Geometries.
@@ -493,7 +485,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of specialized Oracle circular arc polygon Geometries.
@@ -532,7 +524,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of compount linestring.
@@ -571,7 +563,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of compount polygon.
@@ -610,7 +602,7 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test deleting an existing layer.
@@ -639,8 +631,6 @@ def test_ogr_oci_16():
 
     lyr = gdaltest.oci_ds.GetLayerByName('testsrs2')
     assert lyr is None, 'apparently failed to remove testsrs2 layer'
-
-    return 'success'
 
 ###############################################################################
 # Test that synctodisk actually sets the layer bounds metadata.
@@ -708,8 +698,6 @@ def test_ogr_oci_17():
 
     oci_ds2 = None
 
-    return 'success'
-
 ###############################################################################
 # Test layer geometry types
 
@@ -768,8 +756,6 @@ def test_ogr_oci_18():
     lyr = oci_ds2.GetLayerByName('test_NONE')
     assert lyr.GetGeomType() == ogr.wkbNone
 
-    return 'success'
-
 ###############################################################################
 # Test date / datetime
 
@@ -796,8 +782,6 @@ def test_ogr_oci_19():
         f.DumpReadable()
         pytest.fail()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test not nullable fields
@@ -869,8 +853,6 @@ def test_ogr_oci_20():
     assert feat.GetGeometryRef() is not None
     feat = lyr.GetNextFeature()
     assert feat.GetGeometryRef() is None
-
-    return 'success'
 
 ###############################################################################
 # Test default values
@@ -964,8 +946,6 @@ def test_ogr_oci_21():
 
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -999,8 +979,6 @@ def test_ogr_oci_cleanup():
     gdaltest.oci_ds.Destroy()
     gdaltest.oci_ds = None
     gdaltest.shp_ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

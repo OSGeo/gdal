@@ -68,8 +68,6 @@ def test_ida_2():
 
     assert band1.DataType == gdal.GDT_Byte, 'Data type is not byte.'
 
-    return 'success'
-
 ###############################################################################
 # Create simple copy and check.
 

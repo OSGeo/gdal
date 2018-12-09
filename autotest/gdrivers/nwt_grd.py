@@ -51,7 +51,7 @@ def test_nwt_grd_1():
     tst4 = gdaltest.GDALTest('NWT_GRD', 'nwt_grd.grd', 4, 25856)
     status4 = tst4.testOpen()
     if status1 == 'success' and status2 == 'success' and status3 == 'success' and status4 == 'success':
-        return 'success'
+        return
     pytest.fail()
 
 

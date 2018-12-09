@@ -68,8 +68,6 @@ def test_vrtwarp_2():
     assert checksum == expected, ('Got checksum of %d instead of expected %d.'
                              % (checksum, expected))
 
-    return 'success'
-
 ###############################################################################
 # Force the VRT warp file to be written to disk and close it.  Reopen, and
 # verify checksum.
@@ -90,8 +88,6 @@ def test_vrtwarp_3():
 
     assert checksum == expected, ('Got checksum of %d instead of expected %d.'
                              % (checksum, expected))
-
-    return 'success'
 
 ###############################################################################
 # Test implicit overviews with default source overview level strategy (AUTO)
@@ -148,8 +144,6 @@ def test_vrtwarp_4():
     gdal.Unlink('tmp/vrtwarp_4.vrt')
     gdal.Unlink('tmp/vrtwarp_4.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test implicit overviews with selection of the upper source overview level
 
@@ -186,8 +180,6 @@ def test_vrtwarp_5():
     vrtwarp_ds = None
 
     gdal.Unlink('tmp/vrtwarp_5.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test implicit overviews with GCP
@@ -235,8 +227,6 @@ def test_vrtwarp_6():
     gdal.Unlink('tmp/vrtwarp_6.vrt')
     gdal.Unlink('tmp/vrtwarp_6.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test implicit overviews with GCP (TPS)
 
@@ -279,8 +269,6 @@ def test_vrtwarp_7():
     gdal.Unlink('tmp/vrtwarp_7.vrt')
     gdal.Unlink('tmp/vrtwarp_7.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test implicit overviews with RPC
 
@@ -308,8 +296,6 @@ def test_vrtwarp_8():
     gdal.Unlink('tmp/vrtwarp_8.vrt')
     gdal.Unlink('tmp/vrtwarp_8.tif')
     gdal.Unlink('tmp/vrtwarp_8_rpc.txt')
-
-    return 'success'
 
 ###############################################################################
 # Test implicit overviews with GEOLOCATION
@@ -366,8 +352,6 @@ def test_vrtwarp_9():
     gdal.Unlink('tmp/sstgeo.vrt.ovr')
     gdal.Unlink('tmp/sstgeo.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test implicit overviews with selection of the full resolution level
 
@@ -404,8 +388,6 @@ def test_vrtwarp_10():
 
     gdal.Unlink('tmp/vrtwarp_10.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test implicit overviews with dest alpha band (#6081)
 
@@ -420,8 +402,6 @@ def test_vrtwarp_11():
 
     assert cs1 == 22122 and cs2 == 56685 and cs3 == 22122
 
-    return 'success'
-
 ###############################################################################
 # Test reading a regular VRT whose source is a warped VRT inlined
 
@@ -431,8 +411,6 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
     ds = gdal.Open('data/vrt_of_warped_vrt.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4672
-
-    return 'success'
 
 ###############################################################################
 # Test different nodata values on bands and partial blocks (#6581)

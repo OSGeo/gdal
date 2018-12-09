@@ -46,8 +46,6 @@ def test_gdalinfo_lib_1():
     ret = gdal.Info(ds)
     assert ret.find('Driver: GTiff/GeoTIFF') != -1, 'did not get expected string.'
 
-    return 'success'
-
 ###############################################################################
 # Test Json format
 
@@ -58,8 +56,6 @@ def test_gdalinfo_lib_2():
 
     ret = gdal.Info(ds, format='json')
     assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
-
-    return 'success'
 
 ###############################################################################
 # Test extraMDDomains()
@@ -77,8 +73,6 @@ def test_gdalinfo_lib_3():
     assert ret['metadata']['TRE']['BLOCKA'].find('010000001000000000') != -1, \
         'did not get extra MD.'
 
-    return 'success'
-
 ###############################################################################
 # Test allMetadata
 
@@ -89,8 +83,6 @@ def test_gdalinfo_lib_4():
 
     ret = gdal.Info(ds, allMetadata=True, format='json')
     assert 'xml:XMP' in ret['metadata']
-
-    return 'success'
 
 ###############################################################################
 # Test all options
@@ -115,8 +107,6 @@ def test_gdalinfo_lib_5():
 
     gdal.Unlink('../gdrivers/data/byte.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test command line syntax + dataset as string
 
@@ -125,8 +115,6 @@ def test_gdalinfo_lib_6():
 
     ret = gdal.Info('../gcore/data/byte.tif', options='-json')
     assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
-
-    return 'success'
 
 ###############################################################################
 # Test with unicode strings
@@ -137,8 +125,6 @@ def test_gdalinfo_lib_7():
     ret = gdal.Info('../gcore/data/byte.tif'.encode('ascii').decode('ascii'), options='-json'.encode('ascii').decode('ascii'))
     assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -147,8 +133,6 @@ def test_gdalinfo_lib_nodatavalues():
     ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of VRT -b 1 -b 1 -b 1 -mo "NODATA_VALUES=0 1 2"')
     ret = gdal.Info(ds)
     assert ret.find('PER_DATASET NODATA') >= 0, 'wrong value for mask flags.'
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -43,8 +43,6 @@ def test_osr_getprojectionmethods_1():
     methods = osr.GetProjectionMethods()
     assert methods[0][0] == 'Transverse_Mercator'
 
-    return 'success'
-
 
 gdaltest_list = [
     test_osr_getprojectionmethods_1,

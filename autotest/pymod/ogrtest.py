@@ -181,8 +181,7 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
     if f is not None:
         f.DumpReadable()
         pytest.fail()
-    return 'success'
-
+    
 ###############################################################################
 
 

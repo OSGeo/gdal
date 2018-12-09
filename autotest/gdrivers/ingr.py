@@ -69,8 +69,6 @@ def test_ingr_3():
     assert ct.GetCount() == 256 and ct.GetColorEntry(8) == (8, 8, 8, 255), \
         'Wrong color table entry.'
 
-    return 'success'
-
 ###############################################################################
 # frmt02 is a plain byte format
 
@@ -173,8 +171,6 @@ def test_ingr_14():
 
     assert cs == 11466 or cs == 11095
 
-    return 'success'
-
 ###############################################################################
 # Same, but through vsimem all in memory.
 
@@ -220,8 +216,6 @@ def test_ingr_17():
 
     assert got_cs == ref_cs
 
-    return 'success'
-
 ###############################################################################
 # Test 'random access' in simple RLE
 
@@ -247,13 +241,10 @@ def test_ingr_18():
 
     assert got_data == expected_data
 
-    return 'success'
-
 
 def test_ingr_cleanup():
 
     gdal.Unlink('data/frmt09.cot.aux.xml')
-    return 'success'
 
 
 gdaltest_list = [

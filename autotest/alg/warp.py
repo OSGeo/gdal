@@ -64,8 +64,6 @@ def test_warp_1():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_1_short():
 
@@ -80,8 +78,6 @@ def test_warp_1_short():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_1_ushort():
@@ -98,8 +94,6 @@ def test_warp_1_ushort():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_1_float():
 
@@ -114,8 +108,6 @@ def test_warp_1_float():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_2():
@@ -132,8 +124,6 @@ def test_warp_2():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_2_short():
 
@@ -148,8 +138,6 @@ def test_warp_2_short():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_2_ushort():
@@ -166,8 +154,6 @@ def test_warp_2_ushort():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_2_downsize():
 
@@ -182,8 +168,6 @@ def test_warp_2_downsize():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_3():
@@ -200,8 +184,6 @@ def test_warp_3():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_3_short():
 
@@ -216,8 +198,6 @@ def test_warp_3_short():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_3_ushort():
@@ -234,8 +214,6 @@ def test_warp_3_ushort():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_3_downsize():
 
@@ -250,8 +228,6 @@ def test_warp_3_downsize():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_3_float_downsize():
@@ -268,8 +244,6 @@ def test_warp_3_float_downsize():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_4():
 
@@ -284,8 +258,6 @@ def test_warp_4():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_4_short():
@@ -302,8 +274,6 @@ def test_warp_4_short():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_4_ushort():
 
@@ -318,8 +288,6 @@ def test_warp_4_ushort():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_4_downsize():
@@ -336,8 +304,6 @@ def test_warp_4_downsize():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_4_short_downsize():
 
@@ -352,8 +318,6 @@ def test_warp_4_short_downsize():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_4_float_downsize():
@@ -370,8 +334,6 @@ def test_warp_4_float_downsize():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_5():
 
@@ -387,8 +349,6 @@ def test_warp_5():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_5_downsize():
 
@@ -403,8 +363,6 @@ def test_warp_5_downsize():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 # Downsampling
 
@@ -456,8 +414,6 @@ def test_warp_9():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 
 def test_warp_10():
 
@@ -472,8 +428,6 @@ def test_warp_10():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 
 def test_warp_11():
@@ -685,8 +639,6 @@ def warp_19_internal(size, datatype, resampling_string):
 
     gdaltest.tiff_drv.Delete('tmp/test.tif')
 
-    return 'success'
-
 
 # Test all data types and resampling methods for very small images
 # to test edge behaviour
@@ -719,8 +671,7 @@ def test_warp_19():
                 assert warp_19_internal(size, datatype, method) == 'success', \
                     ('fail with size = %d, data type = %d and method %s' % (size, datatype, method))
 
-    return 'success'
-
+    
 
 # Test fix for #2724 (initialization of destination area to nodata in warped VRT)
 def test_warp_20():
@@ -754,8 +705,6 @@ def test_warp_21():
     ds = None
 
     os.remove('tmp/warp_21.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test warping with datasets which are "bigger" than the wm parameter.
@@ -902,8 +851,6 @@ def test_warp_24():
 
     assert cs == cs_ref, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test -refine_gcps (#4143)
 
@@ -915,8 +862,6 @@ def test_warp_25():
     ds = None
 
     assert cs == 4672, 'did not get expected checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test serializing and deserializing TPS transformer
@@ -938,8 +883,6 @@ def test_warp_26():
 
     os.unlink('tmp/warp_25_gcp.vrt')
     os.unlink('tmp/warp_25_warp.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Pure Python reprojection example. Nothing particular, just make use of existing
@@ -1013,8 +956,6 @@ def test_warp_27():
     gdal.Unlink('tmp/warp_27.tif')
     gdal.Unlink('tmp/warp_27_ref.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a VRT with a destination alpha band, but no explicit
 # INIT_DEST setting
@@ -1027,8 +968,6 @@ def test_warp_28():
     cs2 = ds.GetRasterBand(2).Checksum()
     assert not (cs1 == 0 or cs2 == 0), 'bad checksum'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test multi-thread computations
@@ -1087,8 +1026,6 @@ def test_warp_29():
     assert got_cs == src_ds.GetRasterBand(1).Checksum()
 
     src_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping interruption
@@ -1167,8 +1104,6 @@ def test_warp_30():
 
     gdal.Unlink('/vsimem/warp_30.tif')
 
-    return 'success'
-
 # Average (Byte)
 
 
@@ -1185,8 +1120,6 @@ def test_warp_31():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 # Average (Float)
 
@@ -1205,8 +1138,6 @@ def test_warp_32():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Mode (Byte)
 
 
@@ -1223,8 +1154,6 @@ def test_warp_33():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 # Mode (Int16)
 
@@ -1243,8 +1172,6 @@ def test_warp_34():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Mode (Int16 - signed with negative values)
 
 
@@ -1262,8 +1189,6 @@ def test_warp_35():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Mode (Int32) - this uses algorithm 2 (inefficient)
 
 
@@ -1280,8 +1205,6 @@ def test_warp_36():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # Test a few error cases
@@ -1315,8 +1238,6 @@ def test_warp_37():
     gdal.ErrorReset()
     assert tmp_ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test a warp with GCPs on the *destination* image.
 
@@ -1348,7 +1269,6 @@ def test_warp_38():
     assert cs == exp_cs
 
     os.unlink(out_file)
-    return 'success'
 
 ###############################################################################
 # Test a warp with GCPs for TPS on the *destination* image.
@@ -1381,7 +1301,6 @@ def test_warp_39():
     assert cs == exp_cs
 
     os.unlink(out_file)
-    return 'success'
 
 ###############################################################################
 # test average (#5311)
@@ -1400,8 +1319,6 @@ def test_warp_40():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # test GDALSuggestedWarpOutput (#5693)
@@ -1430,8 +1347,7 @@ def test_warp_41():
     for i in range(6):
         assert abs(src_gt[i] - vrt_gt[i]) <= 1e-5
 
-    return 'success'
-
+    
 ###############################################################################
 
 # Maximum
@@ -1451,8 +1367,6 @@ def test_warp_42():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Minimum
 
 
@@ -1469,8 +1383,6 @@ def test_warp_43():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 # Median
 
@@ -1489,8 +1401,6 @@ def test_warp_44():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Quartile 1
 
 
@@ -1507,8 +1417,6 @@ def test_warp_45():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 # Quartile 3
 
@@ -1527,8 +1435,6 @@ def test_warp_46():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Maximum (Int16 - signed with negative values)
 
 
@@ -1545,8 +1451,6 @@ def test_warp_47():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 # Minimum (Int16 - signed with negative values)
 
@@ -1565,8 +1469,6 @@ def test_warp_48():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Median (Int16 - signed with negative values)
 
 
@@ -1583,8 +1485,6 @@ def test_warp_49():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 # Quartile 1 (Int16 - signed with negative values)
 
@@ -1603,8 +1503,6 @@ def test_warp_50():
 
     assert maxdiff <= 1, 'Image too different from reference'
 
-    return 'success'
-
 # Quartile 3 (Int16 - signed with negative values)
 
 
@@ -1621,8 +1519,6 @@ def test_warp_51():
     ref_ds = None
 
     assert maxdiff <= 1, 'Image too different from reference'
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #6182
@@ -1669,8 +1565,6 @@ def test_warp_52():
     cs = out_ds.GetRasterBand(4).Checksum()
     assert cs == 3188
 
-    return 'success'
-
 ###############################################################################
 # Test Grey+Alpha
 
@@ -1706,8 +1600,7 @@ def test_warp_53():
                     print(option)
                     pytest.fail(alg_name)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Alpha on UInt16/Int16
 
@@ -1746,8 +1639,6 @@ def test_warp_54():
 
     gdal.Unlink('/vsimem/warp_54.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test warped VRT with source overview, target GT != GenImgProjetion target GT
 # and subsampling (#6972)
@@ -1759,8 +1650,6 @@ def test_warp_55():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 25128
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test bilinear interpolation when warping into same coordinate system (and
@@ -1794,8 +1683,7 @@ def test_warp_56():
         assert abs(warped - exp) <= 0.6, \
             'offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped)
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_warp_1,

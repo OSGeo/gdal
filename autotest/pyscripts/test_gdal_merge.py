@@ -55,8 +55,6 @@ def test_gdal_merge_1():
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Merge 4 tiles
 
@@ -115,8 +113,6 @@ def test_gdal_merge_2():
 
     assert ds.GetRasterBand(1).Checksum() == 3508, 'Wrong checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test -separate and -v options
 
@@ -146,8 +142,6 @@ def test_gdal_merge_3():
 
     assert ds.GetRasterBand(1).Checksum() == 0, 'Wrong checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test -init option
 
@@ -163,8 +157,6 @@ def test_gdal_merge_4():
     ds = gdal.Open('tmp/test_gdal_merge_4.tif')
 
     assert ds.GetRasterBand(1).Checksum() == 4725, 'Wrong checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test merging with alpha band (#3669)
@@ -221,8 +213,6 @@ def test_gdal_merge_5():
     assert ds.GetRasterBand(3).Checksum() == 0, 'Wrong checksum'
     assert ds.GetRasterBand(4).Checksum() == cs, 'Wrong checksum'
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -246,8 +236,7 @@ def test_gdal_merge_cleanup():
         except OSError:
             pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdal_merge_1,

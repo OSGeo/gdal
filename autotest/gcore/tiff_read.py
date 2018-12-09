@@ -131,8 +131,6 @@ def test_tiff_read_off():
         ds = gdal.Open('GTIFF_DIR:1:data/byte.tif', gdal.GA_Update)
     assert ds is not None
 
-    return 'success'
-
 
 ###############################################################################
 # Confirm we interpret bands as alpha when we should, and not when we
@@ -195,8 +193,7 @@ def test_tiff_check_alpha():
         assert got_cs == [12603, 58561, 36064, 10807]
         ds = None
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test reading a CMYK tiff as RGBA image
@@ -218,8 +215,6 @@ def test_tiff_read_cmyk_rgba():
     assert ds.GetRasterBand(1).Checksum() == 23303, \
         ('Expected checksum = %d. Got = %d' % (23303, ds.GetRasterBand(1).Checksum()))
 
-    return 'success'
-
 ###############################################################################
 # Test reading a CMYK tiff as a raw image
 
@@ -233,8 +228,6 @@ def test_tiff_read_cmyk_raw():
 
     assert ds.GetRasterBand(1).Checksum() == 29430, \
         ('Expected checksum = %d. Got = %d' % (29430, ds.GetRasterBand(1).Checksum()))
-
-    return 'success'
 
 ###############################################################################
 # Test reading a OJPEG image
@@ -269,8 +262,7 @@ def test_tiff_read_ojpeg():
     if cs != 0:
         print('Should be 0 with internal libtiff')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read a .tif.gz file
 
@@ -291,7 +283,7 @@ def test_tiff_read_gzip():
         os.stat('data/byte.tif.gz.properties')
         pytest.fail('did not expect data/byte.tif.gz.properties')
     except OSError:
-        return 'success'
+        return
 
 ###############################################################################
 # Read a .tif.zip file (with explicit filename)
@@ -304,8 +296,6 @@ def test_tiff_read_zip_1():
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Read a .tif.zip file (with implicit filename)
 
@@ -316,8 +306,6 @@ def test_tiff_read_zip_2():
     assert ds.GetRasterBand(1).Checksum() == 4672, \
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Read a .tif.zip file with a single file in a subdirectory (with explicit filename)
@@ -330,8 +318,6 @@ def test_tiff_read_zip_3():
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Read a .tif.zip file with a single file in a subdirectory(with implicit filename)
 
@@ -342,8 +328,6 @@ def test_tiff_read_zip_4():
     assert ds.GetRasterBand(1).Checksum() == 4672, \
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Read a .tif.zip file with 2 files in a subdirectory
@@ -356,8 +340,6 @@ def test_tiff_read_zip_5():
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Read a .tar file (with explicit filename)
 
@@ -369,8 +351,6 @@ def test_tiff_read_tar_1():
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Read a .tar file (with implicit filename)
 
@@ -381,8 +361,6 @@ def test_tiff_read_tar_2():
     assert ds.GetRasterBand(1).Checksum() == 4672, \
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Read a .tgz file (with explicit filename)
@@ -397,8 +375,6 @@ def test_tiff_read_tgz_1():
 
     gdal.Unlink('data/byte.tgz.properties')
 
-    return 'success'
-
 ###############################################################################
 # Read a .tgz file (with implicit filename)
 
@@ -412,8 +388,6 @@ def test_tiff_read_tgz_2():
 
     gdal.Unlink('data/byte.tgz.properties')
 
-    return 'success'
-
 ###############################################################################
 # Check handling of non-degree angular units (#601)
 
@@ -425,8 +399,6 @@ def test_tiff_grads():
 
     assert srs.find('PARAMETER["latitude_of_origin",46.8]') != -1, \
         'Did not get expected latitude of origin.'
-
-    return 'success'
 
 ###############################################################################
 # Check Erdas Citation Parsing for coordinate system.
@@ -447,8 +419,7 @@ def test_tiff_citation():
         print('got: ', wkt)
         pytest.fail('Erdas citation processing failing?')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check that we can read linear projection parameters properly (#3901)
 
@@ -487,8 +458,6 @@ def test_tiff_linearparmunits():
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
     assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (3)'
-
-    return 'success'
 
 ###############################################################################
 # Check that the GTIFF_LINEAR_UNITS handling works properly (#3901)
@@ -533,8 +502,6 @@ def test_tiff_linearparmunits2():
 
     gdal.SetConfigOption('GTIFF_LINEAR_UNITS', 'DEFAULT')
 
-    return 'success'
-
 ###############################################################################
 # Test GTiffSplitBitmapBand to treat one row 1bit files as scanline blocks (#2622)
 
@@ -552,8 +519,6 @@ def test_tiff_g4_split():
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 3322, 'Got wrong checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test reading a tiff with multiple images in it
@@ -583,8 +548,6 @@ def test_tiff_multi_images():
     assert ds.GetRasterBand(1).Checksum() == 4672, \
         ('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading a tiff from a memory buffer (#2931)
@@ -622,8 +585,6 @@ def test_tiff_vsimem():
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/tiffinmem')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a tiff from inside a zip in a memory buffer !
 
@@ -647,8 +608,6 @@ def test_tiff_vsizip_and_mem():
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/tiffinmem.zip')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a GeoTIFF with only ProjectedCSTypeGeoKey defined (ticket #3019)
 
@@ -659,8 +618,6 @@ def test_tiff_ProjectedCSTypeGeoKey_only():
     assert ds.GetProjectionRef().find('WGS 84 / UTM zone 31N') != -1
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading a GeoTIFF with only GTModelTypeGeoKey defined
 
@@ -670,8 +627,6 @@ def test_tiff_GTModelTypeGeoKey_only():
     ds = gdal.Open('data/GTModelTypeGeoKey_only.tif')
     assert ds.GetProjectionRef().find('LOCAL_CS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["unretrievable - using WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT[,0.0174532925199433]],UNIT["unknown",1]]') == 0
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading a 12bit jpeg compressed geotiff.
@@ -713,8 +668,6 @@ def test_tiff_12bitjpeg():
 
     os.unlink('data/mandrilmini_12bitjpeg.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test that statistics for TIFF files are stored and correctly read from .aux.xml
 
@@ -751,8 +704,7 @@ def test_tiff_read_stats_from_pam():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test extracting georeferencing from a .TAB file
 
@@ -797,8 +749,6 @@ Definition Table
 
     assert wkt.find('OSGB_1936') != -1, 'did not get expected SRS'
 
-    return 'success'
-
 ###############################################################################
 # Test reading PixelIsPoint file.
 
@@ -827,8 +777,6 @@ def test_tiff_read_pixelispoint():
         'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE'
 
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', None)
-
-    return 'success'
 
 ###############################################################################
 # Test reading a GeoTIFF file with a geomatrix in PixelIsPoint format.
@@ -859,8 +807,6 @@ def test_tiff_read_geomatrix():
 
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', None)
 
-    return 'success'
-
 ###############################################################################
 # Test that we don't crash when reading a TIFF with corrupted GeoTIFF tags
 
@@ -877,8 +823,6 @@ def test_tiff_read_corrupted_gtiff():
        err_msg.find('Error fetching data for field') == -1)), \
         'did not get expected error message'
 
-    return 'success'
-
 ###############################################################################
 # Test that we don't crash when reading a TIFF with corrupted GeoTIFF tags
 
@@ -893,8 +837,6 @@ def test_tiff_read_tag_without_null_byte():
     assert gdal.GetLastErrorType() == 0, \
         'should have not emitted a warning, but only a CPLDebug() message'
     del ds
-
-    return 'success'
 
 
 ###############################################################################
@@ -921,8 +863,6 @@ def test_tiff_read_buggy_packbits():
     assert ret is not None, 'expected a valid result'
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading a GeoEye _rpc.txt (#3639)
@@ -944,8 +884,6 @@ def test_tiff_read_rpc_txt():
             '+1.000000000000000E+00 -5.207696939454288E-03') == 0), \
         'LINE_DEN_COEFF wrong'
 
-    return 'success'
-
 ###############################################################################
 # Test reading a TIFF with the RPC tag per
 #  http://geotiff.maptools.org/rpc_prop.html
@@ -961,8 +899,6 @@ def test_tiff_read_rpc_tif():
 
     assert rpc_md['LINE_DEN_COEFF'].find('1 -0.00520769693945429') == 0, \
         'LINE_DEN_COEFF wrong'
-
-    return 'success'
 
 ###############################################################################
 # Test a very small TIFF with only 4 tags :
@@ -988,8 +924,6 @@ def test_tiff_small():
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/small.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test that we can workaround a DoS with
 
@@ -1000,8 +934,6 @@ def test_tiff_dos_strip_chop():
     ds = gdal.Open('data/tiff_dos_strip_chop.tif')
     gdal.PopErrorHandler()
     del ds
-
-    return 'success'
 
 ###############################################################################
 # Test reading EXIF and GPS metadata
@@ -1028,8 +960,6 @@ def test_tiff_read_exif_and_gps():
 
     assert (exif_md is None or not exif_md)
 
-    return 'success'
-
 ###############################################################################
 # Test reading a pixel interleaved RGBA JPEG-compressed TIFF
 
@@ -1051,8 +981,6 @@ def test_tiff_jpeg_rgba_pixel_interleaved():
         assert ds.GetRasterBand(i + 1).GetRasterColorInterpretation() == gdal.GCI_RedBand + i
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading a band interleaved RGBA JPEG-compressed TIFF
@@ -1076,8 +1004,6 @@ def test_tiff_jpeg_rgba_band_interleaved():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
@@ -1098,8 +1024,6 @@ def test_tiff_read_online_1():
     assert gdal.GetLastErrorMsg() == ''
 
     assert cs == 62628 or cs == 28554
-
-    return 'success'
 
 ###############################################################################
 # Use GTIFF_DIRECT_IO=YES option combined with /vsicurl to test for multi-range
@@ -1136,8 +1060,6 @@ def test_tiff_read_online_2():
 
     assert cs == 54935, 'wrong checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test reading a TIFF made of a single-strip that is more than 2GB (#5403)
 
@@ -1165,8 +1087,7 @@ def test_tiff_read_huge4GB():
         ds = None
         os.remove('tmp/huge4GB.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a (small) BigTIFF. Tests GTiffCacheOffsetOrCount8()
 
@@ -1182,8 +1103,6 @@ def test_tiff_read_bigtiff():
     ds = None
 
     assert cs == 4672
-
-    return 'success'
 
 ###############################################################################
 # Test reading in TIFF metadata domain
@@ -1208,8 +1127,6 @@ def test_tiff_read_tiff_metadata():
     assert ds.GetRasterBand(4).GetMetadataItem('BLOCK_OFFSET_0_2', 'TIFF') == '11071'
     assert ds.GetRasterBand(4).GetMetadataItem('BLOCK_SIZE_0_2', 'TIFF') == '188'
 
-    return 'success'
-
 ###############################################################################
 # Test reading a JPEG-in-TIFF with tiles of irregular size (corrupted image)
 
@@ -1233,8 +1150,6 @@ def test_tiff_read_irregular_tile_size_jpeg_in_tiff():
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorType() != 0
     gdal.ErrorReset()
-
-    return 'success'
 
 ###############################################################################
 # Test GTIFF_DIRECT_IO and GTIFF_VIRTUAL_MEM_IO optimizations
@@ -1608,8 +1523,7 @@ def test_tiff_direct_and_virtual_mem_io():
         print('unreached = %s' % unreached)
         pytest.fail('missing code coverage in VirtualMemIO()')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Digital Globe metadata IMD & RPB format
 
@@ -1647,8 +1561,7 @@ def test_tiff_read_md1():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Digital Globe metadata XML format
 
@@ -1686,8 +1599,7 @@ def test_tiff_read_md2():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read GeoEye metadata format
 
@@ -1725,8 +1637,7 @@ def test_tiff_read_md3():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read OrbView metadata format
 
@@ -1764,8 +1675,7 @@ def test_tiff_read_md4():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Resurs-DK1 metadata format
 
@@ -1803,8 +1713,7 @@ def test_tiff_read_md5():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Landsat metadata format
 
@@ -1842,8 +1751,7 @@ def test_tiff_read_md6():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Spot metadata format
 
@@ -1881,8 +1789,7 @@ def test_tiff_read_md7():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read RapidEye metadata format
 
@@ -1920,8 +1827,7 @@ def test_tiff_read_md8():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Alos metadata format
 
@@ -1958,8 +1864,7 @@ def test_tiff_read_md9():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Eros metadata format
 
@@ -1997,8 +1902,7 @@ def test_tiff_read_md10():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Kompsat metadata format
 
@@ -2036,8 +1940,7 @@ def test_tiff_read_md11():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Check read Dimap metadata format
 
@@ -2087,8 +1990,6 @@ def test_tiff_read_md12():
 
     assert len(filelist) <= 1, 'did not get expected file list.'
 
-    return 'success'
-
 ###############################################################################
 # Test reading a TIFFTAG_GDAL_NODATA with empty text
 
@@ -2097,8 +1998,6 @@ def test_tiff_read_empty_nodata_tag():
 
     ds = gdal.Open('data/empty_nodata.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() is None
-
-    return 'success'
 
 ###############################################################################
 # Check that no auxiliary files are read with a simple Open(), reading
@@ -2131,8 +2030,6 @@ def test_tiff_read_strace_check():
 
     assert len(lines_with_dotdot_gcore) == 1
 
-    return 'success'
-
 ###############################################################################
 # Test GDAL_READDIR_LIMIT_ON_OPEN
 
@@ -2147,8 +2044,6 @@ def test_tiff_read_readdir_limit_on_open():
     gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', None)
 
     assert len(filelist) == 3, 'did not get expected file list.'
-
-    return 'success'
 
 ###############################################################################
 #
@@ -2166,8 +2061,6 @@ def test_tiff_read_minisblack_as_rgba():
     assert got_cs == [4672, 4672, 4672, 4873]
     ds = None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -2183,8 +2076,6 @@ def test_tiff_read_colortable_as_rgba():
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     assert got_cs == [2433, 2433, 2433, 4873]
     ds = None
-
-    return 'success'
 
 ###############################################################################
 #
@@ -2202,8 +2093,6 @@ def test_tiff_read_logl_as_rgba():
     # I'm pretty sure this isn't the expected result...
     assert got_cs == [0, 0, 0, 4873]
     ds = None
-
-    return 'success'
 
 ###############################################################################
 #
@@ -2241,8 +2130,6 @@ def test_tiff_read_strip_separate_as_rgba():
 
     gdal.Unlink('/vsimem/tiff_read_strip_separate_as_rgba.tif')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -2278,8 +2165,6 @@ def test_tiff_read_tiled_separate_as_rgba():
 
     gdal.Unlink('/vsimem/tiff_read_tiled_separate_as_rgba.tif')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -2289,7 +2174,6 @@ def test_tiff_read_scanline_more_than_2GB():
     with gdaltest.error_handler():
         ds = gdal.Open('data/scanline_more_than_2GB.tif')
     assert ds is None
-    return 'success'
 
 ###############################################################################
 # Test that we are at least robust to wrong number of ExtraSamples and warn
@@ -2304,8 +2188,6 @@ def test_tiff_read_wrong_number_extrasamples():
     assert gdal.GetLastErrorMsg().find('Wrong number of ExtraSamples') >= 0
     assert ds.GetRasterBand(6).GetRasterColorInterpretation() == gdal.GCI_AlphaBand
 
-    return 'success'
-
 ###############################################################################
 # Test that we can read a one-trip TIFF without StripByteCounts tag
 
@@ -2316,8 +2198,6 @@ def test_tiff_read_one_strip_no_bytecount():
     ds = gdal.Open('data/one_strip_nobytecount.tif')
     gdal.PopErrorHandler()
     assert ds.GetRasterBand(1).Checksum() == 1
-
-    return 'success'
 
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
@@ -2384,8 +2264,7 @@ def test_tiff_read_nogeoref():
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
 
@@ -2443,8 +2322,7 @@ def test_tiff_read_inconsistent_georef():
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
 
@@ -2492,8 +2370,7 @@ def test_tiff_read_gcp_internal_and_auxxml():
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s' % (iteration, config_option_value, str(copy_pam)))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading .tif + .aux
 
@@ -2519,8 +2396,6 @@ def test_tiff_read_aux():
     assert handler.msg is None, \
         ('Got message that indicate recursive calls: %s' % handler.msg)
 
-    return 'success'
-
 
 def test_tiff_read_one_band_from_two_bands():
 
@@ -2534,8 +2409,6 @@ def test_tiff_read_one_band_from_two_bands():
     gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands.tif.aux.xml')
     gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
 
-    return 'success'
-
 
 def test_tiff_read_jpeg_cloud_optimized():
 
@@ -2546,8 +2419,7 @@ def test_tiff_read_jpeg_cloud_optimized():
         assert cs0 == 4743 and cs1 == 1133, i
         ds = None
 
-    return 'success'
-
+    
 # This one was generated with a buggy code that emit JpegTables with mode == 1
 # when creating the overview directory but failed to properly set this mode while
 # writing the imagery. libjpeg-6b emits a 'JPEGLib:Huffman table 0x00 was not defined'
@@ -2567,8 +2439,7 @@ def test_tiff_read_corrupted_jpeg_cloud_optimized():
     elif cs1 != 1133:
         pytest.fail(cs1)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading YCbCr images with LZW compression
 
@@ -2599,8 +2470,7 @@ def test_tiff_read_ycbcr_lzw():
         assert got_cs1 == cs1 and got_cs2 == cs2 and got_cs3 == cs3, \
             (filename, got_cs1, got_cs2, got_cs3)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading YCbCr images with nbits > 8
 
@@ -2611,8 +2481,6 @@ def test_tiff_read_ycbcr_int12():
         ds = gdal.Open('data/int12_ycbcr_contig.tif')
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Cannot open TIFF file with') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test reading band unit from VERT_CS unit (#6675)
@@ -2633,8 +2501,6 @@ def test_tiff_read_unit_from_srs():
 
     gdal.Unlink('/vsimem/tiff_read_unit_from_srs.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test reading ArcGIS 9.3 .aux.xml
 
@@ -2650,7 +2516,6 @@ def test_tiff_read_arcgis93_geodataxform_gcp():
        abs(gcp.GCPX - 500000) <= 1e-5 and \
        abs(gcp.GCPY - 4705078.79016612) <= 1e-5 and \
        abs(gcp.GCPZ - 0) <= 1e-5)
-    return 'success'
 
 ###############################################################################
 # Test reading file with block size > signed int 32 bit
@@ -2661,7 +2526,6 @@ def test_tiff_read_block_width_above_32bit():
     with gdaltest.error_handler():
         ds = gdal.Open('data/block_width_above_32bit.tif')
     assert ds is None
-    return 'success'
 
 ###############################################################################
 # Test reading file with image size > signed int 32 bit
@@ -2672,7 +2536,6 @@ def test_tiff_read_image_width_above_32bit():
     with gdaltest.error_handler():
         ds = gdal.Open('data/image_width_above_32bit.tif')
     assert ds is None
-    return 'success'
 
 ###############################################################################
 # Test reading file with image size > signed int 32 bit
@@ -2688,8 +2551,6 @@ def test_tiff_read_second_image_width_above_32bit():
         ds = gdal.Open('GTIFF_DIR:2:data/second_image_width_above_32bit.tif')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test reading file with minimal number of warnings without warning
 
@@ -2701,8 +2562,6 @@ def test_tiff_read_minimum_tiff_tags_no_warning():
     assert gdal.GetLastErrorMsg() == ''
     ds.GetRasterBand(1).Checksum()
     assert gdal.GetLastErrorMsg() == ''
-
-    return 'success'
 
 ###############################################################################
 # Test reading file with minimal number of warnings but warning
@@ -2717,8 +2576,6 @@ def test_tiff_read_minimum_tiff_tags_with_warning():
     gdal.ErrorReset()
     ds.GetRasterBand(1).Checksum()
     assert gdal.GetLastErrorMsg() == ''
-
-    return 'success'
 
 
 ###############################################################################
@@ -2755,8 +2612,6 @@ def test_tiff_read_unknown_compression():
         ds = gdal.Open('data/unknown_compression.tif')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2770,8 +2625,7 @@ def test_tiff_read_leak_ZIPSetupDecode():
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2785,8 +2639,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip():
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2799,8 +2652,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip2():
         ds = gdal.Open('data/excessive-memory-TIFFFillStrip2.tif')
         ds.GetRasterBand(1).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2813,8 +2665,7 @@ def test_tiff_read_excessive_memory_TIFFFillTile():
         ds = gdal.Open('data/excessive-memory-TIFFFillTile.tif')
         ds.GetRasterBand(1).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2831,8 +2682,6 @@ def test_tiff_read_big_strip():
     ds = None
     gdal.Unlink('/vsimem/test.tif')
 
-    return 'success'
-
 ###############################################################################
 # (Potentially) test libtiff CHUNKY_STRIP_READ_SUPPORT
 
@@ -2845,8 +2694,6 @@ def test_tiff_read_big_strip_chunky_way():
     assert cs == 38337
     ds = None
     gdal.Unlink('/vsimem/test.tif')
-
-    return 'success'
 
 ###############################################################################
 
@@ -2864,8 +2711,6 @@ def test_tiff_read_big_tile():
     ds = None
     gdal.Unlink('/vsimem/test.tif')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2874,8 +2719,6 @@ def test_tiff_read_huge_tile():
     with gdaltest.error_handler():
         ds = gdal.Open('data/hugeblocksize.tif')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 
@@ -2890,8 +2733,7 @@ def test_tiff_read_huge_number_strips():
         ds = gdal.Open('data/huge-number-strips.tif')
         ds.GetRasterBand(1).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2903,8 +2745,7 @@ def test_tiff_read_huge_implied_number_strips():
     with gdaltest.error_handler():
         gdal.Open('data/huge-implied-number-strips.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -2925,8 +2766,6 @@ def test_tiff_read_many_blocks():
     ds = None
     gdal.Unlink('/vsimem/test.tif')
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -2941,8 +2780,6 @@ def test_tiff_read_many_blocks_truncated():
         ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_2000000', 'TIFF')
     assert gdal.GetLastErrorMsg() == 'File too short'
 
-    return 'success'
-
 ###############################################################################
 # Test reading  images with nbits > 32
 
@@ -2953,8 +2790,6 @@ def test_tiff_read_uint33():
         ds = gdal.Open('data/uint33.tif')
     assert ds is None
     assert gdal.GetLastErrorMsg().find('Unsupported TIFF configuration') >= 0
-
-    return 'success'
 
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1545
@@ -2969,8 +2804,7 @@ def test_tiff_read_corrupted_deflate_singlestrip():
         ds = gdal.Open('data/corrupted_deflate_singlestrip.tif')
         ds.GetRasterBand(1).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1563
 
@@ -2984,8 +2818,7 @@ def test_tiff_read_packbits_not_enough_data():
         ds = gdal.Open('data/packbits-not-enough-data.tif')
         ds.GetRasterBand(1).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading images with more than 2billion blocks for a single band
 
@@ -2996,8 +2829,6 @@ def test_tiff_read_toomanyblocks():
         ds = gdal.Open('data/toomanyblocks.tif')
     assert ds is None
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading images with more than 2billion blocks for all bands
@@ -3007,8 +2838,6 @@ def test_tiff_read_toomanyblocks_separate():
     with gdaltest.error_handler():
         ds = gdal.Open('data/toomanyblocks_separate.tif')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test reading images where the number of items in StripByteCounts/StripOffsets
@@ -3027,8 +2856,6 @@ def test_tiff_read_size_of_stripbytecount_lower_than_stripcount():
     ds = gdal.Open('data/size_of_stripbytecount_at_1_and_lower_than_stripcount.tif')
     # There are 3 strips but StripByteCounts has just one element;
     assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF') == '1'
-
-    return 'success'
 
 
 ###############################################################################
@@ -3079,8 +2906,7 @@ def test_tiff_read_stripoffset_types():
         if offsets != expected_offsets:
             print(filename, expected_offsets, offsets)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a JPEG-in-TIFF file that contains the 2 denial of service
 # vulnerabilities listed in
@@ -3111,8 +2937,7 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
         del os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER']
         assert gdal.GetLastErrorMsg() != ''
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test reading old-style LZW
@@ -3127,8 +2952,6 @@ def test_tiff_read_old_style_lzw():
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == 34282
-
-    return 'success'
 
 ###############################################################################
 # Test libtiff mmap interface (actually not using mmap, but our /vsimem
@@ -3166,8 +2989,6 @@ def test_tiff_read_mmap_interface():
 
     gdal.Unlink(tmpfile)
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading JPEG compressed file whole last strip height is the full
@@ -3189,8 +3010,6 @@ def test_tiff_read_jpeg_too_big_last_stripe():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4557
 
-    return 'success'
-
 
 ###############################################################################
 # Test reading GeoTIFF file with negative ScaleY in GeoPixelScale tag
@@ -3209,8 +3028,7 @@ def test_tiff_read_negative_scaley():
     with gdaltest.config_option('GTIFF_HONOUR_NEGATIVE_SCALEY', 'YES'):
         assert ds.GetGeoTransform()[5] == 60
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ZSTD compression
 
@@ -3280,8 +3098,6 @@ def test_tiff_read_webp_huge_single_strip():
     ds = gdal.Open('data/tif_webp_huge_single_strip.tif')
     assert ds.GetRasterBand(1).Checksum() != 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -3289,7 +3105,6 @@ def test_tiff_read_1bit_2bands():
     ds = gdal.Open('data/1bit_2bands.tif')
     cs = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     assert cs == (200, 824)
-    return 'success'
 
 ###############################################################################
 # Test LERC compression
@@ -3328,8 +3143,6 @@ def test_tiff_read_overview_of_external_mask():
 
     assert cs1 == cs2
     assert flags1 == gdal.GMF_PER_DATASET
-
-    return 'success'
 
 ###############################################################################
 

@@ -50,8 +50,7 @@ def test_wms_1():
     gdaltest.wms_drv = gdal.GetDriverByName('WMS')
     if gdaltest.wms_drv is None:
         pytest.skip()
-    return 'success'
-
+    
 ###############################################################################
 # Open the WMS dataset
 
@@ -75,7 +74,7 @@ def wms_2():
     gdaltest.wms_ds = gdal.Open('data/pop_wms.xml')
 
     if gdaltest.wms_ds is not None:
-        return 'success'
+        return
     pytest.fail('open failed.')
 
 ###############################################################################
@@ -105,8 +104,6 @@ def wms_3():
     assert gdaltest.wms_ds.GetRasterBand(1).DataType >= gdal.GDT_Byte, \
         'wrong band data type'
 
-    return 'success'
-
 ###############################################################################
 # Check checksum for a small region.
 
@@ -134,8 +131,6 @@ def wms_4():
 
     assert cs == 57182, ('Wrong checksum: ' + str(cs))
 
-    return 'success'
-
 ###############################################################################
 # Open the WMS service using XML as filename.
 
@@ -159,8 +154,6 @@ def test_wms_5():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test TileService
 
@@ -183,8 +176,6 @@ def test_wms_6():
         'wrong size or bands'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test TMS
@@ -234,8 +225,6 @@ def test_wms_7():
     ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -451,8 +440,7 @@ def test_wms_8():
     for expected_file in expected_files:
         assert os.path.getmtime(expected_file) > mod_time
 
-    return 'success'
-
+    
 ###############################################################################
 # Test OnEarth Tiled WMS minidriver
 
@@ -485,8 +473,6 @@ def wms_9():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test getting subdatasets from GetCapabilities
 
@@ -513,8 +499,6 @@ def wms_10():
     assert ds is not None, ('open of %s failed.' % name)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test getting subdatasets from GetTileService
@@ -546,8 +530,6 @@ def test_wms_11():
     assert ds is not None, ('open of %s failed.' % name)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test getting subdatasets from a TMS server
@@ -584,8 +566,7 @@ def test_wms_12():
                 pytest.fail('open of %s failed.' % name)
             ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading WMS through VRT (test effect of r21866)
 
@@ -602,8 +583,6 @@ def test_wms_13():
             pytest.skip()
         pytest.fail()
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -639,8 +618,7 @@ def test_wms_14():
         print("(%d, %d)" % (block_xsize, block_ysize))
         pytest.fail('bad block size')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading ArcGIS MapServer JSon definition and CreateCopy()
 
@@ -680,8 +658,6 @@ def test_wms_15():
 
     ds = None
     gdal.Unlink("/vsimem/wms.xml")
-
-    return 'success'
 
 ###############################################################################
 # Test getting subdatasets from WMS-C Capabilities
@@ -760,8 +736,6 @@ def test_wms_16():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test a TiledWMS dataset with a color table (#4613)
 
@@ -783,8 +757,6 @@ def wms_17():
     assert band.GetColorTable() is not None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test a ArcGIS Server
@@ -819,8 +791,6 @@ def test_wms_18():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test a IIP server
 
@@ -845,8 +815,6 @@ def test_wms_19():
     assert cs != 0, 'Did not get expected checksum.'
 
     ds = None
-
-    return 'success'
 ###############################################################################
 
 
@@ -860,8 +828,7 @@ def test_wms_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_wms_1,

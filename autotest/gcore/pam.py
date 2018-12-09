@@ -67,8 +67,6 @@ def test_pam_1():
 
     assert xml_md[0] == expected_xml, 'xml does not match'
 
-    return 'success'
-
 ###############################################################################
 # Verify that we can write XML to a new file.
 
@@ -90,8 +88,6 @@ def test_pam_2():
     band.SetNoDataValue(100)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
@@ -129,8 +125,6 @@ def test_pam_3():
     assert ds.GetRasterBand(1).GetNoDataValue() is None, \
         'got nodata value whereas none was expected'
 
-    return 'success'
-
 ###############################################################################
 # Check that PAM binary encoded nodata values work properly.
 #
@@ -150,8 +144,6 @@ def test_pam_4():
     assert stats[0] == 0 and stats[1] == 4, \
         'Got wrong min/max, likely nodata not working?'
 
-    return 'success'
-
 ###############################################################################
 # Verify that .aux files that don't match the configuration of the
 # dependent file are not utilized. (#2471)
@@ -165,8 +157,6 @@ def test_pam_5():
     ds = None
 
     assert len(filelist) == 1, 'did not get expected file list.'
-
-    return 'success'
 
 ###############################################################################
 # Verify we can read nodata values from .aux files (#2505)
@@ -182,8 +172,6 @@ def test_pam_6():
 
     assert not os.path.exists('data/f2r23.tif.aux.xml'), \
         'did not expect .aux.xml to be created.'
-
-    return 'success'
 
 ###############################################################################
 # Verify we can create overviews on PNG with PAM disabled (#3693)
@@ -208,8 +196,6 @@ def test_pam_7():
 
     assert ovr_count == 1
 
-    return 'success'
-
 ###############################################################################
 # Test that Band.SetDescription() goes through PAM (#3780)
 #
@@ -230,8 +216,6 @@ def test_pam_8():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/pam_8.tif')
 
     assert desc == 'foo'
-
-    return 'success'
 
 ###############################################################################
 # Test that we can retrieve projection from xml:ESRI domain
@@ -266,8 +250,6 @@ def test_pam_9():
     expected_wkt = """PROJCS["NAD_1983_UTM_Zone_14N",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["false_easting",500000.0],PARAMETER["false_northing",0.0],PARAMETER["central_meridian",-99.0],PARAMETER["scale_factor",0.9996],PARAMETER["latitude_of_origin",0.0],UNIT["Meter",1.0]]"""
 
     assert wkt == expected_wkt
-
-    return 'success'
 
 ###############################################################################
 # Test serializing and deserializing of various band metadata
@@ -320,8 +302,6 @@ def test_pam_10():
 
     gdal.Unlink('/vsimem/pam_10.asc')
     gdal.Unlink('/vsimem/pam_10.asc.aux.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test PamProxyDb mechanism
@@ -377,8 +357,6 @@ def test_pam_11():
     ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test2')
     assert ret.find('success') != -1, ('pamproxydb.py -test2 failed %s' % ret)
 
-    return 'success'
-
 ###############################################################################
 # Test histogram with 64bit counts
 
@@ -415,8 +393,6 @@ def test_pam_12():
     assert hist1[0] == 6000000000
     assert aux_xml.find('<HistCounts>6000000000|') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test various stuff with PAM disabled
 #
@@ -448,8 +424,6 @@ def test_pam_13():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup.
@@ -471,8 +445,7 @@ def test_pam_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_pam_1,

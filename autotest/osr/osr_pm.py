@@ -51,8 +51,6 @@ def test_osr_pm_1():
     assert abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) - 0.0) <= 0.0000005, \
         'Wrong central meridian.'
 
-    return 'success'
-
 ###############################################################################
 # Check that EPSG:27572 lookup has the prime meridian properly set,
 # and the central meridian in the PROJ.4 string.
@@ -67,8 +65,6 @@ def test_osr_pm_2():
     assert proj4_srs.find('+pm=paris') != -1, 'prime meridian wrong or missing.'
 
     assert proj4_srs.find('+lon_0=0') != -1, '+lon_0 is wrong.'
-
-    return 'success'
 
 ###############################################################################
 # Convert PROJ.4 format to WKT and verify that PM and central meridian
@@ -85,8 +81,6 @@ def test_osr_pm_3():
 
     assert abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) + 3.0) <= 0.0000005, \
         'Wrong central meridian.'
-
-    return 'success'
 
 
 ###############################################################################

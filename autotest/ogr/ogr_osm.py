@@ -224,8 +224,6 @@ def test_ogr_osm_1(filename='data/test.pbf'):
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test .osm
 
@@ -342,8 +340,6 @@ def test_ogr_osm_4():
 
     assert not is_none
 
-    return 'success'
-
 ###############################################################################
 # Test optimizations for early attribute filter evaluation
 
@@ -382,8 +378,6 @@ def test_ogr_osm_5():
 
     assert not is_none, test
 
-    return 'success'
-
 ###############################################################################
 # Test ogr2ogr -sql
 
@@ -414,8 +408,6 @@ def test_ogr_osm_6():
 
     assert count == 3
 
-    return 'success'
-
 ###############################################################################
 # Test optimization when reading only the points layer through a SQL request
 # with SQLite dialect (#4825)
@@ -436,8 +428,6 @@ def test_ogr_osm_7():
     ds.ReleaseResultSet(sql_lyr)
 
     assert count == 1
-
-    return 'success'
 
 ###############################################################################
 # Test 64-bit ids
@@ -467,8 +457,7 @@ def test_ogr_osm_8():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Same as ogr_osm_8 but with OSM_USE_CUSTOM_INDEXING=NO
 
@@ -561,8 +550,7 @@ def test_ogr_osm_10():
         gdal.PopErrorHandler()
         assert feat is None and gdal.GetLastErrorMsg() != ''
 
-    return 'success'
-
+    
 ###############################################################################
 # Test all_tags
 
@@ -589,8 +577,7 @@ def test_ogr_osm_11():
         feat.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test that attribute filter set on a line layer is well taken into
@@ -614,8 +601,6 @@ def test_ogr_osm_12():
             feat = lay.GetNextFeature()
         assert i != 1 or count == 1
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test test_uncompressed_dense_true_nometadata.pbf
@@ -656,8 +641,6 @@ def test_ogr_osm_13():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_osm_13.osm')
-
-    return 'success'
 
 ###############################################################################
 # Test that we handle polygons in other_relations (#6475)
@@ -701,8 +684,6 @@ def test_ogr_osm_14():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_osm_14.osm')
-
-    return 'success'
 
 ###############################################################################
 # Test Dataset.GetNextFeature()
@@ -775,8 +756,6 @@ def test_ogr_osm_15():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test laundering of tags (https://github.com/OSGeo/gdal/pull/161)
 
@@ -813,8 +792,6 @@ attributes=foo:baar,foo:bar
     gdal.Unlink('/vsimem/ogr_osm_16.osm')
     gdal.Unlink('/vsimem/ogr_osm_16_conf.ini')
 
-    return 'success'
-
 ###############################################################################
 # Test converting an empty OSM file (this essentially tests the behaviour of
 # GDALVectorTranslate() in random feature mode, when there is no feature)
@@ -836,8 +813,6 @@ def test_ogr_osm_17():
 
     assert layer_count == 4
 
-    return 'success'
-
 ###############################################################################
 # Test correct reading of .pbf files with multiple densenode blocks and
 # regarding EOF
@@ -856,8 +831,6 @@ def test_ogr_osm_18():
     ds = None
 
     assert count == 2
-
-    return 'success'
 
 
 gdaltest_list = [

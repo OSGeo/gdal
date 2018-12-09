@@ -77,8 +77,6 @@ def test_cals_3():
     gdal.Unlink('/vsimem/cals_2_tmp.cal.aux.xml')
     gdal.Unlink('/vsimem/cals_2.cal')
 
-    return 'success'
-
 ###############################################################################
 # Test CreateCopy() error conditions
 
@@ -122,8 +120,6 @@ def test_cals_4():
     gdal.PopErrorHandler()
     assert out_ds is None
 
-    return 'success'
-
 ###############################################################################
 # Test PIXEL_PATH & LINE_PROGRESSION metadata item
 
@@ -140,8 +136,6 @@ def test_cals_5():
     assert out_ds.GetMetadataItem('LINE_PROGRESSION') == '270'
     out_ds = None
     gdal.Unlink('/vsimem/cals_5.cal')
-
-    return 'success'
 
 ###############################################################################
 

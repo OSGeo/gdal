@@ -88,8 +88,7 @@ def test_ogr_openfilegdb_init():
     if ogrtest.fgdb_drv is not None:
         ogrtest.fgdb_drv.Deregister()
 
-    return 'success'
-
+    
 ###############################################################################
 # Make test data
 
@@ -264,8 +263,6 @@ def ogr_openfilegdb_make_test_data():
     os.chdir('..')
     shutil.rmtree('data/testopenfilegdb.gdb')
 
-    return 'success'
-
 ###############################################################################
 # Basic tests
 
@@ -379,8 +376,6 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
 
     ds = None
 
-    return 'success'
-
 
 def test_ogr_openfilegdb_1_92():
     return test_ogr_openfilegdb_1(filename='data/testopenfilegdb92.gdb.zip', version10=False)
@@ -402,8 +397,6 @@ def test_ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + filename)
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 
 def test_ogr_openfilegdb_2_92():
@@ -433,8 +426,6 @@ def test_ogr_openfilegdb_3():
     assert lyr.GetName() == 'GDB_SystemCatalog'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test use of attribute indexes
@@ -621,7 +612,6 @@ def test_ogr_openfilegdb_4():
         assert feat is None, (where_clause, count)
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Test opening an unzipped dataset
@@ -644,8 +634,6 @@ def test_ogr_openfilegdb_5():
 
     ds = ogr.Open('tmp/testopenfilegdb.gdb')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test special SQL processing for min/max/count/sum/avg values
@@ -691,8 +679,6 @@ def test_ogr_openfilegdb_6():
         ds.ReleaseResultSet(sql_lyr)
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test special SQL processing for ORDER BY
@@ -760,8 +746,7 @@ def test_ogr_openfilegdb_7():
                 assert ret.find('INFO') != -1 and ret.find('ERROR') == -1, \
                     (sql, feat_count, first_fid)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a .gdbtable without .gdbtablx
 
@@ -798,8 +783,7 @@ def test_ogr_openfilegdb_8():
         i = i + 1
         feat = lyr.GetNextFeature()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading a .gdbtable outside a .gdb
 
@@ -818,8 +802,6 @@ def test_ogr_openfilegdb_9():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     assert feat is not None
-
-    return 'success'
 
 ###############################################################################
 # Test various error conditions
@@ -988,8 +970,7 @@ def test_ogr_openfilegdb_10():
                 gdal.PopErrorHandler()
                 unfuzz(backup)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test spatial filtering
 
@@ -1139,7 +1120,6 @@ def test_ogr_openfilegdb_11():
     feat = None
     lyr = None
     ds = None
-    return 'success'
 
 ###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
@@ -1155,8 +1135,6 @@ def test_ogr_openfilegdb_12():
     expected_wkt = sr.ExportToWkt()
     assert got_wkt == expected_wkt
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening a FGDB v9 with a non spatial table (#5673)
@@ -1175,8 +1153,6 @@ def test_ogr_openfilegdb_13():
         pytest.fail()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test not nullable fields
 
@@ -1189,8 +1165,6 @@ def test_ogr_openfilegdb_14():
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() == 1
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() == 0
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test default values
@@ -1207,7 +1181,6 @@ def test_ogr_openfilegdb_15():
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('FLOAT32')).GetDefault().find('1.23') == 0
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('FLOAT64')).GetDefault().find('1.23456') == 0
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('DATETIME')).GetDefault() == "'2015/06/30 12:34:56'"
-    return 'success'
 
 
 ###############################################################################
@@ -1232,8 +1205,6 @@ def test_ogr_openfilegdb_16():
     f = lyr.GetFeature(16384)
     assert f is not None
 
-    return 'success'
-
 ###############################################################################
 # Read a MULTILINESTRING ZM with a dummy M array (#6528)
 
@@ -1244,8 +1215,6 @@ def test_ogr_openfilegdb_17():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
-
-    return 'success'
 
 ###############################################################################
 # Read curves
@@ -1282,8 +1251,7 @@ def test_ogr_openfilegdb_18():
             print(f.GetGeometryRef().ExportToWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening '.'
 
@@ -1294,8 +1262,6 @@ def test_ogr_openfilegdb_19():
     ds = ogr.Open('.')
     os.chdir('../..')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Read polygons with M component where the M of the closing point is not the
@@ -1324,8 +1290,7 @@ def test_ogr_openfilegdb_20():
             print(f.GetGeometryRef().ExportToIsoWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToIsoWkt())
 
-    return 'success'
-
+    
 ###############################################################################
 # Test selecting FID column with OGRSQL
 
@@ -1350,8 +1315,7 @@ def test_ogr_openfilegdb_21():
         f.DumpReadable()
         pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -1375,8 +1339,7 @@ def test_ogr_openfilegdb_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_openfilegdb_init,

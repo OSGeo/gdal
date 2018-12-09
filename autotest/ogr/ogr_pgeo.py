@@ -102,8 +102,6 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
     feat_count = lyr.GetFeatureCount()
     assert feat_count == 9418, 'did not get expected feature count'
 
-    return 'success'
-
 
 def ogr_pgeo_mdb_1():
     return ogr_pgeo_1('MDB', 'PGeo')
@@ -139,8 +137,6 @@ def ogr_pgeo_2():
     feat_count = lyr.GetFeatureCount()
     assert feat_count == 9418, 'did not get expected feature count'
 
-    return 'success'
-
 ###############################################################################
 # Test attribute filter
 
@@ -167,8 +163,6 @@ def ogr_pgeo_3():
     feat_count = lyr.GetFeatureCount()
     assert feat_count == 9418, 'did not get expected feature count'
 
-    return 'success'
-
 ###############################################################################
 # Test ExecuteSQL()
 
@@ -191,8 +185,6 @@ def ogr_pgeo_4():
 
     ogrtest.pgeo_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
 ###############################################################################
 # Test GetFeature()
 
@@ -207,8 +199,7 @@ def ogr_pgeo_5():
         feat.DumpReadable()
         pytest.fail('did not get expected attributes')
 
-    return 'success'
-
+    
 ###############################################################################
 # Run test_ogrsf
 
@@ -224,8 +215,6 @@ def ogr_pgeo_6():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "tmp/cache/Autodesk Test.mdb"')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf with -sql
@@ -243,8 +232,6 @@ def ogr_pgeo_7():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -258,7 +245,6 @@ def ogr_pgeo_cleanup():
         pytest.skip()
 
     ogrtest.pgeo_ds = None
-    return 'success'
 
 
 gdaltest_list_internal = [
@@ -283,8 +269,6 @@ def test_ogr_pgeo_main():
     # Run with the MDB driver only (PGeo disabled)
     gdaltest.run_tests([ogr_pgeo_mdb_1])
     gdaltest.run_tests(gdaltest_list_internal)
-
-    return 'success'
 
 
 gdaltest_list = [

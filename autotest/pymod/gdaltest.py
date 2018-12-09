@@ -268,8 +268,7 @@ class GDALTest(object):
             self.driver = gdal.GetDriverByName(self.drivername)
             assert self.driver is not None, (self.drivername + ' driver not found!')
 
-        return 'success'
-
+        
     def testOpen(self, check_prj=None, check_gt=None, gt_epsilon=None,
                  check_stat=None, check_approx_stat=None,
                  stat_epsilon=None, skip_checksum=None, check_min=None,
@@ -443,9 +442,9 @@ class GDALTest(object):
         assert not is_file_open(wrk_filename), 'file still open after dataset closing'
 
         if skip_checksum is not None:
-            return 'success'
+            return
         if self.chksum is None or chksum == self.chksum:
-            return 'success'
+            return
         pytest.fail('Checksum for band %d in "%s" is %d, but expected %d.'
                     % (self.band, self.filename, chksum, self.chksum))
 
@@ -499,7 +498,7 @@ class GDALTest(object):
                 gdal.PushErrorHandler('CPLQuietErrorHandler')
                 self.driver.Delete(new_filename)
                 gdal.PopErrorHandler()
-                return 'success'
+                return
             new_ds = None
             self.driver.Delete(new_filename)
             pytest.fail('CreateCopy() should have failed due to interruption')

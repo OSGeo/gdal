@@ -62,8 +62,6 @@ def test_tiff_srs_without_linear_units():
 
     assert sr.IsSame(sr2) == 1, 'did not get expected SRS'
 
-    return 'success'
-
 ###############################################################################
 # Test COMPDCS without VerticalCSType
 
@@ -105,8 +103,6 @@ def test_tiff_srs_compd_cs():
 
     assert sr.IsSame(sr2) == 1, 'did not get expected SRS'
 
-    return 'success'
-
 ###############################################################################
 # Test reading a GeoTIFF with both StdParallel1 and ScaleAtNatOrigin defined (#5791)
 
@@ -144,8 +140,6 @@ def test_tiff_srs_weird_mercator_2sp():
 
     assert sr.IsSame(sr2) == 1, 'did not get expected SRS'
 
-    return 'success'
-
 ###############################################################################
 # Test reading ESRI WGS_1984_Web_Mercator_Auxiliary_Sphere
 
@@ -173,8 +167,6 @@ def test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
     PARAMETER["Auxiliary_Sphere_Type",0.0],
     UNIT["Meter",1.0],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"]]"""
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading various angular units
@@ -257,8 +249,6 @@ def test_tiff_srs_angular_units():
 
     gdal.Unlink('/vsimem/tiff_srs_angular_units.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test writing and reading a unknown datum but with a known ellipsoid
 
@@ -279,8 +269,6 @@ def test_tiff_custom_datum_known_ellipsoid():
 
     gdal.Unlink('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a GeoTIFF file with only PCS set, but with a ProjLinearUnitsGeoKey
 # override to another unit (us-feet) ... (#6210)
@@ -300,8 +288,6 @@ def test_tiff_srs_epsg_2853_with_us_feet():
     gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
     wkt = ds.GetProjectionRef()
     assert wkt.find('PARAMETER["false_easting",11482916.66') >= 0 and wkt.find('UNIT["us_survey_feet",0.3048006') >= 0 and wkt.find('2853') < 0
-
-    return 'success'
 
 ###############################################################################
 # Test reading a SRS with a PCSCitationGeoKey = "LUnits = ..."
@@ -332,8 +318,6 @@ def test_tiff_srs_PCSCitationGeoKey_LUnits():
 
     gdal.Unlink('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a geotiff key ProjectionGeoKey (Short,1): Unknown-3856
 
@@ -346,8 +330,6 @@ def test_tiff_srs_projection_3856():
 
     assert wkt.find('EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test reading a geotiff with a LOCAL_CS and a Imagine citation
 
@@ -359,8 +341,6 @@ def test_tiff_srs_imagine_localcs_citation():
     ds = None
 
     assert wkt == 'LOCAL_CS["Projection Name = UTM Units = meters GeoTIFF Units = meters",UNIT["unknown",1]]'
-
-    return 'success'
 
 ###############################################################################
 # Test reading a geotiff with a EPSG code and a TOWGS84 key that must
@@ -375,8 +355,6 @@ def test_tiff_srs_towgs84_override():
 
     assert wkt.find('TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]') >= 0
 
-    return 'success'
-
 ###############################################################################
 # Test reading PCSCitationGeoKey (#7199)
 
@@ -388,8 +366,6 @@ def test_tiff_srs_pcscitation():
     ds = None
 
     assert wkt.find('PROJCS["mycitation",') == 0
-
-    return 'success'
 
 
 def _test_tiff_srs(sr, expect_fail):

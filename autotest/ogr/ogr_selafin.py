@@ -56,7 +56,7 @@ def test_ogr_selafin_create_ds():
     gdaltest.selafin_ds = selafin_drv.CreateDataSource('tmp/tmp.slf')
 
     if gdaltest.selafin_ds is not None:
-        return 'success'
+        return
     pytest.fail()
 
 ###############################################################################
@@ -85,7 +85,6 @@ def test_ogr_selafin_create_nodes():
     # return
     del gdaltest.selafin_ds
     del layer
-    return 'success'
 
 ###############################################################################
 # Add a set of elements to the datasource
@@ -139,7 +138,6 @@ def test_ogr_selafin_create_elements():
         'wrong value of attribute in element layer'
     # return
     del gdaltest.selafin_ds
-    return 'success'
 
 ###############################################################################
 # Add a field and set its values for point features
@@ -174,7 +172,6 @@ def test_ogr_selafin_set_field():
         'wrong value of attribute in point layer'
     # return
     del gdaltest.selafin_ds
-    return 'success'
 
 
 ###############################################################################
@@ -184,7 +181,6 @@ def test_ogr_selafin_cleanup():
 
     selafin_drv = ogr.GetDriverByName('Selafin')
     selafin_drv.DeleteDataSource('tmp/tmp.slf')
-    return 'success'
 
 
 gdaltest_list = [

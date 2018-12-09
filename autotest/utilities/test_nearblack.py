@@ -71,8 +71,6 @@ def test_nearblack_1():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Add alpha band
 
@@ -89,8 +87,6 @@ def test_nearblack_2():
     assert ds.GetRasterBand(4).Checksum() == 22002, 'Bad checksum band 0'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Set existing alpha band
@@ -109,8 +105,6 @@ def test_nearblack_3():
     assert ds.GetRasterBand(4).Checksum() == 22002, 'Bad checksum band 0'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -white
@@ -132,8 +126,6 @@ def test_nearblack_4():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Add mask band
 
@@ -151,8 +143,6 @@ def test_nearblack_5():
         'Bad checksum mask band'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Set existing mask band
@@ -175,8 +165,6 @@ def test_nearblack_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test -color
 
@@ -195,8 +183,6 @@ def test_nearblack_7():
        ds.GetRasterBand(3).Checksum() == 0), 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test in-place update
@@ -221,8 +207,6 @@ def test_nearblack_8():
     assert ds.GetRasterBand(2).Checksum() == 20736, 'Bad checksum band 2'
 
     assert ds.GetRasterBand(3).Checksum() == 21309, 'Bad checksum band 3'
-
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -273,8 +257,7 @@ def test_nearblack_cleanup():
         os.remove('tmp/nearblack8.tif')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_nearblack_1,

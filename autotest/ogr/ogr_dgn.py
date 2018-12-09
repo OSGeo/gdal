@@ -44,8 +44,6 @@ def test_ogr_dgn_1():
 
     gdaltest.dgn_lyr = gdaltest.dgn_ds.GetLayer(0)
 
-    return 'success'
-
 ###############################################################################
 # Check first feature, a text element.
 
@@ -64,8 +62,6 @@ def test_ogr_dgn_2():
 
     assert feat.GetStyleString() == 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)', \
         'Style string different than expected.'
-
-    return 'success'
 
 ###############################################################################
 # Check second feature, a circle.
@@ -92,8 +88,6 @@ def test_ogr_dgn_3():
     assert genvelope[0] >= 0.328593 and genvelope[0] <= 0.328594 and genvelope[1] >= 9.68780 and genvelope[1] <= 9.68781 and genvelope[2] >= -0.09611 and genvelope[2] <= -0.09610 and genvelope[3] >= 9.26310 and genvelope[3] <= 9.26311, \
         'geometry extents seem odd'
 
-    return 'success'
-
 ###############################################################################
 # Check third feature, a polygon with fill styling.
 
@@ -115,8 +109,6 @@ def test_ogr_dgn_4():
 
     gdaltest.dgn_lyr.ResetReading()
 
-    return 'success'
-
 ###############################################################################
 # Use attribute query to pick just the type 15 level 2 object.
 
@@ -130,7 +122,7 @@ def test_ogr_dgn_5():
     tr = ogrtest.check_features_against_list(gdaltest.dgn_lyr, 'Type', [15])
     gdaltest.dgn_lyr.SetAttributeFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Use spatial filter to just pick the big circle.
@@ -148,7 +140,7 @@ def test_ogr_dgn_6():
     tr = ogrtest.check_features_against_list(gdaltest.dgn_lyr, 'Type', [15])
     gdaltest.dgn_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Copy our small dgn file to a new dgn file.
@@ -180,8 +172,6 @@ def test_ogr_dgn_7():
 
     dgn2_lyr = None
     dgn2_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify that our copy is pretty similar.
@@ -244,8 +234,6 @@ def test_ogr_dgn_8():
 
     dgn2_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test delta encoding (#6806)
 
@@ -263,8 +251,6 @@ def test_ogr_dgn_online_1():
 
     assert not ogrtest.check_feature_geometry(feat, wkt)
 
-    return 'success'
-
 ###############################################################################
 #  Cleanup
 
@@ -276,7 +262,6 @@ def test_ogr_dgn_cleanup():
         gdaltest.dgn_ds = None
 
     gdaltest.clean_tmp()
-    return 'success'
 
 
 gdaltest_list = [

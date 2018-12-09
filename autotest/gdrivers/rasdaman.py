@@ -65,8 +65,6 @@ def test_rasdaman_1():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 61774, 'did not get expected checksum'
 
-    return 'success'
-
 ###############################################################################
 # Test opening a non existing collection
 
@@ -76,7 +74,7 @@ def test_rasdaman_2():
         pytest.skip()
 
     ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'")
-    return 'success' if ds is None else 'fail'
+    assert ds is None
 
 ###############################################################################
 # Test syntax error
@@ -88,7 +86,7 @@ def test_rasdaman_3():
 
     ds = gdal.Open("rasdaman:query='select'")
 
-    return 'success' if ds is None else 'fail'
+    assert ds is None
 
 
 gdaltest_list = [

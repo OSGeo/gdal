@@ -103,8 +103,6 @@ def test_l1b_geoloc():
     cs = ds.GetRasterBand(2).Checksum()
     assert cs == 52616
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -128,8 +126,6 @@ def test_l1b_solar_zenith_angles_before_noaa_15():
     ds = gdal.Open('L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 22924
-
-    return 'success'
 
 ###############################################################################
 #
@@ -156,8 +152,6 @@ def test_l1b_metadata_before_noaa_15():
     f.close()
 
     os.unlink('tmp/n12gac10bit.l1b_metadata.csv')
-
-    return 'success'
 
 ###############################################################################
 #
@@ -187,8 +181,6 @@ def test_l1b_angles_after_noaa_15():
     cs = ds.GetRasterBand(3).Checksum()
     assert cs == 64989
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -212,8 +204,6 @@ def test_l1b_clouds_after_noaa_15():
     ds = gdal.Open('L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 0
-
-    return 'success'
 
 ###############################################################################
 #
@@ -241,8 +231,6 @@ def test_l1b_metadata_after_noaa_15():
 
     os.unlink('tmp/n16gac10bit.l1b_metadata.csv')
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -255,8 +243,6 @@ def test_l1b_little_endian():
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 25115
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

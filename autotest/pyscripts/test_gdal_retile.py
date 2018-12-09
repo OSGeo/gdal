@@ -74,8 +74,6 @@ def test_gdal_retile_1():
     #    return 'fail'
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdal_retile.py with RGBA dataset
 
@@ -97,8 +95,6 @@ def test_gdal_retile_2():
     assert ds.GetRasterBand(1).Checksum() == 35, 'wrong checksum for band 1'
     assert ds.GetRasterBand(4).Checksum() == 35, 'wrong checksum for band 4'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdal_retile.py with input images of different pixel sizes
@@ -174,8 +170,6 @@ def test_gdal_retile_3():
 
     assert ds.GetRasterBand(1).Checksum() == 38999, 'Wrong checksum'
 
-    return 'success'
-
 
 ###############################################################################
 # Test gdal_retile.py -overlap
@@ -249,8 +243,7 @@ def test_gdal_retile_4():
         assert ds.RasterYSize == height, filename
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -287,8 +280,6 @@ def test_gdal_retile_cleanup():
                 pass
 
     shutil.rmtree('tmp/outretile4')
-
-    return 'success'
 
 
 gdaltest_list = [

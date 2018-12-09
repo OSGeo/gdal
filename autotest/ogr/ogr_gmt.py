@@ -47,8 +47,6 @@ def test_ogr_gmt_1():
 
     assert gdaltest.gmt_ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -90,8 +88,6 @@ def test_ogr_gmt_2():
     gdaltest.gmt_lyr = None
     gdaltest.gmt_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -124,7 +120,7 @@ def test_ogr_gmt_3():
     gdaltest.gmt_lyr = None
     gdaltest.gmt_ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify reading of multilinestring file. (#3802)
@@ -153,8 +149,6 @@ def test_ogr_gmt_4():
     feat = lyr.GetNextFeature()
 
     assert feat is None, 'did not get null feature when expected.'
-
-    return 'success'
 
 ###############################################################################
 # Write a multipolygon file and verify it.
@@ -217,8 +211,6 @@ def test_ogr_gmt_5():
 
     assert feat is None, 'did not get null feature when expected.'
 
-    return 'success'
-
 
 ###############################################################################
 #
@@ -230,8 +222,6 @@ def test_ogr_gmt_cleanup():
         gdaltest.gmt_ds = None
 
     gdaltest.clean_tmp()
-
-    return 'success'
 
 
 gdaltest_list = [

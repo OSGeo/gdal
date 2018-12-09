@@ -56,8 +56,6 @@ def test_ogrlineref_1():
     ds = ogr.Open('tmp/parts.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 9
 
-    return 'success'
-
 ###############################################################################
 # get_pos test
 
@@ -71,8 +69,6 @@ def test_ogrlineref_2():
     expected = '15977.724709'
     assert ret == expected, ('"%s" != %s' % (ret.strip(), expected))
 
-    return 'success'
-
 ###############################################################################
 # get_coord test
 
@@ -85,8 +81,6 @@ def test_ogrlineref_3():
 
     expected = '-1.435097,51.950080,0.000000'
     assert ret == expected, ('%s != %s' % (ret.strip(), expected))
-
-    return 'success'
 
 ###############################################################################
 # get_subline test
@@ -110,8 +104,6 @@ def test_ogrlineref_4():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/subline.shp')
 
-    return 'success'
-
 ###############################################################################
 # test kml
 
@@ -125,7 +117,7 @@ def test_ogrlineref_5():
 
     gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrlineref_path() + ' -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.kml -s 222')
     if os.path.exists('tmp/parts.kml'):
-        return 'success'
+        return
 
     pytest.fail()
 
@@ -139,8 +131,7 @@ def test_ogrlineref_cleanup():
     if os.path.exists('tmp/parts.kml'):
         ogr.GetDriverByName('KML').DeleteDataSource('tmp/parts.kml')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogrlineref_1,

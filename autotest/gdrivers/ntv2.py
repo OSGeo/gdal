@@ -90,8 +90,6 @@ def test_ntv2_5():
     ds = None
     gdal.GetDriverByName('NTv2').Delete('/vsimem/ntv2_5.gsb')
 
-    return 'success'
-
 ###############################################################################
 # Test appending to a big-endian NTv2 grid
 
@@ -108,8 +106,6 @@ def test_ntv2_6():
     ds = None
     gdal.GetDriverByName('NTv2').Delete('/vsimem/ntv2_6.gsb')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a file with invalid filename
 
@@ -123,8 +119,6 @@ def test_ntv2_7():
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('NTv2').Create('/does/not/exist.gsb', 1, 1, 4, gdal.GDT_Float32, options=['APPEND_SUBDATASET=YES'])
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 

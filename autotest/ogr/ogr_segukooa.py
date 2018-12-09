@@ -73,8 +73,7 @@ def test_ogr_segp1_points():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read SEGP1 lines
 
@@ -111,8 +110,7 @@ def test_ogr_segp1_lines():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read UKOOA
 
@@ -149,8 +147,7 @@ def test_ogr_ukooa_points():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read UKOOA lines
 
@@ -187,8 +184,7 @@ def test_ogr_ukooa_lines():
         feat.DumpReadable()
         pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_ogr_segp1_points,

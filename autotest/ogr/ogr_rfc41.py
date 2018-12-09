@@ -84,8 +84,6 @@ def test_ogr_rfc41_1():
 
     gfld_defn = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test OGRFeatureDefn methods related to OGRGeomFieldDefn class
@@ -179,8 +177,6 @@ def test_ogr_rfc41_2():
 
     feature_defn = None
 
-    return 'success'
-
 ###############################################################################
 # Test OGRFeature methods
 
@@ -257,8 +253,6 @@ def test_ogr_rfc41_3():
     feature_default.SetFrom(feature)
     assert feature_default.GetGeomFieldRef(0).ExportToWkt() == 'POLYGON EMPTY'
 
-    return 'success'
-
 ###############################################################################
 # Test OGRLayer methods
 
@@ -331,8 +325,6 @@ def test_ogr_rfc41_4():
     geom = dup_feat.GetGeomFieldRef('another_geom_field')
     assert geom.ExportToWkt() == 'POLYGON ((10 10,10 11,11 11,11 10,10 10))'
 
-    return 'success'
-
 ###############################################################################
 # Test Python field accessors facilities
 
@@ -391,8 +383,6 @@ def test_ogr_rfc41_5():
     f.geomfield = ogr.CreateGeometryFromWkt(wkt2)
     assert f['geomfield'].ExportToWkt() == wkt2
     assert f.geomfield.ExportToWkt() == wkt2
-
-    return 'success'
 
 ###############################################################################
 # Test OGRSQL with geometries
@@ -679,8 +669,6 @@ def test_ogr_rfc41_6():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test crazy OGRSQL
 
@@ -711,8 +699,6 @@ def test_ogr_rfc41_7():
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test SQLite dialect
@@ -779,8 +765,6 @@ def test_ogr_rfc41_8():
         pytest.fail()
     feat = None
     ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -44,8 +44,7 @@ def test_bsb_0():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Read
 

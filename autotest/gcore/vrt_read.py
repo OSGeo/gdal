@@ -88,7 +88,7 @@ def test_vrt_read_1():
     gdal.PopErrorHandler()
 
     if ds is None:
-        return 'success'
+        return
 
     pytest.fail()
 
@@ -112,7 +112,6 @@ def test_vrt_read_2():
     ds.GetGCPs()
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # Test init of band data in case of cascaded VRT (ticket #2867)
@@ -141,8 +140,6 @@ def test_vrt_read_3():
 
     driver_tif.Delete('tmp/test_mosaic1.tif')
     driver_tif.Delete('tmp/test_mosaic2.tif')
-
-    return 'success'
 
 
 ###############################################################################
@@ -185,8 +182,7 @@ def test_vrt_read_4():
         print('scaleddata[0, 0]: %f %f' % (scaleddata[0, 0].real, scaleddata[0, 0].imag))
         pytest.fail('did not get expected value')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test serializing and deserializing of various band metadata
 
@@ -239,8 +235,6 @@ def test_vrt_read_5():
 
     gdal.Unlink('/vsimem/vrt_read_5.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test GetMinimum() and GetMaximum()
 
@@ -266,8 +260,6 @@ def test_vrt_read_6():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_6.tif')
     gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_6.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test GDALOpen() anti-recursion mechanism
@@ -299,8 +291,6 @@ def test_vrt_read_7():
 
     assert error_msg != ''
 
-    return 'success'
-
 ###############################################################################
 # Test ComputeRasterMinMax()
 
@@ -322,8 +312,6 @@ def test_vrt_read_8():
 
     assert vrt_minmax == mem_minmax
 
-    return 'success'
-
 ###############################################################################
 # Test ComputeStatistics()
 
@@ -344,8 +332,6 @@ def test_vrt_read_9():
     gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_9.vrt')
 
     assert vrt_stats == mem_stats
-
-    return 'success'
 
 ###############################################################################
 # Test GetHistogram() & GetDefaultHistogram()
@@ -425,8 +411,6 @@ def test_vrt_read_10():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_10.tif')
     gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_10.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test resolving files from a symlinked vrt using relativeToVRT with an absolute symlink
 
@@ -449,8 +433,6 @@ def test_vrt_read_11():
     os.remove('tmp/byte.vrt')
 
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test resolving files from a symlinked vrt using relativeToVRT
@@ -475,8 +457,6 @@ def test_vrt_read_12():
     os.remove('tmp/byte.vrt')
 
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test resolving files from a symlinked vrt using relativeToVRT with a relative symlink
@@ -508,8 +488,6 @@ def test_vrt_read_13():
 
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Test ComputeStatistics() when the VRT is a subwindow of the source dataset (#5468)
 
@@ -540,8 +518,6 @@ def test_vrt_read_14():
 
     assert vrt_stats[0] == 115.0 and vrt_stats[1] == 173.0
 
-    return 'success'
-
 ###############################################################################
 # Test RasterIO() with resampling on SimpleSource
 
@@ -569,8 +545,6 @@ def test_vrt_read_15():
 
     cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == 1044
-
-    return 'success'
 
 ###############################################################################
 # Test RasterIO() with resampling on ComplexSource
@@ -600,8 +574,6 @@ def test_vrt_read_16():
     cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == 1044
 
-    return 'success'
-
 ###############################################################################
 # Test RasterIO() with resampling on AveragedSource
 
@@ -625,8 +597,6 @@ def test_vrt_read_17():
     cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == 847
 
-    return 'success'
-
 ###############################################################################
 # Test that relative path is correctly VRT-in-VRT
 
@@ -636,8 +606,6 @@ def test_vrt_read_18():
     vrt_ds = gdal.Open('data/vrtinvrt.vrt')
     cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == 4672
-
-    return 'success'
 
 ###############################################################################
 # Test shared="0"
@@ -669,8 +637,6 @@ def test_vrt_read_19():
 
     cs = vrt2_ds.GetRasterBand(1).Checksum()
     assert cs == 4672
-
-    return 'success'
 
 
 ###############################################################################
@@ -725,8 +691,7 @@ def test_vrt_read_20():
     for f in ['tmp/byte.tif', 'tmp/byte1_1.vrt', 'tmp/byte1_2.vrt', 'tmp/byte1_3.vrt', 'tmp/byte2.vrt']:
         os.unlink(f)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test implicit virtual overviews
 
@@ -815,8 +780,6 @@ def test_vrt_read_21():
     gdal.Unlink('/vsimem/vrt_read_21.vrt.ovr')
     gdal.Unlink('/vsimem/byte.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test that we honour NBITS with SimpleSource and ComplexSource
 
@@ -896,8 +859,6 @@ def test_vrt_read_22():
     gdal.Unlink('/vsimem/byte.tif')
     gdal.Unlink('/vsimem/byte.tif.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test non-nearest resampling on a VRT exposing a nodata value but with
 # an underlying dataset without nodata
@@ -950,8 +911,6 @@ def test_vrt_read_23():
 
     gdal.Unlink('/vsimem/vrt_read_23.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test floating point rounding issues when the VRT does a zoom-in
 
@@ -971,8 +930,6 @@ def test_vrt_read_24():
     # the result image has no vertical black line in the middle
     assert cs == 46612
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test GetDataCoverageStatus()
@@ -1019,8 +976,6 @@ def test_vrt_read_25():
     (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(10, 10, 20, 20)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 25.0
 
-    return 'success'
-
 
 ###############################################################################
 # Test consistency of RasterIO() with resampling, that is extracting different
@@ -1048,8 +1003,6 @@ def test_vrt_read_26():
 
     assert partial_data[0] == full_data[22 + 1]
 
-    return 'success'
-
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1553
 
@@ -1057,8 +1010,6 @@ def test_vrt_read_26():
 def test_vrt_read_27():
 
     gdal.Open('data/empty_gcplist.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1551
@@ -1069,8 +1020,6 @@ def test_vrt_read_28():
     with gdaltest.error_handler():
         ds = gdal.Open('<VRTDataset rasterXSize="1 "rasterYSize="1"><VRTRasterBand band="-2147483648"><SimpleSource></SimpleSource></VRTRasterBand></VRTDataset>')
     assert ds is None
-
-    return 'success'
 
 
 ###############################################################################
@@ -1131,8 +1080,6 @@ def test_vrt_read_29():
 
     gdal.Unlink('tmp/vrt_read_29.tif')
 
-    return 'success'
-
 ###############################################################################
 # Check VRT reading with DatasetRasterIO
 
@@ -1153,8 +1100,6 @@ def test_vrt_read_30():
     for i in range(2 * 2 * 3):
         assert got[i] == 0
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check that we take into account intermediate data type demotion
@@ -1185,8 +1130,6 @@ dy           1
     ds = None
 
     gdal.Unlink('/vsimem/in.asc')
-
-    return 'success'
 
 
 ###############################################################################
@@ -1220,8 +1163,6 @@ def test_vrt_float32_with_nodata_slightly_below_float_min():
 
     assert stats == [-3.0, 5.0, 1.0, 4.0], 'did not get expected stats'
 
-    return 'success'
-
 
 ###############################################################################
 # Fix issue raised in https://lists.osgeo.org/pipermail/gdal-dev/2018-December/049415.html
@@ -1231,8 +1172,6 @@ def test_vrt_subpixel_offset():
     ds = gdal.Open('data/vrt_subpixel_offset.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4849
-
-    return 'success'
 
 
 ###############################################################################
@@ -1244,8 +1183,6 @@ def test_vrt_dstsize_larger_than_source():
     ds = gdal.Open('data/dstsize_larger_than_source.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 33273
-
-    return 'success'
 
 
 gdaltest_list = [

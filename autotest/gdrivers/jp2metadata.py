@@ -53,8 +53,7 @@ def test_jp2metadata_1():
     expected_gt = (356000.0, 0.5, 0.0, 7596000.0, 0.0, -0.5)
     for i in range(6):
         assert abs(gt[i] - expected_gt[i]) <= 1e-5
-    return 'success'
-
+    
 ###############################################################################
 # Test Pleiades imagery metadata
 
@@ -93,8 +92,7 @@ def test_jp2metadata_2():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading GMLJP2 file with srsName only on the Envelope, and lots of other
 # metadata junk.  This file is also handled currently with axis reordering
@@ -131,8 +129,6 @@ def test_jp2metadata_3():
 
     gdal.SetConfigOption('GDAL_IGNORE_AXIS_ORIENTATION', 'NO')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a file with axis orientation set properly for an alternate
 # axis order coordinate system (urn:...:EPSG::4326).
@@ -166,8 +162,6 @@ def test_jp2metadata_4():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test reading a file with EPSG axis orientation being northing, easting,
 # but with explicit axisName being easting, northing (#5960)
@@ -199,8 +193,6 @@ def test_jp2metadata_5():
         pytest.fail('did not get expected geotransform')
 
     ds = None
-
-    return 'success'
 
 
 gdaltest_list = [

@@ -64,7 +64,7 @@ def test_testnonboundtoswig_init():
     if gdal_handle_init:
         if gdal_handle is None:
             pytest.skip()
-        return 'success'
+        return
 
     gdal_handle_init = True
 
@@ -101,7 +101,7 @@ def test_testnonboundtoswig_init():
             gdal_handle_stdcall = None
             pytest.skip('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
 
-        return 'success'
+        return
     except:
         pytest.skip('cannot find gdal shared object')
 
@@ -122,8 +122,6 @@ def GDALDestroyDriverManager():
 
     gdal_handle_stdcall.GDALDestroyDriverManager()
 
-    return 'success'
-
 ###############################################################################
 # Call OGRCleanupAll()
 
@@ -141,8 +139,6 @@ def OGRCleanupAll():
 
     gdal_handle_stdcall.OGRCleanupAll()
 
-    return 'success'
-
 ###############################################################################
 # Call OSRCleanup()
 
@@ -159,8 +155,6 @@ def OSRCleanup():
     gdal_handle.OSRCleanup.restype = None
 
     gdal_handle.OSRCleanup()
-
-    return 'success'
 
 ###############################################################################
 # Test GDALSimpleImageWarp
@@ -228,8 +222,6 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
     gdal.Unlink('/vsimem/out.tif')
 
     assert cs == 4672
-
-    return 'success'
 
 ###############################################################################
 # Test VRT derived bands with callback functions implemented in Python!
@@ -349,8 +341,6 @@ def test_testnonboundtoswig_VRTDerivedBands():
     assert ref_cs == got_cs, 'wrong checksum'
 
     assert ref_data == got_data, 'wrong data'
-
-    return 'success'
 
 
 gdaltest_list = [test_testnonboundtoswig_init,

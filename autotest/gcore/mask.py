@@ -57,8 +57,6 @@ def test_mask_1():
     my_min, my_max, mean, stddev = band.GetMaskBand().ComputeStatistics(0)
     assert (my_min, my_max, mean, stddev) == (255, 255, 255, 0), 'Got wrong mask stats'
 
-    return 'success'
-
 ###############################################################################
 # Verify the checksum and flags for "nodata" case.
 
@@ -75,8 +73,6 @@ def test_mask_2():
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 4209, 'Got wrong mask checksum'
-
-    return 'success'
 
 ###############################################################################
 # Verify the checksum and flags for "alpha" case.
@@ -117,8 +113,6 @@ def test_mask_3():
     cs = band.GetMaskBand().Checksum()
     assert cs == 36074, 'Got wrong alpha mask checksum'
 
-    return 'success'
-
 ###############################################################################
 # Copy a *real* masked dataset, and confirm masks copied properly.
 
@@ -147,8 +141,6 @@ def test_mask_4():
 
     msk = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Create overviews for masked file, and verify the overviews have proper
@@ -205,8 +197,6 @@ def test_mask_5():
 
     gdal.GetDriverByName('PNM').Delete('tmp/mask_4.pnm')
 
-    return 'success'
-
 ###############################################################################
 # Test a TIFF file with 1 band and an embedded mask of 1 bit
 
@@ -226,8 +216,6 @@ def test_mask_6():
     assert cs == 100, 'Got wrong mask checksum'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-
-    return 'success'
 
 ###############################################################################
 # Test a TIFF file with 3 bands and an embedded mask of 1 band of 1 bit
@@ -250,8 +238,6 @@ def test_mask_7():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
-    return 'success'
-
 ###############################################################################
 # Test a TIFF file with 1 band and an embedded mask of 8 bit.
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
@@ -269,8 +255,6 @@ def test_mask_8():
 
     cs = band.GetMaskBand().Checksum()
     assert cs == 1222, 'Got wrong mask checksum'
-
-    return 'success'
 
 ###############################################################################
 # Test a TIFF file with 3 bands with an embedded mask of 1 bit with 3 bands.
@@ -291,8 +275,7 @@ def test_mask_9():
         cs = band.GetMaskBand().Checksum()
         assert cs == 100, 'Got wrong mask checksum'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test a TIFF file with 3 bands with an embedded mask of 8 bit with 3 bands.
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
@@ -312,8 +295,7 @@ def test_mask_10():
         cs = band.GetMaskBand().Checksum()
         assert cs == 1222, 'Got wrong mask checksum'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test a TIFF file with an overview, an embedded mask of 1 bit, and an embedded
 # mask for the overview
@@ -351,8 +333,6 @@ def test_mask_11():
     assert cs == 25, 'Got wrong checksum for the overview of the mask'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-
-    return 'success'
 
 
 ###############################################################################
@@ -392,8 +372,6 @@ def test_mask_12():
         assert cs == 25, 'Got wrong checksum for the overview of the mask'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-
-    return 'success'
 
 ###############################################################################
 # Test creation of external TIFF mask band
@@ -446,8 +424,7 @@ def test_mask_13():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creation of internal TIFF mask band
 
@@ -530,8 +507,6 @@ def test_mask_14():
 
     drv.Delete('tmp/byte_with_mask.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test creation of internal TIFF overview, mask band and mask band of overview
 
@@ -613,8 +588,6 @@ def mask_and_ovr(order, method):
 
     drv.Delete('tmp/byte_with_ovr_and_mask.tif')
 
-    return 'success'
-
 
 def test_mask_15():
     return mask_and_ovr(1, 'NEAREST')
@@ -669,8 +642,6 @@ def test_mask_19():
     msk = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Extensive test of nodata mask for all data types
 
@@ -700,8 +671,7 @@ def test_mask_20():
         ds = None
         drv.Delete('tmp/mask20.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Extensive test of NODATA_VALUES mask for all data types
 
@@ -735,8 +705,7 @@ def test_mask_21():
         ds = None
         drv.Delete('tmp/mask21.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creation of external TIFF mask band just after Create()
 
@@ -780,8 +749,7 @@ def test_mask_22():
     except OSError:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateCopy() of a dataset with a mask into a JPEG-compressed TIFF with
 # internal mask (#3800)
@@ -814,8 +782,6 @@ def test_mask_23():
 
     # 'ERROR 1: TIFFRewriteDirectory:Error fetching directory count' was triggered before
     assert error_msg == ''
-
-    return 'success'
 
 ###############################################################################
 # Test on a GDT_UInt16 RGBA (#5692)
@@ -850,8 +816,6 @@ def test_mask_24():
     ds = None
 
     gdal.Unlink('/vsimem/mask_24.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test various error conditions
@@ -911,8 +875,7 @@ def test_mask_25():
         ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
         ds.CreateMaskBand(0)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test on a GDT_UInt16 1band data
 
@@ -935,8 +898,6 @@ def test_mask_26():
     ds = None
 
     gdal.Unlink('/vsimem/mask_26.tif')
-
-    return 'success'
 
 ###############################################################################
 # Cleanup.
@@ -969,8 +930,7 @@ def test_mask_27():
         ds = None
         drv.Delete('tmp/mask27.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Extensive test of real NODATA_VALUES mask for all complex types
 

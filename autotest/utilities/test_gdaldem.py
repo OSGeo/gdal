@@ -70,8 +70,6 @@ def test_gdaldem_hillshade():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade
 
@@ -95,8 +93,6 @@ def test_gdaldem_hillshade_compressed_tiled_output():
     stat_compressed = os.stat('tmp/n43_hillshade_compressed_tiled.tif')
     assert stat_uncompressed.st_size >= stat_compressed.st_size, \
         'failure: compressed size greater than uncompressed one'
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade -combined
@@ -128,8 +124,6 @@ def test_gdaldem_hillshade_combined():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges
 
@@ -147,8 +141,6 @@ def test_gdaldem_hillshade_compute_edges():
     assert cs == 50239, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade with -az parameter
@@ -184,8 +176,6 @@ def test_gdaldem_hillshade_azimuth():
     ds = None
     ds_ref = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade to PNG
 
@@ -204,8 +194,6 @@ def test_gdaldem_hillshade_png():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem hillshade to PNG with -compute_edges
 
@@ -223,8 +211,6 @@ def test_gdaldem_hillshade_png_compute_edges():
     assert cs == 50239, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem slope
@@ -255,8 +241,6 @@ def test_gdaldem_slope():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem aspect
 
@@ -285,8 +269,6 @@ def test_gdaldem_aspect():
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief
@@ -318,8 +300,6 @@ def test_gdaldem_color_relief():
     src_ds = None
     ds = None
 
-    return 'success'
-
 
 ###############################################################################
 # Test gdaldem color relief on a GMT .cpt file
@@ -350,8 +330,6 @@ def test_gdaldem_color_relief_cpt():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem color relief to VRT
 
@@ -380,8 +358,6 @@ def test_gdaldem_color_relief_vrt():
     src_ds = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem color relief from a Float32 dataset
 
@@ -405,8 +381,6 @@ def test_gdaldem_color_relief_from_float32():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem color relief to PNG
 
@@ -426,8 +400,6 @@ def test_gdaldem_color_relief_png():
     assert ds.GetRasterBand(3).Checksum() == 47711, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief from a Float32 to PNG
@@ -451,8 +423,6 @@ def test_gdaldem_color_relief_from_float32_to_png():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry
 
@@ -473,8 +443,6 @@ def test_gdaldem_color_relief_nearest_color_entry():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry and -of VRT
 
@@ -494,8 +462,6 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
     assert ds.GetRasterBand(3).Checksum() == 47181, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief with a nan nodata
@@ -534,8 +500,6 @@ NODATA_value nan
     os.unlink('tmp/nodata_nan_src.asc')
     os.unlink('tmp/nodata_nan_plt.txt')
     os.unlink('tmp/nodata_nan_out.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief with entries with repeated DEM values in the color table (#6422)
@@ -588,8 +552,6 @@ NODATA_value 5
     os.unlink('tmp/test_gdaldem_color_relief_repeated_entry.txt')
     os.unlink('tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
     os.unlink('tmp/test_gdaldem_color_relief_repeated_entry_out.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -670,8 +632,7 @@ def test_gdaldem_cleanup():
         os.remove('tmp/n43_colorrelief_nearest.vrt')
     except OSError:
         pass
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_gdaldem_hillshade,

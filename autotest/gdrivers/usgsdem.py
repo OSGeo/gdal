@@ -116,8 +116,6 @@ def test_usgsdem_5():
 
     ds2 = None
 
-    return 'success'
-
 ###############################################################################
 # Test CreateCopy() without a few creation options. Then create a new copy with TEMPLATE
 # creation option and check that both files are binary identical.
@@ -151,8 +149,6 @@ def test_usgsdem_6():
     f1.close()
     f2.close()
 
-    return 'success'
-
 ###############################################################################
 # Test CreateCopy() with CDED50K profile
 
@@ -183,8 +179,6 @@ def test_usgsdem_7():
     assert ds2.GetProjectionRef() == srs.ExportToWkt(), 'Bad SRS.'
 
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/various.zip/39109h1.dem
@@ -251,8 +245,7 @@ def test_usgsdem_cleanup():
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 gdaltest_list = [
     test_usgsdem_1,

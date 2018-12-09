@@ -79,8 +79,6 @@ def test_rat_1():
 
     gdaltest.saved_rat = rat
 
-    return 'success'
-
 ###############################################################################
 # Save a RAT in a file, written to .aux.xml, read it back and check it.
 
@@ -127,8 +125,6 @@ def test_rat_2():
 
     gdaltest.saved_rat = None
 
-    return 'success'
-
 ###############################################################################
 # Save an empty RAT (#5451)
 
@@ -140,8 +136,6 @@ def test_rat_3():
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/rat_3.tif')
-
-    return 'success'
 ##############################################################################
 
 

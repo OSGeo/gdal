@@ -53,8 +53,6 @@ def test_vsicurl_1():
     ds = ogr.Open('/vsizip/vsicurl/http://publicfiles.dep.state.fl.us/dear/BWR_GIS/2007NWFLULC/NWFWMD2007LULC.zip')
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 #
 
@@ -68,8 +66,6 @@ def vsicurl_2():
 
     ds = gdal.Open('/vsizip//vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # This server doesn't support range downloading
@@ -85,8 +81,6 @@ def vsicurl_3():
     ds = ogr.Open('/vsizip/vsicurl/http://www.iucnredlist.org/spatial-data/MAMMALS_TERRESTRIAL.zip')
     assert ds is None
 
-    return 'success'
-
 ###############################################################################
 # This server doesn't support range downloading
 
@@ -100,8 +94,6 @@ def test_vsicurl_4():
 
     ds = ogr.Open('/vsizip/vsicurl/http://lelserver.env.duke.edu:8080/LandscapeTools/export/49/Downloads/1_Habitats.zip')
     assert ds is None
-
-    return 'success'
 
 ###############################################################################
 # Test URL unescaping when reading HTTP file list
@@ -117,8 +109,6 @@ def test_vsicurl_5():
     ds = gdal.Open('/vsicurl/http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/N34W119_DEM.tif')
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Test with FTP server that doesn't support EPSV command
 
@@ -133,8 +123,6 @@ def vsicurl_6_disabled():
     fl = gdal.ReadDir('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif')
     assert fl
 
-    return 'success'
-
 
 ###############################################################################
 # Test Microsoft-IIS/6.0 listing
@@ -148,8 +136,6 @@ def test_vsicurl_7():
 
     fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
     assert fl
-
-    return 'success'
 
 ###############################################################################
 # Test interleaved reading between 2 datasets
@@ -166,8 +152,6 @@ def vsicurl_8():
     gdal.Open('/vsizip//vsicurl/http://edcftp.cr.usgs.gov/pub/data/landcover/files/2009/biso/gokn09b_dnbr.zip/nps-serotnbsp-9001-20090321_rd.tif')
     cs = ds1.GetRasterBand(1).Checksum()
     assert cs == 61342
-
-    return 'success'
 
 ###############################################################################
 # Test reading a file with Chinese characters, but the HTTP file listing
@@ -190,8 +174,6 @@ def test_vsicurl_9():
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/' + filename)
     assert ds is not None
 
-    return 'success'
-
 ###############################################################################
 # Test reading a file with escaped Chinese characters.
 
@@ -205,8 +187,6 @@ def test_vsicurl_10():
 
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/xx%E4%B8%AD%E6%96%87.%E4%B8%AD%E6%96%87')
     assert ds is not None
-
-    return 'success'
 
 ###############################################################################
 # Test ReadDir() after reading a file on the same server
@@ -229,8 +209,6 @@ def test_vsicurl_11():
     filelist = gdal.ReadDir('/vsicurl/http://download.osgeo.org/gdal/data/gtiff')
     assert filelist is not None and filelist
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -246,8 +224,7 @@ def test_vsicurl_start_webserver():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -368,8 +345,6 @@ def test_vsicurl_test_redirect():
 
     gdal.VSIFCloseL(f)
 
-    return 'success'
-
 ###############################################################################
 # TODO: better testing
 
@@ -378,8 +353,6 @@ def test_vsicurl_test_clear_cache():
 
     gdal.VSICurlClearCache()
     gdal.VSICurlClearCache()
-
-    return 'success'
 
 ###############################################################################
 
@@ -420,8 +393,7 @@ def test_vsicurl_test_retry():
         assert data == 'foo'
         assert error_msg.find('429') >= 0
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -440,8 +412,6 @@ def test_vsicurl_test_fallback_from_head_to_get():
     assert statres.size == 3
 
     gdal.VSICurlClearCache()
-
-    return 'success'
 
 ###############################################################################
 
@@ -477,8 +447,7 @@ def test_vsicurl_test_parse_html_filelist_apache():
     with webserver.install_http_handler(handler):
         assert gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/i_dont_exist' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is None
 
-    return 'success'
-
+    
 ###############################################################################
 
 
@@ -492,8 +461,6 @@ def test_vsicurl_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 
 gdaltest_list = [test_vsicurl_1,

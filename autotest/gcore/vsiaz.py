@@ -58,8 +58,6 @@ def test_vsiaz_init():
 
     assert gdal.GetSignedURL('/vsiaz/foo/bar') is None
 
-    return 'success'
-
 ###############################################################################
 # Error cases
 
@@ -105,15 +103,13 @@ def test_vsiaz_real_server_errors():
         if f is not None:
             gdal.VSIFCloseL(f)
         if gdal.GetConfigOption('APPVEYOR') is not None:
-            return 'success'
+            return
         pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsiaz_streaming/foo/bar.baz')
     assert f is None, gdal.VSIGetLastErrorMsg()
-
-    return 'success'
 
 ###############################################################################
 
@@ -135,8 +131,6 @@ def test_vsiaz_start_webserver():
     gdal.SetConfigOption('AZURE_STORAGE_ACCOUNT', '')
     gdal.SetConfigOption('AZURE_STORAGE_ACCESS_KEY', '')
     gdal.SetConfigOption('CPL_AZURE_TIMESTAMP', 'my_timestamp')
-
-    return 'success'
 
 ###############################################################################
 # Test with a fake Azure Blob server
@@ -230,8 +224,7 @@ def test_vsiaz_fake_basic():
                 print(stat_res)
             pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test ReadDir() with a fake Azure Blob server
 
@@ -345,8 +338,6 @@ def test_vsiaz_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/')
     assert dir_contents == ['mycontainer1', 'mycontainer2']
-
-    return 'success'
 
 ###############################################################################
 # Test write
@@ -592,8 +583,7 @@ def test_vsiaz_fake_write():
             pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Unlink()
 
@@ -619,8 +609,6 @@ def test_vsiaz_fake_unlink():
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
     assert ret == -1
-
-    return 'success'
 
 ###############################################################################
 # Test Mkdir() / Rmdir()
@@ -743,8 +731,6 @@ def test_vsiaz_fake_mkdir_rmdir():
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/dir_nonempty')
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -758,8 +744,6 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
 
     signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource')
     assert signed_url.find('http://127.0.0.1:%d/myaccount/az_fake_bucket/resource' % gdaltest.webserver_port) >= 0
-
-    return 'success'
 
 
 ###############################################################################
@@ -775,8 +759,6 @@ def test_vsiaz_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    return 'success'
 
 ###############################################################################
 # Nominal cases (require valid credentials)
@@ -852,7 +834,7 @@ def vsiaz_extra_1():
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
-        return 'success'
+        return
 
     f = open_for_read('/vsiaz/' + az_resource)
     assert f is not None
@@ -893,8 +875,6 @@ def vsiaz_extra_1():
 
     assert len(ret) == 1
 
-    return 'success'
-
 ###############################################################################
 
 
@@ -903,8 +883,7 @@ def test_vsiaz_cleanup():
     for var in gdaltest.az_vars:
         gdal.SetConfigOption(var, gdaltest.az_vars[var])
 
-    return 'success'
-
+    
 
 gdaltest_list = [test_vsiaz_init,
                  test_vsiaz_real_server_errors,

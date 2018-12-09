@@ -100,8 +100,6 @@ def test_ogr_rfc35_sqlite_1():
     fd.SetWidth(20)
     lyr.CreateField(fd)
 
-    return 'success'
-
 ###############################################################################
 # Test ReorderField()
 
@@ -136,8 +134,7 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
         feat = lyr.GetNextFeature()
         i = i + 1
 
-    return 'success'
-
+    
 
 def CheckColumnOrder(lyr, expected_order):
 
@@ -145,16 +142,13 @@ def CheckColumnOrder(lyr, expected_order):
     for i, exp_order in enumerate(expected_order):
         assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
-    return 'success'
-
+    
 
 def Check(lyr, expected_order):
 
     ret = CheckColumnOrder(lyr, expected_order)
 
     ret = CheckFeatures(lyr)
-
-    return 'success'
 
 
 def test_ogr_rfc35_sqlite_2():
@@ -204,8 +198,6 @@ def test_ogr_rfc35_sqlite_2():
     gdal.PopErrorHandler()
     assert ret != 0
 
-    return 'success'
-
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
@@ -249,8 +241,6 @@ def test_ogr_rfc35_sqlite_3():
     assert fld_defn.GetWidth() == 5
 
     ret = CheckFeatures(lyr, field3='baz5')
-
-    return 'success'
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
@@ -345,8 +335,6 @@ def test_ogr_rfc35_sqlite_4():
 
     ret = CheckFeatures(lyr, field3='baz5')
 
-    return 'success'
-
 ###############################################################################
 # Test DeleteField()
 
@@ -389,8 +377,6 @@ def test_ogr_rfc35_sqlite_5():
 
     ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
-    return 'success'
-
 ###############################################################################
 # Initiate the test file
 
@@ -402,8 +388,6 @@ def test_ogr_rfc35_sqlite_cleanup():
 
     gdaltest.rfc35_sqlite_ds = None
     ogr.GetDriverByName('SQLite').DeleteDataSource(gdaltest.rfc35_sqlite_ds_name)
-
-    return 'success'
 
 
 gdaltest_list = [
