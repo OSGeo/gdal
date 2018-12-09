@@ -118,8 +118,6 @@ def test_isis_4():
     tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978)
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ds.GetMetadataDomainList() != ['', 'json:ISIS3']:
         gdaltest.post_reason('fail')
@@ -151,8 +149,6 @@ def test_isis_4():
                             options=['USE_SRC_MAPPING=YES'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
     if lbl.find('PositiveWest') < 0:
@@ -174,8 +170,6 @@ def test_isis_4():
                                      'TARGET_NAME=my_label'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
     if lbl.find('PositiveEast') < 0:
@@ -205,8 +199,6 @@ def test_isis_5():
                                      'WRITE_BOUNDING_DEGREES=NO'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.cub') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -231,8 +223,6 @@ def test_isis_6():
                                      'COMMENT=my comment'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.cub') is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -267,8 +257,6 @@ def test_isis_7():
                                      'USE_SRC_LABEL=NO'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.tif') is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -288,8 +276,6 @@ def test_isis_7():
                                      'USE_SRC_LABEL=NO'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.tif') is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -315,8 +301,6 @@ def test_isis_8():
                                      'GEOTIFF_OPTIONS=COMPRESS=LZW'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.tif') is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -350,8 +334,6 @@ def test_isis_9():
                                      'EXTERNAL_FILENAME=/vsimem/foo.bin'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     if gdal.VSIStatL('/vsimem/foo.bin') is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -382,8 +364,6 @@ def test_isis_10():
                                      'EXTERNAL_FILENAME=/vsimem/foo.tif'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     ds = gdal.Open('/vsimem/foo.tif')
     if ds.GetRasterBand(1).GetBlockSize() != [16, 32]:
         gdaltest.post_reason('fail')
@@ -408,8 +388,6 @@ def test_isis_11():
                                      'GEOTIFF_OPTIONS=COMPRESS=LZW'])
     ret = tst.testCreateCopy(new_filename='/vsimem/isis_tmp.lbl',
                              delete_copy=0)
-    if ret != 'success':
-        return ret
     ds = gdal.Open('/vsimem/isis_tmp.tif')
     if ds.GetRasterBand(1).GetBlockSize() != [256, 256]:
         gdaltest.post_reason('fail')

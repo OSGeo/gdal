@@ -77,8 +77,6 @@ def test_pds_2():
                        check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    if ret != 'success':
-        return 'fail'
 
     ds = gdal.Open('data/fl73n003_truncated.img')
     if ds.GetRasterBand(1).GetNoDataValue() != 7:
@@ -108,8 +106,7 @@ def test_pds_3():
     tst = gdaltest.GDALTest('PDS', 'EN0001426030M_truncated.IMG', 1, 1367)
 
     gt_expected = (0, 1, 0, 0, 0, 1)
-    if tst.testOpen(check_gt=gt_expected) != 'success':
-        return 'fail'
+    tst.testOpen(check_gt=gt_expected)
 
     ds = gdal.Open('data/EN0001426030M_truncated.IMG')
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
@@ -162,8 +159,6 @@ def test_pds_6():
     ret = tst.testOpen(check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    if ret != 'success':
-        return 'fail'
 
     ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
 
@@ -210,8 +205,6 @@ def test_pds_7():
                        check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    if ret != 'success':
-        return 'fail'
 
     return 'success'
 
@@ -252,8 +245,7 @@ def test_pds_9():
     # Derived from http://pdsimage.wr.usgs.gov/data/co-v_e_j_s-radar-3-sbdr-v1.0/CORADR_0035/DATA/BIDR/BIEQI49N071_D035_T00AS01_V02.LBL
     tst = gdaltest.GDALTest('PDS', 'PDS_WITH_ZIP_IMG.LBL', 1, 0)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('data/PDS_WITH_ZIP_IMG.LBL')
     got_nd = ds.GetRasterBand(1).GetNoDataValue()

@@ -63,8 +63,7 @@ def test_ogr_selafin_create_ds():
 
 
 def test_ogr_selafin_create_nodes():
-    if test_ogr_selafin_create_ds() != 'success':
-        return 'skip'
+    test_ogr_selafin_create_ds()
     ref = osr.SpatialReference()
     ref.ImportFromEPSG(4326)
     layer = gdaltest.selafin_ds.CreateLayer('name', ref, geom_type=ogr.wkbPoint)

@@ -1386,8 +1386,6 @@ def test_ogr_vrt_23(shared_ds_flag=''):
 def test_ogr_vrt_24():
 
     ret = test_ogr_vrt_23(' shared="1"')
-    if ret != 'success':
-        return ret
 
     rec1 = """<OGRVRTDataSource>
     <OGRVRTLayer name="test">

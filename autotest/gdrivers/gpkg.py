@@ -249,8 +249,7 @@ def test_gpkg_1():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 2, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 2, False)
 
     # Check that there's no extensions
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
@@ -307,8 +306,7 @@ def test_gpkg_1():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, False)
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
@@ -344,8 +342,7 @@ def test_gpkg_2():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'JPEG', 1, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'JPEG', 1, False)
 
     # Check that there's no extensions
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
@@ -380,8 +377,7 @@ def test_gpkg_2():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'JPEG', 1, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'JPEG', 1, False)
 
     # Try deregistering JPEG driver
     gdaltest.jpeg_dr.Deregister()
@@ -463,8 +459,7 @@ def test_gpkg_3():
         expected_band_count = 4
     else:
         expected_band_count = 3
-    if check_tile_format(out_ds, 'WEBP', expected_band_count, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'WEBP', expected_band_count, False)
 
     out_ds = None
 
@@ -491,8 +486,7 @@ def test_gpkg_3():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'WEBP', 3, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'WEBP', 3, False)
 
     # Try deregistering WEBP driver
     gdaltest.webp_dr.Deregister()
@@ -584,8 +578,7 @@ def test_gpkg_4(tile_drv_name='PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, working_bands, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, tile_drv_name, working_bands, False)
     out_ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['USE_TILE_EXTENT=YES'])
@@ -611,8 +604,7 @@ def test_gpkg_4(tile_drv_name='PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, 3, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, tile_drv_name, 3, False)
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
@@ -689,8 +681,7 @@ def test_gpkg_7(tile_drv_name='PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, working_bands, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, tile_drv_name, working_bands, False)
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
@@ -710,8 +701,7 @@ def test_gpkg_7(tile_drv_name='PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, 3, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, tile_drv_name, 3, False)
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
@@ -731,8 +721,7 @@ def test_gpkg_7(tile_drv_name='PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, None, None, None) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, None, None, None)
     out_ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')
@@ -801,8 +790,7 @@ def test_gpkg_10():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, True)
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
     if got_ct is not None:
         gdaltest.post_reason('fail')
@@ -879,8 +867,7 @@ def test_gpkg_10():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 4, False) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 4, False)
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
     if got_ct is not None:
         gdaltest.post_reason('fail')
@@ -1677,8 +1664,7 @@ def test_gpkg_17():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, False, zoom_level=0) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, False, zoom_level=0)
     if out_ds.GetRasterBand(1).GetOverview(0).GetColorTable() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1701,8 +1687,7 @@ def test_gpkg_17():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, False, zoom_level=0) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, False, zoom_level=0)
     out_ds = None
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -1722,8 +1707,7 @@ def test_gpkg_17():
         gdaltest.post_reason('fail')
         print(got_cs)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 3, False, zoom_level=0) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 3, False, zoom_level=0)
 
     # Check that there's no extensions
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
@@ -1856,10 +1840,8 @@ def test_gpkg_18():
         print(got_cs)
         print(expected_cs_ov1)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 3, False, zoom_level=1) != 'success':
-        return 'fail'
-    if check_tile_format(out_ds, 'PNG', 4, False, zoom_level=0) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 3, False, zoom_level=1)
+    check_tile_format(out_ds, 'PNG', 4, False, zoom_level=0)
     out_ds = None
 
     # Test gpkg_zoom_other extension
@@ -2013,10 +1995,8 @@ def test_gpkg_19():
         print(got_cs)
         print(expected_cs_ov1)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, True, zoom_level=1) != 'success':
-        return 'fail'
-    if check_tile_format(out_ds, 'PNG', 4, False, zoom_level=0) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, True, zoom_level=1)
+    check_tile_format(out_ds, 'PNG', 4, False, zoom_level=0)
     out_ds = None
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2049,8 +2029,7 @@ def test_gpkg_20():
         print(got_cs)
         print(expected_cs)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, True)
     out_ds = None
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2068,8 +2047,7 @@ def test_gpkg_20():
         print(got_cs)
         print(expected_cs)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, True)
     out_ds = None
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2087,10 +2065,8 @@ def test_gpkg_20():
         print(got_cs)
         print(expected_cs)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
-        return 'fail'
-    if check_tile_format(out_ds, 'PNG', 4, False, row=0, col=2) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, True)
+    check_tile_format(out_ds, 'PNG', 4, False, row=0, col=2)
     out_ds = None
     gdal.Unlink('/vsimem/tmp.gpkg')
 
@@ -2113,8 +2089,7 @@ def test_gpkg_20():
         print(got_cs)
         print(expected_cs)
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
-        return 'fail'
+    check_tile_format(out_ds, 'PNG', 1, True)
     out_ds = None
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER, open_options=['BAND_COUNT=1'])
     if out_ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
@@ -2801,8 +2776,7 @@ def test_gpkg_31():
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', None)
 
     ds = gdal.Open('/vsimem/tmp.gpkg')
-    if check_tile_format(ds, 'PNG', 4, False) != 'success':
-        return 'fail'
+    check_tile_format(ds, 'PNG', 4, False)
     expected_cs = [4672, 4672, 4672, 4873]
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -2832,8 +2806,7 @@ def test_gpkg_32():
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', None)
 
     ds = gdal.Open('/vsimem/tmp.gpkg')
-    if check_tile_format(ds, 'PNG', 4, False) != 'success':
-        return 'fail'
+    check_tile_format(ds, 'PNG', 4, False)
     expected_cs = [1970, 1970, 1970, 10807]
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     if got_cs != expected_cs:
@@ -2873,8 +2846,7 @@ def test_gpkg_33():
     gdal.Unlink(src_ds.GetDescription())
 
     ds = gdal.Open('/vsimem/tmp.gpkg')
-    if check_tile_format(ds, 'PNG', 4, False) != 'success':
-        return 'fail'
+    check_tile_format(ds, 'PNG', 4, False)
     expected_cs = [10991, 57677, 34965, 10638]
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     if got_cs != expected_cs:

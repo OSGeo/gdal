@@ -171,8 +171,7 @@ def test_gif_7():
 
     tst = gdaltest.GDALTest('BIGGIF', 'bug407.gif', 1, 57921)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('data/bug407.gif')
     if ds is None:

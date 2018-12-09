@@ -60,8 +60,7 @@ def test_ogr_wasp_create_ds():
 
 def test_ogr_wasp_elevation_from_linestring_z():
 
-    if test_ogr_wasp_create_ds() != 'success':
-        return 'skip'
+    test_ogr_wasp_create_ds()
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
@@ -121,8 +120,7 @@ def test_ogr_wasp_elevation_from_linestring_z():
 
 def test_ogr_wasp_elevation_from_linestring_z_toler():
 
-    if test_ogr_wasp_create_ds() != 'success':
-        return 'skip'
+    test_ogr_wasp_create_ds()
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
@@ -191,8 +189,7 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
 
 def test_ogr_wasp_elevation_from_linestring_field():
 
-    if test_ogr_wasp_create_ds() != 'success':
-        return 'skip'
+    test_ogr_wasp_create_ds()
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                          options=['WASP_FIELDS=elevation'],
@@ -246,8 +243,7 @@ def test_ogr_wasp_elevation_from_linestring_field():
 
 def test_ogr_wasp_roughness_from_linestring_fields():
 
-    if test_ogr_wasp_create_ds() != 'success':
-        return 'skip'
+    test_ogr_wasp_create_ds()
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                          options=['WASP_FIELDS=z_left,z_right'],
@@ -309,8 +305,7 @@ def test_ogr_wasp_roughness_from_linestring_fields():
 
 def test_ogr_wasp_roughness_from_polygon_z():
 
-    if test_ogr_wasp_create_ds() != 'success':
-        return 'skip'
+    test_ogr_wasp_create_ds()
 
     if not ogrtest.have_geos():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -379,8 +374,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
 
 def test_ogr_wasp_roughness_from_polygon_field():
 
-    if test_ogr_wasp_create_ds() != 'success':
-        return 'skip'
+    test_ogr_wasp_create_ds()
 
     if not ogrtest.have_geos():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -454,8 +448,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
 
 def test_ogr_wasp_merge():
 
-    if test_ogr_wasp_create_ds() != 'success':
-        return 'skip'
+    test_ogr_wasp_create_ds()
 
     if not ogrtest.have_geos():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -523,8 +516,7 @@ def test_ogr_wasp_merge():
 
 
 def test_ogr_wasp_reading():
-    if test_ogr_wasp_elevation_from_linestring_z() != 'success':
-        return 'skip'
+    test_ogr_wasp_elevation_from_linestring_z()
 
     gdaltest.wasp_ds = None
 

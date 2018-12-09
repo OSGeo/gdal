@@ -51,8 +51,6 @@ def test_rraster_1(filename='data/byte_rraster.grd', check_prj=None):
                        check_gt=ref_ds.GetGeoTransform(),
                        check_min=74,
                        check_max=255)
-    if ret != 'success':
-        return ret
 
     ds = gdal.Open(filename)
     md = ds.GetMetadata()

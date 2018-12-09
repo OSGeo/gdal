@@ -2173,8 +2173,7 @@ def test_ecw_online_1():
     # checksum = 32316 on my PC
     tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
@@ -2195,8 +2194,7 @@ def test_ecw_online_2():
     # checksum = 1292 on my PC
     tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/gcp.jp2')
     ds.GetRasterBand(1).Checksum()
@@ -2231,8 +2229,7 @@ def ecw_online_3():
     # checksum = 16481 on my PC
     tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
@@ -2270,8 +2267,7 @@ def test_ecw_online_4():
     # Checksum = 53054 on my PC
     tst = gdaltest.GDALTest('JP2ECW', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')

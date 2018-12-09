@@ -333,9 +333,6 @@ def test_netcdf_2():
 
     result = tst.testOpen(check_prj=wkt)
 
-    if result != 'success':
-        return result
-
     # Test that in raster-only mode, update isn't supported (not sure what would be missing for that...)
     with gdaltest.error_handler():
         ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
@@ -1013,8 +1010,6 @@ def test_netcdf_25():
         return 'skip'
 
     result = netcdf_test_copy('data/nc_vars.nc', 1, None, 'tmp/netcdf_25.nc')
-    if result != 'success':
-        return result
 
     vals_global = {'NC_GLOBAL#test': 'testval',
                    'NC_GLOBAL#valid_range_i': '0,255',
@@ -1042,8 +1037,6 @@ def netcdf_25_nc4():
         return 'skip'
 
     result = netcdf_test_copy('data/nc4_vars.nc', 1, None, 'tmp/netcdf_25_nc4.nc', ['FORMAT=NC4'])
-    if result != 'success':
-        return result
 
     vals_global = {'NC_GLOBAL#test': 'testval',
                    'NC_GLOBAL#test_string': 'testval_string',
@@ -1203,8 +1196,6 @@ def test_netcdf_28():
 
     # copy file
     result = netcdf_test_copy(ifile, 0, None, ofile)
-    if result != 'success':
-        return 'fail'
 
     # test file
     return netcdf_test_4dfile(ofile)
@@ -1247,8 +1238,6 @@ def test_netcdf_29():
 
     # copy vrt to netcdf, with proper dimension rolling
     result = netcdf_test_copy(ofile1, 0, None, ofile)
-    if result != 'success':
-        return 'fail'
 
     # test file
     result = netcdf_test_4dfile(ofile)
@@ -1321,11 +1310,7 @@ def test_netcdf_32():
 
     # test basic read/write
     result = netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4'])
-    if result != 'success':
-        return 'fail'
     result = netcdf_test_copy(ifile, 1, 4672, ofile, ['FORMAT=NC4C'])
-    if result != 'success':
-        return 'fail'
 
     return 'success'
 
@@ -1342,8 +1327,6 @@ def test_netcdf_33():
     ofile = 'tmp/netcdf_33.nc'
 
     result = netcdf_test_copy(ifile, 1, None, ofile, ['FORMAT=NC4'])
-    if result != 'success':
-        return result
 
     return netcdf_check_vars('tmp/netcdf_33.nc')
 
@@ -1411,8 +1394,6 @@ def test_netcdf_35():
 
     # copy file
     result = netcdf_test_copy(ifile, 0, None, ofile)
-    if result != 'success':
-        return 'fail'
 
     # test long metadata is copied correctly
     ds = gdal.Open(ofile)
@@ -2073,9 +2054,6 @@ def test_netcdf_51():
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
         result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_51.nc', 'auto', False)
-        if result_cf != 'success':
-            gdaltest.post_reason('failure')
-            return 'fail'
 
     gdal.Unlink('tmp/netcdf_51.nc')
     gdal.Unlink('tmp/netcdf_51.csv')
@@ -2208,9 +2186,6 @@ def test_netcdf_52():
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
         result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_52.nc', 'auto', False)
-        if result_cf != 'success':
-            gdaltest.post_reason('failure')
-            return 'fail'
 
     gdal.Unlink('tmp/netcdf_52.nc')
     gdal.Unlink('tmp/netcdf_52.csv')
@@ -2665,9 +2640,6 @@ def test_netcdf_62_cf_check():
     if netcdf_cf.netcdf_cf_setup() == 'success' and \
        gdaltest.netcdf_cf_method is not None:
         result_cf = netcdf_cf.netcdf_cf_check_file('tmp/netcdf_62.nc', 'auto', False)
-        if result_cf != 'success':
-            gdaltest.post_reason('failure')
-            return 'fail'
 
     gdal.Unlink('/vsimem/netcdf_62.nc')
 

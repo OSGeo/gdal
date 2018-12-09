@@ -1429,8 +1429,7 @@ def test_ogr_pg_24(with_and_without_postgis):
     lyr = ds.GetLayerByName('datatypetest')
 
     feat = lyr.GetNextFeature()
-    if check_value_23(lyr.GetLayerDefn(), feat) != 'success':
-        return 'fail'
+    check_value_23(lyr.GetLayerDefn(), feat)
 
     feat = None
 
@@ -1454,8 +1453,7 @@ def test_ogr_pg_25(with_and_without_postgis):
     sql_lyr = ds.ExecuteSQL('select * from datatypetest')
 
     feat = sql_lyr.GetNextFeature()
-    if check_value_23(sql_lyr.GetLayerDefn(), feat) != 'success':
-        return 'fail'
+    check_value_23(sql_lyr.GetLayerDefn(), feat)
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -1533,8 +1531,7 @@ def test_ogr_pg_29(with_and_without_postgis):
 
     # my_timestamp has now a time zone...
     feat = lyr.GetNextFeature()
-    if check_value_23(lyr.GetLayerDefn(), feat) != 'success':
-        return 'fail'
+    check_value_23(lyr.GetLayerDefn(), feat)
 
     geom = feat.GetGeometryRef()
     wkt = geom.ExportToWkt()
@@ -4460,17 +4457,9 @@ def test_ogr_pg_76(with_and_without_postgis):
         return 'fail'
 
     ret = ogr_pg_76_scenario1(lyr1, lyr2)
-    if ret != 'success':
-        return ret
     ret = ogr_pg_76_scenario2(lyr1, lyr2)
-    if ret != 'success':
-        return ret
     ret = ogr_pg_76_scenario3(lyr1, lyr2)
-    if ret != 'success':
-        return ret
     ret = ogr_pg_76_scenario4(lyr1, lyr2)
-    if ret != 'success':
-        return ret
 
     return ret
 

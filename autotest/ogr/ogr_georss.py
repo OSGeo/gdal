@@ -338,8 +338,7 @@ def ogr_georss_create(filename, options):
 
 def test_ogr_georss_4():
 
-    if ogr_georss_create('tmp/test_rss2.xml', []) != 'success':
-        return 'fail'
+    ogr_georss_create('tmp/test_rss2.xml', [])
 
     content = open('tmp/test_rss2.xml').read()
     if content.find('<georss:point>49 2') == -1:
@@ -362,8 +361,7 @@ def test_ogr_georss_5():
 
 def test_ogr_georss_6():
 
-    if ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=GML']) != 'success':
-        return 'fail'
+    ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=GML'])
 
     content = open('tmp/test_rss2.xml').read()
     if content.find('<georss:where><gml:Point><gml:pos>49 2') == -1:
@@ -388,8 +386,7 @@ def test_ogr_georss_7():
 
 def test_ogr_georss_8():
 
-    if ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=W3C_GEO']) != 'success':
-        return 'fail'
+    ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=W3C_GEO'])
 
     content = open('tmp/test_rss2.xml').read()
     if content.find('<geo:lat>49') == -1 or content.find('<geo:long>2') == -1:

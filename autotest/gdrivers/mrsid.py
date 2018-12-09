@@ -115,9 +115,6 @@ def test_mrsid_1():
                        check_stat=(0.0, 255.0, 103.319, 55.153),
                        check_approx_stat=(2.0, 243.0, 103.131, 43.978))
 
-    if ret != 'success':
-        return ret
-
     ds = gdal.Open('data/mercator.sid')
     got_prj = ds.GetProjectionRef()
     ds = None
@@ -459,8 +456,7 @@ def test_mrsid_online_1():
     # Checksum = 29473 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
@@ -482,8 +478,7 @@ def test_mrsid_online_2():
     # Checksum = 209 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     # The JP2MrSID driver doesn't handle GCPs
     ds = gdal.Open('tmp/cache/gcp.jp2')
@@ -517,8 +512,7 @@ def test_mrsid_online_3():
     # checksum = 14443 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
@@ -554,8 +548,7 @@ def test_mrsid_online_4():
     # Checksum = 53186 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')

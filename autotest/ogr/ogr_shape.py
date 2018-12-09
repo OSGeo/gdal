@@ -2570,31 +2570,15 @@ def test_ogr_shape_54():
     ds = ogr.Open(ds_name)
     for i in range(N):
         ret = ogr_shape_54_test_layer(ds, i)
-        if ret != 'success':
-            return ret
 
     # Now some 'random' access
     ret = ogr_shape_54_test_layer(ds, N - 1 - LRUListSize)
-    if ret != 'success':
-        return ret
     ret = ogr_shape_54_test_layer(ds, N - LRUListSize / 2)
-    if ret != 'success':
-        return ret
     ret = ogr_shape_54_test_layer(ds, N - LRUListSize / 4)
-    if ret != 'success':
-        return ret
     ret = ogr_shape_54_test_layer(ds, 0)
-    if ret != 'success':
-        return ret
     ret = ogr_shape_54_test_layer(ds, 0)
-    if ret != 'success':
-        return ret
     ret = ogr_shape_54_test_layer(ds, 2)
-    if ret != 'success':
-        return ret
     ret = ogr_shape_54_test_layer(ds, 1)
-    if ret != 'success':
-        return ret
     ds = None
 
     # Test adding a new layer
@@ -2605,30 +2589,20 @@ def test_ogr_shape_54():
     # Test accessing the new layer
     ds = ogr.Open(ds_name)
     ret = ogr_shape_54_test_layer(ds, N)
-    if ret != 'success':
-        return ret
     ds = None
 
     # Test deleting layers
     ds = ogr.Open(ds_name, update=1)
     for i in range(N):
         ret = ogr_shape_54_test_layer(ds, i)
-        if ret != 'success':
-            return ret
     for i in range(N - LRUListSize + 1, N):
         ds.ExecuteSQL('DROP TABLE layer%03d' % i)
     ret = ogr_shape_54_test_layer(ds, N - LRUListSize)
-    if ret != 'success':
-        return ret
     ogr_shape_54_create_layer(ds, N + 2)
     for i in range(0, N - LRUListSize + 1):
         ds.ExecuteSQL('DROP TABLE layer%03d' % i)
     ret = ogr_shape_54_test_layer(ds, N)
-    if ret != 'success':
-        return ret
     ret = ogr_shape_54_test_layer(ds, N + 2)
-    if ret != 'success':
-        return ret
     ds = None
 
     # Destroy and recreate datasource

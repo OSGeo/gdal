@@ -181,8 +181,6 @@ def test_aigrid_online_1():
 
     tst = gdaltest.GDALTest('AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute=1)
     ret = tst.testOpen()
-    if ret != 'success':
-        return ret
 
     ds = gdal.Open('tmp/cache/nzdem/nzdem500/hdr.adf')
 

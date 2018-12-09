@@ -63,8 +63,6 @@ def test_ingr_3():
 
     tst = gdaltest.GDALTest('INGR', '8bit_pal.cot', 1, 4855)
     result = tst.testOpen()
-    if result != 'success':
-        return result
 
     ds = gdal.Open('data/8bit_pal.cot')
     ct = ds.GetRasterBand(1).GetRasterColorTable()

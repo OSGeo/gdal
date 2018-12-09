@@ -156,23 +156,15 @@ def CheckColumnOrder(lyr, expected_order):
 def Check(lyr, expected_order):
 
     ret = CheckColumnOrder(lyr, expected_order)
-    if ret != 'success':
-        return ret
 
     ret = CheckFeatures(lyr)
-    if ret != 'success':
-        return ret
 
     ds = ogr.Open('/vsimem/rfc35_test.tab', update=1)
     lyr_reopen = ds.GetLayer(0)
 
     ret = CheckColumnOrder(lyr_reopen, expected_order)
-    if ret != 'success':
-        return ret
 
     ret = CheckFeatures(lyr_reopen)
-    if ret != 'success':
-        return ret
 
     return 'success'
 
@@ -349,8 +341,6 @@ def test_ogr_rfc35_mitab_3():
         return 'fail'
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
 
     return 'success'
 

@@ -128,8 +128,6 @@ def test_ogr_shape_sbn_1():
     for i in range(ds.GetLayerCount()):
         lyr = ds.GetLayer(i)
         ret = search_all_features(lyr)
-        if ret != 'success':
-            return ret
 
     return 'success'
 

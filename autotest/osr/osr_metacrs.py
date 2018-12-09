@@ -59,8 +59,6 @@ class TestMetaCRS(object):
         self.dst_error = None
 
         result = self.parse_line()
-        if result != 'success':
-            return result
 
         try:
             gdal.PushErrorHandler('CPLQuietErrorHandler')

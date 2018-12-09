@@ -534,16 +534,10 @@ def test_ogr_sql_sqlite_6():
     gdal.SetConfigOption('OGR_SQLITE_DIALECT_USE_SPATIALITE', 'NO')
 
     ret = test_ogr_sql_sqlite_1()
-    if ret != 'success':
-        return ret
 
     ret = test_ogr_sql_sqlite_2()
-    if ret != 'success':
-        return ret
 
     ret = test_ogr_sql_sqlite_4()
-    if ret != 'success':
-        return ret
 
     gdal.SetConfigOption('OGR_SQLITE_DIALECT_USE_SPATIALITE', None)
 

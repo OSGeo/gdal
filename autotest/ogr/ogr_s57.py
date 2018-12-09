@@ -277,14 +277,10 @@ def test_ogr_s57_9():
         return 'fail'
 
     gdaltest.s57_ds = ds
-    if test_ogr_s57_2() != 'success':
-        return 'fail'
-    if test_ogr_s57_3() != 'success':
-        return 'fail'
-    if test_ogr_s57_4() != 'success':
-        return 'fail'
-    if test_ogr_s57_5() != 'success':
-        return 'fail'
+    test_ogr_s57_2()
+    test_ogr_s57_3()
+    test_ogr_s57_4()
+    test_ogr_s57_5()
 
     gdaltest.s57_ds = None
 
@@ -304,8 +300,7 @@ def test_ogr_s57_9():
         return 'fail'
 
     gdaltest.s57_ds = ds
-    if test_ogr_s57_4() != 'success':
-        return 'fail'
+    test_ogr_s57_4()
 
     gdaltest.s57_ds = None
 

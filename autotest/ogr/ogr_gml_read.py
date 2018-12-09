@@ -1272,9 +1272,6 @@ def test_ogr_gml_31():
     ret = test_ogr_gml_29()
     gdal.SetConfigOption('GML_READ_MODE', None)
 
-    if ret != 'success':
-        return ret
-
     # Test reading second layer and then first layer
     gdal.SetConfigOption('GML_READ_MODE', 'SEQUENTIAL_LAYERS')
     ds = ogr.Open('data/testfmegml.gml')
@@ -3752,9 +3749,7 @@ def test_ogr_gml_71():
     # With .xsd
     gdal.Unlink('data/wfsjointlayer.gfs')
     ds = ogr.Open('data/wfsjointlayer.gml')
-    if ogr_gml_71_helper(ds) != 'success':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    ogr_gml_71_helper(ds)
     ds = None
 
     try:
@@ -3766,9 +3761,7 @@ def test_ogr_gml_71():
 
     # With .xsd but that is only partially understood
     ds = gdal.OpenEx('data/wfsjointlayer.gml', open_options=['XSD=data/wfsjointlayer_not_understood.xsd'])
-    if ogr_gml_71_helper(ds) != 'success':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    ogr_gml_71_helper(ds)
     ds = None
 
     try:
@@ -3781,9 +3774,7 @@ def test_ogr_gml_71():
     shutil.copy('data/wfsjointlayer.gml', 'tmp/wfsjointlayer.gml')
     gdal.Unlink('tmp/wfsjointlayer.gfs')
     ds = ogr.Open('tmp/wfsjointlayer.gml')
-    if ogr_gml_71_helper(ds) != 'success':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    ogr_gml_71_helper(ds)
     ds = None
 
     try:
@@ -3794,9 +3785,7 @@ def test_ogr_gml_71():
 
     # With .gfs
     ds = ogr.Open('tmp/wfsjointlayer.gml')
-    if ogr_gml_71_helper(ds) != 'success':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    ogr_gml_71_helper(ds)
     ds = None
 
     return 'success'

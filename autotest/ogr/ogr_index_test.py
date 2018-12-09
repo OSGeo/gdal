@@ -460,28 +460,18 @@ def test_ogr_index_11():
 
     lyr.SetAttributeFilter("intfield = 1 OR strfield = 'bar'")
     ret = ogr_index_11_check(lyr, [0, 1, 3])
-    if ret != 'success':
-        return ret
 
     lyr.SetAttributeFilter("intfield = 1 AND strfield = 'bar'")
     ret = ogr_index_11_check(lyr, [1])
-    if ret != 'success':
-        return ret
 
     lyr.SetAttributeFilter("intfield = 1 AND strfield = 'foo'")
     ret = ogr_index_11_check(lyr, [0])
-    if ret != 'success':
-        return ret
 
     lyr.SetAttributeFilter("intfield = 3 AND strfield = 'foo'")
     ret = ogr_index_11_check(lyr, [])
-    if ret != 'success':
-        return ret
 
     lyr.SetAttributeFilter("intfield IN (1, 2, 3)")
     ret = ogr_index_11_check(lyr, [0, 1, 2, 3, 4])
-    if ret != 'success':
-        return ret
 
     ds = None
 

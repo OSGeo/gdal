@@ -73,8 +73,6 @@ def test_kea_2():
     for src_file in src_files:
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
         ret = tst.testCreateCopy(check_minmax=1)
-        if ret != 'success':
-            return ret
 
     return 'success'
 
@@ -97,8 +95,6 @@ def test_kea_3():
     for src_file in src_files:
         tst = gdaltest.GDALTest('KEA', src_file, 1, 4672)
         ret = tst.testCreate(out_bands=1, check_minmax=1)
-        if ret != 'success':
-            return ret
 
     return 'success'
 

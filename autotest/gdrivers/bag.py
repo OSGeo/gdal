@@ -843,8 +843,6 @@ def test_bag_write_two_bands():
     ret = tst.testCreateCopy(quiet_error_handler=False,
                              delete_copy=False,
                              new_filename='/vsimem/out.bag')
-    if ret != 'success':
-        return ret
 
     ds = gdal.Open('/vsimem/out.bag')
     xml = ds.GetMetadata_List('xml:BAG')[0]

@@ -219,8 +219,7 @@ def test_jp2openjpeg_6():
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'll.jp2', 1, None)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('data/ll.jp2')
     ds.GetRasterBand(1).Checksum()
@@ -3365,8 +3364,7 @@ def test_jp2openjpeg_online_1():
     # Checksum = 32669 on my PC
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
@@ -3388,8 +3386,7 @@ def test_jp2openjpeg_online_2():
     # Checksum = 15621 on my PC
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/gcp.jp2')
     ds.GetRasterBand(1).Checksum()
@@ -3421,8 +3418,7 @@ def test_jp2openjpeg_online_3():
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
@@ -3455,8 +3451,7 @@ def test_jp2openjpeg_online_4():
 
     tst = gdaltest.GDALTest('JP2OpenJPEG', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'expected_fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')

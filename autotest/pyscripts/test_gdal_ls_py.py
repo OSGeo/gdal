@@ -79,9 +79,6 @@ def test_gdal_ls_py_1():
     # TODO: Why the '' as the first element of the list here and below?
     ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data/poly.shp'])
 
-    if ret != 'success':
-        return ret
-
     if ret_str.find('poly.shp') == -1:
         print(ret_str)
         return 'fail'
@@ -94,9 +91,6 @@ def test_gdal_ls_py_1():
 
 def test_gdal_ls_py_2():
     ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data'])
-
-    if ret != 'success':
-        return ret
 
     if ret_str.find('poly.shp') == -1:
         print(ret_str)
@@ -111,9 +105,6 @@ def test_gdal_ls_py_2():
 def test_gdal_ls_py_3():
     ret, ret_str = run_gdal_ls(['', '-R', '../ogr/data'])
 
-    if ret != 'success':
-        return ret
-
     if ret_str.find('PROJ_UNITS') == -1:
         print(ret_str)
         return 'fail'
@@ -126,9 +117,6 @@ def test_gdal_ls_py_3():
 
 def test_gdal_ls_py_4():
     ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
-
-    if ret != 'success':
-        return ret
 
     if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/../ogr/data/poly.zip/poly.PRJ') == -1:
         print(ret_str)
@@ -193,9 +181,6 @@ def test_gdal_ls_py_6():
         return 'skip'
 
     ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'])
-
-    if ret != 'success':
-        return ret
 
     if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
         print(ret_str)
@@ -271,9 +256,6 @@ def test_gdal_ls_py_8():
         return 'skip'
 
     ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])
-
-    if ret != 'success':
-        return ret
 
     if ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001') == -1:
         print(ret_str)

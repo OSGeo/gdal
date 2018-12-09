@@ -205,8 +205,7 @@ def ogr_bna_write(creation_options):
     for layer_name in ['points', 'lines', 'polygons', 'ellipses']:
         src_lyr = gdaltest.bna_ds.GetLayerByName('test_' + layer_name)
         dst_lyr = output_ds.GetLayerByName('out_' + layer_name)
-        if ogr_bna_check_content(src_lyr, dst_lyr) != 'success':
-            return 'fail'
+        ogr_bna_check_content(src_lyr, dst_lyr)
 
     return 'success'
 
@@ -224,8 +223,6 @@ def test_ogr_bna_6():
         pass
 
     ret = ogr_bna_write(['LINEFORMAT=LF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
-    if ret != 'success':
-        return ret
 
     size = os.stat('tmp/out.bna').st_size
     if size != 1601:
@@ -235,8 +232,6 @@ def test_ogr_bna_6():
     os.remove('tmp/out.bna')
 
     ret = ogr_bna_write(['LINEFORMAT=CRLF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
-    if ret != 'success':
-        return ret
 
     size = os.stat('tmp/out.bna').st_size
     if size != 1611:

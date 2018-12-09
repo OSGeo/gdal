@@ -151,12 +151,8 @@ def CheckColumnOrder(lyr, expected_order):
 def Check(lyr, expected_order):
 
     ret = CheckColumnOrder(lyr, expected_order)
-    if ret != 'success':
-        return ret
 
     ret = CheckFeatures(lyr)
-    if ret != 'success':
-        return ret
 
     return 'success'
 
@@ -185,51 +181,27 @@ def test_ogr_rfc35_sqlite_2():
         return 'fail'
 
     ret = Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.ReorderField(3, 1)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.ReorderField(0, 2)
     ret = Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.ReorderField(2, 0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.ReorderField(0, 1)
     ret = Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.ReorderField(1, 0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.ReorderFields([3, 2, 1, 0])
     ret = Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.ReorderFields([3, 2, 1, 0])
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.ReorderFields([0, 0, 0, 0])
@@ -273,9 +245,6 @@ def test_ogr_rfc35_sqlite_3():
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
     ret = CheckFeatures(lyr, field3='baz25')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     fd = ogr.FieldDefn("baz5", ogr.OFTString)
     fd.SetWidth(5)
@@ -284,9 +253,6 @@ def test_ogr_rfc35_sqlite_3():
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
@@ -295,9 +261,6 @@ def test_ogr_rfc35_sqlite_3():
         return 'fail'
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     return 'success'
 
@@ -339,9 +302,6 @@ def test_ogr_rfc35_sqlite_4():
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     fd.SetWidth(5)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
@@ -354,9 +314,6 @@ def test_ogr_rfc35_sqlite_4():
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     fd.SetWidth(4)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
@@ -370,9 +327,6 @@ def test_ogr_rfc35_sqlite_4():
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
     fd.SetWidth(15)
@@ -387,9 +341,6 @@ def test_ogr_rfc35_sqlite_4():
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     lyr.DeleteField(lyr_defn.GetFieldIndex("oldintfld"))
 
@@ -423,9 +374,6 @@ def test_ogr_rfc35_sqlite_4():
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     return 'success'
 
@@ -464,27 +412,18 @@ def test_ogr_rfc35_sqlite_5():
         return 'fail'
 
     ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) != 0:
         gdaltest.post_reason('failed')
         return 'fail'
 
     ret = CheckFeatures(lyr, field3='baz5', field4=None)
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) != 0:
         gdaltest.post_reason('failed')
         return 'fail'
 
     ret = CheckFeatures(lyr, field3=None, field4=None)
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     if lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) != 0:
         gdaltest.post_reason('failed')
@@ -495,9 +434,6 @@ def test_ogr_rfc35_sqlite_5():
         return 'fail'
 
     ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
 
     return 'success'
 

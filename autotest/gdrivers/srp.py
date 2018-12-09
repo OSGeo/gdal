@@ -48,8 +48,6 @@ def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
 
     tst = gdaltest.GDALTest('SRP', filename, 1, 24576)
     ret = tst.testOpen(check_prj=srs.ExportToWkt(), check_gt=(500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0))
-    if ret != 'success':
-        return ret
 
     ds = gdal.Open('data/' + filename)
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:

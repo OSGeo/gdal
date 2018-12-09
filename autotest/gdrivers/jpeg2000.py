@@ -140,8 +140,7 @@ def test_jpeg2000_4():
         return 'skip'
 
     tst = gdaltest.GDALTest('JPEG2000', 'byte.jp2', 1, 50054)
-    if tst.testCreateCopy() != 'success':
-        return 'fail'
+    tst.testCreateCopy()
 
     # This may fail for a good reason
     if tst.testCreateCopy(check_gt=1, check_srs=1) != 'success':
@@ -173,8 +172,7 @@ def test_jpeg2000_6():
 
     tst = gdaltest.GDALTest('JPEG2000', 'll.jp2', 1, None)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('data/ll.jp2')
     ds.GetRasterBand(1).Checksum()
@@ -342,8 +340,7 @@ def test_jpeg2000_online_1():
     # Checksum = 32669 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
@@ -365,8 +362,7 @@ def test_jpeg2000_online_2():
     # Checksum = 15621 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/gcp.jp2')
     ds.GetRasterBand(1).Checksum()
@@ -399,8 +395,7 @@ def test_jpeg2000_online_3():
     # Checksum = 14443 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')

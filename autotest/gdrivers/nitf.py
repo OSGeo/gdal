@@ -558,8 +558,7 @@ def test_nitf_26():
 
 def test_nitf_27():
 
-    if nitf_create(['ICORDS=G', 'IC=NC', 'BLOCKXSIZE=10', 'BLOCKYSIZE=10']) != 'success':
-        return 'fail'
+    nitf_create(['ICORDS=G', 'IC=NC', 'BLOCKXSIZE=10', 'BLOCKYSIZE=10'])
 
     return nitf_check_created_file(32498, 42602, 38982)
 
@@ -872,10 +871,9 @@ def test_nitf_30():
 
 def test_nitf_31():
 
-    if nitf_create(['TRE=CUSTOM= Test TRE1\\0MORE',
+    nitf_create(['TRE=CUSTOM= Test TRE1\\0MORE',
                     'TRE=TOTEST=SecondTRE',
-                    'ICORDS=G']) != 'success':
-        return 'fail'
+                    'ICORDS=G'])
 
     ds = gdal.Open('tmp/test_create.ntf')
 
@@ -909,8 +907,7 @@ def test_nitf_31():
 
 def test_nitf_32():
 
-    if nitf_create(['ICORDS=D']) != 'success':
-        return 'fail'
+    nitf_create(['ICORDS=D'])
 
     return nitf_check_created_file(32498, 42602, 38982)
 
@@ -920,15 +917,14 @@ def test_nitf_32():
 
 def test_nitf_33():
 
-    if nitf_create(['ICORDS=D',
+    nitf_create(['ICORDS=D',
                     'BLOCKA_BLOCK_COUNT=01',
                     'BLOCKA_BLOCK_INSTANCE_01=01',
                     'BLOCKA_L_LINES_01=100',
                     'BLOCKA_FRLC_LOC_01=+29.950000+119.950000',
                     'BLOCKA_LRLC_LOC_01=+20.050000+119.950000',
                     'BLOCKA_LRFC_LOC_01=+20.050000+100.050000',
-                    'BLOCKA_FRFC_LOC_01=+29.950000+100.050000']) != 'success':
-        return 'fail'
+                    'BLOCKA_FRFC_LOC_01=+29.950000+100.050000'])
 
     return nitf_check_created_file(32498, 42602, 38982)
 
@@ -3771,8 +3767,6 @@ def test_nitf_online_25():
     tst = gdaltest.GDALTest('NITF', 'tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5', 1, 7099, filename_absolute=1)
 
     ret = tst.testOpen()
-    if ret != 'success':
-        return ret
 
     ds = gdal.Open('tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5')
     xml_tre = ds.GetMetadata('xml:TRE')[0]

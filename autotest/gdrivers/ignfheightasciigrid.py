@@ -181,8 +181,7 @@ def test_ignfheightasciigrid_gra():
     tst = gdaltest.GDALTest(
         'IGNFHeightASCIIGrid', 'ignfheightasciigrid.gra', 1, 21)
     gt = (-152.125, 0.25, 0.0, -16.375, 0.0, -0.25)
-    if tst.testOpen(check_gt=gt, check_prj='WGS84') != 'success':
-        return 'fail'
+    tst.testOpen(check_gt=gt, check_prj='WGS84')
 
     ds = gdal.OpenEx('data/ignfheightasciigrid.gra', gdal.OF_RASTER)
     if ds.GetRasterBand(1).GetNoDataValue() != 9999:

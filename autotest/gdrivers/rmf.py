@@ -65,14 +65,10 @@ def test_rmf_4():
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 1, 21212)
     ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                  -22.932584, 0, -0.003432))
-    if ret != 'success':
-        return 'fail'
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 2, 21053)
     ret = tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
                                  -22.932584, 0, -0.003432))
-    if ret != 'success':
-        return 'fail'
 
     tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 3, 21349)
     return tst.testOpen(check_gt=(-44.840320, 0.003432, 0,
@@ -85,16 +81,12 @@ def test_rmf_5():
     with gdaltest.error_handler():
         ret = tst.testOpen()
 
-    if ret != 'success':
-        return 'fail'
-
+    
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 2, 41429)
     with gdaltest.error_handler():
         ret = tst.testOpen()
 
-    if ret != 'success':
-        return 'fail'
-
+    
     tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 3, 40238)
     with gdaltest.error_handler():
         return tst.testOpen()
@@ -105,15 +97,11 @@ def test_rmf_6():
     tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 1, 7782)
     with gdaltest.error_handler():
         ret = tst.testOpen()
-    if ret != 'success':
-        return 'fail'
-
+    
     tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 2, 8480)
     with gdaltest.error_handler():
         ret = tst.testOpen()
-    if ret != 'success':
-        return 'fail'
-
+    
     tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 3, 4195)
     with gdaltest.error_handler():
         return tst.testOpen()

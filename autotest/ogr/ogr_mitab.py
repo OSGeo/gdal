@@ -401,8 +401,7 @@ def test_ogr_mitab_13():
         return 'skip'
 
     import ogr_gml_read
-    if ogr_gml_read.ogr_gml_1() != 'success':
-        return 'skip'
+    ogr_gml_read.ogr_gml_1()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -452,8 +451,7 @@ def test_ogr_mitab_14():
         return 'skip'
 
     import ogr_gml_read
-    if ogr_gml_read.ogr_gml_1() != 'success':
-        return 'skip'
+    ogr_gml_read.ogr_gml_1()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -565,8 +563,7 @@ def test_ogr_mitab_17():
         return 'skip'
 
     import ogr_gml_read
-    if ogr_gml_read.ogr_gml_1() != 'success':
-        return 'skip'
+    ogr_gml_read.ogr_gml_1()
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'

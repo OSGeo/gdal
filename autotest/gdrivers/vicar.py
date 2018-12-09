@@ -52,9 +52,7 @@ def test_vicar_1():
     PARAMETER["longitude_of_center",137],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
-    if tst.testOpen(check_prj=expected_prj, skip_checksum=True) != 'success':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    tst.testOpen(check_prj=expected_prj, skip_checksum=True)
 
     ds = gdal.Open('data/test_vicar_truncated.bin')
     expected_gt = (-53985.0, 25.0, 0.0, -200805.0, 0.0, -25.0)

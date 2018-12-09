@@ -46,10 +46,9 @@ def test_sdts_1():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     srs.SetUTM(16)
-    if tst.testOpen(check_prj=srs.ExportToWkt(),
+    tst.testOpen(check_prj=srs.ExportToWkt(),
                     check_gt=(666015, 30, 0, 5040735, 0, -30),
-                    check_filelist=False) != 'success':
-        return 'fail'
+                    check_filelist=False)
 
     ds = gdal.Open('data/STDS_1107834_truncated/1107CATD.DDF')
     md = ds.GetMetadata()
