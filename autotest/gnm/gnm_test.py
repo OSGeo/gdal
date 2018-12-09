@@ -63,17 +63,11 @@ def test_gnm_filenetwork_create():
     ds = ogrtest.drv.Create('tmp/', 0, 0, 0, gdal.GDT_Unknown, options=['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'])
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        return 'fail'
-    if dn.GetVersion() != 100:
-        gdaltest.post_reason('GNM: Check GNM version failed')
-        return 'fail'
-    if dn.GetName() != 'test_gnm':
-        gdaltest.post_reason('GNM: Check GNM name failed')
-        return 'fail'
-    if dn.GetDescription() != 'Test file based GNM':
-        gdaltest.post_reason('GNM: Check GNM description failed')
-        return 'fail'
+    assert dn is not None
+    assert dn.GetVersion() == 100, 'GNM: Check GNM version failed'
+    assert dn.GetName() == 'test_gnm', 'GNM: Check GNM name failed'
+    assert dn.GetDescription() == 'Test file based GNM', \
+        'GNM: Check GNM description failed'
 
     dn = None
     ogrtest.have_gnm = 1
@@ -91,17 +85,11 @@ def test_gnm_filenetwork_open():
     ds = gdal.OpenEx('tmp/test_gnm')
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        return 'fail'
-    if dn.GetVersion() != 100:
-        gdaltest.post_reason('GNM: Check GNM version failed')
-        return 'fail'
-    if dn.GetName() != 'test_gnm':
-        gdaltest.post_reason('GNM: Check GNM name failed')
-        return 'fail'
-    if dn.GetDescription() != 'Test file based GNM':
-        gdaltest.post_reason('GNM: Check GNM description failed')
-        return 'fail'
+    assert dn is not None
+    assert dn.GetVersion() == 100, 'GNM: Check GNM version failed'
+    assert dn.GetName() == 'test_gnm', 'GNM: Check GNM name failed'
+    assert dn.GetDescription() == 'Test file based GNM', \
+        'GNM: Check GNM description failed'
 
     dn = None
     return 'success'
@@ -121,9 +109,7 @@ def test_gnm_import():
     dspipes = gdal.OpenEx('data/pipes.shp', gdal.OF_VECTOR)
     lyrpipes = dspipes.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrpipes, 'pipes')
-    if new_lyr is None:
-        gdaltest.post_reason('failed to import pipes')
-        return 'fail'
+    assert new_lyr is not None, 'failed to import pipes'
     dspipes = None
     new_lyr = None
 
@@ -131,15 +117,11 @@ def test_gnm_import():
     dswells = gdal.OpenEx('data/wells.shp', gdal.OF_VECTOR)
     lyrwells = dswells.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrwells, 'wells')
-    if new_lyr is None:
-        gdaltest.post_reason('failed to import wells')
-        return 'fail'
+    assert new_lyr is not None, 'failed to import wells'
     dswells = None
     new_lyr = None
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('expected 2 layers')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'expected 2 layers'
 
     ds = None
     return 'success'
@@ -155,14 +137,10 @@ def test_gnm_autoconnect():
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dgn = gnm.CastToGenericNetwork(ds)
-    if dgn is None:
-        gdaltest.post_reason('cast to GNMGenericNetwork failed')
-        return 'fail'
+    assert dgn is not None, 'cast to GNMGenericNetwork failed'
 
     ret = dgn.ConnectPointsByLines(['pipes', 'wells'], 0.000001, 1, 1, gnm.GNM_EDGE_DIR_BOTH)
-    if ret != 0:
-        gdaltest.post_reason('failed to connect')
-        return 'fail'
+    assert ret == 0, 'failed to connect'
 
     dgn = None
     return 'success'
@@ -178,14 +156,10 @@ def test_gnm_graph_dijkstra():
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('cast to GNMNetwork failed')
-        return 'fail'
+    assert dn is not None, 'cast to GNMNetwork failed'
 
     lyr = dn.GetPath(61, 50, gnm.GATDijkstraShortestPath)
-    if lyr is None:
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+    assert lyr is not None, 'failed to get path'
 
     if lyr.GetFeatureCount() == 0:
         dn.ReleaseResultSet(lyr)
@@ -209,14 +183,10 @@ def test_gnm_graph_kshortest():
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('cast to GNMNetwork failed')
-        return 'fail'
+    assert dn is not None, 'cast to GNMNetwork failed'
 
     lyr = dn.GetPath(61, 50, gnm.GATKShortestPath, options=['num_paths=3'])
-    if lyr is None:
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+    assert lyr is not None, 'failed to get path'
 
     if lyr.GetFeatureCount() < 20:
         dn.ReleaseResultSet(lyr)
@@ -238,14 +208,10 @@ def test_gnm_graph_connectedcomponents():
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('cast to GNMNetwork failed')
-        return 'fail'
+    assert dn is not None, 'cast to GNMNetwork failed'
 
     lyr = dn.GetPath(61, 50, gnm.GATConnectedComponents)
-    if lyr is None:
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+    assert lyr is not None, 'failed to get path'
 
     if lyr.GetFeatureCount() == 0:
         dn.ReleaseResultSet(lyr)

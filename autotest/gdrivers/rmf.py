@@ -153,15 +153,11 @@ def test_rmf_11():
     test_fn = '/vsigzip/data/overviews.rsw.gz'
     src_ds = gdal.Open(test_fn)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     band1 = src_ds.GetRasterBand(1)
 
-    if band1.GetOverviewCount() != 3:
-        gdaltest.post_reason('overviews is missing')
-        return 'fail'
+    assert band1.GetOverviewCount() == 3, 'overviews is missing'
 
     ovr_n = (0, 1, 2)
     ovr_size = (256, 64, 16)
@@ -229,36 +225,26 @@ def test_rmf_12d():
 def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_count=1):
 
     rmf_drv = gdal.GetDriverByName('RMF')
-    if rmf_drv is None:
-        gdaltest.post_reason('RMF driver not found.')
-        return 'fail'
+    assert rmf_drv is not None, 'RMF driver not found.'
 
     src_ds = gdal.Open('data/' + source, gdal.GA_ReadOnly)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     test_ds_name = 'tmp/ov-' + testid + '.tst'
     src_ds = rmf_drv.CreateCopy(test_ds_name, src_ds, options=options)
-    if src_ds is None:
-        gdaltest.post_reason('Failed to create test dataset copy.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to create test dataset copy.'
 
     for _ in range(pass_count):
         if reopen:
             src_ds = None
             src_ds = gdal.Open(test_ds_name, gdal.GA_Update)
 
-            if src_ds is None:
-                gdaltest.post_reason('Failed to open test dataset.')
-                return 'fail'
+            assert src_ds is not None, 'Failed to open test dataset.'
 
         reopen = True
         err = src_ds.BuildOverviews(overviewlist=[2, 4])
-        if err != 0:
-            gdaltest.post_reason('BuildOverviews reports an error')
-            return 'fail'
+        assert err == 0, 'BuildOverviews reports an error'
 
         src_ds = None
         src_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
@@ -266,9 +252,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
         for iBand in range(src_ds.RasterCount):
             band = src_ds.GetRasterBand(iBand + 1)
 
-            if band.GetOverviewCount() != 2:
-                gdaltest.post_reason('overviews missing')
-                return 'fail'
+            assert band.GetOverviewCount() == 2, 'overviews missing'
 
             for iOverview in range(band.GetOverviewCount()):
                 ovr_band = band.GetOverview(iOverview)
@@ -444,48 +428,32 @@ def test_rmf_24():
 
 def test_rmf_25():
     rmf_drv = gdal.GetDriverByName('RMF')
-    if rmf_drv is None:
-        gdaltest.post_reason('RMF driver not found.')
-        return 'fail'
+    assert rmf_drv is not None, 'RMF driver not found.'
 
     src_ds = gdal.Open('data/byte.rsw', gdal.GA_ReadOnly)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     test_ds_name = 'tmp/nodata.rsw'
     test_ds = rmf_drv.CreateCopy(test_ds_name, src_ds)
-    if test_ds is None:
-        gdaltest.post_reason('Failed to create test dataset copy.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to create test dataset copy.'
 
     test_ds.GetRasterBand(1).SetNoDataValue(33)
     nd = test_ds.GetRasterBand(1).GetNoDataValue()
-    if nd != 33:
-        gdaltest.post_reason('Invalid NoData value after CreateCopy.')
-        return 'fail'
+    assert nd == 33, 'Invalid NoData value after CreateCopy.'
     test_ds = None
 
     test_ds = gdal.Open(test_ds_name, gdal.GA_Update)
-    if test_ds is None:
-        gdaltest.post_reason('Failed to reopen test dataset.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to reopen test dataset.'
     nd = test_ds.GetRasterBand(1).GetNoDataValue()
-    if nd != 33:
-        gdaltest.post_reason('Invalid NoData value after dataset reopen.')
-        return 'fail'
+    assert nd == 33, 'Invalid NoData value after dataset reopen.'
     test_ds.GetRasterBand(1).SetNoDataValue(55)
     test_ds = None
 
     test_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
-    if test_ds is None:
-        gdaltest.post_reason('Failed to reopen test dataset.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to reopen test dataset.'
     nd = test_ds.GetRasterBand(1).GetNoDataValue()
-    if nd != 55:
-        gdaltest.post_reason('Invalid NoData value after dataset update.')
-        return 'fail'
+    assert nd == 55, 'Invalid NoData value after dataset update.'
 
     test_ds = None
     os.remove(test_ds_name)
@@ -497,54 +465,36 @@ def test_rmf_25():
 
 def test_rmf_26():
     rmf_drv = gdal.GetDriverByName('RMF')
-    if rmf_drv is None:
-        gdaltest.post_reason('RMF driver not found.')
-        return 'fail'
+    assert rmf_drv is not None, 'RMF driver not found.'
 
     src_ds = gdal.Open('data/float64.mtw', gdal.GA_ReadOnly)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     test_ds_name = 'tmp/unit.mtw'
     test_ds = rmf_drv.CreateCopy(test_ds_name, src_ds, options=['MTW=YES'])
-    if test_ds is None:
-        gdaltest.post_reason('Failed to create test dataset copy.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to create test dataset copy.'
 
     test_ds.GetRasterBand(1).SetUnitType('cm')
     unittype = test_ds.GetRasterBand(1).GetUnitType()
-    if unittype != 'cm':
-        gdaltest.post_reason('Invalid UnitType after CreateCopy.')
-        return 'fail'
+    assert unittype == 'cm', 'Invalid UnitType after CreateCopy.'
     test_ds = None
 
     test_ds = gdal.Open(test_ds_name, gdal.GA_Update)
-    if test_ds is None:
-        gdaltest.post_reason('Failed to reopen test dataset.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to reopen test dataset.'
     unittype = test_ds.GetRasterBand(1).GetUnitType()
-    if unittype != 'cm':
-        gdaltest.post_reason('Invalid UnitType after dataset reopen.')
-        return 'fail'
+    assert unittype == 'cm', 'Invalid UnitType after dataset reopen.'
     test_ds.GetRasterBand(1).SetUnitType('mm')
     test_ds = None
 
     test_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
-    if test_ds is None:
-        gdaltest.post_reason('Failed to reopen test dataset.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to reopen test dataset.'
     unittype = test_ds.GetRasterBand(1).GetUnitType()
-    if unittype != 'mm':
-        gdaltest.post_reason('Invalid UnitType after dataset update.')
-        return 'fail'
+    assert unittype == 'mm', 'Invalid UnitType after dataset update.'
 
     test_ds.GetRasterBand(1).SetUnitType('ft')
     unittype = test_ds.GetRasterBand(1).GetUnitType()
-    if unittype != 'mm':
-        gdaltest.post_reason('Invalid UnitType after dataset update.')
-        return 'fail'
+    assert unittype == 'mm', 'Invalid UnitType after dataset update.'
 
     test_ds = None
     os.remove(test_ds_name)
@@ -564,25 +514,20 @@ def test_rmf_27():
     cs2 = [51009, 27640, 37765] # osx, clang
 
     ds = gdal.Open('data/jpeg-in-rmf.rsw', gdal.GA_ReadOnly)
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
-    if md['COMPRESSION'] != 'JPEG':
-        gdaltest.post_reason('"COMPRESSION" value is "%s" but expected "JPEG"' %
+    assert md['COMPRESSION'] == 'JPEG', \
+        ('"COMPRESSION" value is "%s" but expected "JPEG"' %
                               md['COMPRESSION'])
-        return 'fail'
 
     cs = [0, 0, 0]
     for iBand in range(ds.RasterCount):
         band = ds.GetRasterBand(iBand + 1)
         cs[iBand] = band.Checksum()
 
-    if cs != cs1 and cs != cs2:
-        gdaltest.post_reason('Invalid checksum %s expected %s or %s.' %
+    assert cs == cs1 or cs == cs2, ('Invalid checksum %s expected %s or %s.' %
                              (str(cs), str(cs1), str(cs2)))
-        return 'fail'
 
     return 'success'
 
@@ -594,15 +539,12 @@ def test_rmf_27():
 def test_rmf_28a():
 
     ds = gdal.Open('data/byte-lzw.rsw', gdal.GA_ReadOnly)
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
-    if md['COMPRESSION'] != 'LZW':
-        gdaltest.post_reason('"COMPRESSION" value is "%s" but expected "LZW"' %
+    assert md['COMPRESSION'] == 'LZW', \
+        ('"COMPRESSION" value is "%s" but expected "LZW"' %
                               md['COMPRESSION'])
-        return 'fail'
 
     return 'success'
 
@@ -610,15 +552,12 @@ def test_rmf_28a():
 def test_rmf_28b():
 
     ds = gdal.Open('data/t100.mtw', gdal.GA_ReadOnly)
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
-    if md['COMPRESSION'] != 'RMF_DEM':
-        gdaltest.post_reason('"COMPRESSION" value is "%s" but expected "RMF_DEM"' %
+    assert md['COMPRESSION'] == 'RMF_DEM', \
+        ('"COMPRESSION" value is "%s" but expected "RMF_DEM"' %
                               md['COMPRESSION'])
-        return 'fail'
 
     return 'success'
 
@@ -629,20 +568,14 @@ def test_rmf_28b():
 def test_rmf_29():
 
     rmf_drv = gdal.GetDriverByName('RMF')
-    if rmf_drv is None:
-        gdaltest.post_reason('RMF driver not found.')
-        return 'fail'
+    assert rmf_drv is not None, 'RMF driver not found.'
 
     ds = gdal.Open('data/byte.rsw', gdal.GA_ReadOnly)
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     test_ds_name = 'tmp/epsg.rsw'
     test_ds = rmf_drv.CreateCopy(test_ds_name, ds)
-    if test_ds is None:
-        gdaltest.post_reason('Failed to create test dataset copy.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to create test dataset copy.'
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput('EPSG:3388')
@@ -651,17 +584,13 @@ def test_rmf_29():
     ds = None
 
     test_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
-    if test_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert test_ds is not None, 'Failed to open test dataset.'
 
     wkt = test_ds.GetProjectionRef()
     sr = osr.SpatialReference()
     sr.SetFromUserInput(wkt)
-    if str(sr.GetAuthorityCode(None)) != '3388':
-        gdaltest.post_reason('EPSG code is %s expected 3388.' %
+    assert str(sr.GetAuthorityCode(None)) == '3388', ('EPSG code is %s expected 3388.' %
                              str(sr.GetAuthorityCode(None)))
-        return 'fail'
 
     return 'success'
 
@@ -676,17 +605,13 @@ def test_rmf_30():
                    format='GTiff')
 
     ds = gdal.Open(ds_name)
-    if ds is None:
-        gdaltest.post_reason('Can\'t open ' + ds_name)
-        return 'fail'
+    assert ds is not None, ('Can\'t open ' + ds_name)
     expected_cs = [40503, 41429, 40238]
     cs = [ds.GetRasterBand(1).Checksum(),
           ds.GetRasterBand(2).Checksum(),
           ds.GetRasterBand(3).Checksum()]
-    if cs != expected_cs:
-        gdaltest.post_reason('Invalid checksum %s expected %s.' %
+    assert cs == expected_cs, ('Invalid checksum %s expected %s.' %
                              (str(cs), str(expected_cs)))
-        return 'fail'
     return 'success'
 
 
@@ -717,19 +642,16 @@ def test_rmf_31c():
                    format='RMF', options='-co COMPRESS=JPEG')
 
     ds = gdal.Open(ds_name)
-    if ds is None:
-        gdaltest.post_reason('Can\'t open ' + ds_name)
-        return 'fail'
+    assert ds is not None, ('Can\'t open ' + ds_name)
     expected_cs1 = [25789, 27405, 31974]
     expected_cs2 = [23764, 25264, 33585] # osx
     cs = [ds.GetRasterBand(1).Checksum(),
           ds.GetRasterBand(2).Checksum(),
           ds.GetRasterBand(3).Checksum()]
 
-    if cs != expected_cs1 and cs != expected_cs2:
-        gdaltest.post_reason('Invalid checksum %s expected %s or %s.' %
+    assert cs == expected_cs1 or cs == expected_cs2, \
+        ('Invalid checksum %s expected %s or %s.' %
                              (str(cs), str(expected_cs1), str(expected_cs2)))
-        return 'fail'
     return 'success'
 
 
@@ -756,9 +678,7 @@ def test_rmf_31e():
     sy = 8*stripeSize
     tst_name = 'tmp/rmf_31e.tif'
     tst_ds = drv.Create(tst_name, sx, sy, 1, gdal.GDT_Int32 )
-    if tst_ds is None:
-        gdaltest.post_reason('Can\'t create ' + tst_name)
-        return 'fail'
+    assert tst_ds is not None, ('Can\'t create ' + tst_name)
 
     # No deltas
     buff = numpy.zeros((sx, stripeSize), dtype = numpy.int32)
@@ -790,9 +710,7 @@ def test_rmf_31e():
 
     tst_ds = None
     tst_ds = gdal.Open(tst_name)
-    if tst_ds is None:
-        gdaltest.post_reason('Can\'t open ' + tst_name)
-        return 'fail'
+    assert tst_ds is not None, ('Can\'t open ' + tst_name)
 
     cs = tst_ds.GetRasterBand(1).Checksum()
     tst_ds = None

@@ -66,9 +66,7 @@ def search_all_features(lyr):
                 found_geom = True
             else:
                 feat = lyr.GetNextFeature()
-        if not found_geom:
-            gdaltest.post_reason('did not find geometry for %s' % (geom.ExportToWkt()))
-            return 'fail'
+        assert found_geom, ('did not find geometry for %s' % (geom.ExportToWkt()))
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
@@ -97,9 +95,7 @@ def search_all_features(lyr):
         lyr.ResetReading()
         fc = fc + lyr.GetFeatureCount()
 
-    if fc != fc_ref:
-        gdaltest.post_reason('layer %s: expected %d. got %d' % (lyr.GetName(), fc_ref, fc))
-        return 'fail'
+    assert fc == fc_ref, ('layer %s: expected %d. got %d' % (lyr.GetName(), fc_ref, fc))
 
     return 'success'
 

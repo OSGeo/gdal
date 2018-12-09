@@ -180,9 +180,7 @@ def test_osr_xml_1():
     got = srs.ExportToWkt()
     expected = gdaltest.srs_wkt
 
-    if got != expected:
-        print(got)
-        return 'fail'
+    assert got == expected
 
     return 'success'
 
@@ -204,9 +202,7 @@ def test_osr_xml_2():
     got = re.sub(r' gml:id="[^"]*"', '', got, 0)
     expected = re.sub(r' gml:id="[^"]*"', '', expected, 0)
 
-    if got != expected:
-        print(got)
-        return 'fail'
+    assert got == expected
 
     return 'success'
 

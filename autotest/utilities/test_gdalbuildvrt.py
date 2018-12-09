@@ -44,28 +44,21 @@ import test_cli_utilities
 def test_gdalbuildvrt_check():
 
     ds = gdal.Open('tmp/mosaic.vrt')
-    if ds.GetProjectionRef().find('WGS 84') == -1:
-        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS 84') != -1, \
+        ('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
 
     gt = ds.GetGeoTransform()
     expected_gt = [2, 0.1, 0, 49, 0, -0.1]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.RasterXSize != 20 or ds.RasterYSize != 20:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 20 and ds.RasterYSize == 20, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount))
-        return 'fail'
+    assert ds.RasterCount == 1, ('Wrong raster count : %d ' % (ds.RasterCount))
 
-    if ds.GetRasterBand(1).Checksum() != 3508:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 3508, 'Wrong checksum'
 
     return 'success'
 
@@ -107,10 +100,7 @@ def test_gdalbuildvrt_1():
     ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     return test_gdalbuildvrt_check()
 
@@ -214,28 +204,21 @@ def test_gdalbuildvrt_6():
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -separate tmp/stacked.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
 
     ds = gdal.Open('tmp/stacked.vrt')
-    if ds.GetProjectionRef().find('WGS 84') == -1:
-        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS 84') != -1, \
+        ('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
 
     gt = ds.GetGeoTransform()
     expected_gt = [2, 0.1, 0, 49, 0, -0.1]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.RasterXSize != 20 or ds.RasterYSize != 20:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 20 and ds.RasterYSize == 20, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount))
-        return 'fail'
+    assert ds.RasterCount == 4, ('Wrong raster count : %d ' % (ds.RasterCount))
 
-    if ds.GetRasterBand(1).Checksum() != 0:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0, 'Wrong checksum'
 
     return 'success'
 
@@ -286,17 +269,11 @@ def test_gdalbuildvrt_7():
 
     ds = gdal.Open('tmp/gdalbuildvrt7.vrt')
 
-    if ds.GetRasterBand(1).Checksum() != 1217:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 1217, 'Wrong checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 1218:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 1218, 'Wrong checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 0:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 0, 'Wrong checksum'
 
     ds = None
 
@@ -317,13 +294,11 @@ def test_gdalbuildvrt_8():
     gt = ds.GetGeoTransform()
     expected_gt = [2, 0.05, 0, 49, 0, -0.05]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.RasterXSize != 40 or ds.RasterYSize != 40:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 40 and ds.RasterYSize == 40, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
@@ -344,13 +319,11 @@ def test_gdalbuildvrt_9():
     gt = ds.GetGeoTransform()
     expected_gt = [1, 0.1, 0, 50, 0, -0.1]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.RasterXSize != 40 or ds.RasterYSize != 40:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 40 and ds.RasterYSize == 40, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt')
 
@@ -386,10 +359,7 @@ def test_gdalbuildvrt_10():
 
     ds = gdal.Open('tmp/gdalbuildvrt10.vrt')
 
-    if ds.GetRasterBand(1).Checksum() != 18:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 18, 'Wrong checksum'
 
     ds = None
 
@@ -417,17 +387,9 @@ def test_gdalbuildvrt_11():
 
     ds = gdal.Open('tmp/gdalbuildvrt11.vrt')
 
-    if ds.GetRasterBand(1).Checksum() != cs1:
-        print(ds.GetRasterBand(1).Checksum())
-        print(cs1)
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == cs1, 'Wrong checksum'
 
-    if ds.GetRasterBand(2).Checksum() != cs2:
-        print(ds.GetRasterBand(2).Checksum())
-        print(cs2)
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == cs2, 'Wrong checksum'
 
     ds = None
 
@@ -443,9 +405,8 @@ def test_gdalbuildvrt_12():
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif',
                                                 check_memleak=False)
-    if err.find('-tap option cannot be used without using -tr') == -1:
-        gdaltest.post_reason('expected error')
-        return 'fail'
+    assert err.find('-tap option cannot be used without using -tr') != -1, \
+        'expected error'
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' -tr 100 50 -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif')
 
@@ -454,13 +415,11 @@ def test_gdalbuildvrt_12():
     gt = ds.GetGeoTransform()
     expected_gt = [440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.RasterXSize != 13 or ds.RasterYSize != 25:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 13 and ds.RasterYSize == 25, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
     return 'success'
 
@@ -475,8 +434,7 @@ def test_gdalbuildvrt_13():
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/gdalbuildvrt13.vrt ../gcore/data/byte.tif -a_srs EPSG:4326')
 
     ds = gdal.Open('tmp/gdalbuildvrt13.vrt')
-    if ds.GetProjectionRef().find('4326') == -1:
-        return 'fail'
+    assert ds.GetProjectionRef().find('4326') != -1
     ds = None
 
     return 'success'
@@ -502,10 +460,7 @@ def test_gdalbuildvrt_14():
     ds = None
     ds_ref = None
 
-    if cs != cs_ref:
-        print(cs)
-        print(cs_ref)
-        return 'fail'
+    assert cs == cs_ref
 
     return 'success'
 
@@ -523,9 +478,7 @@ def test_gdalbuildvrt_15():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4672:
-        print(cs)
-        return 'fail'
+    assert cs == 4672
 
     return 'success'
 
@@ -540,16 +493,10 @@ def test_gdalbuildvrt_16():
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' /non_existing_dir/non_existing_subdir/out.vrt ../gcore/data/byte.tif')
 
     if not gdaltest.is_travis_branch('mingw'):
-        if err.find('ERROR ret code = 1') < 0:
-            print(out)
-            print(err)
-            return 'fail'
+        assert err.find('ERROR ret code = 1') >= 0, out
     else:
         # We don't get the error code on Travis mingw
-        if err.find('ERROR') < 0:
-            print(out)
-            print(err)
-            return 'fail'
+        assert err.find('ERROR') >= 0, out
 
     return 'success'
 

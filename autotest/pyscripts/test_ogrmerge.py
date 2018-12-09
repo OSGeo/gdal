@@ -50,8 +50,7 @@ def test_ogrmerge_1():
 
     ds = ogr.Open('/vsimem/out.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 20:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 20
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
@@ -74,8 +73,7 @@ def test_ogrmerge_2():
 
     ds = ogr.Open('/vsimem/out.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 20:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 20
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
@@ -98,8 +96,7 @@ def test_ogrmerge_3():
 
     ds = ogr.Open('/vsimem/out.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 10:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 10
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/out.shp')
@@ -120,10 +117,8 @@ def test_ogrmerge_4():
 
     ds = ogr.Open('/vsimem/out.vrt')
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'poly':
-        return 'fail'
-    if lyr.GetFeatureCount() != 10:
-        return 'fail'
+    assert lyr.GetName() == 'poly'
+    assert lyr.GetFeatureCount() == 10
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
@@ -145,17 +140,11 @@ def test_ogrmerge_5():
 
     ds = ogr.Open('/vsimem/out.vrt')
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'foo_../ogr/data/poly.shp_poly_0_poly_0':
-        print(lyr.GetName())
-        return 'fail'
-    if lyr.GetFeatureCount() != 10:
-        return 'fail'
+    assert lyr.GetName() == 'foo_../ogr/data/poly.shp_poly_0_poly_0'
+    assert lyr.GetFeatureCount() == 10
     lyr = ds.GetLayer(1)
-    if lyr.GetName() != 'foo_../ogr/data/testpoly.shp_testpoly_1_testpoly_0':
-        print(lyr.GetName())
-        return 'fail'
-    if lyr.GetFeatureCount() != 14:
-        return 'fail'
+    assert lyr.GetName() == 'foo_../ogr/data/testpoly.shp_testpoly_1_testpoly_0'
+    assert lyr.GetFeatureCount() == 14
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
@@ -203,8 +192,7 @@ def test_ogrmerge_7():
                                   '-src_geom_type POINT')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds.GetLayerCount() != 0:
-        return 'fail'
+    assert ds.GetLayerCount() == 0
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
@@ -215,8 +203,7 @@ def test_ogrmerge_7():
                                   '-src_geom_type POLYGON')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds.GetLayerCount() == 1
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
@@ -227,8 +214,7 @@ def test_ogrmerge_7():
                                   '-src_geom_type POINT')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds.GetLayerCount() != 0:
-        return 'fail'
+    assert ds.GetLayerCount() == 0
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
@@ -239,8 +225,7 @@ def test_ogrmerge_7():
                                   '-src_geom_type POLYGON')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds.GetLayerCount() == 1
     ds = None
 
     gdal.Unlink('/vsimem/out.vrt')
@@ -261,8 +246,7 @@ def test_ogrmerge_8():
                                   '-s_srs EPSG:32630 -t_srs EPSG:4326')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
@@ -272,13 +256,9 @@ def test_ogrmerge_8():
         gdal.VSIFCloseL(f)
     gdal.Unlink('/vsimem/out.vrt')
 
-    if content.find('<SrcSRS>EPSG:32630</SrcSRS>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<SrcSRS>EPSG:32630</SrcSRS>') >= 0
 
-    if content.find('<TargetSRS>EPSG:4326</TargetSRS>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<TargetSRS>EPSG:4326</TargetSRS>') >= 0
 
     return 'success'
 
@@ -296,8 +276,7 @@ def test_ogrmerge_9():
                                   '-s_srs EPSG:32630 -t_srs EPSG:4326')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
@@ -307,13 +286,9 @@ def test_ogrmerge_9():
         gdal.VSIFCloseL(f)
     gdal.Unlink('/vsimem/out.vrt')
 
-    if content.find('<SrcSRS>EPSG:32630</SrcSRS>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<SrcSRS>EPSG:32630</SrcSRS>') >= 0
 
-    if content.find('<TargetSRS>EPSG:4326</TargetSRS>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<TargetSRS>EPSG:4326</TargetSRS>') >= 0
 
     return 'success'
 
@@ -331,8 +306,7 @@ def test_ogrmerge_10():
                                   '-a_srs EPSG:32630')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
@@ -342,9 +316,7 @@ def test_ogrmerge_10():
         gdal.VSIFCloseL(f)
     gdal.Unlink('/vsimem/out.vrt')
 
-    if content.find('<LayerSRS>EPSG:32630</LayerSRS>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
 
     return 'success'
 
@@ -362,8 +334,7 @@ def test_ogrmerge_11():
                                   '-a_srs EPSG:32630')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
@@ -373,9 +344,7 @@ def test_ogrmerge_11():
         gdal.VSIFCloseL(f)
     gdal.Unlink('/vsimem/out.vrt')
 
-    if content.find('<LayerSRS>EPSG:32630</LayerSRS>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
 
     return 'success'
 
@@ -395,8 +364,7 @@ def test_ogrmerge_12():
                                   '-f VRT -o /vsimem/out.vrt tmp/tmp.json')
 
     ds = ogr.Open('/vsimem/out.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     gdal.Unlink('tmp/tmp.json')

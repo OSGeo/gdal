@@ -60,29 +60,23 @@ def test_mbtiles_2():
         return 'skip'
 
     ds = gdal.OpenEx('data/world_l1.mbtiles', open_options=['USE_BOUNDS=NO'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 4, 'expected 3 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'did not get expected overview count'
 
     expected_cs_tab = [6324, 19386, 45258]
     expected_cs_tab_jpeg8 = [6016, 13996, 45168]
     expected_cs_tab_jpeg9b = [6016, 14034, 45168]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if ds.GetRasterBand(i + 1).GetColorInterpretation() != gdal.GCI_RedBand + i:
-            gdaltest.post_reason('bad color interpretation')
-            return 'fail'
+        assert ds.GetRasterBand(i + 1).GetColorInterpretation() == gdal.GCI_RedBand + i, \
+            'bad color interpretation'
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
-            gdaltest.post_reason('for band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
-            return 'fail'
+        assert cs == expected_cs or cs == expected_cs_tab_jpeg8[i] or cs == expected_cs_tab_jpeg9b[i], \
+            ('for band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
 
     expected_cs_tab = [16642, 15772, 10029]
     expected_cs_tab_jpeg8 = [16621, 14725, 8988]
@@ -90,27 +84,19 @@ def test_mbtiles_2():
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
-            gdaltest.post_reason('for overview of band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
-            return 'fail'
+        assert cs == expected_cs or cs == expected_cs_tab_jpeg8[i] or cs == expected_cs_tab_jpeg9b[i], \
+            ('for overview of band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
 
-    if ds.GetProjectionRef().find('3857') == -1:
-        gdaltest.post_reason('projection_ref = %s' % ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetProjectionRef().find('3857') != -1, \
+        ('projection_ref = %s' % ds.GetProjectionRef())
 
     gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 20037508.342789244, 0.0, -78271.516964020484)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            gdaltest.post_reason('bad gt')
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15, 'bad gt'
 
     md = ds.GetMetadata()
-    if md['bounds'] != '-180.0,-85,180,85':
-        gdaltest.post_reason('bad metadata')
-        return 'fail'
+    assert md['bounds'] == '-180.0,-85,180,85', 'bad metadata'
 
     ds = None
 
@@ -205,8 +191,7 @@ def test_mbtiles_http_jpeg_three_bands():
         {'/world_l1.mbtiles': open('data/world_l1.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -232,8 +217,7 @@ def test_mbtiles_http_jpeg_single_band():
         {'/byte_jpeg.mbtiles': open('data/byte_jpeg.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -259,8 +243,7 @@ def test_mbtiles_http_png():
         {'/byte.mbtiles': open('data/byte.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -294,31 +277,19 @@ def test_mbtiles_4():
         return 'skip'
 
     ds = gdal.Open('data/world_l1.mbtiles')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('expected 4 bands')
-        return 'fail'
+    assert ds.RasterCount == 4, 'expected 4 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'did not get expected overview count'
 
-    if ds.RasterXSize != 512 or ds.RasterYSize != 510:
-        gdaltest.post_reason('bad dimensions')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 512 and ds.RasterYSize == 510, 'bad dimensions'
 
     gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 19971868.880408563, 0.0, -78271.516964020484)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            gdaltest.post_reason('bad gt')
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15, 'bad gt'
 
     ds = None
 
@@ -341,37 +312,21 @@ def test_mbtiles_5():
     src_ds = None
 
     ds = gdal.OpenEx('/vsimem/mbtiles_5.mbtiles', open_options=['BAND_COUNT=2'])
-    if ds.RasterXSize != 19 or ds.RasterYSize != 19:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
-    if ds.RasterCount != 2:
-        print(ds.RasterCount)
-        return 'fail'
+    assert ds.RasterXSize == 19 and ds.RasterYSize == 19
+    assert ds.RasterCount == 2
     got_gt = ds.GetGeoTransform()
     expected_gt = (-13095853.550435878, 76.437028285176254, 0.0, 4015708.8887064462, 0.0, -76.437028285176254)
     for i in range(6):
-        if abs(expected_gt[i] - got_gt[i]) > 1e-6:
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(expected_gt[i] - got_gt[i]) <= 1e-6
     got_cs = ds.GetRasterBand(1).Checksum()
-    if got_cs != 4118:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 4118
     got_cs = ds.GetRasterBand(2).Checksum()
-    if got_cs != 4406:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 4406
     got_md = ds.GetMetadata()
     expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
-    if set(got_md.keys()) != set(expected_md.keys()):
-        print(got_md)
-        return 'fail'
+    assert set(got_md.keys()) == set(expected_md.keys())
     for key in got_md:
-        if key != 'bounds' and got_md[key] != expected_md[key]:
-            print(got_md)
-            return 'fail'
+        assert key == 'bounds' or got_md[key] == expected_md[key]
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_5.mbtiles')
@@ -405,14 +360,10 @@ def test_mbtiles_6():
 
     ds = gdal.Open('tmp/mbtiles_6.mbtiles')
     got_cs = ds.GetRasterBand(1).Checksum()
-    if got_cs == 0:
-        print(got_cs)
-        return 'fail'
+    assert got_cs != 0
     got_md = ds.GetMetadata()
     expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
-    if got_md != expected_md:
-        print(got_md)
-        return 'fail'
+    assert got_md == expected_md
     ds = None
 
     gdal.Unlink('tmp/mbtiles_6.mbtiles')
@@ -455,17 +406,11 @@ def test_mbtiles_7():
     ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
     expected_ovr_cs = [21179, 22577, 11996, 17849]
     got_ovr_cs = [ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)]
-    if expected_ovr_cs != got_ovr_cs:
-        print(got_ovr_cs)
-        return 'fail'
-    if ds.GetMetadataItem('minzoom') != '0':
-        print(ds.GetMetadata())
-        return 'fail'
+    assert expected_ovr_cs == got_ovr_cs
+    assert ds.GetMetadataItem('minzoom') == '0', ds.GetMetadata()
     ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles', gdal.GA_Update)
@@ -473,12 +418,8 @@ def test_mbtiles_7():
     ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
-    if ds.GetMetadataItem('minzoom') != '1':
-        print(ds.GetMetadata())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    assert ds.GetMetadataItem('minzoom') == '1', ds.GetMetadata()
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_7.mbtiles')
@@ -505,15 +446,10 @@ def test_mbtiles_8():
     expected_cs = [993, 50461, 64354]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if got_cs != expected_cs:
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
+    assert got_cs == expected_cs
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
-    if got_ct is not None:
-        return 'fail'
-    if out_ds.GetRasterBand(1).GetBlockSize() != [256, 256]:
-        print(out_ds.GetRasterBand(1).GetBlockSize())
-        return 'fail'
+    assert got_ct is None
+    assert out_ds.GetRasterBand(1).GetBlockSize() == [256, 256]
     out_ds = None
 
     # 512 pixel tiles
@@ -525,14 +461,10 @@ def test_mbtiles_8():
     expected_cs = [60844, 7388, 53813]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if got_cs != expected_cs:
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
+    assert got_cs == expected_cs
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
-    if got_ct is not None:
-        return 'fail'
-    if out_ds.GetRasterBand(1).GetBlockSize() != [512, 512]:
-        return 'fail'
+    assert got_ct is None
+    assert out_ds.GetRasterBand(1).GetBlockSize() == [512, 512]
     out_ds = None
 
     gdal.Unlink('/vsimem/mbtiles_8.mbtiles')
@@ -559,11 +491,8 @@ def test_mbtiles_9():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/mbtiles_9.mbtiles')
-    if ds.RasterXSize != 256 or ds.RasterYSize != 256:
-        return 'fail'
-    if abs(ds.GetGeoTransform()[0] - -13110479.091473430395126) > 1e-6:
-        print(ds.GetGeoTransform())
-        return 'fail'
+    assert ds.RasterXSize == 256 and ds.RasterYSize == 256
+    assert abs(ds.GetGeoTransform()[0] - -13110479.091473430395126) <= 1e-6
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_9.mbtiles')
@@ -589,9 +518,7 @@ def test_mbtiles_10():
 
     ds = gdal.Open('/vsimem/mbtiles_10.mbtiles')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 29925:
-        print(cs)
-        return 'fail'
+    assert cs == 29925
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_10.mbtiles')
@@ -612,9 +539,7 @@ def test_mbtiles_11():
     if gdal.GetDriverByName('PNG') is None:
         return 'skip'
     ds = gdal.Open('data/byte.mbtiles.sql')
-    if ds.GetRasterBand(1).Checksum() != 4118:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4118, 'validation failed'
 
     return 'success'
 
@@ -627,8 +552,7 @@ def test_mbtiles_raster_open_in_vector_mode():
         return 'skip'
 
     ds = ogr.Open('data/byte.mbtiles')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -643,8 +567,7 @@ def test_mbtiles_create():
     filename = '/vsimem/mbtiles_create.mbtiles'
     gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
     with gdaltest.error_handler():
-        if gdal.Open(filename) is not None:
-            return 'fail'
+        assert gdal.Open(filename) is None
 
     # Nominal case
     gdal.Unlink(filename)
@@ -656,21 +579,18 @@ def test_mbtiles_create():
     # Cannot modify geotransform once set"
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ds = None
 
     ds = gdal.Open('data/byte.mbtiles')
     # SetGeoTransform() not supported on read-only dataset"
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     # SetProjection() not supported on read-only dataset
     with gdaltest.error_handler():
         ret = ds.SetProjection(src_ds.GetProjectionRef())
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
@@ -678,8 +598,7 @@ def test_mbtiles_create():
     # Only EPSG:3857 supported on MBTiles dataset
     with gdaltest.error_handler():
         ret = ds.SetProjection('LOCAL_CS["foo"]')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
@@ -687,8 +606,7 @@ def test_mbtiles_create():
     # Only north-up non rotated geotransform supported
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
@@ -696,8 +614,7 @@ def test_mbtiles_create():
     # Could not find an appropriate zoom level that matches raster pixel size
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)

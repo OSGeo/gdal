@@ -51,8 +51,7 @@ def test_osr_ozi_1():
 
     expected = 'PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40],PARAMETER["standard_parallel_2",56],PARAMETER["latitude_of_origin",4],PARAMETER["central_meridian",10],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
-    if not gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt()):
-        return 'fail'
+    assert gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt())
 
     return 'success'
 
@@ -74,8 +73,7 @@ def test_osr_ozi_2():
     srs_ref = osr.SpatialReference()
     srs_ref.ImportFromEPSG(4301)
 
-    if not gdaltest.equal_srs_from_wkt(srs_ref.ExportToWkt(), srs.ExportToWkt()):
-        return 'fail'
+    assert gdaltest.equal_srs_from_wkt(srs_ref.ExportToWkt(), srs.ExportToWkt())
 
     return 'success'
 
@@ -96,8 +94,7 @@ def test_osr_ozi_3():
 
     expected = 'GEOGCS["European 1950 (Mean France)",DATUM["European 1950 (Mean France)",SPHEROID["International 1924",6378388,297],TOWGS84[-87,-96,-120,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
 
-    if not gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt()):
-        return 'fail'
+    assert gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt())
 
     return 'success'
 

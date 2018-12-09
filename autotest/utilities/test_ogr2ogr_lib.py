@@ -35,6 +35,7 @@ import sys
 from osgeo import gdal, gdalconst, ogr
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Simple test
@@ -44,18 +45,13 @@ def test_ogr2ogr_lib_1():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
     feat0 = ds.GetLayer(0).GetFeature(0)
-    if feat0.GetFieldAsDouble('AREA') != 215229.266:
-        print(feat0.GetFieldAsDouble('AREA'))
-        gdaltest.post_reason('Did not get expected value for field AREA')
-        return 'fail'
-    if feat0.GetFieldAsString('PRFEDEA') != '35043411':
-        print(feat0.GetFieldAsString('PRFEDEA'))
-        gdaltest.post_reason('Did not get expected value for field PRFEDEA')
-        return 'fail'
+    assert feat0.GetFieldAsDouble('AREA') == 215229.266, \
+        'Did not get expected value for field AREA'
+    assert feat0.GetFieldAsString('PRFEDEA') == '35043411', \
+        'Did not get expected value for field PRFEDEA'
 
     return 'success'
 
@@ -67,14 +63,12 @@ def test_ogr2ogr_lib_2():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='select * from poly', SQLDialect='OGRSQL')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
     # Test @filename syntax
     gdal.FileFromMemBuffer('/vsimem/sql.txt', '-- initial comment\nselect * from poly\n-- trailing comment')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='@/vsimem/sql.txt')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     gdal.Unlink('/vsimem/sql.txt')
 
     # Test @filename syntax with a UTF-8 BOM
@@ -83,8 +77,7 @@ def test_ogr2ogr_lib_2():
     else:
         gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='@/vsimem/sql.txt')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     gdal.Unlink('/vsimem/sql.txt')
 
     return 'success'
@@ -97,14 +90,12 @@ def test_ogr2ogr_lib_3():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', where='EAS_ID=171')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
 
     # Test @filename syntax
     gdal.FileFromMemBuffer('/vsimem/filter.txt', 'EAS_ID=171')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', where='@/vsimem/filter.txt')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
     gdal.Unlink('/vsimem/filter.txt')
 
     return 'success'
@@ -117,39 +108,22 @@ def test_ogr2ogr_lib_4():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('/vsimem/poly.shp', srcDS)
-    if ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('wrong feature count')
-        print(ds.GetLayer(0).GetFeatureCount())
-        return 'fail'
+    assert ds.GetLayer(0).GetFeatureCount() == 10, 'wrong feature count'
     ds = None
 
     ds = gdal.VectorTranslate('/vsimem/poly.shp', srcDS, accessMode='append')
-    if ds is None:
-        gdaltest.post_reason('ds is None')
-        return 'fail'
-    if ds.GetLayer(0).GetFeatureCount() != 20:
-        gdaltest.post_reason('wrong feature count')
-        print(ds.GetLayer(0).GetFeatureCount())
-        return 'fail'
+    assert ds is not None, 'ds is None'
+    assert ds.GetLayer(0).GetFeatureCount() == 20, 'wrong feature count'
 
     ret = gdal.VectorTranslate(ds, srcDS, accessMode='append')
-    if ret != 1:
-        gdaltest.post_reason('ds is None')
-        return 'fail'
-    if ds.GetLayer(0).GetFeatureCount() != 30:
-        gdaltest.post_reason('wrong feature count')
-        print(ds.GetLayer(0).GetFeatureCount())
-        return 'fail'
+    assert ret == 1, 'ds is None'
+    assert ds.GetLayer(0).GetFeatureCount() == 30, 'wrong feature count'
 
     feat10 = ds.GetLayer(0).GetFeature(10)
-    if feat10.GetFieldAsDouble('AREA') != 215229.266:
-        print(feat10.GetFieldAsDouble('AREA'))
-        gdaltest.post_reason('Did not get expected value for field AREA')
-        return 'fail'
-    if feat10.GetFieldAsString('PRFEDEA') != '35043411':
-        print(feat10.GetFieldAsString('PRFEDEA'))
-        gdaltest.post_reason('Did not get expected value for field PRFEDEA')
-        return 'fail'
+    assert feat10.GetFieldAsDouble('AREA') == 215229.266, \
+        'Did not get expected value for field AREA'
+    assert feat10.GetFieldAsString('PRFEDEA') == '35043411', \
+        'Did not get expected value for field PRFEDEA'
 
     ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/poly.shp')
@@ -164,8 +138,7 @@ def test_ogr2ogr_lib_5():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', dstSRS='EPSG:4326')
-    if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
-        return 'fail'
+    assert str(ds.GetLayer(0).GetSpatialRef()).find('1984') != -1
 
     return 'success'
 
@@ -179,8 +152,7 @@ def test_ogr2ogr_lib_6():
     # Voluntary don't use the exact case of the source field names (#4502)
     ds = gdal.VectorTranslate('', srcDS, format='Memory', selectFields=['eas_id', 'prfedea'])
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldCount() != 2:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
     feat = lyr.GetNextFeature()
     ret = 'success'
     if feat.GetFieldAsDouble('EAS_ID') != 168:
@@ -202,8 +174,7 @@ def test_ogr2ogr_lib_7():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('/vsimem/poly.shp', srcDS, layerCreationOptions=['SHPT=POLYGONZ'])
-    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
-        return 'fail'
+    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
 
     ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/poly.shp')
@@ -218,13 +189,11 @@ def test_ogr2ogr_lib_8():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', layers=['poly'])
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
     # Test also with just a string and not an array
     ds = gdal.VectorTranslate('', srcDS, format='Memory', layers='poly')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
     return 'success'
 
@@ -236,11 +205,9 @@ def test_ogr2ogr_lib_9():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', segmentizeMaxDist=100)
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     feat = ds.GetLayer(0).GetNextFeature()
-    if feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() != 36:
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 36
 
     return 'success'
 
@@ -252,14 +219,12 @@ def test_ogr2ogr_lib_10():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('/vsimem/tmp/poly.shp', srcDS)
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds = None
 
     # Overwrite
     ds = gdal.VectorTranslate('/vsimem/tmp', srcDS, accessMode='overwrite')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp')
@@ -274,11 +239,9 @@ def test_ogr2ogr_lib_11():
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('', srcDS, format='Memory', spatFilter=[479609, 4764629, 479764, 4764817])
     if ogrtest.have_geos():
-        if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
-            return 'fail'
+        assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
     else:
-        if ds is None or ds.GetLayer(0).GetFeatureCount() != 5:
-            return 'fail'
+        assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 5
 
     return 'success'
 
@@ -296,12 +259,9 @@ def test_ogr2ogr_lib_12():
 
     tab = [0]
     ds = gdal.VectorTranslate('', '../ogr/data/poly.shp', format='Memory', callback=mycallback, callback_data=tab)
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
-    if tab[0] != 1.0:
-        gdaltest.post_reason('Bad percentage')
-        return 'fail'
+    assert tab[0] == 1.0, 'Bad percentage'
 
     return 'success'
 
@@ -320,8 +280,7 @@ def test_ogr2ogr_lib_13():
 
     with gdaltest.error_handler():
         ds = gdal.VectorTranslate('', '../ogr/data/poly.shp', format='Memory', callback=mycallback_with_failure)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -349,8 +308,7 @@ def test_ogr2ogr_lib_15():
     with gdaltest.error_handler():
         ds = gdal.VectorTranslate('', srcDS, format='Memory', zField='foo')
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPolygon:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon
 
     return 'success'
 
@@ -386,10 +344,7 @@ def test_ogr2ogr_lib_16():
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToIsoWkt() != wkt_after:
             print(wkt_before)
-            print(dim)
-            print(wkt_after)
-            print(f.GetGeometryRef().ExportToIsoWkt())
-            return 'fail'
+            pytest.fail(dim)
 
     return 'success'
 
@@ -402,8 +357,7 @@ def test_ogr2ogr_lib_17():
     ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     gdal.VectorTranslate(ds, gdal.OpenEx('../ogr/data/poly.shp'))
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 10:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 10
     ds = None
 
     return 'success'
@@ -417,8 +371,7 @@ def test_ogr2ogr_lib_18():
     ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     gdal.VectorTranslate(ds, gdal.OpenEx('../ogr/data/poly.shp'), limit=1)
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     ds = None
 
     return 'success'
@@ -468,9 +421,7 @@ def test_ogr2ogr_lib_20():
 
     ds = gdal.VectorTranslate('/vsimem/out.gpkg', src_ds, format='GPKG')
     lyr = ds.GetLayer(0)
-    if lyr.GetGeometryColumn() != 'foo':
-        print(lyr.GetGeometryColumn())
-        return 'fail'
+    assert lyr.GetGeometryColumn() == 'foo'
     ds = None
     gdal.Unlink('/vsimem/out.gpkg')
 
@@ -481,9 +432,7 @@ def test_ogr2ogr_lib_20():
 
     ds = gdal.VectorTranslate('/vsimem/out.gpkg', src_ds, format='GPKG', selectFields=['bar'])
     lyr = ds.GetLayer(0)
-    if lyr.GetGeometryColumn() != 'bar':
-        print(lyr.GetGeometryColumn())
-        return 'fail'
+    assert lyr.GetGeometryColumn() == 'bar'
     ds = None
     gdal.Unlink('/vsimem/out.gpkg')
 
@@ -513,10 +462,8 @@ def test_ogr2ogr_lib_21():
     f.Destroy()
     src_ds = None
 
-    if gdal.GetLastErrorNo() != gdalconst.CPLE_IllegalArg:
-        gdaltest.post_reason(
-            'expected use of -select and -append together to be invalid')
-        return 'fail'
+    assert gdal.GetLastErrorNo() == gdalconst.CPLE_IllegalArg, \
+        'expected use of -select and -append together to be invalid'
 
     return 'success'
 
@@ -535,9 +482,7 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
                               options='-f CSV -clipsrc "%s"' % wkt)
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
-    if fc != 1:
-        print(fc)
-        return 'fail'
+    assert fc == 1
     ds = None
 
     gdal.Unlink(tmpfilename)

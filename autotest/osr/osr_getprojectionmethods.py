@@ -41,8 +41,7 @@ from osgeo import osr
 def test_osr_getprojectionmethods_1():
 
     methods = osr.GetProjectionMethods()
-    if methods[0][0] != 'Transverse_Mercator':
-        return 'fail'
+    assert methods[0][0] == 'Transverse_Mercator'
 
     return 'success'
 

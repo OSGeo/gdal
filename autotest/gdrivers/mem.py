@@ -48,13 +48,9 @@ def test_mem_1():
     gdaltest.mem_ds = drv.Create('mem_1.mem', 50, 3)
     ds = gdaltest.mem_ds
 
-    if ds.GetProjection() != '':
-        gdaltest.post_reason('projection wrong')
-        return 'fail'
+    assert ds.GetProjection() == '', 'projection wrong'
 
-    if ds.GetGeoTransform(can_return_null=True) is not None:
-        gdaltest.post_reason('geotransform wrong')
-        return 'fail'
+    assert ds.GetGeoTransform(can_return_null=True) is None, 'geotransform wrong'
 
     raw_data = array.array('f', list(range(150))).tostring()
     ds.WriteRaster(0, 0, 50, 3, raw_data,
@@ -82,41 +78,22 @@ def test_mem_1():
     #######################################################
     # Verify dataset.
 
-    if band.GetNoDataValue() != -1.0:
-        gdaltest.post_reason('no data is wrong')
-        return 'fail'
+    assert band.GetNoDataValue() == -1.0, 'no data is wrong'
 
-    if ds.GetProjection() != wkt:
-        gdaltest.post_reason('projection wrong')
-        return 'fail'
+    assert ds.GetProjection() == wkt, 'projection wrong'
 
-    if ds.GetGeoTransform() != gt:
-        gdaltest.post_reason('geotransform wrong')
-        return 'fail'
+    assert ds.GetGeoTransform() == gt, 'geotransform wrong'
 
-    if band.Checksum() != 1531:
-        gdaltest.post_reason('checksum wrong')
-        print(band.Checksum())
-        return 'fail'
+    assert band.Checksum() == 1531, 'checksum wrong'
 
-    if ds.GetGCPCount() != 1:
-        gdaltest.post_reason('GetGCPCount wrong')
-        return 'fail'
+    assert ds.GetGCPCount() == 1, 'GetGCPCount wrong'
 
-    if len(ds.GetGCPs()) != 1:
-        gdaltest.post_reason('GetGCPs wrong')
-        return 'fail'
+    assert len(ds.GetGCPs()) == 1, 'GetGCPs wrong'
 
-    if ds.GetGCPProjection() != wkt_gcp:
-        gdaltest.post_reason('GetGCPProjection wrong')
-        return 'fail'
+    assert ds.GetGCPProjection() == wkt_gcp, 'GetGCPProjection wrong'
 
-    if band.DeleteNoDataValue() != 0:
-        gdaltest.post_reason('wrong return code')
-        return 'fail'
-    if band.GetNoDataValue() is not None:
-        gdaltest.post_reason('got nodata value whereas none was expected')
-        return 'fail'
+    assert band.DeleteNoDataValue() == 0, 'wrong return code'
+    assert band.GetNoDataValue() is None, 'got nodata value whereas none was expected'
 
     gdaltest.mem_ds = None
 
@@ -131,9 +108,7 @@ def test_mem_2():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('MEM:::')
     gdal.PopErrorHandler()
-    if ds is not None:
-        gdaltest.post_reason('opening MEM dataset should have failed.')
-        return 'fail'
+    assert ds is None, 'opening MEM dataset should have failed.'
 
     try:
         import ctypes
@@ -212,8 +187,7 @@ def test_mem_3():
 
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('MEM:::', 1, 1, 1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     return 'success'
@@ -230,19 +204,15 @@ def test_mem_4():
     expected_cs = [0, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d' % (i + 1))
-            print(cs)
-            return 'fail'
+        assert cs == expected_cs[i], \
+            ('did not get expected checksum for band %d' % (i + 1))
 
     ds.GetRasterBand(1).Fill(255)
     expected_cs = [57182, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i + 1))
-            print(cs)
-            return 'fail'
+        assert cs == expected_cs[i], \
+            ('did not get expected checksum for band %d after fill' % (i + 1))
 
     ds = None
 
@@ -260,23 +230,18 @@ def test_mem_5():
     expected_cs = [0, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d' % (i + 1))
-            print(cs)
-            return 'fail'
+        assert cs == expected_cs[i], \
+            ('did not get expected checksum for band %d' % (i + 1))
 
     ds.GetRasterBand(1).Fill(255)
     expected_cs = [57182, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if cs != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d after fill' % (i + 1))
-            print(cs)
-            return 'fail'
+        assert cs == expected_cs[i], \
+            ('did not get expected checksum for band %d after fill' % (i + 1))
 
-    if ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') != 'PIXEL':
-        gdaltest.post_reason('did not get expected INTERLEAVE value')
-        return 'fail'
+    assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'PIXEL', \
+        'did not get expected INTERLEAVE value'
 
     ds = None
 
@@ -296,36 +261,31 @@ def test_mem_6():
     # Multiplication overflow
     with gdaltest.error_handler():
         ds = drv.Create('', 1, 1, 0x7FFFFFFF, gdal.GDT_Float64)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     # Multiplication overflow
     with gdaltest.error_handler():
         ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 16)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     # Multiplication overflow
     with gdaltest.error_handler():
         ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     # Out of memory error
     with gdaltest.error_handler():
         ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1, options=['INTERLEAVE=PIXEL'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     # Out of memory error
     with gdaltest.error_handler():
         ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     # 32 bit overflow on 32-bit builds, or possible out of memory error
@@ -337,8 +297,7 @@ def test_mem_6():
     ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 0)
     with gdaltest.error_handler():
         ret = ds.AddBand(gdal.GDT_Float64)
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     return 'success'
 
@@ -351,8 +310,7 @@ def test_mem_7():
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('MEM:::', 1, 1, 1)
     ds.AddBand(gdal.GDT_Byte, [])
-    if ds.RasterCount != 2:
-        return 'fail'
+    assert ds.RasterCount == 2
     ds = None
 
     return 'success'
@@ -371,9 +329,7 @@ def test_mem_8():
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     ds = None
 
-    if hist != (1.0, 2.0, 2, [3000000000, 4]):
-        print(hist)
-        return 'fail'
+    assert hist == (1.0, 2.0, 2, [3000000000, 4])
 
     return 'success'
 
@@ -400,44 +356,30 @@ def test_mem_9():
 
         ref_data = src_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_line_space=100)
         got_data = out_ds.GetRasterBand(2).ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_line_space=100)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         ref_data = src_ds.ReadRaster(20, 8, 4, 5)
         got_data = out_ds.ReadRaster(20, 8, 4, 5)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         ref_data = src_ds.ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_band_space=1)
         got_data = out_ds.ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_band_space=1)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         out_ds.WriteRaster(20, 8, 4, 5, got_data, buf_pixel_space=3, buf_band_space=1)
         got_data = out_ds.ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_band_space=1)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         ref_data = src_ds.ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_line_space=100, buf_band_space=1)
         got_data = out_ds.ReadRaster(20, 8, 4, 5, buf_pixel_space=3, buf_line_space=100, buf_band_space=1)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         ref_data = src_ds.ReadRaster(20, 20, 4, 5, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
         got_data = out_ds.ReadRaster(20, 20, 4, 5, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
         out_ds.WriteRaster(20, 20, 4, 5, got_data, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
         got_data = out_ds.ReadRaster(20, 20, 4, 5, buf_type=gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         # Test IReadBlock
         ref_data = src_ds.GetRasterBand(1).ReadRaster(0, 10, src_ds.RasterXSize, 1)
@@ -445,44 +387,33 @@ def test_mem_9():
         # to make that unnecessary
         out_ds.FlushCache()
         got_data = out_ds.GetRasterBand(1).ReadBlock(0, 10)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         # Test IRasterIO(GF_Write,)
         ref_data = src_ds.GetRasterBand(1).ReadRaster(2, 3, 4, 5)
         out_ds.GetRasterBand(1).WriteRaster(6, 7, 4, 5, ref_data)
         got_data = out_ds.GetRasterBand(1).ReadRaster(6, 7, 4, 5)
-        if ref_data != got_data:
-            return 'fail'
+        assert ref_data == got_data
 
         # Test IRasterIO(GF_Write, change data type) + IWriteBlock() + IRasterIO(GF_Read, change data type)
         ref_data = src_ds.GetRasterBand(1).ReadRaster(10, 11, 4, 5, buf_type=gdal.GDT_Int32)
         out_ds.GetRasterBand(1).WriteRaster(10, 11, 4, 5, ref_data, buf_type=gdal.GDT_Int32)
         got_data = out_ds.GetRasterBand(1).ReadRaster(10, 11, 4, 5, buf_type=gdal.GDT_Int32)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         ref_data = src_ds.GetRasterBand(1).ReadRaster(10, 11, 4, 5)
         got_data = out_ds.GetRasterBand(1).ReadRaster(10, 11, 4, 5)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
         # Test IRasterIO(GF_Write, resampling) + IWriteBlock() + IRasterIO(GF_Read, resampling)
         ref_data = src_ds.GetRasterBand(1).ReadRaster(10, 11, 4, 5)
         ref_data_zoomed = src_ds.GetRasterBand(1).ReadRaster(10, 11, 4, 5, 8, 10)
         out_ds.GetRasterBand(1).WriteRaster(10, 11, 8, 10, ref_data, 4, 5)
         got_data = out_ds.GetRasterBand(1).ReadRaster(10, 11, 8, 10)
-        if ref_data_zoomed != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data_zoomed == got_data, interleave
 
         got_data = out_ds.GetRasterBand(1).ReadRaster(10, 11, 8, 10, 4, 5)
-        if ref_data != got_data:
-            print(interleave)
-            return 'fail'
+        assert ref_data == got_data, interleave
 
     return 'success'
 
@@ -499,121 +430,80 @@ def test_mem_10():
 
     # Requesting overviews when they are not
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverview(0) is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    assert ds.GetRasterBand(1).GetOverview(-1) is None
+    assert ds.GetRasterBand(1).GetOverview(0) is None
 
     # Single band case
     ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/byte.tif'))
     for _ in range(2):
         ret = ds.BuildOverviews('NEAR', [2])
-        if ret != 0:
-            return 'fail'
-        if ds.GetRasterBand(1).GetOverviewCount() != 1:
-            return 'fail'
+        assert ret == 0
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != 1087:
-            print(cs)
-            return 'fail'
+        assert cs == 1087
 
     ret = ds.BuildOverviews('NEAR', [4])
-    if ret != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        return 'fail'
+    assert ret == 0
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
 
     ret = ds.BuildOverviews('NEAR', [2, 4])
-    if ret != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        return 'fail'
+    assert ret == 0
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
 
     # Test that average in one or several steps give the same result
     ds.GetRasterBand(1).GetOverview(0).Fill(0)
     ds.GetRasterBand(1).GetOverview(1).Fill(0)
 
     ret = ds.BuildOverviews('AVERAGE', [2, 4])
-    if ret != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        return 'fail'
+    assert ret == 0
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1152:
-        print(cs)
-        return 'fail'
+    assert cs == 1152
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 240:
-        print(cs)
-        return 'fail'
+    assert cs == 240
 
     ds.GetRasterBand(1).GetOverview(0).Fill(0)
     ds.GetRasterBand(1).GetOverview(1).Fill(0)
 
     ret = ds.BuildOverviews('AVERAGE', [2])
     ret = ds.BuildOverviews('AVERAGE', [4])
-    if ret != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        return 'fail'
+    assert ret == 0
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1152:
-        print(cs)
-        return 'fail'
+    assert cs == 1152
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 240:
-        print(cs)
-        return 'fail'
+    assert cs == 240
 
     ds = None
 
     # Multiple band case
     ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/rgbsmall.tif'))
     ret = ds.BuildOverviews('NEAR', [2])
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 5057:
-        print(cs)
-        return 'fail'
+    assert cs == 5057
     cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
-    if cs != 5304:
-        print(cs)
-        return 'fail'
+    assert cs == 5304
     cs = ds.GetRasterBand(3).GetOverview(0).Checksum()
-    if cs != 5304:
-        print(cs)
-        return 'fail'
+    assert cs == 5304
     ds = None
 
     # Clean overviews
     ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/byte.tif'))
     ret = ds.BuildOverviews('NEAR', [2])
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     ret = ds.BuildOverviews('NONE', [])
-    if ret != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        return 'fail'
+    assert ret == 0
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
 
     return 'success'
@@ -626,59 +516,47 @@ def test_mem_11():
 
     # Error case: building overview on a 0 band dataset
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
-    if ds.CreateMaskBand(gdal.GMF_PER_DATASET) == 0:
-        return 'fail'
+    assert ds.CreateMaskBand(gdal.GMF_PER_DATASET) != 0
 
     # Per dataset mask on single band dataset
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    if ds.CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        return 'fail'
+    assert ds.CreateMaskBand(gdal.GMF_PER_DATASET) == 0
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
     mask = ds.GetRasterBand(1).GetMaskBand()
     cs = mask.Checksum()
-    if cs != 0:
-        return 'fail'
+    assert cs == 0
     mask.Fill(255)
     cs = mask.Checksum()
-    if cs != 3:
-        return 'fail'
+    assert cs == 3
 
     # Check that the per dataset mask is shared by all bands
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
-    if ds.CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
-        return 'fail'
+    assert ds.CreateMaskBand(gdal.GMF_PER_DATASET) == 0
     mask1 = ds.GetRasterBand(1).GetMaskBand()
     mask1.Fill(255)
     mask2 = ds.GetRasterBand(2).GetMaskBand()
     cs = mask2.Checksum()
-    if cs != 3:
-        return 'fail'
+    assert cs == 3
 
     # Same but call it on band 2
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
-    if ds.GetRasterBand(2).CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
-        return 'fail'
+    assert ds.GetRasterBand(2).CreateMaskBand(gdal.GMF_PER_DATASET) == 0
     mask2 = ds.GetRasterBand(2).GetMaskBand()
     mask2.Fill(255)
     mask1 = ds.GetRasterBand(1).GetMaskBand()
     cs = mask1.Checksum()
-    if cs != 3:
-        return 'fail'
+    assert cs == 3
 
     # Per band masks
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
-    if ds.GetRasterBand(1).CreateMaskBand(0) != 0:
-        return 'fail'
-    if ds.GetRasterBand(2).CreateMaskBand(0) != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).CreateMaskBand(0) == 0
+    assert ds.GetRasterBand(2).CreateMaskBand(0) == 0
     mask1 = ds.GetRasterBand(1).GetMaskBand()
     mask2 = ds.GetRasterBand(2).GetMaskBand()
     mask2.Fill(255)
     cs1 = mask1.Checksum()
     cs2 = mask2.Checksum()
-    if cs1 != 0 or cs2 != 3:
-        return 'fail'
+    assert cs1 == 0 and cs2 == 3
 
     return 'success'
 
@@ -694,15 +572,11 @@ def test_mem_12():
     ds.GetRasterBand(1).GetMaskBand().Fill(127)
     ds.BuildOverviews('NEAR', [2])
     cs = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
-    if cs != 267:
-        print(cs)
-        return 'fail'
+    assert cs == 267
 
     # Default mask
     cs = ds.GetRasterBand(2).GetOverview(0).GetMaskBand().Checksum()
-    if cs != 283:
-        print(cs)
-        return 'fail'
+    assert cs == 283
 
     # Test on per-dataset mask
     ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2)
@@ -710,13 +584,9 @@ def test_mem_12():
     ds.GetRasterBand(1).GetMaskBand().Fill(127)
     ds.BuildOverviews('NEAR', [2])
     cs = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
-    if cs != 267:
-        print(cs)
-        return 'fail'
+    assert cs == 267
     cs2 = ds.GetRasterBand(2).GetOverview(0).GetMaskBand().Checksum()
-    if cs2 != cs:
-        print(cs2)
-        return 'fail'
+    assert cs2 == cs
 
     return 'success'
 
@@ -728,11 +598,9 @@ def test_mem_rat():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
-    if ds.GetRasterBand(1).GetDefaultRAT() is None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetDefaultRAT() is not None
     ds.GetRasterBand(1).SetDefaultRAT(None)
-    if ds.GetRasterBand(1).GetDefaultRAT() is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetDefaultRAT() is None
 
     return 'success'
 
@@ -744,11 +612,9 @@ def test_mem_categorynames():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     ds.GetRasterBand(1).SetCategoryNames(['foo'])
-    if ds.GetRasterBand(1).GetCategoryNames() != ['foo']:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetCategoryNames() == ['foo']
     ds.GetRasterBand(1).SetCategoryNames([])
-    if ds.GetRasterBand(1).GetCategoryNames() is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetCategoryNames() is None
 
     return 'success'
 
@@ -762,11 +628,9 @@ def test_mem_colortable():
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255, 255, 255, 255))
     ds.GetRasterBand(1).SetColorTable(ct)
-    if ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorTable().GetCount() == 1
     ds.GetRasterBand(1).SetColorTable(None)
-    if ds.GetRasterBand(1).GetColorTable() is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorTable() is None
 
     return 'success'
 

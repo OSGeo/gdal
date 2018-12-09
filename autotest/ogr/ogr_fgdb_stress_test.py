@@ -125,9 +125,7 @@ def ogr_fgdb_stress_test_1():
                 # So to ensure lyr_ref will use the same FID as the tested layer
                 fid = f.GetFID()
                 # print("created %d" % fid)
-            if ret[0] != ret[1]:
-                print(ret)
-                return 'fail'
+            assert ret[0] == ret[1]
             if ret[0] == 0:
                 nfeatures_created += 1
         # For some odd reason, the .spx file is no longer updated when doing
@@ -146,9 +144,7 @@ def ogr_fgdb_stress_test_1():
                 # gdal.PushErrorHandler()
                 ret.append(lyr.SetFeature(f))
                 # gdal.PopErrorHandler()
-            if ret[0] != ret[1]:
-                print(ret)
-                return 'fail'
+            assert ret[0] == ret[1]
         # Same for DeleteFeature()
         elif nfeatures_created >= 2:
             ret = []
@@ -159,9 +155,7 @@ def ogr_fgdb_stress_test_1():
                 # gdal.PushErrorHandler()
                 ret.append(lyr.DeleteFeature(fid))
                 # gdal.PopErrorHandler()
-            if ret[0] != ret[1]:
-                print(ret)
-                return 'fail'
+            assert ret[0] == ret[1]
 
     if in_transaction:
         ds_test.CommitTransaction()
@@ -185,8 +179,7 @@ def ogr_fgdb_stress_test_2():
     while True:
         f_test = lyr_test.GetNextFeature()
         f_ref = lyr_ref.GetNextFeature()
-        if (f_test is None and f_ref is not None) or (f_test is not None and f_ref is None):
-            return 'fail'
+        assert not (f_test is None and f_ref is not None) or (f_test is not None and f_ref is None)
         if f_test is None:
             break
         if f_test.GetFID() != f_ref.GetFID() or \
@@ -199,11 +192,7 @@ def ogr_fgdb_stress_test_2():
     for val in range(1000):
         lyr_test.SetAttributeFilter("str = '%d'" % val)
         lyr_ref.SetAttributeFilter("str = '%d'" % val)
-        if lyr_test.GetFeatureCount() != lyr_ref.GetFeatureCount():
-            print(val)
-            print(lyr_test.GetFeatureCount())
-            print(lyr_ref.GetFeatureCount())
-            return 'fail'
+        assert lyr_test.GetFeatureCount() == lyr_ref.GetFeatureCount(), val
 
     # sys.exit(0)
 

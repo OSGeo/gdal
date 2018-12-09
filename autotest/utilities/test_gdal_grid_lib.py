@@ -78,12 +78,9 @@ def test_gdal_grid_lib_1():
                     algorithm='nearest:radius1=0.0:radius2=0.0:angle=0.0',
                     spatFilter=spatFilter)
     # We should get the same values as in n43.td0
-    if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum(), ds2.GetRasterBand(1).Checksum()))
-        return 'fail'
-    if ds2.GetRasterBand(1).GetNoDataValue() is not None:
-        print('did not expect nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == ds2.GetRasterBand(1).Checksum(), \
+        ('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum(), ds2.GetRasterBand(1).Checksum()))
+    assert ds2.GetRasterBand(1).GetNoDataValue() is None, 'did not expect nodata value'
 
     ds = None
     ds2 = None
@@ -121,14 +118,10 @@ def test_gdal_grid_lib_2():
         gdal.SetConfigOption('GDAL_USE_SSE', None)
 
         cs = ds1.GetRasterBand(1).Checksum()
-        if cs != 2:
-            print(cs)
-            return 'fail'
+        assert cs == 2
 
         cs = ds2.GetRasterBand(1).Checksum()
-        if cs != 1064:
-            print(cs)
-            return 'fail'
+        assert cs == 1064
 
     return 'success'
 

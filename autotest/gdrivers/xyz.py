@@ -57,9 +57,7 @@ def test_xyz_2():
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.GetDriverByName('XYZ').Delete('tmp/float.xyz')
-    if got_cs != expected_cs and got_cs != 24387:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == expected_cs or got_cs == 24387
     return 'success'
 
 ###############################################################################
@@ -85,21 +83,13 @@ def test_xyz_3():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
     ds = gdal.Open('/vsimem/grid.xyz')
     buf = ds.ReadRaster(0, 2, 2, 1)
-    if struct.unpack('B' * 2, buf) != (69, 70):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (69, 70)
     buf = ds.ReadRaster(0, 1, 2, 1)
-    if struct.unpack('B' * 2, buf) != (67, 68):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (67, 68)
     buf = ds.ReadRaster(0, 0, 2, 1)
-    if struct.unpack('B' * 2, buf) != (65, 66):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (65, 66)
     buf = ds.ReadRaster(0, 2, 2, 1)
-    if struct.unpack('B' * 2, buf) != (69, 70):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (69, 70)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
     return 'success'
@@ -133,20 +123,13 @@ def test_xyz_4():
     got_gt = ds.GetGeoTransform()
     expected_gt = (440660.0, 60.0, 0.0, 3751350.0, 0.0, -120.0)
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
-    if ds.GetRasterBand(1).GetMinimum() != 1:
-        return 'fail'
-    if ds.GetRasterBand(1).GetMaximum() != 7:
-        return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 1
+    assert ds.GetRasterBand(1).GetMaximum() == 7
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
     for i in [0, 1, 2, 1, 0, 2, 0, 2, 0, 1, 2]:
-        if not xyz_4_checkline(ds, i, expected[i]):
-            return 'fail'
+        assert xyz_4_checkline(ds, i, expected[i])
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
     return 'success'
@@ -167,18 +150,14 @@ def test_xyz_5():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 3 or ds.RasterYSize != 2:
-        return 'fail'
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 2
     got_gt = ds.GetGeoTransform()
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
     return 'success'
 
@@ -198,18 +177,14 @@ def test_xyz_6():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 3 or ds.RasterYSize != 2:
-        return 'fail'
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 2
     got_gt = ds.GetGeoTransform()
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
     return 'success'
 
@@ -239,8 +214,7 @@ def test_xyz_7():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 3 or ds.RasterYSize != 5:
-        return 'fail'
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 5
     got_gt = ds.GetGeoTransform()
     expected_gt = (354.46666625, 0.0333335, 0.0, 51.5125, 0.0, -0.025)
     cs = ds.GetRasterBand(1).Checksum()
@@ -248,14 +222,9 @@ def test_xyz_7():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
 
-    if cs != 146:
-        print(cs)
-        return 'fail'
+    assert cs == 146
 
     return 'success'
 
@@ -274,15 +243,12 @@ def test_xyz_8():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 4 or ds.RasterYSize != 2:
-        return 'fail'
+    assert ds.RasterXSize == 4 and ds.RasterYSize == 2
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
 
-    if cs != 35:
-        print(cs)
-        return 'fail'
+    assert cs == 35
 
     return 'success'
 

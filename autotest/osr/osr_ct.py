@@ -38,6 +38,7 @@ from osgeo import gdal
 from osgeo import osr
 from osgeo import ogr
 import gdaltest
+import pytest
 
 
 ###############################################################################
@@ -69,9 +70,8 @@ def test_osr_ct_1():
         gdaltest.post_reason(gdal.GetLastErrorMsg())
         return 'fail'
 
-    if ct is None or ct.this is None:
-        gdaltest.post_reason('Unable to create simple CoordinateTransformat.')
-        return 'fail'
+    assert not (ct is None or ct.this is None), \
+        'Unable to create simple CoordinateTransformat.'
 
     gdaltest.have_proj4 = 1
 
@@ -96,11 +96,8 @@ def test_osr_ct_2():
     gdaltest.ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
     result = gdaltest.ct.TransformPoint(-117.5, 32.0, 0.0)
-    if abs(result[0] - 452772.06) > 0.01 \
-       or abs(result[1] - 3540544.89) > 0.01 \
-       or abs(result[2] - 0.0) > 0.01:
-        gdaltest.post_reason('Wrong LL to UTM result')
-        return 'fail'
+    assert abs(result[0] - 452772.06) <= 0.01 and abs(result[1] - 3540544.89) <= 0.01 and abs(result[2] - 0.0) <= 0.01, \
+        'Wrong LL to UTM result'
     return 'success'
 
 ###############################################################################
@@ -125,17 +122,14 @@ def test_osr_ct_3():
 
     pnt = ogr.CreateGeometryFromWkt('POINT(-117.5 32.0)', ll_srs)
     result = pnt.Transform(ct)
-    if result != 0:
-        return 'fail'
+    assert result == 0
 
     ll_srs = None
     ct = None
     utm_srs = None
 
     out_srs = pnt.GetSpatialReference().ExportToPrettyWkt()
-    if out_srs[0:6] != 'PROJCS':
-        gdaltest.post_reason('output srs corrupt, ref counting issue?')
-        return 'fail'
+    assert out_srs[0:6] == 'PROJCS', 'output srs corrupt, ref counting issue?'
 
     pnt = None
 
@@ -163,11 +157,8 @@ def test_osr_ct_4():
     result = gdaltest.ct.TransformPoints([(-117.5, 32.0, 0.0), (-117.5, 32.0)])
 
     for i in range(2):
-        if abs(result[i][0] - 452772.06) > 0.01 \
-                or abs(result[i][1] - 3540544.89) > 0.01 \
-                or abs(result[i][2] - 0.0) > 0.01:
-            gdaltest.post_reason('Wrong LL to UTM result')
-            return 'fail'
+        assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
+            'Wrong LL to UTM result'
 
     return 'success'
 
@@ -193,11 +184,8 @@ def test_osr_ct_5():
     result = gdaltest.ct.TransformPoints(((-117.5, 32.0, 0.0), (-117.5, 32.0)))
 
     for i in range(2):
-        if abs(result[i][0] - 452772.06) > 0.01 \
-                or abs(result[i][1] - 3540544.89) > 0.01 \
-                or abs(result[i][2] - 0.0) > 0.01:
-            gdaltest.post_reason('Wrong LL to UTM result')
-            return 'fail'
+        assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
+            'Wrong LL to UTM result'
 
     return 'success'
 
@@ -211,8 +199,7 @@ def test_osr_ct_6():
         return 'skip'
 
     ct = osr.CreateCoordinateTransformation(None, None)
-    if ct is not None:
-        return 'fail'
+    assert ct is None
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -222,17 +209,13 @@ def test_osr_ct_6():
     ll_srs.SetWellKnownGeogCS('WGS84')
 
     ct = osr.CreateCoordinateTransformation(ll_srs, utm_srs)
-    if ct is None:
-        return 'fail'
+    assert ct is not None
 
     result = ct.TransformPoints(((-117.5, 32.0, 0.0), (-117.5, 32.0)))
 
     for i in range(2):
-        if abs(result[i][0] - 452772.06) > 0.01 \
-                or abs(result[i][1] - 3540544.89) > 0.01 \
-                or abs(result[i][2] - 0.0) > 0.01:
-            gdaltest.post_reason('Wrong LL to UTM result')
-            return 'fail'
+        assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
+            'Wrong LL to UTM result'
 
     return 'success'
 
@@ -258,25 +241,22 @@ def test_osr_ct_7():
     if (abs(exp_x - x) > 0.00001 or
         abs(exp_y - y) > 0.00001 or
             abs(exp_z - z) > 0.00001):
-        gdaltest.post_reason('Wrong LL for Pseudo Mercator result')
         print('Got:      (%f, %f, %f)' % (x, y, z))
         print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
-        return 'fail'
+        pytest.fail('Wrong LL for Pseudo Mercator result')
 
     pnt = ogr.CreateGeometryFromWkt('POINT(%g %g)' % (7000000, 7000000),
                                     pm_srs)
     expected_pnt = ogr.CreateGeometryFromWkt('POINT(%.10f %.10f)' % (exp_x, exp_y),
                                              ll_srs)
     result = pnt.Transform(gdaltest.ct)
-    if result != 0:
-        return 'fail'
+    assert result == 0
     if (abs(expected_pnt.GetX() - pnt.GetX()) > 0.00001 or
         abs(expected_pnt.GetY() - pnt.GetY()) > 0.00001 or
             abs(expected_pnt.GetZ() - pnt.GetZ()) > 0.00001):
-        gdaltest.post_reason('Failed to transform from Pseudo Mercator to LL')
         print('Got:      %s' % pnt.ExportToWkt())
         print('Expected: %s' % expected_pnt.ExportToWkt())
-        return 'fail'
+        pytest.fail('Failed to transform from Pseudo Mercator to LL')
 
     return 'success'
 
@@ -304,10 +284,9 @@ def test_osr_ct_8():
     for i in range(2):
         for j in range(3):
             if abs(result[i][j] - expected_result[i][j]) > 1e-10:
-                gdaltest.post_reason('Failed to transform from Pseudo Mercator to LL')
                 print('Got:      %s' % str(result))
                 print('Expected: %s' % str(expected_result))
-                return 'fail'
+                pytest.fail('Failed to transform from Pseudo Mercator to LL')
 
     pnts = [(0, 6274861.39400658), (1 + 0, 1 + 6274861.39400658)]
     result = ct.TransformPoints(pnts)
@@ -316,12 +295,9 @@ def test_osr_ct_8():
     for i in range(2):
         for j in range(3):
             if abs(result[i][j] - expected_result[i][j]) > 1e-10:
-                gdaltest.post_reason('Failed to transform from Pseudo Mercator to LL')
                 print('Got:      %s' % str(result))
                 print('Expected: %s' % str(expected_result))
-                print(i)
-                print(j)
-                return 'fail'
+                pytest.fail('Failed to transform from Pseudo Mercator to LL')
 
     return 'success'
 

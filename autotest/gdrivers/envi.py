@@ -195,10 +195,7 @@ def test_envi_8():
     set_gt = (50000, 1, 0, 4500000, 0, -1)
     ds.SetGeoTransform(set_gt)
     got_gt = ds.GetGeoTransform()
-    if set_gt != got_gt:
-        gdaltest.post_reason('did not get expected geotransform')
-        print(got_gt)
-        return 'fail'
+    assert set_gt == got_gt, 'did not get expected geotransform'
     ds = None
 
     gdal.GetDriverByName('ENVI').Delete('/vsimem/foo.bsq')
@@ -233,9 +230,7 @@ def test_envi_10():
 
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envirpc.img')
 
-    if md['HEIGHT_OFF'] != '3355':
-        print(md)
-        return 'fail'
+    assert md['HEIGHT_OFF'] == '3355'
 
     return 'success'
 
@@ -249,10 +244,7 @@ def test_envi_11():
     val = ds.GetRasterBand(1).GetStatistics(0, 0)
     ds = None
 
-    if val != [1.0, 3.0, 2.0, 0.5]:
-        gdaltest.post_reason('bad stats')
-        print(val)
-        return 'fail'
+    assert val == [1.0, 3.0, 2.0, 0.5], 'bad stats'
 
     return 'success'
 
@@ -273,20 +265,11 @@ def test_envi_12():
     category = ds.GetRasterBand(1).GetCategoryNames()
     ct = ds.GetRasterBand(1).GetColorTable()
 
-    if category != ['Black', 'White']:
-        gdaltest.post_reason('bad category names')
-        print(category)
-        return 'fail'
+    assert category == ['Black', 'White'], 'bad category names'
 
-    if ct.GetCount() != 2:
-        gdaltest.post_reason('bad color entry count')
-        print(ct.GetCount())
-        return 'fail'
+    assert ct.GetCount() == 2, 'bad color entry count'
 
-    if ct.GetColorEntry(0) != (0, 0, 0, 255):
-        gdaltest.post_reason('bad color entry')
-        print(ct.GetColorEntry(0))
-        return 'fail'
+    assert ct.GetColorEntry(0) == (0, 0, 0, 255), 'bad color entry'
 
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/testenviclasses')
@@ -311,11 +294,9 @@ def test_envi_13():
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_13.dat')
 
-    if lines != 1:
-        return 'fail'
+    assert lines == 1
 
-    if val != 'Landsat TM':
-        return 'fail'
+    assert val == 'Landsat TM'
 
     return 'success'
 
@@ -329,8 +310,7 @@ def test_envi_14():
 
     gdal.Unlink('/vsimem/envi_14.dat.aux.xml')
 
-    if gdal.VSIStatL('/vsimem/envi_14.dat').size != 3 * 4 * 5 * 2:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/envi_14.dat').size == 3 * 4 * 5 * 2
 
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_14.dat')
 
@@ -346,19 +326,15 @@ def test_envi_15():
     got_gt = src_ds.GetGeoTransform()
     expected_gt = [736600.089, 1.0981889363046606, -2.4665727356350224,
                    4078126.75, -2.4665727356350224, -1.0981889363046606]
-    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) > 1e-5:
-        gdaltest.post_reason('did not get expected geotransform')
-        print(got_gt)
-        return 'fail'
+    assert max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) <= 1e-5, \
+        'did not get expected geotransform'
 
     gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_15.dat', src_ds)
 
     ds = gdal.Open('/vsimem/envi_15.dat')
     got_gt = ds.GetGeoTransform()
-    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) > 1e-5:
-        gdaltest.post_reason('did not get expected geotransform')
-        print(got_gt)
-        return 'fail'
+    assert max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) <= 1e-5, \
+        'did not get expected geotransform'
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_15.dat')
 
@@ -383,9 +359,7 @@ def test_envi_truncated():
     ds = None
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_truncated.dat')
 
-    if cs != 2315:
-        print(cs)
-        return 'fail'
+    assert cs == 2315
 
     return 'success'
 

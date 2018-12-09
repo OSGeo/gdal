@@ -39,9 +39,7 @@ from osgeo import ogr
 def test_ogr_dgn_1():
 
     gdaltest.dgn_ds = ogr.Open('data/smalltest.dgn')
-    if gdaltest.dgn_ds is None:
-        gdaltest.post_reason('failed to open test file.')
-        return 'fail'
+    assert gdaltest.dgn_ds is not None, 'failed to open test file.'
 
     gdaltest.dgn_lyr = gdaltest.dgn_ds.GetLayer(0)
 
@@ -56,20 +54,15 @@ def test_ogr_dgn_2():
         return 'skip'
 
     feat = gdaltest.dgn_lyr.GetNextFeature()
-    if feat.GetField('Type') != 17 or feat.GetField('Level') != 1:
-        gdaltest.post_reason('feature 1: expected attributes')
-        return 'fail'
+    assert feat.GetField('Type') == 17 and feat.GetField('Level') == 1, \
+        'feature 1: expected attributes'
 
-    if feat.GetField('Text') != 'Demo Text':
-        gdaltest.post_reason('feature 1: expected text')
-        return 'fail'
+    assert feat.GetField('Text') == 'Demo Text', 'feature 1: expected text'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (0.73650000 4.21980000)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (0.73650000 4.21980000)')
 
-    if feat.GetStyleString() != 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)':
-        gdaltest.post_reason('Style string different than expected.')
-        return 'fail'
+    assert feat.GetStyleString() == 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)', \
+        'Style string different than expected.'
 
     return 'success'
 
@@ -82,30 +75,21 @@ def test_ogr_dgn_3():
         return 'skip'
 
     feat = gdaltest.dgn_lyr.GetNextFeature()
-    if feat.GetField('Type') != 15 or feat.GetField('Level') != 2:
-        gdaltest.post_reason('feature 2: expected attributes')
-        return 'fail'
+    assert feat.GetField('Type') == 15 and feat.GetField('Level') == 2, \
+        'feature 2: expected attributes'
 
     geom = feat.GetGeometryRef()
-    if geom.GetCoordinateDimension() != 2:
-        gdaltest.post_reason('expected 2d circle.')
-        return 'fail'
+    assert geom.GetCoordinateDimension() == 2, 'expected 2d circle.'
 
-    if geom.GetGeometryName() != 'LINESTRING':
-        gdaltest.post_reason('Expected circle to be translated as LINESTRING.')
-        return 'fail'
+    assert geom.GetGeometryName() == 'LINESTRING', \
+        'Expected circle to be translated as LINESTRING.'
 
-    if geom.GetPointCount() < 15:
-        gdaltest.post_reason('Unexpected small number of circle interpolation points.')
-        return 'fail'
+    assert geom.GetPointCount() >= 15, \
+        'Unexpected small number of circle interpolation points.'
 
     genvelope = geom.GetEnvelope()
-    if genvelope[0] < 0.328593 or genvelope[0] > 0.328594 \
-       or genvelope[1] < 9.68780 or genvelope[1] > 9.68781 \
-       or genvelope[2] < -0.09611 or genvelope[2] > -0.09610 \
-       or genvelope[3] < 9.26310 or genvelope[3] > 9.26311:
-        gdaltest.post_reason('geometry extents seem odd')
-        return 'fail'
+    assert genvelope[0] >= 0.328593 and genvelope[0] <= 0.328594 and genvelope[1] >= 9.68780 and genvelope[1] <= 9.68781 and genvelope[2] >= -0.09611 and genvelope[2] <= -0.09610 and genvelope[3] >= 9.26310 and genvelope[3] <= 9.26311, \
+        'geometry extents seem odd'
 
     return 'success'
 
@@ -118,19 +102,15 @@ def test_ogr_dgn_4():
         return 'skip'
 
     feat = gdaltest.dgn_lyr.GetNextFeature()
-    if feat.GetField('Type') != 6 or feat.GetField('Level') != 2 \
-       or feat.GetField('ColorIndex') != 83:
-        gdaltest.post_reason('feature 3: expected attributes')
-        return 'fail'
+    assert feat.GetField('Type') == 6 and feat.GetField('Level') == 2 and feat.GetField('ColorIndex') == 83, \
+        'feature 3: expected attributes'
 
     wkt = 'POLYGON ((4.53550000 3.31700000,4.38320000 2.65170000,4.94410000 2.52350000,4.83200000 3.33310000,4.53550000 3.31700000))'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
-    if feat.GetStyleString() != 'BRUSH(fc:#b40000,id:"ogr-brush-0")':
-        gdaltest.post_reason('Style string different than expected.')
-        return 'fail'
+    assert feat.GetStyleString() == 'BRUSH(fc:#b40000,id:"ogr-brush-0")', \
+        'Style string different than expected.'
 
     gdaltest.dgn_lyr.ResetReading()
 
@@ -193,9 +173,7 @@ def test_ogr_dgn_7():
     feat = gdaltest.dgn_lyr.GetNextFeature()
     while feat is not None:
         dst_feat.SetFrom(feat)
-        if dgn2_lyr.CreateFeature(dst_feat) != 0:
-            gdaltest.post_reason('CreateFeature failed.')
-            return 'fail'
+        assert dgn2_lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
         feat = gdaltest.dgn_lyr.GetNextFeature()
 
@@ -223,63 +201,45 @@ def test_ogr_dgn_8():
 
     # Test first first, a text element.
     feat = dgn2_lyr.GetNextFeature()
-    if feat.GetField('Type') != 17 or feat.GetField('Level') != 1:
-        gdaltest.post_reason('feature 1: expected attributes')
-        return 'fail'
+    assert feat.GetField('Type') == 17 and feat.GetField('Level') == 1, \
+        'feature 1: expected attributes'
 
-    if feat.GetField('Text') != 'Demo Text':
-        gdaltest.post_reason('feature 1: expected text')
-        return 'fail'
+    assert feat.GetField('Text') == 'Demo Text', 'feature 1: expected text'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (0.73650000 4.21980000)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (0.73650000 4.21980000)')
 
-    if feat.GetStyleString() != 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)':
-        gdaltest.post_reason('feature 1: Style string different than expected.')
-        return 'fail'
+    assert feat.GetStyleString() == 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)', \
+        'feature 1: Style string different than expected.'
 
     # Check second element, a circle.
 
     feat = dgn2_lyr.GetNextFeature()
-    if feat.GetField('Type') != 12 or feat.GetField('Level') != 2:
-        gdaltest.post_reason('feature 2: expected attributes')
-        return 'fail'
+    assert feat.GetField('Type') == 12 and feat.GetField('Level') == 2, \
+        'feature 2: expected attributes'
 
     geom = feat.GetGeometryRef()
-    if geom.GetCoordinateDimension() != 2:
-        gdaltest.post_reason('feature 2: expected 2d circle.')
-        return 'fail'
+    assert geom.GetCoordinateDimension() == 2, 'feature 2: expected 2d circle.'
 
-    if geom.GetGeometryName() != 'MULTILINESTRING':
-        gdaltest.post_reason('feature 2: Expected MULTILINESTRING.')
-        return 'fail'
+    assert geom.GetGeometryName() == 'MULTILINESTRING', \
+        'feature 2: Expected MULTILINESTRING.'
 
     genvelope = geom.GetEnvelope()
-    if genvelope[0] < 0.3285 or genvelope[0] > 0.3287 \
-       or genvelope[1] < 9.6878 or genvelope[1] > 9.6879 \
-       or genvelope[2] < -0.0962 or genvelope[2] > -0.0960 \
-       or genvelope[3] < 9.26310 or genvelope[3] > 9.2632:
-        gdaltest.post_reason('feature 2: geometry extents seem odd')
-        print(genvelope)
-        return 'fail'
+    assert genvelope[0] >= 0.3285 and genvelope[0] <= 0.3287 and genvelope[1] >= 9.6878 and genvelope[1] <= 9.6879 and genvelope[2] >= -0.0962 and genvelope[2] <= -0.0960 and genvelope[3] >= 9.26310 and genvelope[3] <= 9.2632, \
+        'feature 2: geometry extents seem odd'
 
     # Check 3rd feature, a polygon
 
     feat = dgn2_lyr.GetNextFeature()
-    if feat.GetField('Type') != 6 or feat.GetField('Level') != 2 \
-       or feat.GetField('ColorIndex') != 83:
-        gdaltest.post_reason('feature 3: expected attributes')
-        return 'fail'
+    assert feat.GetField('Type') == 6 and feat.GetField('Level') == 2 and feat.GetField('ColorIndex') == 83, \
+        'feature 3: expected attributes'
 
     wkt = 'POLYGON ((4.53550000 3.31700000,4.38320000 2.65170000,4.94410000 2.52350000,4.83200000 3.33310000,4.53550000 3.31700000))'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     # should be: 'BRUSH(fc:#b40000,id:"ogr-brush-0")'
-    if feat.GetStyleString() != 'PEN(id:"ogr-pen-0",c:#b40000)':
-        gdaltest.post_reason('feature 3: Style string different than expected: ' + feat.GetStyleString())
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(id:"ogr-pen-0",c:#b40000)', \
+        ('feature 3: Style string different than expected: ' + feat.GetStyleString())
 
     dgn2_ds = None
 
@@ -295,14 +255,12 @@ def test_ogr_dgn_online_1():
         return 'skip'
 
     ds = ogr.Open('tmp/cache/DGNSample_v7.dgn')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(35)
     wkt = 'LINESTRING (82.9999500717185 23.2084166997284,83.0007450788903 23.2084495986816,83.00081490524 23.2068095339824,82.9999503769036 23.2067737968078)'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     return 'success'
 

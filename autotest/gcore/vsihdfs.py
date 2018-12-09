@@ -48,12 +48,10 @@ def test_vsihdfs_1():
     gdaltest.have_vsihdfs = True
 
     data = gdal.VSIFReadL(5, 1, fp)
-    if not data or data.decode('ascii') != 'Lorem':
-        return 'fail'
+    assert data and data.decode('ascii') == 'Lorem'
 
     data = gdal.VSIFReadL(1, 6, fp)
-    if not data or data.decode('ascii') != ' ipsum':
-        return 'fail'
+    assert data and data.decode('ascii') == ' ipsum'
 
     gdal.VSIFCloseL(fp)
     return 'success'
@@ -65,24 +63,20 @@ def test_vsihdfs_2():
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
 
     gdal.VSIFSeekL(fp, 2, 0) # From beginning
     gdal.VSIFSeekL(fp, 5, 0)
     data = gdal.VSIFReadL(6, 1, fp)
-    if not data or data.decode('ascii') != ' ipsum':
-        return 'fail'
+    assert data and data.decode('ascii') == ' ipsum'
 
     gdal.VSIFSeekL(fp, 7, 1) # From current
     data = gdal.VSIFReadL(3, 1, fp)
-    if not data or data.decode('ascii') != 'sit':
-        return 'fail'
+    assert data and data.decode('ascii') == 'sit'
 
     gdal.VSIFSeekL(fp, 9, 2) # From end
     data = gdal.VSIFReadL(7, 1, fp)
-    if not data or data.decode('ascii') != 'laborum':
-        return 'fail'
+    assert data and data.decode('ascii') == 'laborum'
 
     gdal.VSIFCloseL(fp)
     return 'success'
@@ -94,16 +88,13 @@ def test_vsihdfs_3():
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
 
     data = gdal.VSIFReadL(5, 1, fp)
-    if not data or data.decode('ascii') != 'Lorem':
-        return 'fail'
+    assert data and data.decode('ascii') == 'Lorem'
 
     offset = gdal.VSIFTellL(fp)
-    if offset != 5:
-        return 'fail'
+    assert offset == 5
 
     gdal.VSIFCloseL(fp)
     return 'success'
@@ -119,28 +110,23 @@ def test_vsihdfs_5():
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
 
     gdal.VSIFReadL(5, 1, fp)
     eof = gdal.VSIFEofL(fp)
-    if eof != 0:
-        return 'fail'
+    assert eof == 0
 
     gdal.VSIFReadL(1000000, 1, fp)
     eof = gdal.VSIFEofL(fp)
-    if eof != 0:
-        return 'fail'
+    assert eof == 0
 
     gdal.VSIFReadL(1, 1, fp)
     eof = gdal.VSIFEofL(fp)
-    if eof != 1:
-        return 'fail'
+    assert eof == 1
 
     gdal.VSIFSeekL(fp, 0, 0)
     eof = gdal.VSIFEofL(fp)
-    if eof != 0:
-        return 'fail'
+    assert eof == 0
 
     gdal.VSIFCloseL(fp)
     return 'success'
@@ -152,13 +138,11 @@ def test_vsihdfs_6():
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     statBuf = gdal.VSIStatL(filename, 0)
-    if not statBuf:
-        return 'fail'
+    assert statBuf
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/no-such-file.txt'
     statBuf = gdal.VSIStatL(filename, 0)
-    if statBuf:
-        return 'fail'
+    assert not statBuf
 
     return 'success'
 
@@ -169,8 +153,7 @@ def test_vsihdfs_7():
 
     dirname = '/vsihdfs/file:' + os.getcwd() + '/data/'
     lst = gdal.ReadDir(dirname)
-    if len(lst) < 360:
-        return 'fail'
+    assert len(lst) >= 360
 
     return 'success'
 

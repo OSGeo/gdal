@@ -69,16 +69,11 @@ def test_ctg_1():
     if ret == 'success':
         ds = gdal.Open('data/fake_grid_cell')
         lst = ds.GetRasterBand(1).GetCategoryNames()
-        if lst is None or not lst:
-            gdaltest.post_reason('expected non empty category names for band 1')
-            return 'fail'
+        assert lst is not None and lst, 'expected non empty category names for band 1'
         lst = ds.GetRasterBand(2).GetCategoryNames()
-        if lst is not None:
-            gdaltest.post_reason('expected empty category names for band 2')
-            return 'fail'
-        if ds.GetRasterBand(1).GetNoDataValue() != 0:
-            gdaltest.post_reason('did not get expected nodata value')
-            return 'fail'
+        assert lst is None, 'expected empty category names for band 2'
+        assert ds.GetRasterBand(1).GetNoDataValue() == 0, \
+            'did not get expected nodata value'
 
     return ret
 

@@ -87,8 +87,7 @@ def test_vrtfilt_3():
         return 'skip'
 
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'vrt_sources')
-    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
-        return 'fail'
+    assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
     return 'success'
 
@@ -117,8 +116,7 @@ def test_vrtfilt_4():
         return 'skip'
 
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'new_vrt_sources')
-    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
-        return 'fail'
+    assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
     return 'success'
 
@@ -145,8 +143,7 @@ def test_vrtfilt_5():
     md['source_0'] = filterSourceXML
 
     vrt_ds.GetRasterBand(1).SetMetadata(md, 'vrt_sources')
-    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
-        return 'fail'
+    assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
     return 'success'
 

@@ -46,9 +46,8 @@ def test_ogr_join_1():
         'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.eas_id')
 
     count = sql_lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
-        return 'fail'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
@@ -253,9 +252,8 @@ def test_ogr_join_12():
         "SELECT * FROM poly LEFT JOIN 'data/idlink.dbf'.idlink ON poly.eas_id = idlink.eas_id")
 
     count = sql_lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
-        return 'fail'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -329,13 +327,9 @@ def test_ogr_join_15():
     gdal.Unlink('/vsimem/ogr_join_14/third.csv')
     gdal.Unlink('/vsimem/ogr_join_14')
 
-    if val1 != 'c2':
-        print(val1)
-        return 'fail'
+    assert val1 == 'c2'
 
-    if val2 != 'c2':
-        print(val2)
-        return 'fail'
+    assert val2 == 'c2'
 
     return 'success'
 
@@ -353,8 +347,7 @@ def test_ogr_join_16():
         'WHERE idlink.name = \'_165\'')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Cannot use field') == 0
 
     if sql_lyr is None:
         return 'success'
@@ -374,9 +367,7 @@ def test_ogr_join_17():
         'ORDER BY name')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Cannot use field') == 0
 
     if sql_lyr is None:
         return 'success'
@@ -392,9 +383,8 @@ def test_ogr_join_18():
         'SELECT * FROM poly LEFT JOIN idlink ON idlink.eas_id = poly.eas_id')
 
     count = sql_lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
-        return 'fail'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
@@ -412,9 +402,7 @@ def test_ogr_join_19():
         'SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field') == 0
 
     if sql_lyr is None:
         return 'success'
@@ -432,9 +420,7 @@ def test_ogr_join_20():
         'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('"idlink"."foo" not recognised as an available field') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('"idlink"."foo" not recognised as an available field') == 0
 
     if sql_lyr is None:
         return 'success'
@@ -454,9 +440,7 @@ def test_ogr_join_21():
         'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') == 0
 
     if sql_lyr is None:
         return 'success'
@@ -486,9 +470,7 @@ def test_ogr_join_22():
 
     ds = None
 
-    if val != '2':
-        print(val)
-        return 'fail'
+    assert val == '2'
 
     return 'success'
 

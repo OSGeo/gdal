@@ -48,74 +48,57 @@ def test_ogr_style_styletable():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = style_table.SaveStyleTable('/nonexistingdir/nonexistingfile')
     gdal.PopErrorHandler()
-    if ret != 0:
-        print(ret)
-        return 'fail'
-    if style_table.SaveStyleTable("/vsimem/out.txt") != 1:
-        return 'fail'
+    assert ret == 0
+    assert style_table.SaveStyleTable("/vsimem/out.txt") == 1
     style_table = None
 
     style_table = ogr.StyleTable()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = style_table.LoadStyleTable('/nonexistent')
     gdal.PopErrorHandler()
-    if ret != 0:
-        return 'fail'
-    if style_table.LoadStyleTable('/vsimem/out.txt') != 1:
-        return 'fail'
+    assert ret == 0
+    assert style_table.LoadStyleTable('/vsimem/out.txt') == 1
 
     gdal.Unlink('/vsimem/out.txt')
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = style_table.Find("non_existing_style")
     gdal.PopErrorHandler()
-    if ret is not None:
-        return 'fail'
+    assert ret is None
 
-    if style_table.Find("style1_normal") != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        return 'fail'
+    assert style_table.Find("style1_normal") == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
 
     style = style_table.GetNextStyle()
-    if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        return 'fail'
+    assert style == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
     style_name = style_table.GetLastStyleName()
-    if style_name != 'style1_normal':
-        return 'fail'
+    assert style_name == 'style1_normal'
 
     style = style_table.GetNextStyle()
-    if style is not None:
-        return 'fail'
+    assert style is None
 
     style_table.ResetStyleStringReading()
     style = style_table.GetNextStyle()
-    if style is None:
-        return 'fail'
+    assert style is not None
 
     # GetStyleTable()/SetStyleTable() on data source
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
-    if ds.GetStyleTable() is not None:
-        return 'fail'
+    assert ds.GetStyleTable() is None
     ds.SetStyleTable(None)
-    if ds.GetStyleTable() is not None:
-        return 'fail'
+    assert ds.GetStyleTable() is None
     ds.SetStyleTable(style_table)
     style_table2 = ds.GetStyleTable()
     style = style_table2.GetNextStyle()
-    if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        return 'fail'
+    assert style == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
 
     # GetStyleTable()/SetStyleTable() on layer
     lyr = ds.CreateLayer('foo')
-    if lyr.GetStyleTable() is not None:
-        return 'fail'
+    assert lyr.GetStyleTable() is None
     lyr.SetStyleTable(None)
-    if lyr.GetStyleTable() is not None:
-        return 'fail'
+    assert lyr.GetStyleTable() is None
     lyr.SetStyleTable(style_table)
     style_table2 = lyr.GetStyleTable()
     style = style_table2.GetNextStyle()
-    if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        return 'fail'
+    assert style == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
 
     ds = None
 

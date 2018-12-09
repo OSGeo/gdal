@@ -69,9 +69,7 @@ def test_srtmhgt_1():
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
 
-    if chksum != 60918:
-        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
-        return 'fail'
+    assert chksum == 60918, ('Wrong checksum. Checksum found %d' % chksum)
 
     return 'success'
 
@@ -88,9 +86,7 @@ def test_srtmhgt_2():
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
 
-    if chksum != 60918:
-        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
-        return 'fail'
+    assert chksum == 60918, ('Wrong checksum. Checksum found %d' % chksum)
     dsDst = None
 
     # Test update support
@@ -99,9 +95,7 @@ def test_srtmhgt_2():
                       dsDst.ReadRaster())
     dsDst.FlushCache()
 
-    if chksum != 60918:
-        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
-        return 'fail'
+    assert chksum == 60918, ('Wrong checksum. Checksum found %d' % chksum)
     dsDst = None
 
     return 'success'
@@ -121,9 +115,7 @@ def test_srtmhgt_3():
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
 
-    if chksum != 60918:
-        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
-        return 'fail'
+    assert chksum == 60918, ('Wrong checksum. Checksum found %d' % chksum)
 
     return 'success'
 
@@ -140,15 +132,12 @@ def test_srtmhgt_4():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open('/vsimem/N43W080.SRTMSWBD.raw.zip')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.Unlink('/vsimem/N43W080.SRTMSWBD.raw.zip')
 
-    if cs != 3636:
-        gdaltest.post_reason('Wrong checksum. Checksum found %d' % cs)
-        return 'fail'
+    assert cs == 3636, ('Wrong checksum. Checksum found %d' % cs)
 
     return 'success'
 

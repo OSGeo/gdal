@@ -45,12 +45,8 @@ def test_gdaltransform_1():
     strin = '2 49 1\n' + '3 50 2\n'
     ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' -s_srs EPSG:4326 -t_srs EPSG:4326', strin)
 
-    if ret.find('2 49 1') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('3 50 2') == -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('2 49 1') != -1
+    assert ret.find('3 50 2') != -1
 
     return 'success'
 
@@ -65,18 +61,10 @@ def test_gdaltransform_2():
     strin = '0 0\n' + '20 0\n' + '20 20\n' + '0 20\n'
     ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000', strin)
 
-    if ret.find('440720 3751320') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('441920 3751320') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('441920 3750120') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('440720 3750120') == -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('440720 3751320') != -1
+    assert ret.find('441920 3751320') != -1
+    assert ret.find('441920 3750120') != -1
+    assert ret.find('440720 3750120') != -1
 
     return 'success'
 
@@ -91,18 +79,10 @@ def test_gdaltransform_3():
     strin = '0 0\n' + '20 0\n' + '20 20\n' + '0 20\n'
     ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' -tps -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000', strin)
 
-    if ret.find('440720 3751320') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('441920 3751320') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('441920 3750120') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('440720 3750120') == -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('440720 3751320') != -1
+    assert ret.find('441920 3751320') != -1
+    assert ret.find('441920 3750120') != -1
+    assert ret.find('440720 3750120') != -1
 
     return 'success'
 
@@ -117,18 +97,10 @@ def test_gdaltransform_4():
     strin = '0 0\n' + '20 0\n' + '20 20\n' + '0 20\n'
     ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' -order 1 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000', strin)
 
-    if ret.find('440720 3751320') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('441920 3751320') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('441920 3750120') == -1:
-        print(ret)
-        return 'fail'
-    if ret.find('440720 3750120') == -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('440720 3751320') != -1
+    assert ret.find('441920 3751320') != -1
+    assert ret.find('441920 3750120') != -1
+    assert ret.find('440720 3750120') != -1
 
     return 'success'
 
@@ -147,9 +119,7 @@ def test_gdaltransform_5():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    if abs(x - 440720) > 1e-4 or abs(y - 3751320) > 1e-4:
-        print(ret)
-        return 'fail'
+    assert abs(x - 440720) <= 1e-4 and abs(y - 3751320) <= 1e-4, ret
 
     return 'success'
 
@@ -168,9 +138,7 @@ def test_gdaltransform_6():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    if abs(x - 440720) > 1e-4 or abs(y - 3751320) > 1e-4:
-        print(ret)
-        return 'fail'
+    assert abs(x - 440720) <= 1e-4 and abs(y - 3751320) <= 1e-4, ret
 
     return 'success'
 
@@ -189,9 +157,7 @@ def test_gdaltransform_7():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    if abs(x - 0) > 1e-4 or abs(y - 0) > 1e-4:
-        print(ret)
-        return 'fail'
+    assert abs(x - 0) <= 1e-4 and abs(y - 0) <= 1e-4, ret
 
     return 'success'
 
@@ -206,9 +172,7 @@ def test_gdaltransform_8():
     strin = '2 49 1\n'
     ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' -to "SRC_SRS=WGS84" -to "DST_SRS=WGS84"', strin)
 
-    if ret.find('2 49 1') == -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('2 49 1') != -1
 
     return 'success'
 
@@ -224,9 +188,7 @@ def test_gdaltransform_9():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' ../gcore/data/byte.tif -output_xy', strin)
 
     text_split = ret.split(' ')
-    if len(text_split) != 2:
-        print(ret)
-        return 'fail'
+    assert len(text_split) == 2, ret
 
     return 'success'
 

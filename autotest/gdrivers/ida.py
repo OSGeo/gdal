@@ -33,6 +33,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
@@ -56,22 +57,16 @@ def test_ida_2():
     if gt[0] != -17.875 or gt[1] != 0.25 or gt[2] != 0 \
        or gt[3] != 37.875 or gt[4] != 0 or gt[5] != -0.25:
         print('got: ', gt)
-        gdaltest.post_reason('Aaigrid geotransform wrong.')
-        return 'fail'
+        pytest.fail('Aaigrid geotransform wrong.')
 
     prj = ds.GetProjection()
-    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != 255:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == 255, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('Data type is not byte.')
-        return 'fail'
+    assert band1.DataType == gdal.GDT_Byte, 'Data type is not byte.'
 
     return 'success'
 

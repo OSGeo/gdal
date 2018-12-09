@@ -89,7 +89,7 @@ def test_ogr_pgdump_1():
     sql = f.read()
     f.close()
 
-    if sql.find("""DROP TABLE IF EXISTS "public"."tpoly" CASCADE;""") == -1 or \
+    assert (not (sql.find("""DROP TABLE IF EXISTS "public"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'public';""") == -1 or \
        sql.find("""BEGIN;""") == -1 or \
        sql.find("""CREATE TABLE "public"."tpoly" ( "ogc_fid" SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );""") == -1 or \
@@ -100,9 +100,7 @@ def test_ogr_pgdump_1():
        sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "prfedea" VARCHAR;""") == -1 or \
        sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "shortname" VARCHAR(8);""") == -1 or \
        sql.find("""INSERT INTO "public"."tpoly" ("wkb_geometry" , "area", "eas_id", "prfedea") VALUES ('01030000800100000005000000000000C01A481D4100000080072D5241000000000000000000000060AA461D4100000080FF2C524100000000000000000000006060461D41000000400C2D52410000000000000000000000A0DF471D4100000000142D52410000000000000000000000C01A481D4100000080072D52410000000000000000', 5268.813, 170, '35043413');""") == -1 or \
-       sql.find("""COMMIT;""") == -1:
-        print(sql)
-        return 'fail'
+       sql.find("""COMMIT;""") == -1))
 
     return 'success'
 
@@ -161,7 +159,7 @@ def test_ogr_pgdump_2():
     sql = f.read()
     f.close()
 
-    if sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
+    assert (not (sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'another_schema';""") == -1 or \
        sql.find("""BEGIN;""") == -1 or \
        sql.find("""CREATE TABLE "another_schema"."tpoly" ( "ogc_fid" SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );""") == -1 or \
@@ -174,9 +172,7 @@ def test_ogr_pgdump_2():
        sql.find("""COPY "another_schema"."tpoly" ("the_geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
        sql.find("0103000020E61000000100000005000000000000C01A481D4100000080072D524100000060AA461D4100000080FF2C52410000006060461D41000000400C2D5241000000A0DF471D4100000000142D5241000000C01A481D4100000080072D5241	5268.813	170	35043413	\\N") == -1 or \
        sql.find("""\.""") == -1 or \
-       sql.find("""COMMIT;""") == -1:
-        print(sql)
-        return 'fail'
+       sql.find("""COMMIT;""") == -1))
 
     return 'success'
 
@@ -246,7 +242,7 @@ def test_ogr_pgdump_3():
     sql = f.read()
     f.close()
 
-    if sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
+    assert (not (sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns""") != -1 or \
        sql.find("""BEGIN;""") == -1 or \
        sql.find("""CREATE TABLE "another_schema"."tpoly" (    "ogc_fid" SERIAL,    CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );""") == -1 or \
@@ -260,9 +256,7 @@ def test_ogr_pgdump_3():
        sql.find("""\\N	215229.266	168	35043411	\\N""") == -1 or \
        sql.find("""	5268.813	170	35043413	\\N""") == -1 or \
        sql.find("""\\.""") == -1 or \
-       sql.find("""COMMIT;""") == -1:
-        print(sql)
-        return 'fail'
+       sql.find("""COMMIT;""") == -1))
 
     return 'success'
 
@@ -273,14 +267,12 @@ def test_ogr_pgdump_3():
 def test_ogr_pgdump_4():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('tmp/ogr_pgdump_4.sql', options=['LINEFORMAT=LF'])
-    if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
-        return 'fail'
+    assert ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 0
 
     ######################################################
     # Create Layer
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['WRITE_EWKT_GEOM=YES'])
-    if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCCreateGeomField) != 0
 
     gfld_defn = ogr.GeomFieldDefn("point_nosrs", ogr.wkbPoint)
     lyr.CreateGeomField(gfld_defn)
@@ -305,15 +297,13 @@ def test_ogr_pgdump_4():
     sql = f.read()
     f.close()
 
-    if sql.find("""CREATE TABLE "public"."test" (    "ogc_fid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )""") == -1 or \
+    assert (not (sql.find("""CREATE TABLE "public"."test" (    "ogc_fid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )""") == -1 or \
        sql.find("""SELECT AddGeometryColumn('public','test','point_nosrs',-1,'POINT',2)""") == -1 or \
        sql.find("""CREATE INDEX "test_point_nosrs_geom_idx" ON "public"."test" USING GIST ("point_nosrs")""") == -1 or \
        sql.find("""SELECT AddGeometryColumn('public','test','poly',4326,'POLYGON',3)""") == -1 or \
        sql.find("""CREATE INDEX "test_poly_geom_idx" ON "public"."test" USING GIST ("poly")""") == -1 or \
        sql.find("""INSERT INTO "public"."test" DEFAULT VALUES""") == -1 or \
-       sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=-1;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1:
-        print(sql)
-        return 'fail'
+       sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=-1;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1))
 
     return 'success'
 
@@ -347,8 +337,7 @@ def test_ogr_pgdump_5():
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
@@ -357,8 +346,7 @@ def test_ogr_pgdump_5():
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     f = None
 
     ds = None
@@ -369,11 +357,9 @@ def test_ogr_pgdump_5():
 
     gdal.Unlink('/vsimem/ogr_pgdump_5.sql')
 
-    if sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_not_nullable" VARCHAR NOT NULL;""") == -1 or \
+    assert (not (sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_not_nullable" VARCHAR NOT NULL;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_nullable" VARCHAR;""") == -1 or \
-       sql.find("""ALTER TABLE "test" ALTER COLUMN "geomfield_not_nullable" SET NOT NULL;""") == -1:
-        print(sql)
-        return 'fail'
+       sql.find("""ALTER TABLE "test" ALTER COLUMN "geomfield_not_nullable" SET NOT NULL;""") == -1))
 
     return 'success'
 
@@ -457,7 +443,7 @@ def test_ogr_pgdump_6():
 
     gdal.Unlink('/vsimem/ogr_pgdump_6.sql')
 
-    if sql.find("""a\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""") < 0 or \
+    assert (not (sql.find("""a\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""") < 0 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_string" VARCHAR DEFAULT 'a''b';""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_int" INTEGER DEFAULT 123;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_real" FLOAT8 DEFAULT 1.23;""") == -1 or \
@@ -465,9 +451,7 @@ def test_ogr_pgdump_6():
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_datetime2" timestamp with time zone DEFAULT '2015/06/30 12:34:56+00'::timestamp with time zone;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_date" date DEFAULT CURRENT_DATE;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_time" time DEFAULT CURRENT_TIME;""") == -1 or \
-       sql.find("""b\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""") < 0:
-        print(sql)
-        return 'fail'
+       sql.find("""b\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""") < 0))
 
     return 'success'
 
@@ -484,12 +468,10 @@ def test_ogr_pgdump_7():
     gdal.PushErrorHandler()
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTString))
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTInteger))
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     lyr.CreateField(ogr.FieldDefn('str2', ogr.OFTString))
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -497,16 +479,13 @@ def test_ogr_pgdump_7():
     feat.SetField('myfid', 10)
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
-    if ret != 0:
-        return 'fail'
-    if feat.GetFID() != 10:
-        return 'fail'
+    assert ret == 0
+    assert feat.GetFID() == 10
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     if feat.GetFID() < 0:
         feat.DumpReadable()
         return 'fail'
@@ -526,8 +505,7 @@ def test_ogr_pgdump_7():
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # gdal.PushErrorHandler()
     # ret = lyr.SetFeature(feat)
@@ -549,10 +527,8 @@ def test_ogr_pgdump_7():
     feat.SetField('myfid', 12)
     feat.SetField('str2', 'second string')
     ret = lyr.CreateFeature(feat)
-    if ret != 0:
-        return 'fail'
-    if feat.GetFID() != 12:
-        return 'fail'
+    assert ret == 0
+    assert feat.GetFID() == 12
 
     ds = None
 
@@ -562,13 +538,11 @@ def test_ogr_pgdump_7():
 
     gdal.Unlink('/vsimem/ogr_pgdump_7.sql')
 
-    if sql.find("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""") < 0 or \
+    assert (not (sql.find("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""") < 0 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "myfid" """) >= 0 or \
        sql.find("""INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (10, 'first string', 'second string');""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("str2") VALUES ('second string');""") == -1 or \
-       sql.find("""INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (12, 'first string', 'second string');""") == -1:
-        print(sql)
-        return 'fail'
+       sql.find("""INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (12, 'first string', 'second string');""") == -1))
 
     return 'success'
 
@@ -585,12 +559,10 @@ def test_ogr_pgdump_8():
     gdal.PushErrorHandler()
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTString))
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTInteger))
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     lyr.CreateField(ogr.FieldDefn('str2', ogr.OFTString))
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -600,18 +572,15 @@ def test_ogr_pgdump_8():
     gdal.SetConfigOption('PG_USE_COPY', 'YES')
     ret = lyr.CreateFeature(feat)
     gdal.SetConfigOption('PG_USE_COPY', None)
-    if ret != 0:
-        return 'fail'
-    if feat.GetFID() != 10:
-        return 'fail'
+    assert ret == 0
+    assert feat.GetFID() == 10
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str2', 'second string')
     gdal.SetConfigOption('PG_USE_COPY', 'YES')
     ret = lyr.CreateFeature(feat)
     gdal.SetConfigOption('PG_USE_COPY', None)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     if feat.GetFID() < 0:
         feat.DumpReadable()
         return 'fail'
@@ -633,8 +602,7 @@ def test_ogr_pgdump_8():
     ret = lyr.CreateFeature(feat)
     gdal.SetConfigOption('PG_USE_COPY', None)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # gdal.PushErrorHandler()
     # ret = lyr.SetFeature(feat)
@@ -658,10 +626,8 @@ def test_ogr_pgdump_8():
     gdal.SetConfigOption('PG_USE_COPY', 'YES')
     ret = lyr.CreateFeature(feat)
     gdal.SetConfigOption('PG_USE_COPY', None)
-    if ret != 0:
-        return 'fail'
-    if feat.GetFID() != 12:
-        return 'fail'
+    assert ret == 0
+    assert feat.GetFID() == 12
 
     ds = None
 
@@ -671,13 +637,11 @@ def test_ogr_pgdump_8():
 
     gdal.Unlink('/vsimem/ogr_pgdump_8.sql')
 
-    if sql.find("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""") < 0 or \
+    assert (not (sql.find("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""") < 0 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "myfid" """) >= 0 or \
        sql.find("""10\tfirst string\tsecond string""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("str2") VALUES ('second string');""") == -1 or \
-       sql.find("""12\tfirst string\tsecond string""") == -1:
-        print(sql)
-        return 'fail'
+       sql.find("""12\tfirst string\tsecond string""") == -1))
 
     return 'success'
 
@@ -737,12 +701,10 @@ def test_ogr_pgdump_9(pg_use_copy='YES'):
         eofield = '\t'
     else:
         eofield = "'"
-    if sql.find("""01234%s""" % eofield) < 0 or \
-       sql.find("""ABCDE%s""" % eofield) < 0 or \
-       sql.find("""%s%s""" % (val5, eofield)) < 0 or \
-       sql.find("""%s%s""" % ('a' + val4, eofield)) < 0:
-        print(sql)
-        return 'fail'
+    assert (sql.find("""01234%s""" % eofield) >= 0 and \
+       sql.find("""ABCDE%s""" % eofield) >= 0 and \
+       sql.find("""%s%s""" % (val5, eofield)) >= 0 and \
+       sql.find("""%s%s""" % ('a' + val4, eofield)) >= 0)
 
     return 'success'
 
@@ -771,10 +733,8 @@ def test_ogr_pgdump_11():
     gdal.Unlink('/vsimem/ogr_pgdump_11.sql')
 
     # clang -m32 generates F8FF..., instead of F87F... for all other systems
-    if sql.find('0101000000000000000000F87F000000000000F87F') < 0 and \
-       sql.find('0101000000000000000000F8FF000000000000F8FF') < 0:
-        print(sql)
-        return 'fail'
+    assert (sql.find('0101000000000000000000F87F000000000000F87F') >= 0 or \
+       sql.find('0101000000000000000000F8FF000000000000F8FF') >= 0)
 
     return 'success'
 
@@ -798,9 +758,7 @@ def test_ogr_pgdump_12():
 
     gdal.Unlink('/vsimem/ogr_pgdump_12.sql')
 
-    if sql.find('another_name') < 0:
-        print(sql)
-        return 'fail'
+    assert sql.find('another_name') >= 0
 
     return 'success'
 
@@ -845,10 +803,7 @@ def test_ogr_pgdump_13():
         gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
 
         for expected_string in expected_strings:
-            if sql.find(expected_string) < 0:
-                print(geom_type, options, wkt, expected_string)
-                print(sql)
-                return 'fail'
+            assert sql.find(expected_string) >= 0, (geom_type, options, wkt, expected_string)
 
         if 'GEOM_TYPE=geography' in options:
             continue
@@ -869,10 +824,7 @@ def test_ogr_pgdump_13():
         gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
 
         for expected_string in expected_strings:
-            if sql.find(expected_string) < 0:
-                print(geom_type, options, wkt, expected_string)
-                print(sql)
-                return 'fail'
+            assert sql.find(expected_string) >= 0, (geom_type, options, wkt, expected_string)
 
     return 'success'
 
@@ -896,9 +848,7 @@ def test_ogr_pgdump_14():
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
 
-    if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'foo';""") < 0 or sql.find('bar') >= 0 or sql.find('baz') >= 0:
-        print(sql)
-        return 'fail'
+    assert sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'foo';""") >= 0 and sql.find('bar') < 0 and sql.find('baz') < 0
 
     # Set with SetMetadataItem()
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options=['LINEFORMAT=LF'])
@@ -911,9 +861,7 @@ def test_ogr_pgdump_14():
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
-    if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'bar';""") < 0:
-        print(sql)
-        return 'fail'
+    assert sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'bar';""") >= 0
 
     # Set with SetMetadata()
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options=['LINEFORMAT=LF'])
@@ -926,9 +874,7 @@ def test_ogr_pgdump_14():
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
-    if sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""") < 0:
-        print(sql)
-        return 'fail'
+    assert sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""") >= 0
 
     return 'success'
 
@@ -955,10 +901,8 @@ def test_ogr_pgdump_15():
 
     gdal.Unlink('/vsimem/ogr_pgdump_15.sql')
 
-    if sql.find('INSERT INTO "public"."test" ("str") VALUES (NULL)') < 0 and \
-       sql.find('INSERT INTO "public"."test" DEFAULT VALUES') < 0:
-        print(sql)
-        return 'fail'
+    assert (sql.find('INSERT INTO "public"."test" ("str") VALUES (NULL)') >= 0 or \
+       sql.find('INSERT INTO "public"."test" DEFAULT VALUES') >= 0)
 
     return 'success'
 
@@ -986,9 +930,7 @@ def test_ogr_pgdump_16():
 
         gdal.Unlink('/vsimem/ogr_pgdump_16.sql')
 
-        if sql.find("""SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";""") < 0:
-            print(sql)
-            return 'fail'
+        assert sql.find("""SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";""") >= 0
 
     gdal.SetConfigOption('PG_USE_COPY', None)
 

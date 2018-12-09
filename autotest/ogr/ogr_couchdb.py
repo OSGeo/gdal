@@ -77,8 +77,7 @@ def test_ogr_couchdb_1():
                          layerName=ogrtest.couchdb_temp_layer_name,
                          layerCreationOptions=['UPDATE_PERMISSIONS=ALL'])
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     lyr = ds.GetLayerByName(ogrtest.couchdb_temp_layer_name)
     f = lyr.GetNextFeature()
     if f['AREA'] != 215229.266 or f['EAS_ID'] != '168' or f.GetGeometryRef() is None:
@@ -97,8 +96,7 @@ def test_ogr_couchdb_2():
         return 'skip'
 
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     lyr = ds.CreateLayer(ogrtest.couchdb_temp_layer_name, geom_type=ogr.wkbNone, options=['UPDATE_PERMISSIONS=ALL'])
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
 
@@ -139,8 +137,7 @@ def test_ogr_couchdb_cleanup():
         return 'skip'
 
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
 
     return 'success'

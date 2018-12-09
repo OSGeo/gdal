@@ -80,12 +80,10 @@ def test_ogr_gft_read():
     gdal.SetConfigOption('GFT_AUTH', old_auth)
     gdal.SetConfigOption('GFT_ACCESS_TOKEN', old_access)
     gdal.SetConfigOption('GFT_REFRESH_TOKEN', old_refresh)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     lyr.SetSpatialFilterRect(67, 31.5, 67.5, 32)
     lyr.SetAttributeFilter("'Attack on' = 'ENEMY'")
@@ -100,15 +98,12 @@ def test_ogr_gft_read():
         return 'fail'
 
     sql_lyr = ds.ExecuteSQL("SELECT Latitude, Longitude FROM " + table_id + " WHERE ST_INTERSECTS('Latitude', RECTANGLE(LATLNG(31.5,67.0), LATLNG(32.0,67.5))) AND 'Attack on' = 'ENEMY'")
-    if sql_lyr is None:
-        gdaltest.post_reason('SQL request failed')
-        return 'fail'
+    assert sql_lyr is not None, 'SQL request failed'
     sql_lyr_count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
-    if sql_lyr_count != count:
-        gdaltest.post_reason('did not get expected feature count. Got %d, expected %d' % (sql_lyr_count, count))
-        return 'fail'
+    assert sql_lyr_count == count, \
+        ('did not get expected feature count. Got %d, expected %d' % (sql_lyr_count, count))
 
     return 'success'
 
@@ -145,15 +140,11 @@ def test_ogr_gft_write():
     expected_wkt = "POLYGON ((0 0,0 1,1 1,1 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25))"
     geom = ogr.CreateGeometryFromWkt(expected_wkt)
     feat.SetGeometry(geom)
-    if lyr.CreateFeature(feat) != 0:
-        gdaltest.post_reason('CreateFeature() failed')
-        return 'fail'
+    assert lyr.CreateFeature(feat) == 0, 'CreateFeature() failed'
 
     fid = feat.GetFID()
     feat.SetField('strcol', 'bar')
-    if lyr.SetFeature(feat) != 0:
-        gdaltest.post_reason('SetFeature() failed')
-        return 'fail'
+    assert lyr.SetFeature(feat) == 0, 'SetFeature() failed'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -168,18 +159,12 @@ def test_ogr_gft_write():
         feat.DumpReadable()
         return 'fail'
     got_wkt = feat.GetGeometryRef().ExportToWkt()
-    if got_wkt != expected_wkt:
-        gdaltest.post_reason('did not get expected geometry')
-        print(got_wkt)
-        return 'fail'
+    assert got_wkt == expected_wkt, 'did not get expected geometry'
 
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('GetFeatureCount() did not returned expected value')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1, \
+        'GetFeatureCount() did not returned expected value'
 
-    if lyr.DeleteFeature(feat.GetFID()) != 0:
-        gdaltest.post_reason('DeleteFeature() failed')
-        return 'fail'
+    assert lyr.DeleteFeature(feat.GetFID()) == 0, 'DeleteFeature() failed'
 
     ds.ExecuteSQL('DELLAYER:%s' % table_name)
 

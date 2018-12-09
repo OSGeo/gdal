@@ -67,9 +67,7 @@ def test_gdal_pansharpen_1():
     ds = None
     gdal.GetDriverByName('GTiff').Delete('tmp/out.tif')
 
-    if cs != [4735, 10000, 9742]:
-        print(cs)
-        return 'fail'
+    assert cs == [4735, 10000, 9742]
 
     return 'success'
 
@@ -90,9 +88,7 @@ def test_gdal_pansharpen_2():
     ds = None
     gdal.GetDriverByName('VRT').Delete('tmp/out.vrt')
 
-    if cs != [9742, 4735]:
-        print(cs)
-        return 'fail'
+    assert cs == [9742, 4735]
 
     return 'success'
 

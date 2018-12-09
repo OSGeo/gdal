@@ -35,6 +35,7 @@ from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 
 def open_for_read(uri):
@@ -54,8 +55,7 @@ def test_visoss_init():
         if gdaltest.oss_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
-    if gdal.GetSignedURL('/vsioss/foo/bar') is not None:
-        return 'fail'
+    assert gdal.GetSignedURL('/vsioss/foo/bar') is None
 
     return 'success'
 
@@ -72,16 +72,12 @@ def test_visoss_1():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsioss/foo/bar')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('OSS_SECRET_ACCESS_KEY') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('OSS_SECRET_ACCESS_KEY') >= 0
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsioss_streaming/foo/bar')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('OSS_SECRET_ACCESS_KEY') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('OSS_SECRET_ACCESS_KEY') >= 0
 
     gdal.SetConfigOption('OSS_SECRET_ACCESS_KEY', 'OSS_SECRET_ACCESS_KEY')
 
@@ -89,9 +85,7 @@ def test_visoss_1():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsioss/foo/bar')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('OSS_ACCESS_KEY_ID') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('OSS_ACCESS_KEY_ID') >= 0
 
     gdal.SetConfigOption('OSS_ACCESS_KEY_ID', 'OSS_ACCESS_KEY_ID')
 
@@ -121,9 +115,7 @@ def test_visoss_real_test():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsioss_streaming/foo/bar.baz')
-    if f is not None or gdal.VSIGetLastErrorMsg() == '':
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg() != ''
 
     return 'success'
 
@@ -185,37 +177,29 @@ def test_visoss_2():
 
     signed_url = gdal.GetSignedURL('/vsioss/oss_fake_bucket/resource',
                                    ['START_DATE=20180212T123456Z'])
-    if signed_url not in ('http://127.0.0.1:8080/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D',
-                          'http://127.0.0.1:8081/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D'):
-        print(signed_url)
-        return 'fail'
+    assert (signed_url in ('http://127.0.0.1:8080/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D',
+                          'http://127.0.0.1:8081/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D'))
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_fake_bucket/resource', custom_method=get_oss_fake_bucket_resource_method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss/oss_fake_bucket/resource')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-        if data != 'foo':
-            print(data)
-            return 'fail'
+        assert data == 'foo'
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_fake_bucket/resource', custom_method=get_oss_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss_streaming/oss_fake_bucket/resource')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-    if data != 'foo':
-        print(data)
-        return 'fail'
+    assert data == 'foo'
 
     handler = webserver.SequentialHandler()
 
@@ -257,8 +241,7 @@ def test_visoss_2():
     # Test region and endpoint 'redirects'
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss/oss_fake_bucket/redirect')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
@@ -275,14 +258,11 @@ def test_visoss_2():
     handler.req_count = 0
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss_streaming/oss_fake_bucket/redirect')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-    if data != 'foo':
-        print(data)
-        return 'fail'
+    assert data == 'foo'
 
     handler = webserver.SequentialHandler()
 
@@ -308,9 +288,7 @@ def test_visoss_2():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsioss_streaming/oss_fake_bucket/non_xml_error')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('bla') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('bla') >= 0
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
@@ -323,9 +301,7 @@ def test_visoss_2():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsioss_streaming/oss_fake_bucket/invalid_xml_error')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('<oops>') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('<oops>') >= 0
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
@@ -338,9 +314,7 @@ def test_visoss_2():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsioss_streaming/oss_fake_bucket/no_code_in_error')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error/>') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('<Error/>') >= 0
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
@@ -353,9 +327,7 @@ def test_visoss_2():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsioss_streaming/oss_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error>') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('<Error>') >= 0
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>PermanentRedirect</Code></Error>'
@@ -368,9 +340,7 @@ def test_visoss_2():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsioss_streaming/oss_fake_bucket/no_endpoint_in_PermanentRedirect_error')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error>') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('<Error>') >= 0
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>bla</Code></Error>'
@@ -383,9 +353,7 @@ def test_visoss_2():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsioss_streaming/oss_fake_bucket/no_message_in_error')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('<Error>') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('<Error>') >= 0
 
     return 'success'
 
@@ -457,18 +425,13 @@ def test_visoss_3():
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         dir_contents = gdal.ReadDir('/vsioss/oss_fake_bucket2/a_dir')
-    if dir_contents != ['resource3.bin', 'resource4.bin', 'subdir']:
-        print(dir_contents)
-        return 'fail'
-    if gdal.VSIStatL('/vsioss/oss_fake_bucket2/a_dir/resource3.bin').size != 123456:
-        return 'fail'
-    if gdal.VSIStatL('/vsioss/oss_fake_bucket2/a_dir/resource3.bin').mtime != 1:
-        return 'fail'
+    assert dir_contents == ['resource3.bin', 'resource4.bin', 'subdir']
+    assert gdal.VSIStatL('/vsioss/oss_fake_bucket2/a_dir/resource3.bin').size == 123456
+    assert gdal.VSIStatL('/vsioss/oss_fake_bucket2/a_dir/resource3.bin').mtime == 1
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir('/vsioss/oss_fake_bucket2/a_dir/resource3.bin')
-    if dir_contents is not None:
-        return 'fail'
+    assert dir_contents is None
 
     # Test CPL_VSIL_CURL_NON_CACHED
     for config_option_value in ['/vsioss/oss_non_cached/test.txt',
@@ -483,25 +446,17 @@ def test_visoss_3():
 
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsioss/oss_non_cached/test.txt')
-                if f is None:
-                    print(config_option_value)
-                    return 'fail'
+                assert f is not None, config_option_value
                 data = gdal.VSIFReadL(1, 3, f).decode('ascii')
                 gdal.VSIFCloseL(f)
-                if data != 'foo':
-                    print(config_option_value)
-                    print(data)
-                    return 'fail'
+                assert data == 'foo', config_option_value
 
             handler = webserver.SequentialHandler()
             handler.add('GET', '/oss_non_cached/test.txt', 200, {}, 'bar2')
 
             with webserver.install_http_handler(handler):
                 size = gdal.VSIStatL('/vsioss/oss_non_cached/test.txt').size
-            if size != 4:
-                print(config_option_value)
-                print(size)
-                return 'fail'
+            assert size == 4, config_option_value
 
             handler = webserver.SequentialHandler()
             handler.add('GET', '/oss_non_cached/test.txt', 200, {}, 'foo')
@@ -510,23 +465,17 @@ def test_visoss_3():
                 size = gdal.VSIStatL('/vsioss/oss_non_cached/test.txt').size
                 if size != 3:
                     print(config_option_value)
-                    print(data)
-                    return 'fail'
+                    pytest.fail(data)
 
             handler = webserver.SequentialHandler()
             handler.add('GET', '/oss_non_cached/test.txt', 200, {}, 'bar2')
 
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsioss/oss_non_cached/test.txt')
-                if f is None:
-                    print(config_option_value)
-                    return 'fail'
+                assert f is not None, config_option_value
                 data = gdal.VSIFReadL(1, 4, f).decode('ascii')
                 gdal.VSIFCloseL(f)
-                if data != 'bar2':
-                    print(config_option_value)
-                    print(data)
-                    return 'fail'
+                assert data == 'bar2', config_option_value
 
     # Retry without option
     for config_option_value in [None,
@@ -555,29 +504,19 @@ def test_visoss_3():
 
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsioss/oss_non_cached/test.txt')
-                if f is None:
-                    print(config_option_value)
-                    return 'fail'
+                assert f is not None, config_option_value
                 data = gdal.VSIFReadL(1, 3, f).decode('ascii')
                 gdal.VSIFCloseL(f)
-                if data != 'foo':
-                    print(config_option_value)
-                    print(data)
-                    return 'fail'
+                assert data == 'foo', config_option_value
 
             handler = webserver.SequentialHandler()
             with webserver.install_http_handler(handler):
                 f = open_for_read('/vsioss/oss_non_cached/test.txt')
-                if f is None:
-                    print(config_option_value)
-                    return 'fail'
+                assert f is not None, config_option_value
                 data = gdal.VSIFReadL(1, 4, f).decode('ascii')
                 gdal.VSIFCloseL(f)
                 # We should still get foo because of caching
-                if data != 'foo':
-                    print(config_option_value)
-                    print(data)
-                    return 'fail'
+                assert data == 'foo', config_option_value
 
     # List buckets (empty result)
     handler = webserver.SequentialHandler()
@@ -590,9 +529,7 @@ def test_visoss_3():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsioss/')
-    if dir_contents != ['.']:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents == ['.']
 
     gdal.VSICurlClearCache()
 
@@ -610,9 +547,7 @@ def test_visoss_3():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsioss/')
-    if dir_contents != ['mybucket']:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents == ['mybucket']
 
     return 'success'
 
@@ -628,14 +563,12 @@ def test_visoss_4():
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
             f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket3', 'wb')
-    if f is not None:
-        return 'fail'
+    assert f is None
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_fake_bucket3/empty_file.bin', 200, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
-        if gdal.VSIStatL('/vsioss/oss_fake_bucket3/empty_file.bin').size != 3:
-            return 'fail'
+        assert gdal.VSIStatL('/vsioss/oss_fake_bucket3/empty_file.bin').size == 3
 
     # Empty file
     handler = webserver.SequentialHandler()
@@ -654,41 +587,34 @@ def test_visoss_4():
 
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket3/empty_file.bin', 'wb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         gdal.ErrorReset()
         gdal.VSIFCloseL(f)
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_fake_bucket3/empty_file.bin', 200, {'Connection': 'close'}, '')
     with webserver.install_http_handler(handler):
-        if gdal.VSIStatL('/vsioss/oss_fake_bucket3/empty_file.bin').size != 0:
-            return 'fail'
+        assert gdal.VSIStatL('/vsioss/oss_fake_bucket3/empty_file.bin').size == 0
 
     # Invalid seek
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket3/empty_file.bin', 'wb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         with gdaltest.error_handler():
             ret = gdal.VSIFSeekL(f, 1, 0)
-        if ret == 0:
-            return 'fail'
+        assert ret != 0
         gdal.VSIFCloseL(f)
 
     # Invalid read
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket3/empty_file.bin', 'wb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         with gdaltest.error_handler():
             ret = gdal.VSIFReadL(1, 1, f)
-        if ret:
-            return 'fail'
+        assert not ret
         gdal.VSIFCloseL(f)
 
     # Error case
@@ -696,31 +622,22 @@ def test_visoss_4():
     handler.add('PUT', '/oss_fake_bucket3/empty_file_error.bin', 403)
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket3/empty_file_error.bin', 'wb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         gdal.ErrorReset()
         with gdaltest.error_handler():
             gdal.VSIFCloseL(f)
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     # Nominal case
     with webserver.install_http_handler(webserver.SequentialHandler()):
         f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket3/another_file.bin', 'wb')
-        if f is None:
-            return 'fail'
-        if gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) != 0:
-            return 'fail'
-        if gdal.VSIFSeekL(f, 0, 1) != 0:
-            return 'fail'
-        if gdal.VSIFSeekL(f, 0, 2) != 0:
-            return 'fail'
-        if gdal.VSIFWriteL('foo', 1, 3, f) != 3:
-            return 'fail'
-        if gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) != 0:
-            return 'fail'
-        if gdal.VSIFWriteL('bar', 1, 3, f) != 3:
-            return 'fail'
+        assert f is not None
+        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+        assert gdal.VSIFSeekL(f, 0, 1) == 0
+        assert gdal.VSIFSeekL(f, 0, 2) == 0
+        assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+        assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
 
     handler = webserver.SequentialHandler()
 
@@ -751,8 +668,7 @@ def test_visoss_4():
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         gdal.VSIFCloseL(f)
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     return 'success'
 
@@ -768,32 +684,27 @@ def test_visoss_5():
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsioss/foo')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_delete_bucket/delete_file', 200, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
-        if gdal.VSIStatL('/vsioss/oss_delete_bucket/delete_file').size != 3:
-            return 'fail'
+        assert gdal.VSIStatL('/vsioss/oss_delete_bucket/delete_file').size == 3
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        if gdal.VSIStatL('/vsioss/oss_delete_bucket/delete_file').size != 3:
-            return 'fail'
+        assert gdal.VSIStatL('/vsioss/oss_delete_bucket/delete_file').size == 3
 
     handler = webserver.SequentialHandler()
     handler.add('DELETE', '/oss_delete_bucket/delete_file', 204)
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsioss/oss_delete_bucket/delete_file')
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_delete_bucket/delete_file', 404, {'Connection': 'close'}, 'foo')
     handler.add('GET', '/oss_delete_bucket/?delimiter=%2F&max-keys=100&prefix=delete_file%2F', 404, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
-        if gdal.VSIStatL('/vsioss/oss_delete_bucket/delete_file') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsioss/oss_delete_bucket/delete_file') is None
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_delete_bucket/delete_file_error', 200)
@@ -801,8 +712,7 @@ def test_visoss_5():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsioss/oss_delete_bucket/delete_file_error')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     return 'success'
 
@@ -818,8 +728,7 @@ def test_visoss_6():
     with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
             f = gdal.VSIFOpenL('/vsioss/oss_fake_bucket4/large_file.bin', 'wb')
-    if f is None:
-        return 'fail'
+    assert f is not None
     size = 1024 * 1024 + 1
     big_buffer = 'a' * size
 
@@ -852,8 +761,7 @@ def test_visoss_6():
 
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
-    if ret != size:
-        return 'fail'
+    assert ret == size
     handler = webserver.SequentialHandler()
 
     def method(request):
@@ -900,8 +808,7 @@ def test_visoss_6():
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         gdal.VSIFCloseL(f)
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/oss_fake_bucket4/large_file_initiate_403_error.bin?uploads', 403)
@@ -915,17 +822,13 @@ def test_visoss_6():
                          '/vsioss/oss_fake_bucket4/large_file_initiate_no_uploadId.bin']:
             with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
                 f = gdal.VSIFOpenL(filename, 'wb')
-            if f is None:
-                return 'fail'
+            assert f is not None
             with gdaltest.error_handler():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
-            if ret != 0:
-                print(ret)
-                return 'fail'
+            assert ret == 0
             gdal.ErrorReset()
             gdal.VSIFCloseL(f)
-            if gdal.GetLastErrorMsg() != '':
-                return 'fail'
+            assert gdal.GetLastErrorMsg() == ''
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/oss_fake_bucket4/large_file_upload_part_403_error.bin?uploads', 200, {},
@@ -943,20 +846,13 @@ def test_visoss_6():
                          '/vsioss/oss_fake_bucket4/large_file_upload_part_no_etag.bin']:
             with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
                 f = gdal.VSIFOpenL(filename, 'wb')
-            if f is None:
-                print(filename)
-                return 'fail'
+            assert f is not None, filename
             with gdaltest.error_handler():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
-            if ret != 0:
-                print(filename)
-                print(ret)
-                return 'fail'
+            assert ret == 0, filename
             gdal.ErrorReset()
             gdal.VSIFCloseL(f)
-            if gdal.GetLastErrorMsg() != '':
-                print(filename)
-                return 'fail'
+            assert gdal.GetLastErrorMsg() == '', filename
 
     # Simulate failure in AbortMultipart stage
     handler = webserver.SequentialHandler()
@@ -969,21 +865,14 @@ def test_visoss_6():
     with webserver.install_http_handler(handler):
         with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
-        if f is None:
-            print(filename)
-            return 'fail'
+        assert f is not None, filename
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
-        if ret != 0:
-            print(filename)
-            print(ret)
-            return 'fail'
+        assert ret == 0, filename
         gdal.ErrorReset()
         with gdaltest.error_handler():
             gdal.VSIFCloseL(f)
-        if gdal.GetLastErrorMsg() == '':
-            print(filename)
-            return 'fail'
+        assert gdal.GetLastErrorMsg() != '', filename
 
     # Simulate failure in CompleteMultipartUpload stage
     handler = webserver.SequentialHandler()
@@ -998,20 +887,13 @@ def test_visoss_6():
     with webserver.install_http_handler(handler):
         with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'):  # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
-            if f is None:
-                print(filename)
-                return 'fail'
+            assert f is not None, filename
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
-            if ret != size:
-                print(filename)
-                print(ret)
-                return 'fail'
+            assert ret == size, filename
             gdal.ErrorReset()
             with gdaltest.error_handler():
                 gdal.VSIFCloseL(f)
-            if gdal.GetLastErrorMsg() == '':
-                print(filename)
-                return 'fail'
+            assert gdal.GetLastErrorMsg() != '', filename
 
     return 'success'
 
@@ -1030,23 +912,20 @@ def test_visoss_7():
     handler.add('PUT', '/oss_bucket_test_mkdir/dir/', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsioss/oss_bucket_test_mkdir/dir', 0)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Try creating already existing directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/dir/', 416)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsioss/oss_bucket_test_mkdir/dir', 0)
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     handler = webserver.SequentialHandler()
     handler.add('DELETE', '/oss_bucket_test_mkdir/dir/', 204)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsioss/oss_bucket_test_mkdir/dir')
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Try deleting already deleted directory
     handler = webserver.SequentialHandler()
@@ -1054,8 +933,7 @@ def test_visoss_7():
     handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir%2F', 404, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsioss/oss_bucket_test_mkdir/dir')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
@@ -1074,8 +952,7 @@ def test_visoss_7():
                 """)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsioss/oss_bucket_test_mkdir/dir_nonempty')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     return 'success'
 
@@ -1107,19 +984,15 @@ def test_visoss_8():
 
     with webserver.install_http_handler(handler):
         listdir = gdal.ReadDir('/vsioss/visoss_8', 0)
-    if listdir != ['test', 'test/']:
-        print(listdir)
-        return 'fail'
+    assert listdir == ['test', 'test/']
 
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
-        if stat.S_ISDIR(gdal.VSIStatL('/vsioss/visoss_8/test').mode):
-            return 'fail'
+        assert not stat.S_ISDIR(gdal.VSIStatL('/vsioss/visoss_8/test').mode)
 
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
-        if not stat.S_ISDIR(gdal.VSIStatL('/vsioss/visoss_8/test/').mode):
-            return 'fail'
+        assert stat.S_ISDIR(gdal.VSIStatL('/vsioss/visoss_8/test/').mode)
 
     return 'success'
 
@@ -1164,113 +1037,80 @@ def visoss_extra_1():
     if OSS_RESOURCE.find('/') < 0:
         path = '/vsioss/' + OSS_RESOURCE
         statres = gdal.VSIStatL(path)
-        if statres is None or not stat.S_ISDIR(statres.mode):
-            print('%s is not a valid bucket' % path)
-            return 'fail'
+        assert statres is not None and stat.S_ISDIR(statres.mode), \
+            ('%s is not a valid bucket' % path)
 
         readdir = gdal.ReadDir(path)
-        if readdir is None:
-            print('ReadDir() should not return empty list')
-            return 'fail'
+        assert readdir is not None, 'ReadDir() should not return empty list'
         for filename in readdir:
             if filename != '.':
                 subpath = path + '/' + filename
-                if gdal.VSIStatL(subpath) is None:
-                    print('Stat(%s) should not return an error' % subpath)
-                    return 'fail'
+                assert gdal.VSIStatL(subpath) is not None, \
+                    ('Stat(%s) should not return an error' % subpath)
 
         unique_id = 'visoss_test'
         subpath = path + '/' + unique_id
         ret = gdal.Mkdir(subpath, 0)
-        if ret < 0:
-            print('Mkdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
         readdir = gdal.ReadDir(path)
-        if unique_id not in readdir:
-            print('ReadDir(%s) should contain %s' % (path, unique_id))
-            print(readdir)
-            return 'fail'
+        assert unique_id in readdir, \
+            ('ReadDir(%s) should contain %s' % (path, unique_id))
 
         ret = gdal.Mkdir(subpath, 0)
-        if ret == 0:
-            print('Mkdir(%s) repeated should return an error' % subpath)
-            return 'fail'
+        assert ret != 0, ('Mkdir(%s) repeated should return an error' % subpath)
 
         ret = gdal.Rmdir(subpath)
-        if ret < 0:
-            print('Rmdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
         readdir = gdal.ReadDir(path)
-        if unique_id in readdir:
-            print('ReadDir(%s) should not contain %s' % (path, unique_id))
-            print(readdir)
-            return 'fail'
+        assert unique_id not in readdir, \
+            ('ReadDir(%s) should not contain %s' % (path, unique_id))
 
         ret = gdal.Rmdir(subpath)
-        if ret == 0:
-            print('Rmdir(%s) repeated should return an error' % subpath)
-            return 'fail'
+        assert ret != 0, ('Rmdir(%s) repeated should return an error' % subpath)
 
         ret = gdal.Mkdir(subpath, 0)
-        if ret < 0:
-            print('Mkdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
 
         ret = gdal.Rmdir(subpath)
-        if ret == 0:
-            print('Rmdir(%s) on non empty directory should return an error' % subpath)
-            return 'fail'
+        assert ret != 0, \
+            ('Rmdir(%s) on non empty directory should return an error' % subpath)
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
-        if data != 'hello':
-            print(data)
-            return 'fail'
+        assert data == 'hello'
         gdal.VSIFCloseL(f)
 
         ret = gdal.Unlink(subpath + '/test.txt')
-        if ret < 0:
-            print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
-            return 'fail'
+        assert ret >= 0, \
+            ('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
 
         ret = gdal.Rmdir(subpath)
-        if ret < 0:
-            print('Rmdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
         return 'success'
 
     f = open_for_read('/vsioss/' + OSS_RESOURCE)
-    if f is None:
-        print('cannot open %s' % ('/vsioss/' + OSS_RESOURCE))
-        return 'fail'
+    assert f is not None, ('cannot open %s' % ('/vsioss/' + OSS_RESOURCE))
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
-    if len(ret) != 1:
-        print(ret)
-        return 'fail'
+    assert len(ret) == 1
 
     # Same with /vsioss_streaming/
     f = open_for_read('/vsioss_streaming/' + OSS_RESOURCE)
-    if f is None:
-        return 'fail'
+    assert f is not None
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
-    if len(ret) != 1:
-        print(ret)
-        return 'fail'
+    assert len(ret) == 1
 
     if False:  # pylint: disable=using-constant-test
         # we actually try to read at read() time and bSetError = false:
@@ -1280,28 +1120,21 @@ def visoss_extra_1():
         with gdaltest.error_handler():
             gdal.VSIFReadL(1, 1, f)
         gdal.VSIFCloseL(f)
-        if gdal.VSIGetLastErrorMsg() == '':
-            print(gdal.VSIGetLastErrorMsg())
-            return 'fail'
+        assert gdal.VSIGetLastErrorMsg() != ''
 
     # Invalid resource
     gdal.ErrorReset()
     f = open_for_read('/vsioss_streaming/' + OSS_RESOURCE + '/invalid_resource.baz')
-    if f is not None:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None, gdal.VSIGetLastErrorMsg()
 
     # Test GetSignedURL()
     signed_url = gdal.GetSignedURL('/vsioss/' + OSS_RESOURCE)
     f = open_for_read('/vsicurl_streaming/' + signed_url)
-    if f is None:
-        return 'fail'
+    assert f is not None
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
-    if len(ret) != 1:
-        print(ret)
-        return 'fail'
+    assert len(ret) == 1
 
     return 'success'
 

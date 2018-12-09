@@ -60,9 +60,8 @@ def check_qix_non_overlapping_geoms(lyr):
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         got_geom = feat.GetGeometryRef()
-        if got_geom.Equals(geom) == 0:
-            gdaltest.post_reason('expected %s. got %s' % (geom.ExportToWkt(), got_geom.ExportToWkt()))
-            return 'fail'
+        assert got_geom.Equals(geom) != 0, \
+            ('expected %s. got %s' % (geom.ExportToWkt(), got_geom.ExportToWkt()))
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
@@ -70,9 +69,7 @@ def check_qix_non_overlapping_geoms(lyr):
     lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
-    if fc != fc_ref:
-        gdaltest.post_reason('expected %d. got %d' % (fc_ref, fc))
-        return 'fail'
+    assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
 
     return 'success'
 
@@ -207,9 +204,7 @@ def check_qix_random_geoms(lyr):
                 found_geom = True
             else:
                 feat = lyr.GetNextFeature()
-        if not found_geom:
-            gdaltest.post_reason('did not find geometry for %s' % (geom.ExportToWkt()))
-            return 'fail'
+        assert found_geom, ('did not find geometry for %s' % (geom.ExportToWkt()))
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
@@ -217,9 +212,7 @@ def check_qix_random_geoms(lyr):
     lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
-    if fc != fc_ref:
-        gdaltest.post_reason('expected %d. got %d' % (fc_ref, fc))
-        return 'fail'
+    assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
 
     return 'success'
 

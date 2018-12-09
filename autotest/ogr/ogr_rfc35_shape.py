@@ -52,9 +52,8 @@ def CheckFileSize(src_filename):
     statBufDst = gdal.VSIStatL('/vsimem/CheckFileSize.dbf', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/CheckFileSize.dbf')
 
-    if statBufSrc.size != statBufDst.size:
-        print('src_size = %d, dst_size = %d', statBufSrc.size, statBufDst.size)
-        return 'fail'
+    assert statBufSrc.size == statBufDst.size, \
+        ('src_size = %d, dst_size = %d', statBufSrc.size, statBufDst.size)
 
     return 'success'
 
@@ -147,8 +146,7 @@ def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
     for i, exp_order in enumerate(expected_order):
-        if lyr_defn.GetFieldDefn(i).GetName() != exp_order:
-            return 'fail'
+        assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
     return 'success'
 
@@ -174,8 +172,7 @@ def test_ogr_rfc35_shape_2():
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
 
-    if lyr.TestCapability(ogr.OLCReorderFields) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCReorderFields) == 1
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 'foo3')
@@ -185,8 +182,7 @@ def test_ogr_rfc35_shape_2():
     lyr.CreateFeature(feat)
     feat = None
 
-    if lyr.ReorderField(1, 3) != 0:
-        return 'fail'
+    assert lyr.ReorderField(1, 3) == 0
     ret = Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
 
     lyr.ReorderField(3, 1)
@@ -213,8 +209,7 @@ def test_ogr_rfc35_shape_2():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.ReorderFields([0, 0, 0, 0])
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     ds = None
 
@@ -244,14 +239,12 @@ def test_ogr_rfc35_shape_3():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
@@ -271,8 +264,7 @@ def test_ogr_rfc35_shape_3():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
-    if fld_defn.GetWidth() != 5:
-        return 'fail'
+    assert fld_defn.GetWidth() == 5
 
     ret = CheckFeatures(lyr, field3='baz5')
 
@@ -288,8 +280,7 @@ def test_ogr_rfc35_shape_4():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
 
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
     lyr.CreateField(fd)
@@ -307,8 +298,7 @@ def test_ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 12345:
-        return 'fail'
+    assert feat.GetField("intfield") == 12345
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -318,8 +308,7 @@ def test_ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 12345:
-        return 'fail'
+    assert feat.GetField("intfield") == 12345
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -335,8 +324,7 @@ def test_ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 1234:
-        return 'fail'
+    assert feat.GetField("intfield") == 1234
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -358,8 +346,7 @@ def test_ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '1234':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '1234'
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -372,8 +359,7 @@ def test_ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '1234':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '1234'
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -382,17 +368,14 @@ def test_ogr_rfc35_shape_4():
 
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
     fd.SetWidth(10)
-    if lyr.CreateField(fd) != 0:
-        return 'fail'
+    assert lyr.CreateField(fd) == 0
 
-    if lyr.ReorderField(lyr_defn.GetFieldIndex("intfield"), 0) != 0:
-        return 'fail'
+    assert lyr.ReorderField(lyr_defn.GetFieldIndex("intfield"), 0) == 0
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     feat.SetField("intfield", 98765)
-    if lyr.SetFeature(feat) != 0:
-        return 'fail'
+    assert lyr.SetFeature(feat) == 0
     feat = None
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
@@ -401,8 +384,7 @@ def test_ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '98765':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '98765'
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -415,8 +397,7 @@ def test_ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '98765':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '98765'
     feat = None
 
     ret = CheckFeatures(lyr, field3='baz5')
@@ -433,28 +414,23 @@ def test_ogr_rfc35_shape_5():
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    if lyr.TestCapability(ogr.OLCDeleteField) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCDeleteField) == 1
 
-    if lyr.DeleteField(0) != 0:
-        return 'fail'
+    assert lyr.DeleteField(0) == 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(-1)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     ret = CheckFeatures(lyr, field3='baz5')
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) == 0
 
     ds = None
 
@@ -469,16 +445,13 @@ def test_ogr_rfc35_shape_5():
 
     ret = CheckFeatures(lyr, field3='baz5', field4=None)
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) == 0
 
     ret = CheckFeatures(lyr, field3=None, field4=None)
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) == 0
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) == 0
 
     ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 

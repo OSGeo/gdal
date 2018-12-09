@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Use common test for /vsicrypt
@@ -65,62 +66,52 @@ def test_vsicrypt_2():
     # Missing key
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Invalid file
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'wb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Invalid file
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'rb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Invalid file
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'ab')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Invalid access
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing', 'foo')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Key to short
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=a,file=/vsimem/file.bin', 'wb+')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Invalid signature
     gdal.FileFromMemBuffer('/vsimem/file.bin', 'foo')
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Generate empty file
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'wb')
     gdal.VSIFCloseL(fp)
 
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
     gdal.VSIFCloseL(fp)
 
     fp = gdal.VSIFOpenL('/vsimem/file.bin', 'rb')
     header = gdal.VSIFReadL(1, 1000, fp)
     gdal.VSIFCloseL(fp)
 
-    if len(header) != 46:
-        print(len(header))
-        return 'fail'
+    assert len(header) == 46
 
     # Test shortening header
     for i in range(46):
@@ -130,8 +121,7 @@ def test_vsicrypt_2():
 
         with gdaltest.error_handler():
             fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
-        if fp is not None:
-            return 'fail'
+        assert fp is None
 
     # Test corrupting all bytes of header
     for i in range(46):
@@ -182,8 +172,7 @@ def test_vsicrypt_2():
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL(
             '/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Inconsistent initial vector with key check.
     header = struct.pack('B' * 39,
@@ -208,8 +197,7 @@ def test_vsicrypt_2():
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Test reading with wrong key
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'wb')
@@ -220,13 +208,11 @@ def test_vsicrypt_2():
     content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
 
-    if content == 'hello':
-        return 'fail'
+    assert content != 'hello'
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=short_key,file=/vsimem/file.bin', 'ab')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Test reading with wrong key with add_key_check
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,add_key_check=yes,file=/vsimem/file.bin', 'wb')
@@ -235,18 +221,15 @@ def test_vsicrypt_2():
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin', 'rb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=short_key,file=/vsimem/file.bin', 'ab')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin', 'ab')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Test creating with potentially not build-in alg:
     with gdaltest.error_handler():
@@ -257,14 +240,12 @@ def test_vsicrypt_2():
     # Invalid sector_size
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,sector_size=1,file=/vsimem/file.bin', 'wb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Sector size (16) should be at least twice larger than the block size (16) in CBC_CTS
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,sector_size=16,mode=CBC_CTS,file=/vsimem/file.bin', 'wb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     gdal.Unlink('/vsimem/file.bin')
 
@@ -291,9 +272,7 @@ def test_vsicrypt_3():
                 fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PRODDONT_USE_IN_PROD,%s,file=/vsimem/file.bin' % options, 'wb')
         else:
             fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PRODDONT_USE_IN_PROD,%s,file=/vsimem/file.bin' % options, 'wb')
-        if fp is None:
-            print(options)
-            return 'fail'
+        assert fp is not None, options
         gdal.VSIFWriteL('hello', 1, 5, fp)
         gdal.VSIFCloseL(fp)
 
@@ -301,9 +280,7 @@ def test_vsicrypt_3():
         content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
         gdal.VSIFCloseL(fp)
 
-        if content != 'hello':
-            print(options)
-            return 'fail'
+        assert content == 'hello', options
 
     # Some of those algs might be missing
     for options in ['alg=Blowfish', 'alg=Camellia', 'alg=CAST256', 'alg=MARS', 'alg=IDEA', 'alg=RC5', 'alg=RC6', 'alg=Serpent', 'alg=SHACAL2', 'alg=Twofish', 'alg=XTEA']:
@@ -320,9 +297,7 @@ def test_vsicrypt_3():
             content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
             gdal.VSIFCloseL(fp)
 
-            if content != 'hello':
-                print(options)
-                return 'fail'
+            assert content == 'hello', options
 
     # Test key generation
 
@@ -333,8 +308,7 @@ def test_vsicrypt_3():
 
     # Get the generated random key
     key_b64 = gdal.GetConfigOption('VSICRYPT_KEY_B64')
-    if key_b64 is None:
-        return 'fail'
+    assert key_b64 is not None
 
     gdal.VSIFWriteL('hello', 1, 5, fp)
     gdal.VSIFCloseL(fp)
@@ -343,9 +317,7 @@ def test_vsicrypt_3():
     content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
 
-    if content != 'hello':
-        print(options)
-        return 'fail'
+    assert content == 'hello', options
 
     gdal.SetConfigOption('VSICRYPT_KEY_B64', None)
 
@@ -353,29 +325,20 @@ def test_vsicrypt_3():
     content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
 
-    if content != 'hello':
-        print(options)
-        return 'fail'
+    assert content == 'hello', options
 
     with gdaltest.error_handler():
         statRes = gdal.VSIStatL('/vsicrypt//vsimem/file.bin')
-    if statRes is not None:
-        return 'fail'
+    assert statRes is None
 
     ret = gdal.Rename('/vsicrypt//vsimem/file.bin', '/vsicrypt//vsimem/subdir_crypt/file.bin')
-    if ret != 0:
-        print(ret)
-        return 'fail'
+    assert ret == 0
 
     ret = gdal.Rename('/vsicrypt//vsimem/subdir_crypt/file.bin', '/vsimem/subdir_crypt/file2.bin')
-    if ret != 0:
-        print(ret)
-        return 'fail'
+    assert ret == 0
 
     dir_content = gdal.ReadDir('/vsicrypt//vsimem/subdir_crypt')
-    if dir_content != ['file2.bin']:
-        print(dir_content)
-        return 'fail'
+    assert dir_content == ['file2.bin']
 
     gdal.Unlink('/vsimem/subdir_crypt/file2.bin')
 
@@ -425,11 +388,8 @@ def test_vsicrypt_4():
                 if test_content != ref_content:
                     print(seed)
                     print('Test content (%d):' % len(test_content))
-                    print(test_content)
                     print('')
-                    print('Ref content (%d):' % len(ref_content))
-                    print(ref_content)
-                    return 'fail'
+                    pytest.fail('Ref content (%d):' % len(ref_content))
 
         gdal.VSIFSeekL(test_f, 0, 0)
         gdal.VSIFSeekL(ref_f, 0, 0)
@@ -439,11 +399,8 @@ def test_vsicrypt_4():
         if test_content != ref_content:
             print(seed)
             print('Test content (%d):' % len(test_content))
-            print(test_content)
             print('')
-            print('Ref content (%d):' % len(ref_content))
-            print(ref_content)
-            return 'fail'
+            pytest.fail('Ref content (%d):' % len(ref_content))
 
     gdal.Unlink(test_file)
     gdal.Unlink(ref_file)
@@ -474,9 +431,7 @@ def test_vsicrypt_5():
     content = gdal.VSIFReadL(1, 4, f)
     content = struct.unpack('B' * len(content), content)
     gdal.VSIFCloseL(f)
-    if content != (97, 98, 0, 100):
-        print(content)
-        return 'fail'
+    assert content == (97, 98, 0, 100)
 
     f = gdal.VSIFOpenL(test_file, 'rb+')
     gdal.VSIFReadL(1, 1, f)
@@ -488,9 +443,7 @@ def test_vsicrypt_5():
     content = gdal.VSIFReadL(1, 6, f)
     content = struct.unpack('B' * len(content), content)
     gdal.VSIFCloseL(f)
-    if content != (97, 98, 0, 100, 0, 102):
-        print(content)
-        return 'fail'
+    assert content == (97, 98, 0, 100, 0, 102)
 
     f = gdal.VSIFOpenL(test_file, 'rb+')
     gdal.VSIFReadL(1, 1, f)
@@ -504,9 +457,7 @@ def test_vsicrypt_5():
     content = gdal.VSIFReadL(1, 8, f)
     content = struct.unpack('B' * len(content), content)
     gdal.VSIFCloseL(f)
-    if content != (97, 98, 0, 100, 0, 102, 0, 104):
-        print(content)
-        return 'fail'
+    assert content == (97, 98, 0, 100, 0, 102, 0, 104)
 
     gdal.Unlink(test_file)
 
@@ -539,8 +490,7 @@ def test_vsicrypt_6():
         return 'skip'
 
     fp = gdal.VSIFOpenL('/vsicrypt/add_key_check=yes,file=/vsimem/file.bin', 'wb+')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
     gdal.VSIFWriteL('hello', 1, 5, fp)
     gdal.VSIFCloseL(fp)
 
@@ -548,12 +498,10 @@ def test_vsicrypt_6():
     content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
 
-    if content != 'hello':
-        return 'fail'
+    assert content == 'hello'
 
     fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
     gdal.VSIFWriteL('hello', 1, 5, fp)
     gdal.VSIFCloseL(fp)
 
@@ -561,27 +509,23 @@ def test_vsicrypt_6():
     content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
 
-    if content != 'hello':
-        return 'fail'
+    assert content == 'hello'
 
     # Set a too short key
     testnonboundtoswig.gdal_handle.VSISetCryptKey('bbc'.encode('ASCII'), 3)
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'rb')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     # Erase key
     testnonboundtoswig.gdal_handle.VSISetCryptKey(None, 0)
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
-    if fp is not None:
-        return 'fail'
+    assert fp is None
 
     gdal.Unlink('/vsimem/file.bin')
 

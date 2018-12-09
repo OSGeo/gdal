@@ -126,9 +126,7 @@ def test_ogr_idf_2():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.idf')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 
@@ -251,9 +249,7 @@ eof; 4
     got = gdal.VSIFReadL(1, 10000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    if got != expected:
-        print(got)
-        return 'fail'
+    assert got == expected
 
     gdal.Unlink(out_filename)
 
@@ -271,9 +267,7 @@ def test_ogr_vdv_3():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.x10')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 
@@ -303,9 +297,7 @@ def test_ogr_vdv_6():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test_x10')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 
@@ -354,8 +346,7 @@ def test_ogr_vdv_7():
         gdal.PushErrorHandler()
         lyr = ds.CreateLayer('UNKNOWN', options=['PROFILE=' + profile, 'PROFILE_STRICT=' + str(strict)])
         gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg() == '':
-            return 'fail'
+        assert gdal.GetLastErrorMsg() != ''
         if strict and lyr is not None:
             return 'fail'
         elif not strict and lyr is None:
@@ -370,8 +361,7 @@ def test_ogr_vdv_7():
         gdal.PushErrorHandler()
         ret = lyr.CreateField(ogr.FieldDefn('UNKNOWN'))
         gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg() == '':
-            return 'fail'
+        assert gdal.GetLastErrorMsg() != ''
         if strict and ret == 0:
             return 'fail'
         elif not strict and ret != 0:
@@ -392,14 +382,12 @@ def test_ogr_vdv_8():
     gdal.PushErrorHandler()
     ds = ogr.GetDriverByName('VDV').CreateDataSource('/does/not_exist')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.PushErrorHandler()
     ds = ogr.GetDriverByName('VDV').CreateDataSource('/does/not_exist', options=['SINGLE_FILE=FALSE'])
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Add layer in non writable directory
     if sys.platform.startswith('linux'):
@@ -422,8 +410,7 @@ def test_ogr_vdv_8():
             os.chmod('tmp/ogr_vdv_8', 493)
             ds = None
             shutil.rmtree('tmp/ogr_vdv_8')
-            if lyr is not None:
-                return 'fail'
+            assert lyr is None
 
     out_filename = '/vsimem/vdv/ogr_vdv_8.x10'
     ds = ogr.GetDriverByName('VDV').CreateDataSource(out_filename)
@@ -432,17 +419,13 @@ def test_ogr_vdv_8():
     gdal.PushErrorHandler()
     ds2 = ogr.GetDriverByName('VDV').CreateDataSource(out_filename)
     gdal.PopErrorHandler()
-    if ds2 is not None:
-        return 'fail'
+    assert ds2 is None
 
-    if ds.TestCapability(ogr.ODsCCreateLayer) != 1:
-        return 'fail'
+    assert ds.TestCapability(ogr.ODsCCreateLayer) == 1
 
     lyr1 = ds.CreateLayer("lyr1")
-    if lyr1.TestCapability(ogr.OLCSequentialWrite) != 1:
-        return 'fail'
-    if lyr1.TestCapability(ogr.OLCCreateField) != 1:
-        return 'fail'
+    assert lyr1.TestCapability(ogr.OLCSequentialWrite) == 1
+    assert lyr1.TestCapability(ogr.OLCCreateField) == 1
 
     lyr1.ResetReading()
 
@@ -453,31 +436,26 @@ def test_ogr_vdv_8():
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
 
     # Layer structure is now frozen
-    if lyr1.TestCapability(ogr.OLCCreateField) != 0:
-        return 'fail'
+    assert lyr1.TestCapability(ogr.OLCCreateField) == 0
 
     gdal.PushErrorHandler()
     ret = lyr1.CreateField(ogr.FieldDefn('not_allowed'))
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     lyr2 = ds.CreateLayer("lyr2")
     lyr2.CreateFeature(ogr.Feature(lyr2.GetLayerDefn()))
 
     # Test interleaved writing
 
-    if lyr1.TestCapability(ogr.OLCSequentialWrite) != 0:
-        return 'fail'
+    assert lyr1.TestCapability(ogr.OLCSequentialWrite) == 0
 
     gdal.PushErrorHandler()
     ret = lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
-    if lyr1.GetFeatureCount() != 1:
-        return 'fail'
+    assert lyr1.GetFeatureCount() == 1
 
     ds = None
 
@@ -508,22 +486,18 @@ eof; 2
     got = gdal.VSIFReadL(1, 10000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    if got != expected:
-        print(got)
-        return 'fail'
+    assert got == expected
 
     # Test we are robust against missing end;
     ds = ogr.Open(out_filename)
     for i in range(2):
         lyr = ds.GetLayer(i)
-        if lyr.GetFeatureCount() != 1:
-            return 'fail'
+        assert lyr.GetFeatureCount() == 1
         lyr.ResetReading()
         fc = 0
         for f in lyr:
             fc += 1
-        if fc != 1:
-            return 'fail'
+        assert fc == 1
         lyr = None
     ds = None
 
@@ -542,9 +516,7 @@ eof; 2
     got = gdal.VSIFReadL(1, 10000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    if got != expected:
-        print(got)
-        return 'fail'
+    assert got == expected
 
     gdal.Unlink(out_filename)
 

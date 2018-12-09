@@ -57,8 +57,7 @@ def test_ozi_online_1():
             return 'skip'
 
     ds = gdal.Open('tmp/cache/Europe 2001_OZF.map')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     if False:  # pylint: disable=using-constant-test
         gt = ds.GetGeoTransform()
@@ -66,41 +65,24 @@ def test_ozi_online_1():
 
         expected_gt = (-1841870.2731215316, 3310.9550245520159, -13.025246304875619, 8375316.4662204208, -16.912440131236657, -3264.1162527118681)
         for i in range(6):
-            if abs(gt[i] - expected_gt[i]) > 1e-7:
-                gdaltest.post_reason('bad geotransform')
-                print(gt)
-                print(expected_gt)
-                return 'fail'
+            assert abs(gt[i] - expected_gt[i]) <= 1e-7, 'bad geotransform'
 
     else:
         gcps = ds.GetGCPs()
 
-        if len(gcps) != 4:
-            gdaltest.post_reason('did not get expected gcp count.')
-            print(len(gcps))
-            return 'fail'
+        assert len(gcps) == 4, 'did not get expected gcp count.'
 
         gcp0 = gcps[0]
-        if gcp0.GCPPixel != 61 or gcp0.GCPLine != 436 \
-                or abs(gcp0.GCPX - (-1653990.4525324)) > 0.001 \
-                or abs(gcp0.GCPY - 6950885.0402214) > 0.001:
-            gdaltest.post_reason('did not get expected gcp.')
-            print(gcp0)
-            return 'fail'
+        assert gcp0.GCPPixel == 61 and gcp0.GCPLine == 436 and abs(gcp0.GCPX - (-1653990.4525324)) <= 0.001 and abs(gcp0.GCPY - 6950885.0402214) <= 0.001, \
+            'did not get expected gcp.'
 
         wkt = ds.GetGCPProjection()
 
     expected_wkt = 'PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40],PARAMETER["standard_parallel_2",56],PARAMETER["latitude_of_origin",4],PARAMETER["central_meridian",10],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
-    if wkt != expected_wkt:
-        gdaltest.post_reason('bad WKT')
-        print(wkt)
-        return 'fail'
+    assert wkt == expected_wkt, 'bad WKT'
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 16025:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 16025, 'bad checksum'
 
     return 'success'
 

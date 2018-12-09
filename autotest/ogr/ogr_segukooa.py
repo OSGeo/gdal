@@ -42,18 +42,12 @@ from osgeo import ogr
 def test_ogr_segp1_points():
 
     ds = ogr.Open('data/test.segp1')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 
@@ -89,18 +83,12 @@ def test_ogr_segp1_points():
 def test_ogr_segp1_lines():
 
     ds = ogr.Open('data/test.segp1')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(1)
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 
@@ -137,18 +125,12 @@ def test_ogr_segp1_lines():
 def test_ogr_ukooa_points():
 
     ds = ogr.Open('data/test.ukooa')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 
@@ -183,18 +165,12 @@ def test_ogr_ukooa_points():
 def test_ogr_ukooa_lines():
 
     ds = ogr.Open('data/test.ukooa')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(1)
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 

@@ -32,6 +32,7 @@
 import sys
 import os
 import shutil
+import pytest
 
 sys.path.append('../ogr')
 
@@ -55,24 +56,16 @@ def test_ogr2ogr_1():
         pass
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
     feat0 = ds.GetLayer(0).GetFeature(0)
-    if feat0.GetFieldAsDouble('AREA') != 215229.266:
-        print(feat0.GetFieldAsDouble('AREA'))
-        gdaltest.post_reason('Did not get expected value for field AREA')
-        return 'fail'
-    if feat0.GetFieldAsString('PRFEDEA') != '35043411':
-        print(feat0.GetFieldAsString('PRFEDEA'))
-        gdaltest.post_reason('Did not get expected value for field PRFEDEA')
-        return 'fail'
+    assert feat0.GetFieldAsDouble('AREA') == 215229.266, \
+        'Did not get expected value for field AREA'
+    assert feat0.GetFieldAsString('PRFEDEA') == '35043411', \
+        'Did not get expected value for field PRFEDEA'
 
     ds.Destroy()
 
@@ -97,8 +90,7 @@ def test_ogr2ogr_2():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -sql "select * from poly"')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -123,11 +115,9 @@ def test_ogr2ogr_3():
 
     ds = ogr.Open('tmp/poly.shp')
     if ogrtest.have_geos():
-        if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
-            return 'fail'
+        assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
     else:
-        if ds is None or ds.GetLayer(0).GetFeatureCount() != 5:
-            return 'fail'
+        assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 5
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -151,8 +141,7 @@ def test_ogr2ogr_4():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -where "EAS_ID=171"')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -180,18 +169,13 @@ def test_ogr2ogr_5():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -update tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 40:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 40
 
     feat10 = ds.GetLayer(0).GetFeature(10)
-    if feat10.GetFieldAsDouble('AREA') != 215229.266:
-        print(feat10.GetFieldAsDouble('AREA'))
-        gdaltest.post_reason('Did not get expected value for field AREA')
-        return 'fail'
-    if feat10.GetFieldAsString('PRFEDEA') != '35043411':
-        print(feat10.GetFieldAsString('PRFEDEA'))
-        gdaltest.post_reason('Did not get expected value for field PRFEDEA')
-        return 'fail'
+    assert feat10.GetFieldAsDouble('AREA') == 215229.266, \
+        'Did not get expected value for field AREA'
+    assert feat10.GetFieldAsString('PRFEDEA') == '35043411', \
+        'Did not get expected value for field PRFEDEA'
 
     ds.Destroy()
 
@@ -223,8 +207,7 @@ def test_ogr2ogr_6():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update -overwrite -f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
-    if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayerByName('tpoly').GetFeatureCount() == 10
     ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
@@ -254,8 +237,7 @@ def test_ogr2ogr_7():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly -gt 1')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
-    if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayerByName('tpoly').GetFeatureCount() == 10
     ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
@@ -279,8 +261,7 @@ def test_ogr2ogr_8():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -t_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
-        return 'fail'
+    assert str(ds.GetLayer(0).GetSpatialRef()).find('1984') != -1
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -304,8 +285,7 @@ def test_ogr2ogr_9():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -a_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
-        return 'fail'
+    assert str(ds.GetLayer(0).GetSpatialRef()).find('1984') != -1
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -331,8 +311,7 @@ def test_ogr2ogr_10():
 
     ds = ogr.Open('tmp/poly.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldCount() != 2:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
     feat = lyr.GetNextFeature()
     ret = 'success'
     if feat.GetFieldAsDouble('EAS_ID') != 168:
@@ -367,8 +346,7 @@ def test_ogr2ogr_11():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
-        return 'fail'
+    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -392,8 +370,7 @@ def test_ogr2ogr_12():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
-        return 'fail'
+    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -417,8 +394,7 @@ def test_ogr2ogr_13():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp poly')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -442,11 +418,9 @@ def test_ogr2ogr_14():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     feat = ds.GetLayer(0).GetNextFeature()
-    if feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() != 36:
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 36
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -471,16 +445,14 @@ def test_ogr2ogr_15():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     # Overwrite
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -505,12 +477,10 @@ def test_ogr2ogr_16():
 
     src_ds = ogr.Open('../ogr/data/poly.shp')
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
     src_feat = src_ds.GetLayer(0).GetFeature(8)
     feat = ds.GetLayer(0).GetNextFeature()
-    if feat.GetField("EAS_ID") != src_feat.GetField("EAS_ID"):
-        return 'fail'
+    assert feat.GetField("EAS_ID") == src_feat.GetField("EAS_ID")
     ds.Destroy()
     src_ds.Destroy()
 
@@ -533,12 +503,10 @@ def test_ogr2ogr_17():
         pass
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -progress tmp/poly.shp ../ogr/data/poly.shp')
-    if ret.find('0...10...20...30...40...50...60...70...80...90...100 - done.') == -1:
-        return 'fail'
+    assert ret.find('0...10...20...30...40...50...60...70...80...90...100 - done.') != -1
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -621,13 +589,10 @@ def test_ogr2ogr_19():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
 
-    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
-        print(ds.GetLayer(0).GetExtent())
-        gdaltest.post_reason('unexpected extent')
-        return 'fail'
+    assert ds.GetLayer(0).GetExtent() == (479609, 479764, 4764629, 4764817), \
+        'unexpected extent'
 
     ds.Destroy()
 
@@ -680,8 +645,7 @@ def test_ogr2ogr_20():
 
     ds = ogr.Open('tmp/Fields.dbf')
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     layer_defn = ds.GetLayer(0).GetLayerDefn()
     if layer_defn.GetFieldCount() != 15:
         gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()))
@@ -702,8 +666,7 @@ def test_ogr2ogr_20():
     ds.Destroy()
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
 
-    if error_occurred:
-        return 'fail'
+    assert not error_occurred
 
     return 'success'
 
@@ -726,8 +689,7 @@ def test_ogr2ogr_21():
                          '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr21.gtm')
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds.GetLayer(0).GetLayerDefn()
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -757,8 +719,7 @@ def test_ogr2ogr_22():
                          '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr22.mif')
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds.GetLayer(0).GetLayerDefn()
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -788,8 +749,7 @@ def test_ogr2ogr_23():
                          '-sql "SELECT comment, name FROM dataforogr2ogr21" -select comment,name -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr23.mif')
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds.GetLayer(0).GetLayerDefn()
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -826,13 +786,10 @@ def test_ogr2ogr_24():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
 
-    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
-        print(ds.GetLayer(0).GetExtent())
-        gdaltest.post_reason('unexpected extent')
-        return 'fail'
+    assert ds.GetLayer(0).GetExtent() == (479609, 479764, 4764629, 4764817), \
+        'unexpected extent'
 
     ds.Destroy()
 
@@ -865,13 +822,10 @@ def test_ogr2ogr_25():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc tmp/clip.csv -clipsrcwhere foo=\'foo\'')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
 
-    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
-        print(ds.GetLayer(0).GetExtent())
-        gdaltest.post_reason('unexpected extent')
-        return 'fail'
+    assert ds.GetLayer(0).GetExtent() == (479609, 479764, 4764629, 4764817), \
+        'unexpected extent'
 
     ds.Destroy()
 
@@ -900,13 +854,10 @@ def test_ogr2ogr_26():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp -clipdst "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
 
-    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
-        print(ds.GetLayer(0).GetExtent())
-        gdaltest.post_reason('unexpected extent')
-        return 'fail'
+    assert ds.GetLayer(0).GetExtent() == (479609, 479764, 4764629, 4764817), \
+        'unexpected extent'
 
     ds.Destroy()
 
@@ -939,13 +890,10 @@ def test_ogr2ogr_27():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -nlt MULTIPOLYGON tmp/poly.shp ../ogr/data/poly.shp -clipdst tmp/clip.csv -clipdstsql "SELECT * from clip"')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 4:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
 
-    if ds.GetLayer(0).GetExtent() != (479609, 479764, 4764629, 4764817):
-        print(ds.GetLayer(0).GetExtent())
-        gdaltest.post_reason('unexpected extent')
-        return 'fail'
+    assert ds.GetLayer(0).GetExtent() == (479609, 479764, 4764629, 4764817), \
+        'unexpected extent'
 
     ds.Destroy()
 
@@ -1062,8 +1010,7 @@ def test_ogr2ogr_29():
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
 
-        if ret != 0:
-            return 'fail'
+        assert ret == 0
 
     return 'success'
 
@@ -1085,8 +1032,7 @@ def test_ogr2ogr_30():
     gdal.Unlink('../ogr/data//testlistfields.gfs')
 
     ds = ogr.Open('tmp/test_ogr2ogr_30.dbf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -1124,8 +1070,7 @@ def test_ogr2ogr_31():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
@@ -1150,17 +1095,14 @@ def test_ogr2ogr_32():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_32.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
-        gdaltest.post_reason('-append failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 20, '-append failed'
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_32.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('-overwrite failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
+        '-overwrite failed'
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_32.shp')
@@ -1197,10 +1139,7 @@ def test_ogr2ogr_33():
 
     ds = ogr.Open('tmp/test_ogr2ogr_33_dst.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason('-explodecollections failed')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 3, '-explodecollections failed'
 
     feat = lyr.GetFeature(0)
     if feat.GetField("foo") != 'bar':
@@ -1252,25 +1191,21 @@ def test_ogr2ogr_34():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
 
     ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('initial shapefile creation failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
+        'initial shapefile creation failed'
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
 
     ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
-        gdaltest.post_reason('-append failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 20, '-append failed'
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
 
     ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('-overwrite failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
+        '-overwrite failed'
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_34_dir')
@@ -1294,25 +1229,21 @@ def test_ogr2ogr_35():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp ')
 
     ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('initial shapefile creation failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
+        'initial shapefile creation failed'
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
-        gdaltest.post_reason('-append failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 20, '-append failed'
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -overwrite tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
-        gdaltest.post_reason('-overwrite failed')
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
+        '-overwrite failed'
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_35_dir')
@@ -1342,8 +1273,7 @@ def test_ogr2ogr_36():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_36.shp')
 
-    if wkt.find(' 168,') == -1:
-        return 'fail'
+    assert wkt.find(' 168,') != -1
 
     return 'success'
 
@@ -1376,8 +1306,7 @@ def test_ogr2ogr_37():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_37_dir.shp tmp/test_ogr2ogr_37_src')
 
     ds = ogr.Open('tmp/test_ogr2ogr_37_dir.shp')
-    if ds is None or ds.GetLayerCount() != 2:
-        return 'fail'
+    assert ds is not None and ds.GetLayerCount() == 2
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_37_src')
@@ -1406,8 +1335,7 @@ def test_ogr2ogr_38():
     ds = ogr.Open('tmp/test_ogr2ogr_38.shp')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_38.shp')
@@ -1443,8 +1371,7 @@ def test_ogr2ogr_39():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_39.shp tmp/test_ogr2ogr_39_src -sql "select * from poly"')
 
     ds = ogr.Open('tmp/test_ogr2ogr_39.shp')
-    if ds is None or ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayerCount() == 1
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_39_src')
@@ -1475,8 +1402,7 @@ def test_ogr2ogr_40():
 
     ds = ogr.Open('tmp/test_ogr2ogr_40.db')
     lyr = ds.GetLayerByName('poly2')
-    if lyr.GetFeatureCount() != 10:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 10
     ds = None
 
     ogr.GetDriverByName('SQLite').DeleteDataSource('tmp/test_ogr2ogr_40.db')
@@ -1517,8 +1443,7 @@ def test_ogr2ogr_41():
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('test_ogr2ogr_41_target')
-    if lyr.GetFeatureCount() != 501:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 501
     ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_src')
     ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_target')
     ds = None
@@ -1544,8 +1469,7 @@ def test_ogr2ogr_42():
 
     ds = ogr.Open('tmp/test_ogr2ogr_42.shp')
     lyr = ds.GetLayerByIndex(0)
-    if lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_42.shp')
@@ -1571,8 +1495,7 @@ def test_ogr2ogr_43():
 
     ds = ogr.Open('tmp/test_ogr2ogr_43_3d.shp')
     lyr = ds.GetLayerByIndex(0)
-    if lyr.GetGeomType() != ogr.wkbPolygon25D:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon25D
     ds = None
 
     try:
@@ -1585,8 +1508,7 @@ def test_ogr2ogr_43():
 
     ds = ogr.Open('tmp/test_ogr2ogr_43_2d.shp')
     lyr = ds.GetLayerByIndex(0)
-    if lyr.GetGeomType() != ogr.wkbPolygon:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_2d.shp')
@@ -1628,17 +1550,13 @@ def test_ogr2ogr_44():
     data = f.read()
     f.close()
 
-    if data.find('type="gml:MultiPolygonPropertyType"') == -1:
-        print(data)
-        return 'fail'
+    assert data.find('type="gml:MultiPolygonPropertyType"') != -1
 
     f = open('tmp/test_ogr2ogr_44.gml')
     data = f.read()
     f.close()
 
-    if data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') == -1:
-        print(data)
-        return 'fail'
+    assert data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') != -1
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
     os.unlink('tmp/test_ogr2ogr_44.gml')
@@ -1680,17 +1598,13 @@ def test_ogr2ogr_45():
     data = f.read()
     f.close()
 
-    if data.find('type="gml:MultiLineStringPropertyType"') == -1:
-        print(data)
-        return 'fail'
+    assert data.find('type="gml:MultiLineStringPropertyType"') != -1
 
     f = open('tmp/test_ogr2ogr_45.gml')
     data = f.read()
     f.close()
 
-    if data.find('<ogr:geometryProperty><gml:MultiLineString><gml:lineStringMember><gml:LineString><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LineString></gml:lineStringMember></gml:MultiLineString></ogr:geometryProperty>') == -1:
-        print(data)
-        return 'fail'
+    assert data.find('<ogr:geometryProperty><gml:MultiLineString><gml:lineStringMember><gml:LineString><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LineString></gml:lineStringMember></gml:MultiLineString></ogr:geometryProperty>') != -1
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_45_src.shp')
     os.unlink('tmp/test_ogr2ogr_45.gml')
@@ -1733,15 +1647,11 @@ def test_ogr2ogr_46():
         data = f.read()
         f.close()
 
-        if data.find('2,49') == -1 and data.find('2.0,49.0') == -1 and data.find('222638.') == -1:
-            print(option)
-            print(data)
-            return 'fail'
+        assert not (data.find('2,49') == -1 and data.find('2.0,49.0') == -1 and data.find('222638.') == -1), \
+            option
 
-        if data.find('3,50') == -1 and data.find('3.0,50.0') == -1 and data.find('333958.') == -1:
-            print(option)
-            print(data)
-            return 'fail'
+        assert not (data.find('3,50') == -1 and data.find('3.0,50.0') == -1 and data.find('333958.') == -1), \
+            option
 
         os.unlink('tmp/test_ogr2ogr_46.gml')
         os.unlink('tmp/test_ogr2ogr_46.xsd')
@@ -1797,9 +1707,7 @@ def test_ogr2ogr_47():
     data = f.read()
     f.close()
 
-    if data.find('>-3.0,40.65') == -1 and data.find('<3.0,40.65') == -1:
-        print(data)
-        return 'fail'
+    assert not (data.find('>-3.0,40.65') == -1 and data.find('<3.0,40.65') == -1)
 
     os.unlink('tmp/test_ogr2ogr_47_dst.gml')
     os.unlink('tmp/test_ogr2ogr_47_dst.xsd')
@@ -1823,8 +1731,7 @@ def test_ogr2ogr_48():
 
     ds = ogr.Open('tmp/Fields.dbf')
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     layer_defn = ds.GetLayer(0).GetLayerDefn()
     if layer_defn.GetFieldCount() != 15:
         gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()))
@@ -1849,8 +1756,7 @@ def test_ogr2ogr_48():
     ds.Destroy()
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
 
-    if error_occurred:
-        return 'fail'
+    assert not error_occurred
 
     return 'success'
 
@@ -1870,10 +1776,8 @@ def test_ogr2ogr_49():
 
     os.unlink('tmp/test_ogr2ogr_49.csv')
 
-    if lines[0].find('foo,bar,foo3,foo2,baz,foo4') != 0 or \
-       lines[1].find('val_foo,val_bar,val_foo3,val_foo2,val_baz,val_foo4') != 0:
-        print(lines)
-        return 'fail'
+    assert (lines[0].find('foo,bar,foo3,foo2,baz,foo4') == 0 and \
+       lines[1].find('val_foo,val_bar,val_foo3,val_foo2,val_baz,val_foo4') == 0)
 
     return 'success'
 
@@ -1903,13 +1807,9 @@ def test_ogr2ogr_49_bis():
         """</Folder>""",
         """</Document></kml>"""]
 
-    if len(lines) != len(expected_lines):
-        print(lines)
-        return 'fail'
+    assert len(lines) == len(expected_lines)
     for i, line in enumerate(lines):
-        if line.strip() != expected_lines[i].strip():
-            print(lines)
-            return 'fail'
+        assert line.strip() == expected_lines[i].strip(), lines
 
     return 'success'
 
@@ -1975,9 +1875,7 @@ def test_ogr2ogr_51():
 
     expected_lines = ['"_WKTgeom1_EPSG_4326","_WKTgeom2_EPSG_32631","id","foo"', '"POINT (1 2)","POINT (3 4)","1","bar"']
     for i in range(2):
-        if lines[i].strip() != expected_lines[i]:
-            print(lines)
-            return 'fail'
+        assert lines[i].strip() == expected_lines[i]
 
     # Test conversion from a multi-geometry format into a single-geometry format
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_51_dst.shp tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst')
@@ -1985,12 +1883,9 @@ def test_ogr2ogr_51():
     ds = ogr.Open('tmp/test_ogr2ogr_51_dst.shp')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    if sr is None or sr.ExportToWkt().find('GEOGCS["WGS 84"') != 0:
-        print(sr.ExportToWkt())
-        return 'fail'
+    assert sr is not None and sr.ExportToWkt().find('GEOGCS["WGS 84"') == 0
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (1 2)'
     ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_51_dst.shp')
 
@@ -2005,9 +1900,7 @@ def test_ogr2ogr_51():
                       '"POINT (1 2)","POINT (3 4)","1","bar"',
                       '"POINT (1 2)","POINT (3 4)","1","bar"']
     for i in range(3):
-        if lines[i].strip() != expected_lines[i]:
-            print(lines)
-            return 'fail'
+        assert lines[i].strip() == expected_lines[i]
 
     os.unlink('tmp/test_ogr2ogr_51_dst.csv')
 
@@ -2020,9 +1913,7 @@ def test_ogr2ogr_51():
 
     expected_lines = ['"_WKTgeom2_EPSG_32631","_WKTgeom1_EPSG_4326","foo","id"', '"POINT (3 4)","POINT (1 2)","bar","1"']
     for i in range(2):
-        if lines[i].strip() != expected_lines[i]:
-            print(lines)
-            return 'fail'
+        assert lines[i].strip() == expected_lines[i]
 
     # Test -geomfield option
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -spat 1 2 1 2 -geomfield geom__WKTgeom1_EPSG_4326')
@@ -2035,9 +1926,7 @@ def test_ogr2ogr_51():
                       '"POINT (3 4)","POINT (1 2)","bar","1"',
                       '"POINT (3 4)","POINT (1 2)","bar","1"']
     for i in range(2):
-        if lines[i].strip() != expected_lines[i]:
-            print(lines)
-            return 'fail'
+        assert lines[i].strip() == expected_lines[i]
 
     os.unlink('tmp/test_ogr2ogr_51_src.csv')
     os.unlink('tmp/test_ogr2ogr_51_dst.csv')
@@ -2063,9 +1952,7 @@ def test_ogr2ogr_52():
     content = f.read()
     f.close()
 
-    if content.find('LINESTRING (0 0,') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('LINESTRING (0 0,') >= 0
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_52_dst2.csv tmp/test_ogr2ogr_52_dst.csv -select id -nln test_ogr2ogr_52_dst2 -dsco GEOMETRY=AS_WKT -nlt CONVERT_TO_CURVE')
 
@@ -2073,9 +1960,7 @@ def test_ogr2ogr_52():
     content = f.read()
     f.close()
 
-    if content.find('COMPOUNDCURVE ((0 0,') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('COMPOUNDCURVE ((0 0,') >= 0
 
     os.unlink('tmp/test_ogr2ogr_52_src.csv')
     os.unlink('tmp/test_ogr2ogr_52_dst.csv')
@@ -2106,14 +1991,12 @@ def test_ogr2ogr_53():
     content = f.read()
     f.close()
 
-    if content.find('<SimpleField name="id" type="int"></SimpleField>') < 0 or \
-       content.find('<SimpleData name="id">1</SimpleData>') < 0 or \
-       content.find('<SimpleField name="i64" type="float"></SimpleField>') < 0 or \
-       content.find('<SimpleData name="i64">123456789012</SimpleData>') < 0 or \
-       content.find('<SimpleField name="b" type="string"></SimpleField>') < 0 or \
-       content.find('<SimpleData name="b">1</SimpleData>') < 0:
-        print(content)
-        return 'fail'
+    assert (content.find('<SimpleField name="id" type="int"></SimpleField>') >= 0 and \
+       content.find('<SimpleData name="id">1</SimpleData>') >= 0 and \
+       content.find('<SimpleField name="i64" type="float"></SimpleField>') >= 0 and \
+       content.find('<SimpleData name="i64">123456789012</SimpleData>') >= 0 and \
+       content.find('<SimpleField name="b" type="string"></SimpleField>') >= 0 and \
+       content.find('<SimpleData name="b">1</SimpleData>') >= 0)
 
     os.unlink('tmp/test_ogr2ogr_53.kml')
 
@@ -2124,9 +2007,7 @@ def test_ogr2ogr_53():
     content = f.read()
     f.close()
 
-    if content.find('"123456789012.0"') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('"123456789012.0"') >= 0
 
     os.unlink('tmp/test_ogr2ogr_53.bna')
 
@@ -2137,10 +2018,8 @@ def test_ogr2ogr_53():
     content = f.read()
     f.close()
 
-    if content.find('<SimpleField name="i64" type="string"></SimpleField>') < 0 or \
-       content.find('<SimpleData name="i64">123456789012</SimpleData>') < 0:
-        print(content)
-        return 'fail'
+    assert (content.find('<SimpleField name="i64" type="string"></SimpleField>') >= 0 and \
+       content.find('<SimpleData name="i64">123456789012</SimpleData>') >= 0)
 
     os.unlink('tmp/test_ogr2ogr_53.kml')
 
@@ -2182,11 +2061,9 @@ def test_ogr2ogr_54():
     content = f.read()
     f.close()
 
-    if content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>') < 0 or \
-       content.find('<xs:element name="fld1" nillable="true" minOccurs="1" maxOccurs="1">') < 0 or \
-       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
-        print(content)
-        return 'fail'
+    assert (content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>') >= 0 and \
+       content.find('<xs:element name="fld1" nillable="true" minOccurs="1" maxOccurs="1">') >= 0 and \
+       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') >= 0)
 
     os.unlink('tmp/test_ogr2ogr_54.gml')
     os.unlink('tmp/test_ogr2ogr_54.xsd')
@@ -2198,11 +2075,9 @@ def test_ogr2ogr_54():
     content = f.read()
     f.close()
 
-    if content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') < 0 or \
-       content.find('<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">') < 0 or \
-       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
-        print(content)
-        return 'fail'
+    assert (content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') >= 0 and \
+       content.find('<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">') >= 0 and \
+       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') >= 0)
 
     os.unlink('tmp/test_ogr2ogr_54.gml')
     os.unlink('tmp/test_ogr2ogr_54.xsd')
@@ -2249,9 +2124,7 @@ def test_ogr2ogr_55():
     content = f.read()
     f.close()
 
-    if content.find('<ogr:fld2>2</ogr:fld2>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<ogr:fld2>2</ogr:fld2>') >= 0
 
     os.unlink('tmp/test_ogr2ogr_55.gml')
     os.unlink('tmp/test_ogr2ogr_55.xsd')
@@ -2263,9 +2136,7 @@ def test_ogr2ogr_55():
     content = f.read()
     f.close()
 
-    if content.find('<ogr:fld2>') >= 0:
-        print(content)
-        return 'fail'
+    assert content.find('<ogr:fld2>') < 0
 
     os.unlink('tmp/test_ogr2ogr_55.gml')
     os.unlink('tmp/test_ogr2ogr_55.xsd')
@@ -2299,10 +2170,8 @@ def test_ogr2ogr_56():
     content = f.read()
     f.close()
 
-    if content.find("""ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid"" """) >= 0 or \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_56" ("wkb_geometry" , "myid" , "str", "wkt") VALUES ('010100000000000000000000000000000000000000', 10, 'aaa', 'POINT(0 0)');""") < 0:
-        print(content)
-        return 'fail'
+    assert (content.find("""ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid"" """) < 0 and \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_56" ("wkb_geometry" , "myid" , "str", "wkt") VALUES ('010100000000000000000000000000000000000000', 10, 'aaa', 'POINT(0 0)');""") >= 0)
 
     os.unlink('tmp/test_ogr2ogr_56.sql')
     os.unlink('tmp/test_ogr2ogr_56.csv')
@@ -2347,10 +2216,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") < 0 or \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") < 0:
-        print(content)
-        return 'fail'
+    assert (content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") >= 0 and \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") >= 0)
 
     os.unlink('tmp/test_ogr2ogr_57.sql')
 
@@ -2361,10 +2228,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") < 0 or \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") < 0:
-        print(content)
-        return 'fail'
+    assert (content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") >= 0 and \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") >= 0)
 
     os.unlink('tmp/test_ogr2ogr_57.sql')
 
@@ -2388,8 +2253,7 @@ def test_ogr2ogr_58():
 
     ds = ogr.Open('tmp/test_ogr2ogr_58.sqlite')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 10:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 10
     ds = None
 
     ogr.GetDriverByName('SQLite').DeleteDataSource('tmp/test_ogr2ogr_58.sqlite')
@@ -2417,32 +2281,20 @@ def test_ogr2ogr_59():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -mo BAZ=BAW')
 
     ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
-    if ds.GetMetadata() != {'FOO': 'BAR', 'BAZ': 'BAW'}:
-        print(ds.GetMetadata())
-        return 'fail'
-    if ds.GetMetadata('another_domain') != {'BAR': 'BAZ'}:
-        print(ds.GetMetadata())
-        return 'fail'
+    assert ds.GetMetadata() == {'FOO': 'BAR', 'BAZ': 'BAW'}
+    assert ds.GetMetadata('another_domain') == {'BAR': 'BAZ'}
     lyr = ds.GetLayer(0)
-    if lyr.GetMetadata() != {'lyr_FOO': 'lyr_BAR'}:
-        print(lyr.GetMetadata())
-        return 'fail'
-    if lyr.GetMetadata('lyr_another_domain') != {'lyr_BAR': 'lyr_BAZ'}:
-        print(lyr.GetMetadata())
-        return 'fail'
+    assert lyr.GetMetadata() == {'lyr_FOO': 'lyr_BAR'}
+    assert lyr.GetMetadata('lyr_another_domain') == {'lyr_BAR': 'lyr_BAZ'}
     ds = None
 
     ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_dest.gpkg')
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -nomd')
     ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
-    if ds.GetMetadata() != {}:
-        print(ds.GetMetadata())
-        return 'fail'
+    assert ds.GetMetadata() == {}
     lyr = ds.GetLayer(0)
-    if lyr.GetMetadata() != {}:
-        print(lyr.GetMetadata())
-        return 'fail'
+    assert lyr.GetMetadata() == {}
     ds = None
 
     ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_dest.gpkg')
@@ -2465,8 +2317,7 @@ def test_ogr2ogr_60():
 
     ds = ogr.Open('tmp/test_ogr2ogr_60.gdb')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 10:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 10
     ds = None
 
     ogr.GetDriverByName('FileGDB').DeleteDataSource('tmp/test_ogr2ogr_60.gdb')
@@ -2489,15 +2340,13 @@ def test_ogr2ogr_61():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_61.shp tmp/test_ogr2ogr_61.csv -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631 -s_srs EPSG:4326 -a_srs EPSG:4326')
 
     ds = ogr.Open('tmp/test_ogr2ogr_61.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
     ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_61_2.shp tmp/test_ogr2ogr_61.shp -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631')
 
     ds = ogr.Open('tmp/test_ogr2ogr_61_2.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_61.shp')
@@ -2522,29 +2371,23 @@ def test_ogr2ogr_62():
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json""")
     fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
     os.unlink('tmp/test_ogr2ogr_62.json')
 
-    if data.find('bar') < 0 or data.find('baz') < 0:
-        print(data)
-        return 'fail'
+    assert data.find('bar') >= 0 and data.find('baz') >= 0
 
     # Test -noNativeData
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json -noNativeData""")
     fp = gdal.VSIFOpenL('tmp/test_ogr2ogr_62.json', 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
     os.unlink('tmp/test_ogr2ogr_62.json')
     os.unlink('tmp/test_ogr2ogr_62_in.json')
 
-    if data.find('bar') >= 0 or data.find('baz') >= 0:
-        print(data)
-        return 'fail'
+    assert data.find('bar') < 0 and data.find('baz') < 0
 
     return 'success'
 
@@ -2563,14 +2406,8 @@ def test_ogr2ogr_63():
         pass
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' --formats')
-    if ret.find('Supported Formats') < 0:
-        print(ret)
-        print(err)
-        return 'fail'
-    if err.find('ERROR') >= 0:
-        print(ret)
-        print(err)
-        return 'fail'
+    assert ret.find('Supported Formats') >= 0, err
+    assert err.find('ERROR') < 0, ret
     return 'success'
 
 ###############################################################################
@@ -2603,10 +2440,8 @@ def test_ogr2ogr_64():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/out_csv tmp/in_csv')
 
     ds = ogr.Open('tmp/out_csv')
-    if ds.GetLayerByName(first_layer).GetFeatureCount() != 1:
-        return 'fail'
-    if ds.GetLayerByName(second_layer).GetFeatureCount() != 2:
-        return 'fail'
+    assert ds.GetLayerByName(first_layer).GetFeatureCount() == 1
+    assert ds.GetLayerByName(second_layer).GetFeatureCount() == 2
     ds = None
 
     shutil.rmtree('tmp/in_csv')
@@ -2624,17 +2459,14 @@ def test_ogr2ogr_65():
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/out.csv ../ogr/data/poly.shp')
     ds = gdal.OpenEx('tmp/out.csv')
-    if ds.GetDriver().ShortName != 'CSV':
-        return 'fail'
+    assert ds.GetDriver().ShortName == 'CSV'
     ds = None
     gdal.Unlink('tmp/out.csv')
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' /vsimem/out.xxx ../ogr/data/poly.shp')
     if err.find("Cannot guess") < 0:
-        gdaltest.post_reason('expected a warning about probably wrong extension')
         print(ret)
-        print(err)
-        return 'fail'
+        pytest.fail('expected a warning about probably wrong extension')
 
     return 'success'
 
@@ -2647,10 +2479,8 @@ def test_ogr2ogr_66():
         return 'skip'
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' ../ogr/data/poly.shp ../ogr/data/poly.shp')
-    if err.find("Source and destination datasets must be different in non-update mode") < 0:
-        print(ret)
-        print(err)
-        return 'fail'
+    assert err.find("Source and destination datasets must be different in non-update mode") >= 0, \
+        ret
 
     return 'success'
 

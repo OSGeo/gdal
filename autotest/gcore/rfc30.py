@@ -58,17 +58,13 @@ def test_rfc30_1():
 
     file_list = ds.GetFileList()
 
-    if ds is None:
-        gdaltest.post_reason('failed to open utf filename.')
-        return 'fail'
+    assert ds is not None, 'failed to open utf filename.'
 
     ds = None
 
     ds = gdal.Open(file_list[0])
 
-    if ds is None:
-        gdaltest.post_reason('failed to open utf filename (2).')
-        return 'fail'
+    assert ds is not None, 'failed to open utf filename (2).'
 
     return 'success'
 
@@ -86,9 +82,7 @@ def test_rfc30_2():
         # filename = filename.encode( 'utf-8' )
 
     fd = gdal.VSIFOpenL(filename, 'w')
-    if fd is None:
-        gdaltest.post_reason('failed to create utf-8 named file.')
-        return 'fail'
+    assert fd is not None, 'failed to create utf-8 named file.'
 
     gdal.VSIFWriteL('abc', 3, 1, fd)
     gdal.VSIFCloseL(fd)
@@ -103,14 +97,10 @@ def test_rfc30_2():
         filename_for_rename = filename.encode('utf-8')  # FIXME ? rename should perhaps accept unicode strings
         new_filename = new_filename.encode('utf-8')  # FIXME ? rename should perhaps accept unicode strings
 
-    if gdal.Rename(filename_for_rename, new_filename) != 0:
-        gdaltest.post_reason('utf-8 rename failed.')
-        return 'fail'
+    assert gdal.Rename(filename_for_rename, new_filename) == 0, 'utf-8 rename failed.'
 
     fd = gdal.VSIFOpenL(new_filename, 'r')
-    if fd is None:
-        gdaltest.post_reason('reopen failed with utf8')
-        return 'fail'
+    assert fd is not None, 'reopen failed with utf8'
 
     data = gdal.VSIFReadL(3, 1, fd)
     gdal.VSIFCloseL(fd)
@@ -119,16 +109,12 @@ def test_rfc30_2():
         ok = eval("data == b'abc'")
     else:
         ok = data == 'abc'
-    if not ok:
-        gdaltest.post_reason('did not get expected data.')
-        return 'fail'
+    assert ok, 'did not get expected data.'
 
     gdal.Unlink(new_filename)
 
     fd = gdal.VSIFOpenL(new_filename, 'r')
-    if fd is not None:
-        gdaltest.post_reason('did unlink fail on utf8 filename?')
-        return 'fail'
+    assert fd is None, 'did unlink fail on utf8 filename?'
 
     return 'success'
 

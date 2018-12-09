@@ -77,10 +77,7 @@ def test_basic_test_strace_non_existing_file():
         if line.find('non_existing_ds') >= 0:
             interesting_lines += [ line ]
     # Only 3 calls on the file are legit: open(), stat() and readlink()
-    if len(interesting_lines) > 3:
-        gdaltest.post_reason('too many system calls accessing file')
-        print(interesting_lines)
-        return 'fail'
+    assert len(interesting_lines) <= 3, 'too many system calls accessing file'
 
     return 'success'
 
@@ -147,20 +144,15 @@ def basic_test_7_internal():
     except:
         # Special case: we should still be able to get the error message
         # until we call a new GDAL function
-        if not matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
-            gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
-            return 'fail'
+        assert matches_non_existing_error_msg(gdal.GetLastErrorMsg()), \
+            ('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
-        if gdal.GetLastErrorType() == 0:
-            gdaltest.post_reason('did not get expected error type')
-            return 'fail'
+        assert gdal.GetLastErrorType() != 0, 'did not get expected error type'
 
         # Should issue an implicit CPLErrorReset()
         gdal.GetCacheMax()
 
-        if gdal.GetLastErrorType() != 0:
-            gdaltest.post_reason('got unexpected error type')
-            return 'fail'
+        assert gdal.GetLastErrorType() == 0, 'got unexpected error type'
 
         return 'success'
 
@@ -180,27 +172,21 @@ def test_basic_test_7():
 def test_basic_test_8():
 
     ret = gdal.VersionInfo('RELEASE_DATE')
-    if len(ret) != 8:
-        print(ret)
-        return 'fail'
+    assert len(ret) == 8
 
     python_exe = sys.executable
     if sys.platform == 'win32':
         python_exe = python_exe.replace('\\', '/')
 
     ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 0')
-    if ret.find('GDAL/OGR is released under the MIT/X license') != 0 and ret.find('GDAL/OGR Licensing') < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find('GDAL/OGR is released under the MIT/X license') == 0 or ret.find('GDAL/OGR Licensing') >= 0
 
     f = open('tmp/LICENSE.TXT', 'wt')
     f.write('fake_license')
     f.close()
     ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 1')
     os.unlink('tmp/LICENSE.TXT')
-    if ret.find('fake_license') != 0 and ret.find('GDAL/OGR Licensing') < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find('fake_license') == 0 or ret.find('GDAL/OGR Licensing') >= 0
 
     return 'success'
 
@@ -223,14 +209,11 @@ def test_basic_test_9():
     gdal.Error(1, 2, 'test')
     gdal.PopErrorHandler()
 
-    if gdaltest.eErrClass != 1:
-        return 'fail'
+    assert gdaltest.eErrClass == 1
 
-    if gdaltest.err_no != 2:
-        return 'fail'
+    assert gdaltest.err_no == 2
 
-    if gdaltest.msg != 'test':
-        return 'fail'
+    assert gdaltest.msg == 'test'
 
     return 'success'
 
@@ -262,14 +245,11 @@ def test_basic_test_10():
     gdal.Error(1, 2, 'test')
     gdal.PopErrorHandler()
 
-    if error_handler.eErrClass != 1:
-        return 'fail'
+    assert error_handler.eErrClass == 1
 
-    if error_handler.err_no != 2:
-        return 'fail'
+    assert error_handler.err_no == 2
 
-    if error_handler.msg != 'test':
-        return 'fail'
+    assert error_handler.msg == 'test'
 
     return 'success'
 
@@ -280,85 +260,65 @@ def test_basic_test_10():
 def test_basic_test_11():
 
     ds = gdal.OpenEx('data/byte.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', gdal.OF_RASTER)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', gdal.OF_VECTOR)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     ds = gdal.OpenEx('data/byte.tif', gdal.OF_RASTER | gdal.OF_VECTOR)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', gdal.OF_ALL)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', gdal.OF_UPDATE)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', gdal.OF_RASTER | gdal.OF_VECTOR | gdal.OF_UPDATE | gdal.OF_VERBOSE_ERROR)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', allowed_drivers=[])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', allowed_drivers=['GTiff'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('data/byte.tif', allowed_drivers=['PNG'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('data/byte.tif', open_options=['FOO'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ar_ds = [gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for _ in range(1024)]
-    if ar_ds[1023] is None:
-        return 'fail'
+    assert ar_ds[1023] is not None
     ar_ds = None
 
     ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_RASTER)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
-    if ds is None:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
-    if ds.GetLayer(0) is None:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
+    assert ds.GetLayer(0) is not None
     ds.GetLayer(0).GetMetadata()
 
     ds = gdal.OpenEx('../ogr/data/poly.shp', allowed_drivers=['ESRI Shapefile'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_RASTER | gdal.OF_VECTOR)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = gdal.OpenEx('non existing')
-    if ds is not None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is None and gdal.GetLastErrorMsg() == ''
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.OpenEx('non existing', gdal.OF_VERBOSE_ERROR)
     gdal.PopErrorHandler()
-    if ds is not None or gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert ds is None and gdal.GetLastErrorMsg() != ''
 
     old_use_exceptions_status = gdal.GetUseExceptions()
     gdal.UseExceptions()
@@ -369,8 +329,7 @@ def test_basic_test_11():
         got_exception = True
     if old_use_exceptions_status == 0:
         gdal.DontUseExceptions()
-    if not got_exception:
-        return 'fail'
+    assert got_exception
 
     return 'success'
 
@@ -381,40 +340,26 @@ def test_basic_test_11():
 def test_basic_test_12():
 
     ds = gdal.GetDriverByName('MEMORY').Create('bar', 0, 0, 0)
-    if ds.GetDescription() != 'bar':
-        print(ds.GetDescription())
-        return 'fail'
+    assert ds.GetDescription() == 'bar'
     lyr = ds.CreateLayer("foo")
-    if lyr is None:
-        return 'fail'
-    if lyr.GetDescription() != 'foo':
-        print(lyr.GetDescription())
-        return 'fail'
+    assert lyr is not None
+    assert lyr.GetDescription() == 'foo'
     from osgeo import ogr
-    if lyr.TestCapability(ogr.OLCCreateField) != 1:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCCreateField) == 1
+    assert ds.GetLayerCount() == 1
     lyr = ds.GetLayerByName("foo")
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
     lyr = ds.GetLayerByIndex(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
     sql_lyr = ds.ExecuteSQL('SELECT * FROM foo')
-    if sql_lyr is None:
-        return 'fail'
+    assert sql_lyr is not None
     ds.ReleaseResultSet(sql_lyr)
     new_lyr = ds.CopyLayer(lyr, 'bar')
-    if new_lyr is None:
-        return 'fail'
-    if ds.DeleteLayer(0) != 0:
-        return 'fail'
-    if ds.DeleteLayer('bar') != 0:
-        return 'fail'
+    assert new_lyr is not None
+    assert ds.DeleteLayer(0) == 0
+    assert ds.DeleteLayer('bar') == 0
     ds.SetStyleTable(ds.GetStyleTable())
     ds = None
 
@@ -441,24 +386,18 @@ def test_basic_test_13():
             ds.SetMetadataItem("ScaleBounds", "True")
             ds.SetMetadataItem("ScaleBounds.MaxScale", "2000000")
 
-        if ds.GetMetadataItem('scalebounds') != 'True':
-            return 'fail'
-        if ds.GetMetadataItem('ScaleBounds') != 'True':
-            return 'fail'
-        if ds.GetMetadataItem('SCALEBOUNDS') != 'True':
-            return 'fail'
-        if ds.GetMetadataItem('ScaleBounds.MinScale') != '0':
-            return 'fail'
-        if ds.GetMetadataItem('ScaleBounds.MaxScale') != '2000000':
-            return 'fail'
+        assert ds.GetMetadataItem('scalebounds') == 'True'
+        assert ds.GetMetadataItem('ScaleBounds') == 'True'
+        assert ds.GetMetadataItem('SCALEBOUNDS') == 'True'
+        assert ds.GetMetadataItem('ScaleBounds.MinScale') == '0'
+        assert ds.GetMetadataItem('ScaleBounds.MaxScale') == '2000000'
     ds = None
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     for i in range(200):
         ds.SetMetadataItem("FILENAME_%d" % i, "%d" % i)
     for i in range(200):
-        if ds.GetMetadataItem("FILENAME_%d" % i) != '%d' % i:
-            return 'fail'
+        assert ds.GetMetadataItem("FILENAME_%d" % i) == '%d' % i
 
     return 'success'
 
@@ -471,8 +410,7 @@ def test_basic_test_14():
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
 
     ds.SetMetadata('foo')
-    if ds.GetMetadata_List() != ['foo']:
-        return 'fail'
+    assert ds.GetMetadata_List() == ['foo']
 
     try:
         ds.SetMetadata(5)
@@ -481,8 +419,7 @@ def test_basic_test_14():
         pass
 
     ds.SetMetadata(['foo=bar'])
-    if ds.GetMetadata_List() != ['foo=bar']:
-        return 'fail'
+    assert ds.GetMetadata_List() == ['foo=bar']
 
     try:
         ds.SetMetadata([5])
@@ -491,8 +428,7 @@ def test_basic_test_14():
         pass
 
     ds.SetMetadata({'foo': 'baz'})
-    if ds.GetMetadata_List() != ['foo=baz']:
-        return 'fail'
+    assert ds.GetMetadata_List() == ['foo=baz']
 
     try:
         ds.SetMetadata({'foo': 5})
@@ -518,12 +454,10 @@ def test_basic_test_14():
         exec("val = u'\\u00e9ven'")
 
     ds.SetMetadata({'bar': val})
-    if ds.GetMetadata()['bar'] != val:
-        return 'fail'
+    assert ds.GetMetadata()['bar'] == val
 
     ds.SetMetadata({val: 'baz'})
-    if ds.GetMetadata()[val] != 'baz':
-        return 'fail'
+    assert ds.GetMetadata()[val] == 'baz'
 
     try:
         ds.SetMetadata({val: 5})
@@ -568,18 +502,15 @@ def test_basic_test_15():
 
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_no_argument)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_no_ret)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('', 1, 1), callback=basic_test_15_cbk_bad_ret)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -591,17 +522,14 @@ def test_basic_test_16():
 
     gdal.ErrorReset()
     gdal.OpenEx('data/byte.tif', open_options=['@UNRECOGNIZED=FOO'])
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     gdal.ErrorReset()
     gdal.Translate('/vsimem/temp.tif', 'data/byte.tif', options='-co BLOCKYSIZE=10')
     with gdaltest.error_handler():
         gdal.OpenEx('/vsimem/temp.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
     gdal.Unlink('/vsimem/temp.tif')
-    if gdal.GetLastErrorMsg() != 'Invalid value for NUM_THREADS: INVALID':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == 'Invalid value for NUM_THREADS: INVALID'
 
     return 'success'
 
@@ -622,10 +550,8 @@ def test_basic_test_17():
             pass
         gdal.DontUseExceptions()
         ogr.DontUseExceptions()
-        if gdal.GetUseExceptions():
-            return 'fail'
-        if ogr.GetUseExceptions():
-            return 'fail'
+        assert not gdal.GetUseExceptions()
+        assert not ogr.GetUseExceptions()
 
     for _ in range(2):
         ogr.UseExceptions()
@@ -642,13 +568,9 @@ def test_basic_test_17():
         except:
             gdal.DontUseExceptions()
             ogr.DontUseExceptions()
-        if flag:
-            gdaltest.post_reason('expected failure')
-            return 'fail'
-        if gdal.GetUseExceptions():
-            return 'fail'
-        if ogr.GetUseExceptions():
-            return 'fail'
+        assert not flag, 'expected failure'
+        assert not gdal.GetUseExceptions()
+        assert not ogr.GetUseExceptions()
 
     return 'success'
 

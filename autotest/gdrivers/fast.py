@@ -74,26 +74,16 @@ def test_fast_3():
 
     gdaltest.fast_ds = gdal.Open('data/L71118038_03820020111_HPN.FST')
     ds = gdaltest.fast_ds
-    if ds is None:
-        gdaltest.post_reason('Missing test dataset')
-        return 'fail'
+    assert ds is not None, 'Missing test dataset'
 
     md = ds.GetMetadata()
-    if md is None:
-        gdaltest.post_reason('Missing metadata in test dataset')
-        return 'fail'
+    assert md is not None, 'Missing metadata in test dataset'
 
-    if md['ACQUISITION_DATE'] != '20020111':
-        gdaltest.post_reason('ACQUISITION_DATE wrong')
-        return 'fail'
+    assert md['ACQUISITION_DATE'] == '20020111', 'ACQUISITION_DATE wrong'
 
-    if md['SATELLITE'] != 'LANDSAT7':
-        gdaltest.post_reason('SATELLITE wrong')
-        return 'fail'
+    assert md['SATELLITE'] == 'LANDSAT7', 'SATELLITE wrong'
 
-    if md['SENSOR'] != 'ETM+':
-        gdaltest.post_reason('SENSOR wrong')
-        return 'fail'
+    assert md['SENSOR'] == 'ETM+', 'SENSOR wrong'
 
     # GAIN and BIAS expected values
     gb_expected = (-6.199999809265137, 0.775686297697179)
@@ -120,9 +110,7 @@ def test_fast_4():
         return 'skip'
 
     ds = gdaltest.fast_ds
-    if ds is None:
-        gdaltest.post_reason('Missing test dataset')
-        return 'fail'
+    assert ds is not None, 'Missing test dataset'
 
     gt = ds.GetGeoTransform()
 
@@ -130,11 +118,10 @@ def test_fast_4():
     ds = None
 
     tolerance = 0.01
-    if abs(gt[0] - 280342.5) > tolerance or abs(gt[1] - 15.0) > tolerance or \
-       abs(gt[2] - 0.0) > tolerance or abs(gt[3] - 3621457.5) > tolerance or \
-       abs(gt[4] - 0.0) > tolerance or abs(gt[5] + 15.0) > tolerance:
-        gdaltest.post_reason('FAST geotransform wrong')
-        return 'fail'
+    assert (abs(gt[0] - 280342.5) <= tolerance and abs(gt[1] - 15.0) <= tolerance and \
+       abs(gt[2] - 0.0) <= tolerance and abs(gt[3] - 3621457.5) <= tolerance and \
+       abs(gt[4] - 0.0) <= tolerance and abs(gt[5] + 15.0) <= tolerance), \
+        'FAST geotransform wrong'
 
     return 'success'
 
@@ -275,13 +262,9 @@ def test_fast_9():
         return 'skip'
 
     ds = gdal.Open('data/HEADER.DAT')
-    if ds.GetMetadataItem('SENSOR') != '':
-        gdaltest.post_reason('Did not get expected SENSOR value.')
-        return 'fail'
+    assert ds.GetMetadataItem('SENSOR') == '', 'Did not get expected SENSOR value.'
 
-    if ds.RasterCount != 7:
-        gdaltest.post_reason('Did not get expected band count.')
-        return 'fail'
+    assert ds.RasterCount == 7, 'Did not get expected band count.'
 
     return 'success'
 

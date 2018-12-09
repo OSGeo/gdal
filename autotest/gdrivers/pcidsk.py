@@ -75,14 +75,10 @@ def test_pcidsk_4():
     ds = gdal.Open('data/utm.pix')
 
     band = ds.GetRasterBand(1)
-    if band.GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 1, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    if cs != 8368:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 8368, ('wrong overview checksum (%d)' % cs)
 
     return 'success'
 
@@ -184,9 +180,7 @@ def test_pcidsk_7():
 
     ct = band.GetColorTable()
 
-    if ct is not None:
-        gdaltest.post_reason('Got color table unexpectedly.')
-        return 'fail'
+    assert ct is None, 'Got color table unexpectedly.'
 
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (0, 255, 0, 255))
@@ -196,9 +190,8 @@ def test_pcidsk_7():
 
     ct = band.GetColorTable()
 
-    if ct.GetColorEntry(1) != (255, 0, 255, 255):
-        gdaltest.post_reason('Got wrong color table entry immediately.')
-        return 'fail'
+    assert ct.GetColorEntry(1) == (255, 0, 255, 255), \
+        'Got wrong color table entry immediately.'
 
     ct = None
     band = None
@@ -211,25 +204,16 @@ def test_pcidsk_7():
 
     ct = band.GetColorTable()
 
-    if ct.GetColorEntry(1) != (255, 0, 255, 255):
-        gdaltest.post_reason('Got wrong color table entry after reopen.')
-        return 'fail'
+    assert ct.GetColorEntry(1) == (255, 0, 255, 255), \
+        'Got wrong color table entry after reopen.'
 
-    if band.GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        gdaltest.post_reason('Not a palette?')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_PaletteIndex, 'Not a palette?'
 
-    if band.SetColorTable(None) != 0:
-        gdaltest.post_reason('SetColorTable failed.')
-        return 'fail'
+    assert band.SetColorTable(None) == 0, 'SetColorTable failed.'
 
-    if band.GetColorTable() is not None:
-        gdaltest.post_reason('color table still exists!')
-        return 'fail'
+    assert band.GetColorTable() is None, 'color table still exists!'
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('Paletted?')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined, 'Paletted?'
 
     return 'success'
 
@@ -265,8 +249,7 @@ def pcidsk_9():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('/vsimem/pcidsk_9.pix')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     gdal.Unlink('/vsimem/pcidsk_9.pix')
@@ -291,14 +274,10 @@ def test_pcidsk_10():
     band = ds.GetRasterBand(1)
     ds.BuildOverviews('NEAR', [2])
 
-    if band.GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 1, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    if cs != 1087:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 1087, ('wrong overview checksum (%d)' % cs)
 
     ds = None
 
@@ -358,10 +337,7 @@ def test_pcidsk_13():
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_13.pix')
 
-    if cs != 4645:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4645, 'bad checksum'
 
     return 'success'
 
@@ -387,10 +363,7 @@ def test_pcidsk_14():
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_14.pix')
 
-    if desc != 'mydescription':
-        gdaltest.post_reason('bad description')
-        print(desc)
-        return 'fail'
+    assert desc == 'mydescription', 'bad description'
 
     return 'success'
 
@@ -408,20 +381,16 @@ def test_pcidsk_15():
     ds = None
 
     ds = gdal.Open('/vsimem/pcidsk_15.pix')
-    if ds.RasterCount != 1:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds.RasterCount == 1
+    assert ds.GetLayerCount() == 1
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
     ds2 = None
     ds = None
 
     ds = gdal.Open('/vsimem/pcidsk_15_2.pix')
-    if ds.RasterCount != 1:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds.RasterCount == 1
+    assert ds.GetLayerCount() == 1
     ds = None
 
     # One vector layer only
@@ -430,20 +399,16 @@ def test_pcidsk_15():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
-    if ds.RasterCount != 0:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 1
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
     ds2 = None
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
-    if ds.RasterCount != 0:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 1
     ds = None
 
     # Zero raster band and vector layer
@@ -451,20 +416,16 @@ def test_pcidsk_15():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
-    if ds.RasterCount != 0:
-        return 'fail'
-    if ds.GetLayerCount() != 0:
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 0
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
     del ds2
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
-    if ds.RasterCount != 0:
-        return 'fail'
-    if ds.GetLayerCount() != 0:
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 0
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_15.pix')
@@ -481,11 +442,9 @@ def test_pcidsk_external_ovr():
     ds = gdal.Open('/vsimem/test.pix')
     ds.BuildOverviews('NEAR', [2])
     ds = None
-    if gdal.VSIStatL('/vsimem/test.pix.ovr') is None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/test.pix.ovr') is not None
     ds = gdal.Open('/vsimem/test.pix')
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
@@ -502,11 +461,9 @@ def test_pcidsk_external_ovr_rrd():
     with gdaltest.config_option('USE_RRD', 'YES'):
         ds.BuildOverviews('NEAR', [2])
     ds = None
-    if gdal.VSIStatL('/vsimem/test.aux') is None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/test.aux') is not None
     ds = gdal.Open('/vsimem/test.pix')
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
@@ -538,21 +495,15 @@ def test_pcidsk_online_1():
         return 'false'
 
     band = ds.GetRasterBand(20)
-    if band.GetDescription() != 'Training site for type 2 crop':
-        gdaltest.post_reason('did not get expected band 20 description')
-        return 'fail'
+    assert band.GetDescription() == 'Training site for type 2 crop', \
+        'did not get expected band 20 description'
 
     exp_checksum = 2057
     checksum = band.Checksum()
-    if exp_checksum != checksum:
-        print(checksum)
-        gdaltest.post_reason('did not get right bitmap checksum.')
-        return 'fail'
+    assert exp_checksum == checksum, 'did not get right bitmap checksum.'
 
     md = band.GetMetadata('IMAGE_STRUCTURE')
-    if md['NBITS'] != '1':
-        gdaltest.post_reason('did not get expected NBITS=1 metadata.')
-        return 'fail'
+    assert md['NBITS'] == '1', 'did not get expected NBITS=1 metadata.'
 
     return 'success'
 

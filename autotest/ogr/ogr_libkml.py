@@ -37,6 +37,7 @@ import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test basic open operation for KML datastore.
@@ -68,10 +69,7 @@ def test_ogr_libkml_datastore():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds.GetLayerCount() != 10:
-        gdaltest.post_reason('wrong number of layers')
-        print(ogrtest.kml_ds.GetLayerCount())
-        return 'fail'
+    assert ogrtest.kml_ds.GetLayerCount() == 10, 'wrong number of layers'
 
     return 'success'
 
@@ -85,49 +83,34 @@ def test_ogr_libkml_attributes_1():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds is None:
-        gdaltest.post_reason('libkml_ds is none')
-        return 'fail'
+    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
     feat = lyr.GetNextFeature()
 
-    if feat.GetField('Name') != 'Simple placemark':
-        gdaltest.post_reason('Wrong name field value')
-        return 'fail'
+    assert feat.GetField('Name') == 'Simple placemark', 'Wrong name field value'
 
     if feat.GetField('description')[:23] != 'Attached to the ground.':
-        gdaltest.post_reason('Wrong description field value')
         print('got: ', feat.GetField('description')[:23])
-        return 'fail'
+        pytest.fail('Wrong description field value')
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
-    if feat.GetField('Name') != 'Floating placemark':
-        gdaltest.post_reason('Wrong name field value')
-        return 'fail'
+    assert feat.GetField('Name') == 'Floating placemark', 'Wrong name field value'
 
     if feat.GetField('description')[:25] != 'Floats a defined distance':
-        gdaltest.post_reason('Wrong description field value')
         print('got: ', feat.GetField('description')[:25])
-        return 'fail'
+        pytest.fail('Wrong description field value')
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
-    if feat.GetField('Name') != 'Extruded placemark':
-        gdaltest.post_reason('Wrong name field value')
-        return 'fail'
+    assert feat.GetField('Name') == 'Extruded placemark', 'Wrong name field value'
 
     if feat.GetField('description') != 'Tethered to the ground by a customizable\n          \"tail\"':
-        gdaltest.post_reason('Wrong description field value')
         print('got: ', feat.GetField('description'))
-        return 'fail'
+        pytest.fail('Wrong description field value')
 
     return 'success'
 
@@ -141,26 +124,19 @@ def test_ogr_libkml_attributes_2():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds is None:
-        gdaltest.post_reason('libkml_ds is none')
-        return 'fail'
+    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Highlighted Icon')
     feat = lyr.GetNextFeature()
 
-    if feat.GetField('Name') != 'Roll over this icon':
-        gdaltest.post_reason('Wrong name field value')
-        return 'fail'
+    assert feat.GetField('Name') == 'Roll over this icon', 'Wrong name field value'
 
     if feat.GetField('description') is not None:
-        gdaltest.post_reason('Wrong description field value')
         print("'%s'" % feat.GetField('description'))
-        return 'fail'
+        pytest.fail('Wrong description field value')
 
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('unexpected feature found.')
-        return 'fail'
+    assert feat is None, 'unexpected feature found.'
 
     return 'success'
 
@@ -174,38 +150,26 @@ def test_ogr_libkml_attributes_3():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds is None:
-        gdaltest.post_reason('libkml_ds is none')
-        return 'fail'
+    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Paths')
     feat = lyr.GetNextFeature()
 
-    if feat.GetField('Name') != 'Tessellated':
-        gdaltest.post_reason('Wrong name field value')
-        return 'fail'
+    assert feat.GetField('Name') == 'Tessellated', 'Wrong name field value'
 
-    if feat.GetField('description') != 'If the <tessellate> tag has a value of 1, the line will contour to the underlying terrain':
-        gdaltest.post_reason('Wrong description field value')
-        return 'fail'
+    assert feat.GetField('description') == 'If the <tessellate> tag has a value of 1, the line will contour to the underlying terrain', \
+        'Wrong description field value'
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
-    if feat.GetField('Name') != 'Untessellated':
-        gdaltest.post_reason('Wrong name field value')
-        return 'fail'
+    assert feat.GetField('Name') == 'Untessellated', 'Wrong name field value'
 
-    if feat.GetField('description') != 'If the <tessellate> tag has a value of 0, the line follow a simple straight-line path from point to point':
-        gdaltest.post_reason('Wrong description field value')
-        return 'fail'
+    assert feat.GetField('description') == 'If the <tessellate> tag has a value of 0, the line follow a simple straight-line path from point to point', \
+        'Wrong description field value'
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     return 'success'
 
@@ -219,9 +183,7 @@ def test_ogr_libkml_attributes_4():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds is None:
-        gdaltest.post_reason('libkml_ds is none')
-        return 'fail'
+    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
     feat = lyr.GetNextFeature()
@@ -230,13 +192,10 @@ def test_ogr_libkml_attributes_4():
     while feat is not None:
         name = 'Building %d' % i
         if feat.GetField('Name') != name:
-            gdaltest.post_reason('Wrong name field value')
             print('Got: "%s"' % feat.GetField('name'))
-            return 'fail'
+            pytest.fail('Wrong name field value')
 
-        if feat.GetField('description') is not None:
-            gdaltest.post_reason('Wrong description field value')
-            return 'fail'
+        assert feat.GetField('description') is None, 'Wrong description field value'
 
         i = i + 1
         feat = lyr.GetNextFeature()
@@ -253,9 +212,7 @@ def test_ogr_libkml_point_read():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds is None:
-        gdaltest.post_reason('libkml_ds is none')
-        return 'fail'
+    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
     lyr.ResetReading()
@@ -263,28 +220,21 @@ def test_ogr_libkml_point_read():
 
     wkt = 'POINT(-122.0822035425683 37.42228990140251)'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     wkt = 'POINT(-122.084075 37.4220033612141 50)'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     wkt = 'POINT(-122.0857667006183 37.42156927867553 50)'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     return 'success'
 
@@ -298,35 +248,26 @@ def test_ogr_libkml_linestring_read():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds is None:
-        gdaltest.post_reason('libkml_ds is none')
-        return 'fail'
+    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Paths')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
     wkt = 'LINESTRING (-112.081423783034495 36.106778704771372 0, -112.087026775269294 36.0905099328766 0)'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     wkt = 'LINESTRING (-112.080622229594994 36.106734600079953 0,-112.085242575314993 36.090495986124218 0)'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     wkt = 'LINESTRING (-112.265654928602004 36.094476726025462 2357,-112.266038452823807 36.093426088386707 2357,-112.266813901345301 36.092510587768807 2357,-112.267782683444494 36.091898273579957 2357,-112.268855751095202 36.091313794118697 2357,-112.269481071721899 36.090367720752099 2357,-112.269526855561097 36.089321714872852 2357,-112.269014456727604 36.088509160604723 2357,-112.268152881533894 36.087538135979557 2357,-112.2670588176031 36.086826852625677 2357,-112.265737458732104 36.086463123013033 2357)'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     return 'success'
 
@@ -340,44 +281,32 @@ def test_ogr_libkml_polygon_read():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    if ogrtest.kml_ds is None:
-        gdaltest.post_reason('libkml_ds is none')
-        return 'fail'
+    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
     wkt = 'POLYGON ((-122.084893845961204 37.422571240447859 17,-122.084958097919795 37.422119226268563 17,-122.084746957304702 37.42207183952619 17,-122.084572538096197 37.422090067296757 17,-122.084595488672306 37.422159327008949 17,-122.0838521118269 37.422272785643713 17,-122.083792243334997 37.422035391120843 17,-122.0835076656616 37.422090069571063 17,-122.083470946415204 37.422009873951609 17,-122.083122108574798 37.422104649494599 17,-122.082924737457205 37.422265039903863 17,-122.082933916938501 37.422312428430942 17,-122.083383735973698 37.422250460876178 17,-122.083360785424802 37.422341592287452 17,-122.083420455164202 37.42237075460644 17,-122.083659133885007 37.422512920110009 17,-122.083975843895203 37.422658730937812 17,-122.084237474333094 37.422651439725207 17,-122.0845036949503 37.422651438643499 17,-122.0848020460801 37.422611339163147 17,-122.084788275051494 37.422563950551208 17,-122.084893845961204 37.422571240447859 17))'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     wkt = 'POLYGON ((-122.085741277148301 37.422270331552568 17,-122.085816976848093 37.422314088323461 17,-122.085852582875006 37.422303374697442 17,-122.085879994563896 37.422256861387893 17,-122.085886010140896 37.422231107613797 17,-122.085806915728796 37.422202501738553 17,-122.085837954265301 37.42214027058678 17,-122.085673264051906 37.422086902144081 17,-122.085602292640701 37.42214885429042 17,-122.085590277843593 37.422128290487002 17,-122.085584167223701 37.422081719672462 17,-122.085485206574106 37.42210455874995 17,-122.085506726435199 37.422142679498243 17,-122.085443071291493 37.422127838461719 17,-122.085099071490404 37.42251282407603 17,-122.085676981863202 37.422818153236513 17,-122.086016227378295 37.422449188587223 17,-122.085726032700407 37.422292396042529 17,-122.085741277148301 37.422270331552568 17))'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     wkt = 'POLYGON ((-122.085786228724203 37.421362088869692 25,-122.085731299060299 37.421369359894811 25,-122.085731299291794 37.421409349109027 25,-122.085607707367899 37.421383901665649 25,-122.085580242651602 37.42137299550869 25,-122.085218622197104 37.421372995043157 25,-122.085227776563897 37.421616565082651 25,-122.085259818934702 37.421605658944031 25,-122.085259818549901 37.421682001560001 25,-122.085236931147804 37.421700178603459 25,-122.085264395782801 37.421761979825753 25,-122.085323903274599 37.421761980139067 25,-122.085355945432397 37.421852864451999 25,-122.085410875246296 37.421889218237339 25,-122.085479537935697 37.42189285337048 25,-122.085543622981902 37.421889217975462 25,-122.085626017804202 37.421860134999257 25,-122.085937287963006 37.421860134536047 25,-122.085942871866607 37.42160898590042 25,-122.085965546986102 37.421579927591438 25,-122.085864046234093 37.421471150029568 25,-122.0858548911215 37.421405713261841 25,-122.085809116276806 37.4214057134039 25,-122.085786228724203 37.421362088869692 25))'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('expected feature not found.')
-        return 'fail'
+    assert feat is not None, 'expected feature not found.'
 
     wkt = 'POLYGON ((-122.084437112828397 37.421772530030907 19,-122.084511885574599 37.421911115428962 19,-122.0850470999805 37.421787551215353 19,-122.085071991339106 37.421436630231611 19,-122.084916406231997 37.421372378221157 19,-122.084219386816699 37.421372378016258 19,-122.084219386589993 37.421476171614962 19,-122.083808641999099 37.4214613409357 19,-122.083789972856394 37.421313064107963 19,-122.083279653469802 37.421293288405927 19,-122.083260981920702 37.421392139442979 19,-122.082937362173695 37.421372363998763 19,-122.082906242566693 37.421515697788713 19,-122.082850226966499 37.421762825764652 19,-122.082943578863507 37.421767769696352 19,-122.083217411188002 37.421792485526858 19,-122.0835970430103 37.421748007445601 19,-122.083945555677104 37.421693642376027 19,-122.084007789463698 37.421762838158529 19,-122.084113587521003 37.421748011043917 19,-122.084076247378405 37.421713412923751 19,-122.084144704773905 37.421678815345693 19,-122.084144704222993 37.421817206601972 19,-122.084250333307395 37.421817070044597 19,-122.084437112828397 37.421772530030907 19))'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     return 'success'
 
@@ -399,13 +328,9 @@ def ogr_libkml_write(filename):
 
         dst_feat = ogr.Feature(lyr.GetLayerDefn())
         dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
-        if lyr.CreateFeature(dst_feat) != 0:
-            gdaltest.post_reason('CreateFeature failed.')
-            return 'fail'
-        if dst_feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-            print(dst_feat.GetGeometryRef().ExportToWkt())
-            gdaltest.post_reason('CreateFeature changed the geometry.')
-            return 'fail'
+        assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
+        assert dst_feat.GetGeometryRef().ExportToWkt() == 'POINT (2 49)', \
+            'CreateFeature changed the geometry.'
 
     lyr = ds.CreateLayer('test_wgs84')
 
@@ -421,51 +346,35 @@ def ogr_libkml_write(filename):
     dst_feat.SetField('description', 'my_description')
     dst_feat.SetField('foo', 'bar')
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49 1)'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (0 1,2 3)'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0))'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,2 49)'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING ((0 1,2 3),(0 1,2 3))'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0)),((-0.25 0.25 0,-0.25 0.75 0,-0.75 0.75 0,-0.75 0.25 0,-0.25 0.25 0)))'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1,2 3))'))
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     ds = None
 
@@ -485,69 +394,42 @@ def ogr_libkml_check_write(filename):
         lyr = ds.GetLayerByName('test_wgs84')
     else:
         lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 8:
-        gdaltest.post_reason('Bad feature count.')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 8, 'Bad feature count.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetField('name') != 'my_name':
-        print(feat.GetField('name'))
-        gdaltest.post_reason('Unexpected name.')
-        return 'fail'
-    if feat.GetField('description') != 'my_description':
-        print(feat.GetField('description'))
-        gdaltest.post_reason('Unexpected description.')
-        return 'fail'
-    if feat.GetField('foo') != 'bar':
-        print(feat.GetField('foo'))
-        gdaltest.post_reason('Unexpected foo.')
-        return 'fail'
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 0)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetField('name') == 'my_name', 'Unexpected name.'
+    assert feat.GetField('description') == 'my_description', 'Unexpected description.'
+    assert feat.GetField('foo') == 'bar', 'Unexpected foo.'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (2 49 0)', \
+        'Unexpected geometry.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 1)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (2 49 1)', \
+        'Unexpected geometry.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1 0,2 3 0)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'LINESTRING (0 1 0,2 3 0)', \
+        'Unexpected geometry.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0))':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0))', \
+        'Unexpected geometry.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOINT (2 49 0,2 49 0)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'MULTIPOINT (2 49 0,2 49 0)', \
+        'Unexpected geometry.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'MULTILINESTRING ((0 1 0,2 3 0),(0 1 0,2 3 0))':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'MULTILINESTRING ((0 1 0,2 3 0),(0 1 0,2 3 0))', \
+        'Unexpected geometry.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0)),((-0.25 0.25 0,-0.25 0.75 0,-0.75 0.75 0,-0.75 0.25 0,-0.25 0.25 0)))':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'MULTIPOLYGON (((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0)),((-0.25 0.25 0,-0.25 0.75 0,-0.75 0.75 0,-0.75 0.25 0,-0.25 0.25 0)))', \
+        'Unexpected geometry.'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1 0,2 3 0))':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1 0,2 3 0))', \
+        'Unexpected geometry.'
 
     ds = None
 
@@ -614,9 +496,8 @@ def test_ogr_libkml_xml_attributes():
     feat = lyr.GetNextFeature()
 
     if feat.GetField('description').find('Description<br></br><i attr="val">Interesting</i><br></br>') != 0:
-        gdaltest.post_reason('Wrong description field value')
         print('got: %s ' % feat.GetField('description'))
-        return 'fail'
+        pytest.fail('Wrong description field value')
 
     ds = None
 
@@ -658,9 +539,7 @@ def test_ogr_libkml_test_ogrsf():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_SKIP KML -ro data/samples.kml')
 
-    if ret.find("using driver `LIBKML'") == -1 or ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert not (ret.find("using driver `LIBKML'") == -1 or ret.find('INFO') == -1 or ret.find('ERROR') != -1)
 
     return 'success'
 
@@ -676,8 +555,7 @@ def test_ogr_libkml_read_placemark():
     ds = ogr.Open('data/placemark.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     ds = None
 
@@ -693,9 +571,7 @@ def test_ogr_libkml_read_empty():
         return 'skip'
 
     ds = ogr.Open('data/empty.kml')
-    if ds.GetLayerCount() != 0:
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 0
 
     ds = None
 
@@ -711,18 +587,12 @@ def test_ogr_libkml_read_emptylayers():
         return 'skip'
 
     ds = ogr.Open('data/emptylayers.kml')
-    if ds.GetLayerCount() != 2:
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 2
 
     # --> One difference with the old KML driver
-    if ds.GetLayer(0).GetFeatureCount() != 1:
-        print(ds.GetLayer(0).GetFeatureCount())
-        return 'fail'
+    assert ds.GetLayer(0).GetFeatureCount() == 1
 
-    if ds.GetLayer(1).GetFeatureCount() != 0:
-        print(ds.GetLayer(1).GetFeatureCount())
-        return 'fail'
+    assert ds.GetLayer(1).GetFeatureCount() == 0
 
     ds = None
 
@@ -741,14 +611,11 @@ def test_ogr_libkml_read_emptylayers_without_folder():
         return 'skip'
 
     ds = ogr.Open('data/emptylayers_without_folder.kml')
-    if ds.GetLayerCount() != 1:
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 1
 
     # --> One difference with the old KML driver
-    if ds.GetLayer(0).GetName() != 'Test':
-        print("Layer name must be '" + ds.GetLayer(0).GetName() + "'.")
-        return 'fail'
+    assert ds.GetLayer(0).GetName() == 'Test', \
+        ("Layer name must be '" + ds.GetLayer(0).GetName() + "'.")
 
     ds = None
 
@@ -764,9 +631,7 @@ def test_ogr_libkml_read_schema():
         return 'skip'
 
     ds = ogr.Open('data/test_schema.kml')
-    if ds.GetLayerCount() != 4:
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 4
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -781,12 +646,10 @@ def test_ogr_libkml_read_schema():
         return 'fail'
 
     lyr = ds.GetLayer(2)
-    if lyr.GetLayerDefn().GetFieldIndex('foo') != -1:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldIndex('foo') == -1
 
     lyr = ds.GetLayer(3)
-    if lyr.GetLayerDefn().GetFieldIndex('foo') != -1:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldIndex('foo') == -1
 
     ds = None
 
@@ -904,15 +767,13 @@ def test_ogr_libkml_camera():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<Camera>') == -1 or \
+    assert (not (data.find('<Camera>') == -1 or \
        data.find('<longitude>2</longitude>') == -1 or \
        data.find('<latitude>49</latitude>') == -1 or \
        data.find('<heading>70</heading>') == -1 or \
        data.find('<tilt>75</tilt>') == -1 or \
        data.find('<roll>10</roll>') == -1 or \
-       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1))
 
     ds = ogr.Open('/vsimem/ogr_libkml_camera.kml')
     lyr = ds.GetLayer(0)
@@ -959,23 +820,19 @@ def test_ogr_libkml_write_layer_lookat():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<LookAt>') == -1 or \
+    assert (not (data.find('<LookAt>') == -1 or \
        data.find('<longitude>2</longitude>') == -1 or \
        data.find('<latitude>49</latitude>') == -1 or \
-       data.find('<range>150</range>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<range>150</range>') == -1))
 
-    if data.find('<LookAt>') == -1 or \
+    assert (not (data.find('<LookAt>') == -1 or \
        data.find('<longitude>3</longitude>') == -1 or \
        data.find('<latitude>50</latitude>') == -1 or \
        data.find('<altitude>100</altitude>') == -1 or \
        data.find('<heading>70</heading>') == -1 or \
        data.find('<tilt>50</tilt>') == -1 or \
        data.find('<range>150</range>') == -1 or \
-       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1))
 
     return 'success'
 
@@ -999,16 +856,14 @@ def test_ogr_libkml_write_layer_camera():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<Camera>') == -1 or \
+    assert (not (data.find('<Camera>') == -1 or \
        data.find('<longitude>3</longitude>') == -1 or \
        data.find('<latitude>50</latitude>') == -1 or \
        data.find('<altitude>100</altitude>') == -1 or \
        data.find('<heading>70</heading>') == -1 or \
        data.find('<tilt>50</tilt>') == -1 or \
        data.find('<roll>10</roll>') == -1 or \
-       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1))
 
     return 'success'
 
@@ -1071,9 +926,7 @@ def test_ogr_libkml_write_snippet():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<snippet>test_snippet</snippet>') == -1:
-        print(data)
-        return 'fail'
+    assert data.find('<snippet>test_snippet</snippet>') != -1
 
     ds = ogr.Open("/vsimem/ogr_libkml_write_snippet.kml")
     lyr = ds.GetLayer(0)
@@ -1099,9 +952,7 @@ def test_ogr_libkml_write_atom_author():
     filepath = '/vsimem/ogr_libkml_write_atom_author.kml'
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options=['author_name=name', 'author_uri=http://foo', 'author_email=foo@bar.com'])
-    if ds is None:
-        gdaltest.post_reason('Unable to create %s.' % filepath)
-        return 'fail'
+    assert ds is not None, ('Unable to create %s.' % filepath)
     ds = None
 
     f = gdal.VSIFOpenL(filepath, 'rb')
@@ -1109,13 +960,11 @@ def test_ogr_libkml_write_atom_author():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
+    assert (not (data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
        data.find('<atom:name>name</atom:name>') == -1 or \
        data.find('<atom:uri>http://foo</atom:uri>') == -1 or \
-       data.find('<atom:email>foo@bar.com</atom:email>') == -1:
-        print(data)
-        gdaltest.post_reason('failure to find an atom string')
-        return 'fail'
+       data.find('<atom:email>foo@bar.com</atom:email>') == -1)), \
+        'failure to find an atom string'
 
     return 'success'
 
@@ -1131,9 +980,7 @@ def test_ogr_libkml_write_atom_link():
     filepath = '/vsimem/ogr_libkml_write_atom_link.kml'
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options=['link=http://foo'])
-    if ds is None:
-        gdaltest.post_reason('Unable to create %s.' % filepath)
-        return 'fail'
+    assert ds is not None, ('Unable to create %s.' % filepath)
     ds = None
 
     f = gdal.VSIFOpenL(filepath, 'rb')
@@ -1141,10 +988,8 @@ def test_ogr_libkml_write_atom_link():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
-       data.find('<atom:link href="http://foo" rel="related"/>') == -1:
-        print(data)
-        return 'fail'
+    assert (not (data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
+       data.find('<atom:link href="http://foo" rel="related"/>') == -1))
 
     return 'success'
 
@@ -1160,9 +1005,7 @@ def test_ogr_libkml_write_phonenumber():
     filepath = '/vsimem/ogr_libkml_write_phonenumber.kml'
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options=['phonenumber=tel:911'])
-    if ds is None:
-        gdaltest.post_reason('Unable to create %s.' % filepath)
-        return 'fail'
+    assert ds is not None, ('Unable to create %s.' % filepath)
     ds = None
 
     f = gdal.VSIFOpenL(filepath, 'rb')
@@ -1170,9 +1013,7 @@ def test_ogr_libkml_write_phonenumber():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<phoneNumber>tel:911</phoneNumber>') == -1:
-        print(data)
-        return 'fail'
+    assert data.find('<phoneNumber>tel:911</phoneNumber>') != -1
 
     return 'success'
 
@@ -1201,25 +1042,21 @@ def test_ogr_libkml_write_region():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<north>49</north>') == -1 or \
+    assert (not (data.find('<north>49</north>') == -1 or \
        data.find('<south>48</south>') == -1 or \
        data.find('<east>3</east>') == -1 or \
        data.find('<west>2</west>') == -1 or \
        data.find('<minLodPixels>256</minLodPixels>') == -1 or \
-       data.find('<maxLodPixels>-1</maxLodPixels>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<maxLodPixels>-1</maxLodPixels>') == -1))
 
-    if data.find('<north>90</north>') == -1 or \
+    assert (not (data.find('<north>90</north>') == -1 or \
        data.find('<south>-90</south>') == -1 or \
        data.find('<east>180</east>') == -1 or \
        data.find('<west>-180</west>') == -1 or \
        data.find('<minLodPixels>128</minLodPixels>') == -1 or \
        data.find('<maxLodPixels>10000000</maxLodPixels>') == -1 or \
        data.find('<minFadeExtent>1</minFadeExtent>') == -1 or \
-       data.find('<maxFadeExtent>2</maxFadeExtent>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<maxFadeExtent>2</maxFadeExtent>') == -1))
 
     return 'success'
 
@@ -1256,18 +1093,14 @@ def test_ogr_libkml_write_screenoverlay():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<href>http://foo</href>') == -1 or \
-       data.find('<screenXY x="0.05" xunits="fraction" y="0.05" yunits="fraction"/>') == -1:
-        print(data)
-        return 'fail'
+    assert (not (data.find('<href>http://foo</href>') == -1 or \
+       data.find('<screenXY x="0.05" xunits="fraction" y="0.05" yunits="fraction"/>') == -1))
 
-    if data.find('<overlayXY x="10" xunits="pixels" y="20" yunits="pixels"/>') == -1 or \
+    assert (not (data.find('<overlayXY x="10" xunits="pixels" y="20" yunits="pixels"/>') == -1 or \
        data.find('<screenXY x="0.4" xunits="fraction" y="0.5" yunits="fraction"/>') == -1 or \
        data.find('<size x="1.1" xunits="fraction" y="1.2" yunits="fraction"/>') == -1 or \
        data.find('<name>name</name>') == -1 or \
-       data.find('<description>description</description>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<description>description</description>') == -1))
 
     return 'success'
 
@@ -1315,7 +1148,7 @@ def test_ogr_libkml_write_model():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<longitude>2</longitude>') == -1 or \
+    assert (not (data.find('<longitude>2</longitude>') == -1 or \
        data.find('<latitude>49</latitude>') == -1 or \
        data.find('<altitude>10</altitude>') == -1 or \
        data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1 or \
@@ -1329,18 +1162,15 @@ def test_ogr_libkml_write_model():
        data.find('<y>1</y>') == -1 or \
        data.find('<z>1</z>') == -1 or \
        data.find('<href>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae</href>') == -1 or \
-       data.find('<href>http://foo</href>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<href>http://foo</href>') == -1))
 
     # This can only appear if HTTP resource is available and GDAL is built with curl/http support
     if gdal.GetDriverByName('HTTP') is not None and \
        (data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or
             data.find('<sourceHref>cube.gif</sourceHref>') == -1):
 
-        if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:
-            print(data)
-            return 'fail'
+        assert gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is None, \
+            data
 
     return 'success'
 
@@ -1446,15 +1276,13 @@ def test_ogr_libkml_read_write_style():
     lines_ref = [l.strip() for l in styles.split('\n')]
     if lines_got != lines_ref:
         print(data)
-        print(styles)
-        return 'fail'
+        pytest.fail(styles)
 
     lines_got = lines[lines.index('<Style id="styleMapExample">'):lines.index('</Document>')]
     lines_ref = [l.strip() for l in resolved_stylemap.split('\n')]
     if lines_got != lines_ref:
         print(data)
-        print(resolved_stylemap)
-        return 'fail'
+        pytest.fail(resolved_stylemap)
 
     # Test reading highlight style in StyleMap
     gdal.SetConfigOption('LIBKML_STYLEMAP_KEY', 'HIGHLIGHT')
@@ -1477,8 +1305,7 @@ def test_ogr_libkml_read_write_style():
     lines_ref = [l.strip() for l in resolved_stylemap_highlight.split('\n')]
     if lines_got != lines_ref:
         print(data)
-        print(resolved_stylemap_highlight)
-        return 'fail'
+        pytest.fail(resolved_stylemap_highlight)
 
     # Test writing feature style
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
@@ -1497,13 +1324,9 @@ def test_ogr_libkml_read_write_style():
     ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_write.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    if feat.GetStyleString() != '@unknown_style':
-        print(feat.GetStyleString())
-        return 'fail'
+    assert feat.GetStyleString() == '@unknown_style'
     feat = lyr.GetNextFeature()
-    if feat.GetStyleString() != style_string:
-        print(feat.GetStyleString())
-        return 'fail'
+    assert feat.GetStyleString() == style_string
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
@@ -1538,8 +1361,7 @@ def test_ogr_libkml_read_write_style():
     lines_ref = [l.strip() for l in expected_style.split('\n')]
     if lines_got != lines_ref:
         print(data)
-        print(resolved_stylemap_highlight)
-        return 'fail'
+        pytest.fail(resolved_stylemap_highlight)
 
     # Automatic StyleMap creation testing
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
@@ -1586,8 +1408,7 @@ def test_ogr_libkml_read_write_style():
     lines_ref = [l.strip() for l in expected_styles.split('\n')]
     if lines_got != lines_ref:
         print(data)
-        print(styles)
-        return 'fail'
+        pytest.fail(styles)
 
     return 'success'
 
@@ -1628,14 +1449,12 @@ def test_ogr_libkml_write_update():
             f = gdal.VSIFOpenL('/vsizip//vsimem/ogr_libkml_write_update.kmz', 'rb')
         else:
             f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_update_dir/doc.kml', 'rb')
-        if f is None:
-            gdaltest.post_reason('Unable to open the write_update file.')
-            return 'fail'
+        assert f is not None, 'Unable to open the write_update file.'
         data = gdal.VSIFReadL(1, 2048, f)
         data = data.decode('ascii')
         gdal.VSIFCloseL(f)
 
-        if data.find('<NetworkLinkControl>') == -1 or \
+        assert (not (data.find('<NetworkLinkControl>') == -1 or \
                 data.find('<Update>') == -1 or \
                 data.find('<targetHref>http://foo</targetHref>') == -1 or \
                 data.find('<Placemark/>') == -1 or \
@@ -1645,9 +1464,7 @@ def test_ogr_libkml_write_update():
                 data.find('<Change>') == -1 or \
                 data.find('<Placemark targetId="layer_to_edit.2"/>') == -1 or \
                 data.find('<Delete>') == -1 or \
-                data.find('<Placemark targetId="layer_to_edit.3"/>') == -1:
-            print(data)
-            return 'fail'
+                data.find('<Placemark targetId="layer_to_edit.3"/>') == -1))
 
     return 'success'
 
@@ -1679,9 +1496,7 @@ def test_ogr_libkml_write_networklinkcontrol():
             name = "/vsimem/ogr_libkml_write_networklinkcontrol_dir"
 
         ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name, options=options)
-        if ds is None:
-            gdaltest.post_reason('Unable to create %s.' % name)
-            return 'fail'
+        assert ds is not None, ('Unable to create %s.' % name)
         ds = None
 
         if i == 0:
@@ -1690,22 +1505,19 @@ def test_ogr_libkml_write_networklinkcontrol():
             f = gdal.VSIFOpenL('/vsizip//vsimem/ogr_libkml_write_networklinkcontrol.kmz', 'rb')
         else:
             f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol_dir/doc.kml', 'rb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 2048, f)
         data = data.decode('ascii')
         gdal.VSIFCloseL(f)
 
-        if data.find('<minRefreshPeriod>3600</minRefreshPeriod>') == -1 or \
+        assert (not (data.find('<minRefreshPeriod>3600</minRefreshPeriod>') == -1 or \
                 data.find('<maxSessionLength>-1</maxSessionLength>') == -1 or \
                 data.find('<cookie>cookie</cookie>') == -1 or \
                 data.find('<message>message</message>') == -1 or \
                 data.find('<linkName>linkname</linkName>') == -1 or \
                 data.find('<linkDescription>linkdescription</linkDescription>') == -1 or \
                 data.find('<linkSnippet>linksnippet</linkSnippet>') == -1 or \
-                data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
-            print(data)
-            return 'fail'
+                data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1))
 
     return 'success'
 
@@ -1734,7 +1546,7 @@ def test_ogr_libkml_write_liststyle():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<styleUrl>#root_doc_liststyle</styleUrl>') == -1 or \
+    assert (not (data.find('<styleUrl>#root_doc_liststyle</styleUrl>') == -1 or \
        data.find('<Style id="root_doc_liststyle">') == -1 or \
        data.find('<href>http://www.gdal.org/gdalicon.png</href>') == -1 or \
        data.find('<styleUrl>#test_liststyle</styleUrl>') == -1 or \
@@ -1743,9 +1555,7 @@ def test_ogr_libkml_write_liststyle():
        data.find('<listItemType>check</listItemType>') == -1 or \
        data.find('<listItemType>radioFolder</listItemType>') == -1 or \
        data.find('<listItemType>checkOffOnly</listItemType>') == -1 or \
-       data.find('<listItemType>checkHideChildren</listItemType>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<listItemType>checkHideChildren</listItemType>') == -1))
 
     return 'success'
 
@@ -1801,7 +1611,7 @@ def test_ogr_libkml_write_networklink():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<name>a network link</name>') == -1 or \
+    assert (not (data.find('<name>a network link</name>') == -1 or \
        data.find('<refreshVisibility>1</refreshVisibility>') == -1 or \
        data.find('<flyToView>1</flyToView>') == -1 or \
        data.find('<href>http://developers.google.com/kml/documentation/Point.kml</href>') == -1 or \
@@ -1813,9 +1623,7 @@ def test_ogr_libkml_write_networklink():
        data.find('<refreshMode>onExpire</refreshMode>') == -1 or \
        data.find('<viewRefreshMode>onRegion</viewRefreshMode>') == -1 or \
        data.find('<viewBoundScale>0.5</viewBoundScale>') == -1 or \
-       data.find('<viewFormat>BBOX=[bboxWest],[bboxSouth],[bboxEast],[bboxNorth]</viewFormat>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<viewFormat>BBOX=[bboxWest],[bboxSouth],[bboxEast],[bboxNorth]</viewFormat>') == -1))
 
     return 'success'
 
@@ -1881,7 +1689,7 @@ def test_ogr_libkml_write_photooverlay():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<Camera>') == -1 or \
+    assert (not (data.find('<Camera>') == -1 or \
        data.find('<longitude>2.2946</longitude>') == -1 or \
        data.find('<latitude>48.8583</latitude>') == -1 or \
        data.find('<altitude>20</altitude>') == -1 or \
@@ -1901,9 +1709,7 @@ def test_ogr_libkml_write_photooverlay():
        data.find('<tileSize>256</tileSize>') == -1 or \
        data.find('<maxWidth>512</maxWidth>') == -1 or \
        data.find('<maxHeight>512</maxHeight>') == -1 or \
-       data.find('<gridOrigin>upperLeft</gridOrigin>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<gridOrigin>upperLeft</gridOrigin>') == -1))
 
     return 'success'
 
@@ -1932,16 +1738,13 @@ def test_ogr_libkml_read_write_data():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<Data name="foo">') == -1 or \
-       data.find('<value>bar</value>') == -1:
-        print(data)
-        return 'fail'
+    assert (not (data.find('<Data name="foo">') == -1 or \
+       data.find('<value>bar</value>') == -1))
 
     ds = ogr.Open("/vsimem/ogr_libkml_read_write_data.kml")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    if feat.GetField('foo') != 'bar':
-        return 'fail'
+    assert feat.GetField('foo') == 'bar'
 
     return 'success'
 
@@ -1964,13 +1767,11 @@ def test_ogr_libkml_write_folder():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<Style id="test_liststyle">') == -1 or \
+    assert (not (data.find('<Style id="test_liststyle">') == -1 or \
        data.find('<href>http://foo</href>') == -1 or \
        data.find('<Folder id="test">') == -1 or \
        data.find('<styleUrl>#test_liststyle</styleUrl>') == -1 or \
-       data.find('<Folder id="test2">') == -1:
-        print(data)
-        return 'fail'
+       data.find('<Folder id="test2">') == -1))
 
     return 'success'
 
@@ -1993,7 +1794,7 @@ def test_ogr_libkml_write_container_properties():
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('<name>ds_name</name>') == -1 or \
+    assert (not (data.find('<name>ds_name</name>') == -1 or \
        data.find('<visibility>1</visibility>') == -1 or \
        data.find('<open>1</open>') == -1 or \
        data.find('<snippet>ds_snippet</snippet>') == -1 or \
@@ -2002,9 +1803,7 @@ def test_ogr_libkml_write_container_properties():
        data.find('<visibility>0</visibility>') == -1 or \
        data.find('<open>0</open>') == -1 or \
        data.find('<snippet>lyr_snippet</snippet>') == -1 or \
-       data.find('<description>lyr_description</description>') == -1:
-        print(data)
-        return 'fail'
+       data.find('<description>lyr_description</description>') == -1))
 
     return 'success'
 
@@ -2042,8 +1841,7 @@ def test_ogr_libkml_read_placemark_with_kml_prefix():
     ds = ogr.Open('data/placemark_with_kml_prefix.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     return 'success'
 
@@ -2058,13 +1856,9 @@ def test_ogr_libkml_read_duplicate_folder_name():
 
     ds = ogr.Open('data/duplicate_folder_name.kml')
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'layer':
-        print(lyr.GetName())
-        return 'fail'
+    assert lyr.GetName() == 'layer'
     lyr = ds.GetLayer(1)
-    if lyr.GetName() != 'layer (#2)':
-        print(lyr.GetName())
-        return 'fail'
+    assert lyr.GetName() == 'layer (#2)'
 
     return 'success'
 
@@ -2079,16 +1873,12 @@ def test_ogr_libkml_read_placemark_in_root_and_subfolder():
 
     ds = ogr.Open('data/placemark_in_root_and_subfolder.kml')
     lyr = ds.GetLayerByName('TopLevel')
-    if lyr is None:
-        return 'fail'
-    if lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert lyr is not None
+    assert lyr.GetFeatureCount() == 1
 
     lyr = ds.GetLayerByName('SubFolder1')
-    if lyr is None:
-        return 'fail'
-    if lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert lyr is not None
+    assert lyr.GetFeatureCount() == 1
 
     return 'success'
 
@@ -2107,8 +1897,7 @@ def test_ogr_libkml_read_tab_separated_coord_triplet():
 
     wkt = 'LINESTRING Z (1 2 3,4 5 6)'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     return 'success'
 
@@ -2127,8 +1916,7 @@ def test_ogr_libkml_read_kml_with_space_content_in_coordinates():
 
     wkt = 'LINESTRING EMPTY'
 
-    if ogrtest.check_feature_geometry(feat, wkt):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
 
     return 'success'
 
@@ -2187,8 +1975,7 @@ def test_ogr_libkml_update_existing_kml():
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     fc_after = lyr.GetFeatureCount()
-    if fc_after != fc_before + 1:
-        return 'fail'
+    assert fc_after == fc_before + 1
 
     gdal.Unlink(filename)
     return 'success'

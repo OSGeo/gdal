@@ -43,41 +43,25 @@ from osgeo import ogr
 
 def ogr_ods_check(ds):
 
-    if ds.TestCapability("foo") != 0:
-        return 'fail'
+    assert ds.TestCapability("foo") == 0
 
-    if ds.GetLayerCount() != 8:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 8, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'Feuille1':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Feuille1', 'bad layer name'
 
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbNone, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.GetFeatureCount() != 26:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 26
 
-    if lyr.TestCapability("foo") != 0:
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
     lyr = ds.GetLayer(6)
-    if lyr.GetName() != 'Feuille7':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Feuille7', 'bad layer name'
 
-    if lyr.GetLayerDefn().GetFieldCount() != 12:
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 12
 
     type_array = [ogr.OFTString,
                   ogr.OFTInteger,
@@ -93,10 +77,7 @@ def ogr_ods_check(ds):
                   ogr.OFTDateTime]
 
     for i, typ in enumerate(type_array):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            print(i)
-            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString(0) != 'val' or \
@@ -125,13 +106,10 @@ def test_ogr_ods_1():
     if drv is None:
         return 'skip'
 
-    if drv.TestCapability("foo") != 0:
-        return 'fail'
+    assert drv.TestCapability("foo") == 0
 
     ds = ogr.Open('data/test.ods')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     return ogr_ods_check(ds)
 
@@ -145,49 +123,30 @@ def test_ogr_ods_kspread_1():
     if drv is None:
         return 'skip'
 
-    if drv.TestCapability("foo") != 0:
-        return 'fail'
+    assert drv.TestCapability("foo") == 0
 
     ds = ogr.Open('data/test_kspread.ods')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.TestCapability("foo") != 0:
-        return 'fail'
+    assert ds.TestCapability("foo") == 0
 
-    if ds.GetLayerCount() != 8:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 8, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'Feuille1':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Feuille1', 'bad layer name'
 
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbNone, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.GetFeatureCount() != 26:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 26
 
-    if lyr.TestCapability("foo") != 0:
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
     lyr = ds.GetLayer(6)
-    if lyr.GetName() != 'Feuille7':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Feuille7', 'bad layer name'
 
-    if lyr.GetLayerDefn().GetFieldCount() != 12:
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 12
 
     type_array = [ogr.OFTString,
                   ogr.OFTInteger,
@@ -204,9 +163,7 @@ def test_ogr_ods_kspread_1():
                   ]
 
     for i, typ in enumerate(type_array):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            print(i)
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString(0) != 'val' or \
@@ -240,9 +197,7 @@ def test_ogr_ods_2():
 
     lyr = ds.GetLayerByName('Feuille7')
 
-    if lyr.GetFeatureCount() != 3:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 3
 
     gdal.SetConfigOption('OGR_ODS_HEADERS', None)
 
@@ -263,8 +218,7 @@ def test_ogr_ods_3():
 
     lyr = ds.GetLayerByName('Feuille7')
 
-    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTString:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
 
     gdal.SetConfigOption('OGR_ODS_FIELD_TYPES', None)
 
@@ -286,9 +240,7 @@ def test_ogr_ods_4():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.ods')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 
@@ -330,9 +282,7 @@ def test_ogr_ods_6():
     filepath = '/vsimem/content_formulas.csv'
     with gdaltest.error_handler():
         out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, filepath)
-    if out_ds is None:
-        gdaltest.post_reason('Unable to create %s.' % filepath)
-        return 'fail'
+    assert out_ds is not None, ('Unable to create %s.' % filepath)
     out_ds = None
     src_ds = None
 
@@ -357,9 +307,7 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 "0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0"
 """.split()
 
-    if res != expected_res:
-        gdaltest.post_reason('did not get expected result: %s' % res)
-        return 'fail'
+    assert res == expected_res, ('did not get expected result: %s' % res)
 
     return 'success'
 
@@ -435,12 +383,10 @@ def test_ogr_ods_8():
 
     ds = ogr.Open('/vsimem/ogr_ods_8.ods')
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger64
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
-    if f.GetField(0) != 12345678901234:
-        return 'fail'
+    assert f.GetField(0) == 12345678901234
     ds = None
 
     gdal.Unlink('/vsimem/ogr_ods_8.ods')
@@ -473,8 +419,7 @@ def test_ogr_ods_9():
     ds = ogr.Open('/vsimem/ogr_ods_9.ods')
     lyr = ds.GetLayer(0)
     for i in range(3):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTDateTime
     f = lyr.GetNextFeature()
     if f.GetField(0) != '2015/12/23 12:34:56.789':
         f.DumpReadable()
@@ -518,16 +463,12 @@ def test_ogr_ods_boolean():
 
     ds = ogr.Open(out_filename)
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTBoolean
     f = lyr.GetNextFeature()
-    if not f.GetField(0):
-        return 'fail'
+    assert f.GetField(0)
     f = lyr.GetNextFeature()
-    if f.GetField(0):
-        return 'fail'
+    assert not f.GetField(0)
     ds = None
 
     gdal.Unlink(out_filename)

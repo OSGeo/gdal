@@ -35,6 +35,7 @@ import os
 from osgeo import gdal
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
@@ -48,14 +49,10 @@ def test_jp2metadata_1():
 
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
-    if wkt.find('PROJCS["ETRS89') != 0:
-        print(wkt)
-        return 'fail'
+    assert wkt.find('PROJCS["ETRS89') == 0
     expected_gt = (356000.0, 0.5, 0.0, 7596000.0, 0.0, -0.5)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-5:
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-5
     return 'success'
 
 ###############################################################################
@@ -76,26 +73,17 @@ def test_jp2metadata_2():
 
     filelist = ds.GetFileList()
 
-    if len(filelist) != 3:
-        gdaltest.post_reason('did not get expected file list.')
-        return 'fail'
+    assert len(filelist) == 3, 'did not get expected file list.'
 
     mddlist = ds.GetMetadataDomainList()
-    if 'IMD' not in mddlist or 'RPC' not in mddlist or 'IMAGERY' not in mddlist:
-        gdaltest.post_reason('did not get expected metadata list.')
-        print(mddlist)
-        return 'fail'
+    assert 'IMD' in mddlist and 'RPC' in mddlist and 'IMAGERY' in mddlist, \
+        'did not get expected metadata list.'
 
     md = ds.GetMetadata('IMAGERY')
-    if 'SATELLITEID' not in md:
-        print('SATELLITEID not present in IMAGERY Domain')
-        return 'fail'
-    if 'CLOUDCOVER' not in md:
-        print('CLOUDCOVER not present in IMAGERY Domain')
-        return 'fail'
-    if 'ACQUISITIONDATETIME' not in md:
-        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
-        return 'fail'
+    assert 'SATELLITEID' in md, 'SATELLITEID not present in IMAGERY Domain'
+    assert 'CLOUDCOVER' in md, 'CLOUDCOVER not present in IMAGERY Domain'
+    assert 'ACQUISITIONDATETIME' in md, \
+        'ACQUISITIONDATETIME not present in IMAGERY Domain'
 
     ds = None
 
@@ -127,10 +115,9 @@ def test_jp2metadata_3():
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
-        gdaltest.post_reason('did not get expected WKT, should be WGS84')
         print('got: ', wkt)
         print('exp: ', exp_wkt)
-        return 'fail'
+        pytest.fail('did not get expected WKT, should be WGS84')
 
     gt = ds.GetGeoTransform()
     if abs(gt[0] - 8) > 0.0000001 or abs(gt[3] - 50) > 0.000001 \
@@ -138,9 +125,8 @@ def test_jp2metadata_3():
        or abs(gt[2] - 0.0) > 0.000000000005 \
        or abs(gt[4] - 0.0) > 0.000000000005 \
        or abs(gt[5] - -0.000761397164) > 0.000000000005:
-        gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
-        return 'fail'
+        pytest.fail('did not get expected geotransform')
 
     ds = None
 
@@ -163,10 +149,9 @@ def test_jp2metadata_4():
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
-        gdaltest.post_reason('did not get expected WKT, should be WGS84')
         print('got: ', wkt)
         print('exp: ', exp_wkt)
-        return 'fail'
+        pytest.fail('did not get expected WKT, should be WGS84')
 
     gt = ds.GetGeoTransform()
     gte = (42.999583333333369, 0.008271349862259, 0,
@@ -177,9 +162,8 @@ def test_jp2metadata_4():
        or abs(gt[2] - gte[2]) > 0.000000000005 \
        or abs(gt[4] - gte[4]) > 0.000000000005 \
        or abs(gt[5] - gte[5]) > 0.000000000005:
-        gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
-        return 'fail'
+        pytest.fail('did not get expected geotransform')
 
     ds = None
 
@@ -200,10 +184,9 @@ def test_jp2metadata_5():
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
-        gdaltest.post_reason('did not get expected WKT')
         print('got: ', wkt)
         print('exp: ', exp_wkt)
-        return 'fail'
+        pytest.fail('did not get expected WKT')
 
     gt = ds.GetGeoTransform()
     gte = (4895766.000000001, 2.0, 0.0, 2296946.0, 0.0, -2.0)
@@ -213,9 +196,8 @@ def test_jp2metadata_5():
        or abs(gt[2] - gte[2]) > 0.000000000005 \
        or abs(gt[4] - gte[4]) > 0.000000000005 \
        or abs(gt[5] - gte[5]) > 0.000000000005:
-        gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
-        return 'fail'
+        pytest.fail('did not get expected geotransform')
 
     ds = None
 

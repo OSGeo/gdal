@@ -67,8 +67,7 @@ def test_roipac_2():
 
     ds = gdal.Open('data/srtm.dem')
     val = ds.GetMetadataItem('YMAX', 'ROI_PAC')
-    if val != '9':
-        return 'fail'
+    assert val == '9'
 
     return 'success'
 
@@ -99,11 +98,9 @@ def test_roipac_5():
     ds = gdal.Open('data/srtm.dem')
     band = ds.GetRasterBand(1)
     offset = band.GetOffset()
-    if offset != 1:
-        return 'fail'
+    assert offset == 1
     scale = band.GetScale()
-    if scale != 2:
-        return 'fail'
+    assert scale == 2
 
     return 'success'
 

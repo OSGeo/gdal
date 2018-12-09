@@ -145,10 +145,8 @@ def test_kmlsuperoverlay_4():
 
     src_ds = gdal.Open("/vsimem/src.vrt")
     ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlsuperoverlay_4.kmz', src_ds, options=['FORMAT=PNG', 'NAME=myname', 'DESCRIPTION=mydescription', 'ALTITUDE=10', 'ALTITUDEMODE=absolute'])
-    if ds.GetMetadataItem('NAME') != 'myname':
-        return 'fail'
-    if ds.GetMetadataItem('DESCRIPTION') != 'mydescription':
-        return 'fail'
+    assert ds.GetMetadataItem('NAME') == 'myname'
+    assert ds.GetMetadataItem('DESCRIPTION') == 'mydescription'
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         ds = None
         src_ds = None
@@ -247,9 +245,8 @@ def test_kmlsuperoverlay_5():
             east = tag.find('{http://earth.google.com/kml/2.1}east').text
             west = tag.find('{http://earth.google.com/kml/2.1}west').text
 
-            if float(east) < float(west):
-                gdaltest.post_reason('East is less than west in LatLonAltBox %s, (%s < %s)' % (f, east, west))
-                return 'fail'
+            assert float(east) >= float(west), \
+                ('East is less than west in LatLonAltBox %s, (%s < %s)' % (f, east, west))
 
     shutil.rmtree('tmp/0')
     shutil.rmtree('tmp/1')
@@ -264,27 +261,18 @@ def test_kmlsuperoverlay_5():
 def test_kmlsuperoverlay_6():
 
     ds = gdal.Open('data/kmlimage.kmz')
-    if ds.GetProjectionRef().find('WGS_1984') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS_1984') >= 0
     got_gt = ds.GetGeoTransform()
     ref_gt = [1.2554125761846773, 1.6640895429971981e-05, 0.0, 43.452120815728101, 0.0, -1.0762348187666334e-05]
     for i in range(6):
-        if abs(got_gt[i] - ref_gt[i]) > 1e-6:
-            print(got_gt)
-            return 'fail'
+        assert abs(got_gt[i] - ref_gt[i]) <= 1e-6
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if cs != 47673:
-            print(cs)
-            return 'fail'
-        if ds.GetRasterBand(i + 1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
-            return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        return 'fail'
+        assert cs == 47673
+        assert ds.GetRasterBand(i + 1).GetRasterColorInterpretation() == gdal.GCI_RedBand + i
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 61070:
-        print(cs)
-        return 'fail'
+    assert cs == 61070
 
     return 'success'
 
@@ -295,21 +283,15 @@ def test_kmlsuperoverlay_6():
 def test_kmlsuperoverlay_7():
 
     ds = gdal.Open('data/small_world.kml')
-    if ds.GetProjectionRef().find('WGS_1984') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS_1984') >= 0
     got_gt = ds.GetGeoTransform()
     ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
     for i in range(6):
-        if abs(got_gt[i] - ref_gt[i]) > 1e-6:
-            print(got_gt)
-            return 'fail'
+        assert abs(got_gt[i] - ref_gt[i]) <= 1e-6
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 30111:
-        print(cs)
-        return 'fail'
-    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert cs == 30111
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
 
     return 'success'
 
@@ -401,14 +383,10 @@ def test_kmlsuperoverlay_8():
     del ds
     src_ds = None
 
-    if set(os.listdir('tmp/0/0')) != set(('0.kml', '0.png')):
-        return 'fail'
-    if set(os.listdir('tmp/3/1')) != set(('0.jpg', '0.kml', '1.jpg', '1.kml', '2.jpg', '2.kml', '3.jpg', '3.kml',
-                                          '4.jpg', '4.kml', '5.jpg', '5.kml', '6.jpg', '6.kml', '7.jpg', '7.kml',)):
-        return 'fail'
-    if set(os.listdir('tmp/3/2')) != set():
-        # dir should be empty - 3/2 is entirely transparent so we skip generating files.
-        return 'fail'
+    assert set(os.listdir('tmp/0/0')) == set(('0.kml', '0.png'))
+    assert (set(os.listdir('tmp/3/1')) == set(('0.jpg', '0.kml', '1.jpg', '1.kml', '2.jpg', '2.kml', '3.jpg', '3.kml',
+                                          '4.jpg', '4.kml', '5.jpg', '5.kml', '6.jpg', '6.kml', '7.jpg', '7.kml',)))
+    assert set(os.listdir('tmp/3/2')) == set()
 
     shutil.rmtree('tmp/0')
     shutil.rmtree('tmp/1')

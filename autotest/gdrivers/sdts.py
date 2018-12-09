@@ -53,8 +53,7 @@ def test_sdts_1():
     ds = gdal.Open('data/STDS_1107834_truncated/1107CATD.DDF')
     md = ds.GetMetadata()
 
-    if md['TITLE'] != 'ALANSON, MI-24000':
-        return 'fail'
+    assert md['TITLE'] == 'ALANSON, MI-24000'
 
     return 'success'
 

@@ -83,29 +83,19 @@ def test_blx_5():
     ds = gdal.Open('data/s4103.blx')
 
     band = ds.GetRasterBand(1)
-    if band.GetOverviewCount() != 4:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 4, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    if cs != 42981:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 42981, ('wrong overview checksum (%d)' % cs)
 
     cs = band.GetOverview(1).Checksum()
-    if cs != 61363:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 61363, ('wrong overview checksum (%d)' % cs)
 
     cs = band.GetOverview(2).Checksum()
-    if cs != 48060:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 48060, ('wrong overview checksum (%d)' % cs)
 
     cs = band.GetOverview(3).Checksum()
-    if cs != 12058:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 12058, ('wrong overview checksum (%d)' % cs)
 
     return 'success'
 

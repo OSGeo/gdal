@@ -36,6 +36,7 @@ import sys
 import gdaltest
 from osgeo import gdal
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test simple Geotransform based transformer.
@@ -48,23 +49,13 @@ def test_transformer_1():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    if not success \
-       or abs(pnt[0] - 441920) > 0.00000001 \
-       or abs(pnt[1] - 3750720) > 0.00000001 \
-       or pnt[2] != 0.0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 441920) <= 0.00000001 and abs(pnt[1] - 3750720) <= 0.00000001 and pnt[2] == 0.0, \
+        'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20) > 0.00000001 \
-       or abs(pnt[1] - 10) > 0.00000001 \
-       or pnt[2] != 0.0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 20) <= 0.00000001 and abs(pnt[1] - 10) <= 0.00000001 and pnt[2] == 0.0, \
+        'got wrong reverse transform result.'
 
     return 'success'
 
@@ -79,23 +70,13 @@ def test_transformer_2():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    if not success \
-       or abs(pnt[0] - 441920) > 0.001 \
-       or abs(pnt[1] - 3750720) > 0.001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 441920) <= 0.001 and abs(pnt[1] - 3750720) <= 0.001 and pnt[2] == 0, \
+        'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20) > 0.001 \
-       or abs(pnt[1] - 10) > 0.001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 20) <= 0.001 and abs(pnt[1] - 10) <= 0.001 and pnt[2] == 0, \
+        'got wrong reverse transform result.'
 
     return 'success'
 
@@ -110,23 +91,13 @@ def test_transformer_3():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    if not success \
-       or abs(pnt[0] - 441920) > 0.001 \
-       or abs(pnt[1] - 3750720) > 0.001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 441920) <= 0.001 and abs(pnt[1] - 3750720) <= 0.001 and pnt[2] == 0, \
+        'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20) > 0.001 \
-       or abs(pnt[1] - 10) > 0.001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 20) <= 0.001 and abs(pnt[1] - 10) <= 0.001 and pnt[2] == 0, \
+        'got wrong reverse transform result.'
 
     return 'success'
 
@@ -141,23 +112,13 @@ def test_transformer_4():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    if not success \
-       or abs(pnt[0] + 81.961341857910156) > 0.000001 \
-       or abs(pnt[1] - 29.612689971923828) > 0.000001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] + 81.961341857910156) <= 0.000001 and abs(pnt[1] - 29.612689971923828) <= 0.000001 and pnt[2] == 0, \
+        'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20.436627518907024) > 0.001 \
-       or abs(pnt[1] - 10.484599774610549) > 0.001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 20.436627518907024) <= 0.001 and abs(pnt[1] - 10.484599774610549) <= 0.001 and pnt[2] == 0, \
+        'got wrong reverse transform result.'
 
     return 'success'
 
@@ -171,65 +132,37 @@ def test_transformer_5():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_PIXEL_ERROR_THRESHOLD=0.05'])
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
-    if not success \
-       or abs(pnt[0] - 125.64830100509131) > 0.000001 \
-       or abs(pnt[1] - 39.869433991997553) > 0.000001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 125.64830100509131) <= 0.000001 and abs(pnt[1] - 39.869433991997553) <= 0.000001 and pnt[2] == 0, \
+        'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
-    if not success \
-       or abs(pnt[0] - 20.5) > 0.05 \
-       or abs(pnt[1] - 10.5) > 0.05 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05 and pnt[2] == 0, \
+        'got wrong reverse transform result.'
 
     # Try with a different height.
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 30)
 
-    if not success \
-       or abs(pnt[0] - 125.64828521533849) > 0.000001 \
-       or abs(pnt[1] - 39.869345204440144) > 0.000001 \
-       or pnt[2] != 30:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.(2)')
-        return 'fail'
+    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001 and pnt[2] == 30, \
+        'got wrong forward transform result.(2)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20.5) > 0.05 \
-       or abs(pnt[1] - 10.5) > 0.05 \
-       or pnt[2] != 30:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.(2)')
-        return 'fail'
+    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05 and pnt[2] == 30, \
+        'got wrong reverse transform result.(2)'
 
     # Test RPC_HEIGHT option
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT=30'])
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
 
-    if not success \
-       or abs(pnt[0] - 125.64828521533849) > 0.000001 \
-       or abs(pnt[1] - 39.869345204440144) > 0.000001:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.(3)')
-        return 'fail'
+    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001, \
+        'got wrong forward transform result.(3)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20.5) > 0.1 \
-       or abs(pnt[1] - 10.5) > 0.1:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.(3)')
-        return 'fail'
+    assert success and abs(pnt[0] - 20.5) <= 0.1 and abs(pnt[1] - 10.5) <= 0.1, \
+        'got wrong reverse transform result.(3)'
 
     # Test RPC_DEM and RPC_HEIGHT_SCALE options
 
@@ -246,21 +179,13 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
 
-    if not success \
-       or abs(pnt[0] - 125.64828521533849) > 0.000001 \
-       or abs(pnt[1] - 39.869345204440144) > 0.000001:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.(4)')
-        return 'fail'
+    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001, \
+        'got wrong forward transform result.(4)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20.5) > 0.05 \
-       or abs(pnt[1] - 10.5) > 0.05:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.(4)')
-        return 'fail'
+    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05, \
+        'got wrong reverse transform result.(4)'
 
     tr = None
 
@@ -270,21 +195,13 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
 
-    if not success \
-       or abs(pnt[0] - 125.64828521533849) > 0.000001 \
-       or abs(pnt[1] - 39.869345204440144) > 0.000001:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.(5)')
-        return 'fail'
+    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001, \
+        'got wrong forward transform result.(5)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20.5) > 0.05 \
-       or abs(pnt[1] - 10.5) > 0.05:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.(5)')
-        return 'fail'
+    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05, \
+        'got wrong reverse transform result.(5)'
 
     tr = None
 
@@ -294,21 +211,13 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
 
-    if not success \
-       or abs(pnt[0] - 125.64828521503811) > 0.000001 \
-       or abs(pnt[1] - 39.869345204874911) > 0.000001:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.(6)')
-        return 'fail'
+    assert success and abs(pnt[0] - 125.64828521503811) <= 0.000001 and abs(pnt[1] - 39.869345204874911) <= 0.000001, \
+        'got wrong forward transform result.(6)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    if not success \
-       or abs(pnt[0] - 20.5) > 0.05 \
-       or abs(pnt[1] - 10.5) > 0.05:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.(6)')
-        return 'fail'
+    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05, \
+        'got wrong reverse transform result.(6)'
 
     tr = None
 
@@ -316,12 +225,10 @@ def test_transformer_5():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif'])
 
     (success, pnt) = tr.TransformPoint(0, 40000, 0, 0)
-    if success != 0:
-        return 'fail'
+    assert success == 0
 
     (success, pnt) = tr.TransformPoint(1, 125, 40, 0)
-    if success != 0:
-        return 'fail'
+    assert success == 0
 
     tr = None
 
@@ -336,20 +243,12 @@ def test_transformer_5():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_MISSING_VALUE=0'])
 
     (success, pnt) = tr.TransformPoint(0, -99.5, 0.5, 0)
-    if not success \
-       or abs(pnt[0] - 125.64746155942839) > 0.000001 \
-       or abs(pnt[1] - 39.869506789921168) > 0.000001:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 125.64746155942839) <= 0.000001 and abs(pnt[1] - 39.869506789921168) <= 0.000001, \
+        'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
-    if not success \
-       or abs(pnt[0] - -99.5) > 0.05 \
-       or abs(pnt[1] - 0.5) > 0.05:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - -99.5) <= 0.05 and abs(pnt[1] - 0.5) <= 0.05, \
+        'got wrong reverse transform result.'
 
     tr = None
 
@@ -368,13 +267,8 @@ def test_transformer_6():
 
     (success, pnt) = tr.TransformPoint(0, 0.5, 0.5)
 
-    if not success \
-       or abs(pnt[0] - 28.26163232) > 0.0001 \
-       or abs(pnt[1] - -27.79853245) > 0.0001 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 28.26163232) <= 0.0001 and abs(pnt[1] - -27.79853245) <= 0.0001 and pnt[2] == 0, \
+        'got wrong forward transform result.'
 
     return 'success'
 
@@ -389,13 +283,8 @@ def test_transformer_7():
 
     (pnt, success) = tr.TransformPoints(0, [(20, 10)])
 
-    if success[0] == 0 \
-       or abs(pnt[0][0] - 441920) > 0.00000001 \
-       or abs(pnt[0][1] - 3750720) > 0.00000001 \
-       or pnt[0][2] != 0.0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong forward transform result.')
-        return 'fail'
+    assert success[0] != 0 and abs(pnt[0][0] - 441920) <= 0.00000001 and abs(pnt[0][1] - 3750720) <= 0.00000001 and pnt[0][2] == 0.0, \
+        'got wrong forward transform result.'
 
     return 'success'
 
@@ -424,15 +313,13 @@ def test_transformer_8():
 
         if success:
             print(success, pnt)
-            gdaltest.post_reason('got wrong forward transform result.')
-            return 'fail'
+            pytest.fail('got wrong forward transform result.')
 
         (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
         if success:
             print(success, pnt)
-            gdaltest.post_reason('got wrong reverse transform result.')
-            return 'fail'
+            pytest.fail('got wrong reverse transform result.')
 
     gdal.Unlink('/vsimem/dem.tif')
 
@@ -463,21 +350,13 @@ def test_transformer_9():
 
         points = [(125.64828521533849, 39.869345204440144)] * 10
         (pnt, success) = tr.TransformPoints(1, points)
-        if not success[0]:
-            print(method)
-            return 'fail'
+        assert success[0], method
         pnt_optimized = pnt[0]
 
         (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
-        if not success:
-            print(method)
-            return 'fail'
+        assert success, method
 
-        if pnt != pnt_optimized:
-            print(method)
-            print(pnt)
-            print(pnt_optimized)
-            return 'fail'
+        assert pnt == pnt_optimized, method
 
     gdal.Unlink('/vsimem/dem.tif')
 
@@ -546,24 +425,14 @@ def test_transformer_10():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt'])
     (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
-    if not success \
-       or abs(pnt[0] - 27.31476045569616) > 1e-5 \
-       or abs(pnt[1] - -53.328814757762302) > 1e-5 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 27.31476045569616) <= 1e-5 and abs(pnt[1] - -53.328814757762302) <= 1e-5 and pnt[2] == 0, \
+        'got wrong result.'
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt', 'RPC_DEM_APPLY_VDATUM_SHIFT=FALSE'])
     (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
-    if not success \
-       or abs(pnt[0] - 21.445626206892484) > 1e-5 \
-       or abs(pnt[1] - 1.6460100520871492) > 1e-5 \
-       or pnt[2] != 0:
-        print(success, pnt)
-        gdaltest.post_reason('got wrong result.')
-        return 'fail'
+    assert success and abs(pnt[0] - 21.445626206892484) <= 1e-5 and abs(pnt[1] - 1.6460100520871492) <= 1e-5 and pnt[2] == 0, \
+        'got wrong result.'
 
     gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
     gdal.Unlink('/vsimem/dem.tif')
@@ -598,16 +467,12 @@ def test_transformer_11():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT=4000'])
     (success, pnt) = tr.TransformPoint(0, 0, 0, 0)
-    if success:
-        print(pnt)
-        return 'fail'
+    assert not success, pnt
 
     # But this one should succeed
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT=1150'])
     (success, pnt) = tr.TransformPoint(0, 0, 0, 0)
-    if not success or abs(pnt[0] - 77.350939956024618) > 1e-7 or abs(pnt[1] - 38.739703990877814) > 1e-7:
-        print(pnt)
-        return 'fail'
+    assert success and abs(pnt[0] - 77.350939956024618) <= 1e-7 and abs(pnt[1] - 38.739703990877814) <= 1e-7
 
     return 'success'
 
@@ -635,8 +500,7 @@ def test_transformer_12():
 </VRTDataset>""")
 
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
-    if tr is None:
-        return 'fail'
+    assert tr is not None
 
     ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
@@ -658,8 +522,7 @@ def test_transformer_12():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
@@ -681,8 +544,7 @@ def test_transformer_12():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     return 'success'
 
@@ -713,9 +575,7 @@ def test_transformer_13():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=data/transformer_13_dem.tif'])
     (success, pnt) = tr.TransformPoint(0, 6600, 24)
-    if not success or abs(pnt[0] - -108.00066000065341) > 1e-7 or abs(pnt[1] - 39.157694013439489) > 1e-7:
-        print(pnt)
-        return 'fail'
+    assert success and abs(pnt[0] - -108.00066000065341) <= 1e-7 and abs(pnt[1] - 39.157694013439489) <= 1e-7
 
     return 'success'
 
@@ -754,26 +614,20 @@ def test_transformer_14():
     gdal.SetConfigOption('RPC_INVERSE_VERBOSE', old_rpc_inverse_verbose)
     gdal.SetConfigOption('RPC_INVERSE_LOG', old_rpc_inverse_log)
     (success, pnt) = tr.TransformPoint(0, 0, 0)
-    if not success or abs(pnt[0] - 1.9391846640653961e-05) > 1e-7 or abs(pnt[1] - -0.0038824752244123275) > 1e-7:
-        print(pnt)
-        return 'fail'
+    assert success and abs(pnt[0] - 1.9391846640653961e-05) <= 1e-7 and abs(pnt[1] - -0.0038824752244123275) <= 1e-7
 
     f = gdal.VSIFOpenL('/vsimem/transformer_14.csvt', 'rb')
     if f is not None:
         content = gdal.VSIFReadL(1, 1000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
-    if content.find('Integer,Real,Real,Real,String,Real,Real') != 0:
-        print(content)
-        return 'fail'
+    assert content.find('Integer,Real,Real,Real,String,Real,Real') == 0
 
     f = gdal.VSIFOpenL('/vsimem/transformer_14.csv', 'rb')
     if f is not None:
         content = gdal.VSIFReadL(1, 1000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
-    if content.find("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
-0,""") != 0:
-        print(content)
-        return 'fail'
+    assert content.find("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
+0,""") == 0
 
     gdal.Unlink('/vsimem/transformer_14.csvt')
     gdal.Unlink('/vsimem/transformer_14.csv')
@@ -822,25 +676,15 @@ def test_transformer_15():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/transformer_15_dem.vrt'])
     (success, pnt) = tr.TransformPoint(0, 0, 0)
-    if not success or abs(pnt[0] - 180.02280735469199) > 1e-7 or abs(pnt[1] - 0.061069145746997976) > 1e-7:
-        print(pnt)
-        return 'fail'
+    assert success and abs(pnt[0] - 180.02280735469199) <= 1e-7 and abs(pnt[1] - 0.061069145746997976) <= 1e-7
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0], pnt[1], 0)
-    if not success \
-       or abs(pnt_forward[0] - 0) > 0.1 \
-       or abs(pnt_forward[1] - 0) > 0.1:
-        print(success, pnt_forward)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt_forward[0] - 0) <= 0.1 and abs(pnt_forward[1] - 0) <= 0.1, \
+        'got wrong reverse transform result.'
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0] - 360, pnt[1], 0)
-    if not success \
-       or abs(pnt_forward[0] - 0) > 0.1 \
-       or abs(pnt_forward[1] - 0) > 0.1:
-        print(success, pnt_forward)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt_forward[0] - 0) <= 0.1 and abs(pnt_forward[1] - 0) <= 0.1, \
+        'got wrong reverse transform result.'
 
     # Now test around -180
     ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
@@ -850,25 +694,15 @@ def test_transformer_15():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/transformer_15_dem.vrt'])
     (success, pnt) = tr.TransformPoint(0, 6600, 4400)
-    if not success or abs(pnt[0] - -180.02313813793387) > 1e-7 or abs(pnt[1] - -0.061398913932229765) > 1e-7:
-        print(pnt)
-        return 'fail'
+    assert success and abs(pnt[0] - -180.02313813793387) <= 1e-7 and abs(pnt[1] - -0.061398913932229765) <= 1e-7
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0], pnt[1], 0)
-    if not success \
-       or abs(pnt_forward[0] - 6600) > 0.1 \
-       or abs(pnt_forward[1] - 4400) > 0.1:
-        print(success, pnt_forward)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt_forward[0] - 6600) <= 0.1 and abs(pnt_forward[1] - 4400) <= 0.1, \
+        'got wrong reverse transform result.'
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0] + 360, pnt[1], 0)
-    if not success \
-       or abs(pnt_forward[0] - 6600) > 0.1 \
-       or abs(pnt_forward[1] - 4400) > 0.1:
-        print(success, pnt_forward)
-        gdaltest.post_reason('got wrong reverse transform result.')
-        return 'fail'
+    assert success and abs(pnt_forward[0] - 6600) <= 0.1 and abs(pnt_forward[1] - 4400) <= 0.1, \
+        'got wrong reverse transform result.'
 
     gdal.Unlink('/vsimem/demE179.tif')
     gdal.Unlink('/vsimem/demW180.tif')
@@ -890,16 +724,12 @@ def test_transformer_16():
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
-    if content.find('<MaxErrorForward>6.05</MaxErrorForward>') < 0 or \
-       content.find('<MaxErrorReverse>0.1</MaxErrorReverse>') < 0 or \
-       content.find('<MaxErrorForward>0.0001</MaxErrorForward>') < 0 or \
-       content.find('<MaxErrorReverse>6.1</MaxErrorReverse>') < 0:
-        print(content)
-        return 'fail'
+    assert (content.find('<MaxErrorForward>6.05</MaxErrorForward>') >= 0 and \
+       content.find('<MaxErrorReverse>0.1</MaxErrorReverse>') >= 0 and \
+       content.find('<MaxErrorForward>0.0001</MaxErrorForward>') >= 0 and \
+       content.find('<MaxErrorReverse>6.1</MaxErrorReverse>') >= 0)
     ds = gdal.Translate('', '/vsimem/transformer_16.vrt', format='MEM')
-    if ds.GetRasterBand(1).Checksum() != 4727:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4727
     ds = None
     gdal.Unlink('/vsimem/transformer_16.tif')
     gdal.Unlink('/vsimem/transformer_16.vrt')
@@ -915,8 +745,7 @@ def test_transformer_17():
     ds = gdal.Open('data/rpc.vrt')
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif'])
-    if tr is not None:
-        return 'fail'
+    assert tr is None
     return 'success'
 
 

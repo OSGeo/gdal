@@ -75,28 +75,23 @@ def test_ogr_odbc_1():
 
     # Test with ODBC:user/pwd@dsn syntax
     ds = ogrtest.odbc_drv.Open('ODBC:user/pwd@DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     # Test with ODBC:dsn syntax
     ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     # Test with ODBC:dsn,table_list syntax
     ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb,test')
-    if ds is None:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
     ds = None
 
     # Reopen and check
     ds = ogrtest.odbc_drv.Open('tmp/odbc.mdb')
-    if ds.GetLayerCount() != 2:
-        return 'fail'
+    assert ds.GetLayerCount() == 2
 
     lyr = ds.GetLayerByName('test')
     feat = lyr.GetNextFeature()
@@ -106,8 +101,7 @@ def test_ogr_odbc_1():
 
     lyr = ds.GetLayerByName('test_with_pk')
     # Test GetFeatureCount()
-    if lyr.GetFeatureCount() != 5:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 5
 
     # Test GetFeature()
     feat = lyr.GetFeature(4)
@@ -148,9 +142,7 @@ def test_ogr_odbc_2():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/odbc.mdb')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 

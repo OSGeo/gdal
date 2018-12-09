@@ -97,35 +97,21 @@ def test_wcs_3():
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
         return 'skip'
 
-    if gdaltest.wcs_ds.RasterXSize != 983 \
-       or gdaltest.wcs_ds.RasterYSize != 598 \
-       or gdaltest.wcs_ds.RasterCount != 3:
-        gdaltest.post_reason('wrong size or bands')
-        print(gdaltest.wcs_ds.RasterXSize)
-        print(gdaltest.wcs_ds.RasterYSize)
-        print(gdaltest.wcs_ds.RasterCount)
-        return 'fail'
+    assert gdaltest.wcs_ds.RasterXSize == 983 and gdaltest.wcs_ds.RasterYSize == 598 and gdaltest.wcs_ds.RasterCount == 3, \
+        'wrong size or bands'
 
     wkt = gdaltest.wcs_ds.GetProjectionRef()
-    if wkt[:14] != 'GEOGCS["WGS 84':
-        gdaltest.post_reason('Got wrong SRS: ' + wkt)
-        return 'fail'
+    assert wkt[:14] == 'GEOGCS["WGS 84', ('Got wrong SRS: ' + wkt)
 
     gt = gdaltest.wcs_ds.GetGeoTransform()
     expected_gt = (-130.85167999999999, 0.070036907426246159, 0.0, 54.114100000000001, 0.0, -0.055867725752508368)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 0.00001:
-            gdaltest.post_reason('wrong geotransform')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 0.00001, 'wrong geotransform'
 
-    if gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() < 1:
-        gdaltest.post_reason('no overviews!')
-        return 'fail'
+    assert gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() >= 1, 'no overviews!'
 
-    if gdaltest.wcs_ds.GetRasterBand(1).DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('wrong band data type')
-        return 'fail'
+    assert gdaltest.wcs_ds.GetRasterBand(1).DataType == gdal.GDT_Byte, \
+        'wrong band data type'
 
     return 'success'
 
@@ -139,9 +125,7 @@ def test_wcs_4():
         return 'skip'
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum()
-    if cs != 58765:
-        gdaltest.post_reason('Wrong checksum: ' + str(cs))
-        return 'fail'
+    assert cs == 58765, ('Wrong checksum: ' + str(cs))
 
     return 'success'
 
@@ -162,18 +146,10 @@ def wcs_5():
 
     ds = gdal.Open(fn)
 
-    if ds is None:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    assert ds is not None, 'open failed.'
 
-    if ds.RasterXSize != 983 \
-       or ds.RasterYSize != 598 \
-       or ds.RasterCount != 3:
-        gdaltest.post_reason('wrong size or bands')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        print(ds.RasterCount)
-        return 'fail'
+    assert ds.RasterXSize == 983 and ds.RasterYSize == 598 and ds.RasterCount == 3, \
+        'wrong size or bands'
 
     ds = None
 
@@ -207,35 +183,20 @@ def old_wcs_3():
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
         return 'skip'
 
-    if gdaltest.wcs_ds.RasterXSize != 43200 \
-       or gdaltest.wcs_ds.RasterYSize != 21600 \
-       or gdaltest.wcs_ds.RasterCount != 1:
-        gdaltest.post_reason('wrong size or bands')
-        return 'fail'
+    assert gdaltest.wcs_ds.RasterXSize == 43200 and gdaltest.wcs_ds.RasterYSize == 21600 and gdaltest.wcs_ds.RasterCount == 1, \
+        'wrong size or bands'
 
     wkt = gdaltest.wcs_ds.GetProjectionRef()
-    if wkt[:12] != 'GEOGCS["NAD8':
-        gdaltest.post_reason('Got wrong SRS: ' + wkt)
-        return 'fail'
+    assert wkt[:12] == 'GEOGCS["NAD8', ('Got wrong SRS: ' + wkt)
 
     gt = gdaltest.wcs_ds.GetGeoTransform()
-    if abs(gt[0] - -180.0041667) > 0.00001 \
-       or abs(gt[3] - 90.004167) > 0.00001 \
-       or abs(gt[1] - 0.00833333) > 0.00001 \
-       or abs(gt[2] - 0) > 0.00001 \
-       or abs(gt[5] - -0.00833333) > 0.00001 \
-       or abs(gt[4] - 0) > 0.00001:
-        gdaltest.post_reason('wrong geotransform')
-        print(gt)
-        return 'fail'
+    assert abs(gt[0] - -180.0041667) <= 0.00001 and abs(gt[3] - 90.004167) <= 0.00001 and abs(gt[1] - 0.00833333) <= 0.00001 and abs(gt[2] - 0) <= 0.00001 and abs(gt[5] - -0.00833333) <= 0.00001 and abs(gt[4] - 0) <= 0.00001, \
+        'wrong geotransform'
 
-    if gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() < 1:
-        gdaltest.post_reason('no overviews!')
-        return 'fail'
+    assert gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() >= 1, 'no overviews!'
 
-    if gdaltest.wcs_ds.GetRasterBand(1).DataType < gdal.GDT_Int16:
-        gdaltest.post_reason('wrong band data type')
-        return 'fail'
+    assert gdaltest.wcs_ds.GetRasterBand(1).DataType >= gdal.GDT_Int16, \
+        'wrong band data type'
 
     return 'success'
 
@@ -249,9 +210,7 @@ def old_wcs_4():
         return 'skip'
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
-    if cs != 10469:
-        gdaltest.post_reason('Wrong checksum: ' + str(cs))
-        return 'fail'
+    assert cs == 10469, ('Wrong checksum: ' + str(cs))
 
     return 'success'
 
@@ -268,15 +227,10 @@ def old_wcs_5():
 
     ds = gdal.Open(fn)
 
-    if ds is None:
-        gdaltest.post_reason('open failed.')
-        return 'fail'
+    assert ds is not None, 'open failed.'
 
-    if ds.RasterXSize != 43200 \
-       or ds.RasterYSize != 21600 \
-       or ds.RasterCount != 1:
-        gdaltest.post_reason('wrong size or bands')
-        return 'fail'
+    assert ds.RasterXSize == 43200 and ds.RasterYSize == 21600 and ds.RasterCount == 1, \
+        'wrong size or bands'
 
     ds = None
 

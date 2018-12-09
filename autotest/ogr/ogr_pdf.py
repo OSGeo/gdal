@@ -119,9 +119,8 @@ def test_ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
     with open(name, 'rb') as f:
         data = f.read(8192)
-        if wantedstream.encode('utf-8') not in data:
-            gdaltest.post_reason('Wrong text data in written PDF stream')
-            return 'fail'
+        assert wantedstream.encode('utf-8') in data, \
+            'Wrong text data in written PDF stream'
 
     return 'success'
 
@@ -135,23 +134,17 @@ def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
         return 'skip'
 
     ds = ogr.Open(name)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayerByName('first_layer')
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     if has_attributes:
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('strfield')).GetType() != ogr.OFTString:
-            return 'fail'
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('intfield')).GetType() != ogr.OFTInteger:
-            return 'fail'
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('realfield')).GetType() != ogr.OFTReal:
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('strfield')).GetType() == ogr.OFTString
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('intfield')).GetType() == ogr.OFTInteger
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('realfield')).GetType() == ogr.OFTReal
     else:
-        if lyr.GetLayerDefn().GetFieldCount() != 0:
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldCount() == 0
 
     if has_attributes:
         feat = lyr.GetNextFeature()
@@ -249,13 +242,11 @@ def test_ogr_pdf_5():
 
     with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
         ds = ogr.Open('data/drawing.pdf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     # Note: the circle is wrongly drawned as a diamond
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 8:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 8
 
     return 'success'
 
@@ -286,29 +277,23 @@ def test_ogr_pdf_online_1():
     ]
 
     ds = ogr.Open('tmp/cache/webmap_urbansample.pdf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetLayerCount() != len(expected_layers):
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == len(expected_layers)
 
     for i in range(ds.GetLayerCount()):
-        if ds.GetLayer(i).GetName() != expected_layers[i][0]:
-            print('%d : %s' % (i, ds.GetLayer(i).GetName()))
-            return 'fail'
+        assert ds.GetLayer(i).GetName() == expected_layers[i][0], \
+            ('%d : %s' % (i, ds.GetLayer(i).GetName()))
 
-        if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
-            print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
-            return 'fail'
+        assert ds.GetLayer(i).GetGeomType() == expected_layers[i][1], \
+            ('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
 
     lyr = ds.GetLayerByName('Water Points')
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (724431.316665166523308 7672947.212302438914776)')) != 0:
         feat.DumpReadable()
         return 'fail'
-    if feat.GetField('ID') != 'VL46':
-        return 'fail'
+    assert feat.GetField('ID') == 'VL46'
 
     return 'success'
 
@@ -362,8 +347,7 @@ def test_ogr_pdf_online_2():
     ]
 
     ds = ogr.Open('tmp/cache/340711752_Azusa_FSTopo.pdf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     if ds.GetLayerCount() != len(expected_layers):
         print(ds.GetLayerCount())
@@ -372,13 +356,11 @@ def test_ogr_pdf_online_2():
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-        if ds.GetLayer(i).GetName() != expected_layers[i][0]:
-            print('%d : %s' % (i, ds.GetLayer(i).GetName()))
-            return 'fail'
+        assert ds.GetLayer(i).GetName() == expected_layers[i][0], \
+            ('%d : %s' % (i, ds.GetLayer(i).GetName()))
 
-        if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
-            print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
-            return 'fail'
+        assert ds.GetLayer(i).GetGeomType() == expected_layers[i][1], \
+            ('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
 
     return 'success'
 

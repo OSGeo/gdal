@@ -61,9 +61,8 @@ def test_gcps2gt_1():
         (100.0, 0.0, 410000, 370000),
         (100.0, 200.0, 410000, 368000)
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001):
-        return 'fail'
+    assert gdaltest.geotransform_equals(
+            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001)
 
     return 'success'
 
@@ -79,9 +78,8 @@ def test_gcps2gt_2():
         (100.0, 200.0, 410000, 368000),
         (0.0, 200.0, 400000, 368000.01)
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001):
-        return 'fail'
+    assert gdaltest.geotransform_equals(
+            gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001)
 
     return 'success'
 
@@ -98,9 +96,7 @@ def test_gcps2gt_3():
         (100.0, 200.0, 410000, 368000),
         (0.0, 200.0, 400000, 360000)
     ]), approx_ok)
-    if gt is not None:
-        gdaltest.post_reason('Expected failure when no good solution.')
-        return 'fail'
+    assert gt is None, 'Expected failure when no good solution.'
 
     return 'success'
 
@@ -113,9 +109,7 @@ def test_gcps2gt_4():
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
     ]))
-    if gt is not None:
-        gdaltest.post_reason('Expected failure for single GCP.')
-        return 'fail'
+    assert gt is None, 'Expected failure for single GCP.'
 
     return 'success'
 
@@ -129,9 +123,8 @@ def test_gcps2gt_5():
         (0.0, 0.0, 400000, 370000),
         (100.0, 200.0, 410000, 368000),
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001):
-        return 'fail'
+    assert gdaltest.geotransform_equals(
+            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001)
 
     return 'success'
 
@@ -147,9 +140,8 @@ def test_gcps2gt_6():
         (410000, 368000, 410000, 368000),
         (400000, 368000, 400000, 368000),
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001):
-        return 'fail'
+    assert gdaltest.geotransform_equals(
+            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
     return 'success'
 
@@ -165,9 +157,8 @@ def test_gcps2gt_7():
         (410000, 370000, 410000, 370000),
         (400000, 368000, 400000, 368000),
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001):
-        return 'fail'
+    assert gdaltest.geotransform_equals(
+            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
     return 'success'
 
@@ -187,8 +178,7 @@ def test_gcps2gt_8():
     ]))
     gt_expected = (-87.056612873288, -2.232795668658e-05, 3.178617809303e-05,
                    39.227856615716, 2.6091510188921e-05, 1.596921026218e-05)
-    if not gdaltest.geotransform_equals(gt, gt_expected, 0.00001):
-        return 'fail'
+    assert gdaltest.geotransform_equals(gt, gt_expected, 0.00001)
 
     return 'success'
 

@@ -151,15 +151,9 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
     elif expected_format == 'WEBP':
         expected_mime_type = 'image/x-webp'
 
-    if mime_type != expected_mime_type:
-        print(mime_type)
-        return 'fail'
-    if band_count != expected_band_count:
-        print(band_count)
-        return 'fail'
-    if expected_ct != has_ct:
-        print(has_ct)
-        return 'fail'
+    assert mime_type == expected_mime_type
+    assert band_count == expected_band_count
+    assert expected_ct == has_ct
     return 'success'
 
 ###############################################################################
@@ -186,31 +180,24 @@ def test_gpkg_1():
     out_ds = gdal.OpenEx(gdaltest.db2_test_server, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['TABLE=byte'])
 
     bnd = out_ds.GetRasterBand(1)
-    if bnd.Checksum() != 4672:
-        gdaltest.post_reason('Didnt get expected checksum on reopened file')
-        return 'fail'
+    assert bnd.Checksum() == 4672, 'Didnt get expected checksum on reopened file'
 
-    if bnd.ComputeRasterMinMax() != (74.0, 255.0):
-        gdaltest.post_reason('ComputeRasterMinMax() returned wrong value')
-        return 'fail'
+    assert bnd.ComputeRasterMinMax() == (74.0, 255.0), \
+        'ComputeRasterMinMax() returned wrong value'
 
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
-        if abs(expected_gt[i] - got_gt[i]) > 1e-8:
-            return 'fail'
+        assert abs(expected_gt[i] - got_gt[i]) <= 1e-8
     got_wkt = out_ds.GetProjectionRef()
     print("\n** expected_wkt " + expected_wkt + " **\n")
     print("\n** got_wkt " + got_wkt + " **\n")
 #   string comparison doesn't work with DB2 due to differences in
 #   the WKT (similar but different)
 #   just check if it contains '11N' for NAD27 UTM zone 11N
-    if got_wkt.find('11N') == -1:
-        return 'fail'
+    assert got_wkt.find('11N') != -1
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
-    if got_cs != expected_cs:
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
+    assert got_cs == expected_cs
 
     return 'success'
 

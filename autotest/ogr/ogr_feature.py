@@ -147,49 +147,35 @@ def test_ogr_feature_cp_integer():
     dst_feature.SetFrom(src_feature)
     gdal.PopErrorHandler()
 
-    if not check(dst_feature, 'field_integer', 17):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', 17)
 
-    if not check(dst_feature, 'field_integer64', 2147483647):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', 2147483647)
 
-    if not check(dst_feature, 'field_real', 18):
-        return 'fail'
+    assert check(dst_feature, 'field_real', 18)
 
-    if not check(dst_feature, 'field_string', 0):
-        return 'fail'
+    assert check(dst_feature, 'field_string', 0)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', None):
-        return 'fail'
+    assert check(dst_feature, 'field_date', None)
 
-    if not check(dst_feature, 'field_time', None):
-        return 'fail'
+    assert check(dst_feature, 'field_time', None)
 
-    if not check(dst_feature, 'field_datetime', None):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', None)
 
-    if not check(dst_feature, 'field_integerlist', 15):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', 15)
 
-    if not check(dst_feature, 'field_integer64list', 2147483647):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', 2147483647)
 
-    if not check(dst_feature, 'field_reallist', 17):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', 17)
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     vals = []
     for val in dst_feature:
         vals.append(val)
-    if vals != [17, 2147483647, 18, 0, None, None, None, None, 15,
-                2147483647, 17, None]:
-        print(vals)
-        return 'fail'
+    assert (vals == [17, 2147483647, 18, 0, None, None, None, None, 15,
+                2147483647, 17, None])
 
     return 'success'
 
@@ -205,47 +191,34 @@ def test_ogr_feature_cp_integer64():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTInteger64)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', 17):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', 17)
 
-    if not check(dst_feature, 'field_integer64', 9876543210):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', 9876543210)
 
     gdal.PushErrorHandler()
     int32_ovflw = dst_feature.GetFieldAsInteger('field_integer64')
     gdal.PopErrorHandler()
-    if int32_ovflw != 2147483647:
-        return 'fail'
+    assert int32_ovflw == 2147483647
 
-    if not check(dst_feature, 'field_real', 18):
-        return 'fail'
+    assert check(dst_feature, 'field_real', 18)
 
-    if not check(dst_feature, 'field_string', 0):
-        return 'fail'
+    assert check(dst_feature, 'field_string', 0)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', None):
-        return 'fail'
+    assert check(dst_feature, 'field_date', None)
 
-    if not check(dst_feature, 'field_time', None):
-        return 'fail'
+    assert check(dst_feature, 'field_time', None)
 
-    if not check(dst_feature, 'field_datetime', None):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', None)
 
-    if not check(dst_feature, 'field_integerlist', 15):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', 15)
 
-    if not check(dst_feature, 'field_integer64list', 9876543210):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', 9876543210)
 
-    if not check(dst_feature, 'field_reallist', 17):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', 17)
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -262,35 +235,25 @@ def test_ogr_feature_cp_real():
     with gdaltest.error_handler():
         dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', 17.0):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', 17.0)
 
-    if not check(dst_feature, 'field_real', 18.4):
-        return 'fail'
+    assert check(dst_feature, 'field_real', 18.4)
 
-    if not check(dst_feature, 'field_string', 0):
-        return 'fail'
+    assert check(dst_feature, 'field_string', 0)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', None):
-        return 'fail'
+    assert check(dst_feature, 'field_date', None)
 
-    if not check(dst_feature, 'field_time', None):
-        return 'fail'
+    assert check(dst_feature, 'field_time', None)
 
-    if not check(dst_feature, 'field_datetime', None):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', None)
 
-    if not check(dst_feature, 'field_integerlist', 15.0):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', 15.0)
 
-    if not check(dst_feature, 'field_reallist', 17.5):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', 17.5)
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -304,41 +267,29 @@ def test_ogr_feature_cp_string():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTString)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', '17'):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', '17')
 
-    if not check(dst_feature, 'field_integer64', '9876543210'):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', '9876543210')
 
-    if not check(dst_feature, 'field_real', '18.4'):
-        return 'fail'
+    assert check(dst_feature, 'field_real', '18.4')
 
-    if not check(dst_feature, 'field_string', 'abc def'):
-        return 'fail'
+    assert check(dst_feature, 'field_string', 'abc def')
 
-    if not check(dst_feature, 'field_binary', '0123465789ABCDEF'):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', '0123465789ABCDEF')
 
-    if not check(dst_feature, 'field_date', '2011/11/11'):
-        return 'fail'
+    assert check(dst_feature, 'field_date', '2011/11/11')
 
-    if not check(dst_feature, 'field_time', '14:10:35'):
-        return 'fail'
+    assert check(dst_feature, 'field_time', '14:10:35')
 
-    if not check(dst_feature, 'field_datetime', '2011/11/11 14:10:35.123'):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', '2011/11/11 14:10:35.123')
 
-    if not check(dst_feature, 'field_integerlist', '(3:10,20,30)'):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', '(3:10,20,30)')
 
-    if not check(dst_feature, 'field_integer64list', '(1:9876543210)'):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', '(1:9876543210)')
 
-    if not check(dst_feature, 'field_reallist', '(2:123.5,567)'):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', '(2:123.5,567)')
 
-    if not check(dst_feature, 'field_stringlist', '(2:abc,def)'):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', '(2:abc,def)')
 
     return 'success'
 
@@ -352,49 +303,35 @@ def test_ogr_feature_cp_binary():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTBinary)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', None)
 
-    if not check(dst_feature, 'field_integer64', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', None)
 
-    if not check(dst_feature, 'field_real', None):
-        return 'fail'
+    assert check(dst_feature, 'field_real', None)
 
-    if not check(dst_feature, 'field_string', None):
-        return 'fail'
+    assert check(dst_feature, 'field_string', None)
 
-    if not check(dst_feature, 'field_binary', '0123465789ABCDEF'):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', '0123465789ABCDEF')
 
     expected = '\x01\x23\x46\x57\x89\xAB\xCD\xEF'
     if sys.version_info >= (3, 0, 0):
         expected = expected.encode('LATIN1')
-    if dst_feature.GetFieldAsBinary('field_binary') != expected:
-        return 'fail'
-    if dst_feature.GetFieldAsBinary(dst_feature.GetDefnRef().GetFieldIndex('field_binary')) != expected:
-        return 'fail'
+    assert dst_feature.GetFieldAsBinary('field_binary') == expected
+    assert dst_feature.GetFieldAsBinary(dst_feature.GetDefnRef().GetFieldIndex('field_binary')) == expected
 
-    if not check(dst_feature, 'field_date', None):
-        return 'fail'
+    assert check(dst_feature, 'field_date', None)
 
-    if not check(dst_feature, 'field_time', None):
-        return 'fail'
+    assert check(dst_feature, 'field_time', None)
 
-    if not check(dst_feature, 'field_datetime', None):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', None)
 
-    if not check(dst_feature, 'field_integerlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', None)
 
-    if not check(dst_feature, 'field_integer64list', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', None)
 
-    if not check(dst_feature, 'field_reallist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', None)
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -408,41 +345,29 @@ def test_ogr_feature_cp_date():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTDate)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', None)
 
-    if not check(dst_feature, 'field_integer64', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', None)
 
-    if not check(dst_feature, 'field_real', None):
-        return 'fail'
+    assert check(dst_feature, 'field_real', None)
 
-    if not check(dst_feature, 'field_string', None):
-        return 'fail'
+    assert check(dst_feature, 'field_string', None)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', '2011/11/11'):
-        return 'fail'
+    assert check(dst_feature, 'field_date', '2011/11/11')
 
-    if not check(dst_feature, 'field_time', '0000/00/00'):
-        return 'fail'
+    assert check(dst_feature, 'field_time', '0000/00/00')
 
-    if not check(dst_feature, 'field_datetime', '2011/11/11'):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', '2011/11/11')
 
-    if not check(dst_feature, 'field_integerlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', None)
 
-    if not check(dst_feature, 'field_integer64list', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', None)
 
-    if not check(dst_feature, 'field_reallist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', None)
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -456,41 +381,29 @@ def test_ogr_feature_cp_time():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTTime)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', None)
 
-    if not check(dst_feature, 'field_integer64', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', None)
 
-    if not check(dst_feature, 'field_real', None):
-        return 'fail'
+    assert check(dst_feature, 'field_real', None)
 
-    if not check(dst_feature, 'field_string', None):
-        return 'fail'
+    assert check(dst_feature, 'field_string', None)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', '00:00:00'):
-        return 'fail'
+    assert check(dst_feature, 'field_date', '00:00:00')
 
-    if not check(dst_feature, 'field_time', '14:10:35'):
-        return 'fail'
+    assert check(dst_feature, 'field_time', '14:10:35')
 
-    if not check(dst_feature, 'field_datetime', '14:10:35.123'):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', '14:10:35.123')
 
-    if not check(dst_feature, 'field_integerlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', None)
 
-    if not check(dst_feature, 'field_integer64list', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', None)
 
-    if not check(dst_feature, 'field_reallist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', None)
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -504,41 +417,29 @@ def test_ogr_feature_cp_datetime():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTDateTime)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', None)
 
-    if not check(dst_feature, 'field_integer64', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', None)
 
-    if not check(dst_feature, 'field_real', None):
-        return 'fail'
+    assert check(dst_feature, 'field_real', None)
 
-    if not check(dst_feature, 'field_string', None):
-        return 'fail'
+    assert check(dst_feature, 'field_string', None)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', '2011/11/11 00:00:00'):
-        return 'fail'
+    assert check(dst_feature, 'field_date', '2011/11/11 00:00:00')
 
-    if not check(dst_feature, 'field_time', '0000/00/00 14:10:35'):
-        return 'fail'
+    assert check(dst_feature, 'field_time', '0000/00/00 14:10:35')
 
-    if not check(dst_feature, 'field_datetime', '2011/11/11 14:10:35.123'):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', '2011/11/11 14:10:35.123')
 
-    if not check(dst_feature, 'field_integerlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', None)
 
-    if not check(dst_feature, 'field_integer64list', None):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', None)
 
-    if not check(dst_feature, 'field_reallist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', None)
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -554,41 +455,29 @@ def test_ogr_feature_cp_integerlist():
     dst_feature.SetFrom(src_feature)
     gdal.PopErrorHandler()
 
-    if not check(dst_feature, 'field_integer', [17]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', [17])
 
-    if not check(dst_feature, 'field_integer64', [2147483647]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', [2147483647])
 
-    if not check(dst_feature, 'field_real', [18]):
-        return 'fail'
+    assert check(dst_feature, 'field_real', [18])
 
-    if not check(dst_feature, 'field_string', None):
-        return 'fail'
+    assert check(dst_feature, 'field_string', None)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', None):
-        return 'fail'
+    assert check(dst_feature, 'field_date', None)
 
-    if not check(dst_feature, 'field_time', None):
-        return 'fail'
+    assert check(dst_feature, 'field_time', None)
 
-    if not check(dst_feature, 'field_datetime', None):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', None)
 
-    if not check(dst_feature, 'field_integerlist', [10, 20, 30]):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', [10, 20, 30])
 
-    if not check(dst_feature, 'field_integer64list', [2147483647]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', [2147483647])
 
-    if not check(dst_feature, 'field_reallist', [123, 567]):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', [123, 567])
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -602,41 +491,29 @@ def test_ogr_feature_cp_integer64list():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTInteger64List)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', [17]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', [17])
 
-    if not check(dst_feature, 'field_integer64', [9876543210]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', [9876543210])
 
-    if not check(dst_feature, 'field_real', [18]):
-        return 'fail'
+    assert check(dst_feature, 'field_real', [18])
 
-    if not check(dst_feature, 'field_string', None):
-        return 'fail'
+    assert check(dst_feature, 'field_string', None)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', None):
-        return 'fail'
+    assert check(dst_feature, 'field_date', None)
 
-    if not check(dst_feature, 'field_time', None):
-        return 'fail'
+    assert check(dst_feature, 'field_time', None)
 
-    if not check(dst_feature, 'field_datetime', None):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', None)
 
-    if not check(dst_feature, 'field_integerlist', [10, 20, 30]):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', [10, 20, 30])
 
-    if not check(dst_feature, 'field_integer64list', [9876543210]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', [9876543210])
 
-    if not check(dst_feature, 'field_reallist', [123, 567]):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', [123, 567])
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -650,41 +527,29 @@ def test_ogr_feature_cp_reallist():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTRealList)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', [17.0]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', [17.0])
 
-    if not check(dst_feature, 'field_integer64', [9876543210.0]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', [9876543210.0])
 
-    if not check(dst_feature, 'field_real', [18.4]):
-        return 'fail'
+    assert check(dst_feature, 'field_real', [18.4])
 
-    if not check(dst_feature, 'field_string', None):
-        return 'fail'
+    assert check(dst_feature, 'field_string', None)
 
-    if not check(dst_feature, 'field_binary', None):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', None)
 
-    if not check(dst_feature, 'field_date', None):
-        return 'fail'
+    assert check(dst_feature, 'field_date', None)
 
-    if not check(dst_feature, 'field_time', None):
-        return 'fail'
+    assert check(dst_feature, 'field_time', None)
 
-    if not check(dst_feature, 'field_datetime', None):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', None)
 
-    if not check(dst_feature, 'field_integerlist', [10.0, 20.0, 30.0]):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', [10.0, 20.0, 30.0])
 
-    if not check(dst_feature, 'field_integer64list', [9876543210.0]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', [9876543210.0])
 
-    if not check(dst_feature, 'field_reallist', [123.5, 567.0]):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', [123.5, 567.0])
 
-    if not check(dst_feature, 'field_stringlist', None):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', None)
 
     return 'success'
 
@@ -698,41 +563,29 @@ def test_ogr_feature_cp_stringlist():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTStringList)
     dst_feature.SetFrom(src_feature)
 
-    if not check(dst_feature, 'field_integer', ["17"]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer', ["17"])
 
-    if not check(dst_feature, 'field_integer64', ["9876543210"]):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64', ["9876543210"])
 
-    if not check(dst_feature, 'field_real', ["18.4"]):
-        return 'fail'
+    assert check(dst_feature, 'field_real', ["18.4"])
 
-    if not check(dst_feature, 'field_string', ['abc def']):
-        return 'fail'
+    assert check(dst_feature, 'field_string', ['abc def'])
 
-    if not check(dst_feature, 'field_binary', ['0123465789ABCDEF']):
-        return 'fail'
+    assert check(dst_feature, 'field_binary', ['0123465789ABCDEF'])
 
-    if not check(dst_feature, 'field_date', ['2011/11/11']):
-        return 'fail'
+    assert check(dst_feature, 'field_date', ['2011/11/11'])
 
-    if not check(dst_feature, 'field_time', ['14:10:35']):
-        return 'fail'
+    assert check(dst_feature, 'field_time', ['14:10:35'])
 
-    if not check(dst_feature, 'field_datetime', ['2011/11/11 14:10:35.123']):
-        return 'fail'
+    assert check(dst_feature, 'field_datetime', ['2011/11/11 14:10:35.123'])
 
-    if not check(dst_feature, 'field_integerlist', ['10', '20', '30']):
-        return 'fail'
+    assert check(dst_feature, 'field_integerlist', ['10', '20', '30'])
 
-    if not check(dst_feature, 'field_integer64list', ['9876543210']):
-        return 'fail'
+    assert check(dst_feature, 'field_integer64list', ['9876543210'])
 
-    if not check(dst_feature, 'field_reallist', ['123.5', '567']):
-        return 'fail'
+    assert check(dst_feature, 'field_reallist', ['123.5', '567'])
 
-    if not check(dst_feature, 'field_stringlist', ['abc', 'def']):
-        return 'fail'
+    assert check(dst_feature, 'field_stringlist', ['abc', 'def'])
 
     return 'success'
 
@@ -754,20 +607,16 @@ def test_ogr_feature_unicode():
 
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField('field_string', 'abc def'.decode('utf-8'))
-    if src_feature.GetField('field_string') != 'abc def':
-        return 'fail'
-    if src_feature.GetField('field_string'.decode('utf-8')) != 'abc def':
-        return 'fail'
+    assert src_feature.GetField('field_string') == 'abc def'
+    assert src_feature.GetField('field_string'.decode('utf-8')) == 'abc def'
 
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField('field_string'.decode('utf-8'), 'abc def'.decode('utf-8'))
-    if src_feature.GetField('field_string') != 'abc def':
-        return 'fail'
+    assert src_feature.GetField('field_string') == 'abc def'
 
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField('field_integer64'.decode('utf-8'), 1)
-    if src_feature.GetField('field_integer64') != 1:
-        return 'fail'
+    assert src_feature.GetField('field_integer64') == 1
 
     return 'success'
 
@@ -780,8 +629,7 @@ def test_ogr_feature_64bit_fid():
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
     f.SetFID(123456789012345)
-    if f.GetFID() != 123456789012345:
-        return 'fail'
+    assert f.GetFID() == 123456789012345
     return 'success'
 
 ###############################################################################
@@ -815,34 +663,28 @@ def test_ogr_feature_nullable_validate():
     # No fields
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
-    if f.Validate() != 1:
-        return 'fail'
+    assert f.Validate() == 1
 
     # Field with default parameter and empty feature
     feat_def = ogr.FeatureDefn('test')
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
-    if field_def.IsNullable() != 1:
-        return 'fail'
-    if feat_def.GetGeomFieldDefn(0).IsNullable() != 1:
-        return 'fail'
+    assert field_def.IsNullable() == 1
+    assert feat_def.GetGeomFieldDefn(0).IsNullable() == 1
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
-    if f.Validate() != 1:
-        return 'fail'
+    assert f.Validate() == 1
 
     # Field with not NULL constraint and empty feature
     feat_def = ogr.FeatureDefn('test')
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
     field_def.SetNullable(0)
-    if field_def.IsNullable() != 0:
-        return 'fail'
+    assert field_def.IsNullable() == 0
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
     gdal.PushErrorHandler()
     ret = f.Validate()
     gdal.PopErrorHandler()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Field with not NULL constraint and non-empty feature
     feat_def = ogr.FeatureDefn('test')
@@ -851,8 +693,7 @@ def test_ogr_feature_nullable_validate():
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
     f.SetField(0, 'foo')
-    if f.Validate() != 1:
-        return 'fail'
+    assert f.Validate() == 1
 
     # Field with width constraint that is met
     feat_def = ogr.FeatureDefn('test')
@@ -861,8 +702,7 @@ def test_ogr_feature_nullable_validate():
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
     f.SetField(0, 'foo')
-    if f.Validate() != 1:
-        return 'fail'
+    assert f.Validate() == 1
 
     # Field with width constraint that is not met
     feat_def = ogr.FeatureDefn('test')
@@ -874,21 +714,18 @@ def test_ogr_feature_nullable_validate():
     gdal.PushErrorHandler()
     ret = f.Validate()
     gdal.PopErrorHandler()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Geometry field with not-null geometry constraint that is met
     feat_def = ogr.FeatureDefn('test')
     feat_def.SetGeomType(ogr.wkbNone)
     gfield_def = ogr.GeomFieldDefn('test', ogr.wkbUnknown)
     gfield_def.SetNullable(0)
-    if gfield_def.IsNullable() != 0:
-        return 'fail'
+    assert gfield_def.IsNullable() == 0
     feat_def.AddGeomFieldDefn(gfield_def)
     f = ogr.Feature(feat_def)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
-    if f.Validate() != 1:
-        return 'fail'
+    assert f.Validate() == 1
 
     # Geometry field with not-null geometry constraint that is not met
     feat_def = ogr.FeatureDefn('test')
@@ -900,16 +737,14 @@ def test_ogr_feature_nullable_validate():
     gdal.PushErrorHandler()
     ret = f.Validate()
     gdal.PopErrorHandler()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Geometry field with Point geometry type that is met
     feat_def = ogr.FeatureDefn('test')
     feat_def.SetGeomType(ogr.wkbPoint)
     f = ogr.Feature(feat_def)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
-    if f.Validate() != 1:
-        return 'fail'
+    assert f.Validate() == 1
 
     # Geometry field with LineString geometry type that is not met
     feat_def = ogr.FeatureDefn('test')
@@ -919,8 +754,7 @@ def test_ogr_feature_nullable_validate():
     gdal.PushErrorHandler()
     ret = f.Validate()
     gdal.PopErrorHandler()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     return 'success'
 
@@ -933,38 +767,29 @@ def test_ogr_feature_default():
     feat_def = ogr.FeatureDefn('test')
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
 
-    if field_def.GetDefault() is not None:
-        return 'fail'
-    if field_def.IsDefaultDriverSpecific():
-        return 'fail'
+    assert field_def.GetDefault() is None
+    assert not field_def.IsDefaultDriverSpecific()
 
     field_def.SetDefault("(some_expr)")
-    if field_def.GetDefault() != "(some_expr)":
-        return 'fail'
-    if not field_def.IsDefaultDriverSpecific():
-        return 'fail'
+    assert field_def.GetDefault() == "(some_expr)"
+    assert field_def.IsDefaultDriverSpecific()
 
     field_def.SetDefault("'a")
-    if field_def.GetDefault() != "'a":
-        return 'fail'
+    assert field_def.GetDefault() == "'a"
 
     gdal.PushErrorHandler()
     field_def.SetDefault("'a''")
     gdal.PopErrorHandler()
-    if field_def.GetDefault() is not None:
-        return 'fail'
+    assert field_def.GetDefault() is None
 
     gdal.PushErrorHandler()
     field_def.SetDefault("'a'b'")
     gdal.PopErrorHandler()
-    if field_def.GetDefault() is not None:
-        return 'fail'
+    assert field_def.GetDefault() is None
 
     field_def.SetDefault("'a''b'''")
-    if field_def.GetDefault() != "'a''b'''":
-        return 'fail'
-    if field_def.IsDefaultDriverSpecific():
-        return 'fail'
+    assert field_def.GetDefault() == "'a''b'''"
+    assert not field_def.IsDefaultDriverSpecific()
     feat_def.AddFieldDefn(field_def)
 
     field_def = ogr.FieldDefn('field_datetime', ogr.OFTDateTime)
@@ -1009,37 +834,26 @@ def test_ogr_feature_native_data():
 
     feat_def = ogr.FeatureDefn('test')
     f = ogr.Feature(feat_def)
-    if f.GetNativeData() is not None:
-        return 'fail'
-    if f.GetNativeMediaType() is not None:
-        return 'fail'
+    assert f.GetNativeData() is None
+    assert f.GetNativeMediaType() is None
 
     f.SetNativeData('native_data')
-    if f.GetNativeData() != 'native_data':
-        return 'fail'
+    assert f.GetNativeData() == 'native_data'
     f.SetNativeMediaType('native_media_type')
-    if f.GetNativeMediaType() != 'native_media_type':
-        print(f.GetNativeMediaType())
-        return 'fail'
+    assert f.GetNativeMediaType() == 'native_media_type'
 
     f2 = ogr.Feature(feat_def)
     f2.SetFrom(f)
-    if f2.GetNativeData() != 'native_data':
-        return 'fail'
-    if f2.GetNativeMediaType() != 'native_media_type':
-        return 'fail'
+    assert f2.GetNativeData() == 'native_data'
+    assert f2.GetNativeMediaType() == 'native_media_type'
 
     f_clone = f.Clone()
-    if f_clone.GetNativeData() != 'native_data':
-        return 'fail'
-    if f_clone.GetNativeMediaType() != 'native_media_type':
-        return 'fail'
+    assert f_clone.GetNativeData() == 'native_data'
+    assert f_clone.GetNativeMediaType() == 'native_media_type'
     f_clone.SetNativeData(None)
     f_clone.SetNativeMediaType(None)
-    if f_clone.GetNativeData() is not None:
-        return 'fail'
-    if f_clone.GetNativeMediaType() is not None:
-        return 'fail'
+    assert f_clone.GetNativeData() is None
+    assert f_clone.GetNativeMediaType() is None
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -1057,24 +871,12 @@ def test_ogr_feature_native_data():
     for dialect in dialects:
         sql_lyr = ds.ExecuteSQL('SELECT * FROM %s' % lyr.GetName(), dialect=dialect)
         native_data = sql_lyr.GetMetadataItem('NATIVE_DATA', 'NATIVE_DATA')
-        if native_data != 'native_data':
-            print(dialect)
-            print(native_data)
-            return 'fail'
+        assert native_data == 'native_data', dialect
         native_media_type = sql_lyr.GetMetadataItem('NATIVE_MEDIA_TYPE', 'NATIVE_DATA')
-        if native_media_type != 'native_media_type':
-            print(dialect)
-            print(native_media_type)
-            return 'fail'
+        assert native_media_type == 'native_media_type', dialect
         f = sql_lyr.GetNextFeature()
-        if f.GetNativeData() != 'native_data':
-            print(dialect)
-            print(f.GetNativeData())
-            return 'fail'
-        if f.GetNativeMediaType() != 'native_media_type':
-            print(dialect)
-            print(f.GetNativeMediaType())
-            return 'fail'
+        assert f.GetNativeData() == 'native_data', dialect
+        assert f.GetNativeMediaType() == 'native_media_type', dialect
         ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -1092,8 +894,7 @@ def test_ogr_feature_set_geometry_self():
     f.SetGeometryDirectly(f.GetGeometryRef())
     f.SetGeometry(f.GetGeometryRef())
     f.SetGeometry(f.GetGeometryRef())
-    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        return 'fail'
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 49)'
 
     return 'success'
 
@@ -1107,19 +908,14 @@ def test_ogr_feature_null_field():
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
-    if f.IsFieldNull(feat_def.GetFieldIndex("field_string")):
-        return 'fail'
-    if f.IsFieldNull("field_string"):
-        return 'fail'
+    assert not f.IsFieldNull(feat_def.GetFieldIndex("field_string"))
+    assert not f.IsFieldNull("field_string")
     f.SetFieldNull(feat_def.GetFieldIndex("field_string"))
-    if f.IsFieldNull(feat_def.GetFieldIndex("field_string")) == 0:
-        return 'fail'
+    assert f.IsFieldNull(feat_def.GetFieldIndex("field_string")) != 0
     f.SetField("field_string", "foo")
-    if f.IsFieldNull("field_string"):
-        return 'fail'
+    assert not f.IsFieldNull("field_string")
     f.SetFieldNull("field_string")
-    if f.IsFieldNull(feat_def.GetFieldIndex("field_string")) == 0:
-        return 'fail'
+    assert f.IsFieldNull(feat_def.GetFieldIndex("field_string")) != 0
     f = None
 
     field_def = ogr.FieldDefn('field_binary', ogr.OFTBinary)
@@ -1143,37 +939,25 @@ def test_ogr_feature_null_field():
     f.field_integer64list = [9876543210]
     f.field_reallist = [123.5, 567.0]
     f.field_stringlist = ['abc', 'def']
-    if f.IsFieldNull('field_binary') != 0:
-        return 'fail'
-    if f.IsFieldNull('field_integerlist') != 0:
-        return 'fail'
-    if f.IsFieldNull('field_integer64list') != 0:
-        return 'fail'
-    if f.IsFieldNull('field_reallist') != 0:
-        return 'fail'
-    if f.IsFieldNull('field_stringlist') != 0:
-        return 'fail'
+    assert f.IsFieldNull('field_binary') == 0
+    assert f.IsFieldNull('field_integerlist') == 0
+    assert f.IsFieldNull('field_integer64list') == 0
+    assert f.IsFieldNull('field_reallist') == 0
+    assert f.IsFieldNull('field_stringlist') == 0
     f.SetField('field_binary', None)
     f.SetFieldNull('field_integerlist')
     f.SetFieldNull('field_integer64list')
     f.SetFieldNull('field_reallist')
     f.SetFieldNull('field_stringlist')
-    if f.IsFieldNull('field_binary') == 0:
-        return 'fail'
-    if f.IsFieldNull('field_integerlist') == 0:
-        return 'fail'
-    if f.IsFieldNull('field_integer64list') == 0:
-        return 'fail'
-    if f.IsFieldNull('field_reallist') == 0:
-        return 'fail'
-    if f.IsFieldNull('field_stringlist') == 0:
-        return 'fail'
+    assert f.IsFieldNull('field_binary') != 0
+    assert f.IsFieldNull('field_integerlist') != 0
+    assert f.IsFieldNull('field_integer64list') != 0
+    assert f.IsFieldNull('field_reallist') != 0
+    assert f.IsFieldNull('field_stringlist') != 0
 
     f_clone = f.Clone()
-    if f_clone.IsFieldNull('field_binary') == 0:
-        return 'fail'
-    if not f.Equal(f_clone):
-        return 'fail'
+    assert f_clone.IsFieldNull('field_binary') != 0
+    assert f.Equal(f_clone)
 
     f = None
 

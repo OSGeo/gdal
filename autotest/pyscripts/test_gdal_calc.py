@@ -73,25 +73,13 @@ def test_gdal_calc_py_1():
     ds2 = gdal.Open('tmp/test_gdal_calc_py_1_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_1_3.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
 
-    if ds1.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
+    assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 58561, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 58561, 'ds3 wrong checksum'
 
     ds1 = None
     ds2 = None
@@ -120,24 +108,12 @@ def test_gdal_calc_py_2():
     ds2 = gdal.Open('tmp/test_gdal_calc_py_2_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_2_3.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
-    if ds1.GetRasterBand(1).Checksum() != 12368:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 62785:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 47132:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
+    assert ds1.GetRasterBand(1).Checksum() == 12368, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 62785, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 47132, 'ds3 wrong checksum'
     ds1 = None
     ds2 = None
     ds3 = None
@@ -161,21 +137,11 @@ def test_gdal_calc_py_3():
 
     ds = gdal.Open('tmp/test_gdal_calc_py_3.tif')
 
-    if ds is None:
-        gdaltest.post_reason('ds not found')
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('band 1 wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(2).Checksum() != 58561:
-        gdaltest.post_reason('band 2 wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(3).Checksum() != 36064:
-        gdaltest.post_reason('band 3 wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(4).Checksum() != 10807:
-        gdaltest.post_reason('band 4 wrong checksum')
-        return 'fail'
+    assert ds is not None, 'ds not found'
+    assert ds.GetRasterBand(1).Checksum() == 12603, 'band 1 wrong checksum'
+    assert ds.GetRasterBand(2).Checksum() == 58561, 'band 2 wrong checksum'
+    assert ds.GetRasterBand(3).Checksum() == 36064, 'band 3 wrong checksum'
+    assert ds.GetRasterBand(4).Checksum() == 10807, 'band 4 wrong checksum'
 
     ds = None
 
@@ -200,18 +166,10 @@ def test_gdal_calc_py_4():
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_4_2.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds1.GetRasterBand(1).Checksum() != 29935:
-        gdaltest.post_reason('ds1 band 1 wrong checksum')
-        return 'fail'
-    if ds1.GetRasterBand(2).Checksum() != 13128:
-        gdaltest.post_reason('ds1 band 2 wrong checksum')
-        return 'fail'
-    if ds1.GetRasterBand(3).Checksum() != 59092:
-        gdaltest.post_reason('ds1 band 3 wrong checksum')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds1.GetRasterBand(1).Checksum() == 29935, 'ds1 band 1 wrong checksum'
+    assert ds1.GetRasterBand(2).Checksum() == 13128, 'ds1 band 2 wrong checksum'
+    assert ds1.GetRasterBand(3).Checksum() == 59092, 'ds1 band 3 wrong checksum'
 
     ds1 = None
 
@@ -220,18 +178,10 @@ def test_gdal_calc_py_4():
 
     ds2 = gdal.Open('tmp/test_gdal_calc_py_4_3.tif')
 
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 10025:
-        gdaltest.post_reason('ds2 band 1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(2).Checksum() != 62785:
-        gdaltest.post_reason('ds2 band 2 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(3).Checksum() != 10621:
-        gdaltest.post_reason('ds2 band 3 wrong checksum')
-        return 'fail'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds2.GetRasterBand(1).Checksum() == 10025, 'ds2 band 1 wrong checksum'
+    assert ds2.GetRasterBand(2).Checksum() == 62785, 'ds2 band 2 wrong checksum'
+    assert ds2.GetRasterBand(3).Checksum() == 10621, 'ds2 band 3 wrong checksum'
 
     ds2 = None
 
@@ -267,25 +217,13 @@ def test_gdal_calc_py_5():
     ds2 = gdal.Open('tmp/test_gdal_calc_py_5_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_5_3.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
 
-    if ds1.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
+    assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 58561, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 58561, 'ds3 wrong checksum'
 
     ds1 = None
     ds2 = None
@@ -319,13 +257,9 @@ def test_gdal_calc_py_6():
 
     ds = gdal.Open('tmp/test_gdal_calc_py_6.tif')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 4673:
-        print(cs)
-        return 'fail'
+    assert cs == 4673
     result = ds.GetRasterBand(1).ComputeRasterMinMax()
-    if result != (90, 255):
-        print(result)
-        return 'fail'
+    assert result == (90, 255)
 
     return 'success'
 
@@ -373,31 +307,15 @@ def test_gdal_calc_py_7():
     ds3 = gdal.Open('tmp/test_gdal_calc_py_7_3.tif')
     ds4 = gdal.Open('tmp/test_gdal_calc_py_7_4.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
-    if ds4 is None:
-        gdaltest.post_reason('ds4 not found')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
+    assert ds4 is not None, 'ds4 not found'
 
-    if ds1.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
-    if ds4.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds4 wrong checksum')
-        return 'fail'
+    assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 58561, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 58561, 'ds3 wrong checksum'
+    assert ds4.GetRasterBand(1).Checksum() == 58561, 'ds4 wrong checksum'
 
     ds1 = None
     ds2 = None

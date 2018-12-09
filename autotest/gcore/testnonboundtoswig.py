@@ -203,25 +203,20 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
         filename = bytes(filename, 'utf-8')
 
     native_in_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_ReadOnly)
-    if native_in_ds is None:
-        return 'fail'
+    assert native_in_ds is not None
 
     filename = '/vsimem/out.tif'
     if version_info >= (3, 0, 0):
         filename = bytes(filename, 'utf-8')
 
     native_out_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_Update)
-    if native_out_ds is None:
-        return 'fail'
+    assert native_out_ds is not None
 
     pTransformerArg = gdal_handle.GDALCreateGenImgProjTransformer2(native_in_ds, native_out_ds, None)
-    if pTransformerArg is None:
-        return 'fail'
+    assert pTransformerArg is not None
 
     ret = gdal_handle_stdcall.GDALSimpleImageWarp(native_in_ds, native_out_ds, 0, None, gdal_handle_stdcall.GDALGenImgProjTransform, pTransformerArg, None, None, None)
-    if ret != 1:
-        print(ret)
-        return 'fail'
+    assert ret == 1
 
     gdal_handle.GDALDestroyGenImgProjTransformer(pTransformerArg)
 
@@ -234,9 +229,7 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
 
     gdal.Unlink('/vsimem/out.tif')
 
-    if cs != 4672:
-        print(cs)
-        return 'fail'
+    assert cs == 4672
 
     return 'success'
 
@@ -330,8 +323,7 @@ def test_testnonboundtoswig_VRTDerivedBands():
     if version_info >= (3, 0, 0):
         funcName = bytes(funcName, 'utf-8')
     ret = gdal_handle_stdcall.GDALAddDerivedBandPixelFunc(funcName, my_cDerivedPixelFunc)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     vrt_xml = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -356,16 +348,9 @@ def test_testnonboundtoswig_VRTDerivedBands():
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20)
     ds = None
 
-    if ref_cs != got_cs:
-        gdaltest.post_reason('wrong checksum')
-        print(got_cs)
-        return 'fail'
+    assert ref_cs == got_cs, 'wrong checksum'
 
-    if ref_data != got_data:
-        gdaltest.post_reason('wrong data')
-        print(ref_data)
-        print(got_data)
-        return 'fail'
+    assert ref_data == got_data, 'wrong data'
 
     return 'success'
 

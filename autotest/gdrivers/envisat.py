@@ -36,6 +36,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 
 def _get_mds_num(filename):
@@ -99,12 +100,10 @@ class EnvisatTestBase(object):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
-        if (ds.RasterXSize, ds.RasterYSize) != self.size:
-            gdaltest.post_reason('Bad size. Expected %s, got %s' % (self.size, (ds.RasterXSize, ds.RasterYSize)))
-            return 'fail'
+        assert (ds.RasterXSize, ds.RasterYSize) == self.size, \
+            ('Bad size. Expected %s, got %s' % (self.size, (ds.RasterXSize, ds.RasterYSize)))
 
         return 'success'
 
@@ -113,12 +112,10 @@ class EnvisatTestBase(object):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
-        if ds.GetRasterBand(1).Checksum() != self.checksum:
-            gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'fail'
+        assert ds.GetRasterBand(1).Checksum() == self.checksum, \
+            ('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
 
         return 'success'
 
@@ -129,8 +126,7 @@ class EnvisatTestBase(object):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         d = {}
         for gcp in ds.GetGCPs():
@@ -153,12 +149,9 @@ class EnvisatTestBase(object):
         mds_num = _get_mds_num(filename)
 
         ds = gdal.Open(filename)
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
-        if ds.RasterCount < mds_num:
-            gdaltest.post_reason('Not all bands have been detected')
-            return 'fail'
+        assert ds.RasterCount >= mds_num, 'Not all bands have been detected'
 
         return 'success'
 
@@ -169,15 +162,13 @@ class EnvisatTestBase(object):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         product = ds.GetMetadataItem('MPH_PRODUCT')
         record_md = ds.GetMetadata('RECORDS')
 
-        if product[:3] not in ('ASA', 'SAR', 'MER') and record_md:
-            gdaltest.post_reason('Unexpected metadata in the "RECORDS" domain.')
-            return 'fail'
+        assert product[:3] in ('ASA', 'SAR', 'MER') or not record_md, \
+            'Unexpected metadata in the "RECORDS" domain.'
 
         return 'success'
 
@@ -198,14 +189,11 @@ class TestEnvisatASAR(EnvisatTestBase):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         product = ds.GetMetadataItem('MPH_PRODUCT')
 
-        if product[:3] not in ('ASA', 'SAR'):
-            gdaltest.post_reason('Wrong sensor ID.')
-            return 'fail'
+        assert product[:3] in ('ASA', 'SAR'), 'Wrong sensor ID.'
 
         return 'success'
 
@@ -216,15 +204,12 @@ class TestEnvisatASAR(EnvisatTestBase):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         product = ds.GetMetadataItem('MPH_PRODUCT')
         record_md = ds.GetMetadata('RECORDS')
 
-        if not record_md:
-            gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
-            return 'fail'
+        assert record_md, 'Unable to read ADS metadata from ASAR.'
 
         record = 'SQ_ADS'  # it is present in all ASAR poducts
         if product.startswith('ASA_WV'):
@@ -234,11 +219,9 @@ class TestEnvisatASAR(EnvisatTestBase):
                           'PHASE_CROSS_CONF'):
                 key0 = '%s_%s' % (record, field)
                 key1 = '%s_0_%s' % (record, field)
-                if key0 not in record_md and key1 not in record_md:
-                    gdaltest.post_reason(
-                        'No "%s" or "%s" key in "RECORDS" domain.' %
+                assert key0 in record_md or key1 in record_md, \
+                    ('No "%s" or "%s" key in "RECORDS" domain.' %
                         (key0, key1))
-                    return 'fail'
         else:
             for mds in range(1, ds.RasterCount + 1):
                 for field in ('ZERO_DOPPLER_TIME',
@@ -246,11 +229,9 @@ class TestEnvisatASAR(EnvisatTestBase):
                               'INPUT_STD_DEV'):
                     key0 = 'MDS%d_%s_%s' % (mds, record, field)
                     key1 = 'MDS%d_%s_0_%s' % (mds, record, field)
-                    if key0 not in record_md and key1 not in record_md:
-                        gdaltest.post_reason(
-                            'No "%s" or "%s" key in "RECORDS" domain.' %
+                    assert key0 in record_md or key1 in record_md, \
+                        ('No "%s" or "%s" key in "RECORDS" domain.' %
                             (key0, key1))
-                        return 'fail'
 
         return 'success'
 
@@ -271,14 +252,11 @@ class TestEnvisatMERIS(EnvisatTestBase):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         product = ds.GetMetadataItem('MPH_PRODUCT')
 
-        if product[:3] not in ('MER',):
-            gdaltest.post_reason('Wrong sensor ID.')
-            return 'fail'
+        assert product[:3] in ('MER',), 'Wrong sensor ID.'
 
         return 'success'
 
@@ -289,25 +267,20 @@ class TestEnvisatMERIS(EnvisatTestBase):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         record_md = ds.GetMetadata('RECORDS')
 
-        if not record_md:
-            gdaltest.post_reason('Unable to read ADS metadata from ASAR.')
-            return 'fail'
+        assert record_md, 'Unable to read ADS metadata from ASAR.'
 
         record = 'Quality_ADS'  # it is present in all MER poducts
 
         for field in ('DSR_TIME', 'ATTACH_FLAG'):
             key0 = '%s_%s' % (record, field)
             key1 = '%s_0_%s' % (record, field)
-            if key0 not in record_md and key1 not in record_md:
-                gdaltest.post_reason(
-                    'No "%s" or "%s" key in "RECORDS" domain.' %
+            assert key0 in record_md or key1 in record_md, \
+                ('No "%s" or "%s" key in "RECORDS" domain.' %
                     (key0, key1))
-                return 'fail'
 
         return 'success'
 
@@ -318,8 +291,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         flags_band = None
         detector_index_band = None
@@ -334,37 +306,27 @@ class TestEnvisatMERIS(EnvisatTestBase):
         product = ds.GetMetadataItem('MPH_PRODUCT')
         level = product[8]
         if level == '1':
-            if not flags_band:
-                gdaltest.post_reason('No flag band in MERIS Level 1 product.')
-                return 'fail'
+            assert flags_band, 'No flag band in MERIS Level 1 product.'
 
             band = ds.GetRasterBand(flags_band)
-            if band.DataType != gdal.GDT_Byte:
-                gdaltest.post_reason('Incorrect data type of the flag band in '
+            assert band.DataType == gdal.GDT_Byte, \
+                ('Incorrect data type of the flag band in '
                                      'MERIS Level 1 product.')
-                return 'fail'
 
-            if not detector_index_band:
-                gdaltest.post_reason('No "detector index" band in MERIS '
+            assert detector_index_band, ('No "detector index" band in MERIS '
                                      'Level 1 product.')
-                return 'fail'
 
             band = ds.GetRasterBand(detector_index_band)
-            if band.DataType != gdal.GDT_Int16:
-                gdaltest.post_reason('Incorrect data type of the '
+            assert band.DataType == gdal.GDT_Int16, ('Incorrect data type of the '
                                      '"detector index" band in MERIS Level 2 '
                                      'product.')
-                return 'fail'
         elif level == '2':
-            if not flags_band:
-                gdaltest.post_reason('No flag band in MERIS Level 2 product.')
-                return 'fail'
+            assert flags_band, 'No flag band in MERIS Level 2 product.'
 
             band = ds.GetRasterBand(flags_band)
-            if band.DataType != gdal.GDT_UInt32:
-                gdaltest.post_reason('Incorrect data type of the flag band in '
+            assert band.DataType == gdal.GDT_UInt32, \
+                ('Incorrect data type of the flag band in '
                                      'MERIS Level 2 product.')
-                return 'fail'
         else:
             gdaltest.post_reason('Invalid product level: %s.' % level)
             return 'fail'
@@ -378,8 +340,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
             return 'skip'
 
         ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         gcp_values = [
             (gcp.Id, gcp.GCPLine, gcp.GCPPixel, gcp.GCPX, gcp.GCPY, gcp.GCPZ)
@@ -402,9 +363,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
         for r, v in zip(ref, gcp_values):
             for i, ri in enumerate(r):
                 if abs(float(ri) - float(v[i])) > 1e-10:
-                    gdaltest.post_reason('Wrong GCP coordinates.')
                     print(r)
-                    print(v)
-                    return 'fail'
+                    pytest.fail('Wrong GCP coordinates.')
 
         return 'success'

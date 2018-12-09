@@ -159,14 +159,12 @@ def test_proj(src_srs, src_xyz, src_error,
             return 'skip'
 
     src = osr.SpatialReference()
-    if src.SetFromUserInput(src_srs) != 0:
-        gdaltest.post_reason('SetFromUserInput(%s) failed.' % src_srs)
-        return 'fail'
+    assert src.SetFromUserInput(src_srs) == 0, \
+        ('SetFromUserInput(%s) failed.' % src_srs)
 
     dst = osr.SpatialReference()
-    if dst.SetFromUserInput(dst_srs) != 0:
-        gdaltest.post_reason('SetFromUserInput(%s) failed.' % dst_srs)
-        return 'fail'
+    assert dst.SetFromUserInput(dst_srs) == 0, \
+        ('SetFromUserInput(%s) failed.' % dst_srs)
 
     if requirements is not None and requirements[0] != 'G':
         additionnal_error_str = ' Check that proj version is >= %s ' % requirements
@@ -201,10 +199,9 @@ def test_proj(src_srs, src_xyz, src_error,
         + abs(result[1] - dst_xyz[1]) \
         + abs(result[2] - dst_xyz[2])
 
-    if error > dst_error:
-        gdaltest.post_reason('Dest error is %g, got (%.15g,%.15g,%.15g)%s'
+    assert error <= dst_error, \
+        ('Dest error is %g, got (%.15g,%.15g,%.15g)%s'
                              % (error, result[0], result[1], result[2], additionnal_error_str))
-        return 'fail'
 
     ######################################################################
     # Now transform back.
@@ -217,8 +214,7 @@ def test_proj(src_srs, src_xyz, src_error,
         + abs(result[1] - src_xyz[1]) \
         + abs(result[2] - src_xyz[2])
 
-    if error > src_error:
-        gdaltest.post_reason('Back to source error is %g.%s' % (error, additionnal_error_str))
-        return 'fail'
+    assert error <= src_error, \
+        ('Back to source error is %g.%s' % (error, additionnal_error_str))
 
     return 'success'

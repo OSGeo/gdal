@@ -110,19 +110,13 @@ def test_ehdr_5():
     ds = gdal.Open('tmp/test_4.bil')
     band = ds.GetRasterBand(1)
 
-    if band.GetNoDataValue() != 17:
-        gdaltest.post_reason('failed to preserve nodata value.')
-        return 'fail'
+    assert band.GetNoDataValue() == 17, 'failed to preserve nodata value.'
 
     ct = band.GetRasterColorTable()
-    if ct is None or ct.GetCount() != 4 \
-       or ct.GetColorEntry(2) != (255, 0, 255, 255):
-        gdaltest.post_reason('color table not persisted properly.')
-        return 'fail'
+    assert ct is not None and ct.GetCount() == 4 and ct.GetColorEntry(2) == (255, 0, 255, 255), \
+        'color table not persisted properly.'
 
-    if band.GetDefaultRAT():
-        gdaltest.post_reason('did not expect RAT')
-        return 'fail'
+    assert not band.GetDefaultRAT(), 'did not expect RAT'
 
     band = None
     ct = None
@@ -164,16 +158,12 @@ def test_ehdr_8():
     src_ds = None
 
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
-    if 'PIXELTYPE' not in md or md['PIXELTYPE'] != 'SIGNEDBYTE':
-        gdaltest.post_reason('Failed to detect SIGNEDBYTE')
-        return 'fail'
+    assert 'PIXELTYPE' in md and md['PIXELTYPE'] == 'SIGNEDBYTE', \
+        'Failed to detect SIGNEDBYTE'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected = 4672
-    if cs != expected:
-        print(cs)
-        gdaltest.post_reason('Did not get expected image checksum.')
-        return 'fail'
+    assert cs == expected, 'Did not get expected image checksum.'
 
     ds = None
 
@@ -192,21 +182,12 @@ def test_ehdr_9():
 
     ds = gdal.Open('data/wc_10m_CCCMA_A2a_2020_tmin_9.bil')
 
-    if ds.GetRasterBand(1).DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('wrong datatype')
-        print(ds.GetRasterBand(1).DataType)
-        return 'fail'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16, 'wrong datatype'
 
-    if ds.GetRasterBand(1).GetMinimum() != -191:
-        gdaltest.post_reason('wrong minimum value')
-        print(ds.GetRasterBand(1).GetMinimum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == -191, 'wrong minimum value'
 
     wkt = ds.GetProjectionRef()
-    if wkt.find('GEOGCS["WGS 84') != 0:
-        gdaltest.post_reason('wrong projection')
-        print(wkt)
-        return 'fail'
+    assert wkt.find('GEOGCS["WGS 84') == 0, 'wrong projection'
 
     ds = None
 
@@ -240,9 +221,8 @@ def test_ehdr_12():
     ds = None
 
     ds = gdal.Open('/vsimem/1bit.bil')
-    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum(), \
+        'did not get expected checksum'
     ds = None
     src_ds = None
 
@@ -264,39 +244,27 @@ def test_ehdr_13():
     src_ds = None
 
     ds = gdal.Open('/vsimem/byte.bil')
-    if ds.GetRasterBand(1).GetMinimum() is not None:
-        gdaltest.post_reason('did not expected minimum')
-        return 'fail'
-    if ds.GetRasterBand(1).GetMaximum() is not None:
-        gdaltest.post_reason('did not expected maximum')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() is None, 'did not expected minimum'
+    assert ds.GetRasterBand(1).GetMaximum() is None, 'did not expected maximum'
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
     for i in range(4):
-        if abs(stats[i] - expected_stats[i]) > 0.0001:
-            gdaltest.post_reason('did not get expected statistics')
-            return 'fail'
+        assert abs(stats[i] - expected_stats[i]) <= 0.0001, 'did not get expected statistics'
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/byte.stx', 'rb')
-    if f is None:
-        gdaltest.post_reason('expected .stx file')
-        return 'fail'
+    assert f is not None, 'expected .stx file'
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open('/vsimem/byte.bil')
-    if abs(ds.GetRasterBand(1).GetMinimum() - 74) > 0.0001:
-        gdaltest.post_reason('did not get expected minimum')
-        return 'fail'
-    if abs(ds.GetRasterBand(1).GetMaximum() - 255) > 0.0001:
-        gdaltest.post_reason('did not get expected maximum')
-        return 'fail'
+    assert abs(ds.GetRasterBand(1).GetMinimum() - 74) <= 0.0001, \
+        'did not get expected minimum'
+    assert abs(ds.GetRasterBand(1).GetMaximum() - 255) <= 0.0001, \
+        'did not get expected maximum'
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
     for i in range(4):
-        if abs(stats[i] - expected_stats[i]) > 0.0001:
-            gdaltest.post_reason('did not get expected statistics')
-            return 'fail'
+        assert abs(stats[i] - expected_stats[i]) <= 0.0001, 'did not get expected statistics'
     ds = None
 
     gdal.GetDriverByName('EHDR').Delete('/vsimem/byte.bil')
@@ -330,15 +298,9 @@ def test_ehdr_14():
         out_ds.FlushCache()
         cs2 = out_ds.GetRasterBand(1).Checksum()
 
-        if space == 1 and data != data2:
-            print(space)
-            return 'fail'
+        assert space != 1 or data == data2
 
-        if (cs1 != 1087 and cs1 != 1192) or (cs2 != 1087 and cs2 != 1192):
-            print(space)
-            print(cs1)
-            print(cs2)
-            return 'fail'
+        assert not (cs1 != 1087 and cs1 != 1192) or (cs2 != 1087 and cs2 != 1192), space
 
         gdal.SetConfigOption('GDAL_ONE_BIG_READ', 'YES')
         out_ds.GetRasterBand(1).WriteRaster(
@@ -347,10 +309,7 @@ def test_ehdr_14():
         out_ds.FlushCache()
         cs3 = out_ds.GetRasterBand(1).Checksum()
 
-        if cs3 != 1087 and cs3 != 1192:
-            print(space)
-            print(cs3)
-            return 'fail'
+        assert cs3 == 1087 or cs3 == 1192, space
 
     ds = None
 
@@ -369,24 +328,14 @@ def test_ehdr_rat():
     gdal.Translate(tmpfile, 'data/int16_rat.bil', format='EHdr')
     ds = gdal.Open(tmpfile)
     rat = ds.GetRasterBand(1).GetDefaultRAT()
-    if rat is None:
-        return 'fail'
-    if rat.GetColumnCount() != 4:
-        print(rat.GetColumnCount())
-        return 'fail'
-    if rat.GetRowCount() != 25:
-        print(rat.GetRowCount())
-        return 'fail'
+    assert rat is not None
+    assert rat.GetColumnCount() == 4
+    assert rat.GetRowCount() == 25
     for (idx, val) in [(0, -500), (1, 127), (2, 40), (3, 65)]:
-        if rat.GetValueAsInt(0, idx) != val:
-            print(idx, rat.GetValueAsInt(0, idx))
-            return 'fail'
+        assert rat.GetValueAsInt(0, idx) == val
     for (idx, val) in [(0, 2000), (1, 145), (2, 97), (3, 47)]:
-        if rat.GetValueAsInt(24, idx) != val:
-            print(idx, rat.GetValueAsInt(24, idx))
-            return 'fail'
-    if ds.GetRasterBand(1).GetColorTable() is None:
-        return 'fail'
+        assert rat.GetValueAsInt(24, idx) == val
+    assert ds.GetRasterBand(1).GetColorTable() is not None
     ds = None
 
     ds = gdal.Open(tmpfile, gdal.GA_Update)
@@ -395,12 +344,10 @@ def test_ehdr_rat():
     ds = None
 
     ds = gdal.Open(tmpfile, gdal.GA_Update)
-    if ds.GetRasterBand(1).GetDefaultRAT() or ds.GetRasterBand(1).GetColorTable():
-        return 'fail'
+    assert not (ds.GetRasterBand(1).GetDefaultRAT() or ds.GetRasterBand(1).GetColorTable())
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.GetDriverByName('EHDR').Delete(tmpfile)
@@ -423,45 +370,27 @@ def test_ehdr_approx_stats_flag():
     approx_ok = 1
     force = 1
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats != [0.0, 0.0, 0.0, 0.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [0.0, 0.0, 0.0, 0.0], 'did not get expected stats'
     md = ds.GetRasterBand(1).GetMetadata()
-    if 'STATISTICS_APPROXIMATE' not in md:
-        gdaltest.post_reason('did not get expected metadata')
-        print(md)
-        return 'fail'
+    assert 'STATISTICS_APPROXIMATE' in md, 'did not get expected metadata'
 
     approx_ok = 0
     force = 0
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats != [0.0, 0.0, 0.0, -1.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [0.0, 0.0, 0.0, -1.0], 'did not get expected stats'
 
     ds = gdal.Open(tmpfile, gdal.GA_Update)
     approx_ok = 0
     force = 0
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats != [0.0, 0.0, 0.0, -1.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [0.0, 0.0, 0.0, -1.0], 'did not get expected stats'
 
     approx_ok = 0
     force = 1
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats[1] != 20.0:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats[1] == 20.0, 'did not get expected stats'
     md = ds.GetRasterBand(1).GetMetadata()
-    if 'STATISTICS_APPROXIMATE' in md:
-        gdaltest.post_reason('did not get expected metadata')
-        print(md)
-        return 'fail'
+    assert 'STATISTICS_APPROXIMATE' not in md, 'did not get expected metadata'
     ds = None
 
     gdal.GetDriverByName('EHDR').Delete(tmpfile)

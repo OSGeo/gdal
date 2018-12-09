@@ -46,50 +46,40 @@ def test_ogr_rfc41_1():
     gfld_defn = ogr.GeomFieldDefn()
 
     # Check default values
-    if gfld_defn.GetName() != '':
-        return 'fail'
-    if gfld_defn.GetType() != ogr.wkbUnknown:
-        return 'fail'
-    if gfld_defn.GetSpatialRef() is not None:
-        return 'fail'
-    if gfld_defn.IsIgnored() != 0:
-        return 'fail'
+    assert gfld_defn.GetName() == ''
+    assert gfld_defn.GetType() == ogr.wkbUnknown
+    assert gfld_defn.GetSpatialRef() is None
+    assert gfld_defn.IsIgnored() == 0
 
     # Test SetName() / GetName()
     gfld_defn.SetName('foo')
-    if gfld_defn.GetName() != 'foo':
-        return 'fail'
+    assert gfld_defn.GetName() == 'foo'
 
     # Test SetType() / GetType()
     gfld_defn.SetType(ogr.wkbPoint)
-    if gfld_defn.GetType() != ogr.wkbPoint:
-        return 'fail'
+    assert gfld_defn.GetType() == ogr.wkbPoint
 
     # Test SetSpatialRef() / GetSpatialRef()
     sr = osr.SpatialReference()
     gfld_defn.SetSpatialRef(sr)
     got_sr = gfld_defn.GetSpatialRef()
-    if got_sr.IsSame(sr) == 0:
-        return 'fail'
+    assert got_sr.IsSame(sr) != 0
 
     gfld_defn.SetSpatialRef(None)
-    if gfld_defn.GetSpatialRef() is not None:
-        return 'fail'
+    assert gfld_defn.GetSpatialRef() is None
 
     gfld_defn.SetSpatialRef(sr)
 
     # Test SetIgnored() / IsIgnored()
     gfld_defn.SetIgnored(1)
-    if gfld_defn.IsIgnored() != 1:
-        return 'fail'
+    assert gfld_defn.IsIgnored() == 1
 
     # Test setting invalid value
     old_val = gfld_defn.GetType()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gfld_defn.SetType(-3)
     gdal.PopErrorHandler()
-    if gfld_defn.GetType() != old_val:
-        return 'fail'
+    assert gfld_defn.GetType() == old_val
 
     gfld_defn = None
 
@@ -103,123 +93,88 @@ def test_ogr_rfc41_2():
 
     # Check implicit geometry field creation
     feature_defn = ogr.FeatureDefn()
-    if feature_defn.GetGeomFieldCount() != 1:
-        return 'fail'
-    if feature_defn.GetGeomType() != ogr.wkbUnknown:
-        return 'fail'
+    assert feature_defn.GetGeomFieldCount() == 1
+    assert feature_defn.GetGeomType() == ogr.wkbUnknown
 
     # Test IsSame()
-    if feature_defn.IsSame(feature_defn) != 1:
-        return 'fail'
+    assert feature_defn.IsSame(feature_defn) == 1
     other_feature_defn = ogr.FeatureDefn()
-    if feature_defn.IsSame(other_feature_defn) != 1:
-        return 'fail'
+    assert feature_defn.IsSame(other_feature_defn) == 1
     other_feature_defn.GetGeomFieldDefn(0).SetSpatialRef(osr.SpatialReference())
-    if feature_defn.IsSame(other_feature_defn) != 0:
-        return 'fail'
+    assert feature_defn.IsSame(other_feature_defn) == 0
     feature_defn.GetGeomFieldDefn(0).SetSpatialRef(osr.SpatialReference())
-    if feature_defn.IsSame(other_feature_defn) != 1:
-        return 'fail'
+    assert feature_defn.IsSame(other_feature_defn) == 1
     other_feature_defn.GetGeomFieldDefn(0).SetSpatialRef(None)
-    if feature_defn.IsSame(other_feature_defn) != 0:
-        return 'fail'
+    assert feature_defn.IsSame(other_feature_defn) == 0
 
     feature_defn = None
     feature_defn = ogr.FeatureDefn()
 
     # Check changing geometry type
     feature_defn.SetGeomType(ogr.wkbPoint)
-    if feature_defn.GetGeomType() != ogr.wkbPoint:
-        return 'fail'
-    if feature_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbPoint:
-        return 'fail'
+    assert feature_defn.GetGeomType() == ogr.wkbPoint
+    assert feature_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
 
     # Check setting to wkbNone and implicitly destroying the field.
     for _ in range(2):
         feature_defn.SetGeomType(ogr.wkbNone)
-        if feature_defn.GetGeomFieldCount() != 0:
-            return 'fail'
-        if feature_defn.GetGeomType() != ogr.wkbNone:
-            return 'fail'
+        assert feature_defn.GetGeomFieldCount() == 0
+        assert feature_defn.GetGeomType() == ogr.wkbNone
 
     # Recreate the field
     for t in [ogr.wkbPoint, ogr.wkbLineString]:
         feature_defn.SetGeomType(t)
-        if feature_defn.GetGeomFieldCount() != 1:
-            return 'fail'
-        if feature_defn.GetGeomType() != t:
-            return 'fail'
-        if feature_defn.GetGeomFieldDefn(0).GetType() != t:
-            return 'fail'
+        assert feature_defn.GetGeomFieldCount() == 1
+        assert feature_defn.GetGeomType() == t
+        assert feature_defn.GetGeomFieldDefn(0).GetType() == t
 
     # Test setting invalid value
     old_val = feature_defn.GetGeomType()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     feature_defn.SetGeomType(-3)
     gdal.PopErrorHandler()
-    if feature_defn.GetGeomType() != old_val:
-        return 'fail'
+    assert feature_defn.GetGeomType() == old_val
 
     # Test SetIgnored() / IsIgnored()
-    if feature_defn.IsGeometryIgnored() != 0:
-        return 'fail'
-    if feature_defn.GetGeomFieldDefn(0).IsIgnored() != 0:
-        return 'fail'
+    assert feature_defn.IsGeometryIgnored() == 0
+    assert feature_defn.GetGeomFieldDefn(0).IsIgnored() == 0
     feature_defn.SetGeometryIgnored(1)
-    if feature_defn.IsGeometryIgnored() != 1:
-        return 'fail'
-    if feature_defn.GetGeomFieldDefn(0).IsIgnored() != 1:
-        return 'fail'
+    assert feature_defn.IsGeometryIgnored() == 1
+    assert feature_defn.GetGeomFieldDefn(0).IsIgnored() == 1
 
     # Test wrong index values for GetGeomFieldDefn()
     for idx in [-1, 1]:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = feature_defn.GetGeomFieldDefn(idx)
         gdal.PopErrorHandler()
-        if ret is not None:
-            return 'fail'
+        assert ret is None
 
     # Test GetGeomFieldIndex()
-    if feature_defn.GetGeomFieldIndex("") != 0:
-        return 'fail'
-    if feature_defn.GetGeomFieldIndex("invalid") != -1:
-        return 'fail'
+    assert feature_defn.GetGeomFieldIndex("") == 0
+    assert feature_defn.GetGeomFieldIndex("invalid") == -1
 
     # Test AddGeomFieldDefn()
     gfld_defn = ogr.GeomFieldDefn('polygon_field', ogr.wkbPolygon)
     feature_defn.AddGeomFieldDefn(gfld_defn)
-    if feature_defn.GetGeomFieldCount() != 2:
-        return 'fail'
-    if feature_defn.GetGeomFieldIndex("polygon_field") != 1:
-        return 'fail'
-    if feature_defn.GetGeomFieldDefn(1).GetName() != 'polygon_field':
-        return 'fail'
+    assert feature_defn.GetGeomFieldCount() == 2
+    assert feature_defn.GetGeomFieldIndex("polygon_field") == 1
+    assert feature_defn.GetGeomFieldDefn(1).GetName() == 'polygon_field'
 
     # Test DeleteGeomFieldDefn() : error cases
-    if feature_defn.DeleteGeomFieldDefn(-1) == 0:
-        return 'fail'
-    if feature_defn.DeleteGeomFieldDefn(2) == 0:
-        return 'fail'
-    if feature_defn.GetGeomFieldCount() != 2:
-        return 'fail'
+    assert feature_defn.DeleteGeomFieldDefn(-1) != 0
+    assert feature_defn.DeleteGeomFieldDefn(2) != 0
+    assert feature_defn.GetGeomFieldCount() == 2
 
     # Test DeleteGeomFieldDefn() : valid cases
-    if feature_defn.DeleteGeomFieldDefn(0) != 0:
-        return 'fail'
-    if feature_defn.GetGeomFieldCount() != 1:
-        return 'fail'
-    if feature_defn.GetGeomFieldIndex("polygon_field") != 0:
-        return 'fail'
+    assert feature_defn.DeleteGeomFieldDefn(0) == 0
+    assert feature_defn.GetGeomFieldCount() == 1
+    assert feature_defn.GetGeomFieldIndex("polygon_field") == 0
 
-    if feature_defn.DeleteGeomFieldDefn(0) != 0:
-        return 'fail'
-    if feature_defn.GetGeomFieldCount() != 0:
-        return 'fail'
+    assert feature_defn.DeleteGeomFieldDefn(0) == 0
+    assert feature_defn.GetGeomFieldCount() == 0
 
-    if feature_defn.IsSame(feature_defn) != 1:
-        return 'fail'
-    if feature_defn.IsSame(ogr.FeatureDefn()) != 0:
-        return 'fail'
+    assert feature_defn.IsSame(feature_defn) == 1
+    assert feature_defn.IsSame(ogr.FeatureDefn()) == 0
 
     feature_defn = None
 
@@ -234,73 +189,45 @@ def test_ogr_rfc41_3():
     # Test with just one geometry field
     feature_defn = ogr.FeatureDefn()
     feature = ogr.Feature(feature_defn)
-    if feature.GetGeomFieldCount() != 1:
-        return 'fail'
-    if feature.GetGeomFieldDefnRef(0).GetName() != '':
-        return 'fail'
-    if feature.GetGeomFieldDefnRef(0).GetType() != ogr.wkbUnknown:
-        return 'fail'
-    if feature.GetGeomFieldIndex('') != 0:
-        return 'fail'
-    if feature.GetGeomFieldIndex('non_existing') != -1:
-        return 'fail'
-    if feature.GetGeomFieldRef(-1) is not None:
-        return 'fail'
-    if feature.GetGeomFieldRef(0) is not None:
-        return 'fail'
-    if feature.GetGeomFieldRef(1) is not None:
-        return 'fail'
+    assert feature.GetGeomFieldCount() == 1
+    assert feature.GetGeomFieldDefnRef(0).GetName() == ''
+    assert feature.GetGeomFieldDefnRef(0).GetType() == ogr.wkbUnknown
+    assert feature.GetGeomFieldIndex('') == 0
+    assert feature.GetGeomFieldIndex('non_existing') == -1
+    assert feature.GetGeomFieldRef(-1) is None
+    assert feature.GetGeomFieldRef(0) is None
+    assert feature.GetGeomFieldRef(1) is None
     feature_clone_without_geom = feature.Clone()
-    if not feature.Equal(feature_clone_without_geom):
-        return 'fail'
-    if feature.SetGeomField(0, ogr.Geometry(ogr.wkbPoint)) != 0:
-        return 'fail'
-    if feature.GetGeomFieldRef(0).ExportToWkt() != 'POINT EMPTY':
-        return 'fail'
-    if not feature.Equal(feature.Clone()):
-        return 'fail'
-    if feature.Equal(feature_clone_without_geom):
-        return 'fail'
+    assert feature.Equal(feature_clone_without_geom)
+    assert feature.SetGeomField(0, ogr.Geometry(ogr.wkbPoint)) == 0
+    assert feature.GetGeomFieldRef(0).ExportToWkt() == 'POINT EMPTY'
+    assert feature.Equal(feature.Clone())
+    assert not feature.Equal(feature_clone_without_geom)
     feature_clone_with_other_geom = feature.Clone()
     feature_clone_with_other_geom.SetGeometry(ogr.Geometry(ogr.wkbLineString))
-    if feature.Equal(feature_clone_with_other_geom):
-        return 'fail'
-    if feature.SetGeomFieldDirectly(-1, None) == 0:
-        return 'fail'
-    if feature.SetGeomFieldDirectly(0, ogr.Geometry(ogr.wkbLineString)) != 0:
-        return 'fail'
-    if feature.GetGeomFieldRef(0).ExportToWkt() != 'LINESTRING EMPTY':
-        return 'fail'
+    assert not feature.Equal(feature_clone_with_other_geom)
+    assert feature.SetGeomFieldDirectly(-1, None) != 0
+    assert feature.SetGeomFieldDirectly(0, ogr.Geometry(ogr.wkbLineString)) == 0
+    assert feature.GetGeomFieldRef(0).ExportToWkt() == 'LINESTRING EMPTY'
     feature_clone_with_geom = feature.Clone()
-    if feature.SetGeomFieldDirectly(0, None) != 0:
-        return 'fail'
-    if feature.GetGeomFieldRef(0) is not None:
-        return 'fail'
-    if feature.Equal(feature_clone_with_geom):
-        return 'fail'
+    assert feature.SetGeomFieldDirectly(0, None) == 0
+    assert feature.GetGeomFieldRef(0) is None
+    assert not feature.Equal(feature_clone_with_geom)
     feature = None
 
     # Test one a feature with 0 geometry field
     feature_defn = ogr.FeatureDefn()
     feature_defn.SetGeomType(ogr.wkbNone)
     feature = ogr.Feature(feature_defn)
-    if not feature.Equal(feature.Clone()):
-        return 'fail'
-    if feature.GetGeomFieldCount() != 0:
-        return 'fail'
+    assert feature.Equal(feature.Clone())
+    assert feature.GetGeomFieldCount() == 0
     # This used to work before RFC 41, but it no longer will
-    if feature.SetGeometry(ogr.Geometry(ogr.wkbPoint)) == 0:
-        return 'fail'
-    if feature.SetGeomField(0, ogr.Geometry(ogr.wkbPoint)) == 0:
-        return 'fail'
-    if feature.GetGeometryRef() is not None:
-        return 'fail'
-    if feature.GetGeomFieldRef(0) is not None:
-        return 'fail'
-    if feature.SetGeometryDirectly(ogr.Geometry(ogr.wkbPoint)) == 0:
-        return 'fail'
-    if feature.SetGeomFieldDirectly(0, ogr.Geometry(ogr.wkbPoint)) == 0:
-        return 'fail'
+    assert feature.SetGeometry(ogr.Geometry(ogr.wkbPoint)) != 0
+    assert feature.SetGeomField(0, ogr.Geometry(ogr.wkbPoint)) != 0
+    assert feature.GetGeometryRef() is None
+    assert feature.GetGeomFieldRef(0) is None
+    assert feature.SetGeometryDirectly(ogr.Geometry(ogr.wkbPoint)) != 0
+    assert feature.SetGeomFieldDirectly(0, ogr.Geometry(ogr.wkbPoint)) != 0
     feature = None
 
     # Test one a feature with several geometry fields
@@ -313,18 +240,13 @@ def test_ogr_rfc41_3():
     feature = ogr.Feature(feature_defn)
     feature.SetGeomField(0, ogr.Geometry(ogr.wkbPolygon))
     feature.SetGeomField(1, ogr.Geometry(ogr.wkbPoint))
-    if feature.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON EMPTY':
-        return 'fail'
-    if feature.GetGeomFieldRef(1).ExportToWkt() != 'POINT EMPTY':
-        return 'fail'
-    if not feature.Equal(feature.Clone()):
-        return 'fail'
+    assert feature.GetGeomFieldRef(0).ExportToWkt() == 'POLYGON EMPTY'
+    assert feature.GetGeomFieldRef(1).ExportToWkt() == 'POINT EMPTY'
+    assert feature.Equal(feature.Clone())
     other_feature = ogr.Feature(feature_defn)
-    if feature.Equal(other_feature):
-        return 'fail'
+    assert not feature.Equal(other_feature)
     other_feature.SetFrom(feature)
-    if not feature.Equal(other_feature):
-        return 'fail'
+    assert feature.Equal(other_feature)
 
     # Test that in SetFrom() where target has a single geometry field,
     # we get the first geometry of the source even if we cannot find a
@@ -332,8 +254,7 @@ def test_ogr_rfc41_3():
     feature_defn_default = ogr.FeatureDefn()
     feature_default = ogr.Feature(feature_defn_default)
     feature_default.SetFrom(feature)
-    if feature_default.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON EMPTY':
-        return 'fail'
+    assert feature_default.GetGeomFieldRef(0).ExportToWkt() == 'POLYGON EMPTY'
 
     return 'success'
 
@@ -344,16 +265,12 @@ def test_ogr_rfc41_3():
 def test_ogr_rfc41_4():
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
-    if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
-        return 'fail'
+    assert ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 0
     sr = osr.SpatialReference()
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint, srs=sr)
-    if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
-        return 'fail'
-    if lyr.GetSpatialRef().IsSame(sr) == 0:
-        return 'fail'
-    if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().IsSame(sr) == 0:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCCreateGeomField) != 0
+    assert lyr.GetSpatialRef().IsSame(sr) != 0
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().IsSame(sr) != 0
     lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('a_name')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2)'))
@@ -361,8 +278,7 @@ def test_ogr_rfc41_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
-    if geom.GetSpatialReference().IsSame(sr) == 0:
-        return 'fail'
+    assert geom.GetSpatialReference().IsSame(sr) != 0
     feat = None
     lyr.CreateGeomField(ogr.GeomFieldDefn('another_geom_field', ogr.wkbPolygon))
     lyr.ResetReading()
@@ -372,57 +288,47 @@ def test_ogr_rfc41_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     geom = feat.GetGeomFieldRef(0)
-    if geom.ExportToWkt() != 'POINT (1 2)':
-        return 'fail'
+    assert geom.ExportToWkt() == 'POINT (1 2)'
     geom = feat.GetGeomFieldRef('another_geom_field')
-    if geom.ExportToWkt() != 'POLYGON ((10 10,10 11,11 11,11 10,10 10))':
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((10 10,10 11,11 11,11 10,10 10))'
 
     # Test GetExtent()
     got_extent = lyr.GetExtent(geom_field=1)
-    if got_extent != (10.0, 11.0, 10.0, 11.0):
-        return 'fail'
+    assert got_extent == (10.0, 11.0, 10.0, 11.0)
     # Test invalid geometry field index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     got_extent = lyr.GetExtent(geom_field=2)
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     # Test SetSpatialFilter()
     lyr.SetSpatialFilter(1, ogr.CreateGeometryFromWkt('POLYGON ((-10 10,-10 11,-11 11,-11 10,-10 10))'))
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
     lyr.SetSpatialFilter(1, ogr.CreateGeometryFromWkt('POLYGON ((10 10,10 11,11 11,11 10,10 10))'))
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     lyr.SetSpatialFilterRect(1, 10, 10, 11, 11)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     # Test invalid spatial filter index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.SetSpatialFilterRect(2, 0, 0, 0, 0)
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     lyr.SetSpatialFilter(None)
     another_lyr = ds.CopyLayer(lyr, 'dup_test')
     dup_feat = another_lyr.GetNextFeature()
     geom = dup_feat.GetGeomFieldRef('a_name')
-    if geom.ExportToWkt() != 'POINT (1 2)':
-        return 'fail'
+    assert geom.ExportToWkt() == 'POINT (1 2)'
     geom = dup_feat.GetGeomFieldRef('another_geom_field')
-    if geom.ExportToWkt() != 'POLYGON ((10 10,10 11,11 11,11 10,10 10))':
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((10 10,10 11,11 11,11 10,10 10))'
 
     return 'success'
 
@@ -439,15 +345,11 @@ def test_ogr_rfc41_5():
 
     f = ogr.Feature(feature_defn)
 
-    if f['strfield'] is not None:
-        return 'fail'
-    if f.strfield is not None:
-        return 'fail'
+    assert f['strfield'] is None
+    assert f.strfield is None
 
-    if f['geomfield'] is not None:
-        return 'fail'
-    if f.geomfield is not None:
-        return 'fail'
+    assert f['geomfield'] is None
+    assert f.geomfield is None
 
     try:
         f['nonexistent_field']
@@ -469,34 +371,25 @@ def test_ogr_rfc41_5():
 
     # This works.  Default Python behaviour. Stored in a dictionary
     f.nonexistent_field = 'bar'
-    if f.nonexistent_field != 'bar':
-        return 'fail'
+    assert f.nonexistent_field == 'bar'
 
     f['strfield'] = 'foo'
-    if f['strfield'] != 'foo':
-        return 'fail'
-    if f.strfield != 'foo':
-        return 'fail'
+    assert f['strfield'] == 'foo'
+    assert f.strfield == 'foo'
 
     f.strfield = 'bar'
-    if f['strfield'] != 'bar':
-        return 'fail'
-    if f.strfield != 'bar':
-        return 'fail'
+    assert f['strfield'] == 'bar'
+    assert f.strfield == 'bar'
 
     wkt = 'POINT EMPTY'
     f['geomfield'] = ogr.CreateGeometryFromWkt(wkt)
-    if f['geomfield'].ExportToWkt() != wkt:
-        return 'fail'
-    if f.geomfield.ExportToWkt() != wkt:
-        return 'fail'
+    assert f['geomfield'].ExportToWkt() == wkt
+    assert f.geomfield.ExportToWkt() == wkt
 
     wkt2 = 'POLYGON EMPTY'
     f.geomfield = ogr.CreateGeometryFromWkt(wkt2)
-    if f['geomfield'].ExportToWkt() != wkt2:
-        return 'fail'
-    if f.geomfield.ExportToWkt() != wkt2:
-        return 'fail'
+    assert f['geomfield'].ExportToWkt() == wkt2
+    assert f.geomfield.ExportToWkt() == wkt2
 
     return 'success'
 
@@ -528,130 +421,102 @@ def test_ogr_rfc41_6():
                 'SELECT intfield, geomfield FROM poly',
                 'SELECT geomfield, intfield FROM poly']:
         sql_lyr = ds.ExecuteSQL(sql)
-        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
-            return 'fail'
-        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None:
-            return 'fail'
+        assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbPolygon
+        assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None
         feat = sql_lyr.GetNextFeature()
-        if feat.GetField('intfield') != 1:
-            return 'fail'
-        if feat.GetGeomFieldRef('geomfield') is None:
-            return 'fail'
+        assert feat.GetField('intfield') == 1
+        assert feat.GetGeomFieldRef('geomfield') is not None
         feat = sql_lyr.GetNextFeature()
-        if feat.GetGeomFieldRef('geomfield') is not None:
-            return 'fail'
+        assert feat.GetGeomFieldRef('geomfield') is None
         feat = None
         ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(geometry_field AS GEOMETRY)
     sql_lyr = ds.ExecuteSQL('SELECT CAST(geomfield AS GEOMETRY) AS mygeom FROM poly WHERE CAST(geomfield AS GEOMETRY) IS NOT NULL')
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('mygeom') is None:
-        return 'fail'
+    assert feat.GetGeomFieldRef('mygeom') is not None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(xxx AS GEOMETRY(POLYGON))
     sql_lyr = ds.ExecuteSQL('SELECT CAST(geomfield AS GEOMETRY(POLYGON)) AS mygeom FROM poly WHERE CAST(geomfield AS GEOMETRY(POLYGON)) IS NOT NULL')
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbPolygon
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('mygeom') is None:
-        return 'fail'
+    assert feat.GetGeomFieldRef('mygeom') is not None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(xxx AS GEOMETRY(POLYGON,4326))
     sql_lyr = ds.ExecuteSQL('SELECT CAST(geomfield AS GEOMETRY(POLYGON,4326)) AS mygeom FROM poly WHERE CAST(geomfield AS GEOMETRY(POLYGON,4326)) IS NOT NULL')
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') < 0:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbPolygon
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') >= 0
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('mygeom') is None:
-        return 'fail'
+    assert feat.GetGeomFieldRef('mygeom') is not None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(a_multipolygon AS GEOMETRY(POLYGON))
     sql_lyr = ds.ExecuteSQL("SELECT CAST('MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))' AS GEOMETRY(POLYGON)) AS mygeom FROM poly")
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
-        return 'fail'
+    assert feat.GetGeomFieldRef('mygeom').ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,1 0,0 0))'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(a_polygon AS GEOMETRY(MULTIPOLYGON))
     sql_lyr = ds.ExecuteSQL("SELECT CAST('POLYGON ((0 0,0 1,1 1,1 0,0 0))' AS GEOMETRY(MULTIPOLYGON)) AS mygeom FROM poly")
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))':
-        return 'fail'
+    assert feat.GetGeomFieldRef('mygeom').ExportToWkt() == 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(a_multilinestring AS GEOMETRY(LINESTRING))
     sql_lyr = ds.ExecuteSQL("SELECT CAST('MULTILINESTRING ((0 0,0 1,1 1,1 0,0 0))' AS GEOMETRY(LINESTRING)) AS mygeom FROM poly")
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'LINESTRING (0 0,0 1,1 1,1 0,0 0)':
-        return 'fail'
+    assert feat.GetGeomFieldRef('mygeom').ExportToWkt() == 'LINESTRING (0 0,0 1,1 1,1 0,0 0)'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(a_linestring AS GEOMETRY(MULTILINESTRING))
     sql_lyr = ds.ExecuteSQL("SELECT CAST('LINESTRING (0 0,0 1,1 1,1 0,0 0)' AS GEOMETRY(MULTILINESTRING)) AS mygeom FROM poly")
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'MULTILINESTRING ((0 0,0 1,1 1,1 0,0 0))':
-        return 'fail'
+    assert feat.GetGeomFieldRef('mygeom').ExportToWkt() == 'MULTILINESTRING ((0 0,0 1,1 1,1 0,0 0))'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test expression with cast CHARACTER <--> GEOMETRY
     sql_lyr = ds.ExecuteSQL('SELECT CAST(CAST(geomfield AS CHARACTER) AS GEOMETRY) AS mygeom, intfield FROM poly')
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField('intfield') != 1:
-        return 'fail'
-    if feat.GetGeomFieldRef('mygeom') is None:
-        return 'fail'
+    assert feat.GetField('intfield') == 1
+    assert feat.GetGeomFieldRef('mygeom') is not None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(NULL AS GEOMETRY)
     sql_lyr = ds.ExecuteSQL('SELECT CAST(NULL AS GEOMETRY) FROM poly')
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('') is not None:
-        return 'fail'
+    assert feat.GetGeomFieldRef('') is None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test CAST(stringfield AS GEOMETRY)
     sql_lyr = ds.ExecuteSQL('SELECT CAST(wkt AS GEOMETRY) FROM poly')
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeomFieldRef('wkt').ExportToWkt() != 'POINT (0 0)':
-        return 'fail'
+    assert feat.GetGeomFieldRef('wkt').ExportToWkt() == 'POINT (0 0)'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     # Test COUNT(geometry)
     sql_lyr = ds.ExecuteSQL('SELECT COUNT(geomfield) FROM poly')
     feat = sql_lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
-    if feat.GetField(0) != 1:
-        return 'fail'
+    assert feat is not None
+    assert feat.GetField(0) == 1
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -671,11 +536,9 @@ def test_ogr_rfc41_6():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         sql_lyr = ds.ExecuteSQL(sql)
         gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg().find(error_msg) != 0:
-            print('For %s, expected error %s, got %s' % (sql, error_msg, gdal.GetLastErrorMsg()))
-            return 'fail'
-        if sql_lyr is not None:
-            return 'fail'
+        assert gdal.GetLastErrorMsg().find(error_msg) == 0, \
+            ('For %s, expected error %s, got %s' % (sql, error_msg, gdal.GetLastErrorMsg()))
+        assert sql_lyr is None
 
     # Test invalid expressions with geometry
     for sql in ["SELECT geomfield + 'a' FROM poly",
@@ -692,54 +555,43 @@ def test_ogr_rfc41_6():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         sql_lyr = ds.ExecuteSQL(sql)
         gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg().find('Cannot use geometry field in this operation') != 0:
-            print(gdal.GetLastErrorMsg())
-            return 'fail'
-        if sql_lyr is not None:
-            return 'fail'
+        assert gdal.GetLastErrorMsg().find('Cannot use geometry field in this operation') == 0
+        assert sql_lyr is None
 
     # Test expression with geometry in WHERE
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly WHERE geomfield IS NOT NULL')
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField('intfield') != 1:
-        return 'fail'
+    assert feat.GetField('intfield') == 1
     feat = sql_lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly WHERE geomfield IS NULL')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0):
-        return 'fail'
+    assert not feat.IsFieldSet(0)
     feat = sql_lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM poly WHERE CAST(geomfield AS CHARACTER) = 'POLYGON EMPTY'")
     feat = sql_lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     feat = sql_lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL('SELECT count(*) FROM poly WHERE geomfield IS NULL')
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField(0) != 1:
-        return 'fail'
+    assert feat.GetField(0) == 1
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL('SELECT count(*) FROM poly WHERE geomfield IS NOT NULL')
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField(0) != 1:
-        return 'fail'
+    assert feat.GetField(0) == 1
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -754,14 +606,12 @@ def test_ogr_rfc41_6():
     sql_lyr = ds.ExecuteSQL("SELECT * FROM poly")
     sql_lyr.SetSpatialFilterRect(0, 0, 0, 0)
     feat = sql_lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
     feat = None
 
     sql_lyr.SetSpatialFilterRect(0, 1, 2, 1, 2)
     feat = sql_lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     feat = None
 
     # Test invalid spatial filter index
@@ -769,28 +619,23 @@ def test_ogr_rfc41_6():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr.SetSpatialFilterRect(2, 0, 0, 0, 0)
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     # Test invalid geometry field index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr.GetExtent(geom_field=2)
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     ds.ReleaseResultSet(sql_lyr)
 
     # Test querying several geometry fields
     sql_lyr = ds.ExecuteSQL('SELECT geomfield as geom1, geomfield as geom2 FROM poly')
     feat = sql_lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
-    if feat.GetGeomFieldRef('geom1') is None:
-        return 'fail'
-    if feat.GetGeomFieldRef('geom2') is None:
-        return 'fail'
+    assert feat is not None
+    assert feat.GetGeomFieldRef('geom1') is not None
+    assert feat.GetGeomFieldRef('geom2') is not None
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -807,37 +652,28 @@ def test_ogr_rfc41_6():
                 'SELECT secondarygeom, geomfield FROM poly']:
         sql_lyr = ds.ExecuteSQL(sql)
         feat = sql_lyr.GetNextFeature()
-        if feat.GetGeomFieldRef('geomfield').ExportToWkt() != 'POINT (1 2)':
-            return 'fail'
-        if feat.GetGeomFieldRef('secondarygeom').ExportToWkt() != 'POINT (10 100)':
-            return 'fail'
+        assert feat.GetGeomFieldRef('geomfield').ExportToWkt() == 'POINT (1 2)'
+        assert feat.GetGeomFieldRef('secondarygeom').ExportToWkt() == 'POINT (10 100)'
         feat = None
         ds.ReleaseResultSet(sql_lyr)
 
     # Check that we don't get an implicit geometry field
     sql_lyr = ds.ExecuteSQL('SELECT intfield FROM poly')
-    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 0:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 0
     ds.ReleaseResultSet(sql_lyr)
 
     # Check GetExtent() and SetSpatialFilter()
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly')
-    if sql_lyr.GetExtent(geom_field=0) != (1.0, 1.0, 2.0, 2.0):
-        return 'fail'
-    if sql_lyr.GetExtent(geom_field=1) != (10.0, 10.0, 100.0, 100.0):
-        return 'fail'
+    assert sql_lyr.GetExtent(geom_field=0) == (1.0, 1.0, 2.0, 2.0)
+    assert sql_lyr.GetExtent(geom_field=1) == (10.0, 10.0, 100.0, 100.0)
     sql_lyr.SetSpatialFilterRect(0, 0.5, 1.5, 1.5, 2.5)
-    if sql_lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 1
     sql_lyr.SetSpatialFilterRect(0, 0, 0, 0.5, 0.5)
-    if sql_lyr.GetFeatureCount() != 0:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 0
     sql_lyr.SetSpatialFilterRect(1, 9, 99, 11, 101)
-    if sql_lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 1
     sql_lyr.SetSpatialFilterRect(1, 0, 0, 0.5, 0.5)
-    if sql_lyr.GetFeatureCount() != 0:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 0
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
@@ -898,18 +734,12 @@ def test_ogr_rfc41_8():
 
     # Check that we get the geometry columns, even with no features
     sql_lyr = ds.ExecuteSQL('SELECT * FROM mytable', dialect='SQLite')
-    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 2:
-        print(sql_lyr.GetLayerDefn().GetGeomFieldCount())
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() != ogr.wkbPoint25D:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 2
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbPolygon
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
+    assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() == ogr.wkbPoint25D
     srs = sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef()
-    if srs.GetAuthorityCode(None) != '4326':
-        return 'fail'
+    assert srs.GetAuthorityCode(None) == '4326'
     ds.ReleaseResultSet(sql_lyr)
 
     # Test INSERT INTO request

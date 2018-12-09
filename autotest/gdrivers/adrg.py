@@ -77,9 +77,7 @@ def test_adrg_copy():
 
     chksum = dstds.GetRasterBand(1).Checksum()
 
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     dstds = None
 
@@ -104,22 +102,16 @@ def test_adrg_2subdatasets():
     shutil.copy('tmp/XXXXXX01.IMG', 'tmp/XXXXXX02.IMG')
 
     ds = gdal.Open('tmp/TRANSH01.THF')
-    if ds.RasterCount != 0:
-        gdaltest.post_reason('did not expected non 0 RasterCount')
-        return 'fail'
+    assert ds.RasterCount == 0, 'did not expected non 0 RasterCount'
     ds = None
 
     ds = gdal.Open('ADRG:tmp/XXXXXX01.GEN,tmp/XXXXXX02.IMG')
     chksum = ds.GetRasterBand(1).Checksum()
 
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     md = ds.GetMetadata('')
-    if md['ADRG_NAM'] != 'XXXXXX02':
-        gdaltest.post_reason('metadata wrong.')
-        return 'fail'
+    assert md['ADRG_NAM'] == 'XXXXXX02', 'metadata wrong.'
 
     ds = None
 
@@ -144,9 +136,7 @@ def test_adrg_copy_vsimem():
 
     chksum = dstds.GetRasterBand(1).Checksum()
 
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     dstds = None
 
@@ -154,9 +144,7 @@ def test_adrg_copy_vsimem():
     ds = gdal.Open('/vsimem/ABCDEF01.GEN')
 
     chksum = ds.GetRasterBand(1).Checksum()
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     ds = None
 
@@ -174,15 +162,11 @@ def test_adrg_zna_9():
     ds = gdal.Open('data/SMALL_ADRG_ZNA9/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, -179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
-    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-5:
-        gdaltest.post_reason('Wrong geotransfsorm')
-        print(gt)
-        return 'fail'
+    assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \
+        'Wrong geotransfsorm'
     wkt = ds.GetProjectionRef()
-    if wkt != """PROJCS["ARC_System_Zone_09",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""":
-        gdaltest.post_reason('Wrong WKT')
-        print(wkt)
-        return 'fail'
+    assert wkt == """PROJCS["ARC_System_Zone_09",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
+        'Wrong WKT'
 
     return 'success'
 
@@ -195,15 +179,11 @@ def test_adrg_zna_18():
     ds = gdal.Open('data/SMALL_ADRG_ZNA18/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, 179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
-    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-5:
-        gdaltest.post_reason('Wrong geotransfsorm')
-        print(gt)
-        return 'fail'
+    assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \
+        'Wrong geotransfsorm'
     wkt = ds.GetProjectionRef()
-    if wkt != """PROJCS["ARC_System_Zone_18",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""":
-        gdaltest.post_reason('Wrong WKT')
-        print(wkt)
-        return 'fail'
+    assert wkt == """PROJCS["ARC_System_Zone_18",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
+        'Wrong WKT'
 
     return 'success'
 

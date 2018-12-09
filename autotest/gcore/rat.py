@@ -62,33 +62,19 @@ def test_rat_1():
 
     rat2 = rat.Clone()
 
-    if rat2.GetColumnCount() != 2:
-        gdaltest.post_reason('wrong column count')
-        return 'fail'
+    assert rat2.GetColumnCount() == 2, 'wrong column count'
 
-    if rat2.GetRowCount() != 3:
-        gdaltest.post_reason('wrong row count')
-        return 'fail'
+    assert rat2.GetRowCount() == 3, 'wrong row count'
 
-    if rat2.GetNameOfCol(1) != 'Count':
-        gdaltest.post_reason('wrong column name')
-        return 'fail'
+    assert rat2.GetNameOfCol(1) == 'Count', 'wrong column name'
 
-    if rat2.GetUsageOfCol(1) != gdal.GFU_PixelCount:
-        gdaltest.post_reason('wrong column usage')
-        return 'fail'
+    assert rat2.GetUsageOfCol(1) == gdal.GFU_PixelCount, 'wrong column usage'
 
-    if rat2.GetTypeOfCol(1) != gdal.GFT_Integer:
-        gdaltest.post_reason('wrong column type')
-        return 'fail'
+    assert rat2.GetTypeOfCol(1) == gdal.GFT_Integer, 'wrong column type'
 
-    if rat2.GetRowOfValue(11.0) != 1:
-        gdaltest.post_reason('wrong row for value')
-        return 'fail'
+    assert rat2.GetRowOfValue(11.0) == 1, 'wrong row for value'
 
-    if rat2.GetValueAsInt(1, 1) != 200:
-        gdaltest.post_reason('wrong field value.')
-        return 'fail'
+    assert rat2.GetValueAsInt(1, 1) == 200, 'wrong field value.'
 
     gdaltest.saved_rat = rat
 
@@ -112,33 +98,19 @@ def test_rat_2():
     ds = gdal.Open('tmp/rat_2.pnm', gdal.GA_Update)
     rat2 = ds.GetRasterBand(1).GetDefaultRAT()
 
-    if rat2.GetColumnCount() != 2:
-        gdaltest.post_reason('wrong column count')
-        return 'fail'
+    assert rat2.GetColumnCount() == 2, 'wrong column count'
 
-    if rat2.GetRowCount() != 3:
-        gdaltest.post_reason('wrong row count')
-        return 'fail'
+    assert rat2.GetRowCount() == 3, 'wrong row count'
 
-    if rat2.GetNameOfCol(1) != 'Count':
-        gdaltest.post_reason('wrong column name')
-        return 'fail'
+    assert rat2.GetNameOfCol(1) == 'Count', 'wrong column name'
 
-    if rat2.GetUsageOfCol(1) != gdal.GFU_PixelCount:
-        gdaltest.post_reason('wrong column usage')
-        return 'fail'
+    assert rat2.GetUsageOfCol(1) == gdal.GFU_PixelCount, 'wrong column usage'
 
-    if rat2.GetTypeOfCol(1) != gdal.GFT_Integer:
-        gdaltest.post_reason('wrong column type')
-        return 'fail'
+    assert rat2.GetTypeOfCol(1) == gdal.GFT_Integer, 'wrong column type'
 
-    if rat2.GetRowOfValue(11.0) != 1:
-        gdaltest.post_reason('wrong row for value')
-        return 'fail'
+    assert rat2.GetRowOfValue(11.0) == 1, 'wrong row for value'
 
-    if rat2.GetValueAsInt(1, 1) != 200:
-        gdaltest.post_reason('wrong field value.')
-        return 'fail'
+    assert rat2.GetValueAsInt(1, 1) == 200, 'wrong field value.'
 
     # unset the RAT
     ds.GetRasterBand(1).SetDefaultRAT(None)
@@ -148,9 +120,7 @@ def test_rat_2():
     ds = gdal.Open('tmp/rat_2.pnm')
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     ds = None
-    if rat is not None:
-        gdaltest.post_reason('expected a NULL RAT.')
-        return 'fail'
+    assert rat is None, 'expected a NULL RAT.'
 
     gdal.GetDriverByName('PNM').Delete('tmp/rat_2.pnm')
 

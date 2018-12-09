@@ -36,6 +36,7 @@ import shutil
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 sys.path.append('../../gdal/swig/python/samples')
 
@@ -86,8 +87,7 @@ def test_jp2lura_missing_license_num():
     gdal.SetConfigOption('LURA_LICENSE_NUM_1', old_num_1)
     gdal.SetConfigOption('LURA_LICENSE_NUM_2', old_num_2)
 
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -109,8 +109,7 @@ def test_jp2lura_invalid_license_num():
     gdal.SetConfigOption('LURA_LICENSE_NUM_1', old_num_1)
     gdal.SetConfigOption('LURA_LICENSE_NUM_2', old_num_2)
 
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -200,13 +199,10 @@ def test_jp2lura_3():
     ds_ref = None
 
     # Quite a bit of difference...
-    if maxdiff > 6:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 6, 'Image too different from reference'
 
     ds = ogr.Open('data/int16.jp2')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -236,11 +232,9 @@ def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
     vrt_ds = None
     gdal.Unlink('/vsimem/jp2lura_4.vrt')
 
-    if gdal.VSIStatL(out_filename + '.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL(out_filename + '.aux.xml') is None
 
-    if validate(out_filename, inspire_tg=False) == 'fail':
-        return 'fail'
+    assert validate(out_filename, inspire_tg=False) != 'fail'
 
     ds = gdal.Open(out_filename)
     cs = ds.GetRasterBand(1).Checksum()
@@ -253,12 +247,8 @@ def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
 
     gdal.Unlink(out_filename)
 
-    if xres != '300' or yres != '200' or resunit != '3 (pixels/cm)':
-        gdaltest.post_reason('bad resolution')
-        print(xres)
-        print(yres)
-        print(resunit)
-        return 'fail'
+    assert xres == '300' and yres == '200' and resunit == '3 (pixels/cm)', \
+        'bad resolution'
 
     sr1 = osr.SpatialReference()
     sr1.SetFromUserInput(got_wkt)
@@ -266,22 +256,14 @@ def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
     sr2.SetFromUserInput(src_wkt)
 
     if sr1.IsSame(sr2) == 0:
-        gdaltest.post_reason('bad spatial reference')
         print(got_wkt)
         print(src_wkt)
-        return 'fail'
+        pytest.fail('bad spatial reference')
 
     for i in range(6):
-        if abs(got_gt[i] - src_gt[i]) > 1e-8:
-            gdaltest.post_reason('bad geotransform')
-            print(got_gt)
-            print(src_gt)
-            return 'fail'
+        assert abs(got_gt[i] - src_gt[i]) <= 1e-8, 'bad geotransform'
 
-    if cs != 50054:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 50054, 'bad checksum'
 
     return 'success'
 
@@ -346,13 +328,10 @@ def test_jp2lura_8():
     expected_checksums = [64570, 57277, 56048]  # 61292]
 
     for i, csum in enumerate(expected_checksums):
-        if ds.GetRasterBand(i + 1).Checksum() != csum:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (csum, i + 1))
-            return 'fail'
+        assert ds.GetRasterBand(i + 1).Checksum() == csum, \
+            ('unexpected checksum (%d) for band %d' % (csum, i + 1))
 
-    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('unexpected data type')
-        return 'fail'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
     return 'success'
 
@@ -368,15 +347,8 @@ def test_jp2lura_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0] - 440720) > 0.1 \
-            or abs(geotransform[1] - 60) > 0.001 \
-            or abs(geotransform[2] - 0) > 0.001 \
-            or abs(geotransform[3] - 3751320) > 0.1 \
-            or abs(geotransform[4] - 0) > 0.001 \
-            or abs(geotransform[5] - -60) > 0.001:
-        print(geotransform)
-        gdaltest.post_reason('geotransform differs from expected')
-        return 'fail'
+    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+        'geotransform differs from expected'
 
     ds = None
 
@@ -394,20 +366,15 @@ def DISABLED_jp2lura_10():
     src_ds = gdal.Open('data/rgbsmall.tif')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_10.jp2', src_ds, options=['YCBCR420=YES', 'RESOLUTIONS=3'])
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
-    if out_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
-    if out_ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        return 'fail'
-    if out_ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        return 'fail'
+    assert out_ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert out_ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert out_ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
     del out_ds
     src_ds = None
     gdal.Unlink('/vsimem/jp2lura_10.jp2')
 
     # Quite a bit of difference...
-    if maxdiff > 12:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 12, 'Image too different from reference'
 
     return 'success'
 
@@ -422,12 +389,9 @@ def DISABLED_jp2lura_11():
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        return 'fail'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
-    if got_cs != 8527:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
@@ -440,20 +404,15 @@ def DISABLED_jp2lura_11():
     # gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jp2lura_11.tif')
-    if got_cs != 8527:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
 
-    if jp2_bands_data != gtiff_bands_data:
-        return 'fail'
+    assert jp2_bands_data == gtiff_bands_data
 
-    if jp2_fourth_band_data != gtiff_fourth_band_data:
-        return 'fail'
+    assert jp2_fourth_band_data == gtiff_fourth_band_data
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        return 'fail'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
     return 'success'
 
@@ -481,9 +440,7 @@ def test_jp2lura_12():
 
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_12.jp2')
 
-    if wkt.find('32631') < 0:
-        print(wkt)
-        return 'fail'
+    assert wkt.find('32631') >= 0
 
     # Override geotransform
     shutil.copy('data/byte.jp2', 'tmp/jp2lura_12.jp2')
@@ -498,9 +455,7 @@ def test_jp2lura_12():
 
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_12.jp2')
 
-    if gt != (1000, 1, 0, 2000, 0, -1):
-        print(gt)
-        return 'fail'
+    assert gt == (1000, 1, 0, 2000, 0, -1)
 
     return 'success'
 
@@ -519,20 +474,15 @@ def test_jp2lura_13():
     ds = None
     src_ds = None
 
-    if gdal.VSIStatL('tmp/jp2lura_13.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('tmp/jp2lura_13.jp2.aux.xml') is None
 
     ds = gdal.Open('tmp/jp2lura_13.jp2')
     count = ds.GetGCPCount()
     gcps = ds.GetGCPs()
     wkt = ds.GetGCPProjection()
-    if count != 4:
-        return 'fail'
-    if len(gcps) != 4:
-        return 'fail'
-    if wkt.find('4326') < 0:
-        print(wkt)
-        return 'fail'
+    assert count == 4
+    assert len(gcps) == 4
+    assert wkt.find('4326') >= 0
     ds = None
 
     # Override GCP
@@ -551,13 +501,9 @@ def test_jp2lura_13():
 
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_13.jp2')
 
-    if count != 1:
-        return 'fail'
-    if len(gcps) != 1:
-        return 'fail'
-    if wkt.find('32631') < 0:
-        print(wkt)
-        return 'fail'
+    assert count == 1
+    assert len(gcps) == 1
+    assert wkt.find('32631') >= 0
 
     return 'success'
 
@@ -571,8 +517,7 @@ def test_jp2lura_14():
         return 'skip'
 
     ds = gdal.Open('data/byte_2gcps.jp2')
-    if ds.GetGCPCount() != 2:
-        return 'fail'
+    assert ds.GetGCPCount() == 2
 
     return 'success'
 
@@ -587,17 +532,13 @@ def test_jp2lura_16():
 
     ds = gdal.Open('data/byte_point.jp2')
     gt = ds.GetGeoTransform()
-    if ds.GetMetadataItem('AREA_OR_POINT') != 'Point':
-        gdaltest.post_reason('did not get AREA_OR_POINT = Point')
-        return 'fail'
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point', \
+        'did not get AREA_OR_POINT = Point'
     ds = None
 
     gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
 
-    if gt != gt_expected:
-        print(gt)
-        gdaltest.post_reason('did not get expected geotransform')
-        return 'fail'
+    assert gt == gt_expected, 'did not get expected geotransform'
 
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'TRUE')
 
@@ -609,10 +550,8 @@ def test_jp2lura_16():
 
     gt_expected = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    if gt != gt_expected:
-        print(gt)
-        gdaltest.post_reason('did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE')
-        return 'fail'
+    assert gt == gt_expected, \
+        'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE'
 
     return 'success'
 
@@ -630,22 +569,17 @@ def test_jp2lura_17():
     ds = None
     src_ds = None
 
-    if gdal.VSIStatL('/vsimem/jp2lura_17.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_17.jp2.aux.xml') is None
 
     ds = gdal.Open('/vsimem/jp2lura_17.jp2')
     gt = ds.GetGeoTransform()
-    if ds.GetMetadataItem('AREA_OR_POINT') != 'Point':
-        gdaltest.post_reason('did not get AREA_OR_POINT = Point')
-        return 'fail'
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point', \
+        'did not get AREA_OR_POINT = Point'
     ds = None
 
     gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
 
-    if gt != gt_expected:
-        print(gt)
-        gdaltest.post_reason('did not get expected geotransform')
-        return 'fail'
+    assert gt == gt_expected, 'did not get expected geotransform'
 
     gdal.Unlink('/vsimem/jp2lura_17.jp2')
 
@@ -668,8 +602,7 @@ def test_jp2lura_18():
 
     ds = gdal.Open('/vsimem/jp2lura_18.jp2')
     ds.GetRasterBand(1).Checksum()
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
     ds = None
 
     gdal.Unlink('/vsimem/jp2lura_18.jp2')
@@ -686,8 +619,7 @@ def test_jp2lura_19():
         return 'skip'
 
     ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
-    if ds.GetProjectionRef() == '':
-        return 'fail'
+    assert ds.GetProjectionRef() != ''
     ds = None
 
     return 'success'
@@ -759,8 +691,7 @@ def test_jp2lura_20():
     ds = None
     gdal.Unlink('/vsimem/jp2lura_20.jp2')
 
-    if not xmlvalidate.validate(gmljp2, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET'):
-        return 'fail'
+    assert xmlvalidate.validate(gmljp2, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET')
 
     return 'success'
 
@@ -779,27 +710,19 @@ def test_jp2lura_22():
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
     del out_ds
     src_ds = None
-    if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is None
     ds = gdal.Open('/vsimem/jp2lura_22.jp2')
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
-    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        return 'fail'
-    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        return 'fail'
-    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
     ds = None
 
-    if validate('/vsimem/jp2lura_22.jp2', expected_gmljp2=False, inspire_tg=False) == 'fail':
-        return 'fail'
+    assert validate('/vsimem/jp2lura_22.jp2', expected_gmljp2=False, inspire_tg=False) != 'fail'
 
     gdal.Unlink('/vsimem/jp2lura_22.jp2')
 
-    if maxdiff > 0:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 0, 'Image too different from reference'
 
     if False:  # pylint: disable=using-constant-test
         # RGBA with 1BIT_ALPHA=YES
@@ -807,17 +730,13 @@ def test_jp2lura_22():
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_22.jp2', src_ds, options=['1BIT_ALPHA=YES'])
         del out_ds
         src_ds = None
-        if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is None
         ds = gdal.OpenEx('/vsimem/jp2lura_22.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
         fourth_band = ds.GetRasterBand(4)
-        if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-            return 'fail'
+        assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
         ds = None
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
-        if ds.GetRasterBand(4).Checksum() != 23120:
-            print(ds.GetRasterBand(4).Checksum())
-            return 'fail'
+        assert ds.GetRasterBand(4).Checksum() == 23120
         ds = None
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
 
@@ -826,20 +745,13 @@ def test_jp2lura_22():
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_22.jp2', src_ds, options=['YCBCR420=YES'])
         del out_ds
         src_ds = None
-        if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is None
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
-        if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-            return 'fail'
-        if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-            return 'fail'
-        if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-            return 'fail'
-        if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-            return 'fail'
-        if ds.GetRasterBand(1).Checksum() != 11457:
-            print(ds.GetRasterBand(1).Checksum())
-            return 'fail'
+        assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+        assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+        assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+        assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
+        assert ds.GetRasterBand(1).Checksum() == 11457
         ds = None
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
 
@@ -850,13 +762,10 @@ def test_jp2lura_22():
         maxdiff = gdaltest.compare_ds(src_ds, out_ds)
         del out_ds
         src_ds = None
-        if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is None
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
 
-        if maxdiff > 0:
-            gdaltest.post_reason('Image too different from reference')
-            return 'fail'
+        assert maxdiff <= 0, 'Image too different from reference'
 
         # RGB,undefined
         src_ds = gdal.Open('../gcore/data/stefan_full_rgba_photometric_rgb.tif')
@@ -864,23 +773,16 @@ def test_jp2lura_22():
         maxdiff = gdaltest.compare_ds(src_ds, out_ds)
         del out_ds
         src_ds = None
-        if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is None
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
-        if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-            return 'fail'
-        if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-            return 'fail'
-        if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-            return 'fail'
-        if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
-            return 'fail'
+        assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+        assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+        assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+        assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_Undefined
         ds = None
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
 
-        if maxdiff > 0:
-            gdaltest.post_reason('Image too different from reference')
-            return 'fail'
+        assert maxdiff <= 0, 'Image too different from reference'
 
         # RGB,undefined with ALPHA=YES
         src_ds = gdal.Open('../gcore/data/stefan_full_rgba_photometric_rgb.tif')
@@ -888,23 +790,16 @@ def test_jp2lura_22():
         maxdiff = gdaltest.compare_ds(src_ds, out_ds)
         del out_ds
         src_ds = None
-        if gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_22.jp2.aux.xml') is None
         ds = gdal.Open('/vsimem/jp2lura_22.jp2')
-        if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-            return 'fail'
-        if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-            return 'fail'
-        if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-            return 'fail'
-        if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-            return 'fail'
+        assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+        assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+        assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+        assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
         ds = None
         gdal.Unlink('/vsimem/jp2lura_22.jp2')
 
-        if maxdiff > 0:
-            gdaltest.post_reason('Image too different from reference')
-            return 'fail'
+        assert maxdiff <= 0, 'Image too different from reference'
 
     return 'success'
 
@@ -923,23 +818,18 @@ def DISABLED_jp2lura_23():
     del out_ds
     src_ds = None
     ds = gdal.Open('/vsimem/jp2lura_23.jp2')
-    if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '9':
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '9'
 
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_23_2.jp2', ds)
-    if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '9':
-        return 'fail'
+    assert out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '9'
     del out_ds
 
     ds = None
-    if gdal.VSIStatL('/vsimem/jp2lura_23.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_23.jp2.aux.xml') is None
     gdal.Unlink('/vsimem/jp2lura_23.jp2')
     gdal.Unlink('/vsimem/jp2lura_23_2.jp2')
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -958,23 +848,17 @@ def test_jp2lura_24():
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
     del out_ds
     src_ds = None
-    if gdal.VSIStatL('/vsimem/jp2lura_24.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_24.jp2.aux.xml') is None
     ds = gdal.Open('/vsimem/jp2lura_24.jp2')
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        return 'fail'
-    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
     ds = None
 
-    if validate('/vsimem/jp2lura_24.jp2', expected_gmljp2=False, inspire_tg=False) == 'fail':
-        return 'fail'
+    assert validate('/vsimem/jp2lura_24.jp2', expected_gmljp2=False, inspire_tg=False) != 'fail'
 
     gdal.Unlink('/vsimem/jp2lura_24.jp2')
 
-    if maxdiff > 0:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 0, 'Image too different from reference'
 
     if False:  # pylint: disable=using-constant-test
         #  Grey+alpha with 1BIT_ALPHA=YES
@@ -982,23 +866,15 @@ def test_jp2lura_24():
         gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_24.jp2', src_ds, options=['1BIT_ALPHA=YES'])
 
         src_ds = None
-        if gdal.VSIStatL('/vsimem/jp2lura_24.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_24.jp2.aux.xml') is None
         ds = gdal.OpenEx('/vsimem/jp2lura_24.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
-        if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-            return 'fail'
-        if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
-            return 'fail'
-        if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-            return 'fail'
+        assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
+        assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
+        assert ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
         ds = None
         ds = gdal.Open('/vsimem/jp2lura_24.jp2')
-        if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-            print(ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE'))
-            return 'fail'
-        if ds.GetRasterBand(2).Checksum() != 23120:
-            print(ds.GetRasterBand(2).Checksum())
-            return 'fail'
+        assert ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
+        assert ds.GetRasterBand(2).Checksum() == 23120
         ds = None
         gdal.Unlink('/vsimem/jp2lura_24.jp2')
 
@@ -1025,17 +901,13 @@ def test_jp2lura_25():
     del out_ds
     src_ds = None
     ds = gdal.Open('/vsimem/jp2lura_25.jp2')
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_Undefined:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_Undefined
     ds = None
-    if gdal.VSIStatL('/vsimem/jp2lura_25.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_25.jp2.aux.xml') is None
 
     gdal.Unlink('/vsimem/jp2lura_25.jp2')
 
-    if maxdiff > 0:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 0, 'Image too different from reference'
 
     return 'success'
 
@@ -1151,14 +1023,12 @@ def test_jp2lura_28():
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_28.jp2', src_ds, options=options)
         gdal.PopErrorHandler()
         if warning_expected and gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('warning expected')
             print(options)
-            return 'fail'
+            pytest.fail('warning expected')
         del out_ds
         if not jp2lura_test_codeblock('/vsimem/jp2lura_28.jp2', expected_cbkw, expected_cbkh):
-            gdaltest.post_reason('unexpected codeblock size')
             print(options)
-            return 'fail'
+            pytest.fail('unexpected codeblock size')
 
     gdal.Unlink('/vsimem/jp2lura_28.jp2')
 
@@ -1185,8 +1055,7 @@ def test_jp2lura_30():
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_30.jp2', src_ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     return 'success'
 
@@ -1205,16 +1074,11 @@ def DISABLED_jp2lura_31():
     src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_RedBand)
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_31.jp2', src_ds)
     del out_ds
-    if gdal.VSIStatL('/vsimem/jp2lura_31.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_31.jp2.aux.xml') is None
     ds = gdal.Open('/vsimem/jp2lura_31.jp2')
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print(ds.GetRasterBand(1).GetColorInterpretation())
-        return 'fail'
-    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_BlueBand:
-        return 'fail'
-    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_RedBand
     ds = None
     gdal.Unlink('/vsimem/jp2lura_31.jp2')
 
@@ -1226,18 +1090,12 @@ def DISABLED_jp2lura_31():
     src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_RedBand)
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_31.jp2', src_ds)
     del out_ds
-    if gdal.VSIStatL('/vsimem/jp2lura_31.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_31.jp2.aux.xml') is None
     ds = gdal.Open('/vsimem/jp2lura_31.jp2')
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        print(ds.GetRasterBand(1).GetColorInterpretation())
-        return 'fail'
-    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        return 'fail'
-    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        return 'fail'
-    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_AlphaBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_RedBand
     ds = None
     gdal.Unlink('/vsimem/jp2lura_31.jp2')
 
@@ -1259,8 +1117,7 @@ def DISABLED_jp2lura_33():
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_33.jp2', src_ds, options=['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000'])
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
     out_ds = None
     gdal.Unlink('/vsimem/jp2lura_33.jp2')
 
@@ -1278,8 +1135,7 @@ def test_jp2lura_34():
     gdal.PushErrorHandler()
     ds = gdal.Open('data/dimensions_above_31bit.jp2')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -1295,8 +1151,7 @@ def test_jp2lura_35():
     gdal.PushErrorHandler()
     ds = gdal.Open('data/truncated.jp2')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -1313,8 +1168,7 @@ def test_jp2lura_36():
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_36.jp2', src_ds)
     gdal.PopErrorHandler()
-    if out_ds is not None or gdal.VSIStatL('/vsimem/jp2lura_36.jp2') is not None:
-        return 'fail'
+    assert out_ds is None and gdal.VSIStatL('/vsimem/jp2lura_36.jp2') is None
 
     return 'success'
 
@@ -1331,11 +1185,9 @@ def test_jp2lura_37():
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
-    if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is None
     ds = gdal.Open('/vsimem/jp2lura_37.jp2')
-    if ds.GetMetadata() != {}:
-        return 'fail'
+    assert ds.GetMetadata() == {}
     gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
     # Simple metadata in main domain
@@ -1344,11 +1196,9 @@ def test_jp2lura_37():
         src_ds.SetMetadataItem('FOO', 'BAR')
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=options)
         del out_ds
-        if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is None
         ds = gdal.Open('/vsimem/jp2lura_37.jp2')
-        if ds.GetMetadata() != {'FOO': 'BAR'}:
-            return 'fail'
+        assert ds.GetMetadata() == {'FOO': 'BAR'}
         ds = None
 
         gdal.Unlink('/vsimem/jp2lura_37.jp2')
@@ -1358,13 +1208,10 @@ def test_jp2lura_37():
     src_ds.SetMetadataItem('FOO', 'BAR', 'SOME_DOMAIN')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
-    if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is None
     ds = gdal.Open('/vsimem/jp2lura_37.jp2')
     md = ds.GetMetadata('SOME_DOMAIN')
-    if md != {'FOO': 'BAR'}:
-        print(md)
-        return 'fail'
+    assert md == {'FOO': 'BAR'}
     gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
     # Simple metadata in auxiliary XML domain
@@ -1372,11 +1219,9 @@ def test_jp2lura_37():
     src_ds.SetMetadata(['<some_arbitrary_xml_box/>'], 'xml:SOME_DOMAIN')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=['WRITE_METADATA=YES'])
     del out_ds
-    if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is None
     ds = gdal.Open('/vsimem/jp2lura_37.jp2')
-    if ds.GetMetadata('xml:SOME_DOMAIN')[0] != '<some_arbitrary_xml_box />\n':
-        return 'fail'
+    assert ds.GetMetadata('xml:SOME_DOMAIN')[0] == '<some_arbitrary_xml_box />\n'
     gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
     # Special xml:BOX_ metadata domain
@@ -1385,11 +1230,9 @@ def test_jp2lura_37():
         src_ds.SetMetadata(['<some_arbitrary_xml_box/>'], 'xml:BOX_1')
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=options)
         del out_ds
-        if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is None
         ds = gdal.Open('/vsimem/jp2lura_37.jp2')
-        if ds.GetMetadata('xml:BOX_0')[0] != '<some_arbitrary_xml_box/>':
-            return 'fail'
+        assert ds.GetMetadata('xml:BOX_0')[0] == '<some_arbitrary_xml_box/>'
         gdal.Unlink('/vsimem/jp2lura_37.jp2')
 
     # Special xml:XMP metadata domain
@@ -1398,11 +1241,9 @@ def test_jp2lura_37():
         src_ds.SetMetadata(['<fake_xmp_box/>'], 'xml:XMP')
         out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_37.jp2', src_ds, options=options)
         del out_ds
-        if gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsimem/jp2lura_37.jp2.aux.xml') is None
         ds = gdal.Open('/vsimem/jp2lura_37.jp2')
-        if ds.GetMetadata('xml:XMP')[0] != '<fake_xmp_box/>':
-            return 'fail'
+        assert ds.GetMetadata('xml:XMP')[0] == '<fake_xmp_box/>'
         ds = None
 
         gdal.Unlink('/vsimem/jp2lura_37.jp2')
@@ -1441,9 +1282,7 @@ def test_jp2lura_38():
     src_ds.SetProjection(wkt)
     src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_38.jp2', src_ds, options=['GeoJP2=NO'])
-    if out_ds.GetProjectionRef() != wkt:
-        print(out_ds.GetProjectionRef())
-        return 'fail'
+    assert out_ds.GetProjectionRef() == wkt
     crsdictionary = out_ds.GetMetadata_List("xml:CRSDictionary.gml")[0]
     out_ds = None
     gdal.Unlink('/vsimem/jp2lura_38.jp2')
@@ -1461,9 +1300,7 @@ def test_jp2lura_38():
         do_validate = False
 
     if do_validate:
-        if not xmlvalidate.validate(crsdictionary, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET'):
-            print(crsdictionary)
-            return 'fail'
+        assert xmlvalidate.validate(crsdictionary, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET')
 
     return 'success'
 
@@ -1532,9 +1369,7 @@ def test_jp2lura_39():
     gdal.Unlink('/vsimem/override.gml')
     del out_ds
     ds = gdal.Open('/vsimem/jp2lura_39.jp2')
-    if ds.GetProjectionRef().find('4326') < 0:
-        print(ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetProjectionRef().find('4326') >= 0
     ds = None
     gdal.Unlink('/vsimem/jp2lura_39.jp2')
 
@@ -1608,15 +1443,11 @@ def test_jp2lura_40():
     gdal.Unlink('/vsimem/override.gml')
     del out_ds
     ds = gdal.Open('/vsimem/jp2lura_40.jp2')
-    if ds.GetProjectionRef().find('4326') < 0:
-        print(ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetProjectionRef().find('4326') >= 0
     got_gt = ds.GetGeoTransform()
     expected_gt = (2, 0.1, 0, 49, 0, -0.1)
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            print(got_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
     ds = None
     gdal.Unlink('/vsimem/jp2lura_40.jp2')
 
@@ -1634,11 +1465,9 @@ def test_jp2lura_41():
     src_ds = gdal.Open('data/byte.jp2')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES', '@PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
-    if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
-        return 'fail'
+    assert src_ds.GetRasterBand(1).Checksum() == out_ds.GetRasterBand(1).Checksum()
     del out_ds
-    if gdal.VSIStatL('/vsimem/jp2lura_41.jp2').size != 9923:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_41.jp2').size == 9923
     gdal.Unlink('/vsimem/jp2lura_41.jp2')
     gdal.Unlink('/vsimem/jp2lura_41.jp2.aux.xml')
 
@@ -1663,8 +1492,7 @@ def test_jp2lura_41():
                                              options=['USE_SRC_CODESTREAM=YES'])
     gdal.PopErrorHandler()
     del out_ds
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
     gdal.Unlink('/vsimem/jp2lura_41.jp2')
 
     return 'success'
@@ -1676,8 +1504,7 @@ def test_jp2lura_41():
 def test_jp2lura_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
-    if ret is None:
-        return 'fail'
+    assert ret is not None
 
     return 'success'
 
@@ -1697,10 +1524,8 @@ def test_jp2lura_45():
     # Test GMLJP2V2_DEF=YES
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_45.jp2', src_ds, options=['GMLJP2V2_DEF=YES'])
-    if out_ds.GetLayerCount() != 0:
-        return 'fail'
-    if out_ds.GetLayer(0) is not None:
-        return 'fail'
+    assert out_ds.GetLayerCount() == 0
+    assert out_ds.GetLayer(0) is None
     del out_ds
 
     ds = gdal.Open('/vsimem/jp2lura_45.jp2')
@@ -1763,9 +1588,7 @@ def test_jp2lura_45():
   </gmljp2:featureMember>
 </gmljp2:GMLJP2CoverageCollection>
 """
-    if gmljp2 != minimal_instance:
-        print(gmljp2)
-        return 'fail'
+    assert gmljp2 == minimal_instance
 
     gdal.Unlink('/vsimem/jp2lura_45.jp2')
 
@@ -1783,12 +1606,10 @@ def test_jp2lura_47():
     src_ds = gdal.Open('../gcore/data/byte_rpc.tif')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_47.jp2', src_ds)
     del out_ds
-    if gdal.VSIStatL('/vsimem/jp2lura_47.jp2.aux.xml') is not None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/jp2lura_47.jp2.aux.xml') is None
 
     ds = gdal.Open('/vsimem/jp2lura_47.jp2')
-    if ds.GetMetadata('RPC') is None:
-        return 'fail'
+    assert ds.GetMetadata('RPC') is not None
     ds = None
 
     gdal.Unlink('/vsimem/jp2lura_47.jp2')
@@ -1806,11 +1627,8 @@ def test_jp2lura_48():
 
     ds = gdal.Open('data/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
-    if (blockxsize, blockysize) != (20, 20):
-        print(blockxsize, blockysize)
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 4610:
-        return 'fail'
+    assert (blockxsize, blockysize) == (20, 20)
+    assert ds.GetRasterBand(1).Checksum() == 4610
     ds = None
 
     return 'success'
@@ -1855,14 +1673,10 @@ def test_jp2lura_online_2():
 
     ds = gdal.Open('tmp/cache/gcp.jp2')
     ds.GetRasterBand(1).Checksum()
-    if len(ds.GetGCPs()) != 15:
-        gdaltest.post_reason('bad number of GCP')
-        return 'fail'
+    assert len(ds.GetGCPs()) == 15, 'bad number of GCP'
 
     expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
-    if ds.GetGCPProjection() != expected_wkt:
-        gdaltest.post_reason('bad GCP projection')
-        return 'fail'
+    assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None
 
@@ -1895,9 +1709,7 @@ def test_jp2lura_online_3():
     ds_ref = None
 
     # Difference between the image before and after compression
-    if maxdiff > 17:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 17, 'Image too different from reference'
 
     return 'success'
 
@@ -1928,9 +1740,7 @@ def test_jp2lura_online_4():
     ds_ref = None
 
     # Difference between the image before and after compression
-    if maxdiff > 10:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 10, 'Image too different from reference'
 
     return 'success'
 
@@ -1948,13 +1758,9 @@ def test_jp2lura_online_5():
 
     ds = gdal.Open('tmp/cache/file9.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()
-    if cs1 != 47664:
-        gdaltest.post_reason('Did not get expected checksums')
-        print(cs1)
-        return 'fail'
-    if ds.GetRasterBand(1).GetColorTable() is None:
-        gdaltest.post_reason('Did not get expected color table')
-        return 'fail'
+    assert cs1 == 47664, 'Did not get expected checksums'
+    assert ds.GetRasterBand(1).GetColorTable() is not None, \
+        'Did not get expected color table'
     ds = None
 
     return 'success'
@@ -1979,8 +1785,7 @@ def test_jp2lura_online_6():
     #    print(cs1, cs2, cs3)
     #    gdaltest.post_reason('Did not get expected checksums')
     #    return 'fail'
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     return 'success'
@@ -2032,16 +1837,14 @@ def test_jp2lura_49():
         gdal.Unlink('/vsimem/byte_nogeoref.j2w')
 
         if gt != expected_gt:
-            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + str(gt))
             print('Expected ' + str(expected_gt))
-            return 'fail'
+            pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
         if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
-            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
-            return 'fail'
+            pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
     tests = [(None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
@@ -2089,30 +1892,24 @@ def test_jp2lura_49():
         gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.j2w')
 
         if gt != expected_gt:
-            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + str(gt))
             print('Expected ' + str(expected_gt))
-            return 'fail'
+            pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
         if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
-            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
-            return 'fail'
+            pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
     ds = gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=PAM,WORLDFILE'])
     fl = ds.GetFileList()
-    if set(fl) != set(['data/inconsitant_geojp2_gmljp2.jp2', 'data/inconsitant_geojp2_gmljp2.jp2.aux.xml']):
-        gdaltest.post_reason('Did not get expected filelist')
-        print(fl)
-        return 'fail'
+    assert set(fl) == set(['data/inconsitant_geojp2_gmljp2.jp2', 'data/inconsitant_geojp2_gmljp2.jp2.aux.xml']), \
+        'Did not get expected filelist'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
-        if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('expected warning')
-            return 'fail'
+        assert gdal.GetLastErrorMsg() != '', 'expected warning'
 
     return 'success'
 
@@ -2141,21 +1938,18 @@ def test_jp2lura_51():
     src_ds = gdal.Open('data/float32.tif')
     with gdaltest.error_handler():
         ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds,
                                          options=['SPLIT_IEEE754=YES'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
 
-    if validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) == 'fail':
-        return 'fail'
+    assert validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) != 'fail'
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
 
-    if maxdiff > 0.01:
-        return 'fail'
+    assert maxdiff <= 0.01
 
     # QUALITY
     with gdaltest.error_handler():
@@ -2164,12 +1958,9 @@ def test_jp2lura_51():
     if ds is not None:
         maxdiff = gdaltest.compare_ds(ds, src_ds)
         ds = None
-        if maxdiff > 124:
-            print(maxdiff)
-            return 'fail'
+        assert maxdiff <= 124
 
-        if validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) == 'fail':
-            return 'fail'
+        assert validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) != 'fail'
     ds = None
     with gdaltest.error_handler():
         gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
@@ -2180,12 +1971,9 @@ def test_jp2lura_51():
                                          options=['SPLIT_IEEE754=YES', 'RATE=1'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
-    if maxdiff > 370:
-        print(maxdiff)
-        return 'fail'
+    assert maxdiff <= 370
 
-    if validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) == 'fail':
-        return 'fail'
+    assert validate('/vsimem/jp2lura_51.jp2', inspire_tg=False) != 'fail'
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
 
@@ -2194,9 +1982,7 @@ def test_jp2lura_51():
                                          options=['SPLIT_IEEE754=YES', 'REVERSIBLE=YES'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
-    if maxdiff != 0.0:
-        print(maxdiff)
-        return 'fail'
+    assert maxdiff == 0.0
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
 
@@ -2228,14 +2014,11 @@ def test_jp2lura_52():
         ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_52.jp2', src_ds,
                                              options=['REVERSIBLE=YES'])
         got_min, got_max = ds.GetRasterBand(1).ComputeRasterMinMax()
-        if val != got_min or val != got_max:
-            print(val, dt, fmt, got_min, got_max)
-            return 'fail'
+        assert val == got_min and val == got_max, (val, dt, fmt, got_min, got_max)
         ds = None
 
-        if val >= 0 and validate('/vsimem/jp2lura_52.jp2', expected_gmljp2=False, inspire_tg=False) == 'fail':
-            print(val, dt, fmt)
-            return 'fail'
+        assert not (val >= 0 and validate('/vsimem/jp2lura_52.jp2', expected_gmljp2=False, inspire_tg=False) == 'fail'), \
+            (val, dt, fmt)
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_52.jp2')
 
@@ -2256,9 +2039,7 @@ def test_jp2lura_53():
                                          options=['RATE=1'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
-    if maxdiff > 8:
-        print(maxdiff)
-        return 'fail'
+    assert maxdiff <= 8
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
 
@@ -2266,9 +2047,7 @@ def test_jp2lura_53():
                                          options=['QUALITY=100'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
-    if maxdiff > 2:
-        print(maxdiff)
-        return 'fail'
+    assert maxdiff <= 2
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
 
@@ -2277,9 +2056,7 @@ def test_jp2lura_53():
                                          options=['REVERSIBLE=YES', 'RATE=1'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
-    if maxdiff > 8:
-        print(maxdiff)
-        return 'fail'
+    assert maxdiff <= 8
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
 
@@ -2288,9 +2065,7 @@ def test_jp2lura_53():
                                          options=['REVERSIBLE=YES', 'QUALITY=100'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
-    if maxdiff > 0:
-        print(maxdiff)
-        return 'fail'
+    assert maxdiff <= 0
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
 
@@ -2314,18 +2089,12 @@ def test_jp2lura_54():
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100,
                                           buf_type=gdal.GDT_Int16)
     data = struct.unpack('h' * 100 * 100, data)
-    if min(data) != 100 or max(data) != 100:
-        print(min(data))
-        print(max(data))
-        return 'fail'
+    assert min(data) == 100 and max(data) == 100
 
     # Request at a resolution that is not a power of two
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)
     data = struct.unpack('B' * 30 * 30, data)
-    if min(data) != 100 or max(data) != 100:
-        print(min(data))
-        print(max(data))
-        return 'fail'
+    assert min(data) == 100 and max(data) == 100
 
     ds = None
 

@@ -76,31 +76,19 @@ def test_gdal_edit_py_1():
     md = ds.GetMetadata()
     ds = None
 
-    if wkt.find('4326') == -1:
-        print(wkt)
-        return 'fail'
+    assert wkt.find('4326') != -1
 
     expected_gt = (2.0, 0.050000000000000003, 0.0, 50.0, 0.0, -0.050000000000000003)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-10:
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-10
 
-    if nd != 123:
-        print(nd)
-        return 'fail'
+    assert nd == 123
 
-    if md['FOO'] != 'BAR':
-        print(md)
-        return 'fail'
+    assert md['FOO'] == 'BAR'
 
-    if md['UTF8'] != val:
-        print(md)
-        return 'fail'
+    assert md['UTF8'] == val
 
-    if md[val] != 'UTF8':
-        print(md)
-        return 'fail'
+    assert md[val] == 'UTF8'
 
     return 'success'
 
@@ -123,13 +111,9 @@ def test_gdal_edit_py_2():
     gt = ds.GetGeoTransform(can_return_null=True)
     ds = None
 
-    if gt is not None:
-        print(gt)
-        return 'fail'
+    assert gt is None
 
-    if wkt == '':
-        print(wkt)
-        return 'fail'
+    assert wkt != ''
 
     return 'success'
 
@@ -152,13 +136,9 @@ def test_gdal_edit_py_3():
     gt = ds.GetGeoTransform()
     ds = None
 
-    if gt == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
-        print(gt)
-        return 'fail'
+    assert gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 
-    if wkt != '':
-        print(wkt)
-        return 'fail'
+    assert wkt == ''
 
     return 'success'
 
@@ -181,18 +161,16 @@ def test_gdal_edit_py_4():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if (band.GetMetadataItem('STATISTICS_MINIMUM') is None or
-            band.GetMetadataItem('FOO') is None):
-        return 'fail'
+    assert (not (band.GetMetadataItem('STATISTICS_MINIMUM') is None or
+            band.GetMetadataItem('FOO') is None))
     ds = band = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -unsetstats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if (band.GetMetadataItem('STATISTICS_MINIMUM') is not None or
-            band.GetMetadataItem('FOO') is None):
-        return 'fail'
+    assert (not (band.GetMetadataItem('STATISTICS_MINIMUM') is not None or
+            band.GetMetadataItem('FOO') is None))
     ds = band = None
 
     try:
@@ -229,16 +207,14 @@ def test_gdal_edit_py_5():
     ds = band = None
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.ReadAsArray()[15, 12] != 22:
-        return 'fail'
+    assert ds.ReadAsArray()[15, 12] == 22
     ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -stats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 22:
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 22
     ds = None
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
@@ -249,16 +225,14 @@ def test_gdal_edit_py_5():
     ds = band = None
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.ReadAsArray()[15, 12] != 26:
-        return 'fail'
+    assert ds.ReadAsArray()[15, 12] == 26
     ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -stats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 26:
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 26
     ds = None
 
     return 'success'
@@ -280,17 +254,13 @@ def test_gdal_edit_py_6():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 74:
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 74
     stat_max = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MAXIMUM')
-    if stat_max is None or float(stat_max) != 255:
-        return 'fail'
+    assert stat_max is not None and float(stat_max) == 255
     stat_mean = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MEAN')
-    if stat_mean is None or abs(float(stat_mean) - 126.765)>0.001:
-        return 'fail'
+    assert not (stat_mean is None or abs(float(stat_mean) - 126.765)>0.001)
     stat_stddev = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_STDDEV')
-    if stat_stddev is None or abs(float(stat_stddev) - 22.928)>0.001:
-        return 'fail'
+    assert not (stat_stddev is None or abs(float(stat_stddev) - 22.928)>0.001)
 
     ds = None
 
@@ -298,17 +268,13 @@ def test_gdal_edit_py_6():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 22:
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 22
     stat_max = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MAXIMUM')
-    if stat_max is None or float(stat_max) != 217:
-        return 'fail'
+    assert stat_max is not None and float(stat_max) == 217
     stat_mean = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MEAN')
-    if stat_mean is None or float(stat_mean) != 100:
-        return 'fail'
+    assert stat_mean is not None and float(stat_mean) == 100
     stat_stddev = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_STDDEV')
-    if stat_stddev is None or float(stat_stddev) != 30:
-        return 'fail'
+    assert stat_stddev is not None and float(stat_stddev) == 30
     ds = None
 
     return 'success'
@@ -327,10 +293,8 @@ def test_gdal_edit_py_7():
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 -offset 3")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(1).GetScale() != 2:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOffset() != 3:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetScale() == 2
+    assert ds.GetRasterBand(1).GetOffset() == 3
 
     return 'success'
 
@@ -351,14 +315,12 @@ def test_gdal_edit_py_8():
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 alpha")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        return 'fail'
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 undefined")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
-        return 'fail'
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_Undefined
 
     return 'success'
 
@@ -377,8 +339,7 @@ def test_gdal_edit_py_unsetrpc():
                                   "tmp/test_gdal_edit_py.tif -unsetrpc")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetMetadata('RPC'):
-        return 'fail'
+    assert not ds.GetMetadata('RPC')
 
     return 'success'
 

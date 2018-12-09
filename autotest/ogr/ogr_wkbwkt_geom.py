@@ -63,25 +63,21 @@ def test_wkbwkt_geom(unit):
     # print(wkb_wkt)
     # print(normal_wkt)
     # print(raw_wkt)
-    if wkb_wkt != normal_wkt:
-        gdaltest.post_reason('WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt))
-        return 'fail'
+    assert wkb_wkt == normal_wkt, \
+        ('WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt))
 
     ######################################################################
     # Verify that the geometries appear to be the same.   This is
     # intended to catch problems with the encoding too WKT that might
     # cause passes above but that are mistaken.
-    if geom_wkb.GetCoordinateDimension() != geom_wkt.GetCoordinateDimension():
-        gdaltest.post_reason('Coordinate dimension differs!')
-        return 'fail'
+    assert geom_wkb.GetCoordinateDimension() == geom_wkt.GetCoordinateDimension(), \
+        'Coordinate dimension differs!'
 
-    if geom_wkb.GetGeometryType() != geom_wkt.GetGeometryType():
-        gdaltest.post_reason('Geometry type differs!')
-        return 'fail'
+    assert geom_wkb.GetGeometryType() == geom_wkt.GetGeometryType(), \
+        'Geometry type differs!'
 
-    if geom_wkb.GetGeometryName() != geom_wkt.GetGeometryName():
-        gdaltest.post_reason('Geometry name differs!')
-        return 'fail'
+    assert geom_wkb.GetGeometryName() == geom_wkt.GetGeometryName(), \
+        'Geometry name differs!'
 
 # It turns out this test is too picky about coordinate precision. skip.
 #       if geom_wkb.Equal( geom_wkt ) == 0:
@@ -99,20 +95,14 @@ def test_wkbwkt_geom(unit):
     wkb_xdr = geom_wkt.ExportToWkb(ogr.wkbXDR)
     geom_wkb = ogr.CreateGeometryFromWkb(wkb_xdr)
 
-    if str(geom_wkb) != str(geom_wkt):
-        print(geom_wkb)
-        print(geom_wkt)
-        gdaltest.post_reason('XDR WKB encoding/decoding failure.')
-        return 'fail'
+    assert str(geom_wkb) == str(geom_wkt), 'XDR WKB encoding/decoding failure.'
 
     geom_wkb.Destroy()
 
     wkb_ndr = geom_wkt.ExportToWkb(ogr.wkbNDR)
     geom_wkb = ogr.CreateGeometryFromWkb(wkb_ndr)
 
-    if str(geom_wkb) != str(geom_wkt):
-        gdaltest.post_reason('NDR WKB encoding/decoding failure.')
-        return 'fail'
+    assert str(geom_wkb) == str(geom_wkt), 'NDR WKB encoding/decoding failure.'
 
     geom_wkb.Destroy()
 
@@ -135,10 +125,7 @@ def test_ogr_wkbwkt_geom_bigexponents():
     expect = 'POINT (-1.79769313486e+308 -1.12345678901e+308 0)'
     wkt = geom.ExportToWkt()
 
-    if str(wkt) != str(expect):
-        print(wkt)
-        gdaltest.post_reason('trimming long float numbers failed.')
-        return 'fail'
+    assert str(wkt) == str(expect), 'trimming long float numbers failed.'
 
     return 'success'
 
@@ -376,10 +363,7 @@ def test_ogr_wkbwkt_test_broken_geom():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         geom = ogr.CreateGeometryFromWkt(wkt)
         gdal.PopErrorHandler()
-        if geom is not None:
-            gdaltest.post_reason(
-                'geom %s instantiated but not expected' % wkt)
-            return 'fail'
+        assert geom is None, ('geom %s instantiated but not expected' % wkt)
 
     return 'success'
 
@@ -500,16 +484,11 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
 
     for wkt_tuple in list_wkt_tuples:
         geom = ogr.CreateGeometryFromWkt(wkt_tuple[0])
-        if geom is None:
-            gdaltest.post_reason(
-                'could not instantiate geometry %s' % wkt_tuple[0])
-            return 'fail'
+        assert geom is not None, ('could not instantiate geometry %s' % wkt_tuple[0])
         out_wkt = geom.ExportToWkt()
-        if out_wkt != wkt_tuple[1]:
-            gdaltest.post_reason(
-                'in=%s, out=%s, expected=%s.' % (wkt_tuple[0], out_wkt,
+        assert out_wkt == wkt_tuple[1], \
+            ('in=%s, out=%s, expected=%s.' % (wkt_tuple[0], out_wkt,
                                                  wkt_tuple[1]))
-            return 'fail'
 
     return 'success'
 
@@ -525,8 +504,7 @@ def test_ogr_wkbwkt_test_import_bad_multipoint_wkb():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromWkb(wkb)
     gdal.PopErrorHandler()
-    if geom is not None:
-        return 'fail'
+    assert geom is None
 
     return 'success'
 
@@ -554,11 +532,7 @@ def test_ogr_wkbwkt_test_geometrycollection_wktwkb():
         wkb = g.ExportToWkb()
         g = ogr.CreateGeometryFromWkb(wkb)
         wkt2 = g.ExportToWkt()
-        if wkt != wkt2:
-            gdaltest.post_reason('fail for %s' % wkt)
-            print(wkt)
-            print(wkt2)
-            return 'fail'
+        assert wkt == wkt2, ('fail for %s' % wkt)
 
     return 'success'
 
@@ -571,19 +545,14 @@ def test_ogr_wkbwkt_test_geometrycollection_wkt_recursion():
     wkt = 'GEOMETRYCOLLECTION (' * 31 + 'GEOMETRYCOLLECTION EMPTY' + ')' * 31
 
     geom = ogr.CreateGeometryFromWkt(wkt)
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('expected %s' % wkt)
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, ('expected %s' % wkt)
 
     wkt = 'GEOMETRYCOLLECTION (' * 32 + 'GEOMETRYCOLLECTION EMPTY' + ')' * 32
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromWkt(wkt)
     gdal.PopErrorHandler()
-    if geom is not None:
-        gdaltest.post_reason('expected None')
-        return 'fail'
+    assert geom is None, 'expected None'
 
     return 'success'
 
@@ -600,18 +569,14 @@ def test_ogr_wkbwkt_test_geometrycollection_wkb_recursion():
     wkb = wkb_repeat * 31 + wkb_end
 
     geom = ogr.CreateGeometryFromWkb(wkb)
-    if geom is None:
-        gdaltest.post_reason('expected a geometry')
-        return 'fail'
+    assert geom is not None, 'expected a geometry'
 
     wkb = struct.pack('B' * 0) + wkb_repeat * 32 + wkb_end
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromWkb(wkb)
     gdal.PopErrorHandler()
-    if geom is not None:
-        gdaltest.post_reason('expected None')
-        return 'fail'
+    assert geom is None, 'expected None'
 
     return 'success'
 
@@ -624,9 +589,7 @@ def test_ogr_wkbwkt_export_wkt_iso_multipoint():
     wkt = 'MULTIPOINT ((0 0),(1 1))'
     g = ogr.CreateGeometryFromWkt(wkt)
     out_wkt = g.ExportToIsoWkt()
-    if out_wkt != wkt:
-        print(out_wkt)
-        return 'fail'
+    assert out_wkt == wkt
 
     return 'success'
 
@@ -639,9 +602,7 @@ def test_ogr_wkt_inf_nan():
     g = ogr.Geometry(ogr.wkbPoint)
     g.AddPoint(float('inf'), float('-inf'), float('nan'))
     out_wkt = g.ExportToWkt()
-    if out_wkt != 'POINT (inf -inf nan)':
-        print(out_wkt)
-        return 'fail'
+    assert out_wkt == 'POINT (inf -inf nan)'
 
     return 'success'
 
@@ -653,8 +614,7 @@ def test_ogr_wkt_multicurve_compoundcurve_corrupted():
 
     with gdaltest.error_handler():
         g = ogr.CreateGeometryFromWkt('MULTICURVE(COMPOUNDCURVE')
-    if g is not None:
-        return 'fail'
+    assert g is None
 
     return 'success'
 
@@ -666,8 +626,7 @@ def test_ogr_wkt_multipolygon_corrupted():
 
     with gdaltest.error_handler():
         g = ogr.CreateGeometryFromWkt('MULTIPOLYGON(POLYGON((N')
-    if g is not None:
-        return 'fail'
+    assert g is None
 
     return 'success'
 

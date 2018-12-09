@@ -138,9 +138,7 @@ def http_4_old():
         return 'fail'
 
     filelist = ds.GetFileList()
-    if filelist[0] != '/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif':
-        print(filelist)
-        return 'fail'
+    assert filelist[0] == '/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif'
 
     return 'success'
 
@@ -176,9 +174,7 @@ def test_http_4():
         return 'fail'
 
     filelist = ds.GetFileList()
-    if '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' not in filelist:
-        print(filelist)
-        return 'fail'
+    assert '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' in filelist
 
     return 'success'
 
@@ -283,8 +279,7 @@ def test_http_test_use_capi_store():
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdalhttp', ' -use_capi_store', display_live_on_parent_stdout=True)
 
-    if ret.find('Failed:    0') == -1:
-        return 'fail'
+    assert ret.find('Failed:    0') != -1
 
     return 'success'
 

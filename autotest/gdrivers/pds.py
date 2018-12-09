@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read a truncated and modified version of http://download.osgeo.org/gdal/data/pds/mc02.img
@@ -79,17 +80,13 @@ def test_pds_2():
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
 
     ds = gdal.Open('data/fl73n003_truncated.img')
-    if ds.GetRasterBand(1).GetNoDataValue() != 7:
-        return 'fail'
-    if ds.GetRasterBand(1).GetScale() != 0.2:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOffset() != -20.2:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 7
+    assert ds.GetRasterBand(1).GetScale() == 0.2
+    assert ds.GetRasterBand(1).GetOffset() == -20.2
 
     # Per #3939 we would also like to test a dataset with MISSING_CONSTANT.
     ds = gdal.Open('data/fl73n003_alt_truncated.img')
-    if ds.GetRasterBand(1).GetNoDataValue() != 7:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 7
 
     return 'success'
 
@@ -109,8 +106,7 @@ def test_pds_3():
     tst.testOpen(check_gt=gt_expected)
 
     ds = gdal.Open('data/EN0001426030M_truncated.IMG')
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
 
     gdal.PopErrorHandler()
 
@@ -162,18 +158,14 @@ def test_pds_6():
 
     ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
 
-    if len(ds.GetFileList()) != 2:
-        gdaltest.post_reason('failed to get expected file list.')
-        print(ds.GetFileList())
-        return 'fail'
+    assert len(ds.GetFileList()) == 2, 'failed to get expected file list.'
 
     expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",180],PARAMETER["standard_parallel_1",15],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
     wkt = ds.GetProjection()
     if expected_wkt != wkt:
         print('Got: ', wkt)
         print('Exp: ', expected_wkt)
-        gdaltest.post_reason('did not get expected coordinate system.')
-        return 'fail'
+        pytest.fail('did not get expected coordinate system.')
 
     return 'success'
 
@@ -250,12 +242,9 @@ def test_pds_9():
     ds = gdal.Open('data/PDS_WITH_ZIP_IMG.LBL')
     got_nd = ds.GetRasterBand(1).GetNoDataValue()
     expected_nd = -3.40282265508890445e+38
-    if abs((got_nd - expected_nd) / expected_nd) > 1e-5:
-        print(got_nd)
-        return 'fail'
+    assert abs((got_nd - expected_nd) / expected_nd) <= 1e-5
 
-    if not ds.GetProjectionRef():
-        return 'fail'
+    assert ds.GetProjectionRef()
 
     return 'success'
 
@@ -288,13 +277,10 @@ END
 
     ds = gdal.Open('/vsimem/pds_10')
 
-    if ds.GetMetadataItem('NOTE') != '((1,2,3))':
-        print(ds.GetMetadataItem('NOTE'))
-        return 'fail'
+    assert ds.GetMetadataItem('NOTE') == '((1,2,3))'
 
-    if ds.GetMetadataItem('PRODUCT_ID') != '({1,2},{3,4})':
-        print(ds.GetMetadataItem('NOTE'))
-        return 'fail'
+    assert ds.GetMetadataItem('PRODUCT_ID') == '({1,2},{3,4})', \
+        ds.GetMetadataItem('NOTE')
 
     gdal.FileFromMemBuffer('/vsimem/pds_10',
                            """PDS_VERSION_ID                       = "PDS3"

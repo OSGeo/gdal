@@ -47,12 +47,8 @@ def test_ogrinfo_1():
         return 'skip'
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
-    if ret.find('ESRI Shapefile') == -1:
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
+    assert ret.find('ESRI Shapefile') != -1
 
     return 'success'
 
@@ -65,8 +61,7 @@ def test_ogrinfo_2():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro ../ogr/data/poly.shp')
-    if ret.find('ESRI Shapefile') == -1:
-        return 'fail'
+    assert ret.find('ESRI Shapefile') != -1
 
     return 'success'
 
@@ -79,18 +74,12 @@ def test_ogrinfo_3():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al ../ogr/data/poly.shp')
-    if ret.find('Layer name: poly') == -1:
-        return 'fail'
-    if ret.find('Geometry: Polygon') == -1:
-        return 'fail'
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-    if ret.find('Extent: (478315') == -1:
-        return 'fail'
-    if ret.find('PROJCS["OSGB') == -1:
-        return 'fail'
-    if ret.find('AREA: Real (') == -1:
-        return 'fail'
+    assert ret.find('Layer name: poly') != -1
+    assert ret.find('Geometry: Polygon') != -1
+    assert ret.find('Feature Count: 10') != -1
+    assert ret.find('Extent: (478315') != -1
+    assert ret.find('PROJCS["OSGB') != -1
+    assert ret.find('AREA: Real (') != -1
 
     return 'success'
 
@@ -103,8 +92,7 @@ def test_ogrinfo_4():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
+    assert ret.find('Feature Count: 10') != -1
 
     return 'success'
 
@@ -117,8 +105,7 @@ def test_ogrinfo_5():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp -sql "select * from poly"')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
+    assert ret.find('Feature Count: 10') != -1
 
     return 'success'
 
@@ -131,10 +118,8 @@ def test_ogrinfo_6():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -geom=no')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-    if ret.find('POLYGON') != -1:
-        return 'fail'
+    assert ret.find('Feature Count: 10') != -1
+    assert ret.find('POLYGON') == -1
 
     return 'success'
 
@@ -147,12 +132,9 @@ def test_ogrinfo_7():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -geom=summary')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-    if ret.find('POLYGON (') != -1:
-        return 'fail'
-    if ret.find('POLYGON :') == -1:
-        return 'fail'
+    assert ret.find('Feature Count: 10') != -1
+    assert ret.find('POLYGON (') == -1
+    assert ret.find('POLYGON :') != -1
 
     return 'success'
 
@@ -166,12 +148,10 @@ def test_ogrinfo_8():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -spat 479609 4764629 479764 4764817')
     if ogrtest.have_geos():
-        if ret.find('Feature Count: 4') == -1:
-            return 'fail'
+        assert ret.find('Feature Count: 4') != -1
         return 'success'
     else:
-        if ret.find('Feature Count: 5') == -1:
-            return 'fail'
+        assert ret.find('Feature Count: 5') != -1
         return 'success'
 
 ###############################################################################
@@ -183,9 +163,7 @@ def test_ogrinfo_9():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -where "EAS_ID=171"')
-    if ret.find('Feature Count: 1') == -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('Feature Count: 1') != -1
 
     return 'success'
 
@@ -198,8 +176,7 @@ def test_ogrinfo_10():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fid 9')
-    if ret.find('OGRFeature(poly):9') == -1:
-        return 'fail'
+    assert ret.find('OGRFeature(poly):9') != -1
 
     return 'success'
 
@@ -212,10 +189,8 @@ def test_ogrinfo_11():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fields=no')
-    if ret.find('AREA (Real') != -1:
-        return 'fail'
-    if ret.find('POLYGON (') == -1:
-        return 'fail'
+    assert ret.find('AREA (Real') == -1
+    assert ret.find('POLYGON (') != -1
 
     return 'success'
 
@@ -228,9 +203,7 @@ def test_ogrinfo_12():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --version', check_memleak=False)
-    if ret.find(gdal.VersionInfo('--version')) != 0:
-        print(ret)
-        return 'fail'
+    assert ret.find(gdal.VersionInfo('--version')) == 0
 
     return 'success'
 
@@ -243,9 +216,7 @@ def test_ogrinfo_13():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --config', check_memleak=False)
-    if err.find('--config option given without a key and value argument') < 0:
-        print(err)
-        return 'fail'
+    assert err.find('--config option given without a key and value argument') >= 0
 
     return 'success'
 
@@ -258,9 +229,7 @@ def test_ogrinfo_14():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --mempreload', check_memleak=False)
-    if err.find('--mempreload option given without directory path') < 0:
-        print(err)
-        return 'fail'
+    assert err.find('--mempreload option given without directory path') >= 0
 
     return 'success'
 
@@ -273,9 +242,7 @@ def test_ogrinfo_15():
         return 'skip'
 
     (ret, _) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug on --mempreload ../ogr/data /vsimem/poly.shp', check_memleak=False)
-    if ret.find("ESRI Shapefile") < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find("ESRI Shapefile") >= 0
 
     return 'success'
 
@@ -288,9 +255,7 @@ def test_ogrinfo_16():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug', check_memleak=False)
-    if err.find('--debug option given without debug level') < 0:
-        print(err)
-        return 'fail'
+    assert err.find('--debug option given without debug level') >= 0
 
     return 'success'
 
@@ -303,23 +268,17 @@ def test_ogrinfo_17():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile', check_memleak=False)
-    if err.find('--optfile option given without filename') < 0:
-        print(err)
-        return 'fail'
+    assert err.find('--optfile option given without filename') >= 0
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile /foo/bar', check_memleak=False)
-    if err.find('Unable to open optfile') < 0:
-        print(err)
-        return 'fail'
+    assert err.find('Unable to open optfile') >= 0
 
     f = open('tmp/optfile.txt', 'wt')
     f.write('--config foo\n')
     f.close()
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile tmp/optfile.txt', check_memleak=False)
     os.unlink('tmp/optfile.txt')
-    if err.find('--config option given without a key and value argument') < 0:
-        print(err)
-        return 'fail'
+    assert err.find('--config option given without a key and value argument') >= 0
 
     return 'success'
 
@@ -337,9 +296,7 @@ def test_ogrinfo_18():
     f.close()
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --optfile tmp/optfile.txt', check_memleak=False)
     os.unlink('tmp/optfile.txt')
-    if ret.find("ESRI Shapefile") < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find("ESRI Shapefile") >= 0
 
     return 'success'
 
@@ -352,9 +309,7 @@ def test_ogrinfo_19():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --formats', check_memleak=False)
-    if ret.find('ESRI Shapefile -vector- (rw+v): ESRI Shapefile') < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find('ESRI Shapefile -vector- (rw+v): ESRI Shapefile') >= 0
 
     return 'success'
 
@@ -367,9 +322,7 @@ def test_ogrinfo_20():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --help-general', check_memleak=False)
-    if ret.find('Generic GDAL utility command options') < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find('Generic GDAL utility command options') >= 0
 
     return 'success'
 
@@ -382,9 +335,7 @@ def test_ogrinfo_21():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --locale C ../ogr/data/poly.shp', check_memleak=False)
-    if ret.find("ESRI Shapefile") < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find("ESRI Shapefile") >= 0
 
     return 'success'
 
@@ -402,9 +353,7 @@ def test_ogrinfo_22():
     f.close()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' tmp/test_ogrinfo_22.csv', check_memleak=False)
-    if ret.find('1: test_ogrinfo_22 (Unknown (any), Unknown (any))') < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find('1: test_ogrinfo_22 (Unknown (any), Unknown (any))') >= 0
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al tmp/test_ogrinfo_22.csv', check_memleak=False)
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_22.csv'
@@ -463,9 +412,7 @@ OGRFeature(test_ogrinfo_22):1
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
     for i, exp_line in enumerate(expected_lines):
-        if exp_line != lines[i]:
-            print(ret)
-            return 'fail'
+        assert exp_line == lines[i], ret
 
     os.unlink('tmp/test_ogrinfo_22.csv')
 
@@ -542,9 +489,7 @@ OGRFeature(test_ogrinfo_23):2
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
     for i, exp_line in enumerate(expected_lines):
-        if exp_line != lines[i]:
-            print(ret)
-            return 'fail'
+        assert exp_line == lines[i], ret
 
     os.unlink('tmp/test_ogrinfo_23.csv')
 
@@ -730,14 +675,9 @@ def test_ogrinfo_25():
         return 'skip'
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -rl -q ../ogr/data/poly.shp')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
-    if ret.find('OGRFeature(poly):0') < 0 or ret.find('OGRFeature(poly):9') < 0:
-        gdaltest.post_reason('wrong output')
-        print(ret)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
+    assert ret.find('OGRFeature(poly):0') >= 0 and ret.find('OGRFeature(poly):9') >= 0, \
+        'wrong output'
 
     return 'success'
 
@@ -753,14 +693,9 @@ def test_ogrinfo_sql_filename():
     open('tmp/my.sql', 'wt').write('-- initial comment\nselect * from poly\n-- trailing comment')
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -q ../ogr/data/poly.shp -sql @tmp/my.sql')
     os.unlink('tmp/my.sql')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
-    if ret.find('OGRFeature(poly):0') < 0 or ret.find('OGRFeature(poly):9') < 0:
-        gdaltest.post_reason('wrong output')
-        print(ret)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
+    assert ret.find('OGRFeature(poly):0') >= 0 and ret.find('OGRFeature(poly):9') >= 0, \
+        'wrong output'
 
     return 'success'
 

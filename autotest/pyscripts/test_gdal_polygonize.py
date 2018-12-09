@@ -75,9 +75,7 @@ def test_gdal_polygonize_1():
     shp_lyr = shp_ds.GetLayerByName('poly')
 
     expected_feature_number = 13
-    if shp_lyr.GetFeatureCount() != expected_feature_number:
-        gdaltest.post_reason('GetFeatureCount() returned %d instead of %d' % (shp_lyr.GetFeatureCount(), expected_feature_number))
-        return 'fail'
+    assert shp_lyr.GetFeatureCount() == expected_feature_number
 
     expect = [107, 123, 115, 115, 140, 148, 123, 140, 156,
               100, 101, 102, 103]
@@ -124,9 +122,7 @@ def test_gdal_polygonize_2():
     shp_lyr = shp_ds.GetLayerByName('out')
 
     expected_feature_number = 17
-    if shp_lyr.GetFeatureCount() != expected_feature_number:
-        gdaltest.post_reason('GetFeatureCount() returned %d instead of %d' % (shp_lyr.GetFeatureCount(), expected_feature_number))
-        return 'fail'
+    assert shp_lyr.GetFeatureCount() == expected_feature_number
 
     expect = [107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
               132, 156, 100, 101, 102, 103]
@@ -192,9 +188,7 @@ def test_gdal_polygonize_4():
 
     os.unlink('tmp/out.gml')
 
-    if content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') >= 0
 
     # Test mask,1 syntax
     test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask,1 ../gcore/data/byte.tif tmp/out.gml')
@@ -203,9 +197,7 @@ def test_gdal_polygonize_4():
 
     os.unlink('tmp/out.gml')
 
-    if content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') >= 0
 
     return 'success'
 

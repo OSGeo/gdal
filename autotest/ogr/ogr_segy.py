@@ -42,32 +42,20 @@ from osgeo import ogr
 def test_ogr_segy_1():
 
     ds = ogr.Open('data/segy/testsegy.segy')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.TestCapability("foo") != 0:
-        return 'fail'
+    assert ds.TestCapability("foo") == 0
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.TestCapability("foo") != 0:
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
-    if lyr.GetLayerDefn().GetFieldCount() != 71:
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 71
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (500000 4500000)',
@@ -77,32 +65,22 @@ def test_ogr_segy_1():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     lyr = ds.GetLayer(1)
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbNone, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.TestCapability("foo") != 0:
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
-    if lyr.GetLayerDefn().GetFieldCount() != 32:
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 32
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     return 'success'
 
@@ -112,18 +90,12 @@ def test_ogr_segy_1():
 
 def test_ogr_segy_2():
     ds = ogr.Open('data/segy/ascii-header-with-nuls.sgy')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
     # TODO(schwehr): Test the values of fields and data.
 

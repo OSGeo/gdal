@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read test of simple byte reference data.
@@ -63,17 +64,12 @@ def test_png_3():
 
     ds = gdal.Open('data/test.png')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
-    if cm.GetCount() != 16 \
-       or cm.GetColorEntry(0) != (255, 255, 255, 0) \
-       or cm.GetColorEntry(1) != (255, 255, 208, 255):
-        gdaltest.post_reason('Wrong colormap entries')
-        return 'fail'
+    assert cm.GetCount() == 16 and cm.GetColorEntry(0) == (255, 255, 255, 0) and cm.GetColorEntry(1) == (255, 255, 208, 255), \
+        'Wrong colormap entries'
 
     cm = None
 
-    if int(ds.GetRasterBand(1).GetNoDataValue()) != 0:
-        gdaltest.post_reason('Wrong nodata value.')
-        return 'fail'
+    assert int(ds.GetRasterBand(1).GetNoDataValue()) == 0, 'Wrong nodata value.'
 
     # This geotransform test is also verifying the fix for bug 1414, as
     # the world file is in a mixture of numeric representations for the
@@ -86,9 +82,7 @@ def test_png_3():
         if abs(gt[i] - gt_expected[i]) > 0.0001:
             print('expected:', gt_expected)
             print('got:', gt)
-
-            gdaltest.post_reason('Mixed locale world file read improperly.')
-            return 'fail'
+            pytest.fail('Mixed locale world file read improperly.')
 
     return 'success'
 
@@ -138,9 +132,7 @@ def test_png_7():
     md = dstds.GetMetadata()
     dstds = None
 
-    if md['NODATA_VALUES'] != '32639 32639 32639':
-        gdaltest.post_reason('NODATA_VALUES wrong')
-        return 'fail'
+    assert md['NODATA_VALUES'] == '32639 32639 32639', 'NODATA_VALUES wrong'
 
     dstds = None
 
@@ -159,20 +151,14 @@ def test_png_8():
     ds_src = gdal.Open('data/idat_broken.png')
 
     md = ds_src.GetMetadata()
-    if md:
-        gdaltest.post_reason('metadata list not expected')
-        return 'fail'
+    assert not md, 'metadata list not expected'
 
     # Number of bands has been preserved
-    if ds_src.RasterCount != 4:
-        gdaltest.post_reason('wrong number of bands')
-        return 'fail'
+    assert ds_src.RasterCount == 4, 'wrong number of bands'
 
     # No reading is performed, so we expect valid reference
     b = ds_src.GetRasterBand(1)
-    if b is None:
-        gdaltest.post_reason('band 1 is missing')
-        return 'fail'
+    assert b is not None, 'band 1 is missing'
 
     # We're not interested in returned value but internal state of GDAL.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -180,9 +166,7 @@ def test_png_8():
     err = gdal.GetLastErrorNo()
     gdal.PopErrorHandler()
 
-    if err == 0:
-        gdaltest.post_reason('error condition expected')
-        return 'fail'
+    assert err != 0, 'error condition expected'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds_dst = drv.CreateCopy('tmp/idat_broken.png', ds_src)
@@ -190,13 +174,9 @@ def test_png_8():
     gdal.PopErrorHandler()
     ds_src = None
 
-    if err == 0:
-        gdaltest.post_reason('error condition expected')
-        return 'fail'
+    assert err != 0, 'error condition expected'
 
-    if ds_dst is not None:
-        gdaltest.post_reason('dataset not expected')
-        return 'fail'
+    assert ds_dst is None, 'dataset not expected'
 
     os.remove('tmp/idat_broken.png')
 
@@ -220,16 +200,13 @@ def test_png_10():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('PNG').CreateCopy('/vsistdout_redirect//vsimem/tmp.png', src_ds)
-    if ds.GetRasterBand(1).Checksum() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0
     src_ds = None
     ds = None
 
     ds = gdal.Open('/vsimem/tmp.png')
-    if ds is None:
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
     gdal.Unlink('/vsimem/tmp.png')
 
@@ -260,24 +237,21 @@ def test_png_12():
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
-    if cs != got_cs:
-        return 'fail'
+    assert cs == got_cs
 
     # Pixel interleaved
     data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_pixel_space=ds.RasterCount, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_pixel_space=ds.RasterCount, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
-    if cs != got_cs:
-        return 'fail'
+    assert cs == got_cs
 
     # Pixel interleaved with padding
     data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_pixel_space=5, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_pixel_space=5, buf_band_space=1)
     got_cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
-    if cs != got_cs:
-        return 'fail'
+    assert cs == got_cs
 
     return 'success'
 
@@ -293,13 +267,10 @@ def test_png_13():
     src_ds.SetMetadataItem('DESCRIPTION', 'will be overridden by creation option')
     out_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options=['WRITE_METADATA_AS_TEXT=YES', 'DESCRIPTION=my desc'])
     md = out_ds.GetMetadata()
-    if len(md) != 3 or md['foo'] != 'bar' or md['Copyright'] != 'copyright value' or md['Description'] != 'my desc':
-        print(md)
-        return 'fail'
+    assert len(md) == 3 and md['foo'] == 'bar' and md['Copyright'] == 'copyright value' and md['Description'] == 'my desc'
     out_ds = None
     # check that no PAM file is created
-    if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/tmp.png.aux.xml') != 0
     gdal.Unlink('/vsimem/tmp.png')
     return 'success'
 
@@ -317,26 +288,19 @@ def test_png_14():
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')
 
-    if cs != expected_cs:
-        print(cs)
-        return 'fail'
+    assert cs == expected_cs
 
-    if nbits != '1':
-        print(nbits)
-        return 'fail'
+    assert nbits == '1'
 
     # check that no PAM file is created
-    if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/tmp.png.aux.xml') != 0
 
     # Test explicit NBITS
     gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options=['NBITS=2'])
     out_ds = gdal.Open('/vsimem/tmp.png')
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')
-    if nbits != '2':
-        print(nbits)
-        return 'fail'
+    assert nbits == '2'
 
     # Test (wrong) explicit NBITS
     with gdaltest.error_handler():
@@ -344,9 +308,7 @@ def test_png_14():
     out_ds = gdal.Open('/vsimem/tmp.png')
     nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
     gdal.Unlink('/vsimem/tmp.png')
-    if nbits is not None:
-        print(nbits)
-        return 'fail'
+    assert nbits is None
 
     return 'success'
 

@@ -66,9 +66,7 @@ def test_ogr_edigeo_1():
         return 'skip'
 
     ds = ogr.Open('tmp/cache/E000AB01.THF')
-    if ds.GetLayerCount() != 24:
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 24
 
     layers = [('BATIMENT_id', ogr.wkbPolygon, 107),
               ('BORNE_id', ogr.wkbPoint, 5),
@@ -91,15 +89,10 @@ def test_ogr_edigeo_1():
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
-        if lyr.GetLayerDefn().GetGeomType() != l[1]:
-            return 'fail'
-        if lyr.GetFeatureCount() != l[2]:
-            print(lyr.GetFeatureCount())
-            return 'fail'
+        assert lyr.GetLayerDefn().GetGeomType() == l[1]
+        assert lyr.GetFeatureCount() == l[2]
         if l[1] != ogr.wkbNone:
-            if lyr.GetSpatialRef().ExportToWkt().find('Lambert_Conformal_Conic_1SP') == -1:
-                print(lyr.GetSpatialRef().ExportToWkt())
-                return 'fail'
+            assert lyr.GetSpatialRef().ExportToWkt().find('Lambert_Conformal_Conic_1SP') != -1
 
     lyr = ds.GetLayerByName('BORNE_id')
     feat = lyr.GetNextFeature()

@@ -56,10 +56,8 @@ def test_vsistdin_1():
     gdal.Unlink("tmp/vsistdin_1_src.tif")
 
     ds = gdal.Open("tmp/vsistdin_1_out.tif")
-    if ds is None:
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != cs:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetRasterBand(1).Checksum() == cs
 
     gdal.Unlink("tmp/vsistdin_1_out.tif")
 
@@ -82,8 +80,7 @@ def test_vsistdin_2():
     gdal.Unlink("tmp/vsistdin_2_src.tif")
 
     ds = gdal.Open("tmp/vsistdin_2_out.tif")
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     gdal.Unlink("tmp/vsistdin_2_out.tif")
@@ -99,8 +96,7 @@ def test_vsistdin_3():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     f = gdal.VSIFOpenL('/vsistdin/', 'wb')
     gdal.PopErrorHandler()
-    if f is not None:
-        return 'fail'
+    assert f is None
 
     return 'success'
 
@@ -133,8 +129,7 @@ def test_vsistdin_4():
     gdal.Unlink("tmp/vsistdin_4_src.vrt")
 
     ds = gdal.Open("tmp/vsistdin_4_out.tif")
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     gdal.Unlink("tmp/vsistdin_4_out.tif")

@@ -71,8 +71,7 @@ def test_isce_2():
 
     ds = gdal.Open('data/isce.slc')
     val = ds.GetMetadataItem('IMAGE_TYPE', 'ISCE')
-    if val != 'slc':
-        return 'fail'
+    assert val == 'slc'
 
     return 'success'
 

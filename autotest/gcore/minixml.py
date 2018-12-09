@@ -43,70 +43,42 @@ def test_minixml_1():
 
     tree = gdal.ParseXMLString('<TestDoc style="123"><sub1/><sub2>abc</sub2></TestDoc>')
 
-    if tree[0] != gdal.CXT_Element:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert tree[0] == gdal.CXT_Element, 'wrong node type.'
 
-    if tree[1] != 'TestDoc':
-        gdaltest.post_reason('Wrong element name')
-        return 'fail'
+    assert tree[1] == 'TestDoc', 'Wrong element name'
 
-    if len(tree) != 5:
-        gdaltest.post_reason('Wrong number of children.')
-        return 'fail'
+    assert len(tree) == 5, 'Wrong number of children.'
 
     # Check style attribute
     node = tree[2]
 
-    if node[0] != gdal.CXT_Attribute:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert node[0] == gdal.CXT_Attribute, 'wrong node type.'
 
-    if node[1] != 'style':
-        gdaltest.post_reason('Wrong element name')
-        return 'fail'
+    assert node[1] == 'style', 'Wrong element name'
 
-    if len(node) != 3:
-        gdaltest.post_reason('Wrong number of children.')
-        return 'fail'
+    assert len(node) == 3, 'Wrong number of children.'
 
-    if node[2][1] != '123':
-        gdaltest.post_reason('Wrong element content.')
-        return 'fail'
+    assert node[2][1] == '123', 'Wrong element content.'
 
     # Check <sub1> element
     node = tree[3]
 
-    if node[0] != gdal.CXT_Element:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert node[0] == gdal.CXT_Element, 'wrong node type.'
 
-    if node[1] != 'sub1':
-        gdaltest.post_reason('Wrong element name')
-        return 'fail'
+    assert node[1] == 'sub1', 'Wrong element name'
 
-    if len(node) != 2:
-        gdaltest.post_reason('Wrong number of children.')
-        return 'fail'
+    assert len(node) == 2, 'Wrong number of children.'
 
     # Check <sub2> element
     node = tree[4]
 
-    if node[0] != gdal.CXT_Element:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert node[0] == gdal.CXT_Element, 'wrong node type.'
 
-    if node[1] != 'sub2':
-        gdaltest.post_reason('Wrong element name')
-        return 'fail'
+    assert node[1] == 'sub2', 'Wrong element name'
 
-    if len(node) != 3:
-        gdaltest.post_reason('Wrong number of children.')
-        return 'fail'
+    assert len(node) == 3, 'Wrong number of children.'
 
-    if node[2][1] != 'abc':
-        gdaltest.post_reason('Wrong element content.')
-        return 'fail'
+    assert node[2][1] == 'abc', 'Wrong element content.'
 
     return 'success'
 
@@ -119,10 +91,7 @@ def test_minixml_2():
     tree = [0, 'TestDoc', [2, 'style', [1, '123']], [0, 'sub1'], [0, 'sub2', [1, 'abc']]]
     doc_target = '<TestDoc style="123">\n  <sub1 />\n  <sub2>abc</sub2>\n</TestDoc>\n'
     doc_got = gdal.SerializeXMLTree(tree)
-    if doc_got != doc_target:
-        gdaltest.post_reason('serialize xml tree failed.')
-        print(doc_got)
-        return 'fail'
+    assert doc_got == doc_target, 'serialize xml tree failed.'
     return 'success'
 
 ###############################################################################
@@ -135,58 +104,36 @@ def test_minixml_3():
     text = fp.read()
     tree = gdal.ParseXMLString(text)
 
-    if tree[0] != gdal.CXT_Element:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert tree[0] == gdal.CXT_Element, 'wrong node type.'
 
     # Check <chapter> element
     node = tree[6]
 
-    if node[0] != gdal.CXT_Element:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert node[0] == gdal.CXT_Element, 'wrong node type.'
 
-    if node[1] != 'chapter':
-        gdaltest.post_reason('Wrong element name')
-        return 'fail'
+    assert node[1] == 'chapter', 'Wrong element name'
 
-    if len(node) != 7:
-        gdaltest.post_reason('Wrong number of children.')
-        return 'fail'
+    assert len(node) == 7, 'Wrong number of children.'
 
     # Check <chapter><title> subelement
     subnode = node[2]
 
-    if subnode[0] != gdal.CXT_Element:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert subnode[0] == gdal.CXT_Element, 'wrong node type.'
 
-    if subnode[1] != 'title':
-        gdaltest.post_reason('Wrong element name')
-        return 'fail'
+    assert subnode[1] == 'title', 'Wrong element name'
 
-    if len(subnode) != 3:
-        gdaltest.post_reason('Wrong number of children.')
-        return 'fail'
+    assert len(subnode) == 3, 'Wrong number of children.'
 
-    if subnode[2][1] != 'Chapter 1':
-        gdaltest.post_reason('Wrong element content.')
-        return 'fail'
+    assert subnode[2][1] == 'Chapter 1', 'Wrong element content.'
 
     # Check fist <chapter><para> subelement
     subnode = node[3]
 
-    if subnode[0] != gdal.CXT_Element:
-        gdaltest.post_reason('wrong node type.')
-        return 'fail'
+    assert subnode[0] == gdal.CXT_Element, 'wrong node type.'
 
-    if subnode[1] != 'para':
-        gdaltest.post_reason('Wrong element name')
-        return 'fail'
+    assert subnode[1] == 'para', 'Wrong element name'
 
-    if len(subnode) != 3:
-        gdaltest.post_reason('Wrong number of children.')
-        return 'fail'
+    assert len(subnode) == 3, 'Wrong number of children.'
 
     return 'success'
 
@@ -198,10 +145,7 @@ def test_minixml_4():
 
     xml = """<?xml encoding="utf-8"?>\n<foo />\n"""
     got_xml = gdal.SerializeXMLTree(gdal.ParseXMLString(xml))
-    if xml != got_xml:
-        gdaltest.post_reason('serialize xml tree failed.')
-        print(got_xml)
-        return 'fail'
+    assert xml == got_xml, 'serialize xml tree failed.'
 
     return 'success'
 
@@ -221,16 +165,11 @@ def test_minixml_5():
             tree = gdal.ParseXMLString(xml_str)
 
         found = gdal.GetLastErrorMsg()
-        if expect not in found:
-            gdaltest.post_reason(
-                'Did not find expected error message: "%s"  '
+        assert expect in found, ('Did not find expected error message: "%s"  '
                 'Found: "%s"  '
                 'For test string: "%s""' % (expect, found, xml_str))
-            return 'fail'
 
-        if tree is None:
-            gdaltest.post_reason('Tree is None: "%s"' % tree)
-            return 'fail'
+        assert tree is not None, ('Tree is None: "%s"' % tree)
 
     return 'success'
 
@@ -260,16 +199,11 @@ def test_minixml_6():
             tree = gdal.ParseXMLString(xml_str)
 
         found = gdal.GetLastErrorMsg()
-        if expect not in found:
-            gdaltest.post_reason(
-                'Did not find expected error message: "%s"  '
+        assert expect in found, ('Did not find expected error message: "%s"  '
                 'Found: "%s"  '
                 'For test string: "%s""' % (expect, found, xml_str))
-            return 'fail'
 
-        if tree is not None:
-            gdaltest.post_reason('Tree is not None: "%s"' % tree)
-            return 'fail'
+        assert tree is None, ('Tree is not None: "%s"' % tree)
 
     return 'success'
 
@@ -291,13 +225,9 @@ def test_minixml_7():
         tree = gdal.ParseXMLString(xml_str)
 
         found = gdal.GetLastErrorMsg()
-        if found != '':
-            gdaltest.post_reason('Unexpected msg "%s"' % found)
-            return 'fail'
+        assert found == '', ('Unexpected msg "%s"' % found)
 
-        if tree is None:
-            gdaltest.post_reason('Tree is None: "%s"' % tree)
-            return 'fail'
+        assert tree is not None, ('Tree is None: "%s"' % tree)
 
     return 'success'
 
@@ -313,12 +243,8 @@ def test_minixml_8():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         tree = gdal.ParseXMLString(xml_str)
-    if tree is not None:
-        gdaltest.post_reason('expected None tree')
-        return 'fail'
-    if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('expected error message')
-        return 'fail'
+    assert tree is None, 'expected None tree'
+    assert gdal.GetLastErrorMsg() != '', 'expected error message'
 
     return 'success'
 

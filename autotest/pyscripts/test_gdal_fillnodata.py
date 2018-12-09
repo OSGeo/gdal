@@ -50,8 +50,7 @@ def test_gdal_fillnodata_1():
     test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/byte.tif tmp/test_gdal_fillnodata_1.tif')
 
     ds = gdal.Open('tmp/test_gdal_fillnodata_1.tif')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
     return 'success'
@@ -70,9 +69,8 @@ def test_gdal_fillnodata_2():
     test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
 
     ds = gdal.Open('tmp/test_gdal_fillnodata_2.tif')
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Failed to copy No Data Value to dst dataset.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, \
+        'Failed to copy No Data Value to dst dataset.'
     ds = None
 
     return 'success'

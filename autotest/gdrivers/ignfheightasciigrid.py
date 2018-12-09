@@ -99,9 +99,7 @@ def test_ignfheightasciigrid_description_multiword():
     gdal.FileFromMemBuffer(filename, ok_content)
     ds = gdal.OpenEx(filename)
     desc = ds.GetMetadataItem('DESCRIPTION')
-    if desc != 'MULTI WORD':
-        print(desc)
-        return 'fail'
+    assert desc == 'MULTI WORD'
     return 'success'
 
 
@@ -111,10 +109,8 @@ def test_ignfheightasciigrid_invalid():
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. DESC\r1 2 3 4'
     gdal.FileFromMemBuffer(filename, ok_content)
     ds = gdal.OpenEx(filename)
-    if not ds:
-        return 'fail'
-    if ds.GetRasterBand(1).GetUnitType() != 'm':
-        return 'fail'
+    assert ds
+    assert ds.GetRasterBand(1).GetUnitType() == 'm'
     gdal.Unlink(filename)
 
     contents = ['0 0 0 0 0 0 0 0 0 0 0 0\r',  # a lot of invalid values
@@ -148,9 +144,7 @@ def test_ignfheightasciigrid_invalid():
     for content in contents:
         gdal.FileFromMemBuffer(filename, content)
         with gdaltest.error_handler():
-            if gdal.OpenEx(filename, gdal.OF_RASTER):
-                print(content)
-                return 'fail'
+            assert not gdal.OpenEx(filename, gdal.OF_RASTER), content
         gdal.Unlink(filename)
     return 'success'
 
@@ -168,8 +162,7 @@ def test_ignfheightasciigrid_huge():
 
     ds = gdal.OpenEx(filename, gdal.OF_RASTER)
     gdal.Unlink(filename)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     return 'success'
 
 
@@ -181,8 +174,7 @@ def test_ignfheightasciigrid_gra():
     tst.testOpen(check_gt=gt, check_prj='WGS84')
 
     ds = gdal.OpenEx('data/ignfheightasciigrid.gra', gdal.OF_RASTER)
-    if ds.GetRasterBand(1).GetNoDataValue() != 9999:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999
     return 'success'
 
 
@@ -198,9 +190,7 @@ def test_ignfheightasciigrid_gra_invalid():
     for content in contents:
         gdal.FileFromMemBuffer(filename, content)
         with gdaltest.error_handler():
-            if gdal.OpenEx(filename, gdal.OF_RASTER):
-                print(content)
-                return 'fail'
+            assert not gdal.OpenEx(filename, gdal.OF_RASTER), content
         gdal.Unlink(filename)
     return 'success'
 

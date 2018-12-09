@@ -61,56 +61,39 @@ def test_rl2_2():
 
     ds = gdal.Open('data/byte.rl2')
 
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('expected 1 band')
-        return 'fail'
+    assert ds.RasterCount == 1, 'expected 1 band'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('did not expect overview')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, 'did not expect overview'
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 4672:
-        print(cs)
-        return 'fail'
+    assert cs == 4672
 
     gt = ds.GetGeoTransform()
     expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15
 
     wkt = ds.GetProjectionRef()
-    if wkt.find('26711') < 0:
-        return 'fail'
+    assert wkt.find('26711') >= 0
 
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
 
-    if ds.GetRasterBand(1).GetMinimum() != 74:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 74
 
-    if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(-1) is None
 
-    if ds.GetRasterBand(1).GetOverview(0) is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0) is None
 
     subds = ds.GetSubDatasets()
     expected_subds = []
-    if subds != expected_subds:
-        return 'fail'
+    assert subds == expected_subds
 
     gdal.SetConfigOption('RL2_SHOW_ALL_PYRAMID_LEVELS', 'YES')
     ds = gdal.Open('data/byte.rl2')
     gdal.SetConfigOption('RL2_SHOW_ALL_PYRAMID_LEVELS', None)
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
 
     return 'success'
 
@@ -125,49 +108,34 @@ def test_rl2_3():
 
     ds = gdal.Open('data/small_world.rl2')
 
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
 
     ds.GetRasterBand(1).GetNoDataValue()
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 25550:
-        print(cs)
-        return 'fail'
+    assert cs == 25550
 
     cs = ds.GetRasterBand(2).Checksum()
-    if cs != 28146:
-        print(cs)
-        return 'fail'
+    assert cs == 28146
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
 
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 51412:
-        print(cs)
-        return 'fail'
+    assert cs == 51412
 
     subds = ds.GetSubDatasets()
     expected_subds = [('RASTERLITE2:data/small_world.rl2:small_world:1:world_west', 'Coverage small_world, section world_west / 1'), ('RASTERLITE2:data/small_world.rl2:small_world:2:world_east', 'Coverage small_world, section world_east / 2')]
-    if subds != expected_subds:
-        print(subds)
-        return 'fail'
+    assert subds == expected_subds
 
     ds = gdal.Open('RASTERLITE2:data/small_world.rl2:small_world:1:world_west')
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 3721:
-        print(cs)
-        return 'fail'
+    assert cs == 3721
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 35686:
-        print(cs)
-        return 'fail'
+    assert cs == 35686
 
     return 'success'
 
@@ -182,29 +150,20 @@ def test_rl2_4():
 
     ds = gdal.Open('data/small_world_pct.rl2')
 
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 14890:
-        print(cs)
-        return 'fail'
+    assert cs == 14890
 
     pct = ds.GetRasterBand(1).GetColorTable()
-    if pct.GetCount() != 256:
-        return 'fail'
-    if pct.GetColorEntry(1) != (176, 184, 176, 255):
-        print(pct.GetColorEntry(1))
-        return 'fail'
+    assert pct.GetCount() == 256
+    assert pct.GetColorEntry(1) == (176, 184, 176, 255)
 
     pct = ds.GetRasterBand(1).GetColorTable()
-    if pct.GetCount() != 256:
-        return 'fail'
+    assert pct.GetCount() == 256
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 35614:
-        print(cs)
-        return 'fail'
+    assert cs == 35614
 
     return 'success'
 
@@ -221,9 +180,7 @@ def test_rl2_5():
 
     subds = ds.GetSubDatasets()
     expected_subds = [('RASTERLITE2:data/multi_type.rl2:uint8', 'Coverage uint8'), ('RASTERLITE2:data/multi_type.rl2:int8', 'Coverage int8'), ('RASTERLITE2:data/multi_type.rl2:uint16', 'Coverage uint16'), ('RASTERLITE2:data/multi_type.rl2:int16', 'Coverage int16'), ('RASTERLITE2:data/multi_type.rl2:uint32', 'Coverage uint32'), ('RASTERLITE2:data/multi_type.rl2:int32', 'Coverage int32'), ('RASTERLITE2:data/multi_type.rl2:float', 'Coverage float'), ('RASTERLITE2:data/multi_type.rl2:double', 'Coverage double'), ('RASTERLITE2:data/multi_type.rl2:1bit', 'Coverage 1bit'), ('RASTERLITE2:data/multi_type.rl2:2bit', 'Coverage 2bit'), ('RASTERLITE2:data/multi_type.rl2:4bit', 'Coverage 4bit')]
-    if subds != expected_subds:
-        print(subds)
-        return 'fail'
+    assert subds == expected_subds
 
     tests = [('RASTERLITE2:data/multi_type.rl2:uint8', gdal.GDT_Byte, 4672),
              ('RASTERLITE2:data/multi_type.rl2:int8', gdal.GDT_Byte, 4575),
@@ -236,17 +193,11 @@ def test_rl2_5():
              ('RASTERLITE2:data/multi_type.rl2:1bit', gdal.GDT_Byte, 4873)]
     for (subds_name, dt, expected_cs) in tests:
         ds = gdal.Open(subds_name)
-        if ds.GetRasterBand(1).DataType != dt:
-            print(subds_name)
-            return 'fail'
+        assert ds.GetRasterBand(1).DataType == dt, subds_name
         cs = ds.GetRasterBand(1).Checksum()
-        if cs != expected_cs:
-            print(cs)
-            return 'fail'
+        assert cs == expected_cs
         if subds_name == 'RASTERLITE2:data/multi_type.rl2:int8':
-            if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
-                print(ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE'))
-                return 'fail'
+            assert ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
 
     return 'success'
 
@@ -461,9 +412,8 @@ def test_rl2_20():
         options = ['PIXEL_TYPE=' + pixel_type, 'COMPRESS=' + compress]
         with gdaltest.error_handler():
             out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_20.rl2', src_ds, options=options)
-        if out_ds is not None:
-            gdaltest.post_reason('Expected error for %s, band=%d, dt=%d, %s, nbits=%s' % (pixel_type, band_count, dt, compress, nbits))
-            return 'fail'
+        assert out_ds is None, \
+            ('Expected error for %s, band=%d, dt=%d, %s, nbits=%s' % (pixel_type, band_count, dt, compress, nbits))
 
     gdal.Unlink('/vsimem/rl2_20.rl2')
 
@@ -503,12 +453,10 @@ def test_rl2_21():
         if quality is not None:
             options += ['QUALITY=' + str(quality)]
         out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_21.rl2', src_ds, options=options)
-        if out_ds is None:
-            gdaltest.post_reason('Got error with %s, quality=%d' % (compress, quality))
-            return 'fail'
-        if out_ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE').find(compress) < 0:
-            gdaltest.post_reason('Compression %s does not seem to have been applied' % compress)
-            return 'fail'
+        assert out_ds is not None, \
+            ('Got error with %s, quality=%d' % (compress, quality))
+        assert out_ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE').find(compress) >= 0, \
+            ('Compression %s does not seem to have been applied' % compress)
 
     gdal.Unlink('/vsimem/rl2_21.rl2')
 
@@ -529,30 +477,22 @@ def test_rl2_22():
     ds.CreateLayer('foo', None, ogr.wkbPoint)
     ds = None
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=byte'])
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
     ds = gdal.OpenEx('/vsimem/rl2_22.rl2')
-    if ds.RasterXSize != 20:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds.RasterXSize == 20
+    assert ds.GetLayerCount() == 1
 
     left_ds = gdal.Translate('left', src_ds, srcWin=[0, 0, 10, 20], format='MEM')
     right_ds = gdal.Translate('', src_ds, srcWin=[10, 0, 10, 20], format='MEM')
 
     gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', left_ds, options=['COVERAGE=left_right'])
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', right_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=left_right', 'SECTION=right'])
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=rgbsmall'])
-    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
     ds = None
 
     gdal.Unlink('/vsimem/rl2_22.rl2')
@@ -572,22 +512,14 @@ def test_rl2_23():
     src_ds = gdal.Translate('', src_ds, format='MEM', width=2048, height=2048)
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_23.rl2', src_ds)
     ret = ds.BuildOverviews('NEAR', [2])
-    if ret != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ret == 0
+    assert ds.GetRasterBand(1).GetOverviewCount() == 5
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs == 0:
-        print(cs)
-        return 'fail'
+    assert cs != 0
     ret = ds.BuildOverviews('NONE', [])
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     ds = gdal.Open('/vsimem/rl2_23.rl2')
-    if ds.GetRasterBand(1).GetOverviewCount() == 5:
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() != 5
     ds = None
 
     gdal.Unlink('/vsimem/rl2_23.rl2')
@@ -607,9 +539,7 @@ def test_rl2_24():
         return 'skip'
 
     ds = gdal.Open('data/byte.rl2.sql')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
     return 'success'
 
 ###############################################################################
@@ -622,8 +552,7 @@ def test_rl2_error_create():
         return 'skip'
 
     with gdaltest.error_handler():
-        if gdaltest.rl2_drv.Create('/vsimem/out.db', 1, 1) is not None:
-            return 'fail'
+        assert gdaltest.rl2_drv.Create('/vsimem/out.db', 1, 1) is None
     return 'success'
 
 

@@ -46,15 +46,13 @@ def test_ogr_sql_1():
     gdaltest.lyr.SetAttributeFilter('eas_id < 167')
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 3:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 3' % count)
-        return 'fail'
+    assert count == 3, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 3' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
-        return 'fail'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
     return 'success'
 
@@ -344,10 +342,7 @@ def test_ogr_sql_17():
 
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(0)
 
-    if fld_def.GetName() != 'fid':
-        gdaltest.post_reason('got wrong fid field name')
-        print(fld_def.GetName())
-        return 'fail'
+    assert fld_def.GetName() == 'fid', 'got wrong fid field name'
 
     if fld_def.GetType() != ogr.OFTString:
         gdaltest.post_reason('got wrong fid field type')
@@ -359,10 +354,7 @@ def test_ogr_sql_17():
 
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(1)
 
-    if fld_def.GetName() != 'data':
-        gdaltest.post_reason('got wrong data field name')
-        print(fld_def.GetName())
-        return 'fail'
+    assert fld_def.GetName() == 'data', 'got wrong data field name'
 
     if fld_def.GetType() != ogr.OFTReal:
         gdaltest.post_reason('got wrong data field type')
@@ -395,8 +387,7 @@ def test_ogr_sql_18():
     name = 'data/departs.vrt'
 
     ds = ogr.Open(name)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     sql = 'select * from D\303\251parts'
     sql_lyr = ds.ExecuteSQL(sql)
@@ -404,8 +395,7 @@ def test_ogr_sql_18():
         ds = None
         return 'fail'
     feat = sql_lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     feat = None
 
     ds.ReleaseResultSet(sql_lyr)
@@ -417,8 +407,7 @@ def test_ogr_sql_18():
         ds = None
         return 'fail'
     feat = sql_lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     feat = None
 
     ds.ReleaseResultSet(sql_lyr)
@@ -436,8 +425,7 @@ def test_ogr_sql_19():
     sql_lyr = gdaltest.ds.ExecuteSQL('')
     gdal.PopErrorHandler()
 
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
 
     return 'success'
 
@@ -459,8 +447,7 @@ def test_ogr_sql_20():
     mem_lyr.CreateFeature(feat)
 
     sql_lyr = mem_ds.ExecuteSQL("SELECT * from my_layer")
-    if sql_lyr.GetFeatureCount() != 2:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 2
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
 
@@ -476,10 +463,8 @@ def test_ogr_sql_21():
     mem_ds.CreateLayer("my_layer")
 
     sql_lyr = mem_ds.ExecuteSQL("SELECT *, fid from my_layer")
-    if sql_lyr.GetLayerDefn().GetFieldCount() != 1:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'fid':
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetFieldCount() == 1
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == 'fid'
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
 
@@ -500,16 +485,11 @@ def test_ogr_sql_22():
     mem_lyr.CreateFeature(feat)
 
     sql_lyr = mem_ds.ExecuteSQL("SELECT *, fid, *, my_layer.* from my_layer")
-    if sql_lyr.GetLayerDefn().GetFieldCount() != 4:
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'test':
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldDefn(1).GetName() != 'fid':
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldDefn(2).GetName() != 'test':
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldDefn(3).GetName() != 'my_layer.test':
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetFieldCount() == 4
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == 'test'
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == 'fid'
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(2).GetName() == 'test'
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(3).GetName() == 'my_layer.test'
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
 
@@ -536,8 +516,7 @@ def test_ogr_sql_23():
     mem_lyr.CreateFeature(feat)
 
     sql_lyr = mem_ds.ExecuteSQL("SELECT DISTINCT test from my_layer")
-    if sql_lyr.GetFeatureCount() != 2:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 2
     mem_ds.ReleaseResultSet(sql_lyr)
     mem_ds = None
 
@@ -587,13 +566,10 @@ def test_ogr_sql_25():
     mem_lyr.CreateFeature(feat)
 
     sql_lyr = mem_ds.ExecuteSQL("SELECT test, OGR_GEOM_AREA from my_layer WHERE OGR_GEOM_AREA > 0.9")
-    if sql_lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 1
     feat = sql_lyr.GetNextFeature()
-    if feat.GetFieldAsDouble('OGR_GEOM_AREA') != 1.0:
-        return 'fail'
-    if feat.GetFieldAsString('test') != '0':
-        return 'fail'
+    assert feat.GetFieldAsDouble('OGR_GEOM_AREA') == 1.0
+    assert feat.GetFieldAsString('test') == '0'
     mem_ds.ReleaseResultSet(sql_lyr)
 
     mem_ds = None
@@ -614,13 +590,10 @@ def test_ogr_sql_26():
     mem_lyr.CreateFeature(feat)
 
     sql_lyr = mem_ds.ExecuteSQL("SELECT 'literal_value' AS my_column, 'literal_value2' my_column2 FROM my_layer")
-    if sql_lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 1
     feat = sql_lyr.GetNextFeature()
-    if feat.GetFieldAsString('my_column') != 'literal_value':
-        return 'fail'
-    if feat.GetFieldAsString('my_column2') != 'literal_value2':
-        return 'fail'
+    assert feat.GetFieldAsString('my_column') == 'literal_value'
+    assert feat.GetFieldAsString('my_column2') == 'literal_value2'
     mem_ds.ReleaseResultSet(sql_lyr)
 
     mem_ds = None
@@ -820,9 +793,7 @@ def test_ogr_sql_28():
             gdaltest.post_reason('expected None result on "%s"' % query)
             ds.ReleaseResultSet(sql_lyr)
             return 'fail'
-        if gdal.GetLastErrorType() == 0:
-            gdaltest.post_reason('expected error on "%s"' % query)
-            return 'fail'
+        assert gdal.GetLastErrorType() != 0, ('expected error on "%s"' % query)
 
     ds = None
 
@@ -860,15 +831,9 @@ def test_ogr_sql_29():
 
     ds = None
 
-    if count_is_null != 1:
-        gdaltest.post_reason('IS NULL failed')
-        print(count_is_null)
-        return 'fail'
+    assert count_is_null == 1, 'IS NULL failed'
 
-    if count_is_not_null != 2:
-        gdaltest.post_reason('IS NOT NULL failed')
-        print(count_is_not_null)
-        return 'fail'
+    assert count_is_not_null == 2, 'IS NOT NULL failed'
 
     return 'success'
 
@@ -887,8 +852,7 @@ def test_ogr_sql_30():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     return 'success' if val_count == 10 else 'fail'
 
@@ -907,8 +871,7 @@ def test_ogr_sql_31():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     return 'success' if val is None else 'fail'
 
@@ -928,8 +891,7 @@ def test_ogr_sql_32():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     return 'success' if val is None else 'fail'
 
@@ -946,37 +908,31 @@ def test_ogr_sql_33():
     for extrakeyword in ('COLUMN ', ''):
         sql = 'ALTER TABLE my_layer ADD %smyfield NUMERIC(20, 8)' % extrakeyword
         ds.ExecuteSQL(sql)
-        if lyr.GetLayerDefn().GetFieldIndex('myfield') == -1 or \
-                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetType() != ogr.OFTReal or \
-                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetWidth() != 20 or \
-                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetPrecision() != 8:
-            gdaltest.post_reason('%s failed' % sql)
-            return 'fail'
+        assert (lyr.GetLayerDefn().GetFieldIndex('myfield') != -1 and \
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetType() == ogr.OFTReal and \
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetWidth() == 20 and \
+                lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetPrecision() == 8), \
+            ('%s failed' % sql)
 
         sql = 'ALTER TABLE my_layer RENAME %smyfield TO "myfield 2"' % extrakeyword
         ds.ExecuteSQL(sql)
-        if lyr.GetLayerDefn().GetFieldIndex('myfield') != -1 or \
-                lyr.GetLayerDefn().GetFieldIndex('myfield 2') == -1:
-            gdaltest.post_reason('%s failed' % sql)
-            return 'fail'
+        assert (lyr.GetLayerDefn().GetFieldIndex('myfield') == -1 and \
+                lyr.GetLayerDefn().GetFieldIndex('myfield 2') != -1), \
+            ('%s failed' % sql)
 
         sql = 'ALTER TABLE my_layer ALTER %s"myfield 2" TYPE CHARACTER' % extrakeyword
         ds.ExecuteSQL(sql)
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield 2')).GetType() != ogr.OFTString:
-            gdaltest.post_reason('%s failed' % sql)
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield 2')).GetType() == ogr.OFTString, \
+            ('%s failed' % sql)
 
         sql = 'ALTER TABLE my_layer ALTER %s"myfield 2" TYPE CHARACTER(15)' % extrakeyword
         ds.ExecuteSQL(sql)
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield 2')).GetWidth() != 15:
-            gdaltest.post_reason('%s failed' % sql)
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield 2')).GetWidth() == 15, \
+            ('%s failed' % sql)
 
         sql = 'ALTER TABLE my_layer DROP %s"myfield 2"' % extrakeyword
         ds.ExecuteSQL(sql)
-        if lyr.GetLayerDefn().GetFieldIndex('myfield 2') != -1:
-            gdaltest.post_reason('%s failed' % sql)
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldIndex('myfield 2') == -1, ('%s failed' % sql)
 
     ds = None
 
@@ -995,15 +951,12 @@ def test_ogr_sql_34():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if val != 1:
-        print(val)
-        return 'fail'
+    assert val == 1
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL("select count(*) from poly where eas_id in ('a165')")
     gdal.PopErrorHandler()
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
 
     return 'success'
 
@@ -1236,14 +1189,12 @@ def test_ogr_sql_42():
     lyr.SetAttributeFilter("prfedea <> ''")
     feat = lyr.GetNextFeature()
     lyr.SetAttributeFilter(None)
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     sql_lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE prfedea <> ''")
     feat = sql_lyr.GetNextFeature()
     gdaltest.ds.ReleaseResultSet(sql_lyr)
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     return 'success'
 
@@ -1277,9 +1228,7 @@ def test_ogr_sql_44():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         gdal.PopErrorHandler()
-        if sql_lyr is not None:
-            print(sql)
-            return 'fail'
+        assert sql_lyr is None, sql
 
     # Invalid hstore syntax or empty result
     for sql in ["SELECT hstore_get_value('a', null) FROM poly",
@@ -1343,22 +1292,18 @@ def test_ogr_sql_45():
 </OGRVRTDataSource>""")
     lyr = ds.GetLayer(0)
 
-    if lyr.GetFeatureCount() != 1000000000000:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1000000000000
 
     sql_lyr = ds.ExecuteSQL('SELECT COUNT(*) FROM poly')
     f = sql_lyr.GetNextFeature()
-    if f.GetField(0) != 1000000000000:
-        return 'fail'
+    assert f.GetField(0) == 1000000000000
     f = None
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL('SELECT COUNT(AREA) FROM poly')
-    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
     f = sql_lyr.GetNextFeature()
-    if f.GetField(0) != 10:
-        return 'fail'
+    assert f.GetField(0) == 10
     f = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -1390,8 +1335,7 @@ def test_ogr_sql_46():
         feat.DumpReadable()
         return 'fail'
     feat = sql_lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL("select max(\"id\"), max(id), count(\"id\"), count(id) from \"test\"")
@@ -1405,29 +1349,25 @@ def test_ogr_sql_46():
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("select * from 'test'")
     gdal.PopErrorHandler()
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
 
     # Not accepted
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("select distinct 'id' from 'test'")
     gdal.PopErrorHandler()
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
 
     # Not accepted
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("select max('id') from 'test'")
     gdal.PopErrorHandler()
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
 
     # Not accepted
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("select id as 'id2' from 'test'")
     gdal.PopErrorHandler()
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
 
     return 'success'
 
@@ -1445,9 +1385,7 @@ def test_ogr_sql_47():
             new_val = f['text_value']
         else:
             new_val = ''
-        if new_val < prec_val:
-            print("new_val = '%s', prec_val = '%s'" % (new_val, prec_val))
-            return 'fail'
+        assert new_val >= prec_val, ("new_val = '%s', prec_val = '%s'" % (new_val, prec_val))
         prec_val = new_val
     ds.ReleaseResultSet(sql_lyr)
 
@@ -1477,8 +1415,7 @@ def test_ogr_sql_48():
             return 'fail'
         i = i + 1
     ds.ReleaseResultSet(sql_lyr)
-    if i != 1001:
-        return 'fail'
+    assert i == 1001
 
     return 'success'
 

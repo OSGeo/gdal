@@ -151,11 +151,7 @@ def test_mrf_overview_near_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -184,11 +180,7 @@ def test_mrf_overview_near_with_nodata_fact_2():
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         expected_cs = 1117
-        if cs != expected_cs:
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -217,11 +209,7 @@ def test_mrf_overview_avg_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -251,11 +239,7 @@ def test_mrf_overview_avg_with_nodata_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -278,10 +262,7 @@ def test_mrf_overview_near_fact_3():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 478
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -304,10 +285,7 @@ def test_mrf_overview_avg_fact_3():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 658
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -337,11 +315,7 @@ def test_mrf_overview_avg_with_nodata_fact_3():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -362,9 +336,7 @@ def test_mrf_overview_partial_block():
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -387,21 +359,16 @@ def test_mrf_overview_near_implicit_level():
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
     ds = None
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.mrf:MRF:L2')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     ds = gdal.Open('/vsimem/out.mrf:MRF:L1')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -423,10 +390,7 @@ def test_mrf_overview_external():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 1087
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -445,15 +409,10 @@ def test_mrf_lerc_nodata():
                    noData=107, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
     nodata = ds.GetRasterBand(1).GetNoDataValue()
-    if nodata != 107:
-        print(nodata)
-        return 'fail'
+    assert nodata == 107
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -472,10 +431,7 @@ def test_mrf_lerc_with_huffman():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 31204
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -496,10 +452,7 @@ def test_mrf_cached_source():
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 0
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -517,20 +470,14 @@ def test_mrf_cached_source():
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/byte.tif')
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     # Caching MRF in mp_safe mode
@@ -559,20 +506,14 @@ def test_mrf_cached_source():
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/byte.tif')
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     # Cloning MRF
@@ -593,10 +534,7 @@ def test_mrf_cached_source():
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/out.mrf')
@@ -608,10 +546,7 @@ def test_mrf_cached_source():
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/cloning.mrf')
@@ -651,34 +586,24 @@ def test_mrf_versioned():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 0
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     ds = gdal.Open('/vsimem/out.mrf:MRF:V0')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 0
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     ds = gdal.Open('/vsimem/out.mrf:MRF:V1')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.mrf:MRF:V2')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')

@@ -74,11 +74,9 @@ def test_ogr_gpsbabel_1():
         return 'skip'
 
     ds = ogr.Open('GPSBabel:nmea:data/nmea.txt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetLayerCount() != 2:
-        return 'fail'
+    assert ds.GetLayerCount() == 2
 
     return 'success'
 
@@ -92,11 +90,9 @@ def test_ogr_gpsbabel_2():
         return 'skip'
 
     ds = ogr.Open('data/nmea.txt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetLayerCount() != 2:
-        return 'fail'
+    assert ds.GetLayerCount() == 2
 
     return 'success'
 
@@ -137,12 +133,9 @@ def test_ogr_gpsbabel_3():
 
     gdal.Unlink('tmp/nmea.txt')
 
-    if res.find('$GPRMC') == -1 or \
+    assert (not (res.find('$GPRMC') == -1 or \
        res.find('$GPGGA') == -1 or \
-       res.find('$GPGSA') == -1:
-        gdaltest.post_reason('did not get expected result')
-        print(res)
-        return 'fail'
+       res.find('$GPGSA') == -1)), 'did not get expected result'
 
     return 'success'
 

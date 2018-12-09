@@ -52,10 +52,7 @@ def test_gdaladdo_1():
     shutil.copy('../gcore/data/float32.tif', 'tmp/float32.tif')
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaladdo_path() + ' tmp/mfloat32.vrt 2 4')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/mfloat32.vrt')
     ret = tiff_ovr.tiff_ovr_check(ds)
@@ -83,10 +80,7 @@ def test_gdaladdo_2():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1130
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     ds = None
 
@@ -110,10 +104,7 @@ def test_gdaladdo_3():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 20683
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     ds = None
 
@@ -139,9 +130,7 @@ def test_gdaladdo_4():
     cnt = ds.GetRasterBand(1).GetOverviewCount()
     ds = None
 
-    if cnt != 0:
-        gdaltest.post_reason('did not clean overviews.')
-        return 'fail'
+    assert cnt == 0, 'did not clean overviews.'
 
     try:
         os.stat('tmp/test_gdaladdo_3.tif.ovr')
@@ -171,9 +160,7 @@ def test_gdaladdo_5():
     cnt = ds.GetRasterBand(1).GetOverviewCount()
     ds = None
 
-    if cnt != 0:
-        print(cnt)
-        return 'fail'
+    assert cnt == 0
 
     # Will generate overviews of size 10 5 3 2 1
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -minsize 1 tmp/test_gdaladdo_5.tif')
@@ -182,9 +169,7 @@ def test_gdaladdo_5():
     cnt = ds.GetRasterBand(1).GetOverviewCount()
     ds = None
 
-    if cnt != 5:
-        print(cnt)
-        return 'fail'
+    assert cnt == 5
 
     gdal.Translate('tmp/test_gdaladdo_5.tif', '../gcore/data/nodata_byte.tif', options='-outsize 257 257')
 
@@ -195,9 +180,7 @@ def test_gdaladdo_5():
     cnt = ds.GetRasterBand(1).GetOverviewCount()
     ds = None
 
-    if cnt != 1:
-        print(cnt)
-        return 'fail'
+    assert cnt == 1
 
     os.remove('tmp/test_gdaladdo_5.tif')
 

@@ -102,9 +102,8 @@ def test_hdf4_read_online_2():
     md = ds.GetMetadata('GEOLOCATION')
     ds = None
 
-    if md['X_DATASET'] != 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":11':
-        gdaltest.post_reason('Did not get expected X_DATASET')
-        return 'fail'
+    assert md['X_DATASET'] == 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":11', \
+        'Did not get expected X_DATASET'
 
     return 'success'
 
@@ -128,15 +127,10 @@ def test_hdf4_read_online_3():
     gt = ds.GetGeoTransform()
     expected_gt = [-180.0, 0.3515625, 0.0, 90.0, 0.0, -0.3515625]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-8:
-            print(gt)
-            gdaltest.post_reason('did not get expected gt')
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
 
     srs = ds.GetProjectionRef()
-    if srs.find('Clarke') == -1:
-        gdaltest.post_reason('did not get expected projection')
-        return 'fail'
+    assert srs.find('Clarke') != -1, 'did not get expected projection'
 
     ds = None
 
@@ -159,9 +153,7 @@ def test_hdf4_read_online_4():
     ret = tst.testOpen()
 
     ds = gdal.Open('tmp/cache/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf')
-    if ds.RasterCount != 8:
-        gdaltest.post_reason('did not get expected band number')
-        return 'fail'
+    assert ds.RasterCount == 8, 'did not get expected band number'
 
     ds = None
 
@@ -208,15 +200,10 @@ def test_hdf4_read_online_6():
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
-        if blockx != 4800 or blocky != 4800:
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+        assert blockx == 4800 and blocky == 4800, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 12197:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 12197, 'did not get expected checksum'
 
     ds = None
 
@@ -243,15 +230,10 @@ def test_hdf4_read_online_7():
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
-        if blockx != 2400 or blocky != 32:
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+        assert blockx == 2400 and blocky == 32, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 54894:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 54894, 'did not get expected checksum'
 
     ds = None
 
@@ -278,17 +260,13 @@ def test_hdf4_read_online_8():
     ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI')
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 53837:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 53837, 'did not get expected checksum'
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 4800 or blocky == 1:
             print('blockx=%d, blocky=%d' % (blockx, blocky))
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+            pytest.fail("Did not get expected block size")
 
     ds = None
 
@@ -316,10 +294,7 @@ def test_hdf4_read_online_9():
     gcp_count = ds.GetGCPCount()
     ds = None
 
-    if gcp_count != 4:
-        gdaltest.post_reason('did not get expected gcp count')
-        print(gcp_count)
-        return 'fail'
+    assert gcp_count == 4, 'did not get expected gcp count'
 
     return 'success'
 
@@ -339,15 +314,10 @@ def test_hdf4_read_online_10():
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
-        if blockx != 1200 or blocky != 833:
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+        assert blockx == 1200 and blocky == 833, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 20976:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 20976, 'did not get expected checksum'
 
     ds = None
 

@@ -51,8 +51,7 @@ def test_gdal_merge_1():
     test_py_scripts.run_py_script(script_path, 'gdal_merge', '-o tmp/test_gdal_merge_1.tif ../gcore/data/byte.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_1.tif')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
     return 'success'
@@ -99,28 +98,21 @@ def test_gdal_merge_2():
     test_py_scripts.run_py_script(script_path, 'gdal_merge', '-q -o tmp/test_gdal_merge_2.tif tmp/in1.tif tmp/in2.tif tmp/in3.tif tmp/in4.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_2.tif')
-    if ds.GetProjectionRef().find('WGS 84') == -1:
-        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS 84') != -1, \
+        ('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
 
     gt = ds.GetGeoTransform()
     expected_gt = [2, 0.1, 0, 49, 0, -0.1]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.RasterXSize != 20 or ds.RasterYSize != 20:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 20 and ds.RasterYSize == 20, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount))
-        return 'fail'
+    assert ds.RasterCount == 1, ('Wrong raster count : %d ' % (ds.RasterCount))
 
-    if ds.GetRasterBand(1).Checksum() != 3508:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 3508, 'Wrong checksum'
 
     return 'success'
 
@@ -137,28 +129,21 @@ def test_gdal_merge_3():
     test_py_scripts.run_py_script(script_path, 'gdal_merge', '-separate -v -o tmp/test_gdal_merge_3.tif tmp/in1.tif tmp/in2.tif tmp/in3.tif tmp/in4.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_3.tif')
-    if ds.GetProjectionRef().find('WGS 84') == -1:
-        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS 84') != -1, \
+        ('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
 
     gt = ds.GetGeoTransform()
     expected_gt = [2, 0.1, 0, 49, 0, -0.1]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.RasterXSize != 20 or ds.RasterYSize != 20:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 20 and ds.RasterYSize == 20, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount))
-        return 'fail'
+    assert ds.RasterCount == 4, ('Wrong raster count : %d ' % (ds.RasterCount))
 
-    if ds.GetRasterBand(1).Checksum() != 0:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0, 'Wrong checksum'
 
     return 'success'
 
@@ -176,10 +161,7 @@ def test_gdal_merge_4():
 
     ds = gdal.Open('tmp/test_gdal_merge_4.tif')
 
-    if ds.GetRasterBand(1).Checksum() != 4725:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4725, 'Wrong checksum'
 
     return 'success'
 
@@ -221,22 +203,10 @@ def test_gdal_merge_5():
 
     ds = gdal.Open('tmp/test_gdal_merge_5.tif')
 
-    if ds.GetRasterBand(1).Checksum() != 0:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(2).Checksum() != cs:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(3).Checksum() != 0:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(4).Checksum() != cs:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0, 'Wrong checksum'
+    assert ds.GetRasterBand(2).Checksum() == cs, 'Wrong checksum'
+    assert ds.GetRasterBand(3).Checksum() == 0, 'Wrong checksum'
+    assert ds.GetRasterBand(4).Checksum() == cs, 'Wrong checksum'
     ds = None
 
     os.unlink('tmp/test_gdal_merge_5.tif')
@@ -245,22 +215,10 @@ def test_gdal_merge_5():
 
     ds = gdal.Open('tmp/test_gdal_merge_5.tif')
 
-    if ds.GetRasterBand(1).Checksum() != 0:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(2).Checksum() != cs:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(3).Checksum() != 0:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(4).Checksum() != cs:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0, 'Wrong checksum'
+    assert ds.GetRasterBand(2).Checksum() == cs, 'Wrong checksum'
+    assert ds.GetRasterBand(3).Checksum() == 0, 'Wrong checksum'
+    assert ds.GetRasterBand(4).Checksum() == cs, 'Wrong checksum'
 
     return 'success'
 

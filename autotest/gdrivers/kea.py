@@ -34,6 +34,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
@@ -109,17 +110,13 @@ def test_kea_4():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     src_ds = gdaltest.kea_driver.Create('tmp/src.kea', 1, 1, 0)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
     ds = gdaltest.kea_driver.CreateCopy("tmp/out.kea", src_ds)
-    if ds is None:
-        return 'fail'
-    if ds.RasterCount != 0:
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 0
     src_ds = None
     ds = None
 
@@ -132,14 +129,12 @@ def test_kea_4():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = ds.SetProjection('a')
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # Disabled for now since some of them cause memory leaks or
     # crash in the HDF5 library finalizer
@@ -147,46 +142,39 @@ def test_kea_4():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.SetMetadataItem('foo', 'bar')
         gdal.PopErrorHandler()
-        if ret == 0:
-            return 'fail'
+        assert ret != 0
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.SetMetadata({'foo': 'bar'})
         gdal.PopErrorHandler()
-        if ret == 0:
-            return 'fail'
+        assert ret != 0
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.GetRasterBand(1).SetMetadataItem('foo', 'bar')
         gdal.PopErrorHandler()
-        if ret == 0:
-            return 'fail'
+        assert ret != 0
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.GetRasterBand(1).SetMetadata({'foo': 'bar'})
         gdal.PopErrorHandler()
-        if ret == 0:
-            return 'fail'
+        assert ret != 0
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = ds.SetGCPs([], "")
         gdal.PopErrorHandler()
-        if ret == 0:
-            return 'fail'
+        assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = ds.AddBand(gdal.GDT_Byte)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, '\0')
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds.FlushCache()
     gdal.PopErrorHandler()
-    if ds.GetRasterBand(1).Checksum() != 3:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 3
 
     ds = None
 
@@ -209,21 +197,12 @@ def test_kea_5():
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 100, 100, 3, options=options)
     ds = None
     ds = gdal.Open('tmp/out.kea')
-    if ds.GetRasterBand(1).GetBlockSize() != [15, 15]:
-        print(ds.GetRasterBand(1).GetBlockSize())
-        return 'fail'
-    if ds.GetRasterBand(1).GetMetadataItem('LAYER_TYPE') != 'thematic':
-        print(ds.GetRasterBand(1).GetMetadata())
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 0:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
-    if ds.GetGeoTransform() != (0, 1, 0, 0, 0, -1):
-        print(ds.GetGeoTransform())
-        return 'fail'
-    if ds.GetProjectionRef() != '':
-        print(ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetBlockSize() == [15, 15]
+    assert ds.GetRasterBand(1).GetMetadataItem('LAYER_TYPE') == 'thematic', \
+        ds.GetRasterBand(1).GetMetadata()
+    assert ds.GetRasterBand(1).Checksum() == 0
+    assert ds.GetGeoTransform() == (0, 1, 0, 0, 0, -1)
+    assert ds.GetProjectionRef() == ''
     ds = None
     gdaltest.kea_driver.Delete('tmp/out.kea')
 
@@ -246,66 +225,34 @@ def test_kea_6():
     ds.GetRasterBand(3).SetMetadata({'LAYER_TYPE': 'athematic'})
     ds.GetRasterBand(4).SetMetadataItem('LAYER_TYPE', 'thematic')
     ds.GetRasterBand(5).SetMetadataItem('LAYER_TYPE', 'athematic')
-    if ds.SetMetadata({'foo': 'bar'}, 'other_domain') == 0:
-        return 'fail'
-    if ds.SetMetadataItem('foo', 'bar', 'other_domain') == 0:
-        return 'fail'
-    if ds.GetRasterBand(1).SetMetadata({'foo': 'bar'}, 'other_domain') == 0:
-        return 'fail'
-    if ds.GetRasterBand(1).SetMetadataItem('foo', 'bar', 'other_domain') == 0:
-        return 'fail'
+    assert ds.SetMetadata({'foo': 'bar'}, 'other_domain') != 0
+    assert ds.SetMetadataItem('foo', 'bar', 'other_domain') != 0
+    assert ds.GetRasterBand(1).SetMetadata({'foo': 'bar'}, 'other_domain') != 0
+    assert ds.GetRasterBand(1).SetMetadataItem('foo', 'bar', 'other_domain') != 0
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
-    if ds.GetMetadata('other_domain') != {}:
-        print(ds.GetMetadata('other_domain'))
-        return 'fail'
-    if ds.GetMetadataItem('item', 'other_domain') is not None:
-        return 'fail'
-    if ds.GetRasterBand(1).GetMetadata('other_domain') != {}:
-        return 'fail'
-    if ds.GetRasterBand(1).GetMetadataItem('item', 'other_domain') is not None:
-        return 'fail'
+    assert ds.GetMetadata('other_domain') == {}
+    assert ds.GetMetadataItem('item', 'other_domain') is None
+    assert ds.GetRasterBand(1).GetMetadata('other_domain') == {}
+    assert ds.GetRasterBand(1).GetMetadataItem('item', 'other_domain') is None
     md = ds.GetMetadata()
-    if md['foo'] != 'bar':
-        print(md)
-        return 'fail'
-    if ds.GetMetadataItem('foo') != 'bar':
-        print(ds.GetMetadataItem('foo'))
-        return 'fail'
-    if ds.GetMetadataItem('bar') != 'baw':
-        print(ds.GetMetadataItem('bar'))
-        return 'fail'
-    if ds.GetRasterBand(1).GetDescription() != 'desc':
-        return 'fail'
+    assert md['foo'] == 'bar'
+    assert ds.GetMetadataItem('foo') == 'bar'
+    assert ds.GetMetadataItem('bar') == 'baw'
+    assert ds.GetRasterBand(1).GetDescription() == 'desc'
     md = ds.GetRasterBand(1).GetMetadata()
-    if md['bar'] != 'baz':
-        print(md)
-        return 'fail'
-    if ds.GetRasterBand(1).GetMetadataItem('bar') != 'baz':
-        print(ds.GetRasterBand(1).GetMetadataItem('bar'))
-        return 'fail'
-    if ds.GetRasterBand(2).GetMetadataItem('LAYER_TYPE') != 'thematic':
-        print(ds.GetRasterBand(2).GetMetadataItem('LAYER_TYPE'))
-        return 'fail'
-    if ds.GetRasterBand(3).GetMetadataItem('LAYER_TYPE') != 'athematic':
-        print(ds.GetRasterBand(3).GetMetadataItem('LAYER_TYPE'))
-        return 'fail'
-    if ds.GetRasterBand(4).GetMetadataItem('LAYER_TYPE') != 'thematic':
-        print(ds.GetRasterBand(4).GetMetadataItem('LAYER_TYPE'))
-        return 'fail'
-    if ds.GetRasterBand(5).GetMetadataItem('LAYER_TYPE') != 'athematic':
-        print(ds.GetRasterBand(5).GetMetadataItem('LAYER_TYPE'))
-        return 'fail'
+    assert md['bar'] == 'baz'
+    assert ds.GetRasterBand(1).GetMetadataItem('bar') == 'baz'
+    assert ds.GetRasterBand(2).GetMetadataItem('LAYER_TYPE') == 'thematic'
+    assert ds.GetRasterBand(3).GetMetadataItem('LAYER_TYPE') == 'athematic'
+    assert ds.GetRasterBand(4).GetMetadataItem('LAYER_TYPE') == 'thematic'
+    assert ds.GetRasterBand(5).GetMetadataItem('LAYER_TYPE') == 'athematic'
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
 
-    if out2_ds.GetMetadataItem('foo') != 'bar':
-        print(out2_ds.GetMetadataItem('foo'))
-        return 'fail'
-    if out2_ds.GetRasterBand(1).GetMetadataItem('bar') != 'baz':
-        print(out2_ds.GetRasterBand(1).GetMetadataItem('bar'))
-        return 'fail'
+    assert out2_ds.GetMetadataItem('foo') == 'bar'
+    assert out2_ds.GetRasterBand(1).GetMetadataItem('bar') == 'baz'
 
     out2_ds = None
 
@@ -324,25 +271,17 @@ def test_kea_7():
 
     # Geotransform
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
-    if ds.GetGCPCount() != 0:
-        return 'fail'
-    if ds.SetGeoTransform([1, 2, 3, 4, 5, 6]) != 0:
-        return 'fail'
-    if ds.SetProjection('foo') != 0:
-        return 'fail'
+    assert ds.GetGCPCount() == 0
+    assert ds.SetGeoTransform([1, 2, 3, 4, 5, 6]) == 0
+    assert ds.SetProjection('foo') == 0
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
-    if out2_ds.GetGCPCount() != 0:
-        return 'fail'
-    if out2_ds.GetGeoTransform() != (1, 2, 3, 4, 5, 6):
-        print(out2_ds.GetGeoTransform())
-        return 'fail'
-    if out2_ds.GetProjectionRef() != 'foo':
-        print(out2_ds.GetProjectionRef())
-        return 'fail'
+    assert out2_ds.GetGCPCount() == 0
+    assert out2_ds.GetGeoTransform() == (1, 2, 3, 4, 5, 6)
+    assert out2_ds.GetProjectionRef() == 'foo'
     out2_ds = None
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
@@ -362,19 +301,14 @@ def test_kea_7():
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
 
-    if out2_ds.GetGCPCount() != 2:
-        return 'fail'
-    if out2_ds.GetGCPProjection() != 'foo':
-        return 'fail'
+    assert out2_ds.GetGCPCount() == 2
+    assert out2_ds.GetGCPProjection() == 'foo'
     got_gcps = out2_ds.GetGCPs()
     for i in range(2):
-        if got_gcps[i].GCPX != gcps[i].GCPX or got_gcps[i].GCPY != gcps[i].GCPY or \
-           got_gcps[i].GCPZ != gcps[i].GCPZ or got_gcps[i].GCPPixel != gcps[i].GCPPixel or \
-           got_gcps[i].GCPLine != gcps[i].GCPLine or got_gcps[i].Id != gcps[i].Id or \
-           got_gcps[i].Info != gcps[i].Info:
-            print(i)
-            print(got_gcps[i])
-            return 'fail'
+        assert (got_gcps[i].GCPX == gcps[i].GCPX and got_gcps[i].GCPY == gcps[i].GCPY and \
+           got_gcps[i].GCPZ == gcps[i].GCPZ and got_gcps[i].GCPPixel == gcps[i].GCPPixel and \
+           got_gcps[i].GCPLine == gcps[i].GCPLine and got_gcps[i].Id == gcps[i].Id and \
+           got_gcps[i].Info == gcps[i].Info)
     out2_ds = None
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
@@ -392,32 +326,25 @@ def test_kea_8():
 
     for i in range(2):
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
-        if ds.GetRasterBand(1).GetColorTable() is not None:
-            return 'fail'
-        if ds.GetRasterBand(1).SetColorTable(None) == 0:  # not allowed by the driver
-            return 'fail'
+        assert ds.GetRasterBand(1).GetColorTable() is None
+        assert ds.GetRasterBand(1).SetColorTable(None) != 0
         ct = gdal.ColorTable()
         ct.SetColorEntry(0, (0, 255, 0, 255))
         ct.SetColorEntry(1, (255, 0, 255, 255))
         ct.SetColorEntry(2, (0, 0, 255, 255))
-        if ds.GetRasterBand(1).SetColorTable(ct) != 0:
-            return 'fail'
+        assert ds.GetRasterBand(1).SetColorTable(ct) == 0
         if i == 1:
             # And again
-            if ds.GetRasterBand(1).SetColorTable(ct) != 0:
-                return 'fail'
+            assert ds.GetRasterBand(1).SetColorTable(ct) == 0
         ds = None
 
         ds = gdal.Open('tmp/out.kea')
         out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
         ds = None
         got_ct = out2_ds.GetRasterBand(1).GetColorTable()
-        if got_ct.GetCount() != 3:
-            gdaltest.post_reason('Got wrong color table entry count.')
-            return 'fail'
-        if got_ct.GetColorEntry(1) != (255, 0, 255, 255):
-            gdaltest.post_reason('Got wrong color table entry.')
-            return 'fail'
+        assert got_ct.GetCount() == 3, 'Got wrong color table entry count.'
+        assert got_ct.GetColorEntry(1) == (255, 0, 255, 255), \
+            'Got wrong color table entry.'
 
         out2_ds = None
 
@@ -435,8 +362,7 @@ def test_kea_9():
         return 'skip'
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, gdal.GCI_YCbCr_CrBand - gdal.GCI_GrayIndex + 1)
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
     for i in range(gdal.GCI_GrayIndex, gdal.GCI_YCbCr_CrBand + 1):
         ds.GetRasterBand(i).SetColorInterpretation(i)
     ds = None
@@ -445,11 +371,8 @@ def test_kea_9():
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
     ds = None
     for i in range(gdal.GCI_GrayIndex, gdal.GCI_YCbCr_CrBand + 1):
-        if out2_ds.GetRasterBand(i).GetColorInterpretation() != i:
-            gdaltest.post_reason('Got wrong color interpretation.')
-            print(i)
-            print(out2_ds.GetRasterBand(i).GetColorInterpretation())
-            return 'fail'
+        assert out2_ds.GetRasterBand(i).GetColorInterpretation() == i, \
+            'Got wrong color interpretation.'
 
     out2_ds = None
 
@@ -490,30 +413,24 @@ def test_kea_10():
                                   (gdal.GDT_Float32, 0.5, 0.5),
                                   ]:
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, dt)
-        if ds.GetRasterBand(1).GetNoDataValue() is not None:
-            return 'fail'
+        assert ds.GetRasterBand(1).GetNoDataValue() is None
         ds.GetRasterBand(1).SetNoDataValue(nd)
         if ds.GetRasterBand(1).GetNoDataValue() != expected_nd:
-            gdaltest.post_reason('Got wrong nodata.')
             print(dt)
-            print(ds.GetRasterBand(1).GetNoDataValue())
-            return 'fail'
+            pytest.fail('Got wrong nodata.')
         ds = None
 
         ds = gdal.Open('tmp/out.kea')
         out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)
         ds = None
         if out2_ds.GetRasterBand(1).GetNoDataValue() != expected_nd:
-            gdaltest.post_reason('Got wrong nodata.')
             print(dt)
-            print(out2_ds.GetRasterBand(1).GetNoDataValue())
-            return 'fail'
+            pytest.fail('Got wrong nodata.')
         out2_ds.GetRasterBand(1).DeleteNoDataValue()
         out2_ds = None
 
         ds = gdal.Open('tmp/out2.kea')
-        if ds.GetRasterBand(1).GetNoDataValue() is not None:
-            return 'fail'
+        assert ds.GetRasterBand(1).GetNoDataValue() is None
         ds = None
 
         gdaltest.kea_driver.Delete('tmp/out.kea')
@@ -533,19 +450,14 @@ def test_kea_11():
     ds = None
 
     ds = gdal.Open('tmp/out.kea', gdal.GA_Update)
-    if ds.AddBand(gdal.GDT_Byte) != 0:
-        return 'fail'
-    if ds.AddBand(gdal.GDT_Int16, options=['DEFLATE=9']) != 0:
-        return 'fail'
+    assert ds.AddBand(gdal.GDT_Byte) == 0
+    assert ds.AddBand(gdal.GDT_Int16, options=['DEFLATE=9']) == 0
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
-    if ds.RasterCount != 3:
-        return 'fail'
-    if ds.GetRasterBand(2).DataType != gdal.GDT_Byte:
-        return 'fail'
-    if ds.GetRasterBand(3).DataType != gdal.GDT_Int16:
-        return 'fail'
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(2).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(3).DataType == gdal.GDT_Int16
     ds = None
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
@@ -561,14 +473,11 @@ def test_kea_12():
         return 'skip'
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
-    if ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).SetDefaultRAT(None) == 0:  # not allowed by the driver
-        return 'fail'
+    assert ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() == 0
+    assert ds.GetRasterBand(1).SetDefaultRAT(None) != 0
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     rat.CreateColumn('col_real_generic', gdal.GFT_Real, gdal.GFU_Generic)
-    if ds.GetRasterBand(1).SetDefaultRAT(rat) != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).SetDefaultRAT(rat) == 0
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     rat.CreateColumn('col_integer_pixelcount', gdal.GFT_Real, gdal.GFU_PixelCount)
     rat.CreateColumn('col_string_name', gdal.GFT_String, gdal.GFU_Name)
@@ -591,8 +500,7 @@ def test_kea_12():
     rat.SetValueAsInt(0, 3, 123)
 
     cloned_rat = rat.Clone()
-    if ds.GetRasterBand(1).SetDefaultRAT(rat) != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).SetDefaultRAT(rat) == 0
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
@@ -600,38 +508,21 @@ def test_kea_12():
     rat = out2_ds.GetRasterBand(1).GetDefaultRAT()
 
     for i in range(7):
-        if rat.GetColOfUsage(rat.GetUsageOfCol(i)) != i:
-            print(i)
-            print(rat.GetColOfUsage(rat.GetUsageOfCol(i)))
-            return 'fail'
+        assert rat.GetColOfUsage(rat.GetUsageOfCol(i)) == i
 
-    if cloned_rat.GetNameOfCol(0) != 'col_real_generic':
-        return 'fail'
-    if cloned_rat.GetTypeOfCol(0) != gdal.GFT_Real:
-        return 'fail'
-    if cloned_rat.GetUsageOfCol(0) != gdal.GFU_Generic:
-        return 'fail'
-    if cloned_rat.GetUsageOfCol(1) != gdal.GFU_PixelCount:
-        return 'fail'
-    if cloned_rat.GetTypeOfCol(2) != gdal.GFT_String:
-        return 'fail'
-    if cloned_rat.GetTypeOfCol(3) != gdal.GFT_Integer:
-        return 'fail'
+    assert cloned_rat.GetNameOfCol(0) == 'col_real_generic'
+    assert cloned_rat.GetTypeOfCol(0) == gdal.GFT_Real
+    assert cloned_rat.GetUsageOfCol(0) == gdal.GFU_Generic
+    assert cloned_rat.GetUsageOfCol(1) == gdal.GFU_PixelCount
+    assert cloned_rat.GetTypeOfCol(2) == gdal.GFT_String
+    assert cloned_rat.GetTypeOfCol(3) == gdal.GFT_Integer
 
-    if rat.GetColumnCount() != cloned_rat.GetColumnCount():
-        return 'fail'
-    if rat.GetRowCount() != cloned_rat.GetRowCount():
-        return 'fail'
+    assert rat.GetColumnCount() == cloned_rat.GetColumnCount()
+    assert rat.GetRowCount() == cloned_rat.GetRowCount()
     for i in range(rat.GetColumnCount()):
-        if rat.GetNameOfCol(i) != cloned_rat.GetNameOfCol(i):
-            return 'fail'
-        if rat.GetTypeOfCol(i) != cloned_rat.GetTypeOfCol(i):
-            return 'fail'
-        if rat.GetUsageOfCol(i) != cloned_rat.GetUsageOfCol(i):
-            print(i)
-            print(rat.GetUsageOfCol(i))
-            print(cloned_rat.GetUsageOfCol(i))
-            return 'fail'
+        assert rat.GetNameOfCol(i) == cloned_rat.GetNameOfCol(i)
+        assert rat.GetTypeOfCol(i) == cloned_rat.GetTypeOfCol(i)
+        assert rat.GetUsageOfCol(i) == cloned_rat.GetUsageOfCol(i)
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -661,27 +552,17 @@ def test_kea_12():
 
     gdal.PopErrorHandler()
 
-    if rat.GetValueAsDouble(0, 0) != 1.23:
-        return 'fail'
-    if rat.GetValueAsInt(0, 0) != 1:
-        return 'fail'
-    if rat.GetValueAsString(0, 0) != '1.23':
-        print(rat.GetValueAsString(0, 0))
-        return 'fail'
+    assert rat.GetValueAsDouble(0, 0) == 1.23
+    assert rat.GetValueAsInt(0, 0) == 1
+    assert rat.GetValueAsString(0, 0) == '1.23'
 
-    if rat.GetValueAsInt(0, 3) != 123:
-        return 'fail'
-    if rat.GetValueAsDouble(0, 3) != 123:
-        return 'fail'
-    if rat.GetValueAsString(0, 3) != '123':
-        return 'fail'
+    assert rat.GetValueAsInt(0, 3) == 123
+    assert rat.GetValueAsDouble(0, 3) == 123
+    assert rat.GetValueAsString(0, 3) == '123'
 
-    if rat.GetValueAsString(0, 2) != 'foo':
-        return 'fail'
-    if rat.GetValueAsInt(0, 2) != 0:
-        return 'fail'
-    if rat.GetValueAsDouble(0, 2) != 0:
-        return 'fail'
+    assert rat.GetValueAsString(0, 2) == 'foo'
+    assert rat.GetValueAsInt(0, 2) == 0
+    assert rat.GetValueAsDouble(0, 2) == 0
 
     ds = None
     out2_ds = None
@@ -706,18 +587,12 @@ def test_kea_13():
     ds = None
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)  # yes CreateCopy() of KEA copies overviews
-    if out2_ds.GetRasterBand(1).GetOverviewCount() != 1:
-        return 'fail'
-    if out2_ds.GetRasterBand(1).GetOverview(0).Checksum() != 1087:
-        return 'fail'
-    if out2_ds.GetRasterBand(1).GetOverview(0).GetDefaultRAT() is not None:
-        return 'fail'
-    if out2_ds.GetRasterBand(1).GetOverview(0).SetDefaultRAT(None) == 0:
-        return 'fail'
-    if out2_ds.GetRasterBand(1).GetOverview(-1) is not None:
-        return 'fail'
-    if out2_ds.GetRasterBand(1).GetOverview(1) is not None:
-        return 'fail'
+    assert out2_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert out2_ds.GetRasterBand(1).GetOverview(0).Checksum() == 1087
+    assert out2_ds.GetRasterBand(1).GetOverview(0).GetDefaultRAT() is None
+    assert out2_ds.GetRasterBand(1).GetOverview(0).SetDefaultRAT(None) != 0
+    assert out2_ds.GetRasterBand(1).GetOverview(-1) is None
+    assert out2_ds.GetRasterBand(1).GetOverview(1) is None
     out2_ds = None
     ds = None
 
@@ -735,30 +610,19 @@ def test_kea_14():
         return 'skip'
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
-        return 'fail'
-    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 3:
-        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 3
     ds.GetRasterBand(1).CreateMaskBand(0)
-    if ds.GetRasterBand(1).GetMaskFlags() != 0:
-        return 'fail'
-    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 3:
-        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == 0
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 3
     ds.GetRasterBand(1).GetMaskBand().Fill(0)
-    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 0:
-        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 0
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
     out2_ds = gdaltest.kea_driver.CreateCopy('tmp/out2.kea', ds)  # yes CreateCopy() of KEA copies overviews
-    if out2_ds.GetRasterBand(1).GetMaskFlags() != 0:
-        return 'fail'
-    if out2_ds.GetRasterBand(1).GetMaskBand().Checksum() != 0:
-        print(out2_ds.GetRasterBand(1).GetMaskBand().Checksum())
-        return 'fail'
+    assert out2_ds.GetRasterBand(1).GetMaskFlags() == 0
+    assert out2_ds.GetRasterBand(1).GetMaskBand().Checksum() == 0
     out2_ds = None
     ds = None
 

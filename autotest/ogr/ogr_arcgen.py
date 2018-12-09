@@ -42,22 +42,14 @@ from osgeo import ogr
 def test_ogr_arcgen_points():
 
     ds = ogr.Open('data/points.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
@@ -79,22 +71,14 @@ def test_ogr_arcgen_points():
 def test_ogr_arcgen_points25d():
 
     ds = ogr.Open('data/points25d.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPoint25D:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint25D, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
@@ -116,18 +100,12 @@ def test_ogr_arcgen_points25d():
 def test_ogr_arcgen_lines():
 
     ds = ogr.Open('data/lines.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
@@ -149,18 +127,12 @@ def test_ogr_arcgen_lines():
 def test_ogr_arcgen_lines25d():
 
     ds = ogr.Open('data/lines25d.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbLineString25D:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString25D, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
@@ -182,18 +154,12 @@ def test_ogr_arcgen_lines25d():
 def test_ogr_arcgen_polygons():
 
     ds = ogr.Open('data/polygons.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPolygon:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
@@ -215,18 +181,12 @@ def test_ogr_arcgen_polygons():
 def test_ogr_arcgen_polygons25d():
 
     ds = ogr.Open('data/polygons25d.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPolygon25D:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon25D, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:

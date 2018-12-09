@@ -65,46 +65,31 @@ def test_nodatamaskband_1():
                        0, 255, 255, 0, 0, 255,
                        0, 255, 255, 0, 0, 255,
                        255, 0, 0, 255, 255, 255)
-        if data_ar != expected_ar:
-            print(dt)
-            print(data_ar)
-            return 'fail'
+        assert data_ar == expected_ar, dt
 
         data = ds.GetRasterBand(1).GetMaskBand().ReadBlock(0, 0)
         data_ar = struct.unpack('B' * 6 * 1, data)
         expected_ar = (0, 255, 255, 0, 0, 255)
-        if data_ar != expected_ar:
-            print(dt)
-            print(data_ar)
-            return 'fail'
+        assert data_ar == expected_ar, dt
 
         data = ds.GetRasterBand(1).GetMaskBand().ReadBlock(0, 3)
         data_ar = struct.unpack('B' * 6 * 1, data)
         expected_ar = (255, 0, 0, 255, 255, 255)
-        if data_ar != expected_ar:
-            print(dt)
-            print(data_ar)
-            return 'fail'
+        assert data_ar == expected_ar, dt
 
         data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(
             buf_xsize=3, buf_ysize=2)
         data_ar = struct.unpack('B' * 3 * 2, data)
         expected_ar = (255, 0, 255,
                        0, 255, 255)
-        if data_ar != expected_ar:
-            print(dt)
-            print(data_ar)
-            return 'fail'
+        assert data_ar == expected_ar, dt
 
         data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(
             buf_type=gdal.GDT_UInt16, buf_xsize=3, buf_ysize=2)
         data_ar = struct.unpack('H' * 3 * 2, data)
         expected_ar = (255, 0, 255,
                        0, 255, 255)
-        if data_ar != expected_ar:
-            print(dt)
-            print(data_ar)
-            return 'fail'
+        assert data_ar == expected_ar, dt
 
     return 'success'
 

@@ -62,19 +62,14 @@ def test_ogr_osm_1(filename='data/test.pbf'):
 
     # Test points
     lyr = ds.GetLayer('points')
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint
 
     sr = lyr.GetSpatialRef()
-    if sr.ExportToWkt().find('GEOGCS["WGS 84",DATUM["WGS_1984",') != 0 and \
-       sr.ExportToWkt().find('GEOGCS["GCS_WGS_1984",DATUM["WGS_1984"') != 0:
-        print(sr.ExportToWkt())
-        return 'fail'
+    assert (sr.ExportToWkt().find('GEOGCS["WGS 84",DATUM["WGS_1984",') == 0 or \
+       sr.ExportToWkt().find('GEOGCS["GCS_WGS_1984",DATUM["WGS_1984"') == 0)
 
     if filename == 'data/test.osm':
-        if lyr.GetExtent() != (2.0, 3.0, 49.0, 50.0):
-            print(lyr.GetExtent())
-            return 'fail'
+        assert lyr.GetExtent() == (2.0, 3.0, 49.0, 50.0)
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '3' or \
@@ -94,8 +89,7 @@ def test_ogr_osm_1(filename='data/test.pbf'):
 
     # Test lines
     lyr = ds.GetLayer('lines')
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '1' or \
@@ -126,11 +120,9 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     # Test multipolygons
     lyr = ds.GetLayer('multipolygons')
     if filename == 'tmp/ogr_osm_3':
-        if lyr.GetGeomType() != ogr.wkbPolygon:
-            return 'fail'
+        assert lyr.GetGeomType() == ogr.wkbPolygon
     else:
-        if lyr.GetGeomType() != ogr.wkbMultiPolygon:
-            return 'fail'
+        assert lyr.GetGeomType() == ogr.wkbMultiPolygon
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '1' or \
@@ -169,11 +161,9 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     # Test multilinestrings
     lyr = ds.GetLayer('multilinestrings')
     if filename == 'tmp/ogr_osm_3':
-        if lyr.GetGeomType() != ogr.wkbLineString:
-            return 'fail'
+        assert lyr.GetGeomType() == ogr.wkbLineString
     else:
-        if lyr.GetGeomType() != ogr.wkbMultiLineString:
-            return 'fail'
+        assert lyr.GetGeomType() == ogr.wkbMultiLineString
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '3' or \
@@ -198,11 +188,9 @@ def test_ogr_osm_1(filename='data/test.pbf'):
     # Test other_relations
     lyr = ds.GetLayer('other_relations')
     if filename == 'tmp/ogr_osm_3':
-        if lyr is not None:
-            return 'fail'
+        assert lyr is None
     else:
-        if lyr.GetGeomType() != ogr.wkbGeometryCollection:
-            return 'fail'
+        assert lyr.GetGeomType() == ogr.wkbGeometryCollection
 
         feat = lyr.GetNextFeature()
         if feat.GetFieldAsString('osm_id') != '4' or \
@@ -221,18 +209,14 @@ def test_ogr_osm_1(filename='data/test.pbf'):
 
     if ds.GetDriver().GetName() == 'OSM':
         sql_lyr = ds.ExecuteSQL("GetBytesRead()")
-        if sql_lyr is None:
-            return 'fail'
+        assert sql_lyr is not None
         feat = sql_lyr.GetNextFeature()
-        if feat is None:
-            return 'fail'
+        assert feat is not None
         feat = sql_lyr.GetNextFeature()
-        if feat is not None:
-            return 'fail'
+        assert feat is None
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
-        if feat is None:
-            return 'fail'
+        assert feat is not None
         sql_lyr.GetLayerDefn()
         sql_lyr.TestCapability("foo")
         ds.ReleaseResultSet(sql_lyr)
@@ -315,8 +299,7 @@ def test_ogr_osm_4():
         return 'skip'
 
     ds = ogr.Open('data/test.pbf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM points')
 
@@ -325,8 +308,7 @@ def test_ogr_osm_4():
 
     ds.ReleaseResultSet(sql_lyr)
 
-    if is_none:
-        return 'fail'
+    assert not is_none
 
     # Test spatial filter
 
@@ -334,9 +316,7 @@ def test_ogr_osm_4():
     lyr.SetSpatialFilterRect(0, 0, 0, 0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('Zero filter ')
-        return 'fail'
+    assert feat is None, 'Zero filter '
 
     with gdaltest.error_handler():
         lyr.SetSpatialFilter(None)
@@ -349,8 +329,7 @@ def test_ogr_osm_4():
 
         ds.ReleaseResultSet(sql_lyr)
 
-    if is_none:
-        return 'fail'
+    assert not is_none
 
     # Change layer
     sql_lyr = ds.ExecuteSQL('SELECT * FROM points')
@@ -360,8 +339,7 @@ def test_ogr_osm_4():
 
     ds.ReleaseResultSet(sql_lyr)
 
-    if is_none:
-        return 'fail'
+    assert not is_none
 
     return 'success'
 
@@ -375,8 +353,7 @@ def test_ogr_osm_5():
         return 'skip'
 
     ds = ogr.Open('data/test.pbf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     tests = [['points', '3', True],
              ['points', 'foo', False],
@@ -394,9 +371,7 @@ def test_ogr_osm_5():
         feat = None
         ds.ReleaseResultSet(sql_lyr)
 
-        if not (test[2] ^ is_none):  # pylint: disable=superfluous-parens
-            print(test)
-            return 'fail'
+        assert (test[2] ^ is_none)
 
     sql_lyr = ds.ExecuteSQL("select * from multipolygons where type = 'multipolygon'")
     feat = sql_lyr.GetNextFeature()
@@ -404,9 +379,7 @@ def test_ogr_osm_5():
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
-    if is_none:
-        print(test)
-        return 'fail'
+    assert not is_none, test
 
     return 'success'
 
@@ -438,9 +411,7 @@ def test_ogr_osm_6():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_osm_6')
 
-    if count != 3:
-        print(count)
-        return 'fail'
+    assert count == 3
 
     return 'success'
 
@@ -455,8 +426,7 @@ def test_ogr_osm_7():
         return 'skip'
 
     ds = ogr.Open('data/test.pbf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM points LIMIT 10', dialect='SQLite')
     if sql_lyr is None and gdal.GetLastErrorMsg().find('automatic extension loading failed') != 0:
@@ -464,8 +434,7 @@ def test_ogr_osm_7():
     count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
-    if count != 1:
-        return 'fail'
+    assert count == 1
 
     return 'success'
 
@@ -479,8 +448,7 @@ def test_ogr_osm_8():
         return 'skip'
 
     ds = ogr.Open('data/base-64.osm.pbf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayerByName('points')
     lyr.SetAttributeFilter("osm_id = '4294967934'")
@@ -527,16 +495,14 @@ def test_ogr_osm_10():
 
     # A file that does not exist.
     ds = ogr.Open('/nonexistent/foo.osm')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Empty .osm file
     f = gdal.VSIFOpenL('/vsimem/foo.osm', 'wb')
     gdal.VSIFCloseL(f)
 
     ds = ogr.Open('/vsimem/foo.osm')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/foo.osm')
 
@@ -545,8 +511,7 @@ def test_ogr_osm_10():
     gdal.VSIFCloseL(f)
 
     ds = ogr.Open('/vsimem/foo.pbf')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/foo.pbf')
 
@@ -563,8 +528,7 @@ def test_ogr_osm_10():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg() == '':
-            return 'fail'
+        assert gdal.GetLastErrorMsg() != ''
         ds = None
 
         gdal.Unlink('/vsimem/foo.osm')
@@ -581,8 +545,7 @@ def test_ogr_osm_10():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     feat = lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
     ds = None
 
     gdal.Unlink('/vsimem/foo.pbf')
@@ -595,8 +558,7 @@ def test_ogr_osm_10():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
-        if feat is not None or gdal.GetLastErrorMsg() == '':
-            return 'fail'
+        assert feat is None and gdal.GetLastErrorMsg() != ''
 
     return 'success'
 
@@ -649,9 +611,7 @@ def test_ogr_osm_12():
         while feat is not None:
             count = count + 1
             feat = lay.GetNextFeature()
-        if i == 1 and count != 1:
-            print(count)
-            return 'fail'
+        assert i != 1 or count == 1
     ds = None
 
     return 'success'
@@ -765,21 +725,16 @@ def test_ogr_osm_15():
 
     ds = gdal.OpenEx('data/test.pbf')
 
-    if ds.TestCapability(ogr.ODsCRandomLayerRead) != 1:
-        return 'fail'
+    assert ds.TestCapability(ogr.ODsCRandomLayerRead) == 1
 
     count = 0
     last_pct = 0
     while True:
         f, l, pct = ds.GetNextFeature(include_pct=True)
-        if pct < last_pct:
-            print(last_pct)
-            print(pct)
-            return 'fail'
+        assert pct >= last_pct
         last_pct = pct
         if f is None:
-            if l is not None:
-                return 'fail'
+            assert l is None
             break
         # f.DumpReadable()
         count += 1
@@ -788,39 +743,28 @@ def test_ogr_osm_15():
             print(l.GetName())
             return 'fail'
 
-    if count != 8:
-        print(count)
-        return 'fail'
+    assert count == 8
 
-    if last_pct != 1.0:
-        print(last_pct)
-        return 'fail'
+    assert last_pct == 1.0
 
     f, l, pct = ds.GetNextFeature(include_pct=True)
-    if f is not None or l is not None or pct != 1.0:
-        return 'fail'
+    assert f is None and l is None and pct == 1.0
 
     ds.ResetReading()
     for i in range(count):
         f, lyr = ds.GetNextFeature()
         # f.DumpReadable()
-        if f is None or lyr is None:
-            print(i)
-            return 'fail'
+        assert not (f is None or lyr is None), i
 
     ds.ResetReading()
     f, lyr = ds.GetNextFeature(callback=ogr_osm_15_progresscbk_return_false)
-    if f is not None or lyr is not None:
-        return 'fail'
+    assert f is None and lyr is None
 
     ds.ResetReading()
     pct_array = [0]
     f, lyr = ds.GetNextFeature(callback=ogr_osm_15_progresscbk_return_true, callback_data=pct_array)
-    if f is None or lyr is None:
-        return 'fail'
-    if pct_array[0] != 1.0:
-        print(pct_array)
-        return 'fail'
+    assert not (f is None or lyr is None)
+    assert pct_array[0] == 1.0
 
     # ds = gdal.OpenEx('/home/even/gdal/data/osm/france.osm.pbf')
     # ds.ExecuteSQL('SET interest_layers = relations')
@@ -890,9 +834,7 @@ def test_ogr_osm_17():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_osm_17')
 
-    if layer_count != 4:
-        print(layer_count)
-        return 'fail'
+    assert layer_count == 4
 
     return 'success'
 
@@ -913,9 +855,7 @@ def test_ogr_osm_18():
         count += 1
     ds = None
 
-    if count != 2:
-        print(count)
-        return 'fail'
+    assert count == 2
 
     return 'success'
 

@@ -36,6 +36,7 @@ from osgeo import osr
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
@@ -48,9 +49,7 @@ def test_ers_1():
     ds = gdal.Open('data/srtm.ers')
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {'STATISTICS_MEAN': '-4020.25', 'STATISTICS_MINIMUM': '-4315', 'STATISTICS_MAXIMUM': '-3744', 'STATISTICS_MEDIAN': '-4000'}
-    if md != expected_md:
-        print(md)
-        return 'fail'
+    assert md == expected_md
     return 'success'
 
 ###############################################################################
@@ -97,9 +96,7 @@ def test_ers_5():
     ds = gdal.Open('data/8s.ers')
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
 
-    if md['PIXELTYPE'] != 'SIGNEDBYTE':
-        gdaltest.post_reason('Failed to detect SIGNEDBYTE')
-        return 'fail'
+    assert md['PIXELTYPE'] == 'SIGNEDBYTE', 'Failed to detect SIGNEDBYTE'
 
     ds = None
 
@@ -119,9 +116,7 @@ def test_ers_6():
 
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
 
-    if md['PIXELTYPE'] != 'SIGNEDBYTE':
-        gdaltest.post_reason('Failed to detect SIGNEDBYTE')
-        return 'fail'
+    assert md['PIXELTYPE'] == 'SIGNEDBYTE', 'Failed to detect SIGNEDBYTE'
 
     ds = None
 
@@ -139,10 +134,7 @@ def test_ers_7():
 
     desc = ds.GetRasterBand(1).GetDescription()
 
-    if desc != 'RTP 1st Vertical Derivative':
-        print(desc)
-        gdaltest.post_reason('did not get expected values.')
-        return 'fail'
+    assert desc == 'RTP 1st Vertical Derivative', 'did not get expected values.'
 
     return 'success'
 
@@ -166,23 +158,19 @@ def test_ers_8():
     wkt = ds.GetGCPProjection()
     ds = None
 
-    if wkt != """PROJCS["NUTM11",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]""":
-        gdaltest.post_reason('did not get expected GCP projection')
-        print(wkt)
-        return 'fail'
+    assert wkt == """PROJCS["NUTM11",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]""", \
+        'did not get expected GCP projection'
 
-    if len(gcps) != len(expected_gcps) or len(gcps) != gcp_count:
-        gdaltest.post_reason('did not get expected GCP number')
-        return 'fail'
+    assert len(gcps) == len(expected_gcps) and len(gcps) == gcp_count, \
+        'did not get expected GCP number'
 
     for i, gcp in enumerate(gcps):
         if abs(gcp.GCPPixel - expected_gcps[i].GCPPixel) > 1e-6 or \
            abs(gcp.GCPLine - expected_gcps[i].GCPLine) > 1e-6 or \
            abs(gcp.GCPX - expected_gcps[i].GCPX) > 1e-6 or \
            abs(gcp.GCPY - expected_gcps[i].GCPY) > 1e-6:
-            gdaltest.post_reason('did not get expected GCP %d' % i)
             print(gcps[i])
-            return 'fail'
+            pytest.fail('did not get expected GCP %d' % i)
 
     drv.Delete('/vsimem/ers_8.ers')
 
@@ -212,10 +200,7 @@ def test_ers_9():
 
     drv.Delete('/vsimem/ers_9.ers')
 
-    if val != 123:
-        gdaltest.post_reason('did not get expected nodata value')
-        print(val)
-        return 'fail'
+    assert val == 123, 'did not get expected nodata value'
 
     return 'success'
 
@@ -231,20 +216,11 @@ def test_ers_10():
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
     units = ds.GetMetadataItem("UNITS", "ERS")
-    if proj != 'MGA55':
-        gdaltest.post_reason('did not get expected PROJ')
-        print(proj)
-        return 'fail'
+    assert proj == 'MGA55', 'did not get expected PROJ'
 
-    if datum != 'GDA94':
-        gdaltest.post_reason('did not get expected DATUM')
-        print(datum)
-        return 'fail'
+    assert datum == 'GDA94', 'did not get expected DATUM'
 
-    if units != 'METERS':
-        gdaltest.post_reason('did not get expected UNITS')
-        print(units)
-        return 'fail'
+    assert units == 'METERS', 'did not get expected UNITS'
 
     # This should be overridden by the above values
     sr = osr.SpatialReference()
@@ -254,20 +230,11 @@ def test_ers_10():
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
     units = ds.GetMetadataItem("UNITS", "ERS")
-    if proj != 'MGA55':
-        gdaltest.post_reason('did not get expected PROJ')
-        print(proj)
-        return 'fail'
+    assert proj == 'MGA55', 'did not get expected PROJ'
 
-    if datum != 'GDA94':
-        gdaltest.post_reason('did not get expected DATUM')
-        print(datum)
-        return 'fail'
+    assert datum == 'GDA94', 'did not get expected DATUM'
 
-    if units != 'METERS':
-        gdaltest.post_reason('did not get expected UNITS')
-        print(units)
-        return 'fail'
+    assert units == 'METERS', 'did not get expected UNITS'
 
     ds = None
 
@@ -288,31 +255,17 @@ def test_ers_10():
 
     drv.Delete('/vsimem/ers_10.ers')
 
-    if proj != 'MGA55':
-        gdaltest.post_reason('did not get expected PROJ')
-        print(proj)
-        return 'fail'
+    assert proj == 'MGA55', 'did not get expected PROJ'
 
-    if datum != 'GDA94':
-        gdaltest.post_reason('did not get expected DATUM')
-        print(datum)
-        return 'fail'
+    assert datum == 'GDA94', 'did not get expected DATUM'
 
-    if units != 'METERS':
-        gdaltest.post_reason('did not get expected UNITS')
-        print(units)
-        return 'fail'
+    assert units == 'METERS', 'did not get expected UNITS'
 
-    if md_ers["PROJ"] != proj or md_ers["DATUM"] != datum or md_ers["UNITS"] != units:
-        gdaltest.post_reason('GetMetadata() not consistent with '
+    assert md_ers["PROJ"] == proj and md_ers["DATUM"] == datum and md_ers["UNITS"] == units, \
+        ('GetMetadata() not consistent with '
                              'GetMetadataItem()')
-        print(md_ers)
-        return 'fail'
 
-    if wkt.find("""PROJCS["MGA55""") != 0:
-        gdaltest.post_reason('did not get expected projection')
-        print(wkt)
-        return 'fail'
+    assert wkt.find("""PROJCS["MGA55""") == 0, 'did not get expected projection'
 
     ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options=['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
     ds = None
@@ -325,20 +278,11 @@ def test_ers_10():
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
     units = ds.GetMetadataItem("UNITS", "ERS")
-    if proj != 'GEODETIC':
-        gdaltest.post_reason('did not get expected PROJ')
-        print(proj)
-        return 'fail'
+    assert proj == 'GEODETIC', 'did not get expected PROJ'
 
-    if datum != 'WGS84':
-        gdaltest.post_reason('did not get expected DATUM')
-        print(datum)
-        return 'fail'
+    assert datum == 'WGS84', 'did not get expected DATUM'
 
-    if units != 'METERS':
-        gdaltest.post_reason('did not get expected UNITS')
-        print(units)
-        return 'fail'
+    assert units == 'METERS', 'did not get expected UNITS'
     ds = None
 
     ds = gdal.Open('/vsimem/ers_10.ers')
@@ -349,20 +293,11 @@ def test_ers_10():
 
     drv.Delete('/vsimem/ers_10.ers')
 
-    if proj != 'GEODETIC':
-        gdaltest.post_reason('did not get expected PROJ')
-        print(proj)
-        return 'fail'
+    assert proj == 'GEODETIC', 'did not get expected PROJ'
 
-    if datum != 'WGS84':
-        gdaltest.post_reason('did not get expected DATUM')
-        print(datum)
-        return 'fail'
+    assert datum == 'WGS84', 'did not get expected DATUM'
 
-    if units != 'METERS':
-        gdaltest.post_reason('did not get expected UNITS')
-        print(units)
-        return 'fail'
+    assert units == 'METERS', 'did not get expected UNITS'
 
     return 'success'
 

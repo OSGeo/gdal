@@ -125,8 +125,7 @@ class TestMetaCRS(object):
             self.dst_srs = self.build_srs(test_line['tgtCrsType'],
                                           test_line['tgtCrs'])
 
-        if self.src_srs is None or self.dst_srs is None:
-            return 'fail'
+        assert not (self.src_srs is None or self.dst_srs is None)
 
         try:
             self.src_xyz = (float(test_line['srcOrd1']),

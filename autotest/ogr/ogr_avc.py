@@ -46,15 +46,13 @@ def check_content(ds):
     expect = ['1', '2', '3', '4', '5', '6', '7']
 
     tr = ogrtest.check_features_against_list(lyr, 'UserID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)',
-                                      max_error=0.01) != 0:
-        return 'fail'
+    assert (ogrtest.check_feature_geometry(feat, 'LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)',
+                                      max_error=0.01) == 0)
 
     return 'success'
 
@@ -66,9 +64,7 @@ def test_ogr_avc_1():
 
     # Example given at Annex A of http://avce00.maptools.org/docs/v7_e00_cover.html
     avc_ds = ogr.Open('data/test.e00')
-    if avc_ds.GetLayer(0).GetSpatialRef() is None:
-        gdaltest.post_reason('expected SRS')
-        return 'fail'
+    assert avc_ds.GetLayer(0).GetSpatialRef() is not None, 'expected SRS'
 
     if avc_ds is not None:
         return check_content(avc_ds)
@@ -81,9 +77,7 @@ def test_ogr_avc_1():
 def test_ogr_avc_2():
 
     avc_ds = ogr.Open('data/testavc/testavc')
-    if avc_ds.GetLayer(0).GetSpatialRef() is None:
-        gdaltest.post_reason('expected SRS')
-        return 'fail'
+    assert avc_ds.GetLayer(0).GetSpatialRef() is not None, 'expected SRS'
 
     if avc_ds is not None:
         return check_content(avc_ds)
@@ -100,13 +94,9 @@ def test_ogr_avc_3():
     gdal.PopErrorHandler()
     last_error_msg = gdal.GetLastErrorMsg()
 
-    if avc_ds is not None:
-        gdaltest.post_reason('expected failure')
-        return 'fail'
+    assert avc_ds is None, 'expected failure'
 
-    if last_error_msg == '':
-        gdaltest.post_reason('expected error message')
-        return 'fail'
+    assert last_error_msg != '', 'expected error message'
 
     return 'success'
 
@@ -124,15 +114,9 @@ def test_ogr_avc_4():
         for f in lyr:
             count += 1
             last_feature = f
-        if count != 80:
-            print(filename)
-            print(count)
-            return 'fail'
+        assert count == 80, filename
         count = lyr.GetFeatureCount()
-        if count != 80:
-            print(filename)
-            print(count)
-            return 'fail'
+        assert count == 80, filename
         if last_feature.GetFieldCount() != 7:
             print(filename)
             f.DumpReadable()
@@ -162,15 +146,9 @@ def test_ogr_avc_5():
         for f in lyr:
             count += 1
             last_feature = f
-        if count != 3:
-            print(filename)
-            print(count)
-            return 'fail'
+        assert count == 3, filename
         count = lyr.GetFeatureCount()
-        if count != 3:
-            print(filename)
-            print(count)
-            return 'fail'
+        assert count == 3, filename
         if last_feature.GetFieldCount() != 5:
             print(filename)
             f.DumpReadable()

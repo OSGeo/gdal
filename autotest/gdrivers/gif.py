@@ -86,23 +86,16 @@ def test_gif_4():
 
     ds = gdal.Open('data/bug407.gif')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
-    if cm.GetCount() != 16 \
-       or cm.GetColorEntry(0) != (255, 255, 255, 255) \
-       or cm.GetColorEntry(1) != (255, 255, 208, 255):
-        gdaltest.post_reason('Wrong colormap entries')
-        return 'fail'
+    assert cm.GetCount() == 16 and cm.GetColorEntry(0) == (255, 255, 255, 255) and cm.GetColorEntry(1) == (255, 255, 208, 255), \
+        'Wrong colormap entries'
 
     cm = None
 
-    if ds.GetRasterBand(1).GetNoDataValue() is not None:
-        gdaltest.post_reason('Wrong nodata value.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() is None, 'Wrong nodata value.'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if 'GIF_BACKGROUND' not in md or md['GIF_BACKGROUND'] != '0':
-        print(md)
-        gdaltest.post_reason('background metadata missing.')
-        return 'fail'
+    assert 'GIF_BACKGROUND' in md and md['GIF_BACKGROUND'] == '0', \
+        'background metadata missing.'
 
     return 'success'
 
@@ -174,11 +167,9 @@ def test_gif_7():
     tst.testOpen()
 
     ds = gdal.Open('data/bug407.gif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetDriver().ShortName != 'BIGGIF':
-        return 'fail'
+    assert ds.GetDriver().ShortName == 'BIGGIF'
 
     return 'success'
 
@@ -194,11 +185,9 @@ def test_gif_8():
     drv.Register()
 
     ds = gdal.Open('data/fakebig.gif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetDriver().ShortName != 'BIGGIF':
-        return 'fail'
+    assert ds.GetDriver().ShortName == 'BIGGIF'
 
     return 'success'
 
@@ -211,16 +200,13 @@ def test_gif_9():
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('GIF').CreateCopy(
         '/vsistdout_redirect//vsimem/tmp.gif', src_ds)
-    if ds.GetRasterBand(1).Checksum() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0
     src_ds = None
     ds = None
 
     ds = gdal.Open('/vsimem/tmp.gif')
-    if ds is None:
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
     gdal.Unlink('/vsimem/tmp.gif')
 

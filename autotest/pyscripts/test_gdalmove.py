@@ -55,16 +55,9 @@ def test_gdalmove_1():
     got_gt = ds.GetGeoTransform()
     expected_gt = (440719.95870935748, 60.000041745067577, 1.9291142234578728e-05, 3751294.2109841029, 1.9099167548120022e-05, -60.000041705276814)
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) / abs(got_gt[i]) > 1e-5:
-            gdaltest.post_reason('bad gt')
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) / abs(got_gt[i]) <= 1e-5, 'bad gt'
     wkt = ds.GetProjection()
-    if wkt.find('32611') < 0:
-        gdaltest.post_reason('bad geotransform')
-        print(wkt)
-        return 'fail'
+    assert wkt.find('32611') >= 0, 'bad geotransform'
     ds = None
 
     return 'success'

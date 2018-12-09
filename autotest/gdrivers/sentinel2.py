@@ -45,8 +45,7 @@ def test_sentinel2_l1c_1():
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -101,17 +100,15 @@ def test_sentinel2_l1c_1():
         os.system('sh -c "cd data/fake_sentinel2_l1c && zip -r ../../tmp/S2A_OPER_PRD_MSIL1C.zip S2A_OPER_PRD_MSIL1C.SAFE >/dev/null" && cd ../..')
         if os.path.exists('tmp/S2A_OPER_PRD_MSIL1C.zip'):
             ds = gdal.Open('tmp/S2A_OPER_PRD_MSIL1C.zip')
-            if ds is None:
-                return 'fail'
+            assert ds is not None
             os.unlink('tmp/S2A_OPER_PRD_MSIL1C.zip')
 
     # Try opening the 4 subdatasets
     for i in range(4):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1C:',
@@ -125,9 +122,7 @@ def test_sentinel2_l1c_1():
                  'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     return 'success'
 
@@ -140,8 +135,7 @@ def test_sentinel2_l1c_2():
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C:%s:10m:EPSG_32632' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -176,21 +170,14 @@ def test_sentinel2_l1c_2():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 20984 or ds.RasterYSize != 20980:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 20984 and ds.RasterYSize == 20980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 4:
-        return 'fail'
+    assert ds.RasterCount == 4
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -207,12 +194,9 @@ def test_sentinel2_l1c_2():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="10004" yOff="10000" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -228,19 +212,15 @@ def test_sentinel2_l1c_2():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
@@ -265,21 +245,17 @@ def test_sentinel2_l1c_3():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:60m:EPSG_32632' % filename_xml, open_options=['ALPHA=YES'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 4:
-        return 'fail'
+    assert ds.RasterCount == 4
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_AlphaBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_AlphaBand
 
     gdal.ErrorReset()
     cs = band.Checksum()
-    if cs != 0 or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert cs == 0 and gdal.GetLastErrorMsg() == ''
 
     band.ReadRaster()
 
@@ -293,11 +269,9 @@ def test_sentinel2_l1c_4():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:PREVIEW:EPSG_32632' % filename_xml)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 3:
-        return 'fail'
+    assert ds.RasterCount == 3
 
     fl = ds.GetFileList()
     # main XML + 2 granule XML + 2 jp2
@@ -307,11 +281,9 @@ def test_sentinel2_l1c_4():
         return 'fail'
 
     band = ds.GetRasterBand(1)
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_Byte:
-        return 'fail'
+    assert band.DataType == gdal.GDT_Byte
 
     return 'success'
 
@@ -328,13 +300,11 @@ def test_sentinel2_l1c_5():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # File is OK, but granule MTD are missing
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -407,14 +377,12 @@ def test_sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         gdal.Open('/vsimem/test.xml')
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Product_Info
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -426,14 +394,12 @@ def test_sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Product_Organisation
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -446,14 +412,12 @@ def test_sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Band_List
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -469,8 +433,7 @@ def test_sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No valid bands
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -491,8 +454,7 @@ def test_sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/test.xml')
 
@@ -512,14 +474,12 @@ def test_sentinel2_l1c_6():
     filename_xml = '\\\\?\\' + os.getcwd() + '\\' + filename_xml
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     subds_name = ds.GetMetadataItem('SUBDATASET_1_NAME', 'SUBDATASETS')
     gdal.ErrorReset()
     ds = gdal.Open(subds_name)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     return 'success'
 
@@ -588,9 +548,7 @@ def test_sentinel2_l1c_7():
 
     ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:60m:EPSG_32753')
     nbits = ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
-    if nbits != '10':
-        print(nbits)
-        return 'fail'
+    assert nbits == '10'
 
     gdal.Unlink('/vsimem/test.xml')
     gdal.Unlink('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_bla_B01.jp2')
@@ -606,8 +564,7 @@ def test_sentinel2_l1c_tile_1():
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -664,9 +621,8 @@ def test_sentinel2_l1c_tile_1():
     for i in range(4):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1C_TILE:',
@@ -675,9 +631,7 @@ def test_sentinel2_l1c_tile_1():
                  'SENTINEL2_L1C_TILE:%s:' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     return 'success'
 
@@ -692,8 +646,7 @@ def test_sentinel2_l1c_tile_2():
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO')  # Simulate absence of main MTD file
     ds = gdal.Open(filename_xml)
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', None)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -732,8 +685,7 @@ def test_sentinel2_l1c_tile_3():
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C_TILE:%s:10m' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -772,21 +724,14 @@ def test_sentinel2_l1c_tile_3():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 10980 or ds.RasterYSize != 10980:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 4:
-        return 'fail'
+    assert ds.RasterCount == 4
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -796,12 +741,9 @@ def test_sentinel2_l1c_tile_3():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -817,19 +759,15 @@ def test_sentinel2_l1c_tile_3():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
@@ -857,8 +795,7 @@ def test_sentinel2_l1c_tile_4():
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO')  # Simulate absence of main MTD file
     ds = gdal.OpenEx('SENTINEL2_L1C_TILE:%s:10m' % filename_xml, open_options=['ALPHA=YES'])
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', None)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -872,21 +809,14 @@ def test_sentinel2_l1c_tile_4():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 10980 or ds.RasterYSize != 10980:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 5:
-        return 'fail'
+    assert ds.RasterCount == 5
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -896,12 +826,9 @@ def test_sentinel2_l1c_tile_4():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -915,19 +842,15 @@ def test_sentinel2_l1c_tile_4():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(5)
 
-    if band.GetColorInterpretation() != gdal.GCI_AlphaBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_AlphaBand
 
     return 'success'
 
@@ -940,24 +863,16 @@ def test_sentinel2_l1c_tile_5():
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C_TILE:%s:PREVIEW' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
-    if ds.RasterXSize != 343 or ds.RasterYSize != 343:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 343 and ds.RasterYSize == 343
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 320.0, 0.0, 5100060.0, 0.0, -320.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 320.0, 0.0, 5100060.0, 0.0, -320.0)
 
-    if ds.RasterCount != 3:
-        return 'fail'
+    assert ds.RasterCount == 3
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -967,9 +882,7 @@ def test_sentinel2_l1c_tile_5():
       <SrcRect xOff="0" yOff="0" xSize="343" ySize="343" />
       <DstRect xOff="0" yOff="0" xSize="343" ySize="343" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
     return 'success'
 
@@ -986,13 +899,11 @@ def test_sentinel2_l1c_tile_6():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C_TILE:/vsimem/test.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.FileFromMemBuffer('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml',
                            """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1024,8 +935,7 @@ def test_sentinel2_l1c_tile_6():
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C_TILE:/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/test.xml')
     gdal.Unlink('/vsimem/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml')
@@ -1041,8 +951,7 @@ def test_sentinel2_l1b_1():
     filename_xml = 'data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/S2B_OPER_MTD_SAFL1B.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -1091,9 +1000,8 @@ def test_sentinel2_l1b_1():
     for i in range(3):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1B:',
@@ -1103,9 +1011,7 @@ def test_sentinel2_l1b_1():
                  'SENTINEL2_L1B:%s:30m' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     return 'success'
 
@@ -1118,8 +1024,7 @@ def test_sentinel2_l1b_2():
     filename_xml = 'data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -1180,8 +1085,7 @@ def test_sentinel2_l1b_2():
         ds = gdal.Open('S2B_OPER_MTD_L1B.xml')
     finally:
         os.chdir(cwd)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
     got_md = ds.GetMetadata()
     if got_md != expected_md:
         import pprint
@@ -1198,8 +1102,7 @@ def test_sentinel2_l1b_3():
 
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m')
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -1241,61 +1144,44 @@ def test_sentinel2_l1b_3():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 1276 or ds.RasterYSize != 384:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 1276 and ds.RasterYSize == 384
 
-    if ds.GetGCPProjection().find('4326') < 0:
-        return 'fail'
+    assert ds.GetGCPProjection().find('4326') >= 0
 
     gcps = ds.GetGCPs()
-    if len(gcps) != 5:
-        print(len(gcps))
-        return 'fail'
+    assert len(gcps) == 5
 
-    if gcps[0].GCPPixel != 0 or \
-       gcps[0].GCPLine != 0 or \
-       gcps[0].GCPX != 11 or \
-       gcps[0].GCPY != 46 or \
-       gcps[0].GCPZ != 1:
-        print(gcps[0])
-        return 'fail'
+    assert (gcps[0].GCPPixel == 0 and \
+       gcps[0].GCPLine == 0 and \
+       gcps[0].GCPX == 11 and \
+       gcps[0].GCPY == 46 and \
+       gcps[0].GCPZ == 1)
 
-    if gcps[1].GCPPixel != 0 or \
-       gcps[1].GCPLine != 384 or \
-       gcps[1].GCPX != 11 or \
-       gcps[1].GCPY != 45 or \
-       gcps[1].GCPZ != 2:
-        print(gcps[1])
-        return 'fail'
+    assert (gcps[1].GCPPixel == 0 and \
+       gcps[1].GCPLine == 384 and \
+       gcps[1].GCPX == 11 and \
+       gcps[1].GCPY == 45 and \
+       gcps[1].GCPZ == 2)
 
-    if gcps[2].GCPPixel != 1276 or \
-       gcps[2].GCPLine != 384 or \
-       gcps[2].GCPX != 13 or \
-       gcps[2].GCPY != 45 or \
-       gcps[2].GCPZ != 3:
-        print(gcps[2])
-        return 'fail'
+    assert (gcps[2].GCPPixel == 1276 and \
+       gcps[2].GCPLine == 384 and \
+       gcps[2].GCPX == 13 and \
+       gcps[2].GCPY == 45 and \
+       gcps[2].GCPZ == 3)
 
-    if gcps[3].GCPPixel != 1276 or \
-       gcps[3].GCPLine != 0 or \
-       gcps[3].GCPX != 13 or \
-       gcps[3].GCPY != 46 or \
-       gcps[3].GCPZ != 4:
-        print(gcps[3])
-        return 'fail'
+    assert (gcps[3].GCPPixel == 1276 and \
+       gcps[3].GCPLine == 0 and \
+       gcps[3].GCPX == 13 and \
+       gcps[3].GCPY == 46 and \
+       gcps[3].GCPZ == 4)
 
-    if gcps[4].GCPPixel != 1276. / 2 or \
-       gcps[4].GCPLine != 384. / 2 or \
-       gcps[4].GCPX != 12 or \
-       gcps[4].GCPY != 45.5 or \
-       gcps[4].GCPZ != 2.5:
-        print(gcps[4])
-        return 'fail'
+    assert (gcps[4].GCPPixel == 1276. / 2 and \
+       gcps[4].GCPLine == 384. / 2 and \
+       gcps[4].GCPX == 12 and \
+       gcps[4].GCPY == 45.5 and \
+       gcps[4].GCPZ == 2.5)
 
-    if ds.RasterCount != 3:
-        return 'fail'
+    assert ds.RasterCount == 3
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -1305,12 +1191,9 @@ def test_sentinel2_l1b_3():
       <SrcRect xOff="0" yOff="0" xSize="1276" ySize="384" />
       <DstRect xOff="0" yOff="0" xSize="1276" ySize="384" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -1324,11 +1207,9 @@ def test_sentinel2_l1b_3():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     return 'success'
 
@@ -1397,8 +1278,7 @@ def test_sentinel2_l1b_4():
 </n1:Level-1B_Granule_ID>
 """)
     ds = gdal.Open('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m')
-    if ds.RasterXSize != 500:
-        return 'fail'
+    assert ds.RasterXSize == 500
 
     # With standard granule metadata (with Granule_Dimensions)
     gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml',
@@ -1429,10 +1309,8 @@ def test_sentinel2_l1b_4():
     ds = None
 
     ds = gdal.OpenEx('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m', open_options=['ALPHA=YES'])
-    if ds is None:
-        return 'fail'
-    if ds.RasterCount != 2:
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 2
     ds = None
 
     gdal.Unlink('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml')
@@ -1453,8 +1331,7 @@ def test_sentinel2_l1b_5():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Product_Info
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1466,8 +1343,7 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Product_Organisation
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1480,14 +1356,12 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Band_List
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1503,8 +1377,7 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No valid bands
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1525,8 +1398,7 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1535,14 +1407,12 @@ def test_sentinel2_l1b_5():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Granule_Dimensions
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1556,8 +1426,7 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No ROWS
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1577,8 +1446,7 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No NCOLS
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1598,8 +1466,7 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Not the desired resolution
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1615,8 +1482,7 @@ def test_sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     gdal.Unlink('/vsimem/test.xml')
 
     gdal.Unlink('/vsimem/test.xml')
@@ -1632,8 +1498,7 @@ def test_sentinel2_l2a_1():
     filename_xml = 'data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'AOT_RETRIEVAL_ACCURACY': '0',
                    'BARE_SOILS_PERCENTAGE': '0',
@@ -1705,9 +1570,8 @@ def test_sentinel2_l2a_1():
     for i in range(2):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L2A:',
@@ -1721,9 +1585,7 @@ def test_sentinel2_l2a_1():
                  'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     return 'success'
 
@@ -1736,8 +1598,7 @@ def test_sentinel2_l2a_2():
     filename_xml = 'data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32632' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'AOT_RETRIEVAL_ACCURACY': '0',
                    'BARE_SOILS_PERCENTAGE': '0',
@@ -1794,22 +1655,14 @@ def test_sentinel2_l2a_2():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 1830 or ds.RasterYSize != 1830:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 60.0, 0.0, 5100060.0, 0.0, -60.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 60.0, 0.0, 5100060.0, 0.0, -60.0)
 
-    if ds.RasterCount != 17:
-        print(ds.RasterCount)
-        return 'fail'
+    assert ds.RasterCount == 17
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -1819,12 +1672,9 @@ def test_sentinel2_l2a_2():
       <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
       <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -1840,13 +1690,11 @@ def test_sentinel2_l2a_2():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
     band = ds.GetRasterBand(13)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'AOT'}
@@ -1859,8 +1707,7 @@ def test_sentinel2_l2a_2():
     for i in range(ds.RasterCount):
         if ds.GetRasterBand(i + 1).GetMetadataItem('BANDNAME') == 'SCL':
             scl_band = i + 1
-    if scl_band == 0:
-        return 'fail'
+    assert scl_band != 0
     band = ds.GetRasterBand(scl_band)
     expected_categories = ['NODATA',
                            'SATURATED_DEFECTIVE',
@@ -1895,13 +1742,11 @@ def test_sentinel2_l2a_3():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L2A:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # File is OK, but granule MTD are missing
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1945,14 +1790,12 @@ def test_sentinel2_l2a_3():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         gdal.Open('/vsimem/test.xml')
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L2A:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/test.xml')
 
@@ -1967,8 +1810,7 @@ def test_sentinel2_l2a_4():
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {
                     'AOT_QUANTIFICATION_VALUE': '1000.0',
@@ -2052,9 +1894,8 @@ def test_sentinel2_l2a_4():
     for i in range(2):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L2A:',
@@ -2068,9 +1909,7 @@ def test_sentinel2_l2a_4():
                  'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     return 'success'
 
@@ -2084,8 +1923,7 @@ def test_sentinel2_l2a_5():
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32634' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {
                     'AOT_QUANTIFICATION_VALUE': '1000.0',
@@ -2141,22 +1979,14 @@ def test_sentinel2_l2a_5():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 1830 or ds.RasterYSize != 1830:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
 
-    if ds.GetProjectionRef().find('32634') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32634') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
 
-    if ds.RasterCount != 2:
-        print(ds.RasterCount)
-        return 'fail'
+    assert ds.RasterCount == 2
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -2166,12 +1996,9 @@ def test_sentinel2_l2a_5():
       <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
       <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -2187,8 +2014,7 @@ def test_sentinel2_l2a_5():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
     return 'success'
 
@@ -2201,8 +2027,7 @@ def test_sentinel2_l2a_6():
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {
                     'AOT_RETRIEVAL_ACCURACY': '0.0',
@@ -2291,9 +2116,8 @@ def test_sentinel2_l2a_6():
     for i in range(2):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L2A:',
@@ -2307,9 +2131,7 @@ def test_sentinel2_l2a_6():
                  'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     return 'success'
 
@@ -2323,8 +2145,7 @@ def test_sentinel2_l2a_7():
     filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32634' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {
                     'AOT_RETRIEVAL_ACCURACY': '0.0',
@@ -2385,22 +2206,14 @@ def test_sentinel2_l2a_7():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 1830 or ds.RasterYSize != 1830:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
 
-    if ds.GetProjectionRef().find('32634') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32634') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
 
-    if ds.RasterCount != 2:
-        print(ds.RasterCount)
-        return 'fail'
+    assert ds.RasterCount == 2
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -2410,12 +2223,9 @@ def test_sentinel2_l2a_7():
       <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
       <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -2431,8 +2241,7 @@ def test_sentinel2_l2a_7():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
     return 'success'
 
@@ -2446,8 +2255,7 @@ def test_sentinel2_l1c_safe_compact_1():
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -2501,9 +2309,8 @@ def test_sentinel2_l1c_safe_compact_1():
     for i in range(4):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1C:',
@@ -2517,17 +2324,14 @@ def test_sentinel2_l1c_safe_compact_1():
                  'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     # Try opening a zip file as distributed from https://scihub.esa.int/
     if not sys.platform.startswith('win'):
         os.system('sh -c "cd data/fake_sentinel2_l1c_safecompact && zip -r ../../tmp/S2A_MSIL1C_test.zip S2A_OPER_PRD_MSIL1C.SAFE >/dev/null" && cd ../..')
         if os.path.exists('tmp/S2A_MSIL1C_test.zip'):
             ds = gdal.Open('tmp/S2A_MSIL1C_test.zip')
-            if ds is None:
-                return 'fail'
+            assert ds is not None
             os.unlink('tmp/S2A_MSIL1C_test.zip')
 
     return 'success'
@@ -2541,8 +2345,7 @@ def test_sentinel2_l1c_safe_compact_2():
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C:%s:10m:EPSG_32632' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -2577,21 +2380,14 @@ def test_sentinel2_l1c_safe_compact_2():
         pprint.pprint(got_md)
         return 'fail'
 
-    if ds.RasterXSize != 10980 or ds.RasterYSize != 10980:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 4:
-        return 'fail'
+    assert ds.RasterCount == 4
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -2602,12 +2398,9 @@ def test_sentinel2_l1c_safe_compact_2():
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>
 """
-    if vrt.find(placement_vrt) < 0:
-        print(vrt)
-        return 'fail'
+    assert vrt.find(placement_vrt) >= 0
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -2623,19 +2416,15 @@ def test_sentinel2_l1c_safe_compact_2():
         pprint.pprint(got_md)
         return 'fail'
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
@@ -2660,11 +2449,9 @@ def test_sentinel2_l1c_safe_compact_3():
 
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:TCI:EPSG_32632' % filename_xml)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 3:
-        return 'fail'
+    assert ds.RasterCount == 3
 
     fl = ds.GetFileList()
     # main XML + 1 granule XML + 1 jp2
@@ -2674,11 +2461,9 @@ def test_sentinel2_l1c_safe_compact_3():
         return 'fail'
 
     band = ds.GetRasterBand(1)
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_Byte:
-        return 'fail'
+    assert band.DataType == gdal.GDT_Byte
 
     return 'success'
 

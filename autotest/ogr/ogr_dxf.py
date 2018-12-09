@@ -39,6 +39,7 @@ import ogrtest
 import gdaltest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Check some general things to see if they meet expectations.
@@ -48,28 +49,20 @@ def test_ogr_dxf_1():
 
     gdaltest.dxf_ds = ogr.Open('data/assorted.dxf')
 
-    if gdaltest.dxf_ds is None:
-        return 'fail'
+    assert gdaltest.dxf_ds is not None
 
-    if gdaltest.dxf_ds.GetLayerCount() != 1:
-        gdaltest.post_reason('expected exactly one layer!')
-        return 'fail'
+    assert gdaltest.dxf_ds.GetLayerCount() == 1, 'expected exactly one layer!'
 
     gdaltest.dxf_layer = gdaltest.dxf_ds.GetLayer(0)
 
-    if gdaltest.dxf_layer.GetName() != 'entities':
-        gdaltest.post_reason('did not get expected layer name.')
-        return 'fail'
+    assert gdaltest.dxf_layer.GetName() == 'entities', \
+        'did not get expected layer name.'
 
     defn = gdaltest.dxf_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 6:
-        gdaltest.post_reason('did not get expected number of fields.')
-        return 'fail'
+    assert defn.GetFieldCount() == 6, 'did not get expected number of fields.'
 
     fc = gdaltest.dxf_layer.GetFeatureCount()
-    if fc != 22:
-        gdaltest.post_reason('did not get expected feature count, got %d' % fc)
-        return 'fail'
+    assert fc == 22, ('did not get expected feature count, got %d' % fc)
 
     # Setup the utf-8 string.
     if version_info >= (3, 0, 0):
@@ -97,52 +90,37 @@ def test_ogr_dxf_2():
 
     feat = gdaltest.dxf_layer.GetNextFeature()
 
-    if feat.Layer != '0':
-        gdaltest.post_reason('did not get expected layer for feature 0')
-        return 'fail'
+    assert feat.Layer == '0', 'did not get expected layer for feature 0'
 
-    if feat.PaperSpace != None:
-        gdaltest.post_reason( 'did not get expected PaperSpace for feature 0' )
-        return 'fail'
+    assert feat.PaperSpace == None, 'did not get expected PaperSpace for feature 0'
 
-    if feat.GetFID() != 0:
-        gdaltest.post_reason('did not get expected fid for feature 0')
-        return 'fail'
+    assert feat.GetFID() == 0, 'did not get expected fid for feature 0'
 
-    if feat.SubClasses != 'AcDbEntity:AcDbEllipse':
-        gdaltest.post_reason('did not get expected SubClasses on feature 0.')
-        return 'fail'
+    assert feat.SubClasses == 'AcDbEntity:AcDbEllipse', \
+        'did not get expected SubClasses on feature 0.'
 
-    if feat.LineType != 'ByLayer':
-        gdaltest.post_reason('Did not get expected LineType')
-        return 'fail'
+    assert feat.LineType == 'ByLayer', 'Did not get expected LineType'
 
-    if feat.EntityHandle != '43':
-        gdaltest.post_reason('did not get expected EntityHandle')
-        return 'fail'
+    assert feat.EntityHandle == '43', 'did not get expected EntityHandle'
 
     if feat.GetStyleString() != 'PEN(c:#000000)':
         print('%s' % feat.GetStyleString())
-        gdaltest.post_reason('did not get expected style string on feat 0.')
-        return 'fail'
+        pytest.fail('did not get expected style string on feat 0.')
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbLineString25D, \
+        'did not get expected geometry type.'
 
     envelope = geom.GetEnvelope()
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
     exp_area = 1596.12
 
-    if area < exp_area - 0.5 or area > exp_area + 0.5:
-        gdaltest.post_reason('envelope area not as expected, got %g.' % area)
-        return 'fail'
+    assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
+        ('envelope area not as expected, got %g.' % area)
 
-    if abs(geom.GetX(0) - 73.25) > 0.001 or abs(geom.GetY(0) - 139.75) > 0.001:
-        gdaltest.post_reason('first point (%g,%g) not expected location.'
+    assert abs(geom.GetX(0) - 73.25) <= 0.001 and abs(geom.GetY(0) - 139.75) <= 0.001, \
+        ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
-        return 'fail'
 
     return 'success'
 
@@ -160,14 +138,12 @@ def test_ogr_dxf_3():
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
     exp_area = 311.864
 
-    if area < exp_area - 0.5 or area > exp_area + 0.5:
-        gdaltest.post_reason('envelope area not as expected, got %g.' % area)
-        return 'fail'
+    assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
+        ('envelope area not as expected, got %g.' % area)
 
-    if abs(geom.GetX(0) - 61.133) > 0.01 or abs(geom.GetY(0) - 103.592) > 0.01:
-        gdaltest.post_reason('first point (%g,%g) not expected location.'
+    assert abs(geom.GetX(0) - 61.133) <= 0.01 and abs(geom.GetY(0) - 103.592) <= 0.01, \
+        ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
-        return 'fail'
 
     return 'success'
 
@@ -179,8 +155,7 @@ def test_ogr_dxf_4():
 
     feat = gdaltest.dxf_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (83.5 160.0 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (83.5 160.0 0)')
 
     return 'success'
 
@@ -192,12 +167,10 @@ def test_ogr_dxf_5():
 
     feat = gdaltest.dxf_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (97.0 159.5 0,108.5 132.25 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (97.0 159.5 0,108.5 132.25 0)')
 
-    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString:
-        gdaltest.post_reason('not keeping 3D linestring as 3D')
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryType() != ogr.wkbLineString, \
+        'not keeping 3D linestring as 3D'
 
     return 'success'
 
@@ -209,17 +182,13 @@ def test_ogr_dxf_6():
 
     feat = gdaltest.dxf_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (84 126)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (84 126)')
 
-    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbPoint25D:
-        gdaltest.post_reason('not keeping 2D text as 2D')
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryType() != ogr.wkbPoint25D, \
+        'not keeping 2D text as 2D'
 
-    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)':
-        print(feat.GetStyleString())
-        gdaltest.post_reason('got wrong style string')
-        return 'fail'
+    assert feat.GetStyleString() == 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)', \
+        'got wrong style string'
 
     return 'success'
 
@@ -239,13 +208,11 @@ def test_ogr_dxf_7():
 
     if area < exp_area - 0.5 or area > exp_area + 0.5:
         print(envelope)
-        gdaltest.post_reason('envelope area not as expected, got %g.' % area)
-        return 'fail'
+        pytest.fail('envelope area not as expected, got %g.' % area)
 
-    if abs(geom.GetX(0) - 115.258) > 0.01 or abs(geom.GetY(0) - 107.791) > 0.01:
-        gdaltest.post_reason('first point (%g,%g) not expected location.'
+    assert abs(geom.GetX(0) - 115.258) <= 0.01 and abs(geom.GetY(0) - 107.791) <= 0.01, \
+        ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
-        return 'fail'
 
     return 'success'
 
@@ -258,53 +225,43 @@ def test_ogr_dxf_8():
     # Check that this line is in PaperSpace
     feat = gdaltest.dxf_layer.GetNextFeature()
 
-    if feat.GetField('PaperSpace') != 1:
-        gdaltest.post_reason( 'did not get expected PaperSpace' )
-        return 'fail'
+    assert feat.GetField('PaperSpace') == 1, 'did not get expected PaperSpace'
 
     # Dimension lines
     feat = gdaltest.dxf_layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    if geom.GetGeometryType() != ogr.wkbMultiLineString:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbMultiLineString, \
+        'did not get expected geometry type.'
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((63.8628719444825 149.209935992088,24.3419606685507 111.934531038653),(72.3255686642474 140.237438265109,63.0051995752285 150.119275371538),(32.8046573883157 102.962033311673,23.4842882992968 112.843870418103))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((63.8628719444825 149.209935992088,24.3419606685507 111.934531038653),(72.3255686642474 140.237438265109,63.0051995752285 150.119275371538),(32.8046573883157 102.962033311673,23.4842882992968 112.843870418103))')
 
     # Dimension arrowheads
     feat = gdaltest.dxf_layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    if geom.GetGeometryType() != ogr.wkbPolygon25D:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbPolygon25D, \
+        'did not get expected geometry type.'
 
-    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((61.7583023958313 147.797704380064 0,63.8628719444825 149.209935992088 0,62.3300839753339 147.191478127097 0,61.7583023958313 147.797704380064 0))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POLYGON Z ((61.7583023958313 147.797704380064 0,63.8628719444825 149.209935992088 0,62.3300839753339 147.191478127097 0,61.7583023958313 147.797704380064 0))')
 
     feat = gdaltest.dxf_layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    if geom.GetGeometryType() != ogr.wkbPolygon25D:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbPolygon25D, \
+        'did not get expected geometry type.'
 
-    if ogrtest.check_feature_geometry(feat, 'POLYGON Z ((26.4465302172018 113.346762650677 0,24.3419606685507 111.934531038653 0,25.8747486376992 113.952988903644 0,26.4465302172018 113.346762650677 0))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POLYGON Z ((26.4465302172018 113.346762650677 0,24.3419606685507 111.934531038653 0,25.8747486376992 113.952988903644 0,26.4465302172018 113.346762650677 0))')
 
     # Dimension text
     feat = gdaltest.dxf_layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (42.815907752635709 131.936242584545397)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (42.815907752635709 131.936242584545397)')
 
     expected_style = 'LABEL(f:"Arial",t:"54.33",p:5,a:43.3,s:2.5g,c:#000000)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(), expected_style))
-        return 'fail'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(), expected_style))
 
     return 'success'
 
@@ -322,39 +279,30 @@ def test_ogr_dxf_9():
     feat = gdaltest.dxf_layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    if geom.GetGeometryType() != ogr.wkbMultiLineString25D:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbMultiLineString25D, \
+        'did not get expected geometry type.'
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((79.069506278985116 121.003652476272777 0,79.716898725419625 118.892590150942851 0),(79.716898725419625 118.892590150942851 0,78.140638855839953 120.440702522851453 0),(78.140638855839953 120.440702522851453 0,80.139111190485622 120.328112532167196 0),(80.139111190485622 120.328112532167196 0,78.619146316248077 118.920737648613908 0),(78.619146316248077 118.920737648613908 0,79.041358781314059 120.975504978601705 0))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((79.069506278985116 121.003652476272777 0,79.716898725419625 118.892590150942851 0),(79.716898725419625 118.892590150942851 0,78.140638855839953 120.440702522851453 0),(78.140638855839953 120.440702522851453 0,80.139111190485622 120.328112532167196 0),(80.139111190485622 120.328112532167196 0,78.619146316248077 118.920737648613908 0),(78.619146316248077 118.920737648613908 0,79.041358781314059 120.975504978601705 0))')
 
     # First of two MTEXTs
     feat = gdaltest.dxf_layer.GetNextFeature()
-    if feat.GetField('Text') != gdaltest.sample_text:
-        gdaltest.post_reason('Did not get expected first mtext.')
-        return 'fail'
+    assert feat.GetField('Text') == gdaltest.sample_text, \
+        'Did not get expected first mtext.'
 
     expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
-        return 'fail'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (77.602201427662891 120.775897075866169 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (77.602201427662891 120.775897075866169 0)')
 
     # Second of two MTEXTs
     feat = gdaltest.dxf_layer.GetNextFeature()
-    if feat.GetField('Text') != 'Second':
-        gdaltest.post_reason('Did not get expected second mtext.')
-        return 'fail'
+    assert feat.GetField('Text') == 'Second', 'Did not get expected second mtext.'
 
-    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbMText':
-        gdaltest.post_reason('Did not get expected subclasses.')
-        return 'fail'
+    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbMText', \
+        'Did not get expected subclasses.'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (79.977331629005178 119.698291706738644 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (79.977331629005178 119.698291706738644 0)')
 
     return 'success'
 
@@ -374,20 +322,16 @@ def test_ogr_dxf_10():
     feat = ocs_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
-        print(geom.GetGeometryType())
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbLineString25D, \
+        'did not get expected geometry type.'
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (600325.567999998573214 3153021.253000000491738 562.760000000052969,600255.215999998385087 3151973.98600000096485 536.950000000069849,597873.927999997511506 3152247.628000000491738 602.705000000089058)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (600325.567999998573214 3153021.253000000491738 562.760000000052969,600255.215999998385087 3151973.98600000096485 536.950000000069849,597873.927999997511506 3152247.628000000491738 602.705000000089058)')
 
     # LWPOLYLINE in OCS with bulge
     feat = ocs_lyr.GetFeature(12)
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING Z (611415.459819656 3139300.00002682 1807.37309215522,611245.079665823 3139720.59876424 1807.37309215522,611245.079665823 3139720.59876424 1807.37309215522,611244.054791235 3139723.12875936 1807.27984293229,611243.034695086 3139725.64695847 1807.00053001486,611242.024133533 3139728.14162057 1806.53645568869,611241.027818282 3139730.6011144 1805.88978368251,611240.050394615 3139733.01397265 1805.06352907972,611239.096419732 3139735.36894547 1804.06154426071,611238.170341503 3139737.65505289 1802.88850094122,611237.276477734 3139739.86163602 1801.54986839073,611236.418996029 3139741.97840675 1800.0518879321,611235.601894365 3139743.99549572 1798.40154384175,611234.828982446 3139745.90349832 1796.60653078564,611234.103863944 3139747.69351857 1794.67521794327,611233.429919697 3139749.35721058 1792.61660998662,611232.810291944 3139750.88681743 1790.44030509629,611232.247869676 3139752.27520739 1788.15645021029,611231.745275164 3139753.51590716 1785.77569371438,611231.304851737 3139754.60313201 1783.30913579435,611230.928652852 3139755.5318128 1780.76827668182,611230.618432521 3139756.29761959 1778.16496303489,611230.375637135 3139756.89698184 1775.51133270351,611230.201398719 3139757.32710505 1772.81975813727,611230.096529651 3139757.58598378 1770.10278869926,611230.06151888 3139757.67241101 1767.37309215522,611230.06151892 3139757.67241089 1661.18408370228,611230.06151892 3139757.67241089 1661.18408370228,611230.026508154 3139757.75883812 1658.45438717061,611229.921639091 3139758.01771683 1655.73741774404,611229.74740068 3139758.44784002 1653.04584318824,611229.5046053 3139759.04720226 1650.39221286628,611229.194384975 3139759.81300904 1647.78889922769,611228.818186096 3139760.74168982 1645.24804012238,611228.377762675 3139761.82891465 1642.78148220841,611227.87516817 3139763.0696144 1640.40072571739,611227.312745909 3139764.45800435 1638.11687083509,611226.693118163 3139765.98761118 1635.94056594722,611226.019173923 3139767.65130317 1633.88195799181,611225.294055428 3139769.4413234 1631.95064514943,611224.521143516 3139771.34932599 1630.15563209209,611223.704041858 3139773.36641494 1628.50528799927,611222.84656016 3139775.48318565 1627.00730753696,611221.952696397 3139777.68976876 1625.66867498157,611221.026618175 3139779.97587617 1624.49563165602,611220.072643298 3139782.33084897 1623.49364682979,611219.095219637 3139784.74370721 1622.66739221866,611218.098904392 3139787.20320102 1622.02072020306,611217.088342845 3139789.69786311 1621.55664586644,' +
-                                      '611216.0682467 3139792.21606221 1621.27733293758,611215.043372117 3139794.74605732 1621.18408370228,610905.973331759 3140557.71325641 1621.18408370228,610905.973331759 3140557.71325641 1621.18408370228,610904.948457176 3140560.24325151 1621.2773329396,610903.928361033 3140562.76145061 1621.55664587034,610902.917799487 3140565.2561127 1622.02072020868,610901.921484243 3140567.71560651 1622.66739222582,610900.944060583 3140570.12846474 1623.49364683831,610899.990085707 3140572.48343755 1624.49563166573,610899.064007486 3140574.76954495 1625.66867499227,610898.170143725 3140576.97612806 1627.00730754846,610897.312662028 3140579.09289877 1628.50528801138,610896.495560372 3140581.10998771 1630.1556321046,610895.722648461 3140583.0179903 1631.95064516215,610894.997529967 3140584.80801053 1633.88195800453,610894.323585729 3140586.47170251 1635.94056595974,610893.703957984 3140588.00130935 1638.1168708472,610893.141535724 3140589.38969929 1640.4007257289,610892.63894122 3140590.63039904 1642.78148221912,610892.198517801 3140591.71762387 1645.2480401321,610891.822318923 3140592.64630464 1647.78889923622,610891.5120986 3140593.41211142 1650.39221287345,610891.269303221 3140594.01147366 1653.04584319386,610891.095064811 3140594.44159685 1655.73741774794,610890.99019575 3140594.70047556 1658.45438717264,610890.955184986 3140594.78690278 1661.18408370228,610890.955185021 3140594.78690272 1752.31638281001,610890.955185021 3140594.78690271 1752.31638281001,610890.920174252 3140594.87332995 1755.04607934987,610890.815305187 3140595.13220867 1757.76304878401,610890.641066773 3140595.56233187 1760.45462334672,610890.398271389 3140596.16169412 1763.10825367492,610890.088051061 3140596.92750091 1765.71156731903,610889.711852178 3140597.85618169 1768.25242642912,610889.271428753 3140598.94340654 1770.71898434711,610888.768834244 3140600.1841063 1773.09974084137,610888.206411978 3140601.57249626 1775.38359572612,610887.586784228 3140603.1021031 1777.55990061562,610886.912839984 3140604.7657951 1779.61850857185,610886.187721485 3140606.55581535 1781.54982141423,610885.414809569 3140608.46381795 1783.34483447076,610884.597707907 3140610.48090691 1784.99517856195,610883.740226205 3140612.59767763 1786.49315902182,610882.846362438 3140614.80426075 1787.83179157397,610881.920284211 3140617.09036817 1789.0048348955,610880.96630933 3140619.44534098 1790.00681971696,610879.988885665 3140621.85819923 1790.83307432256,610878.992570417 3140624.31769305 1791.47974633192,610877.982008866 3140626.81235515 1791.94382066162,610876.961912718 3140629.33055426 1792.22313358291,610875.937038132 3140631.86054938 1792.31638281001,610699.99993399 3141066.17711854 1792.31638281001)'):
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat, 'LINESTRING Z (611415.459819656 3139300.00002682 1807.37309215522,611245.079665823 3139720.59876424 1807.37309215522,611245.079665823 3139720.59876424 1807.37309215522,611244.054791235 3139723.12875936 1807.27984293229,611243.034695086 3139725.64695847 1807.00053001486,611242.024133533 3139728.14162057 1806.53645568869,611241.027818282 3139730.6011144 1805.88978368251,611240.050394615 3139733.01397265 1805.06352907972,611239.096419732 3139735.36894547 1804.06154426071,611238.170341503 3139737.65505289 1802.88850094122,611237.276477734 3139739.86163602 1801.54986839073,611236.418996029 3139741.97840675 1800.0518879321,611235.601894365 3139743.99549572 1798.40154384175,611234.828982446 3139745.90349832 1796.60653078564,611234.103863944 3139747.69351857 1794.67521794327,611233.429919697 3139749.35721058 1792.61660998662,611232.810291944 3139750.88681743 1790.44030509629,611232.247869676 3139752.27520739 1788.15645021029,611231.745275164 3139753.51590716 1785.77569371438,611231.304851737 3139754.60313201 1783.30913579435,611230.928652852 3139755.5318128 1780.76827668182,611230.618432521 3139756.29761959 1778.16496303489,611230.375637135 3139756.89698184 1775.51133270351,611230.201398719 3139757.32710505 1772.81975813727,611230.096529651 3139757.58598378 1770.10278869926,611230.06151888 3139757.67241101 1767.37309215522,611230.06151892 3139757.67241089 1661.18408370228,611230.06151892 3139757.67241089 1661.18408370228,611230.026508154 3139757.75883812 1658.45438717061,611229.921639091 3139758.01771683 1655.73741774404,611229.74740068 3139758.44784002 1653.04584318824,611229.5046053 3139759.04720226 1650.39221286628,611229.194384975 3139759.81300904 1647.78889922769,611228.818186096 3139760.74168982 1645.24804012238,611228.377762675 3139761.82891465 1642.78148220841,611227.87516817 3139763.0696144 1640.40072571739,611227.312745909 3139764.45800435 1638.11687083509,611226.693118163 3139765.98761118 1635.94056594722,611226.019173923 3139767.65130317 1633.88195799181,611225.294055428 3139769.4413234 1631.95064514943,611224.521143516 3139771.34932599 1630.15563209209,611223.704041858 3139773.36641494 1628.50528799927,611222.84656016 3139775.48318565 1627.00730753696,611221.952696397 3139777.68976876 1625.66867498157,611221.026618175 3139779.97587617 1624.49563165602,611220.072643298 3139782.33084897 1623.49364682979,611219.095219637 3139784.74370721 1622.66739221866,611218.098904392 3139787.20320102 1622.02072020306,611217.088342845 3139789.69786311 1621.55664586644,' +
+                                      '611216.0682467 3139792.21606221 1621.27733293758,611215.043372117 3139794.74605732 1621.18408370228,610905.973331759 3140557.71325641 1621.18408370228,610905.973331759 3140557.71325641 1621.18408370228,610904.948457176 3140560.24325151 1621.2773329396,610903.928361033 3140562.76145061 1621.55664587034,610902.917799487 3140565.2561127 1622.02072020868,610901.921484243 3140567.71560651 1622.66739222582,610900.944060583 3140570.12846474 1623.49364683831,610899.990085707 3140572.48343755 1624.49563166573,610899.064007486 3140574.76954495 1625.66867499227,610898.170143725 3140576.97612806 1627.00730754846,610897.312662028 3140579.09289877 1628.50528801138,610896.495560372 3140581.10998771 1630.1556321046,610895.722648461 3140583.0179903 1631.95064516215,610894.997529967 3140584.80801053 1633.88195800453,610894.323585729 3140586.47170251 1635.94056595974,610893.703957984 3140588.00130935 1638.1168708472,610893.141535724 3140589.38969929 1640.4007257289,610892.63894122 3140590.63039904 1642.78148221912,610892.198517801 3140591.71762387 1645.2480401321,610891.822318923 3140592.64630464 1647.78889923622,610891.5120986 3140593.41211142 1650.39221287345,610891.269303221 3140594.01147366 1653.04584319386,610891.095064811 3140594.44159685 1655.73741774794,610890.99019575 3140594.70047556 1658.45438717264,610890.955184986 3140594.78690278 1661.18408370228,610890.955185021 3140594.78690272 1752.31638281001,610890.955185021 3140594.78690271 1752.31638281001,610890.920174252 3140594.87332995 1755.04607934987,610890.815305187 3140595.13220867 1757.76304878401,610890.641066773 3140595.56233187 1760.45462334672,610890.398271389 3140596.16169412 1763.10825367492,610890.088051061 3140596.92750091 1765.71156731903,610889.711852178 3140597.85618169 1768.25242642912,610889.271428753 3140598.94340654 1770.71898434711,610888.768834244 3140600.1841063 1773.09974084137,610888.206411978 3140601.57249626 1775.38359572612,610887.586784228 3140603.1021031 1777.55990061562,610886.912839984 3140604.7657951 1779.61850857185,610886.187721485 3140606.55581535 1781.54982141423,610885.414809569 3140608.46381795 1783.34483447076,610884.597707907 3140610.48090691 1784.99517856195,610883.740226205 3140612.59767763 1786.49315902182,610882.846362438 3140614.80426075 1787.83179157397,610881.920284211 3140617.09036817 1789.0048348955,610880.96630933 3140619.44534098 1790.00681971696,610879.988885665 3140621.85819923 1790.83307432256,610878.992570417 3140624.31769305 1791.47974633192,610877.982008866 3140626.81235515 1791.94382066162,610876.961912718 3140629.33055426 1792.22313358291,610875.937038132 3140631.86054938 1792.31638281001,610699.99993399 3141066.17711854 1792.31638281001)'))
 
     ocs_lyr = None
     ocs_ds = None
@@ -406,16 +350,14 @@ def test_ogr_dxf_11():
     # Check first point.
     feat = eo_lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'POINT (672500.0 242000.0 539.986)'):
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'POINT (672500.0 242000.0 539.986)'))
 
     # Check second point.
     feat = eo_lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'POINT (672750.0 242000.0 558.974)'):
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'POINT (672750.0 242000.0 558.974)'))
 
     eo_lyr = None
     eo_ds = None
@@ -464,45 +406,39 @@ def test_ogr_dxf_12():
     # Check first feature
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'LINESTRING(10 12, 60 65)'):
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'LINESTRING(10 12, 60 65)')), \
+        feat.GetGeometryRef().ExportToWkt()
 
-    if feat.GetGeometryRef().GetGeometryType() != ogr.wkbLineString:
-        gdaltest.post_reason('not linestring 2D')
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString, \
+        'not linestring 2D'
     feat = None
 
     # Check second feature
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'POLYGON((0 0,100 0,100 100,0 0))'):
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'POLYGON((0 0,100 0,100 100,0 0))')), \
+        feat.GetGeometryRef().ExportToWkt()
 
-    if feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
-        gdaltest.post_reason('not keeping polygon 2D')
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon, \
+        'not keeping polygon 2D'
     feat = None
 
     # Check third feature
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'LINESTRING(1 2 10,3 4 10)'):
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'LINESTRING(1 2 10,3 4 10)')), \
+        feat.GetGeometryRef().ExportToWkt()
     feat = None
 
     # Check fourth feature
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'LINESTRING(1 2 -10,3 4 10)'):
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'LINESTRING(1 2 -10,3 4 10)')), \
+        feat.GetGeometryRef().ExportToWkt()
     feat = None
 
     lyr = None
@@ -525,22 +461,18 @@ def test_ogr_dxf_13():
 
     feat = layer.GetNextFeature()
 
-    if feat.Layer != '1':
-        gdaltest.post_reason('did not get expected layer for feature 0')
-        return 'fail'
+    assert feat.Layer == '1', 'did not get expected layer for feature 0'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbLineString25D, \
+        'did not get expected geometry type.'
 
     envelope = geom.GetEnvelope()
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
     exp_area = 1350.43
 
-    if area < exp_area - 0.5 or area > exp_area + 0.5:
-        gdaltest.post_reason('envelope area not as expected, got %g.' % area)
-        return 'fail'
+    assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
+        ('envelope area not as expected, got %g.' % area)
 
     # Check for specific number of points from tessellated arc(s).
     # Note that this number depends on the tessellation algorithm and
@@ -551,15 +483,12 @@ def test_ogr_dxf_13():
     # only that more points are returned than in the original polyline, and
     # that the points lie along (or reasonably close to) said path.
 
-    if geom.GetPointCount() != 146:
-        gdaltest.post_reason('did not get expected number of points, got %d' % geom.GetPointCount())
-        return 'fail'
+    assert geom.GetPointCount() == 146, \
+        ('did not get expected number of points, got %d' % geom.GetPointCount())
 
-    if abs(geom.GetX(0) - 251297.8179) > 0.001 \
-       or abs(geom.GetY(0) - 412226.8286) > 0.001:
-        gdaltest.post_reason('first point (%g,%g) not expected location.'
+    assert abs(geom.GetX(0) - 251297.8179) <= 0.001 and abs(geom.GetY(0) - 412226.8286) <= 0.001, \
+        ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
-        return 'fail'
 
     # Other possible tests:
     # Polylines with no explicit Z coordinates (e.g., no attribute 38 for
@@ -589,32 +518,25 @@ def test_ogr_dxf_14():
 
     feat = layer.GetNextFeature()
 
-    if feat.Layer != '1':
-        gdaltest.post_reason('did not get expected layer for feature 0')
-        return 'fail'
+    assert feat.Layer == '1', 'did not get expected layer for feature 0'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbLineString:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbLineString, \
+        'did not get expected geometry type.'
 
     envelope = geom.GetEnvelope()
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
     exp_area = 1350.43
 
-    if area < exp_area - 0.5 or area > exp_area + 0.5:
-        gdaltest.post_reason('envelope area not as expected, got %g.' % area)
-        return 'fail'
+    assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
+        ('envelope area not as expected, got %g.' % area)
 
-    if geom.GetPointCount() != 146:
-        gdaltest.post_reason('did not get expected number of points, got %d' % geom.GetPointCount())
-        return 'fail'
+    assert geom.GetPointCount() == 146, \
+        ('did not get expected number of points, got %d' % geom.GetPointCount())
 
-    if abs(geom.GetX(0) - 251297.8179) > 0.001 \
-       or abs(geom.GetY(0) - 412226.8286) > 0.001:
-        gdaltest.post_reason('first point (%g,%g) not expected location.'
+    assert abs(geom.GetX(0) - 251297.8179) <= 0.001 and abs(geom.GetY(0) - 412226.8286) <= 0.001, \
+        ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
-        return 'fail'
 
     ds = None
 
@@ -652,35 +574,26 @@ def test_ogr_dxf_15():
     # Check first feature
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'LINESTRING(10 12, 60 65)'):
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'LINESTRING(10 12, 60 65)')), \
+        feat.GetGeometryRef().ExportToWkt()
 
-    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString25D:
-        gdaltest.post_reason('not linestring 2D')
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryType() != ogr.wkbLineString25D, \
+        'not linestring 2D'
 
-    if feat.GetField('Layer') != 'abc':
-        gdaltest.post_reason('Did not get expected layer, abc.')
-        return 'fail'
+    assert feat.GetField('Layer') == 'abc', 'Did not get expected layer, abc.'
 
     # Check second point.
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
-                                      'POLYGON((0 0,100 0,100 100,0 0))'):
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert (not ogrtest.check_feature_geometry(feat,
+                                      'POLYGON((0 0,100 0,100 100,0 0))')), \
+        feat.GetGeometryRef().ExportToWkt()
 
-    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon25D:
-        gdaltest.post_reason('not keeping polygon 2D')
-        return 'fail'
+    assert feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon25D, \
+        'not keeping polygon 2D'
 
-    if feat.GetField('Layer') != '0':
-        print(feat.GetField('Layer'))
-        gdaltest.post_reason('Did not get expected layer, 0.')
-        return 'fail'
+    assert feat.GetField('Layer') == '0', 'Did not get expected layer, 0.'
 
     lyr = None
     ds = None
@@ -699,18 +612,13 @@ def test_ogr_dxf_15():
 
     abc_off = txt_2.find('abc\n')
 
-    if txt_2[16:abc_off] + '0' + txt_2[abc_off + 3:] != txt_1[16:]:
-        print(txt_2[abc_off] + '0' + txt_2[abc_off + 3:])
-        print(txt_1)
-        gdaltest.post_reason('Layer abc does not seem to match layer 0.')
-        return 'fail'
+    assert txt_2[16:abc_off] + '0' + txt_2[abc_off + 3:] == txt_1[16:], \
+        'Layer abc does not seem to match layer 0.'
 
     # Check that $HANDSEED was set as expected.
     start_seed = outdxf.find('$HANDSEED')
     handseed = outdxf[start_seed + 10 + 4:start_seed + 10 + 4 + 8]
-    if handseed != '00000053':
-        gdaltest.post_reason('Did not get expected HANDSEED, got %s.' % handseed)
-        return 'fail'
+    assert handseed == '00000053', ('Did not get expected HANDSEED, got %s.' % handseed)
 
     os.unlink('tmp/dxf_14.dxf')
 
@@ -726,18 +634,13 @@ def test_ogr_dxf_16():
 
     dxf_ds = ogr.Open('data/assorted.dxf')
 
-    if dxf_ds is None:
-        return 'fail'
+    assert dxf_ds is not None
 
-    if dxf_ds.GetLayerCount() != 2:
-        gdaltest.post_reason('expected exactly two layers!')
-        return 'fail'
+    assert dxf_ds.GetLayerCount() == 2, 'expected exactly two layers!'
 
     dxf_layer = dxf_ds.GetLayer(1)
 
-    if dxf_layer.GetName() != 'entities':
-        gdaltest.post_reason('did not get expected layer name.')
-        return 'fail'
+    assert dxf_layer.GetName() == 'entities', 'did not get expected layer name.'
 
     # read through till we encounter the block reference.
     feat = dxf_layer.GetNextFeature()
@@ -745,21 +648,14 @@ def test_ogr_dxf_16():
         feat = dxf_layer.GetNextFeature()
 
     # check contents.
-    if feat.GetField('BlockName') != 'STAR':
-        gdaltest.post_reason('Did not get blockname!')
-        return 'fail'
+    assert feat.GetField('BlockName') == 'STAR', 'Did not get blockname!'
 
-    if feat.GetField('BlockAngle') != 0.0:
-        gdaltest.post_reason('Did not get expected angle.')
-        return 'fail'
+    assert feat.GetField('BlockAngle') == 0.0, 'Did not get expected angle.'
 
-    if feat.GetField('BlockScale') != [1.0, 1.0, 1.0]:
-        print(feat.GetField('BlockScale'))
-        gdaltest.post_reason('Did not get expected BlockScale')
-        return 'fail'
+    assert feat.GetField('BlockScale') == [1.0, 1.0, 1.0], \
+        'Did not get expected BlockScale'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (79.097653776656188 119.962195062443342 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (79.097653776656188 119.962195062443342 0)')
 
     feat = None
 
@@ -767,46 +663,34 @@ def test_ogr_dxf_16():
 
     dxf_layer = dxf_ds.GetLayer(0)
 
-    if dxf_layer.GetName() != 'blocks':
-        gdaltest.post_reason('did not get expected layer name.')
-        return 'fail'
+    assert dxf_layer.GetName() == 'blocks', 'did not get expected layer name.'
 
     # STAR geometry
     feat = dxf_layer.GetNextFeature()
 
-    if feat.GetField('Block') != 'STAR':
-        gdaltest.post_reason('Did not get expected block name.')
-        return 'fail'
+    assert feat.GetField('Block') == 'STAR', 'Did not get expected block name.'
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),(0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),(-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),(1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),(-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),(0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),(-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),(1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),(-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))')
 
     # First MTEXT
     feat = dxf_layer.GetNextFeature()
-    if feat.GetField('Text') != gdaltest.sample_text:
-        gdaltest.post_reason('Did not get expected first mtext.')
-        return 'fail'
+    assert feat.GetField('Text') == gdaltest.sample_text, \
+        'Did not get expected first mtext.'
 
     expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
-        return 'fail'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (-1.495452348993292 0.813702013422821 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (-1.495452348993292 0.813702013422821 0)')
 
     # Second MTEXT
     feat = dxf_layer.GetNextFeature()
-    if feat.GetField('Text') != 'Second':
-        gdaltest.post_reason('Did not get expected second mtext.')
-        return 'fail'
+    assert feat.GetField('Text') == 'Second', 'Did not get expected second mtext.'
 
-    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbMText':
-        gdaltest.post_reason('Did not get expected subclasses.')
-        return 'fail'
+    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbMText', \
+        'Did not get expected subclasses.'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (0.879677852348995 -0.263903355704699 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (0.879677852348995 -0.263903355704699 0)')
 
     feat = None
 
@@ -902,55 +786,44 @@ def test_ogr_dxf_17():
 
     # Check first feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
-        gdaltest.post_reason('Got wrong subclasses for feature 1.')
-        return 'fail'
+    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbBlockReference', \
+        'Got wrong subclasses for feature 1.'
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((200 100,201 101),(201 100,200 101))'):
-        print('Feature 1')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((200 100,201 101),(201 100,200 101))'), \
+        'Feature 1'
 
     # Check 2nd feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbPoint':
-        gdaltest.post_reason('Got wrong subclasses for feature 2.')
-        return 'fail'
+    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbPoint', \
+        'Got wrong subclasses for feature 2.'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (300 50)'):
-        print('Feature 2')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (300 50)'), 'Feature 2'
 
     # Check 3rd feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
-        gdaltest.post_reason('Got wrong subclasses for feature 3.')
-        return 'fail'
+    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbBlockReference', \
+        'Got wrong subclasses for feature 3.'
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),(250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),(249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),(251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),(249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))'):
-        print('Feature 3')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),(250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),(249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),(251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),(249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))'), \
+        'Feature 3'
 
     # Check 4th feature (scaled and rotated)
     feat = lyr.GetNextFeature()
-    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
-        gdaltest.post_reason('Got wrong subclasses for feature 4.')
-        return 'fail'
+    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbBlockReference', \
+        'Got wrong subclasses for feature 4.'
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((300 100,300.964101615137736 106.330127018922198), (303.464101615137736 102.0,297.5 104.330127018922198))'):
-        print('Feature 4')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((300 100,300.964101615137736 106.330127018922198), (303.464101615137736 102.0,297.5 104.330127018922198))'), \
+        'Feature 4'
 
     # Check 5th feature
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((360 110,360 120,370 120,370 110,360 110)),((360 90,360 80,370 80,370 90,360 90)))'):
-        print('Feature 5')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((360 110,360 120,370 120,370 110,360 110)),((360 90,360 80,370 80,370 90,360 90)))'), \
+        'Feature 5'
 
     # Check 6th feature
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'GEOMETRYCOLLECTION (POINT (401 102),LINESTRING (400 100,401 101))'):
-        print('Feature 5')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'GEOMETRYCOLLECTION (POINT (401 102),LINESTRING (400 100,401 101))'), \
+        'Feature 5'
 
     # Cleanup
 
@@ -1015,68 +888,45 @@ def test_ogr_dxf_18():
 
     # Check first feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'DASHED':
-        gdaltest.post_reason('Got wrong linetype. (1)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'DASHED', 'Got wrong linetype. (1)'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"12.7g 6.1234567892g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason("got wrong style string (1)")
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#ffff00,w:2g,p:"12.7g 6.1234567892g")', \
+        "got wrong style string (1)"
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (0 0,25 25)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (0 0,25 25)')
 
     # Check second feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'DOTTED':
-        gdaltest.post_reason('Got wrong linetype. (2)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'DOTTED', 'Got wrong linetype. (2)'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"0g 4g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason("got wrong style string (2)")
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#ffff00,w:2g,p:"0g 4g")', \
+        "got wrong style string (2)"
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (5 5,30 30)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (5 5,30 30)')
 
     # Check third feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'AutoLineType-1':
-        gdaltest.post_reason('Got wrong linetype. (3)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'AutoLineType-1', 'Got wrong linetype. (3)'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"3g 4g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason("got wrong style string (3)")
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#ffff00,w:2g,p:"3g 4g")', \
+        "got wrong style string (3)"
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (5 5,40 30)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (5 5,40 30)')
 
     # Check fourth feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'DASHED':
-        gdaltest.post_reason('Got wrong linetype. (4)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'DASHED', 'Got wrong linetype. (4)'
 
     # TODO why did the lineweight go AWOL here?
-    if feat.GetStyleString() != 'PEN(c:#ffff00,p:"6.35g 3.0617283946g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason("got wrong style string (4)")
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#ffff00,p:"6.35g 3.0617283946g")', \
+        "got wrong style string (4)"
 
     # Check fifth feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'AutoLineType-1':
-        gdaltest.post_reason('Got wrong linetype. (5)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'AutoLineType-1', 'Got wrong linetype. (5)'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:0.01g,p:"6g 8g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason("got wrong style string (5)")
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#ffff00,w:0.01g,p:"6g 8g")', \
+        "got wrong style string (5)"
 
     # Cleanup
 
@@ -1116,12 +966,10 @@ def test_ogr_dxf_19():
 
     # Check first feature.
     feat = lyr.GetNextFeature()
-    if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
-        gdaltest.post_reason('Got wrong subclasses for feature 1.')
-        return 'fail'
+    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbBlockReference', \
+        'Got wrong subclasses for feature 1.'
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),(250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),(249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),(251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),(249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),(250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),(249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),(251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),(249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))')
 
     # Cleanup
 
@@ -1143,8 +991,7 @@ def test_ogr_dxf_20():
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (10.75 62.75,20.637752769146068 63.434832501489716,29.283239084385464 63.396838394381845,36.766943814562865 62.711565975596599,43.169351828522906 61.454563542054103,48.570947995110252 59.70137939067456,53.05221718316956 57.527561818378146,56.693644261545501 55.008659122085049,59.575714099082703 52.220219598715438,61.778911564625851 49.237791545189509,63.383721527019588 46.136923258427423,64.470628855108572 42.993163035349369,65.120118417737459 39.882059172875508,65.412419131869868 36.878358785215056,65.417809785093752 34.025663008687722,65.193643595004147 31.327113252708507,64.796409941597645 28.783146935042897,64.282598204870823 26.394201473456341,63.708697764820236 24.16071428571431,63.131198001442392 22.083122789582241,62.606588294733939 20.161864402825621,62.191358024691354 18.397376543209894,61.941996571311265 16.790096628500525,61.914993314590184 15.340462076462975,62.166837634524704 14.0489103048627,62.754018911111373 12.915878731465167,63.723652286703427 11.940700981548817,65.053571428571416 11.114552964042769,66.690557841792398 10.424954275262921,68.581246558980226 9.859407264767562,70.672272612748785 9.405414282114966,72.910271035711943 9.050477676863418,75.241876860483572 8.782099798571203,77.613725119677511 8.587782996796603,79.97245084590763 8.4550296210979,82.264689071787842 8.371342021033378,84.437074829931987 8.324222546161321,86.436243152953921 8.301173546040012,88.208926721776336 8.289771106365336,89.722559658784164 8.293223374005688,90.990763736417563 8.349615688917151,92.033410218878885 8.501752503862612,92.870370370370395 8.792438271604945,93.521515455094473 9.264477444907039,94.006716737253413 9.960674476531764,94.345845481049565 10.923833819242011,94.558772950685281 12.196759925800654,94.665370410362868 13.82225724897058,94.685509124284636 15.843130241514663,94.639060356652948 18.302183356195791,94.545895371670113 21.242221045776841,94.421471763308503 24.702030018356666,94.215205541358216 28.660279617432039,93.825673773330607 33.049360720184715,93.15014577259474 37.800473760933045,92.085890852519697 42.844819173995376,90.530178326474584 48.113597393690064,88.380277507828495 53.538008854335445,85.533457709950525 59.049253990249873,81.886988246209697 64.578533235751706,77.338138429975174 70.057047025159264,71.784177574615995 75.415995792790937,65.122374993501282 80.586579972965055,57.25 85.5)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (10.75 62.75,20.637752769146068 63.434832501489716,29.283239084385464 63.396838394381845,36.766943814562865 62.711565975596599,43.169351828522906 61.454563542054103,48.570947995110252 59.70137939067456,53.05221718316956 57.527561818378146,56.693644261545501 55.008659122085049,59.575714099082703 52.220219598715438,61.778911564625851 49.237791545189509,63.383721527019588 46.136923258427423,64.470628855108572 42.993163035349369,65.120118417737459 39.882059172875508,65.412419131869868 36.878358785215056,65.417809785093752 34.025663008687722,65.193643595004147 31.327113252708507,64.796409941597645 28.783146935042897,64.282598204870823 26.394201473456341,63.708697764820236 24.16071428571431,63.131198001442392 22.083122789582241,62.606588294733939 20.161864402825621,62.191358024691354 18.397376543209894,61.941996571311265 16.790096628500525,61.914993314590184 15.340462076462975,62.166837634524704 14.0489103048627,62.754018911111373 12.915878731465167,63.723652286703427 11.940700981548817,65.053571428571416 11.114552964042769,66.690557841792398 10.424954275262921,68.581246558980226 9.859407264767562,70.672272612748785 9.405414282114966,72.910271035711943 9.050477676863418,75.241876860483572 8.782099798571203,77.613725119677511 8.587782996796603,79.97245084590763 8.4550296210979,82.264689071787842 8.371342021033378,84.437074829931987 8.324222546161321,86.436243152953921 8.301173546040012,88.208926721776336 8.289771106365336,89.722559658784164 8.293223374005688,90.990763736417563 8.349615688917151,92.033410218878885 8.501752503862612,92.870370370370395 8.792438271604945,93.521515455094473 9.264477444907039,94.006716737253413 9.960674476531764,94.345845481049565 10.923833819242011,94.558772950685281 12.196759925800654,94.665370410362868 13.82225724897058,94.685509124284636 15.843130241514663,94.639060356652948 18.302183356195791,94.545895371670113 21.242221045776841,94.421471763308503 24.702030018356666,94.215205541358216 28.660279617432039,93.825673773330607 33.049360720184715,93.15014577259474 37.800473760933045,92.085890852519697 42.844819173995376,90.530178326474584 48.113597393690064,88.380277507828495 53.538008854335445,85.533457709950525 59.049253990249873,81.886988246209697 64.578533235751706,77.338138429975174 70.057047025159264,71.784177574615995 75.415995792790937,65.122374993501282 80.586579972965055,57.25 85.5)')
     ds = None
 
     return 'success'
@@ -1160,8 +1007,7 @@ def test_ogr_dxf_21():
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (5 2 3,4.990256201039297 1.720974105023499 3,4.961072274966281 1.443307596159738 3,4.912590402935223 1.168353236728963 3,4.845046783753276 0.897450576732003 3,4.758770483143634 0.631919426697325 3,4.654181830570403 0.373053427696799 3,4.531790371435708 0.122113748856437 3,4.392192384625703 -0.11967705693282 3,4.23606797749979 -0.351141009169893 3,4.064177772475912 -0.571150438746157 3,3.877359201354605 -0.778633481835989 3,3.676522425435433 -0.972579301909577 3,3.462645901302633 -1.152043014426888 3,3.236771613882987 -1.316150290220167 3,3.0 -1.464101615137754 3,2.75348458715631 -1.595176185196668 3,2.498426373663648 -1.70873541826715 3,2.23606797749979 -1.804226065180614 3,1.967687582398672 -1.881182905103986 3,1.694592710667722 -1.939231012048832 3,1.418113853070614 -1.978087581473093 3,1.139597986810004 -1.997563308076383 3,0.860402013189997 -1.997563308076383 3,0.581886146929387 -1.978087581473094 3,0.305407289332279 -1.939231012048832 3,0.032312417601329 -1.881182905103986 3,-0.236067977499789 -1.804226065180615 3,-0.498426373663648 -1.70873541826715 3,-0.75348458715631 -1.595176185196668 3,-1.0 -1.464101615137755 3,-1.236771613882987 -1.316150290220167 3,-1.462645901302633 -1.152043014426888 3,-1.676522425435433 -0.972579301909577 3,-1.877359201354605 -0.778633481835989 3,-2.064177772475912 -0.571150438746158 3,-2.236067977499789 -0.351141009169893 3,-2.392192384625704 -0.11967705693282 3,-2.531790371435707 0.122113748856436 3,-2.654181830570403 0.373053427696798 3,-2.758770483143633 0.631919426697324 3,-2.845046783753275 0.897450576732001 3,-2.912590402935223 1.168353236728963 3,-2.961072274966281 1.443307596159737 3,-2.990256201039297 1.720974105023498 3,-3.0 2.0 3,-2.990256201039297 2.279025894976499 3,-2.961072274966281 2.556692403840262 3,-2.912590402935223 2.831646763271036 3,-2.845046783753276 3.102549423267996 3,-2.758770483143634 3.368080573302675 3,-2.654181830570404 3.626946572303199 3,-2.531790371435708 3.877886251143563 3,-2.392192384625704 4.119677056932819 3,-2.23606797749979 4.351141009169892 3,-2.064177772475912 4.571150438746157 3,-1.877359201354604 4.778633481835989 3,-1.676522425435434 4.972579301909576 3,-1.462645901302632 5.152043014426889 3,-1.236771613882989 5.316150290220166 3,-1.0 5.464101615137753 3,-0.753484587156311 5.595176185196667 3,-0.498426373663649 5.70873541826715 3,-0.23606797749979 5.804226065180615 3,0.032312417601329 5.881182905103985 3,0.305407289332279 5.939231012048833 3,0.581886146929387 5.978087581473094 3,0.860402013189993 5.997563308076383 3,1.139597986810005 5.997563308076383 3,1.418113853070612 5.978087581473094 3,1.69459271066772 5.939231012048833 3,1.96768758239867 5.881182905103986 3,2.236067977499789 5.804226065180615 3,2.498426373663648 5.70873541826715 3,2.75348458715631 5.595176185196668 3,3.0 5.464101615137754 3,3.236771613882985 5.316150290220168 3,3.462645901302634 5.152043014426887 3,3.676522425435431 4.972579301909578 3,3.877359201354603 4.778633481835991 3,4.064177772475912 4.571150438746159 3,4.23606797749979 4.351141009169893 3,4.392192384625702 4.119677056932823 3,4.531790371435708 3.877886251143563 3,4.654181830570404 3.626946572303201 3,4.758770483143634 3.368080573302675 3,4.845046783753275 3.102549423267999 3,4.912590402935223 2.831646763271039 3,4.961072274966281 2.556692403840263 3,4.990256201039298 2.279025894976499 3,5.0 2.0 3)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (5 2 3,4.990256201039297 1.720974105023499 3,4.961072274966281 1.443307596159738 3,4.912590402935223 1.168353236728963 3,4.845046783753276 0.897450576732003 3,4.758770483143634 0.631919426697325 3,4.654181830570403 0.373053427696799 3,4.531790371435708 0.122113748856437 3,4.392192384625703 -0.11967705693282 3,4.23606797749979 -0.351141009169893 3,4.064177772475912 -0.571150438746157 3,3.877359201354605 -0.778633481835989 3,3.676522425435433 -0.972579301909577 3,3.462645901302633 -1.152043014426888 3,3.236771613882987 -1.316150290220167 3,3.0 -1.464101615137754 3,2.75348458715631 -1.595176185196668 3,2.498426373663648 -1.70873541826715 3,2.23606797749979 -1.804226065180614 3,1.967687582398672 -1.881182905103986 3,1.694592710667722 -1.939231012048832 3,1.418113853070614 -1.978087581473093 3,1.139597986810004 -1.997563308076383 3,0.860402013189997 -1.997563308076383 3,0.581886146929387 -1.978087581473094 3,0.305407289332279 -1.939231012048832 3,0.032312417601329 -1.881182905103986 3,-0.236067977499789 -1.804226065180615 3,-0.498426373663648 -1.70873541826715 3,-0.75348458715631 -1.595176185196668 3,-1.0 -1.464101615137755 3,-1.236771613882987 -1.316150290220167 3,-1.462645901302633 -1.152043014426888 3,-1.676522425435433 -0.972579301909577 3,-1.877359201354605 -0.778633481835989 3,-2.064177772475912 -0.571150438746158 3,-2.236067977499789 -0.351141009169893 3,-2.392192384625704 -0.11967705693282 3,-2.531790371435707 0.122113748856436 3,-2.654181830570403 0.373053427696798 3,-2.758770483143633 0.631919426697324 3,-2.845046783753275 0.897450576732001 3,-2.912590402935223 1.168353236728963 3,-2.961072274966281 1.443307596159737 3,-2.990256201039297 1.720974105023498 3,-3.0 2.0 3,-2.990256201039297 2.279025894976499 3,-2.961072274966281 2.556692403840262 3,-2.912590402935223 2.831646763271036 3,-2.845046783753276 3.102549423267996 3,-2.758770483143634 3.368080573302675 3,-2.654181830570404 3.626946572303199 3,-2.531790371435708 3.877886251143563 3,-2.392192384625704 4.119677056932819 3,-2.23606797749979 4.351141009169892 3,-2.064177772475912 4.571150438746157 3,-1.877359201354604 4.778633481835989 3,-1.676522425435434 4.972579301909576 3,-1.462645901302632 5.152043014426889 3,-1.236771613882989 5.316150290220166 3,-1.0 5.464101615137753 3,-0.753484587156311 5.595176185196667 3,-0.498426373663649 5.70873541826715 3,-0.23606797749979 5.804226065180615 3,0.032312417601329 5.881182905103985 3,0.305407289332279 5.939231012048833 3,0.581886146929387 5.978087581473094 3,0.860402013189993 5.997563308076383 3,1.139597986810005 5.997563308076383 3,1.418113853070612 5.978087581473094 3,1.69459271066772 5.939231012048833 3,1.96768758239867 5.881182905103986 3,2.236067977499789 5.804226065180615 3,2.498426373663648 5.70873541826715 3,2.75348458715631 5.595176185196668 3,3.0 5.464101615137754 3,3.236771613882985 5.316150290220168 3,3.462645901302634 5.152043014426887 3,3.676522425435431 4.972579301909578 3,3.877359201354603 4.778633481835991 3,4.064177772475912 4.571150438746159 3,4.23606797749979 4.351141009169893 3,4.392192384625702 4.119677056932823 3,4.531790371435708 3.877886251143563 3,4.654181830570404 3.626946572303201 3,4.758770483143634 3.368080573302675 3,4.845046783753275 3.102549423267999 3,4.912590402935223 2.831646763271039 3,4.961072274966281 2.556692403840263 3,4.990256201039298 2.279025894976499 3,5.0 2.0 3)')
     ds = None
 
     return 'success'
@@ -1277,13 +1123,8 @@ def test_ogr_dxf_23():
 
     feat = lyr.GetNextFeature()
     style = feat.GetStyleString()
-    if style != 'BRUSH(fc:#ff0000)':
-        gdaltest.post_reason('bad style')
-        print(style)
-        return 'fail'
-    if ogrtest.check_feature_geometry(feat, wkt):
-        gdaltest.post_reason('bad geometry')
-        return 'fail'
+    assert style == 'BRUSH(fc:#ff0000)', 'bad style'
+    assert not ogrtest.check_feature_geometry(feat, wkt), 'bad geometry'
 
     ds = None
 
@@ -1303,18 +1144,15 @@ def test_ogr_dxf_24():
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
     feat = lyr.GetNextFeature()
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', None)
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((2 1,1.646446609406726 0.853553390593274,1.5 0.5,1.646446609406726 0.146446609406726,2 0,2.0 0.0,2.146446609406726 -0.353553390593274,2.5 -0.5,2.853553390593274 -0.353553390593274,3.0 -0.0,3 0,3.353553390593274 0.146446609406726,3.5 0.5,3.353553390593274 0.853553390593273,3 1,2.853553390593274 1.353553390593274,2.5 1.5,2.146446609406726 1.353553390593274,2 1))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POLYGON ((2 1,1.646446609406726 0.853553390593274,1.5 0.5,1.646446609406726 0.146446609406726,2 0,2.0 0.0,2.146446609406726 -0.353553390593274,2.5 -0.5,2.853553390593274 -0.353553390593274,3.0 -0.0,3 0,3.353553390593274 0.146446609406726,3.5 0.5,3.353553390593274 0.853553390593273,3 1,2.853553390593274 1.353553390593274,2.5 1.5,2.146446609406726 1.353553390593274,2 1))')
 
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
     feat = lyr.GetNextFeature()
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', None)
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((0.0 0.0 0,-0.353553390593274 0.146446609406726 0,-0.5 0.5 0,-0.353553390593274 0.853553390593274 0,-0.0 1.0 0,0.0 1.0 0,0.146446609406726 1.353553390593274 0,0.5 1.5 0,0.853553390593274 1.353553390593274 0,1.0 1.0 0,1.0 1.0 0,1.353553390593274 0.853553390593274 0,1.5 0.5 0,1.353553390593274 0.146446609406727 0,1.0 0.0 0,1 0 0,0.853553390593274 -0.353553390593274 0,0.5 -0.5 0,0.146446609406726 -0.353553390593274 0,0.0 -0.0 0,0.0 0.0 0))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POLYGON ((0.0 0.0 0,-0.353553390593274 0.146446609406726 0,-0.5 0.5 0,-0.353553390593274 0.853553390593274 0,-0.0 1.0 0,0.0 1.0 0,0.146446609406726 1.353553390593274 0,0.5 1.5 0,0.853553390593274 1.353553390593274 0,1.0 1.0 0,1.0 1.0 0,1.353553390593274 0.853553390593274 0,1.5 0.5 0,1.353553390593274 0.146446609406727 0,1.0 0.0 0,1 0 0,0.853553390593274 -0.353553390593274 0,0.5 -0.5 0,0.146446609406726 -0.353553390593274 0,0.0 -0.0 0,0.0 0.0 0))')
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((-1 -1,-1 0,0 0,-1 -1))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POLYGON ((-1 -1,-1 0,0 0,-1 -1))')
     ds = None
 
     return 'success'
@@ -1369,8 +1207,7 @@ def test_ogr_dxf_27():
     gdal.FileFromMemBuffer('/vsimem/a_dxf_without_extension', open('data/solid.dxf').read())
 
     ds = ogr.Open('/vsimem/a_dxf_without_extension')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     gdal.Unlink('/vsimem/a_dxf_without_extension')
 
@@ -2482,13 +2319,11 @@ def test_ogr_dxf_33():
 
     # Polyface mesh (POLYLINE)
     feat = layer.GetNextFeature()
-    if feat.Layer != '0':
-        return 'fail'
+    assert feat.Layer == '0'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbPolyhedralSurfaceZ:
-        gdaltest.post_reason('did not get expected geometry type; got %s instead of wkbPolyhedralSurface' % geom.GetGeometryType())
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbPolyhedralSurfaceZ, \
+        ('did not get expected geometry type; got %s instead of wkbPolyhedralSurface' % geom.GetGeometryType())
 
     wkt_string = geom.ExportToIsoWkt()
     wkt_string_expected = 'POLYHEDRALSURFACE Z (((0 0 0,1 0 0,1 1 0,0 1 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 0 0,1 1 0,1 1 1,1 0 1,1 0 0)),((1 1 0,1 1 1,0 1 1,0 1 0,1 1 0)),((0 0 0,0 1 0,0 1 1,0 0 1,0 0 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'
@@ -2498,22 +2333,20 @@ def test_ogr_dxf_33():
         return 'fail'
 
     faces = geom.GetGeometryCount()
-    if faces != 6:
-        gdaltest.post_reason('did not get expected number of faces, got %d instead of %d' % (faces, 6))
-        return 'fail'
+    assert faces == 6, \
+        ('did not get expected number of faces, got %d instead of %d' % (faces, 6))
 
     # Cylinder (CIRCLE with thickness)
     feat = layer.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POLYHEDRALSURFACE Z (((2.8 -0.0 1e-31,2.79902562010393 -0.0 -0.0279025894976501,2.79610722749663 -0.0 -0.0556692403840262,2.79125904029352 -0.0 -0.0831646763271037,2.78450467837533 -0.0 -0.1102549423268,2.77587704831436 -0.0 -0.136808057330267,2.76541818305704 -0.0 -0.16269465723032,2.75317903714357 -0.0 -0.187788625114356,2.73921923846257 -0.0 -0.211967705693282,2.72360679774998 0.0 -0.235114100916989,2.70641777724759 0.0 -0.257115043874616,2.68773592013546 0.0 -0.277863348183599,2.66765224254354 0.0 -0.297257930190958,2.64626459013026 0.0 -0.315204301442689,2.6236771613883 0.0 -0.331615029022017,2.6 0.0 -0.346410161513775,2.57534845871563 0.0 -0.359517618519667,2.54984263736636 0.0 -0.370873541826715,2.52360679774998 0.0 -0.380422606518061,2.49676875823987 0.0 -0.388118290510399,2.46945927106677 0.0 -0.393923101204883,2.44181138530706 0.0 -0.397808758147309,2.413959798681 0.0 -0.399756330807638,2.386040201319 0.0 -0.399756330807638,2.35818861469294 0.0 -0.397808758147309,2.33054072893323 0.0 -0.393923101204883,2.30323124176013 0.0 -0.388118290510399,2.27639320225002 0.0 -0.380422606518061,2.25015736263363 0.0 -0.370873541826715,2.22465154128437 0.0 -0.359517618519667,2.2 0.0 -0.346410161513776,2.1763228386117 0.0 -0.331615029022017,2.15373540986974 0.0 -0.315204301442689,2.13234775745646 0.0 -0.297257930190958,2.11226407986454 0.0 -0.277863348183599,2.09358222275241 0.0 -0.257115043874616,2.07639320225002 0.0 -0.235114100916989,2.06078076153743 0.0 -0.211967705693282,2.04682096285643 0.0 -0.187788625114356,2.03458181694296 0.0 -0.16269465723032,2.02412295168564 0.0 -0.136808057330268,2.01549532162467 0.0 -0.1102549423268,2.00874095970648 0.0 -0.0831646763271037,2.00389277250337 0.0 -0.0556692403840263,2.00097437989607 0.0 -0.0279025894976502,' +
+    assert (not ogrtest.check_feature_geometry(feat, 'POLYHEDRALSURFACE Z (((2.8 -0.0 1e-31,2.79902562010393 -0.0 -0.0279025894976501,2.79610722749663 -0.0 -0.0556692403840262,2.79125904029352 -0.0 -0.0831646763271037,2.78450467837533 -0.0 -0.1102549423268,2.77587704831436 -0.0 -0.136808057330267,2.76541818305704 -0.0 -0.16269465723032,2.75317903714357 -0.0 -0.187788625114356,2.73921923846257 -0.0 -0.211967705693282,2.72360679774998 0.0 -0.235114100916989,2.70641777724759 0.0 -0.257115043874616,2.68773592013546 0.0 -0.277863348183599,2.66765224254354 0.0 -0.297257930190958,2.64626459013026 0.0 -0.315204301442689,2.6236771613883 0.0 -0.331615029022017,2.6 0.0 -0.346410161513775,2.57534845871563 0.0 -0.359517618519667,2.54984263736636 0.0 -0.370873541826715,2.52360679774998 0.0 -0.380422606518061,2.49676875823987 0.0 -0.388118290510399,2.46945927106677 0.0 -0.393923101204883,2.44181138530706 0.0 -0.397808758147309,2.413959798681 0.0 -0.399756330807638,2.386040201319 0.0 -0.399756330807638,2.35818861469294 0.0 -0.397808758147309,2.33054072893323 0.0 -0.393923101204883,2.30323124176013 0.0 -0.388118290510399,2.27639320225002 0.0 -0.380422606518061,2.25015736263363 0.0 -0.370873541826715,2.22465154128437 0.0 -0.359517618519667,2.2 0.0 -0.346410161513776,2.1763228386117 0.0 -0.331615029022017,2.15373540986974 0.0 -0.315204301442689,2.13234775745646 0.0 -0.297257930190958,2.11226407986454 0.0 -0.277863348183599,2.09358222275241 0.0 -0.257115043874616,2.07639320225002 0.0 -0.235114100916989,2.06078076153743 0.0 -0.211967705693282,2.04682096285643 0.0 -0.187788625114356,2.03458181694296 0.0 -0.16269465723032,2.02412295168564 0.0 -0.136808057330268,2.01549532162467 0.0 -0.1102549423268,2.00874095970648 0.0 -0.0831646763271037,2.00389277250337 0.0 -0.0556692403840263,2.00097437989607 0.0 -0.0279025894976502,' +
                                       '2.0 0.0 -4.8985871965894e-17,2.00097437989607 0.0 0.0279025894976499,2.00389277250337 0.0 0.0556692403840262,2.00874095970648 0.0 0.0831646763271036,2.01549532162467 0.0 0.1102549423268,2.02412295168564 0.0 0.136808057330267,2.03458181694296 0.0 0.16269465723032,2.04682096285643 0.0 0.187788625114356,2.06078076153743 0.0 0.211967705693282,2.07639320225002 0.0 0.235114100916989,2.09358222275241 0.0 0.257115043874616,2.11226407986454 0.0 0.277863348183599,2.13234775745646 0.0 0.297257930190958,2.15373540986974 0.0 0.315204301442689,2.1763228386117 -0.0 0.331615029022017,2.2 -0.0 0.346410161513775,2.22465154128437 -0.0 0.359517618519667,2.25015736263363 -0.0 0.370873541826715,2.27639320225002 -0.0 0.380422606518061,2.30323124176013 -0.0 0.388118290510399,2.33054072893323 -0.0 0.393923101204883,2.35818861469294 -0.0 0.397808758147309,2.386040201319 -0.0 0.399756330807638,2.413959798681 -0.0 0.399756330807638,2.44181138530706 -0.0 0.397808758147309,2.46945927106677 -0.0 0.393923101204883,2.49676875823987 -0.0 0.388118290510399,2.52360679774998 -0.0 0.380422606518061,2.54984263736636 -0.0 0.370873541826715,2.57534845871563 -0.0 0.359517618519667,2.6 -0.0 0.346410161513775,2.6236771613883 -0.0 0.331615029022017,2.64626459013026 -0.0 0.315204301442689,2.66765224254354 -0.0 0.297257930190958,2.68773592013546 -0.0 0.277863348183599,2.70641777724759 -0.0 0.257115043874616,2.72360679774998 -0.0 0.235114100916989,2.73921923846257 -0.0 0.211967705693282,2.75317903714357 -0.0 0.187788625114356,2.76541818305704 -0.0 0.16269465723032,2.77587704831436 -0.0 0.136808057330267,2.78450467837533 -0.0 0.1102549423268,2.79125904029352 -0.0 0.0831646763271039,2.79610722749663 -0.0 0.0556692403840264,2.79902562010393 -0.0 0.0279025894976499,2.8 -0.0 1e-31)),' +
                                       '((2.8 1.8 3.6e-16,2.79902562010393 1.8 -0.0279025894976498,2.79610722749663 1.8 -0.0556692403840258,2.79125904029352 1.8 -0.0831646763271034,2.78450467837533 1.8 -0.110254942326799,2.77587704831436 1.8 -0.136808057330267,2.76541818305704 1.8 -0.16269465723032,2.75317903714357 1.8 -0.187788625114356,2.73921923846257 1.8 -0.211967705693282,2.72360679774998 1.8 -0.235114100916989,2.70641777724759 1.8 -0.257115043874615,2.68773592013546 1.8 -0.277863348183599,2.66765224254354 1.8 -0.297257930190957,2.64626459013026 1.8 -0.315204301442689,2.6236771613883 1.8 -0.331615029022016,2.6 1.8 -0.346410161513775,2.57534845871563 1.8 -0.359517618519667,2.54984263736636 1.8 -0.370873541826715,2.52360679774998 1.8 -0.380422606518061,2.49676875823987 1.8 -0.388118290510398,2.46945927106677 1.8 -0.393923101204883,2.44181138530706 1.8 -0.397808758147309,2.413959798681 1.8 -0.399756330807638,2.386040201319 1.8 -0.399756330807638,2.35818861469294 1.8 -0.397808758147309,2.33054072893323 1.8 -0.393923101204883,2.30323124176013 1.8 -0.388118290510398,2.27639320225002 1.8 -0.380422606518061,2.25015736263363 1.8 -0.370873541826715,2.22465154128437 1.8 -0.359517618519666,2.2 1.8 -0.346410161513775,2.1763228386117 1.8 -0.331615029022016,2.15373540986974 1.8 -0.315204301442689,2.13234775745646 1.8 -0.297257930190957,2.11226407986454 1.8 -0.277863348183599,2.09358222275241 1.8 -0.257115043874615,2.07639320225002 1.8 -0.235114100916989,2.06078076153743 1.8 -0.211967705693282,2.04682096285643 1.8 -0.187788625114356,2.03458181694296 1.8 -0.16269465723032,2.02412295168564 1.8 -0.136808057330267,2.01549532162467 1.8 -0.1102549423268,2.00874095970648 1.8 -0.0831646763271034,2.00389277250337 1.8 -0.0556692403840259,2.00097437989607 1.8 -0.0279025894976499,2.0 1.8 3.11014128034106e-16,' +
                                       '2.00097437989607 1.8 0.0279025894976503,2.00389277250337 1.8 0.0556692403840266,2.00874095970648 1.8 0.083164676327104,2.01549532162467 1.8 0.1102549423268,2.02412295168564 1.8 0.136808057330268,2.03458181694296 1.8 0.16269465723032,2.04682096285643 1.8 0.187788625114357,2.06078076153743 1.8 0.211967705693282,2.07639320225002 1.8 0.23511410091699,2.09358222275241 1.8 0.257115043874616,2.11226407986454 1.8 0.277863348183599,2.13234775745646 1.8 0.297257930190958,2.15373540986974 1.8 0.315204301442689,2.1763228386117 1.8 0.331615029022017,2.2 1.8 0.346410161513776,2.22465154128437 1.8 0.359517618519667,2.25015736263363 1.8 0.370873541826715,2.27639320225002 1.8 0.380422606518062,2.30323124176013 1.8 0.388118290510399,2.33054072893323 1.8 0.393923101204884,2.35818861469294 1.8 0.39780875814731,2.386040201319 1.8 0.399756330807639,2.413959798681 1.8 0.399756330807639,2.44181138530706 1.8 0.39780875814731,2.46945927106677 1.8 0.393923101204884,2.49676875823987 1.8 0.388118290510399,2.52360679774998 1.8 0.380422606518062,2.54984263736636 1.8 0.370873541826715,2.57534845871563 1.8 0.359517618519667,2.6 1.8 0.346410161513776,2.6236771613883 1.8 0.331615029022017,2.64626459013026 1.8 0.315204301442689,2.66765224254354 1.8 0.297257930190958,2.68773592013546 1.8 0.277863348183599,2.70641777724759 1.8 0.257115043874616,2.72360679774998 1.8 0.23511410091699,2.73921923846257 1.8 0.211967705693283,2.75317903714357 1.8 0.187788625114357,2.76541818305704 1.8 0.16269465723032,2.77587704831436 1.8 0.136808057330268,2.78450467837533 1.8 0.1102549423268,2.79125904029352 1.8 0.0831646763271043,2.79610722749663 1.8 0.0556692403840267,2.79902562010393 1.8 0.0279025894976503,2.8 1.8 3.6e-16)),' +
                                       '((2.0 0.0 -4.8985871965894e-17,2.00097437989607 0.0 -0.0279025894976502,2.00389277250337 0.0 -0.0556692403840263,2.00874095970648 0.0 -0.0831646763271037,2.01549532162467 0.0 -0.1102549423268,2.02412295168564 0.0 -0.136808057330268,2.03458181694296 0.0 -0.16269465723032,2.04682096285643 0.0 -0.187788625114356,2.06078076153743 0.0 -0.211967705693282,2.07639320225002 0.0 -0.235114100916989,2.09358222275241 0.0 -0.257115043874616,2.11226407986454 0.0 -0.277863348183599,2.13234775745646 0.0 -0.297257930190958,2.15373540986974 0.0 -0.315204301442689,2.1763228386117 0.0 -0.331615029022017,2.2 0.0 -0.346410161513776,2.22465154128437 0.0 -0.359517618519667,2.25015736263363 0.0 -0.370873541826715,2.27639320225002 0.0 -0.380422606518061,2.30323124176013 0.0 -0.388118290510399,2.33054072893323 0.0 -0.393923101204883,2.35818861469294 0.0 -0.397808758147309,2.386040201319 0.0 -0.399756330807638,2.413959798681 0.0 -0.399756330807638,2.44181138530706 0.0 -0.397808758147309,2.46945927106677 0.0 -0.393923101204883,2.49676875823987 0.0 -0.388118290510399,2.52360679774998 0.0 -0.380422606518061,2.54984263736636 0.0 -0.370873541826715,2.57534845871563 0.0 -0.359517618519667,2.6 0.0 -0.346410161513775,2.6236771613883 0.0 -0.331615029022017,2.64626459013026 0.0 -0.315204301442689,2.66765224254354 0.0 -0.297257930190958,2.68773592013546 0.0 -0.277863348183599,2.70641777724759 0.0 -0.257115043874616,2.72360679774998 0.0 -0.235114100916989,2.73921923846257 -0.0 -0.211967705693282,2.75317903714357 -0.0 -0.187788625114356,2.76541818305704 -0.0 -0.16269465723032,2.77587704831436 -0.0 -0.136808057330267,2.78450467837533 -0.0 -0.1102549423268,2.79125904029352 -0.0 -0.0831646763271037,2.79610722749663 -0.0 -0.0556692403840262,2.79902562010393 -0.0 -0.0279025894976501,' +
                                       '2.8 -0.0 1e-31,2.8 1.8 3.6e-16,2.79902562010393 1.8 -0.0279025894976498,2.79610722749663 1.8 -0.0556692403840258,2.79125904029352 1.8 -0.0831646763271034,2.78450467837533 1.8 -0.110254942326799,2.77587704831436 1.8 -0.136808057330267,2.76541818305704 1.8 -0.16269465723032,2.75317903714357 1.8 -0.187788625114356,2.73921923846257 1.8 -0.211967705693282,2.72360679774998 1.8 -0.235114100916989,2.70641777724759 1.8 -0.257115043874615,2.68773592013546 1.8 -0.277863348183599,2.66765224254354 1.8 -0.297257930190957,2.64626459013026 1.8 -0.315204301442689,2.6236771613883 1.8 -0.331615029022016,2.6 1.8 -0.346410161513775,2.57534845871563 1.8 -0.359517618519667,2.54984263736636 1.8 -0.370873541826715,2.52360679774998 1.8 -0.380422606518061,2.49676875823987 1.8 -0.388118290510398,2.46945927106677 1.8 -0.393923101204883,2.44181138530706 1.8 -0.397808758147309,2.413959798681 1.8 -0.399756330807638,2.386040201319 1.8 -0.399756330807638,2.35818861469294 1.8 -0.397808758147309,2.33054072893323 1.8 -0.393923101204883,2.30323124176013 1.8 -0.388118290510398,2.27639320225002 1.8 -0.380422606518061,2.25015736263363 1.8 -0.370873541826715,2.22465154128437 1.8 -0.359517618519666,2.2 1.8 -0.346410161513775,2.1763228386117 1.8 -0.331615029022016,2.15373540986974 1.8 -0.315204301442689,2.13234775745646 1.8 -0.297257930190957,2.11226407986454 1.8 -0.277863348183599,2.09358222275241 1.8 -0.257115043874615,2.07639320225002 1.8 -0.235114100916989,2.06078076153743 1.8 -0.211967705693282,2.04682096285643 1.8 -0.187788625114356,2.03458181694296 1.8 -0.16269465723032,2.02412295168564 1.8 -0.136808057330267,2.01549532162467 1.8 -0.1102549423268,2.00874095970648 1.8 -0.0831646763271034,2.00389277250337 1.8 -0.0556692403840259,2.00097437989607 1.8 -0.0279025894976499,2.0 1.8 3.11014128034106e-16,2.0 0.0 -4.8985871965894e-17)),' +
                                       '((2.8 -0.0 1e-31,2.79902562010393 -0.0 0.0279025894976499,2.79610722749663 -0.0 0.0556692403840264,2.79125904029352 -0.0 0.0831646763271039,2.78450467837533 -0.0 0.1102549423268,2.77587704831436 -0.0 0.136808057330267,2.76541818305704 -0.0 0.16269465723032,2.75317903714357 -0.0 0.187788625114356,2.73921923846257 -0.0 0.211967705693282,2.72360679774998 -0.0 0.235114100916989,2.70641777724759 -0.0 0.257115043874616,2.68773592013546 -0.0 0.277863348183599,2.66765224254354 -0.0 0.297257930190958,2.64626459013026 -0.0 0.315204301442689,2.6236771613883 -0.0 0.331615029022017,2.6 -0.0 0.346410161513775,2.57534845871563 -0.0 0.359517618519667,2.54984263736636 -0.0 0.370873541826715,2.52360679774998 -0.0 0.380422606518061,2.49676875823987 -0.0 0.388118290510399,2.46945927106677 -0.0 0.393923101204883,2.44181138530706 -0.0 0.397808758147309,2.413959798681 -0.0 0.399756330807638,2.386040201319 -0.0 0.399756330807638,2.35818861469294 -0.0 0.397808758147309,2.33054072893323 -0.0 0.393923101204883,2.30323124176013 -0.0 0.388118290510399,2.27639320225002 -0.0 0.380422606518061,2.25015736263363 -0.0 0.370873541826715,2.22465154128437 -0.0 0.359517618519667,2.2 -0.0 0.346410161513775,2.1763228386117 -0.0 0.331615029022017,2.15373540986974 0.0 0.315204301442689,2.13234775745646 0.0 0.297257930190958,2.11226407986454 0.0 0.277863348183599,2.09358222275241 0.0 0.257115043874616,2.07639320225002 0.0 0.235114100916989,2.06078076153743 0.0 0.211967705693282,2.04682096285643 0.0 0.187788625114356,2.03458181694296 0.0 0.16269465723032,2.02412295168564 0.0 0.136808057330267,2.01549532162467 0.0 0.1102549423268,2.00874095970648 0.0 0.0831646763271036,2.00389277250337 0.0 0.0556692403840262,2.00097437989607 0.0 0.0279025894976499,' +
-                                      '2.0 0.0 -4.8985871965894e-17,2.0 1.8 3.11014128034106e-16,2.00097437989607 1.8 0.0279025894976503,2.00389277250337 1.8 0.0556692403840266,2.00874095970648 1.8 0.083164676327104,2.01549532162467 1.8 0.1102549423268,2.02412295168564 1.8 0.136808057330268,2.03458181694296 1.8 0.16269465723032,2.04682096285643 1.8 0.187788625114357,2.06078076153743 1.8 0.211967705693282,2.07639320225002 1.8 0.23511410091699,2.09358222275241 1.8 0.257115043874616,2.11226407986454 1.8 0.277863348183599,2.13234775745646 1.8 0.297257930190958,2.15373540986974 1.8 0.315204301442689,2.1763228386117 1.8 0.331615029022017,2.2 1.8 0.346410161513776,2.22465154128437 1.8 0.359517618519667,2.25015736263363 1.8 0.370873541826715,2.27639320225002 1.8 0.380422606518062,2.30323124176013 1.8 0.388118290510399,2.33054072893323 1.8 0.393923101204884,2.35818861469294 1.8 0.39780875814731,2.386040201319 1.8 0.399756330807639,2.413959798681 1.8 0.399756330807639,2.44181138530706 1.8 0.39780875814731,2.46945927106677 1.8 0.393923101204884,2.49676875823987 1.8 0.388118290510399,2.52360679774998 1.8 0.380422606518062,2.54984263736636 1.8 0.370873541826715,2.57534845871563 1.8 0.359517618519667,2.6 1.8 0.346410161513776,2.6236771613883 1.8 0.331615029022017,2.64626459013026 1.8 0.315204301442689,2.66765224254354 1.8 0.297257930190958,2.68773592013546 1.8 0.277863348183599,2.70641777724759 1.8 0.257115043874616,2.72360679774998 1.8 0.23511410091699,2.73921923846257 1.8 0.211967705693283,2.75317903714357 1.8 0.187788625114357,2.76541818305704 1.8 0.16269465723032,2.77587704831436 1.8 0.136808057330268,2.78450467837533 1.8 0.1102549423268,2.79125904029352 1.8 0.0831646763271043,2.79610722749663 1.8 0.0556692403840267,2.79902562010393 1.8 0.0279025894976503,2.8 1.8 3.6e-16,2.8 -0.0 1e-31)))'):
-        gdaltest.post_reason('wrong geometry for cylinder')
-        return 'fail'
+                                      '2.0 0.0 -4.8985871965894e-17,2.0 1.8 3.11014128034106e-16,2.00097437989607 1.8 0.0279025894976503,2.00389277250337 1.8 0.0556692403840266,2.00874095970648 1.8 0.083164676327104,2.01549532162467 1.8 0.1102549423268,2.02412295168564 1.8 0.136808057330268,2.03458181694296 1.8 0.16269465723032,2.04682096285643 1.8 0.187788625114357,2.06078076153743 1.8 0.211967705693282,2.07639320225002 1.8 0.23511410091699,2.09358222275241 1.8 0.257115043874616,2.11226407986454 1.8 0.277863348183599,2.13234775745646 1.8 0.297257930190958,2.15373540986974 1.8 0.315204301442689,2.1763228386117 1.8 0.331615029022017,2.2 1.8 0.346410161513776,2.22465154128437 1.8 0.359517618519667,2.25015736263363 1.8 0.370873541826715,2.27639320225002 1.8 0.380422606518062,2.30323124176013 1.8 0.388118290510399,2.33054072893323 1.8 0.393923101204884,2.35818861469294 1.8 0.39780875814731,2.386040201319 1.8 0.399756330807639,2.413959798681 1.8 0.399756330807639,2.44181138530706 1.8 0.39780875814731,2.46945927106677 1.8 0.393923101204884,2.49676875823987 1.8 0.388118290510399,2.52360679774998 1.8 0.380422606518062,2.54984263736636 1.8 0.370873541826715,2.57534845871563 1.8 0.359517618519667,2.6 1.8 0.346410161513776,2.6236771613883 1.8 0.331615029022017,2.64626459013026 1.8 0.315204301442689,2.66765224254354 1.8 0.297257930190958,2.68773592013546 1.8 0.277863348183599,2.70641777724759 1.8 0.257115043874616,2.72360679774998 1.8 0.23511410091699,2.73921923846257 1.8 0.211967705693283,2.75317903714357 1.8 0.187788625114357,2.76541818305704 1.8 0.16269465723032,2.77587704831436 1.8 0.136808057330268,2.78450467837533 1.8 0.1102549423268,2.79125904029352 1.8 0.0831646763271043,2.79610722749663 1.8 0.0556692403840267,2.79902562010393 1.8 0.0279025894976503,2.8 1.8 3.6e-16,2.8 -0.0 1e-31)))')), \
+        'wrong geometry for cylinder'
 
     # 3DSOLID, plain
     feat = layer.GetNextFeature()
@@ -2589,9 +2422,8 @@ def test_ogr_dxf_34():
     expected_wkt = 'POLYGON ((0 0,0 1,1 0,0 0))'
     received_wkt = geom.ExportToWkt()
 
-    if expected_wkt != received_wkt:
-        gdaltest.post_reason('did not get expected geometry back: got %s' % received_wkt)
-        return 'fail'
+    assert expected_wkt == received_wkt, \
+        ('did not get expected geometry back: got %s' % received_wkt)
     ds = None
 
     gdal.Unlink('tmp/triangle_test.dxf')
@@ -2701,8 +2533,7 @@ def test_ogr_dxf_35():
         "13.3027626235603 8.26630944469236 0," + \
         "10.0 5.0 0," + \
         "10.0 5.0 0))"""
-    if ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, expected_wkt) == 0
 
     return 'success'
 
@@ -2716,8 +2547,7 @@ def test_ogr_dxf_36():
     ds = ogr.Open('data/insert_only.dxf')
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 5:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 5
 
     return 'success'
 
@@ -2747,8 +2577,7 @@ def test_ogr_dxf_37():
 
     # Check first feature
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
     ds = None
 
     gdal.Unlink('/vsimem/ogr_dxf_37.dxf')
@@ -2918,9 +2747,8 @@ def test_ogr_dxf_42():
     # Inlining, merging
     ds = ogr.Open('data/block-insert-order.dxf')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('Defaults: Expected 2 features, found %d' % lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2, \
+        ('Defaults: Expected 2 features, found %d' % lyr.GetFeatureCount())
 
     # No inlining, merging
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'FALSE')
@@ -2928,9 +2756,8 @@ def test_ogr_dxf_42():
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', None)
 
     lyr = ds.GetLayerByName('entities')
-    if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('No inlining: Expected 2 features on entities, found %d' % lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2, \
+        ('No inlining: Expected 2 features on entities, found %d' % lyr.GetFeatureCount())
 
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'POINT Z (8.0 2.5 6)') != 0:
@@ -2945,9 +2772,8 @@ def test_ogr_dxf_42():
         return 'fail'
 
     lyr = ds.GetLayerByName('blocks')
-    if lyr.GetFeatureCount() != 6:
-        gdaltest.post_reason('No inlining: Expected 6 feature on blocks, found %d' % lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 6, \
+        ('No inlining: Expected 6 feature on blocks, found %d' % lyr.GetFeatureCount())
 
     f = lyr.GetFeature(3)
     if ogrtest.check_feature_geometry(f, 'POINT Z (5 5 0)') != 0:
@@ -2961,24 +2787,13 @@ def test_ogr_dxf_42():
         f.DumpReadable()
         return 'fail'
 
-    if f.GetField('BlockName') != 'BLOCK4':
-        gdaltest.post_reason('Wrong BlockName')
-        return 'fail'
-    if f.GetField('BlockScale') != [0.4, 1.0, 1.5]:
-        gdaltest.post_reason('Wrong BlockScale')
-        return 'fail'
-    if f.GetField('BlockAngle') != 40:
-        gdaltest.post_reason('Wrong BlockAngle')
-        return 'fail'
-    if f.GetField('BlockOCSNormal') != [0.6, 0.565685424949238, 0.565685424949238]:
-        gdaltest.post_reason('Wrong BlockOCSNormal')
-        return 'fail'
-    if f.GetField('BlockOCSCoords') != [5, 5, 0]:
-        gdaltest.post_reason('Wrong BlockOCSCoords')
-        return 'fail'
-    if f.GetField('Block') != 'BLOCK3':
-        gdaltest.post_reason('Wrong Block')
-        return 'fail'
+    assert f.GetField('BlockName') == 'BLOCK4', 'Wrong BlockName'
+    assert f.GetField('BlockScale') == [0.4, 1.0, 1.5], 'Wrong BlockScale'
+    assert f.GetField('BlockAngle') == 40, 'Wrong BlockAngle'
+    assert f.GetField('BlockOCSNormal') == [0.6, 0.565685424949238, 0.565685424949238], \
+        'Wrong BlockOCSNormal'
+    assert f.GetField('BlockOCSCoords') == [5, 5, 0], 'Wrong BlockOCSCoords'
+    assert f.GetField('Block') == 'BLOCK3', 'Wrong Block'
 
     # Inlining, no merging
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
@@ -2986,9 +2801,8 @@ def test_ogr_dxf_42():
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
 
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 4:
-        gdaltest.post_reason('Merging: Expected 4 features, found %d' % lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 4, \
+        ('Merging: Expected 4 features, found %d' % lyr.GetFeatureCount())
 
     return 'success'
 
@@ -3000,8 +2814,7 @@ def test_ogr_dxf_43():
 
     ds = ogr.Open('data/insert-recursive-pair.dxf')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     return 'success'
 
@@ -3016,8 +2829,7 @@ def test_ogr_dxf_44():
         lyr = ds.GetLayer(0)
         with gdaltest.error_handler():
             lyr.GetFeatureCount()
-        if gdal.GetLastErrorMsg().find('DXF_MAX_BSPLINE_CONTROL_POINTS') < 0:
-            return 'fail'
+        assert gdal.GetLastErrorMsg().find('DXF_MAX_BSPLINE_CONTROL_POINTS') >= 0
 
     ds = ogr.Open('data/leader-mleader.dxf')
     lyr = ds.GetLayer(0)
@@ -3072,9 +2884,8 @@ def test_ogr_dxf_44():
     # Check that the very long text string in the MTEXT entity associated
     # to this LEADER is captured correctly
     f = lyr.GetNextFeature()
-    if len(f.GetField('Text')) != 319:
-        gdaltest.post_reason('Wrong text length: got %d' % len(f.GetField('Text')))
-        return 'fail'
+    assert len(f.GetField('Text')) == 319, \
+        ('Wrong text length: got %d' % len(f.GetField('Text')))
 
     # MULTILEADER with custom arrowhead
     f = lyr.GetNextFeature()
@@ -3110,22 +2921,19 @@ def test_ogr_dxf_44():
     for x in range(3):
         f = lyr.GetNextFeature()
         geom = f.GetGeometryRef()
-        if geom.GetGeometryType() != ogr.wkbLineString25D:
-            gdaltest.post_reason('Unexpected LEADER geometry, expected wkbLineString25D on iteration %d' % x)
-            return 'fail'
+        assert geom.GetGeometryType() == ogr.wkbLineString25D, \
+            ('Unexpected LEADER geometry, expected wkbLineString25D on iteration %d' % x)
 
     for x in range(2):
         f = lyr.GetNextFeature()
         geom = f.GetGeometryRef()
-        if geom.GetGeometryType() != ogr.wkbMultiLineString:
-            gdaltest.post_reason('Unexpected MULTILEADER geometry, expected wkbMultiLineString on iteration %d' % x)
-            return 'fail'
+        assert geom.GetGeometryType() == ogr.wkbMultiLineString, \
+            ('Unexpected MULTILEADER geometry, expected wkbMultiLineString on iteration %d' % x)
 
         f = lyr.GetNextFeature()
         geom = f.GetGeometryRef()
-        if geom.GetGeometryType() != ogr.wkbPoint:
-            gdaltest.post_reason('Unexpected MULTILEADER geometry, expected wkbPoint on iteration %d' % x)
-            return 'fail'
+        assert geom.GetGeometryType() == ogr.wkbPoint, \
+            ('Unexpected MULTILEADER geometry, expected wkbPoint on iteration %d' % x)
 
     # MULTILEADER with multiple leader lines and formatted text
     f = lyr.GetNextFeature()
@@ -3243,44 +3051,28 @@ def test_ogr_dxf_45():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'DASHED2':
-        gdaltest.post_reason('Got wrong linetype (1)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'DASHED2', 'Got wrong linetype (1)'
 
-    if feat.GetStyleString() != 'PEN(c:#000000,p:"12.5g 6.25g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason('Got wrong style string (1)')
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#000000,p:"12.5g 6.25g")', \
+        'Got wrong style string (1)'
 
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'DASHED2':
-        gdaltest.post_reason('Got wrong linetype (2)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'DASHED2', 'Got wrong linetype (2)'
 
-    if feat.GetStyleString() != 'PEN(c:#000000,p:"0.625g 0.3125g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason('Got wrong style string (2)')
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#000000,p:"0.625g 0.3125g")', \
+        'Got wrong style string (2)'
 
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'DASHED2_FLIPPED':
-        gdaltest.post_reason('Got wrong linetype (3)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'DASHED2_FLIPPED', 'Got wrong linetype (3)'
 
-    if feat.GetStyleString() != 'PEN(c:#000000,p:"0.625g 0.3125g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason('Got wrong style string (3)')
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#000000,p:"0.625g 0.3125g")', \
+        'Got wrong style string (3)'
 
     feat = lyr.GetNextFeature()
-    if feat.GetField('Linetype') != 'Drain_Pipe_Inv_100':
-        gdaltest.post_reason('Got wrong linetype (4)')
-        return 'fail'
+    assert feat.GetField('Linetype') == 'Drain_Pipe_Inv_100', 'Got wrong linetype (4)'
 
-    if feat.GetStyleString() != 'PEN(c:#000000,p:"35g 22.5g")':
-        print(feat.GetStyleString())
-        gdaltest.post_reason('Got wrong style string (4)')
-        return 'fail'
+    assert feat.GetStyleString() == 'PEN(c:#000000,p:"35g 22.5g")', \
+        'Got wrong style string (4)'
 
     return 'success'
 
@@ -3542,9 +3334,8 @@ def test_ogr_dxf_49():
     # Inline blocks mode
     ds = ogr.Open('data/attrib.dxf')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 6:
-        gdaltest.post_reason('Wrong feature count, got %d' % lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 6, \
+        ('Wrong feature count, got %d' % lyr.GetFeatureCount())
 
     f = lyr.GetFeature(1)
     if f.GetField('Text') != 'super test':
@@ -3558,9 +3349,7 @@ def test_ogr_dxf_49():
 
     f = lyr.GetFeature(4)
     geom = f.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
-        gdaltest.post_reason('Expected LINESTRING Z')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbLineString25D, 'Expected LINESTRING Z'
 
     f = lyr.GetFeature(5)
     if f.GetField('Text') != '':
@@ -3848,8 +3637,7 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(TIN EMPTY)'))
     with gdaltest.error_handler():
         ret = lyr.CreateFeature(f)
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ds = None
     gdal.Unlink(tmpfile)
 

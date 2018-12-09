@@ -62,9 +62,7 @@ def both_endian(request):
 
 def tiff_ovr_check(src_ds):
     for i in (1, 2, 3):
-        if src_ds.GetRasterBand(i).GetOverviewCount() != 2:
-            gdaltest.post_reason('overviews missing')
-            return 'fail'
+        assert src_ds.GetRasterBand(i).GetOverviewCount() == 2, 'overviews missing'
 
         ovr_band = src_ds.GetRasterBand(i).GetOverview(0)
         if ovr_band.XSize != 10 or ovr_band.YSize != 10:
@@ -100,9 +98,7 @@ def test_tiff_ovr_1(both_endian):
 
     src_ds = gdal.Open('data/mfloat32.vrt')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     gdaltest.tiff_drv.CreateCopy('tmp/mfloat32.tif', src_ds,
                                  options=['INTERLEAVE=PIXEL'])
@@ -110,15 +106,11 @@ def test_tiff_ovr_1(both_endian):
 
     ds = gdal.Open('tmp/mfloat32.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     err = ds.BuildOverviews(overviewlist=[2, 4])
 
-    if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error')
-        return 'fail'
+    assert err == 0, 'BuildOverviews reports an error'
 
     ret = tiff_ovr_check(ds)
 
@@ -134,9 +126,7 @@ def test_tiff_ovr_2(both_endian):
 
     src_ds = gdal.Open('tmp/mfloat32.tif')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     ret = tiff_ovr_check(src_ds)
 
@@ -154,14 +144,10 @@ def test_tiff_ovr_3(both_endian):
 
     src_ds = gdal.Open('tmp/mfloat32.tif', gdal.GA_Update)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     err = src_ds.BuildOverviews(overviewlist=[2, 4])
-    if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error')
-        return 'fail'
+    assert err == 0, 'BuildOverviews reports an error'
 
     ret = tiff_ovr_check(src_ds)
 
@@ -186,9 +172,7 @@ def test_tiff_ovr_4(both_endian):
 
     wrk_ds = gdal.Open('tmp/ovr4.tif', gdal.GA_Update)
 
-    if wrk_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert wrk_ds is not None, 'Failed to open test dataset.'
 
     wrk_ds.BuildOverviews('AVERAGE_BIT2GRAYSCALE', overviewlist=[2, 4])
     wrk_ds = None
@@ -197,10 +181,8 @@ def test_tiff_ovr_4(both_endian):
 
     ovband = wrk_ds.GetRasterBand(1).GetOverview(1)
     md = ovband.GetMetadata()
-    if 'RESAMPLING' not in md \
-       or md['RESAMPLING'] != 'AVERAGE_BIT2GRAYSCALE':
-        gdaltest.post_reason('Did not get expected RESAMPLING metadata.')
-        return 'fail'
+    assert 'RESAMPLING' in md and md['RESAMPLING'] == 'AVERAGE_BIT2GRAYSCALE', \
+        'Did not get expected RESAMPLING metadata.'
 
     # compute average value of overview band image data.
     ovimage = ovband.ReadRaster(0, 0, ovband.XSize, ovband.YSize)
@@ -220,10 +202,7 @@ def test_tiff_ovr_4(both_endian):
 
     average = total / pix_count
     exp_average = 153.0656
-    if abs(average - exp_average) > 0.1:
-        print(average)
-        gdaltest.post_reason('got wrong average for overview image')
-        return 'fail'
+    assert abs(average - exp_average) <= 0.1, 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
     # the grayscale image.
@@ -243,10 +222,7 @@ def test_tiff_ovr_4(both_endian):
     average = total / pix_count
     exp_average = 0.6096
 
-    if abs(average - exp_average) > 0.01:
-        print(average)
-        gdaltest.post_reason('got wrong average for downsampled image')
-        return 'fail'
+    assert abs(average - exp_average) <= 0.01, 'got wrong average for downsampled image'
 
     wrk_ds = None
 
@@ -262,19 +238,14 @@ def test_tiff_ovr_5(both_endian):
 
     wrk_ds = gdal.Open('tmp/ovr5.tif', gdal.GA_ReadOnly)
 
-    if wrk_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert wrk_ds is not None, 'Failed to open test dataset.'
 
     wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1130
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -291,9 +262,7 @@ def test_tiff_ovr_6(both_endian):
 
     wrk_ds = gdal.Open('tmp/ovr6.tif', gdal.GA_Update)
 
-    if wrk_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert wrk_ds is not None, 'Failed to open test dataset.'
 
     wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
@@ -308,10 +277,7 @@ def test_tiff_ovr_6(both_endian):
     cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1130
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -327,9 +293,7 @@ def test_tiff_ovr_7(both_endian):
     # In nearest resampling, we are expecting a uniform black image.
     ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     ds.BuildOverviews('NEAREST', overviewlist=[2])
 
@@ -338,10 +302,7 @@ def test_tiff_ovr_7(both_endian):
 
     ds = None
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -358,9 +319,7 @@ def test_tiff_ovr_8(both_endian):
     # index 2. So the result of the averaging is a uniform grey image.
     ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
@@ -369,10 +328,7 @@ def test_tiff_ovr_8(both_endian):
 
     ds = None
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -395,9 +351,7 @@ def test_tiff_ovr_9(both_endian):
 
     ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
@@ -409,10 +363,7 @@ def test_tiff_ovr_9(both_endian):
 
     ds = None
 
-    if cs != exp_cs and cs != 5635:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
 
     # Re-check after dataset reopening
     ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
@@ -422,10 +373,7 @@ def test_tiff_ovr_9(both_endian):
 
     ds = None
 
-    if cs != exp_cs and cs != 5635:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -437,35 +385,26 @@ def test_tiff_ovr_10(both_endian):
 
     src_ds = gdal.Open('data/rgbsmall.tif', gdal.GA_ReadOnly)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr10.tif', src_ds, options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'])
     src_ds = None
 
-    if ds is None:
-        gdaltest.post_reason('Failed to apply JPEG compression.')
-        return 'fail'
+    assert ds is not None, 'Failed to apply JPEG compression.'
 
     ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     ds = None
     ds = gdal.Open('tmp/ovr10.tif', gdal.GA_ReadOnly)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open copy of test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open copy of test dataset.'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 5562
 
     ds = None
 
-    if cs != exp_cs and cs != 5635:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs or cs == 5635, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -477,9 +416,7 @@ def test_tiff_ovr_11(both_endian):
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr11.tif', src_ds)
     src_ds = None
@@ -498,9 +435,7 @@ def test_tiff_ovr_11(both_endian):
     ds = None
     ds = gdal.Open('tmp/ovr11.tif', gdal.GA_ReadOnly)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open copy of test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open copy of test dataset.'
 
     cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
     # If NODATA_VALUES was ignored, we would get 2766
@@ -508,10 +443,7 @@ def test_tiff_ovr_11(both_endian):
 
     ds = None
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -524,9 +456,7 @@ def test_tiff_ovr_12(both_endian):
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr12.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
@@ -545,9 +475,7 @@ def test_tiff_ovr_12(both_endian):
     ds = None
     ds = gdal.Open('tmp/ovr12.tif', gdal.GA_ReadOnly)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open copy of test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open copy of test dataset.'
 
     cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
     # If NODATA_VALUES was ignored, we would get 2766
@@ -555,10 +483,7 @@ def test_tiff_ovr_12(both_endian):
 
     ds = None
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -572,9 +497,7 @@ def test_tiff_ovr_13(both_endian):
 
     src_ds = gdal.Open('data/mfloat32.vrt')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     gdaltest.tiff_drv.CreateCopy('tmp/mfloat32.tif', src_ds,
                                  options=['INTERLEAVE=PIXEL'])
@@ -582,15 +505,11 @@ def test_tiff_ovr_13(both_endian):
 
     ds = gdal.Open('tmp/mfloat32.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     err = ds.BuildOverviews('GAUSS', overviewlist=[2, 4])
 
-    if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error')
-        return 'fail'
+    assert err == 0, 'BuildOverviews reports an error'
 
     # if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1225:
     #    gdaltest.post_reason( 'bad checksum' )
@@ -610,9 +529,7 @@ def test_tiff_ovr_14(both_endian):
 
     ds = gdal.Open('tmp/test_gauss_palette.tif', gdal.GA_Update)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     ds.BuildOverviews('GAUSS', overviewlist=[2])
 
@@ -621,10 +538,7 @@ def test_tiff_ovr_14(both_endian):
 
     ds = None
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -637,9 +551,7 @@ def test_tiff_ovr_15(both_endian):
 
     src_ds = gdal.Open('data/test_nodatavalues.tif', gdal.GA_ReadOnly)
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr15.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
@@ -658,9 +570,7 @@ def test_tiff_ovr_15(both_endian):
     ds = None
     ds = gdal.Open('tmp/ovr15.tif', gdal.GA_ReadOnly)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open copy of test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open copy of test dataset.'
 
     cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
     # If NODATA_VALUES was ignored, we would get 2954
@@ -668,10 +578,7 @@ def test_tiff_ovr_15(both_endian):
 
     ds = None
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -685,9 +592,7 @@ def test_tiff_ovr_16(both_endian):
 
     src_ds = gdal.Open('data/mfloat32.vrt')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     gdaltest.tiff_drv.CreateCopy('tmp/ovr16.tif', src_ds,
                                  options=['INTERLEAVE=PIXEL'])
@@ -695,22 +600,15 @@ def test_tiff_ovr_16(both_endian):
 
     ds = gdal.Open('tmp/ovr16.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     err = ds.BuildOverviews('MODE', overviewlist=[2, 4])
 
-    if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error')
-        return 'fail'
+    assert err == 0, 'BuildOverviews reports an error'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1122
-    if cs != exp_cs:
-        gdaltest.post_reason('bad checksum')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'bad checksum'
 
     ds = None
 
@@ -726,22 +624,15 @@ def test_tiff_ovr_17(both_endian):
 
     ds = gdal.Open('tmp/ovr17.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     err = ds.BuildOverviews('MODE', overviewlist=[2, 4])
 
-    if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error')
-        return 'fail'
+    assert err == 0, 'BuildOverviews reports an error'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 1122
-    if cs != exp_cs:
-        gdaltest.post_reason('bad checksum')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'bad checksum'
 
     ds = None
 
@@ -757,9 +648,7 @@ def test_tiff_ovr_18(both_endian):
 
     ds = gdal.Open('tmp/ovr18.tif', gdal.GA_Update)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     ds.BuildOverviews('MODE', overviewlist=[2])
 
@@ -768,10 +657,7 @@ def test_tiff_ovr_18(both_endian):
 
     ds = None
 
-    if cs != exp_cs:
-        gdaltest.post_reason('got wrong overview checksum.')
-        print(exp_cs, cs)
-        return 'fail'
+    assert cs == exp_cs, 'got wrong overview checksum.'
 
     return 'success'
 
@@ -797,19 +683,14 @@ def test_tiff_ovr_19(both_endian):
     ds.FlushCache()
     ds.BuildOverviews('NEAR', overviewlist=[2, 4])
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        print('Overview could not be generated')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2, \
+        'Overview could not be generated'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 2500:
-        print(cs)
-        return 'fail'
+    assert cs == 2500
 
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 625:
-        print(cs)
-        return 'fail'
+    assert cs == 625
 
     ds = None
 
@@ -831,9 +712,7 @@ def test_tiff_ovr_20(both_endian):
 
     ds = gdal.Open('tmp/ovr20.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'YES')
     ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
@@ -847,9 +726,8 @@ def test_tiff_ovr_20(both_endian):
     fileobj.close()
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0) and
-            (binvalues[3] != 0x2B or binvalues[2] != 0)):
-        return 'fail'
+    assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
+            (binvalues[3] != 0x2B or binvalues[2] != 0)))
 
     return 'success'
 
@@ -869,9 +747,7 @@ def test_tiff_ovr_21(both_endian):
 
     ds = gdal.Open('tmp/ovr21.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
     # so BigTIFF is needed
@@ -885,9 +761,8 @@ def test_tiff_ovr_21(both_endian):
     fileobj.close()
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0) and
-            (binvalues[3] != 0x2B or binvalues[2] != 0)):
-        return 'fail'
+    assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
+            (binvalues[3] != 0x2B or binvalues[2] != 0)))
 
     return 'success'
 
@@ -907,9 +782,7 @@ def test_tiff_ovr_22(both_endian):
 
     ds = gdal.Open('tmp/ovr22.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
     # so BigTIFF is needed
@@ -942,9 +815,7 @@ def test_tiff_ovr_23(both_endian):
 
     ds = gdal.Open('tmp/ovr23.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
@@ -960,9 +831,8 @@ def test_tiff_ovr_23(both_endian):
     fileobj.close()
 
     # Check Classical TIFF signature
-    if ((binvalues[2] != 0x2A or binvalues[3] != 0) and
-            (binvalues[3] != 0x2A or binvalues[2] != 0)):
-        return 'fail'
+    assert (not ((binvalues[2] != 0x2A or binvalues[3] != 0) and
+            (binvalues[3] != 0x2A or binvalues[2] != 0)))
 
     return 'success'
 
@@ -982,9 +852,7 @@ def test_tiff_ovr_24(both_endian):
 
     ds = gdal.Open('tmp/ovr24.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     # 85 k * 100 k = 8.5 GB, so BigTIFF might be needed as
     # 8.5 GB / 2 > 4.2 GB
@@ -1000,9 +868,8 @@ def test_tiff_ovr_24(both_endian):
     fileobj.close()
 
     # Check BigTIFF signature
-    if ((binvalues[2] != 0x2B or binvalues[3] != 0) and
-            (binvalues[3] != 0x2B or binvalues[2] != 0)):
-        return 'fail'
+    assert (not ((binvalues[2] != 0x2B or binvalues[3] != 0) and
+            (binvalues[3] != 0x2B or binvalues[2] != 0)))
 
     return 'success'
 
@@ -1020,17 +887,13 @@ def test_tiff_ovr_25(both_endian):
     ds = None
 
     ds = gdal.Open('tmp/ovr25.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 10000:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 10000
 
-    if ds.GetRasterBand(1).GetOverviewCount() == 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() != 0
 
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 2500:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 2500
 
     return 'success'
 
@@ -1047,12 +910,10 @@ def test_tiff_ovr_26(both_endian):
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds.GetRasterBand(1).GetOverview(0).Fill(0)
     cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs_new != 0:
-        return 'fail'
+    assert cs_new == 0
     gdal.RegenerateOverview(ds.GetRasterBand(1), ds.GetRasterBand(1).GetOverview(0), 'NEAR')
     cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != cs_new:
-        return 'fail'
+    assert cs == cs_new
     ds = None
 
     return 'success'
@@ -1073,15 +934,12 @@ def test_tiff_ovr_27(both_endian):
     ds.GetRasterBand(1).GetOverview(1).Fill(0)
     cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
     cs2_new = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs_new != 0 or cs2_new != 0:
-        return 'fail'
+    assert cs_new == 0 and cs2_new == 0
     gdal.RegenerateOverviews(ds.GetRasterBand(1), [ds.GetRasterBand(1).GetOverview(0), ds.GetRasterBand(1).GetOverview(1)], 'NEAR')
     cs_new = ds.GetRasterBand(1).GetOverview(0).Checksum()
     cs2_new = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != cs_new:
-        return 'fail'
-    if cs2 != cs2_new:
-        return 'fail'
+    assert cs == cs_new
+    assert cs2 == cs2_new
     ds = None
 
     return 'success'
@@ -1093,20 +951,17 @@ def test_tiff_ovr_27(both_endian):
 def test_tiff_ovr_28(both_endian):
 
     ds = gdal.Open('tmp/ovr25.tif', gdal.GA_Update)
-    if ds.BuildOverviews(overviewlist=[]) != 0:
-        gdaltest.post_reason('BuildOverviews() returned error code.')
-        return 'fail'
+    assert ds.BuildOverviews(overviewlist=[]) == 0, \
+        'BuildOverviews() returned error code.'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('Overview(s) appear to still exist.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, \
+        'Overview(s) appear to still exist.'
 
     # Close and reopen to confirm they are really gone.
     ds = None
     ds = gdal.Open('tmp/ovr25.tif')
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('Overview(s) appear to still exist after reopen.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, \
+        'Overview(s) appear to still exist after reopen.'
 
     return 'success'
 
@@ -1123,27 +978,19 @@ def test_tiff_ovr_29(both_endian):
     png_ds.BuildOverviews(overviewlist=[2])
     png_ds = None
 
-    if open('tmp/ovr29.png.ovr') is None:
-        gdaltest.post_reason('Did not expected .ovr file.')
-        return 'fail'
+    assert open('tmp/ovr29.png.ovr') is not None, 'Did not expected .ovr file.'
 
     png_ds = gdal.Open('tmp/ovr29.png')
 
-    if png_ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not find overview')
-        return 'fail'
+    assert png_ds.GetRasterBand(1).GetOverviewCount() == 1, 'did not find overview'
 
     png_ds.BuildOverviews(overviewlist=[])
-    if png_ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('delete overview failed.')
-        return 'fail'
+    assert png_ds.GetRasterBand(1).GetOverviewCount() == 0, 'delete overview failed.'
 
     png_ds = None
     png_ds = gdal.Open('tmp/ovr29.png')
 
-    if png_ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('delete overview failed.')
-        return 'fail'
+    assert png_ds.GetRasterBand(1).GetOverviewCount() == 0, 'delete overview failed.'
 
     png_ds = None
 
@@ -1183,8 +1030,7 @@ def test_tiff_ovr_30(both_endian):
     ds = None
 
     ds = gdal.Open('tmp/ovr30.tif')
-    if ds.GetProjectionRef().find('4326') == -1:
-        return 'fail'
+    assert ds.GetProjectionRef().find('4326') != -1
 
     return 'success'
 
@@ -1202,9 +1048,8 @@ def test_tiff_ovr_31(both_endian):
     ds.BuildOverviews('average', overviewlist=[2, 4])
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
     expected_cs = 7646
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d' % (cs, expected_cs))
     ds = None
 
     return 'success'
@@ -1228,15 +1073,13 @@ def test_tiff_ovr_32(both_endian):
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21168
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
     expected_cs = 1851
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
 
     ds = None
 
@@ -1259,9 +1102,8 @@ def test_tiff_ovr_32(both_endian):
 
     cs = tmp2_ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21168
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
 
     src_ds = None
     tmp_ds = None
@@ -1281,15 +1123,13 @@ def test_tiff_ovr_32(both_endian):
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21168
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
     expected_cs = 1851
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
 
     ds = None
 
@@ -1303,15 +1143,13 @@ def test_tiff_ovr_32(both_endian):
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21656
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
     expected_cs = 2132
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
 
     ds = None
 
@@ -1335,9 +1173,8 @@ def test_tiff_ovr_32(both_endian):
     cs = tmp2_ds.GetRasterBand(1).GetOverview(0).Checksum()
     # expected_cs = 21656
     expected_cs = 21168
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
 
     src_ds = None
     tmp_ds = None
@@ -1352,15 +1189,13 @@ def test_tiff_ovr_32(both_endian):
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21656
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
     expected_cs = 2132
-    if cs != expected_cs:
-        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
 
     ds = None
 
@@ -1407,9 +1242,8 @@ def test_tiff_ovr_34(both_endian):
     ds = None
 
     if data != '                         '.encode('ascii'):
-        gdaltest.post_reason('did not get expected cleared overview.')
         print('[%s]' % data)
-        return 'fail'
+        pytest.fail('did not get expected cleared overview.')
 
     gdaltest.tiff_drv.Delete('tmp/ovr34.tif')
 
@@ -1433,9 +1267,8 @@ def test_tiff_ovr_35(both_endian):
     ds = None
 
     if data != '                         '.encode('ascii'):
-        gdaltest.post_reason('did not get expected cleared overview.')
         print('[%s]' % data)
-        return 'fail'
+        pytest.fail('did not get expected cleared overview.')
 
     gdaltest.tiff_drv.Delete('tmp/ovr35.tif')
 
@@ -1466,9 +1299,7 @@ def test_tiff_ovr_37(both_endian):
 
     ds = gdal.Open('tmp/ovr37.dt0')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     gdal.SetConfigOption('PREDICTOR_OVERVIEW', '2')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'LZW')
@@ -1480,19 +1311,13 @@ def test_tiff_ovr_37(both_endian):
 
     ds = gdal.Open('tmp/ovr37.dt0')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 45378:
-        print(cs)
-        gdaltest.post_reason('got wrong overview checksum.')
-        return 'fail'
+    assert cs == 45378, 'got wrong overview checksum.'
     ds = None
 
     predictor2_size = os.stat('tmp/ovr37.dt0.ovr')[stat.ST_SIZE]
     # 3957 : on little-endian host
     # XXXX : on big-endian host ??? FIXME: To be updated
-    if predictor2_size != 3957:
-        print(predictor2_size)
-        gdaltest.post_reason('did not get expected file size.')
-        return 'fail'
+    assert predictor2_size == 3957, 'did not get expected file size.'
 
     return 'success'
 
@@ -1514,10 +1339,7 @@ def test_tiff_ovr_38(both_endian):
 
     file_size = os.stat('tmp/ovr38.tif')[stat.ST_SIZE]
 
-    if file_size > 21000:
-        print(file_size)
-        gdaltest.post_reason('did not get expected file size.')
-        return 'fail'
+    assert file_size <= 21000, 'did not get expected file size.'
 
     return 'success'
 
@@ -1553,9 +1375,7 @@ def test_tiff_ovr_39(both_endian):
         ovr_datatype = ds.GetRasterBand(1).DataType
         ds = None
 
-        if datatype != ovr_datatype:
-            gdaltest.post_reason('did not get expected datatype')
-            return 'fail'
+        assert datatype == ovr_datatype, 'did not get expected datatype'
 
         ds = gdal.Open('tmp/ovr39.tif')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1566,10 +1386,8 @@ def test_tiff_ovr_39(both_endian):
         else:
             expected_cs = 1087
 
-        if cs != expected_cs:
-            gdaltest.post_reason('did not get expected checksum for datatype %s' % gdal.GetDataTypeName(datatype))
-            print(cs)
-            return 'fail'
+        assert cs == expected_cs, \
+            ('did not get expected checksum for datatype %s' % gdal.GetDataTypeName(datatype))
 
     return 'success'
 
@@ -1583,9 +1401,7 @@ def test_tiff_ovr_40(both_endian):
 
     wrk_ds = gdal.Open('tmp/ovr40.tif')
 
-    if wrk_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert wrk_ds is not None, 'Failed to open test dataset.'
 
     wrk_ds.BuildOverviews('AVERAGE_BIT2GRAYSCALE', overviewlist=[2, 4])
     wrk_ds = None
@@ -1594,10 +1410,8 @@ def test_tiff_ovr_40(both_endian):
 
     ovband = wrk_ds.GetRasterBand(1).GetOverview(1)
     md = ovband.GetMetadata()
-    if 'RESAMPLING' not in md \
-       or md['RESAMPLING'] != 'AVERAGE_BIT2GRAYSCALE':
-        gdaltest.post_reason('Did not get expected RESAMPLING metadata.')
-        return 'fail'
+    assert 'RESAMPLING' in md and md['RESAMPLING'] == 'AVERAGE_BIT2GRAYSCALE', \
+        'Did not get expected RESAMPLING metadata.'
 
     # compute average value of overview band image data.
     ovimage = ovband.ReadRaster(0, 0, ovband.XSize, ovband.YSize)
@@ -1617,10 +1431,7 @@ def test_tiff_ovr_40(both_endian):
 
     average = total / pix_count
     exp_average = 153.0656
-    if abs(average - exp_average) > 0.1:
-        print(average)
-        gdaltest.post_reason('got wrong average for overview image')
-        return 'fail'
+    assert abs(average - exp_average) <= 0.1, 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
     # the grayscale image.
@@ -1640,10 +1451,7 @@ def test_tiff_ovr_40(both_endian):
     average = total / pix_count
     exp_average = 0.6096
 
-    if abs(average - exp_average) > 0.01:
-        print(average)
-        gdaltest.post_reason('got wrong average for downsampled image')
-        return 'fail'
+    assert abs(average - exp_average) <= 0.01, 'got wrong average for downsampled image'
 
     wrk_ds = None
 
@@ -1670,10 +1478,7 @@ def test_tiff_ovr_41(both_endian):
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds = None
 
-    if cs != 1496:
-        print(cs)
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == 1496, 'did not get expected checksum'
 
     return 'success'
 
@@ -1700,13 +1505,11 @@ def test_tiff_ovr_42(both_endian):
     ds = gdal.Open('tmp/ovr42.tif.ovr')
     ct2 = ds.GetRasterBand(1).GetRasterColorTable()
 
-    if ct2.GetCount() != 256 or \
-       ct2.GetColorEntry(0) != (255, 0, 0, 255) or \
-       ct2.GetColorEntry(1) != (0, 255, 0, 255) or \
-       ct2.GetColorEntry(2) != (0, 0, 255, 255) or \
-       ct2.GetColorEntry(3) != (255, 255, 255, 255):
-        gdaltest.post_reason('Wrong color table entry.')
-        return 'fail'
+    assert (ct2.GetCount() == 256 and \
+       ct2.GetColorEntry(0) == (255, 0, 0, 255) and \
+       ct2.GetColorEntry(1) == (0, 255, 0, 255) and \
+       ct2.GetColorEntry(2) == (0, 0, 255, 255) and \
+       ct2.GetColorEntry(3) == (255, 255, 255, 255)), 'Wrong color table entry.'
 
     ds = None
 
@@ -1762,15 +1565,9 @@ def test_tiff_ovr_43(both_endian):
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if 'NBITS' not in md or md['NBITS'] != '12':
-        print(md)
-        gdaltest.post_reason('did not get expected NBITS')
-        return 'fail'
+    assert 'NBITS' in md and md['NBITS'] == '12', 'did not get expected NBITS'
 
-    if cs != 642:
-        print(cs)
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == 642, 'did not get expected checksum'
 
     gdaltest.tiff_drv.Delete('tmp/ovr43.tif')
 
@@ -1794,18 +1591,13 @@ def test_tiff_ovr_44(both_endian):
     ovr_band = ds.GetRasterBand(1).GetOverview(0)
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ovr_band.GetBlockSize()
-        if blockx != 256 or blocky != 256:
-            gdaltest.post_reason('did not get expected block size')
-            return 'fail'
+        assert blockx == 256 and blocky == 256, 'did not get expected block size'
     cs = ovr_band.Checksum()
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/ovr44.tif')
 
-    if cs != 1087:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 1087, 'did not get expected checksum'
 
     return 'success'
 
@@ -1826,18 +1618,13 @@ def test_tiff_ovr_45(both_endian):
     ovr_band = ds.GetRasterBand(1)
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ovr_band.GetBlockSize()
-        if blockx != 256 or blocky != 256:
-            gdaltest.post_reason('did not get expected block size')
-            return 'fail'
+        assert blockx == 256 and blocky == 256, 'did not get expected block size'
     cs = ovr_band.Checksum()
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/ovr45.tif')
 
-    if cs != 1087:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 1087, 'did not get expected checksum'
 
     return 'success'
 
@@ -1962,10 +1749,7 @@ def test_tiff_ovr_47(both_endian):
 
     gdal.Unlink("/vsimem/tiff_ovr_47.tif")
 
-    if cs != 35721:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 35721, 'did not get expected checksum'
 
     return 'success'
 
@@ -1983,9 +1767,7 @@ def test_tiff_ovr_48(both_endian):
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if cs != 3:
-            print(i)
-            return 'fail'
+        assert cs == 3, i
 
     # But if we define GDAL_OVR_PROPAGATE_NODATA, a nodata value in source
     # samples will cause the target pixel to be zeroed.
@@ -1999,9 +1781,7 @@ def test_tiff_ovr_48(both_endian):
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if cs != 0:
-            print(i)
-            return 'fail'
+        assert cs == 0, i
 
     return 'success'
 
@@ -2024,8 +1804,7 @@ def test_tiff_ovr_49(both_endian):
     gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
     ds = None
     ds = gdal.Open('/vsimem/tiff_ovr_49.tif.ovr')
-    if ds.GetRasterBand(1).Checksum() == 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() != 0
     ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_49.tif')
 
@@ -2064,9 +1843,7 @@ def test_tiff_ovr_51():
 
     ds = gdal.Open('/vsimem/tiff_ovr_51.png.ovr')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 24518:
-        print(cs)
-        return 'fail'
+    assert cs == 24518
     ds = None
 
     gdal.GetDriverByName('PNG').Delete('/vsimem/tiff_ovr_51.png')
@@ -2097,13 +1874,9 @@ def test_tiff_ovr_52():
 
     ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_52.tif')
@@ -2119,13 +1892,9 @@ def test_tiff_ovr_52():
 
     ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_52.tif')
@@ -2154,13 +1923,9 @@ def test_tiff_ovr_53():
 
     ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_53.tif')
@@ -2182,13 +1947,9 @@ def test_tiff_ovr_53():
 
     ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 328:
-        print(cs)
-        return 'fail'
+    assert cs == 328
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_53.tif')
@@ -2229,9 +1990,7 @@ def test_tiff_ovr_54():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_54.tif')
 
-    if cs0 == 0 or cs1 == 0:
-        print(cs0, cs1)
-        return 'fail'
+    assert not (cs0 == 0 or cs1 == 0)
 
     return 'success'
 
@@ -2244,12 +2003,9 @@ def test_tiff_ovr_too_many_levels_contig():
     tmpfilename = '/vsimem/tiff_ovr_too_many_levels_contig.tif'
     ds = gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
-    if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 5
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
-    if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 5
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
 
@@ -2264,12 +2020,8 @@ def test_tiff_ovr_too_many_levels_separate():
     tmpfilename = '/vsimem/tiff_ovr_too_many_levels_separate.tif'
     ds = gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
-    if ds.GetRasterBand(1).GetOverviewCount() != 6:
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 6:
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 6
+    assert ds.GetRasterBand(1).GetOverviewCount() == 6
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
 
@@ -2285,11 +2037,9 @@ def test_tiff_ovr_too_many_levels_external():
     gdal.GetDriverByName('GTiff').CreateCopy(tmpfilename, src_ds)
     ds = gdal.Open(tmpfilename)
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
-    if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 5
     ds.BuildOverviews('AVERAGE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
-    if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 5
     ds = None
     gdal.GetDriverByName('GTiff').Delete(tmpfilename)
 
@@ -2316,9 +2066,7 @@ def test_tiff_ovr_average_multiband_vs_singleband():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_average_multiband_band.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_average_multiband_pixel.tif')
 
-    if cs_band != cs_pixel:
-        print(cs_band, cs_pixel)
-        return 'fail'
+    assert cs_band == cs_pixel
 
     return 'success'
 

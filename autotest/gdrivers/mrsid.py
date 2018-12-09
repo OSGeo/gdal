@@ -36,6 +36,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read a simple byte file, checking projections and geotransform.
@@ -121,9 +122,8 @@ def test_mrsid_1():
 
     if prj.find('North_American_Datum_1927') == -1 or \
        prj.find('Mercator_1SP') == -1:
-        gdaltest.post_reason('did not get expected projection')
         print(got_prj)
-        return 'fail'
+        pytest.fail('did not get expected projection')
 
     if got_prj != prj:
         print('Warning: did not get exactly expected projection. Got %s' % got_prj)
@@ -163,9 +163,7 @@ def test_mrsid_2():
 
     mean = float(total) / len(data)
 
-    if mean < 95 or mean > 105:
-        gdaltest.post_reason('image mean out of range.')
-        return 'fail'
+    assert mean >= 95 and mean <= 105, 'image mean out of range.'
 
     return 'success'
 
@@ -181,9 +179,7 @@ def test_mrsid_3():
     ds = gdal.Open('data/mercator.sid')
 
     band = ds.GetRasterBand(1)
-    if band.GetOverviewCount() != 4:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 4, 'did not get expected overview count'
 
     new_stat = band.GetOverview(3).GetStatistics(0, 1)
 
@@ -195,8 +191,7 @@ def test_mrsid_3():
             print('')
             print('old = ', check_stat)
             print('new = ', new_stat)
-            gdaltest.post_reason('Statistics differ.')
-            return 'fail'
+            pytest.fail('Statistics differ.')
 
     return 'success'
 
@@ -347,18 +342,11 @@ def test_mrsid_8():
 
     ds = gdal.Open('tmp/mercator.sid')
 
-    if new_srs != ds.GetProjectionRef():
-        print(ds.GetProjectionRef())
-        gdaltest.post_reason('SRS Override failed.')
-        return 'fail'
+    assert new_srs == ds.GetProjectionRef(), 'SRS Override failed.'
 
-    if new_gt != ds.GetGeoTransform():
-        gdaltest.post_reason('Geotransform Override failed.')
-        return 'fail'
+    assert new_gt == ds.GetGeoTransform(), 'Geotransform Override failed.'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 255:
-        gdaltest.post_reason('Nodata override failed.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255, 'Nodata override failed.'
 
     ds = None
 
@@ -384,8 +372,7 @@ def test_mrsid_9():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open('/vsimem/mrsid_9.sid')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     gdal.Unlink('/vsimem/mrsid_9.sid')
@@ -409,8 +396,7 @@ def test_mrsid_10():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open('/vsimem/mrsid_10.jp2')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     gdal.Unlink('/vsimem/mrsid_10.jp2')
@@ -428,15 +414,8 @@ def test_mrsid_11():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0] - 440720) > 0.1 \
-            or abs(geotransform[1] - 60) > 0.001 \
-            or abs(geotransform[2] - 0) > 0.001 \
-            or abs(geotransform[3] - 3751320) > 0.1 \
-            or abs(geotransform[4] - 0) > 0.001 \
-            or abs(geotransform[5] - -60) > 0.001:
-        print(geotransform)
-        gdaltest.post_reason('geotransform differs from expected')
-        return 'fail'
+    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+        'geotransform differs from expected'
 
     ds = None
 
@@ -561,8 +540,7 @@ def test_mrsid_online_4():
     if maxdiff > 1:
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     return 'success'
 

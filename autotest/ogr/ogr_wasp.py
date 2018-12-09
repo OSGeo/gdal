@@ -69,9 +69,7 @@ def test_ogr_wasp_elevation_from_linestring_z():
                                          ref,
                                          geom_type=ogr.wkbLineString25D)
 
-    if layer is None:
-        gdaltest.post_reason('unable to create layer')
-        return 'fail'
+    assert layer is not None, 'unable to create layer'
 
     dfn = ogr.FeatureDefn()
 
@@ -82,9 +80,7 @@ def test_ogr_wasp_elevation_from_linestring_z():
         line.AddPoint(i, 0.5, i)
         line.AddPoint(i, 1, i)
         feat.SetGeometry(line)
-        if layer.CreateFeature(feat) != 0:
-            gdaltest.post_reason('unable to create feature')
-            return 'fail'
+        assert layer.CreateFeature(feat) == 0, 'unable to create feature'
 
     del gdaltest.wasp_ds
     del layer
@@ -97,20 +93,14 @@ def test_ogr_wasp_elevation_from_linestring_z():
     for line in f:
         if not i % 2:
             [h, n] = line.split()
-            if int(n) != 3:
-                gdaltest.post_reason('number of points should be 3 and is %s' % n)
-                return 'fail'
+            assert int(n) == 3, ('number of points should be 3 and is %s' % n)
 
-            if float(h) != j:
-                gdaltest.post_reason('altitude should be %d and is %s' % (j, h))
-                return 'fail'
+            assert float(h) == j, ('altitude should be %d and is %s' % (j, h))
 
             j += 1
         i += 1
 
-    if j != 10:
-        gdaltest.post_reason('nb of feature should be 10 and is %d' % j)
-        return 'fail'
+    assert j == 10, ('nb of feature should be 10 and is %d' % j)
 
     return 'success'
 
@@ -134,9 +124,7 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
     if not ogrtest.have_geos():
         gdal.PopErrorHandler()
 
-    if layer is None:
-        gdaltest.post_reason('unable to create layer')
-        return 'fail'
+    assert layer is not None, 'unable to create layer'
 
     dfn = ogr.FeatureDefn()
 
@@ -147,9 +135,7 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
         line.AddPoint(i, 0.5, i)
         line.AddPoint(i, 1, i)
         feat.SetGeometry(line)
-        if layer.CreateFeature(feat) != 0:
-            gdaltest.post_reason('unable to create feature')
-            return 'fail'
+        assert layer.CreateFeature(feat) == 0, 'unable to create feature'
 
     del gdaltest.wasp_ds
     del layer
@@ -170,16 +156,12 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
                     gdaltest.post_reason('number of points should be 3 and is %s' % n)
                     return 'fail'
 
-            if float(h) != j:
-                gdaltest.post_reason('altitude should be %d and is %s' % (j, h))
-                return 'fail'
+            assert float(h) == j, ('altitude should be %d and is %s' % (j, h))
 
             j += 1
         i += 1
 
-    if j != 10:
-        gdaltest.post_reason('nb of feature should be 10 and is %d' % j)
-        return 'fail'
+    assert j == 10, ('nb of feature should be 10 and is %d' % j)
 
     return 'success'
 
@@ -195,9 +177,7 @@ def test_ogr_wasp_elevation_from_linestring_field():
                                          options=['WASP_FIELDS=elevation'],
                                          geom_type=ogr.wkbLineString)
 
-    if layer is None:
-        gdaltest.post_reason('unable to create layer')
-        return 'fail'
+    assert layer is not None, 'unable to create layer'
 
     layer.CreateField(ogr.FieldDefn('elevation', ogr.OFTReal))
 
@@ -209,9 +189,7 @@ def test_ogr_wasp_elevation_from_linestring_field():
         line.AddPoint(i, 0.5)
         line.AddPoint(i, 1)
         feat.SetGeometry(line)
-        if layer.CreateFeature(feat) != 0:
-            gdaltest.post_reason('unable to create feature')
-            return 'fail'
+        assert layer.CreateFeature(feat) == 0, 'unable to create feature'
 
     del gdaltest.wasp_ds
     del layer
@@ -224,13 +202,9 @@ def test_ogr_wasp_elevation_from_linestring_field():
     for line in f:
         if not i % 2:
             [h, n] = line.split()
-            if int(n) != 3:
-                gdaltest.post_reason('number of points should be 3 and is %s' % n)
-                return 'fail'
+            assert int(n) == 3, ('number of points should be 3 and is %s' % n)
 
-            if float(h) != j:
-                gdaltest.post_reason('altitude should be %d and is %s' % (j, h))
-                return 'fail'
+            assert float(h) == j, ('altitude should be %d and is %s' % (j, h))
 
             j += 1
         i += 1
@@ -249,9 +223,7 @@ def test_ogr_wasp_roughness_from_linestring_fields():
                                          options=['WASP_FIELDS=z_left,z_right'],
                                          geom_type=ogr.wkbLineString)
 
-    if layer is None:
-        gdaltest.post_reason('unable to create layer')
-        return 'fail'
+    assert layer is not None, 'unable to create layer'
 
     layer.CreateField(ogr.FieldDefn('dummy', ogr.OFTString))
     layer.CreateField(ogr.FieldDefn('z_left', ogr.OFTReal))
@@ -267,9 +239,7 @@ def test_ogr_wasp_roughness_from_linestring_fields():
         line.AddPoint(i, 0.5)
         line.AddPoint(i, 1)
         feat.SetGeometry(line)
-        if layer.CreateFeature(feat) != 0:
-            gdaltest.post_reason('unable to create feature %d' % i)
-            return 'fail'
+        assert layer.CreateFeature(feat) == 0, ('unable to create feature %d' % i)
 
     del gdaltest.wasp_ds
     del layer
@@ -282,20 +252,15 @@ def test_ogr_wasp_roughness_from_linestring_fields():
     for line in f:
         if not i % 2:
             [l, r, n] = line.split()
-            if int(n) != 3:
-                gdaltest.post_reason('number of points should be 3 and is %s' % n)
-                return 'fail'
+            assert int(n) == 3, ('number of points should be 3 and is %s' % n)
 
-            if float(r) != j or float(l) != j - 1:
-                gdaltest.post_reason('roughness should be %d and %d and is %s and %s' % (j - 1, j, l, r))
-                return 'fail'
+            assert float(r) == j and float(l) == j - 1, \
+                ('roughness should be %d and %d and is %s and %s' % (j - 1, j, l, r))
 
             j += 1
         i += 1
 
-    if j != 10:
-        gdaltest.post_reason('nb of feature should be 10 and is %d' % j)
-        return 'fail'
+    assert j == 10, ('nb of feature should be 10 and is %d' % j)
 
     return 'success'
 
@@ -315,9 +280,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
         gdal.PopErrorHandler()
 
     if layer is None:
-        if ogrtest.have_geos():
-            gdaltest.post_reason('unable to create layer')
-            return 'fail'
+        assert not ogrtest.have_geos(), 'unable to create layer'
         return 'success'
 
     dfn = ogr.FeatureDefn()
@@ -332,9 +295,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
         poly = ogr.Geometry(type=ogr.wkbPolygon25D)
         poly.AddGeometry(ring)
         feat.SetGeometry(poly)
-        if layer.CreateFeature(feat) != 0:
-            gdaltest.post_reason('unable to create feature')
-            return 'fail'
+        assert layer.CreateFeature(feat) == 0, 'unable to create feature'
 
     del gdaltest.wasp_ds
     del layer
@@ -348,9 +309,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
     for line in f:
         if not i % 2:
             [l, r, n] = [v for v in line.split()]
-            if int(n) != 2:
-                gdaltest.post_reason('number of points should be 2 and is %d' % int(n))
-                return 'fail'
+            assert int(n) == 2, ('number of points should be 2 and is %d' % int(n))
             if float(r) > float(l):
                 res.add((float(l), float(r)))
             else:
@@ -358,14 +317,10 @@ def test_ogr_wasp_roughness_from_polygon_z():
             j += 1
         i += 1
 
-    if j != 6:
-        gdaltest.post_reason('there should be 6 boundaries and there are %d' % j)
-        return 'fail'
+    assert j == 6, ('there should be 6 boundaries and there are %d' % j)
 
-    if res != set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]):
-        print(res)
-        gdaltest.post_reason('wrong values f=in boundaries')
-        return 'fail'
+    assert res == set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]), \
+        'wrong values f=in boundaries'
     return 'success'
 
 ###############################################################################
@@ -385,9 +340,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
         gdal.PopErrorHandler()
 
     if layer is None:
-        if ogrtest.have_geos():
-            gdaltest.post_reason('unable to create layer')
-            return 'fail'
+        assert not ogrtest.have_geos(), 'unable to create layer'
         return 'success'
 
     layer.CreateField(ogr.FieldDefn('roughness', ogr.OFTReal))
@@ -404,9 +357,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
         poly = ogr.Geometry(type=ogr.wkbPolygon)
         poly.AddGeometry(ring)
         feat.SetGeometry(poly)
-        if layer.CreateFeature(feat) != 0:
-            gdaltest.post_reason('unable to create feature')
-            return 'fail'
+        assert layer.CreateFeature(feat) == 0, 'unable to create feature'
 
     del gdaltest.wasp_ds
     del layer
@@ -420,9 +371,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
     for line in f:
         if not i % 2:
             [l, r, n] = [v for v in line.split()]
-            if int(n) != 2:
-                gdaltest.post_reason('number of points should be 2 and is %d' % int(n))
-                return 'fail'
+            assert int(n) == 2, ('number of points should be 2 and is %d' % int(n))
             if float(r) > float(l):
                 res.add((float(l), float(r)))
             else:
@@ -430,14 +379,10 @@ def test_ogr_wasp_roughness_from_polygon_field():
             j += 1
         i += 1
 
-    if j != 6:
-        gdaltest.post_reason('there should be 6 boundaries and there are %d' % j)
-        return 'fail'
+    assert j == 6, ('there should be 6 boundaries and there are %d' % j)
 
-    if res != set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]):
-        print(res)
-        gdaltest.post_reason('wrong values f=in boundaries')
-        return 'fail'
+    assert res == set([(0, 1), (0, 5), (1, 2), (2, 3), (3, 4), (4, 5)]), \
+        'wrong values f=in boundaries'
     return 'success'
 
 ###############################################################################
@@ -458,9 +403,7 @@ def test_ogr_wasp_merge():
         gdal.PopErrorHandler()
 
     if layer is None:
-        if ogrtest.have_geos():
-            gdaltest.post_reason('unable to create layer')
-            return 'fail'
+        assert not ogrtest.have_geos(), 'unable to create layer'
         return 'success'
 
     dfn = ogr.FeatureDefn()
@@ -476,9 +419,7 @@ def test_ogr_wasp_merge():
         poly = ogr.Geometry(type=ogr.wkbPolygon25D)
         poly.AddGeometry(ring)
         feat.SetGeometry(poly)
-        if layer.CreateFeature(feat) != 0:
-            gdaltest.post_reason('unable to create feature')
-            return 'fail'
+        assert layer.CreateFeature(feat) == 0, 'unable to create feature'
 
     del gdaltest.wasp_ds
     del layer
@@ -492,9 +433,8 @@ def test_ogr_wasp_merge():
     for line in f:
         if not i % 2:
             [l, r, n] = [v for v in line.split()]
-            if int(n) != 2:
-                gdaltest.post_reason('number of points should be 2 and is %d (unwanted merge ?)' % int(n))
-                return 'fail'
+            assert int(n) == 2, \
+                ('number of points should be 2 and is %d (unwanted merge ?)' % int(n))
             if float(r) > float(l):
                 res.append((float(l), float(r)))
             else:
@@ -502,14 +442,9 @@ def test_ogr_wasp_merge():
             j += 1
         i += 1
 
-    if j != 6:
-        gdaltest.post_reason('there should be 6 boundaries and there are %d' % j)
-        return 'fail'
+    assert j == 6, ('there should be 6 boundaries and there are %d' % j)
 
-    if res != [(0, 1)] * 6:
-        print(res)
-        gdaltest.post_reason('wrong values f=in boundaries')
-        return 'fail'
+    assert res == [(0, 1)] * 6, 'wrong values f=in boundaries'
     return 'success'
 ###############################################################################
 # Read map file
@@ -522,8 +457,7 @@ def test_ogr_wasp_reading():
 
     ds = ogr.Open('tmp.map')
 
-    if ds is None or ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds is not None and ds.GetLayerCount() == 1
 
     layer = ds.GetLayer(0)
     feat = layer.GetNextFeature()
@@ -533,8 +467,7 @@ def test_ogr_wasp_reading():
         feat = layer.GetNextFeature()
         i += 1
 
-    if i != 10:
-        return 'fail'
+    assert i == 10
     return 'success'
 ###############################################################################
 # Cleanup

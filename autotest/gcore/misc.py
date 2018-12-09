@@ -49,8 +49,7 @@ def test_misc_1():
     for i, _ in enumerate(tab_ds):
         name = 'mem_%d' % i
         tab_ds[i] = drv.Create(name, 1, 1, 1)
-        if tab_ds[i] is None:
-            return 'fail'
+        assert tab_ds[i] is not None
     return 'success'
 
 ###############################################################################
@@ -64,8 +63,7 @@ def test_misc_2():
     tab_ds = [None for i in range(5000)]
     for i, _ in enumerate(tab_ds):
         tab_ds[i] = gdal.OpenShared('data/byte.tif')
-        if tab_ds[i] is None:
-            return 'fail'
+        assert tab_ds[i] is not None
 
     return 'success'
 
@@ -454,9 +452,7 @@ def test_misc_7():
     res = gdal.InvGeoTransform(gt)
     expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
     for i in range(6):
-        if abs(res[i] - expected_inv_gt[i]) > 1e-6:
-            print(res)
-            return 'fail'
+        assert abs(res[i] - expected_inv_gt[i]) <= 1e-6
 
     return 'success'
 
@@ -473,8 +469,7 @@ def test_misc_8():
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.ApplyGeoTransform(gt, 10, 1)
-    if res != [11.0, 19.0]:
-        return 'fail'
+    assert res == [11.0, 19.0]
 
     return 'success'
 
@@ -489,10 +484,7 @@ def test_misc_9():
     ret_val = gdal.GetCacheMax()
     gdal.SetCacheMax(old_val)
 
-    if ret_val != 3000000000:
-        gdaltest.post_reason('did not get expected value')
-        print(ret_val)
-        return 'fail'
+    assert ret_val == 3000000000, 'did not get expected value'
 
     return 'success'
 
@@ -516,8 +508,7 @@ def test_misc_10():
 
     import struct
     ar = struct.unpack('B' * 4, data)
-    if ar != (73, 73, 42, 0):
-        return 'fail'
+    assert ar == (73, 73, 42, 0)
 
     try:
         os.remove('data/byte.tif.gz.properties')
@@ -548,10 +539,7 @@ def test_misc_11():
 
     os.remove('tmp/symlink.tif')
 
-    if desc != 'GTIFF_DIR:1:data/byte.tif':
-        gdaltest.post_reason('did not get expected description')
-        print(desc)
-        return 'fail'
+    assert desc == 'GTIFF_DIR:1:data/byte.tif', 'did not get expected description'
 
     return 'success'
 
@@ -635,16 +623,14 @@ def test_misc_13():
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('ESRI Shapefile').CreateCopy('/vsimem/out.shp', ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     # Raster-only -> vector-only
     ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     return 'success'
 
@@ -674,9 +660,7 @@ def test_misc_14():
     try:
         gdal.ConfigurePythonLogging(logger_name='gdal_logging_test', enable_debug=True)
 
-        if gdal.GetConfigOption("CPL_DEBUG") != "ON":
-            gdaltest.post_reason("should have enabled debug")
-            return 'fail'
+        assert gdal.GetConfigOption("CPL_DEBUG") == "ON", "should have enabled debug"
 
         gdal.Debug("test1", "debug1")
         gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
@@ -691,10 +675,7 @@ def test_misc_14():
             'ERROR': ["99999: error1"],
         }
 
-        if handler.messages != expected:
-            print(handler.messages)
-            gdaltest.post_reason("missing log messages")
-            return 'fail'
+        assert handler.messages == expected, "missing log messages"
 
         gdal.SetErrorHandler('CPLDefaultErrorHandler')
         handler.messages.clear()
@@ -702,18 +683,15 @@ def test_misc_14():
 
         gdal.ConfigurePythonLogging(logger_name='gdal_logging_test')
 
-        if gdal.GetConfigOption("CPL_DEBUG") != "OFF":
-            gdaltest.post_reason("shouldn't have enabled debug")
-            return 'fail'
+        assert gdal.GetConfigOption("CPL_DEBUG") == "OFF", \
+            "shouldn't have enabled debug"
 
         # these get suppressed by CPL_DEBUG
         gdal.Debug("test1", "debug3")
         # these don't
         gdal.Error(gdal.CE_Debug, gdal.CPLE_None, "debug4")
 
-        if handler.messages['DEBUG'] != ['debug4']:
-            gdaltest.post_reason("unexpected log messages")
-            return 'fail'
+        assert handler.messages['DEBUG'] == ['debug4'], "unexpected log messages"
 
     finally:
         gdal.SetErrorHandler('CPLDefaultErrorHandler')
@@ -753,9 +731,7 @@ def test_misc_15():
             (gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1"),
             (gdal.CE_Failure, 99999, "error1"),
         ]
-        if expected0 != messages0:
-            gdaltest.post_reason("SetErrorHandler: mismatched log messages")
-            return 'fail'
+        assert expected0 == messages0, "SetErrorHandler: mismatched log messages"
         messages0[:] = []
 
         # Check Push
@@ -766,12 +742,8 @@ def test_misc_15():
         gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
         gdal.Error(gdal.CE_Failure, 99999, "error1")
 
-        if len(messages0) != 0:
-            gdaltest.post_reason("PushErrorHandler: unexpected log messages")
-            return 'fail'
-        if len(messages1) != 4:
-            gdaltest.post_reason("PushErrorHandler: missing log messages")
-            return 'fail'
+        assert len(messages0) == 0, "PushErrorHandler: unexpected log messages"
+        assert len(messages1) == 4, "PushErrorHandler: missing log messages"
 
         # and pop restores original behaviour
         gdal.PopErrorHandler()
@@ -781,12 +753,8 @@ def test_misc_15():
         gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
         gdal.Error(gdal.CE_Failure, 99999, "error1")
 
-        if len(messages0) != 4:
-            gdaltest.post_reason("PopErrorHandler: missing log messages")
-            return 'fail'
-        if len(messages1) != 0:
-            gdaltest.post_reason("PopErrorHandler: unexpected log messages")
-            return 'fail'
+        assert len(messages0) == 4, "PopErrorHandler: missing log messages"
+        assert len(messages1) == 0, "PopErrorHandler: unexpected log messages"
 
     finally:
         gdal.SetErrorHandler('CPLDefaultErrorHandler')

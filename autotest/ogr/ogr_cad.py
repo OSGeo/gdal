@@ -63,70 +63,51 @@ def test_ogr_cad_2():
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/ellipse_r2000.dwg', allowed_drivers=['CAD'])
 
-    if gdaltest.cad_ds is None:
-        return 'fail'
+    assert gdaltest.cad_ds is not None
 
-    if gdaltest.cad_ds.GetLayerCount() != 1:
-        gdaltest.post_reason('expected exactly one layer.')
-        return 'fail'
+    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
     gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
 
-    if gdaltest.cad_layer.GetName() != '0':
-        gdaltest.post_reason('layer name is expected to be default = 0.')
-        return 'fail'
+    assert gdaltest.cad_layer.GetName() == '0', \
+        'layer name is expected to be default = 0.'
 
     defn = gdaltest.cad_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 5:
-        gdaltest.post_reason('did not get expected number of fields in defn. got %d'
+    assert defn.GetFieldCount() == 5, \
+        ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
-        return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
-    if fc != 1:
-        gdaltest.post_reason('did not get expected feature count, got %d' % fc)
-        return 'fail'
+    assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
     gdaltest.cad_layer.ResetReading()
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if feat is None:
-        gdaltest.post_reason('cad feature 0 get failed.')
-        return 'fail'
+    assert feat is not None, 'cad feature 0 get failed.'
 
-    if feat.cadgeom_type != 'CADEllipse':
-        gdaltest.post_reason('cad geometry type is wrong. Expected CADEllipse, got: %s'
+    assert feat.cadgeom_type == 'CADEllipse', \
+        ('cad geometry type is wrong. Expected CADEllipse, got: %s'
                              % feat.cadgeom_type)
-        return 'fail'
 
-    if feat.GetFID() != 0:
-        gdaltest.post_reason('did not get expected FID for feature 0.')
-        return 'fail'
+    assert feat.GetFID() == 0, 'did not get expected FID for feature 0.'
 
-    if feat.thickness != 0:
-        gdaltest.post_reason('did not get expected thickness. expected 0, got: %f'
+    assert feat.thickness == 0, ('did not get expected thickness. expected 0, got: %f'
                              % feat.thickness)
-        return 'fail'
 
-    if feat.extentity_data is not None:
-        gdaltest.post_reason('expected feature ExtendedEntityData to be null.')
-        return 'fail'
+    assert feat.extentity_data is None, \
+        'expected feature ExtendedEntityData to be null.'
 
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
+    assert feat.GetStyleString() == expected_style, \
+        ('got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
-        return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom is None:
-        gdaltest.post_reason('cad geometry is None.')
-        return 'fail'
+    assert geom is not None, 'cad geometry is None.'
 
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbLineString25D, \
+        'did not get expected geometry type.'
 
     gdaltest.cad_ds = None
     return 'success'
@@ -141,153 +122,121 @@ def test_ogr_cad_3():
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/triple_circles_r2000.dwg', allowed_drivers=['CAD'])
 
-    if gdaltest.cad_ds is None:
-        return 'fail'
+    assert gdaltest.cad_ds is not None
 
-    if gdaltest.cad_ds.GetLayerCount() != 3:
-        gdaltest.post_reason('expected 3 layers.')
-        return 'fail'
+    assert gdaltest.cad_ds.GetLayerCount() == 3, 'expected 3 layers.'
 
     # test first layer and circle
     gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
 
-    if gdaltest.cad_layer.GetName() != '0':
-        gdaltest.post_reason('layer name is expected to be default = 0.')
-        return 'fail'
+    assert gdaltest.cad_layer.GetName() == '0', \
+        'layer name is expected to be default = 0.'
 
     defn = gdaltest.cad_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 5:
-        gdaltest.post_reason('did not get expected number of fields in defn. got %d'
+    assert defn.GetFieldCount() == 5, \
+        ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
-        return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
-    if fc != 1:
-        gdaltest.post_reason('did not get expected feature count, got %d' % fc)
-        return 'fail'
+    assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
     gdaltest.cad_layer.ResetReading()
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if feat.cadgeom_type != 'CADCircle':
-        gdaltest.post_reason('cad geometry type is wrong. Expected CADCircle, got: %s'
+    assert feat.cadgeom_type == 'CADCircle', \
+        ('cad geometry type is wrong. Expected CADCircle, got: %s'
                              % feat.cadgeom_type)
-        return 'fail'
 
-    if feat.thickness != 1.2:
-        gdaltest.post_reason('did not get expected thickness. expected 1.2, got: %f'
+    assert feat.thickness == 1.2, \
+        ('did not get expected thickness. expected 1.2, got: %f'
                              % feat.thickness)
-        return 'fail'
 
-    if feat.extentity_data is not None:
-        gdaltest.post_reason('expected feature ExtendedEntityData to be null.')
-        return 'fail'
+    assert feat.extentity_data is None, \
+        'expected feature ExtendedEntityData to be null.'
 
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
-        return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbCircularStringZ:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbCircularStringZ, \
+        'did not get expected geometry type.'
 
     # test second layer and circle
     gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(1)
 
-    if gdaltest.cad_layer.GetName() != '1':
-        gdaltest.post_reason('layer name is expected to be 1.')
-        return 'fail'
+    assert gdaltest.cad_layer.GetName() == '1', 'layer name is expected to be 1.'
 
     defn = gdaltest.cad_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 5:
-        gdaltest.post_reason('did not get expected number of fields in defn. got %d'
+    assert defn.GetFieldCount() == 5, \
+        ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
-        return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
-    if fc != 1:
-        gdaltest.post_reason('did not get expected feature count, got %d' % fc)
-        return 'fail'
+    assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
     gdaltest.cad_layer.ResetReading()
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if feat.cadgeom_type != 'CADCircle':
-        gdaltest.post_reason('cad geometry type is wrong. Expected CADCircle, got: %s'
+    assert feat.cadgeom_type == 'CADCircle', \
+        ('cad geometry type is wrong. Expected CADCircle, got: %s'
                              % feat.cadgeom_type)
-        return 'fail'
 
-    if feat.thickness != 0.8:
-        gdaltest.post_reason('did not get expected thickness. expected 0.8, got: %f'
+    assert feat.thickness == 0.8, \
+        ('did not get expected thickness. expected 0.8, got: %f'
                              % feat.thickness)
-        return 'fail'
 
-    if feat.extentity_data is not None:
-        gdaltest.post_reason('expected feature ExtendedEntityData to be null.')
-        return 'fail'
+    assert feat.extentity_data is None, \
+        'expected feature ExtendedEntityData to be null.'
 
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
-        return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbCircularStringZ:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbCircularStringZ, \
+        'did not get expected geometry type.'
 
     # test third layer and circle
     gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(2)
 
-    if gdaltest.cad_layer.GetName() != '2':
-        gdaltest.post_reason('layer name is expected to be 2.')
-        return 'fail'
+    assert gdaltest.cad_layer.GetName() == '2', 'layer name is expected to be 2.'
 
     defn = gdaltest.cad_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 5:
-        gdaltest.post_reason('did not get expected number of fields in defn. got %d'
+    assert defn.GetFieldCount() == 5, \
+        ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
-        return 'fail'
 
     fc = gdaltest.cad_layer.GetFeatureCount()
-    if fc != 1:
-        gdaltest.post_reason('did not get expected feature count, got %d' % fc)
-        return 'fail'
+    assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
     gdaltest.cad_layer.ResetReading()
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if feat.cadgeom_type != 'CADCircle':
-        gdaltest.post_reason('cad geometry type is wrong. Expected CADCircle, got: %s'
+    assert feat.cadgeom_type == 'CADCircle', \
+        ('cad geometry type is wrong. Expected CADCircle, got: %s'
                              % feat.cadgeom_type)
-        return 'fail'
 
-    if feat.thickness != 1.8:
-        gdaltest.post_reason('did not get expected thickness. expected 1.8, got: %f'
+    assert feat.thickness == 1.8, \
+        ('did not get expected thickness. expected 1.8, got: %f'
                              % feat.thickness)
-        return 'fail'
 
-    if feat.extentity_data is not None:
-        gdaltest.post_reason('expected feature ExtendedEntityData to be null.')
-        return 'fail'
+    assert feat.extentity_data is None, \
+        'expected feature ExtendedEntityData to be null.'
 
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
-        return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbCircularStringZ:
-        gdaltest.post_reason('did not get expected geometry type.')
-        return 'fail'
+    assert geom.GetGeometryType() == ogr.wkbCircularStringZ, \
+        'did not get expected geometry type.'
 
     gdaltest.cad_ds = None
     return 'success'
@@ -302,21 +251,16 @@ def test_ogr_cad_4():
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/point2d_r2000.dwg', allowed_drivers=['CAD'])
 
-    if gdaltest.cad_ds.GetLayerCount() != 1:
-        gdaltest.post_reason('expected exactly one layer.')
-        return 'fail'
+    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
     gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
 
-    if gdaltest.cad_layer.GetFeatureCount() != 1:
-        gdaltest.post_reason('expected exactly one feature.')
-        return 'fail'
+    assert gdaltest.cad_layer.GetFeatureCount() == 1, 'expected exactly one feature.'
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (50 50 0)'):
-        gdaltest.post_reason('got feature which does not fit expectations.')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (50 50 0)'), \
+        'got feature which does not fit expectations.'
 
     gdaltest.cad_ds = None
     return 'success'
@@ -331,21 +275,16 @@ def test_ogr_cad_5():
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/line_r2000.dwg', allowed_drivers=['CAD'])
 
-    if gdaltest.cad_ds.GetLayerCount() != 1:
-        gdaltest.post_reason('expected exactly one layer.')
-        return 'fail'
+    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
     gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
 
-    if gdaltest.cad_layer.GetFeatureCount() != 1:
-        gdaltest.post_reason('expected exactly one feature.')
-        return 'fail'
+    assert gdaltest.cad_layer.GetFeatureCount() == 1, 'expected exactly one feature.'
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (50 50 0,100 100 0)'):
-        gdaltest.post_reason('got feature which does not fit expectations.')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (50 50 0,100 100 0)'), \
+        'got feature which does not fit expectations.'
 
     gdaltest.cad_ds = None
     return 'success'
@@ -361,21 +300,16 @@ def test_ogr_cad_6():
 
     gdaltest.cad_ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers=['CAD'])
 
-    if gdaltest.cad_ds.GetLayerCount() != 1:
-        gdaltest.post_reason('expected exactly one layer.')
-        return 'fail'
+    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
     gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
 
-    if gdaltest.cad_layer.GetFeatureCount() != 3:
-        gdaltest.post_reason('expected 3 features, got: %d'
+    assert gdaltest.cad_layer.GetFeatureCount() == 3, ('expected 3 features, got: %d'
                              % gdaltest.cad_layer.GetFeatureCount())
-        return 'fail'
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT(0.7413 1.7794 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT(0.7413 1.7794 0)')
 
     expected_style = 'LABEL(f:"Arial",t:"Русские буквы",c:#FFFFFFFF)'
     if feat.GetStyleString() != expected_style:
@@ -395,14 +329,12 @@ def test_ogr_cad_7():
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT(2.8139 5.7963 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT(2.8139 5.7963 0)')
 
     expected_style = 'LABEL(f:"Arial",t:"English letters",c:#FFFFFFFF)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
-        return 'fail'
 
     return 'success'
 
@@ -416,14 +348,12 @@ def test_ogr_cad_8():
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT(4.98953601938918 2.62670161690571 0)'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT(4.98953601938918 2.62670161690571 0)')
 
     expected_style = 'LABEL(f:"Arial",t:"TESTTAG",c:#FFFFFFFF)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason('Got unexpected style string:\n%s\ninstead of:\n%s.'
+    assert feat.GetStyleString() == expected_style, \
+        ('Got unexpected style string:\n%s\ninstead of:\n%s.'
                              % (feat.GetStyleString(), expected_style))
-        return 'fail'
 
     return 'success'
 
@@ -437,11 +367,9 @@ def test_ogr_cad_9():
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('data/AC1018_signature.dwg', allowed_drivers=['CAD'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     msg = gdal.GetLastErrorMsg()
-    if msg.find('does not support this version') < 0:
-        return 'fail'
+    assert msg.find('does not support this version') >= 0
 
     return 'success'
 

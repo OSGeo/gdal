@@ -156,10 +156,7 @@ def test_jp2kak_10():
     for x in range(8):
         got.append((ord(data[x * 100]), ord(data[80000 + x * 100])))
 
-    if got != expected:
-        print(got)
-        gdaltest.post_reason('did not get expected values.')
-        return 'fail'
+    assert got == expected, 'did not get expected values.'
 
     return 'success'
 
@@ -175,9 +172,7 @@ def test_jp2kak_11():
 
     ds = gdal.Open('data/gtsmall_11_int16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs not in (63475, 63472, 63452, 63471):
-        print(cs)
-        return 'fail'
+    assert cs in (63475, 63472, 63452, 63471)
     return 'success'
 
 ###############################################################################
@@ -192,9 +187,7 @@ def test_jp2kak_12():
 
     ds = gdal.Open('data/gtsmall_10_uint16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 63360 and cs != 63357 and cs != 63358:
-        print(cs)
-        return 'fail'
+    assert cs == 63360 or cs == 63357 or cs == 63358
     return 'success'
 
 
@@ -212,23 +205,18 @@ def test_jp2kak_13():
     src_ds = None
 
     jp2_band = jp2_ds.GetRasterBand(1)
-    if jp2_band.GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected number of overviews on jp2')
-        return 'fail'
+    assert jp2_band.GetOverviewCount() == 1, \
+        'did not get expected number of overviews on jp2'
 
     ov_band = jp2_band.GetOverview(0)
-    if ov_band.XSize != 250 or ov_band.YSize != 4:
-        gdaltest.post_reason('did not get expected overview size.')
-        return 'fail'
+    assert ov_band.XSize == 250 and ov_band.YSize == 4, \
+        'did not get expected overview size.'
 
     # Note, due to oddities of rounding related to identifying discard
     # levels the overview is actually generated with no discard levels
     # and in the debug output we see 500x7 -> 500x7 -> 250x4.
     checksum = ov_band.Checksum()
-    if checksum not in (11776, 11736, 11801):
-        print(checksum)
-        gdaltest.post_reason('did not get expected overview checksum')
-        return 'fail'
+    assert checksum in (11776, 11736, 11801), 'did not get expected overview checksum'
 
     return 'success'
 
@@ -247,31 +235,22 @@ def test_jp2kak_14():
     jp2_ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
 
     jp2_band = jp2_ds.GetRasterBand(1)
-    if jp2_band.GetOverviewCount() != 2:
-        gdaltest.post_reason('did not get expected number of overviews on jp2')
-        return 'fail'
+    assert jp2_band.GetOverviewCount() == 2, \
+        'did not get expected number of overviews on jp2'
 
     ov_band = jp2_band.GetOverview(0)
-    if ov_band.XSize != 250 or ov_band.YSize != 4:
-        gdaltest.post_reason('did not get expected overview size.')
-        return 'fail'
+    assert ov_band.XSize == 250 and ov_band.YSize == 4, \
+        'did not get expected overview size.'
 
     checksum = ov_band.Checksum()
-    if checksum not in (12288, 12272, 12224):
-        print(checksum)
-        gdaltest.post_reason('did not get expected overview checksum')
-        return 'fail'
+    assert checksum in (12288, 12272, 12224), 'did not get expected overview checksum'
 
     ov_band = jp2_band.GetOverview(1)
-    if ov_band.XSize != 125 or ov_band.YSize != 2:
-        gdaltest.post_reason('did not get expected overview size. (2)')
-        return 'fail'
+    assert ov_band.XSize == 125 and ov_band.YSize == 2, \
+        'did not get expected overview size. (2)'
 
     checksum = ov_band.Checksum()
-    if checksum not in (2957, 2980, 2990):
-        print(checksum)
-        gdaltest.post_reason('did not get expected overview checksum (2)')
-        return 'fail'
+    assert checksum in (2957, 2980, 2990), 'did not get expected overview checksum (2)'
 
     jp2_ds = None
     gdaltest.jp2kak_drv.Delete('tmp/jp2kak_13.jp2')
@@ -292,10 +271,9 @@ def test_jp2kak_15():
 
     md = jp2_ds.GetMetadata()
 
-    if (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' or
-            md['TIFFTAG_XRESOLUTION'] != '200.012'):
-        gdaltest.post_reason('did not get expected resolution metadata')
-        return 'fail'
+    assert (not (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' or
+            md['TIFFTAG_XRESOLUTION'] != '200.012')), \
+        'did not get expected resolution metadata'
 
     jp2_ds = None
 
@@ -319,10 +297,9 @@ def test_jp2kak_16():
     jp2_ds = gdal.Open('tmp/jp2kak_16.jp2')
     md = jp2_ds.GetMetadata()
 
-    if (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' or
-            md['TIFFTAG_XRESOLUTION'] != '200.012'):
-        gdaltest.post_reason('did not get expected resolution metadata')
-        return 'fail'
+    assert (not (md['TIFFTAG_RESOLUTIONUNIT'] != '3 (pixels/cm)' or
+            md['TIFFTAG_XRESOLUTION'] != '200.012')), \
+        'did not get expected resolution metadata'
 
     jp2_ds = None
 
@@ -408,12 +385,9 @@ def test_jp2kak_20():
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        return 'fail'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
-    if got_cs != 8527:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     # jp2_fourth_band_data = fourth_band.ReadRaster(
     #     0, 0, ds.RasterXSize, ds.RasterYSize)
@@ -432,12 +406,9 @@ def test_jp2kak_20():
     #     ds.RasterXSize/16, ds.RasterYSize/16)
     tmp_ds = None
     tiff_drv.Delete('/vsimem/jp2kak_20.tif')
-    if got_cs != 8527:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
 
-    if jp2_bands_data != gtiff_bands_data:
-        return 'fail'
+    assert jp2_bands_data == gtiff_bands_data
 
     # if jp2_fourth_band_data != gtiff_fourth_band_data:
     #    gdaltest.post_reason('fail')
@@ -446,8 +417,7 @@ def test_jp2kak_20():
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2',
                      open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        return 'fail'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
     return 'success'
 
@@ -481,10 +451,7 @@ def test_jp2kak_21():
     ref_cs = mem_ds.GetRasterBand(1).Checksum()
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
     cs = mem_ds.GetRasterBand(1).Checksum()
-    if cs != ref_cs:
-        print(cs)
-        print(ref_cs)
-        return 'fail'
+    assert cs == ref_cs
 
     return 'success'
 
@@ -503,14 +470,9 @@ def test_jp2kak_22():
     for i in range(4):
         ref_cs = src_ds.GetRasterBand(1).Checksum()
         cs = ds.GetRasterBand(1).Checksum()
-        if ref_cs != cs:
-            print(i)
-            print(cs)
-            print(ref_cs)
-            return 'fail'
-        if src_ds.GetRasterBand(1).GetColorInterpretation() != ds.GetRasterBand(1).GetColorInterpretation():
-            print(i)
-            return 'fail'
+        assert ref_cs == cs, i
+        assert src_ds.GetRasterBand(1).GetColorInterpretation() == ds.GetRasterBand(1).GetColorInterpretation(), \
+            i
     ds = None
 
     gdal.Unlink('/vsimem/jp2kak_22.jp2')

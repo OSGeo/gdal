@@ -98,9 +98,7 @@ def test_ogr_index_2():
     for i in range(20):
         ogrtest.quick_create_feature(gdaltest.s_lyr, [i, 'Value ' + str(i)], None)
 
-    if gdaltest.s_lyr.GetFeatureCount() != 20:
-        gdaltest.post_reason('FeatureCount wrong')
-        return 'fail'
+    assert gdaltest.s_lyr.GetFeatureCount() == 20, 'FeatureCount wrong'
 
     gdaltest.s_ds.Release()
     gdaltest.s_lyr = None
@@ -223,8 +221,7 @@ def test_ogr_index_9():
     expect = ['Value 5']
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'VALUE', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     gdaltest.s_ds.Release()
 
@@ -253,10 +250,7 @@ def test_ogr_index_9():
     f = open('join_t.idm', 'rt')
     xml = f.read()
     f.close()
-    if xml.find('VALUE') == -1:
-        gdaltest.post_reason('VALUE column is not indexed (1)')
-        print(xml)
-        return 'fail'
+    assert xml.find('VALUE') != -1, 'VALUE column is not indexed (1)'
 
     # Close the dataset and re-open
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
@@ -269,14 +263,8 @@ def test_ogr_index_9():
     f = open('join_t.idm', 'rt')
     xml = f.read()
     f.close()
-    if xml.find('VALUE') == -1:
-        gdaltest.post_reason('VALUE column is not indexed (2)')
-        print(xml)
-        return 'fail'
-    if xml.find('SKEY') == -1:
-        gdaltest.post_reason('SKEY column is not indexed (2)')
-        print(xml)
-        return 'fail'
+    assert xml.find('VALUE') != -1, 'VALUE column is not indexed (2)'
+    assert xml.find('SKEY') != -1, 'SKEY column is not indexed (2)'
 
     return 'success'
 
@@ -303,104 +291,87 @@ def test_ogr_index_10():
     lyr.SetAttributeFilter('intfield IN (1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield = 1')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield IN (2)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter('intfield IN (1.0)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield = 1.0')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield IN (1.1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter("intfield IN ('1')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield IN (1.0)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield = 1.0')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield IN (1.1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter('realfield IN (1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield = 1')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield IN (2)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter("realfield IN ('1')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter("strfield IN ('foo')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter("strfield = 'foo'")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter("strfield IN ('bar')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     ds = None
 
@@ -415,10 +386,8 @@ def ogr_index_11_check(lyr, expected_fids):
     lyr.ResetReading()
     for expected_fid in expected_fids:
         feat = lyr.GetNextFeature()
-        if feat is None:
-            return 'fail'
-        if feat.GetFID() != expected_fid:
-            return 'fail'
+        assert feat is not None
+        assert feat.GetFID() == expected_fid
 
     return 'success'
 

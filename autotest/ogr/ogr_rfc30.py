@@ -46,13 +46,9 @@ def ogr_rfc30_1_internal(filename, layer_name):
     ds = None
 
     ds = ogr.Open(filename)
-    if ds is None:
-        gdaltest.post_reason('cannot reopen datasource')
-        return 'fail'
+    assert ds is not None, 'cannot reopen datasource'
     lyr = ds.GetLayerByName(layer_name)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)

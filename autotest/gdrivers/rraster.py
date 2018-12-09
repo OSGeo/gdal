@@ -54,11 +54,8 @@ def test_rraster_1(filename='data/byte_rraster.grd', check_prj=None):
 
     ds = gdal.Open(filename)
     md = ds.GetMetadata()
-    if md != {'CREATOR': "R package 'raster'", 'CREATED': '2016-06-25 17:32:47'}:
-        print(md)
-        return 'fail'
-    if ds.GetRasterBand(1).GetDescription() != 'byte':
-        return 'fail'
+    assert md == {'CREATOR': "R package 'raster'", 'CREATED': '2016-06-25 17:32:47'}
+    assert ds.GetRasterBand(1).GetDescription() == 'byte'
     return 'success'
 
 ###############################################################################
@@ -68,9 +65,7 @@ def test_rraster_1_copy():
 
     filename = '/vsimem/byte_rraster.grd'
     gdal.Translate(filename, 'data/byte_rraster.grd', format='RRASTER')
-    if gdal.VSIStatL(filename + '.aux.xml'):
-        gdaltest.post_reason('did not expect .aux.xml')
-        return 'fail'
+    assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=utm +zone=11 +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat +units=m +no_defs')
     ret = test_rraster_1(filename, check_prj=sr.ExportToWkt())
@@ -143,8 +138,7 @@ def test_rraster_rgba(filename='data/rgba_rraster.grd'):
                    'colorInterpretation': 'Alpha',
                    'description': 'alpha'}]
     }
-    if not _is_dict_included_in_dict(info, expected_info):
-        return 'fail'
+    assert _is_dict_included_in_dict(info, expected_info)
 
     return 'success'
 
@@ -158,9 +152,7 @@ def test_rraster_rgba_copy():
     for creationOptions in [[], ['INTERLEAVE=BIP'], ['INTERLEAVE=BIL'], ['INTERLEAVE=BSQ']]:
         gdal.Translate(filename, 'data/rgba_rraster.grd', format='RRASTER',
                        creationOptions=creationOptions)
-        if gdal.VSIStatL(filename + '.aux.xml'):
-            gdaltest.post_reason('did not expect .aux.xml')
-            return 'fail'
+        assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
         ret = test_rraster_rgba(filename)
         gdal.GetDriverByName('RRASTER').Delete(filename)
         if ret != 'success':
@@ -185,8 +177,7 @@ def test_rraster_ct_rgb(filename='data/byte_rraster_ct_rgb.grd'):
                                   'palette': 'RGB'},
                    'type': 'Byte'}]
     }
-    if not _is_dict_included_in_dict(info, expected_info):
-        return 'fail'
+    assert _is_dict_included_in_dict(info, expected_info)
 
     return 'success'
 
@@ -197,9 +188,7 @@ def test_rraster_ct_rgb_copy():
 
     filename = '/vsimem/byte_rraster_ct_rgb.grd'
     gdal.Translate(filename, 'data/byte_rraster_ct_rgb.grd', format='RRASTER')
-    if gdal.VSIStatL(filename + '.aux.xml'):
-        gdaltest.post_reason('did not expect .aux.xml')
-        return 'fail'
+    assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     ret = test_rraster_ct_rgb(filename)
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
@@ -221,8 +210,7 @@ def test_rraster_ct_rgba(filename='data/byte_rraster_ct_rgba.grd'):
                                   'palette': 'RGB'},
                    'type': 'Byte'}]
     }
-    if not _is_dict_included_in_dict(info, expected_info):
-        return 'fail'
+    assert _is_dict_included_in_dict(info, expected_info)
 
     return 'success'
 
@@ -233,9 +221,7 @@ def test_rraster_ct_rgba_copy():
 
     filename = '/vsimem/byte_rraster_ct_rgba.grd'
     gdal.Translate(filename, 'data/byte_rraster_ct_rgba.grd', format='RRASTER')
-    if gdal.VSIStatL(filename + '.aux.xml'):
-        gdaltest.post_reason('did not expect .aux.xml')
-        return 'fail'
+    assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     ret = test_rraster_ct_rgba(filename)
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
@@ -317,8 +303,7 @@ def test_rraster_rat(filename='data/byte_rraster_rat.grd'):
                                'baw'],
                          'index': 1}]}
     }
-    if not _is_dict_included_in_dict(info, expected_info):
-        return 'fail'
+    assert _is_dict_included_in_dict(info, expected_info)
 
     return 'success'
 
@@ -329,9 +314,7 @@ def test_rraster_rat_copy():
 
     filename = '/vsimem/byte_rraster_rat.grd'
     gdal.Translate(filename, 'data/byte_rraster_rat.grd', format='RRASTER')
-    if gdal.VSIStatL(filename + '.aux.xml'):
-        gdaltest.post_reason('did not expect .aux.xml')
-        return 'fail'
+    assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     ret = test_rraster_rat(filename)
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
@@ -349,10 +332,8 @@ def test_rraster_signedbyte():
     gdal.Translate(filename2, filename, format='RRASTER')
 
     ds = gdal.Open(filename2)
-    if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
-        return 'fail'
-    if ds.GetRasterBand(1).GetMinimum() != -124:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
+    assert ds.GetRasterBand(1).GetMinimum() == -124
     ds = None
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
@@ -376,12 +357,10 @@ def test_rraster_datatypes():
         src_ds = gdal.Open(srcfilename)
         gdal.Translate(filename, src_ds, format='RRASTER')
         ds = gdal.Open(filename)
-        if ds.GetRasterBand(1).DataType != src_ds.GetRasterBand(1).DataType:
-            print(srcfilename)
-            return 'fail'
-        if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-            print(srcfilename)
-            return 'fail'
+        assert ds.GetRasterBand(1).DataType == src_ds.GetRasterBand(1).DataType, \
+            srcfilename
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum(), \
+            srcfilename
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
 
@@ -401,10 +380,8 @@ def test_rraster_nodata_and_metadata():
     ds.SetMetadataItem('CREATED', 'Today')
     ds = None
     ds = gdal.Open(filename)
-    if ds.GetMetadata() != {'CREATOR': 'GDAL', 'CREATED': 'Today'}:
-        return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != 1:
-        return 'fail'
+    assert ds.GetMetadata() == {'CREATOR': 'GDAL', 'CREATED': 'Today'}
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1
     ds = None
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
@@ -420,13 +397,11 @@ def test_rraster_update():
     gdal.Translate(filename, 'data/byte_rraster.grd', format='RRASTER')
     gdal.Open(filename, gdal.GA_Update)
     ds = gdal.Open(filename, gdal.GA_Update)
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds.GetRasterBand(1).Fill(0)
     ds = None
     ds = gdal.Open(filename)
-    if ds.GetRasterBand(1).Checksum() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0
     ds = None
 
     gdal.GetDriverByName('RRASTER').Delete(filename)
@@ -446,14 +421,10 @@ def test_rraster_colorinterpretation():
     ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
     ds = None
     ds = gdal.Open(filename)
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        return 'fail'
-    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        return 'fail'
-    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        return 'fail'
-    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
     ds = None
 
     gdal.GetDriverByName('RRASTER').Delete(filename)

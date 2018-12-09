@@ -49,9 +49,7 @@ def test_ogr_svg_init():
     if not gdaltest.have_svg:
         return 'skip'
 
-    if gdaltest.svg_ds.GetLayerCount() != 3:
-        gdaltest.post_reason('wrong number of layers')
-        return 'fail'
+    assert gdaltest.svg_ds.GetLayerCount() == 3, 'wrong number of layers'
 
     return 'success'
 
@@ -63,13 +61,10 @@ def test_ogr_svg_1():
     if not gdaltest.have_svg:
         return 'skip'
 
-    if gdaltest.svg_ds is None:
-        return 'fail'
+    assert gdaltest.svg_ds is not None
 
     lyr = gdaltest.svg_ds.GetLayerByName('points')
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('wrong number of features')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1, 'wrong number of features'
 
     feat = lyr.GetNextFeature()
 
@@ -83,9 +78,7 @@ def test_ogr_svg_1():
         return 'fail'
 
     lyr = gdaltest.svg_ds.GetLayerByName('lines')
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('wrong number of features')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1, 'wrong number of features'
 
     feat = lyr.GetNextFeature()
 
@@ -95,9 +88,7 @@ def test_ogr_svg_1():
         return 'fail'
 
     lyr = gdaltest.svg_ds.GetLayerByName('polygons')
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('wrong number of features')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1, 'wrong number of features'
 
     feat = lyr.GetNextFeature()
 

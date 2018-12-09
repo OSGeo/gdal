@@ -89,21 +89,14 @@ def test_virtualmem_1():
             for y in range(reqysize):
                 for x in range(reqxsize):
                     for band in range(3):
-                        if ar_tip[tiley][tilex][y][x][band] != ar[band][tiley * tileysize + y][tilex * tilexsize + x]:
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_flat_bsq[band][tiley * tileysize + y][tilex * tilexsize + x]:
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][band]:
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_bsq[band][tiley][tilex][y][x]:
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_bit[tiley][tilex][band][y][x]:
-                            return 'fail'
+                        assert ar_tip[tiley][tilex][y][x][band] == ar[band][tiley * tileysize + y][tilex * tilexsize + x]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_flat_bsq[band][tiley * tileysize + y][tilex * tilexsize + x]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][band]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_bsq[band][tiley][tilex][y][x]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_bit[tiley][tilex][band][y][x]
                         if band == 0:
-                            if ar_flat_band1[tiley * tileysize + y][tilex * tilexsize + x] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]:
-                                return 'fail'
-                            if ar_tiled_band1[tiley][tilex][y][x] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]:
-                                return 'fail'
+                            assert ar_flat_band1[tiley * tileysize + y][tilex * tilexsize + x] == ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]
+                            assert ar_tiled_band1[tiley][tilex][y][x] == ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]
 
     # We need to destroy the array before dataset destruction
     ar_flat_band1 = None
@@ -142,9 +135,7 @@ def test_virtualmem_2():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 57182:
-        print(cs)
-        return 'fail'
+    assert cs == 57182
 
     return 'success'
 
@@ -184,10 +175,8 @@ def test_virtualmem_3():
         ar_255 = gdalnumeric.empty(ds.RasterXSize)
         ar_255.fill(255)
         for y in range(ds.RasterYSize):
-            if not gdalnumeric.array_equal(ar1[y], ar_127):
-                return 'fail'
-            if not gdalnumeric.array_equal(ar2[y], ar_255):
-                return 'fail'
+            assert gdalnumeric.array_equal(ar1[y], ar_127)
+            assert gdalnumeric.array_equal(ar2[y], ar_255)
         # We need to destroy the array before dataset destruction
         ar1 = None
         ar2 = None
@@ -236,9 +225,7 @@ def test_virtualmem_4():
         ar1_bis = None
         ar2 = None
         ds = None
-        if val != 127:
-            print(val)
-            return 'fail'
+        assert val == 127
 
         ds = gdal.Open(tmpfile)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Read)

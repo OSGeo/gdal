@@ -37,6 +37,7 @@ from osgeo import gdal
 from osgeo import ogr
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Test with -a and -i options
@@ -102,24 +103,18 @@ def test_contour_1():
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
 
-    if lyr.GetFeatureCount() != len(expected_envelopes):
-        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes)))
-        return 'fail'
+    assert lyr.GetFeatureCount() == len(expected_envelopes)
 
     i = 0
     feat = lyr.GetNextFeature()
     while feat is not None:
         envelope = feat.GetGeometryRef().GetEnvelope()
-        if feat.GetField('elev') != expected_height[i]:
-            print('Got %f. Expected %f' % (feat.GetField('elev'), expected_height[i]))
-            return 'fail'
+        assert feat.GetField('elev') == expected_height[i]
         for j in range(4):
             if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
-                print(expected_envelopes[i])
-                print('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
-                return 'fail'
+                pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
         i = i + 1
         feat = lyr.GetNextFeature()
 
@@ -168,27 +163,19 @@ def test_contour_2():
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
 
-    if lyr.GetFeatureCount() != len(expected_envelopes):
-        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes)))
-        return 'fail'
+    assert lyr.GetFeatureCount() == len(expected_envelopes)
 
     i = 0
     feat = lyr.GetNextFeature()
     while feat is not None:
-        if feat.GetGeometryRef().GetZ(0) != expected_height[i]:
-            print('Got %f as z. Expected %f' % (feat.GetGeometryRef().GetZ(0), expected_height[i]))
-            return 'fail'
+        assert feat.GetGeometryRef().GetZ(0) == expected_height[i]
         envelope = feat.GetGeometryRef().GetEnvelope()
-        if feat.GetField('elev') != expected_height[i]:
-            print('Got %f. Expected %f' % (feat.GetField('elev'), expected_height[i]))
-            return 'fail'
+        assert feat.GetField('elev') == expected_height[i]
         for j in range(4):
             if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
-                print(expected_envelopes[i])
-                print('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
-                return 'fail'
+                pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
         i = i + 1
         feat = lyr.GetNextFeature()
 
@@ -215,11 +202,9 @@ def test_contour_real_world_case():
     ds = None
 
     ogr_lyr.SetAttributeFilter('elev = 330')
-    if ogr_lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert ogr_lyr.GetFeatureCount() == 1
     f = ogr_lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'LINESTRING (4.50497512437811 11.5,4.5 11.501996007984,3.5 11.8333333333333,2.5 11.5049751243781,2.490099009901 11.5,2.0 10.5,2.5 10.1666666666667,3.0 9.5,3.5 9.21428571428571,4.49800399201597 8.5,4.5 8.49857346647646,5.5 8.16666666666667,6.5 8.0,7.5 8.0,8.0 7.5,8.5 7.0,9.490099009901 6.5,9.5 6.49667774086379,10.5 6.16666666666667,11.4950248756219 5.5,11.5 5.49833610648919,12.5 5.49667774086379,13.5 5.49800399201597,13.501996007984 5.5,13.5 5.50199600798403,12.501996007984 6.5,12.5 6.50142653352354,11.5 6.509900990099,10.509900990099 7.5,10.5 7.50142653352354,9.5 7.9,8.50332225913621 8.5,8.5 8.50249376558603,7.83333333333333 9.5,7.5 10.0,7.0 10.5,6.5 10.7857142857143,5.5 11.1666666666667,4.50497512437811 11.5)', 0.01) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(f, 'LINESTRING (4.50497512437811 11.5,4.5 11.501996007984,3.5 11.8333333333333,2.5 11.5049751243781,2.490099009901 11.5,2.0 10.5,2.5 10.1666666666667,3.0 9.5,3.5 9.21428571428571,4.49800399201597 8.5,4.5 8.49857346647646,5.5 8.16666666666667,6.5 8.0,7.5 8.0,8.0 7.5,8.5 7.0,9.490099009901 6.5,9.5 6.49667774086379,10.5 6.16666666666667,11.4950248756219 5.5,11.5 5.49833610648919,12.5 5.49667774086379,13.5 5.49800399201597,13.501996007984 5.5,13.5 5.50199600798403,12.501996007984 6.5,12.5 6.50142653352354,11.5 6.509900990099,10.509900990099 7.5,10.5 7.50142653352354,9.5 7.9,8.50332225913621 8.5,8.5 8.50249376558603,7.83333333333333 9.5,7.5 10.0,7.0 10.5,6.5 10.7857142857143,5.5 11.1666666666667,4.50497512437811 11.5)', 0.01) == 0
     return 'success'
 
 # Test with -p option (polygonize)
@@ -268,9 +253,7 @@ def test_contour_3():
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elevMin asc")
 
-    if lyr.GetFeatureCount() != len(expected_envelopes):
-        print('Got %d features. Expected %d' % (lyr.GetFeatureCount(), len(expected_envelopes)))
-        return 'fail'
+    assert lyr.GetFeatureCount() == len(expected_envelopes)
 
     i = 0
     feat = lyr.GetNextFeature()
@@ -287,9 +270,7 @@ def test_contour_3():
             if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
-                print(expected_envelopes[i])
-                print('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
-                return 'fail'
+                pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
         i = i + 1
         feat = lyr.GetNextFeature()
 

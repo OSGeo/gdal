@@ -66,9 +66,8 @@ def osr_url_test(url, expected_wkt):
        gdal.GetLastErrorMsg().find("timed out") != -1:
         return 'skip'
 
-    if not gdaltest.equal_srs_from_wkt(expected_wkt,
-                                       srs.ExportToWkt()):
-        return 'fail'
+    assert gdaltest.equal_srs_from_wkt(expected_wkt,
+                                       srs.ExportToWkt())
 
     return 'success'
 

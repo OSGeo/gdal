@@ -89,18 +89,14 @@ def test_ogr_db2_GetFeatureCount():
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     count = lyr.GetFeatureCount()
-    if count != 5:
-        gdaltest.post_reason('did not get expected feature count')
-        return 'fail'
+    assert count == 5, 'did not get expected feature count'
 
     return 'success'
 
@@ -115,26 +111,19 @@ def test_ogr_db2_GetSpatialRef():
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     sr = lyr.GetSpatialRef()
 
-    if sr is None:
-        gdaltest.post_reason('did not get expected srs')
-        return 'fail'
+    assert sr is not None, 'did not get expected srs'
 
     txt = sr.ExportToWkt()
 
-    if txt.find('GEOGCS[\"GCS_WGS_1984') == -1:
-        gdaltest.post_reason('did not get expected srs')
-        print(txt)
-        return 'fail'
+    assert txt.find('GEOGCS[\"GCS_WGS_1984') != -1, 'did not get expected srs'
 
     return 'success'
 
@@ -148,23 +137,17 @@ def test_ogr_db2_GetExtent():
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     extent = lyr.GetExtent()
-    if extent is None:
-        gdaltest.post_reason('did not get extent')
-        return 'fail'
+    assert extent is not None, 'did not get extent'
 
-    if extent != (-122.030745, -121.95672, 37.278665, 37.440885):
-        gdaltest.post_reason('did not get expected extent')
-        print(extent)
-        return 'fail'
+    assert extent == (-122.030745, -121.95672, 37.278665, 37.440885), \
+        'did not get expected extent'
 
     return 'success'
 
@@ -179,18 +162,14 @@ def test_ogr_db2_GetFeature():
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     feat = lyr.GetFeature(5)
-    if feat is None:
-        gdaltest.post_reason('did not get a feature')
-        return 'fail'
+    assert feat is not None, 'did not get a feature'
 
     if feat.GetField('ZIP') != '95008':
         gdaltest.post_reason('did not get expected feature')
@@ -210,28 +189,21 @@ def test_ogr_db2_SetSpatialFilter():
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
 # set a query envelope so we only get one feature
     lyr.SetSpatialFilterRect(-122.02, 37.42, -122.01, 37.43)
 
     count = lyr.GetFeatureCount()
 
-    if count != 1:
-        gdaltest.post_reason('did not get expected feature count (1)')
-        print(count)
-        return 'fail'
+    assert count == 1, 'did not get expected feature count (1)'
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('did not get a feature')
-        return 'fail'
+    assert feat is not None, 'did not get a feature'
 
     if feat.GetField('ZIP') != '94089':
         gdaltest.post_reason('did not get expected feature')
@@ -244,10 +216,7 @@ def test_ogr_db2_SetSpatialFilter():
 
     count = lyr.GetFeatureCount()
 
-    if count != 3:
-        gdaltest.post_reason('did not get expected feature count (3)')
-        print(count)
-        return 'fail'
+    assert count == 3, 'did not get expected feature count (3)'
 
 # iterate through the features to make sure we get the same count
     count = 0
@@ -256,10 +225,7 @@ def test_ogr_db2_SetSpatialFilter():
         count = count + 1
         feat = lyr.GetNextFeature()
 
-    if count != 3:
-        gdaltest.post_reason('did not get expected feature count (3)')
-        print(count)
-        return 'fail'
+    assert count == 3, 'did not get expected feature count (3)'
 
     return 'success'
 
@@ -275,8 +241,7 @@ def test_ogr_db2_capabilities():
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     layer = ds.GetLayer()
     capabilities = [

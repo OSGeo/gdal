@@ -79,9 +79,7 @@ def test_gdal_ls_py_1():
     # TODO: Why the '' as the first element of the list here and below?
     ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data/poly.shp'])
 
-    if ret_str.find('poly.shp') == -1:
-        print(ret_str)
-        return 'fail'
+    assert ret_str.find('poly.shp') != -1
 
     return 'success'
 
@@ -92,9 +90,7 @@ def test_gdal_ls_py_1():
 def test_gdal_ls_py_2():
     ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data'])
 
-    if ret_str.find('poly.shp') == -1:
-        print(ret_str)
-        return 'fail'
+    assert ret_str.find('poly.shp') != -1
 
     return 'success'
 
@@ -105,9 +101,7 @@ def test_gdal_ls_py_2():
 def test_gdal_ls_py_3():
     ret, ret_str = run_gdal_ls(['', '-R', '../ogr/data'])
 
-    if ret_str.find('PROJ_UNITS') == -1:
-        print(ret_str)
-        return 'fail'
+    assert ret_str.find('PROJ_UNITS') != -1
 
     return 'success'
 
@@ -257,13 +251,9 @@ def test_gdal_ls_py_8():
 
     ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])
 
-    if ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001') == -1:
-        print(ret_str)
-        return 'fail'
+    assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001') != -1
 
-    if ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') == -1:
-        print(ret_str)
-        return 'fail'
+    assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') != -1
 
     return 'success'
 

@@ -124,9 +124,7 @@ def test_jpeg2000_3():
     ds_ref = None
 
     # Quite a bit of difference...
-    if maxdiff > 6:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 6, 'Image too different from reference'
 
     return 'success'
 
@@ -206,13 +204,10 @@ def test_jpeg2000_8():
     expected_checksums = [64570, 57277, 56048, 61292]
 
     for i in range(4):
-        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
-            return 'fail'
+        assert ds.GetRasterBand(i + 1).Checksum() == expected_checksums[i], \
+            ('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
 
-    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('unexpected data type')
-        return 'fail'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
     return 'success'
 
@@ -228,15 +223,8 @@ def test_jpeg2000_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0] - 440720) > 0.1 \
-            or abs(geotransform[1] - 60) > 0.001 \
-            or abs(geotransform[2] - 0) > 0.001 \
-            or abs(geotransform[3] - 3751320) > 0.1 \
-            or abs(geotransform[4] - 0) > 0.001 \
-            or abs(geotransform[5] - -60) > 0.001:
-        print(geotransform)
-        gdaltest.post_reason('geotransform differs from expected')
-        return 'fail'
+    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+        'geotransform differs from expected'
 
     ds = None
 
@@ -259,14 +247,10 @@ def test_jpeg2000_10():
     ds = None
 
     ds = gdal.Open('/vsimem/jpeg2000_10_dst.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     for i in range(src_ds.RasterCount):
-        if ds.GetRasterBand(i + 1).Checksum() != src_ds.GetRasterBand(i + 1).Checksum():
-            gdaltest.post_reason('bad checksum for band %d' % (i + 1))
-            print(ds.GetRasterBand(i + 1).Checksum())
-            print(src_ds.GetRasterBand(i + 1).Checksum())
-            return 'fail'
+        assert ds.GetRasterBand(i + 1).Checksum() == src_ds.GetRasterBand(i + 1).Checksum(), \
+            ('bad checksum for band %d' % (i + 1))
     ds = None
     src_ds = None
 
@@ -286,12 +270,9 @@ def test_jpeg2000_11():
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        return 'fail'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
-    if got_cs != 8527:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
@@ -304,20 +285,15 @@ def test_jpeg2000_11():
     # gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jpeg2000_11.tif')
-    if got_cs != 8527:
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
 
-    if jp2_bands_data != gtiff_bands_data:
-        return 'fail'
+    assert jp2_bands_data == gtiff_bands_data
 
-    if jp2_fourth_band_data != gtiff_fourth_band_data:
-        return 'fail'
+    assert jp2_fourth_band_data == gtiff_fourth_band_data
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        return 'fail'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
     return 'success'
 
@@ -361,14 +337,10 @@ def test_jpeg2000_online_2():
 
     ds = gdal.Open('tmp/cache/gcp.jp2')
     ds.GetRasterBand(1).Checksum()
-    if len(ds.GetGCPs()) != 15:
-        gdaltest.post_reason('bad number of GCP')
-        return 'fail'
+    assert len(ds.GetGCPs()) == 15, 'bad number of GCP'
 
     expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
-    if ds.GetGCPProjection() != expected_wkt:
-        gdaltest.post_reason('bad GCP projection')
-        return 'fail'
+    assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None
 
@@ -402,9 +374,7 @@ def test_jpeg2000_online_3():
     ds_ref = None
 
     # Difference between the image before and after compression
-    if maxdiff > 17:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 17, 'Image too different from reference'
 
     return 'success'
 
@@ -439,9 +409,7 @@ def test_jpeg2000_online_4():
     ds_ref = None
 
     # Difference between the image before and after compression
-    if maxdiff > 17:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 17, 'Image too different from reference'
 
     return 'success'
 
@@ -461,10 +429,8 @@ def test_jpeg2000_online_5():
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
-    if cs1 != 48954 or cs2 != 4939 or cs3 != 17734:
-        print(cs1, cs2, cs3)
-        gdaltest.post_reason('Did not get expected checksums')
-        return 'fail'
+    assert cs1 == 48954 and cs2 == 4939 and cs3 == 17734, \
+        'Did not get expected checksums'
 
     ds = None
 
@@ -486,10 +452,8 @@ def test_jpeg2000_online_6():
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
-    if cs1 != 25337 or cs2 != 28262 or cs3 != 59580:
-        print(cs1, cs2, cs3)
-        gdaltest.post_reason('Did not get expected checksums')
-        return 'fail'
+    assert cs1 == 25337 and cs2 == 28262 and cs3 == 59580, \
+        'Did not get expected checksums'
 
     ds = None
 

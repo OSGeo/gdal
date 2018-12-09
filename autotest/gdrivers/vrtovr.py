@@ -58,22 +58,14 @@ def test_vrtovr_1():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'did not get expected overview count'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected overview checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4672, 'did not get expected overview checksum'
 
     fl = ds.GetFileList()
-    if fl != ['data/byte.tif', 'data/int16.tif']:
-        gdaltest.post_reason('did not get expected file list')
-        print(fl)
-        return 'fail'
+    assert fl == ['data/byte.tif', 'data/int16.tif'], 'did not get expected file list'
 
     ds = None
 
@@ -111,16 +103,11 @@ def test_vrtovr_2():
     ds = None
 
     ds = gdal.Open("/vsimem/vrtovr_2.vrt")
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'did not get expected overview count'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected overview checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4672, 'did not get expected overview checksum'
 
     ds = None
 
@@ -148,13 +135,10 @@ def test_vrtovr_none():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('did not get expected overview count')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, \
+        'did not get expected overview count'
 
-    if ds.GetRasterBand(1).GetOverview(0):
-        return 'fail'
+    assert not ds.GetRasterBand(1).GetOverview(0)
 
     return 'success'
 
@@ -182,20 +166,15 @@ def test_vrtovr_errors():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'did not get expected overview count'
 
-    if ds.GetRasterBand(1).GetOverview(-1):
-        return 'fail'
+    assert not ds.GetRasterBand(1).GetOverview(-1)
 
-    if ds.GetRasterBand(1).GetOverview(1):
-        return 'fail'
+    assert not ds.GetRasterBand(1).GetOverview(1)
 
     with gdaltest.error_handler():
-        if ds.GetRasterBand(1).GetOverview(0):
-            return 'fail'
+        assert not ds.GetRasterBand(1).GetOverview(0)
 
     return 'success'
 

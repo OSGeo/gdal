@@ -60,16 +60,12 @@ def test_polygonize_1(is_int_polygonize=True):
         result = gdal.Polygonize(src_band, src_band.GetMaskBand(), mem_layer, 0)
     else:
         result = gdal.FPolygonize(src_band, src_band.GetMaskBand(), mem_layer, 0)
-    if result != 0:
-        gdaltest.post_reason('Polygonize failed')
-        return 'fail'
+    assert result == 0, 'Polygonize failed'
 
     # Confirm we get the set of expected features in the output layer.
 
     expected_feature_number = 13
-    if mem_layer.GetFeatureCount() != expected_feature_number:
-        gdaltest.post_reason('GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number))
-        return 'fail'
+    assert mem_layer.GetFeatureCount() == expected_feature_number
 
     expect = [107, 123, 115, 115, 140, 148, 123, 140, 156,
               100, 101, 102, 103]
@@ -110,16 +106,12 @@ def test_polygonize_2():
 
     # run the algorithm.
     result = gdal.Polygonize(src_band, None, mem_layer, 0)
-    if result != 0:
-        gdaltest.post_reason('Polygonize failed')
-        return 'fail'
+    assert result == 0, 'Polygonize failed'
 
     # Confirm we get the set of expected features in the output layer.
 
     expected_feature_number = 17
-    if mem_layer.GetFeatureCount() != expected_feature_number:
-        gdaltest.post_reason('GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number))
-        return 'fail'
+    assert mem_layer.GetFeatureCount() == expected_feature_number
 
     expect = [107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
               132, 156, 100, 101, 102, 103]
@@ -148,16 +140,12 @@ def test_polygonize_3():
 
     # run the algorithm.
     result = gdal.Polygonize(src_band, None, mem_layer, 0)
-    if result != 0:
-        gdaltest.post_reason('Polygonize failed')
-        return 'fail'
+    assert result == 0, 'Polygonize failed'
 
     # Confirm we get the expected count of features.
 
     expected_feature_number = 125
-    if mem_layer.GetFeatureCount() != expected_feature_number:
-        gdaltest.post_reason('GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number))
-        return 'fail'
+    assert mem_layer.GetFeatureCount() == expected_feature_number
 
     # check at least one geometry.
     mem_layer.SetAttributeFilter('dn = 0')
@@ -191,16 +179,12 @@ def test_polygonize_4():
 
     # run the algorithm.
     result = gdal.Polygonize(src_band, None, mem_layer, 0, ["8CONNECTED=8"])
-    if result != 0:
-        gdaltest.post_reason('Polygonize failed')
-        return 'fail'
+    assert result == 0, 'Polygonize failed'
 
     # Confirm we get the set of expected features in the output layer.
 
     expected_feature_number = 16
-    if mem_layer.GetFeatureCount() != expected_feature_number:
-        gdaltest.post_reason('GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number))
-        return 'fail'
+    assert mem_layer.GetFeatureCount() == expected_feature_number
 
     expect = [107, 123, 132, 115, 132, 115, 140, 148,
               123, 140, 132, 156, 100, 101, 102, 103]

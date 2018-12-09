@@ -56,23 +56,15 @@ def test_ogr_grass_2():
         return 'skip'
 
     ds = ogr.Open('./data/PERMANENT/vector/point/head')
-    if ds is None:
-        gdaltest.post_reason('Cannot open datasource')
-        return 'fail'
+    assert ds is not None, 'Cannot open datasource'
 
     lyr = ds.GetLayerByName('1')
-    if lyr is None:
-        gdaltest.post_reason('Cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'Cannot find layer'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 0)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (0 0)'
 
-    if feat.GetFieldAsString('name') != 'my point':
-        print(feat.GetFieldAsString('name'))
-        return 'fail'
+    assert feat.GetFieldAsString('name') == 'my point'
 
     ds = None
 

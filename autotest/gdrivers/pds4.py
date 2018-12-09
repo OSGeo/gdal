@@ -72,8 +72,7 @@ def validate_xml(filename):
         'VALIDATE=YES',
         'FAIL_IF_VALIDATION_ERROR=YES',
         'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     return 'success'
 
 ###############################################################################
@@ -209,21 +208,14 @@ def test_pds4_8():
             ds = None
 
         ret = validate_xml(filename)
-        if ret == 'fail':
-            gdaltest.post_reason('validation of file for %s failed' % proj4)
-            return 'fail'
+        assert ret != 'fail', ('validation of file for %s failed' % proj4)
 
         ds = gdal.Open(filename)
         wkt = ds.GetProjectionRef()
         sr = osr.SpatialReference()
         sr.SetFromUserInput(wkt)
         got_proj4 = sr.ExportToProj4().strip()
-        if got_proj4 != proj4:
-            gdaltest.post_reason('got %s, expected %s' % (got_proj4, proj4))
-            print('')
-            print(got_proj4)
-            print(proj4)
-            return 'fail'
+        assert got_proj4 == proj4, ''
 
     # longlat doesn't roundtrip as such
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
@@ -239,19 +231,10 @@ def test_pds4_8():
     sr.SetFromUserInput(wkt)
     got_proj4 = sr.ExportToProj4().strip()
     proj4 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs'
-    if got_proj4 != proj4:
-        gdaltest.post_reason('got %s, expected %s' % (got_proj4, proj4))
-        print('')
-        print(got_proj4)
-        print(proj4)
-        return 'fail'
+    assert got_proj4 == proj4, ''
     got_gt = ds.GetGeoTransform()
     expected_gt = (85151.12354629935, 42575.561773149675, 0.0, 2086202.5268843342, 0.0, -85151.12354629935)
-    if max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) > 1:
-        print('')
-        print(got_gt)
-        print(expected_gt)
-        return 'fail'
+    assert max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1, ''
     ds = None
 
     gdal.GetDriverByName('PDS4').Delete(filename)
@@ -265,14 +248,10 @@ def test_pds4_9():
 
     ds = gdal.Open('data/byte_pds4.xml')
     ndv = ds.GetRasterBand(1).GetNoDataValue()
-    if ndv != 74:
-        print(ndv)
-        return 'fail'
+    assert ndv == 74
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 4800:
-        print(cs)
-        return 'fail'
+    assert cs == 4800
     ds = None
 
     filename = '/vsimem/out.xml'
@@ -281,20 +260,14 @@ def test_pds4_9():
         gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4')
 
     ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ret != 'fail', 'validation failed'
 
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
-    if ndv != 74:
-        print(ndv)
-        return 'fail'
+    assert ndv == 74
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 4800:
-        print(cs)
-        return 'fail'
+    assert cs == 4800
 
     ds = None
 
@@ -307,25 +280,17 @@ def test_pds4_9():
                            creationOptions=['IMAGE_FORMAT=' + frmt])
 
         ret = validate_xml(filename)
-        if ret == 'fail':
-            gdaltest.post_reason('validation failed')
-            return 'fail'
+        assert ret != 'fail', 'validation failed'
 
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
-        if ndv != 75:
-            print(ndv)
-            return 'fail'
+        assert ndv == 75
 
         flag = ds.GetRasterBand(1).GetMaskFlags()
-        if flag != 0:
-            print(flag)
-            return 'fail'
+        assert flag == 0
 
         cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-        if cs != 4833:
-            print(cs)
-            return 'fail'
+        assert cs == 4833
 
         ds = None
 
@@ -337,16 +302,11 @@ def test_pds4_9():
                                             'IMAGE_FORMAT=' + frmt])
 
         ret = validate_xml(filename)
-        if ret == 'fail':
-            gdaltest.post_reason('validation failed')
-            return 'fail'
+        assert ret != 'fail', 'validation failed'
 
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
-        if ndv != 74:
-            print(frmt)
-            print(ndv)
-            return 'fail'
+        assert ndv == 74, frmt
 
         ds = None
 
@@ -359,10 +319,7 @@ def test_pds4_9():
 
         ds = gdal.Open(filename)
         cs = ds.GetRasterBand(1).Checksum()
-        if cs != 1:
-            print(frmt)
-            print(cs)
-            return 'fail'
+        assert cs == 1, frmt
         ds = None
 
         # Test setting nodata and then explicit Fill()
@@ -375,10 +332,7 @@ def test_pds4_9():
 
         ds = gdal.Open(filename)
         cs = ds.GetRasterBand(1).Checksum()
-        if cs != 1:
-            print(frmt)
-            print(cs)
-            return 'fail'
+        assert cs == 1, frmt
         ds = None
 
     template = '/vsimem/template.xml'
@@ -437,15 +391,11 @@ def test_pds4_9():
 
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
-    if ndv != 10:
-        print(ndv)
-        return 'fail'
+    assert ndv == 10
     ds = None
 
     ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ret != 'fail', 'validation failed'
 
     # Special_Constants with just saturated_constant
     gdal.FileFromMemBuffer(template, """
@@ -503,15 +453,11 @@ def test_pds4_9():
 
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
-    if ndv != 10:
-        print(ndv)
-        return 'fail'
+    assert ndv == 10
     ds = None
 
     ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ret != 'fail', 'validation failed'
 
     gdal.GetDriverByName('PDS4').Delete(filename)
     gdal.Unlink(template)
@@ -537,13 +483,9 @@ def test_pds4_10():
 
         ds = gdal.Open(filename2)
         scale = ds.GetRasterBand(1).GetScale()
-        if scale != 2:
-            print(scale)
-            return 'fail'
+        assert scale == 2
         offset = ds.GetRasterBand(1).GetOffset()
-        if offset != 3:
-            print(offset)
-            return 'fail'
+        assert offset == 3
         ds = None
 
         gdal.GetDriverByName('PDS4').Delete(filename)
@@ -574,19 +516,11 @@ def test_pds4_11():
 
         with gdaltest.config_option('PDS4_FORCE_MASK', 'YES'):
             ds = gdal.Open(filename)
-        if ds.GetRasterBand(1).DataType != dt:
-            print(ds.GetRasterBand(1).DataType)
-            print(dt)
-            return 'fail'
+        assert ds.GetRasterBand(1).DataType == dt
         got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-        if got_data != data:
-            print(dt)
-            return 'fail'
+        assert got_data == data, dt
         cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-        if cs != 3:
-            print(dt)
-            print(cs)
-            return 'fail'
+        assert cs == 3, dt
         ds = None
 
     gdal.GetDriverByName('PDS4').Delete(filename)
@@ -622,30 +556,14 @@ def test_pds4_12():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    if data.find('<logical_identifier>logical_identifier</logical_identifier>') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<cart:west_bounding_coordinate unit="deg">1</cart:west_bounding_coordinate>') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<cart:east_bounding_coordinate unit="deg">3</cart:east_bounding_coordinate>') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<cart:north_bounding_coordinate unit="deg">4</cart:north_bounding_coordinate>') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<cart:south_bounding_coordinate unit="deg">2</cart:south_bounding_coordinate>') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<cart:latitude_type>planetographic</cart:latitude_type>') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<cart:longitude_direction>Positive West</cart:longitude_direction>') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<file_name>myimage.raw</file_name>') < 0:
-        print(data)
-        return 'fail'
+    assert data.find('<logical_identifier>logical_identifier</logical_identifier>') >= 0
+    assert data.find('<cart:west_bounding_coordinate unit="deg">1</cart:west_bounding_coordinate>') >= 0
+    assert data.find('<cart:east_bounding_coordinate unit="deg">3</cart:east_bounding_coordinate>') >= 0
+    assert data.find('<cart:north_bounding_coordinate unit="deg">4</cart:north_bounding_coordinate>') >= 0
+    assert data.find('<cart:south_bounding_coordinate unit="deg">2</cart:south_bounding_coordinate>') >= 0
+    assert data.find('<cart:latitude_type>planetographic</cart:latitude_type>') >= 0
+    assert data.find('<cart:longitude_direction>Positive West</cart:longitude_direction>') >= 0
+    assert data.find('<file_name>myimage.raw</file_name>') >= 0
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
@@ -665,58 +583,44 @@ def test_pds4_13():
                        'Image file byte_pds4.img, array second_sds'),
                       ('PDS4:data/byte_pds4_multi_sds.xml:2:1',
                        'Image file byte_pds4.img, array third_sds')]
-    if subds != expected_subds:
-        print(subds)
-        return 'fail'
+    assert subds == expected_subds
 
     ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:1')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 2315:
-        print(cs)
-        return 'fail'
+    assert cs == 2315
 
     ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:2')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 2302:
-        print(cs)
-        return 'fail'
+    assert cs == 2302
 
     ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:2:1')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 3496:
-        print(cs)
-        return 'fail'
+    assert cs == 3496
 
     ds = gdal.Open(os.path.join(os.getcwd(), 'data', 'byte_pds4_multi_sds.xml'))
     subds_name = ds.GetSubDatasets()[0][0]
     ds = gdal.Open(subds_name)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:c:\do_not\exist.xml:1:1')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:i_do_not_exist.xml')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:i_do_not_exist.xml:1:1')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:3:1')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:3')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -731,8 +635,7 @@ def test_pds4_14():
     gdal.FileFromMemBuffer(filename, "Product_Observational http://pds.nasa.gov/pds4/pds/v1")
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.FileFromMemBuffer(filename, """
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
@@ -804,8 +707,7 @@ def test_pds4_14():
 </Product_Observational>""")
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.FileFromMemBuffer(filename, """
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
@@ -839,8 +741,7 @@ def test_pds4_14():
 </Product_Observational>""")
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.FileFromMemBuffer(filename, """
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
@@ -869,8 +770,7 @@ def test_pds4_14():
 </Product_Observational>""")
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.FileFromMemBuffer(filename, """
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
@@ -899,8 +799,7 @@ def test_pds4_14():
 </Product_Observational>""")
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.FileFromMemBuffer(filename, """
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
@@ -929,8 +828,7 @@ def test_pds4_14():
 </Product_Observational>""")
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink(filename)
 
@@ -938,31 +836,27 @@ def test_pds4_14():
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('PDS4').Create('/vsimem/out.xml', 1, 1,
                                                  options=['INTERLEAVE=INVALID'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # INTERLEAVE=BIL not supported for GeoTIFF in PDS4
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('PDS4').Create('/vsimem/out.xml', 1, 1,
                                                  options=['INTERLEAVE=BIL',
                                                           'IMAGE_FORMAT=GEOTIFF'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Cannot create GeoTIFF file
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('PDS4').Create('/i/do_not/exist.xml', 1, 1,
                                                  options=['IMAGE_FORMAT=GEOTIFF'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif')
     # Output file has same name as input file
     with gdaltest.error_handler():
         ds = gdal.Translate('/vsimem/test.xml', '/vsimem/test.tif',
                             format='PDS4', creationOptions=['IMAGE_FORMAT=GEOTIFF'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     gdal.Unlink('/vsimem/test.tif')
 
     template = '/vsimem/template.xml'
@@ -974,9 +868,7 @@ def test_pds4_14():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
-    if gdal.GetLastErrorMsg() != 'Cannot find Product_Observational element in template':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == 'Cannot find Product_Observational element in template'
 
     # Missing Target_Identification
     gdal.FileFromMemBuffer(template, """
@@ -993,9 +885,7 @@ def test_pds4_14():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
-    if gdal.GetLastErrorMsg() != 'Cannot find Target_Identification element in template':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == 'Cannot find Target_Identification element in template'
 
     # Missing Observation_Area
     gdal.FileFromMemBuffer(template, """
@@ -1008,9 +898,7 @@ def test_pds4_14():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
-    if gdal.GetLastErrorMsg() != 'Cannot find Observation_Area in template':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == 'Cannot find Observation_Area in template'
 
     # Unexpected content found after Observation_Area in template
     gdal.FileFromMemBuffer(template, """
@@ -1026,9 +914,7 @@ def test_pds4_14():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
-    if gdal.GetLastErrorMsg() != 'Unexpected content found after Observation_Area in template':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == 'Unexpected content found after Observation_Area in template'
 
     gdal.Unlink(template)
     gdal.Unlink(filename)
@@ -1048,17 +934,13 @@ def test_pds4_15():
                                             options=['TEMPLATE=data/byte_pds4.xml'])
 
     ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ret != 'fail', 'validation failed'
 
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    if data.find('<cart:Cartography>') >= 0:
-        print(data)
-        return 'fail'
+    assert data.find('<cart:Cartography>') < 0
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
@@ -1126,23 +1008,15 @@ def test_pds4_16():
         ds = None
 
     ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ret != 'fail', 'validation failed'
 
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    if data.find('http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"') < 0:
-        print(data)
-        return 'fail'
-    if data.find('xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"') < 0:
-        print(data)
-        return 'fail'
-    if data.find('<cart:Cartography>') < 0:
-        print(data)
-        return 'fail'
+    assert data.find('http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"') >= 0
+    assert data.find('xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"') >= 0
+    assert data.find('<cart:Cartography>') >= 0
 
     gdal.GetDriverByName('PDS4').Delete(filename)
     gdal.Unlink(template)
@@ -1161,45 +1035,35 @@ def test_pds4_17():
         gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=['ARRAY_TYPE=Array_2D'])
 
     ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ret != 'fail', 'validation failed'
 
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    if data.find('<Array_2D>') < 0 or data.find('<axes>2</axes>') < 0 or \
-       data.find('<axis_name>Band</axis_name>') >= 0 or \
-       data.find('<sequence_number>3</sequence_number>') >= 0:
-        print(data)
-        return 'fail'
+    assert (data.find('<Array_2D>') >= 0 and data.find('<axes>2</axes>') >= 0 and \
+       data.find('<axis_name>Band</axis_name>') < 0 and \
+       data.find('<sequence_number>3</sequence_number>') < 0)
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
     # Test multi-band creation with Array_2D
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options=['ARRAY_TYPE=Array_2D'])
-    if ds is not None:
-        gdaltest.post_reason('expected failure')
-        return 'fail'
+    assert ds is None, 'expected failure'
 
     # Test multi-band creation with Array_3D_Spectrum
     with gdaltest.error_handler():
         gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options=['ARRAY_TYPE=Array_3D_Spectrum'])
 
     ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ret != 'fail', 'validation failed'
 
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    if data.find('<Array_3D_Spectrum>') < 0 or data.find('<axes>3</axes>') < 0:
-        print(data)
-        return 'fail'
+    assert data.find('<Array_3D_Spectrum>') >= 0 and data.find('<axes>3</axes>') >= 0
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
@@ -1225,11 +1089,9 @@ def test_pds4_18():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    if data.find('<cart:semi_major_radius unit="m">1</cart:semi_major_radius>') < 0 or \
-       data.find('<cart:semi_minor_radius unit="m">1</cart:semi_minor_radius>') < 0 or \
-       data.find('<cart:polar_radius unit="m">2</cart:polar_radius>') < 0:
-        print(data)
-        return 'fail'
+    assert (data.find('<cart:semi_major_radius unit="m">1</cart:semi_major_radius>') >= 0 and \
+       data.find('<cart:semi_minor_radius unit="m">1</cart:semi_minor_radius>') >= 0 and \
+       data.find('<cart:polar_radius unit="m">2</cart:polar_radius>') >= 0)
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 

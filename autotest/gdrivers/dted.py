@@ -58,25 +58,17 @@ def test_dted_2():
 
     max_error = 0.000001
 
-    if abs(gt[0] - (-80.004166666666663)) > max_error or abs(gt[1] - 0.0083333333333333332) > max_error \
-            or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
-            or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
-        gdaltest.post_reason('DTED geotransform wrong.')
-        return 'fail'
+    assert abs(gt[0] - (-80.004166666666663)) <= max_error and abs(gt[1] - 0.0083333333333333332) <= max_error and abs(gt[2] - 0) <= max_error and abs(gt[3] - 44.00416666666667) <= max_error and abs(gt[4] - 0) <= max_error and abs(gt[5] - (-0.0083333333333333332)) <= max_error, \
+        'DTED geotransform wrong.'
 
     prj = ds.GetProjection()
-    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != -32767:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == -32767, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('Data type is not Int16!')
-        return 'fail'
+    assert band1.DataType == gdal.GDT_Int16, 'Data type is not Int16!'
 
     return 'success'
 
@@ -119,8 +111,7 @@ def test_dted_5():
     ds = gdal.Open('tmp/n43.dt1.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        if abs(geotransform[i] - ref_geotransform[i]) > 1e-10:
-            return 'fail'
+        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
 
     ds = None
 
@@ -143,8 +134,7 @@ def test_dted_6():
     ds = gdal.Open('tmp/n43.dt2.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        if abs(geotransform[i] - ref_geotransform[i]) > 1e-10:
-            return 'fail'
+        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
 
     ds = None
 
@@ -162,13 +152,10 @@ def test_dted_7():
     prj = ds.GetProjection()
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg() is None:
-        gdaltest.post_reason('An expected warning was not emitted')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() is not None, 'An expected warning was not emitted'
 
-    if prj != 'GEOGCS["WGS 72",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4322"]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj == 'GEOGCS["WGS 72",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4322"]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
     return 'success'
 
@@ -190,15 +177,11 @@ def test_dted_8():
 
     gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'NO')
 
-    if gdal.GetLastErrorMsg() is None:
-        gdaltest.post_reason('An expected warning was not emitted')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() is not None, 'An expected warning was not emitted'
 
     # 49187 is the checksum of data is the DTED is read without checking its checksum
     # so we should not get this value
-    if chksum == 49187:
-        gdaltest.post_reason('DTED_VERIFY_CHECKSUM=YES has had no effect!')
-        return 'fail'
+    assert chksum != 49187, 'DTED_VERIFY_CHECKSUM=YES has had no effect!'
 
     return 'success'
 
@@ -235,9 +218,7 @@ def test_dted_9():
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
 
-    if chksum != 36542:
-        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
-        return 'fail'
+    assert chksum == 36542, ('Wrong checksum. Checksum found %d' % chksum)
 
     return 'success'
 
@@ -265,25 +246,17 @@ def test_dted_11():
 
     max_error = 0.000001
 
-    if abs(gt[0] - (-80.004166666666663)) > max_error or abs(gt[1] - 0.0083333333333333332) > max_error \
-            or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
-            or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
-        gdaltest.post_reason('DTED geotransform wrong.')
-        return 'fail'
+    assert abs(gt[0] - (-80.004166666666663)) <= max_error and abs(gt[1] - 0.0083333333333333332) <= max_error and abs(gt[2] - 0) <= max_error and abs(gt[3] - 44.00416666666667) <= max_error and abs(gt[4] - 0) <= max_error and abs(gt[5] - (-0.0083333333333333332)) <= max_error, \
+        'DTED geotransform wrong.'
 
     prj = ds.GetProjection()
-    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != -32767:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == -32767, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('Data type is not Int16!')
-        return 'fail'
+    assert band1.DataType == gdal.GDT_Int16, 'Data type is not Int16!'
 
     return 'success'
 
@@ -294,8 +267,7 @@ def test_dted_11():
 def test_dted_12():
 
     ds = gdal.Open('data/w118n033_trunc.dt1')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 

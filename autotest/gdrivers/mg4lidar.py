@@ -62,9 +62,7 @@ def test_mg4lidar_1():
             return 'skip'
 
     ds = gdal.Open('tmp/cache/GDAL_MG4Lidar_Src/Tetons_200k.view')
-    if ds is None:
-        gdaltest.post_reason('could not open dataset')
-        return 'fail'
+    assert ds is not None, 'could not open dataset'
 
     prj = ds.GetProjectionRef()
     if prj.find('NAD83 / UTM zone 12N') == -1:
@@ -75,10 +73,7 @@ def test_mg4lidar_1():
     gt = ds.GetGeoTransform()
     ref_gt = (504489.919999999983702, 3.078227571115974, 0, 4795848.389999999664724, 0, -3.078259860787739)
     for i in range(6):
-        if abs(gt[i] - ref_gt[i]) > 1e-6:
-            gdaltest.post_reason('did not get expected geotransform')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - ref_gt[i]) <= 1e-6, 'did not get expected geotransform'
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 13216:

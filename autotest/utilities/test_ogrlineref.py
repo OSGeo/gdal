@@ -50,13 +50,10 @@ def test_ogrlineref_1():
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/parts.shp')
 
     _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrlineref_path() + ' -create -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.shp -s 1000')
-    if err is not None and err != '':
-        gdaltest.post_reason('got error/warning: "%s"' % err)
-        return 'fail'
+    assert err is None or err == '', ('got error/warning: "%s"' % err)
 
     ds = ogr.Open('tmp/parts.shp')
-    if ds is None or ds.GetLayer(0).GetFeatureCount() != 9:
-        return 'fail'
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 9
 
     return 'success'
 
@@ -71,10 +68,7 @@ def test_ogrlineref_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_pos -r tmp/parts.shp -x -1.4345 -y 51.9497 -quiet').strip()
 
     expected = '15977.724709'
-    if ret != expected:
-        gdaltest.post_reason('"%s" != %s' % (ret.strip(), expected))
-        print(ret)
-        return 'fail'
+    assert ret == expected, ('"%s" != %s' % (ret.strip(), expected))
 
     return 'success'
 
@@ -89,9 +83,7 @@ def test_ogrlineref_3():
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_coord -r tmp/parts.shp -m 15977.724709 -quiet').strip()
 
     expected = '-1.435097,51.950080,0.000000'
-    if ret != expected:
-        gdaltest.post_reason('%s != %s' % (ret.strip(), expected))
-        return 'fail'
+    assert ret == expected, ('%s != %s' % (ret.strip(), expected))
 
     return 'success'
 
@@ -109,14 +101,10 @@ def test_ogrlineref_4():
     gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_subline -r tmp/parts.shp -mb 13300 -me 17400 -o tmp/subline.shp')
 
     ds = ogr.Open('tmp/subline.shp')
-    if ds is None:
-        gdaltest.post_reason('ds is None')
-        return 'fail'
+    assert ds is not None, 'ds is None'
 
     feature_count = ds.GetLayer(0).GetFeatureCount()
-    if feature_count != 1:
-        gdaltest.post_reason('feature count %d != 1' % feature_count)
-        return 'fail'
+    assert feature_count == 1, ('feature count %d != 1' % feature_count)
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/subline.shp')

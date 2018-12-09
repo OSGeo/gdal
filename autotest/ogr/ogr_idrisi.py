@@ -42,36 +42,25 @@ import ogrtest
 def test_ogr_idrisi_1():
 
     ds = ogr.Open('data/points.vct')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint
 
-    if lyr.GetLayerDefn().GetFieldDefn(1).GetName() != 'IntegerField':
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == 'IntegerField'
 
-    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTInteger
 
     sr = lyr.GetSpatialRef()
-    if sr.ExportToWkt().find('PROJCS["UTM Zone 31, Northern Hemisphere"') != 0:
-        print(sr.ExportToWkt())
-        return 'fail'
+    assert sr.ExportToWkt().find('PROJCS["UTM Zone 31, Northern Hemisphere"') == 0
 
-    if lyr.GetFeatureCount() != 2:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
 
-    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
-    if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
 
-    if lyr.GetExtent() != (400000.0, 600000.0, 4000000.0, 5000000.0):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (400000.0, 600000.0, 4000000.0, 5000000.0)
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 1.0:
@@ -113,8 +102,7 @@ def test_ogr_idrisi_1():
     lyr.SetSpatialFilterRect(0, 0, 1, 1)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     ds = None
 
@@ -127,25 +115,18 @@ def test_ogr_idrisi_1():
 def test_ogr_idrisi_2():
 
     ds = ogr.Open('data/lines.vct')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString
 
-    if lyr.GetFeatureCount() != 2:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
 
-    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
-    if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
 
-    if lyr.GetExtent() != (400000.0, 600000.0, 4000000.0, 5000000.0):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (400000.0, 600000.0, 4000000.0, 5000000.0)
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 10.0:
@@ -168,8 +149,7 @@ def test_ogr_idrisi_2():
     lyr.SetSpatialFilterRect(0, 0, 1, 1)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     ds = None
 
@@ -182,25 +162,18 @@ def test_ogr_idrisi_2():
 def test_ogr_idrisi_3():
 
     ds = ogr.Open('data/polygons.vct')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPolygon:
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon
 
-    if lyr.GetFeatureCount() != 2:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
 
-    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
-    if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
 
-    if lyr.GetExtent() != (400000.0, 600000.0, 4000000.0, 5000000.0):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (400000.0, 600000.0, 4000000.0, 5000000.0)
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 1.0:
@@ -223,8 +196,7 @@ def test_ogr_idrisi_3():
     lyr.SetSpatialFilterRect(0, 0, 1, 1)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     ds = None
 

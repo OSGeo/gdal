@@ -67,9 +67,7 @@ def test_ogr_selafin_create_nodes():
     ref = osr.SpatialReference()
     ref.ImportFromEPSG(4326)
     layer = gdaltest.selafin_ds.CreateLayer('name', ref, geom_type=ogr.wkbPoint)
-    if layer is None:
-        gdaltest.post_reason('unable to create layer')
-        return 'fail'
+    assert layer is not None, 'unable to create layer'
     layer.CreateField(ogr.FieldDefn('value', ogr.OFTReal))
     dfn = layer.GetLayerDefn()
     for i in range(5):
@@ -79,13 +77,10 @@ def test_ogr_selafin_create_nodes():
             feat = ogr.Feature(dfn)
             feat.SetGeometry(pt)
             feat.SetField(0, (float)(i * 5 + j))
-            if layer.CreateFeature(feat) != 0:
-                gdaltest.post_reason('unable to create node feature')
-                return 'fail'
+            assert layer.CreateFeature(feat) == 0, 'unable to create node feature'
     # do some checks
-    if layer.GetFeatureCount() != 25:
-        gdaltest.post_reason('wrong number of features after point layer creation')
-        return 'fail'
+    assert layer.GetFeatureCount() == 25, \
+        'wrong number of features after point layer creation'
     # return
     del gdaltest.selafin_ds
     del layer
@@ -101,9 +96,7 @@ def test_ogr_selafin_create_elements():
     if gdaltest.selafin_ds is None:
         return 'skip'
     layerCount = gdaltest.selafin_ds.GetLayerCount()
-    if layerCount < 2:
-        gdaltest.post_reason('elements layer not created with nodes layer')
-        return 'fail'
+    assert layerCount >= 2, 'elements layer not created with nodes layer'
     for i in range(layerCount):
         name = gdaltest.selafin_ds.GetLayer(i).GetName()
         if '_e' in name:
@@ -124,9 +117,7 @@ def test_ogr_selafin_create_elements():
             pol.AddGeometry(poll)
             feat = ogr.Feature(dfn)
             feat.SetGeometry(pol)
-            if layere.CreateFeature(feat) != 0:
-                gdaltest.post_reason('unable to create element feature')
-                return 'fail'
+            assert layere.CreateFeature(feat) == 0, 'unable to create element feature'
     pol = ogr.Geometry(type=ogr.wkbPolygon)
     poll = ogr.Geometry(type=ogr.wkbLinearRing)
     poll.AddPoint_2D(4.0, 4.0)
@@ -137,19 +128,14 @@ def test_ogr_selafin_create_elements():
     pol.AddGeometry(poll)
     feat = ogr.Feature(dfn)
     feat.SetGeometry(pol)
-    if layere.CreateFeature(feat) != 0:
-        gdaltest.post_reason('unable to create element feature')
-        return 'fail'
+    assert layere.CreateFeature(feat) == 0, 'unable to create element feature'
     # do some checks
-    if gdaltest.selafin_ds.GetLayer(k).GetFeatureCount() != 28:
-        gdaltest.post_reason('wrong number of point features after elements layer creation')
-        return 'fail'
-    if math.fabs(layere.GetFeature(5).GetFieldAsDouble(0) - 9) > 0.01:
-        gdaltest.post_reason('wrong value of attribute in element layer')
-        return 'fail'
-    if math.fabs(layere.GetFeature(10).GetFieldAsDouble(0) - 15) > 0.01:
-        gdaltest.post_reason('wrong value of attribute in element layer')
-        return 'fail'
+    assert gdaltest.selafin_ds.GetLayer(k).GetFeatureCount() == 28, \
+        'wrong number of point features after elements layer creation'
+    assert math.fabs(layere.GetFeature(5).GetFieldAsDouble(0) - 9) <= 0.01, \
+        'wrong value of attribute in element layer'
+    assert math.fabs(layere.GetFeature(10).GetFieldAsDouble(0) - 15) <= 0.01, \
+        'wrong value of attribute in element layer'
     # return
     del gdaltest.selafin_ds
     return 'success'
@@ -164,9 +150,7 @@ def test_ogr_selafin_set_field():
     if gdaltest.selafin_ds is None:
         return 'skip'
     layerCount = gdaltest.selafin_ds.GetLayerCount()
-    if layerCount < 2:
-        gdaltest.post_reason('elements layer not created with nodes layer')
-        return 'fail'
+    assert layerCount >= 2, 'elements layer not created with nodes layer'
     for i in range(layerCount):
         name = gdaltest.selafin_ds.GetLayer(i).GetName()
         if '_e' in name:
@@ -185,9 +169,8 @@ def test_ogr_selafin_set_field():
         feat.SetField(0, (float)(val * 10))
         layern.SetFeature(feat)
     # do some checks
-    if math.fabs(layern.GetFeature(11).GetFieldAsDouble(0) - 110) > 0.01:
-        gdaltest.post_reason('wrong value of attribute in point layer')
-        return 'fail'
+    assert math.fabs(layern.GetFeature(11).GetFieldAsDouble(0) - 110) <= 0.01, \
+        'wrong value of attribute in point layer'
     # return
     del gdaltest.selafin_ds
     return 'success'

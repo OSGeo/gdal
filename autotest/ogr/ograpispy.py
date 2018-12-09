@@ -102,14 +102,12 @@ def test_ograpispy_2():
 
     ds = ogr.Open('tmp/snapshot_1/source/ograpispy_2.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 0:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
     ds = None
 
     ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp', update=1)
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1:
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     # Add a feature to check that running the script will work
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
@@ -120,9 +118,7 @@ def test_ograpispy_2():
 
     ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     ds = None
 
     shutil.rmtree('tmp/snapshot_1/working')

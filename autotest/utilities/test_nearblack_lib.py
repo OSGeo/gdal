@@ -43,35 +43,21 @@ def test_nearblack_lib_1():
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
     ds = gdal.Nearblack('', src_ds, format='MEM', maxNonBlack=0, nearDist=15)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 21106:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum band 1')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 21106, 'Bad checksum band 1'
 
-    if ds.GetRasterBand(2).Checksum() != 20736:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum band 2')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 20736, 'Bad checksum band 2'
 
-    if ds.GetRasterBand(3).Checksum() != 21309:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum band 3')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 21309, 'Bad checksum band 3'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
     src_ds = None
     ds = None
@@ -85,13 +71,9 @@ def test_nearblack_lib_1():
 def test_nearblack_lib_2():
 
     ds = gdal.Nearblack('', '../gdrivers/data/rgbsmall.tif', format='MEM', maxNonBlack=0, setAlpha=True)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(4).Checksum() != 22002:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Bad checksum band 0')
-        return 'fail'
+    assert ds.GetRasterBand(4).Checksum() == 22002, 'Bad checksum band 0'
 
     ds = None
 
@@ -105,13 +87,9 @@ def test_nearblack_lib_3():
 
     src_ds = gdal.Nearblack('', '../gdrivers/data/rgbsmall.tif', format='MEM', maxNonBlack=0, setAlpha=True)
     ds = gdal.Nearblack('', src_ds, format='MEM', maxNonBlack=0, setAlpha=True)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(4).Checksum() != 22002:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Bad checksum band 0')
-        return 'fail'
+    assert ds.GetRasterBand(4).Checksum() == 22002, 'Bad checksum band 0'
 
     ds = None
 
@@ -125,13 +103,9 @@ def test_nearblack_lib_4():
 
     src_ds = gdal.Warp('', '../gdrivers/data/rgbsmall.tif', format='MEM', warpOptions=["INIT_DEST=255"], srcNodata=0)
     ds = gdal.Nearblack('', src_ds, format='MEM', white=True, maxNonBlack=0, setAlpha=True)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(4).Checksum() != 24151:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Bad checksum band 0')
-        return 'fail'
+    assert ds.GetRasterBand(4).Checksum() == 24151, 'Bad checksum band 0'
 
     ds = None
 
@@ -144,13 +118,10 @@ def test_nearblack_lib_4():
 def test_nearblack_lib_5():
 
     ds = gdal.Nearblack('/vsimem/test_nearblack_lib_5.tif', '../gdrivers/data/rgbsmall.tif', format='GTiff', maxNonBlack=0, setMask=True)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 22002:
-        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        gdaltest.post_reason('Bad checksum mask band')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 22002, \
+        'Bad checksum mask band'
 
     ds = None
 
@@ -166,17 +137,11 @@ def test_nearblack_lib_5():
 def test_nearblack_lib_7():
 
     ds = gdal.Nearblack('', 'data/whiteblackred.tif', format='MEM', colors=((0, 0, 0), (255, 255, 255)))
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 418 or \
-       ds.GetRasterBand(2).Checksum() != 0 or \
-       ds.GetRasterBand(3).Checksum() != 0:
-        print(ds.GetRasterBand(1).Checksum())
-        print(ds.GetRasterBand(2).Checksum())
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert (ds.GetRasterBand(1).Checksum() == 418 and \
+       ds.GetRasterBand(2).Checksum() == 0 and \
+       ds.GetRasterBand(3).Checksum() == 0), 'Bad checksum'
 
     ds = None
 
@@ -191,23 +156,13 @@ def test_nearblack_lib_8():
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
     ds = gdal.GetDriverByName('MEM').CreateCopy('', src_ds)
     ret = gdal.Nearblack(ds, ds, maxNonBlack=0)
-    if ret != 1:
-        return 'fail'
+    assert ret == 1
 
-    if ds.GetRasterBand(1).Checksum() != 21106:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum band 1')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 21106, 'Bad checksum band 1'
 
-    if ds.GetRasterBand(2).Checksum() != 20736:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum band 2')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 20736, 'Bad checksum band 2'
 
-    if ds.GetRasterBand(3).Checksum() != 21309:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum band 3')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 21309, 'Bad checksum band 3'
 
     return 'success'
 

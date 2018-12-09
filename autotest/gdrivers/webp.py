@@ -58,10 +58,8 @@ def test_webp_2():
 
     ds = gdal.Open('data/rgbsmall.webp')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 21464 and cs != 21450 and cs != 21459:
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs)
-        return 'fail'
+    assert cs == 21464 or cs == 21450 or cs == 21459, \
+        'did not get expected checksum on band 1'
 
     return 'success'
 
@@ -83,10 +81,8 @@ def test_webp_3():
     gdal.Unlink('/vsimem/webp_3.webp.aux.xml')
 
     # 21502 is for libwebp 0.3.0
-    if cs1 != 21464 and cs1 != 21502 and cs1 != 21695 and cs1 != 21700:
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs1)
-        return 'fail'
+    assert cs1 == 21464 or cs1 == 21502 or cs1 == 21695 or cs1 == 21700, \
+        'did not get expected checksum on band 1'
 
     return 'success'
 
@@ -112,15 +108,10 @@ def test_webp_4():
     gdal.Unlink('/vsimem/webp_4.webp')
 
     # 22849 is for libwebp 0.3.0
-    if cs1 not in (22001, 22849, 34422, 36652, 36658, 45319):
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs1)
-        return 'fail'
+    assert cs1 in (22001, 22849, 34422, 36652, 36658, 45319), \
+        'did not get expected checksum on band 1'
 
-    if cs4 != 10807:  # lossless alpha
-        gdaltest.post_reason('did not get expected checksum on band 4')
-        print(cs4)
-        return 'fail'
+    assert cs4 == 10807, 'did not get expected checksum on band 4'
 
     return 'success'
 
@@ -145,15 +136,10 @@ def test_webp_5():
     out_ds = None
     gdal.Unlink('/vsimem/webp_5.webp')
 
-    if cs1 != 12603 and cs1 != 18536 and cs1 != 14800:
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs1)
-        return 'fail'
+    assert cs1 == 12603 or cs1 == 18536 or cs1 == 14800, \
+        'did not get expected checksum on band 1'
 
-    if cs4 != 10807:
-        gdaltest.post_reason('did not get expected checksum on band 4')
-        print(cs4)
-        return 'fail'
+    assert cs4 == 10807, 'did not get expected checksum on band 4'
 
     return 'success'
 

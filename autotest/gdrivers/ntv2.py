@@ -82,14 +82,10 @@ def test_ntv2_5():
     src_ds = gdal.Open('data/test_ntv2_le.gsb')
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_5.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=LE'])
     ds = gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_5.gsb', src_ds, options=['APPEND_SUBDATASET=YES'])
-    if ds.GetRasterBand(2).Checksum() != 10:
-        print(ds.GetRasterBand(2).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 10
     ds = None
     ds = gdal.Open('NTv2:1:/vsimem/ntv2_5.gsb')
-    if ds.GetRasterBand(2).Checksum() != 10:
-        print(ds.GetRasterBand(2).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 10
     ds = None
     gdal.GetDriverByName('NTv2').Delete('/vsimem/ntv2_5.gsb')
 
@@ -104,14 +100,10 @@ def test_ntv2_6():
     src_ds = gdal.Open('data/test_ntv2_le.gsb')
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_6.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=BE'])
     ds = gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_6.gsb', src_ds, options=['APPEND_SUBDATASET=YES'])
-    if ds.GetRasterBand(2).Checksum() != 10:
-        print(ds.GetRasterBand(2).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 10
     ds = None
     ds = gdal.Open('NTv2:1:/vsimem/ntv2_6.gsb')
-    if ds.GetRasterBand(2).Checksum() != 10:
-        print(ds.GetRasterBand(2).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 10
     ds = None
     gdal.GetDriverByName('NTv2').Delete('/vsimem/ntv2_6.gsb')
 
@@ -125,13 +117,11 @@ def test_ntv2_7():
 
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('NTv2').Create('/does/not/exist.gsb', 1, 1, 4, gdal.GDT_Float32)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('NTv2').Create('/does/not/exist.gsb', 1, 1, 4, gdal.GDT_Float32, options=['APPEND_SUBDATASET=YES'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 

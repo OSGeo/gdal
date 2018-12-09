@@ -151,16 +151,10 @@ def test_saga_6():
         # Read raw data into tuple of float numbers
         import struct
         value = struct.unpack('d' * 1, data)[0]
-        if value != expected_nodata[i]:
-            print(value)
-            gdaltest.post_reason('did not get expected pixel value')
-            return 'fail'
+        assert value == expected_nodata[i], 'did not get expected pixel value'
 
         nodata = ds.GetRasterBand(1).GetNoDataValue()
-        if nodata != expected_nodata[i]:
-            print(nodata)
-            gdaltest.post_reason('did not get expected nodata value')
-            return 'fail'
+        assert nodata == expected_nodata[i], 'did not get expected nodata value'
 
         ds = None
 

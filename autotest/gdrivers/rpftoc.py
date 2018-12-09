@@ -64,15 +64,13 @@ def test_rpftoc_2():
 def test_rpftoc_3():
     ds = gdal.Open('data/A.TOC')
     md = ds.GetMetadata('SUBDATASETS')
-    if 'SUBDATASET_1_NAME' not in md or md['SUBDATASET_1_NAME'] != 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC':
-        gdaltest.post_reason('missing SUBDATASET_1_NAME metadata')
-        return 'fail'
+    assert 'SUBDATASET_1_NAME' in md and md['SUBDATASET_1_NAME'] == 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', \
+        'missing SUBDATASET_1_NAME metadata'
 
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC')
     md = ds.GetMetadata()
-    if 'FILENAME_0' not in md or (md['FILENAME_0'] != 'data/RPFTOC01.ON2' and md['FILENAME_0'] != 'data\\RPFTOC01.ON2'):
-        gdaltest.post_reason('missing SUBDATASET_1_NAME metadata')
-        return 'fail'
+    assert 'FILENAME_0' in md and not (md['FILENAME_0'] != 'data/RPFTOC01.ON2' and md['FILENAME_0'] != 'data\\RPFTOC01.ON2'), \
+        'missing SUBDATASET_1_NAME metadata'
 
     return 'success'
 
@@ -89,19 +87,15 @@ def test_rpftoc_4():
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
     err = ds.BuildOverviews(overviewlist=[2, 4])
 
-    if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error')
-        return 'fail'
+    assert err == 0, 'BuildOverviews reports an error'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('Overview missing on target file.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2, \
+        'Overview missing on target file.'
 
     ds = None
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('Overview missing on target file after re-open.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2, \
+        'Overview missing on target file after re-open.'
 
     ds = None
 

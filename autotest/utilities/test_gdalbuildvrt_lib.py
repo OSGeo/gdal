@@ -43,43 +43,27 @@ def test_gdalbuildvrt_lib_1():
 
     # Source = String
     ds = gdal.BuildVRT('', '../gcore/data/byte.tif')
-    if ds is None:
-        gdaltest.post_reason('got error/warning')
-        return 'fail'
+    assert ds is not None, 'got error/warning'
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     # Source = Array of string
     ds = gdal.BuildVRT('', ['../gcore/data/byte.tif'])
-    if ds is None:
-        gdaltest.post_reason('got error/warning')
-        return 'fail'
+    assert ds is not None, 'got error/warning'
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     # Source = Dataset
     ds = gdal.BuildVRT('', gdal.Open('../gcore/data/byte.tif'))
-    if ds is None:
-        gdaltest.post_reason('got error/warning')
-        return 'fail'
+    assert ds is not None, 'got error/warning'
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     # Source = Array of dataset
     ds = gdal.BuildVRT('', [gdal.Open('../gcore/data/byte.tif')])
-    if ds is None:
-        gdaltest.post_reason('got error/warning')
-        return 'fail'
+    assert ds is not None, 'got error/warning'
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     return 'success'
 
@@ -97,16 +81,11 @@ def test_gdalbuildvrt_lib_2():
 
     tab = [0]
     ds = gdal.BuildVRT('', '../gcore/data/byte.tif', callback=mycallback, callback_data=tab)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    if tab[0] != 1.0:
-        gdaltest.post_reason('Bad percentage')
-        return 'fail'
+    assert tab[0] == 1.0, 'Bad percentage'
 
     ds = None
 

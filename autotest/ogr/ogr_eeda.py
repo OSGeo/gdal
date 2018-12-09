@@ -86,23 +86,15 @@ def test_eeda_2():
 
     lyr = ds.GetLayer(0)
 
-    if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
-    if lyr.TestCapability('foo') != 0:
-        return 'fail'
+    assert lyr.TestCapability('foo') == 0
 
-    if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 8 + 7 + 4
 
-    if lyr.GetExtent() != (-180.0, 180.0, -90.0, 90.0):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (-180.0, 180.0, -90.0, 90.0)
 
-    if lyr.GetFeatureCount() != -1:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == -1
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages', json.dumps({
         'assets': [
@@ -197,8 +189,7 @@ def test_eeda_2():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f is not None:
-        return 'fail'
+    assert f is None
 
     lyr.ResetReading()
 
@@ -218,8 +209,7 @@ def test_eeda_2():
     }))
 
     f = lyr.GetNextFeature()
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/raw_filter':
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/raw_filter'
 
     lyr.SetAttributeFilter(None)
     lyr.SetAttributeFilter("time >= '1980-01-01T00:00:00Z' AND " +
@@ -262,8 +252,7 @@ def test_eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/filtered_feature'
 
     lyr.SetSpatialFilter(None)
 
@@ -286,8 +275,7 @@ def test_eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/filtered_feature'
 
     # Test time equality with day granularity
     lyr.SetAttributeFilter("time = '1980-01-01'")
@@ -308,8 +296,7 @@ def test_eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/filtered_feature'
 
     ds = None
 
@@ -333,9 +320,7 @@ def test_eeda_3():
 
     lyr = ds.GetLayer(0)
 
-    if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 8 + 7 + 4
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
@@ -363,8 +348,7 @@ def test_eeda_4():
             }
         ]
     }))
-    if not ogr.Open('EEDA:users/foo').GetLayer(0):
-        return 'fail'
+    assert ogr.Open('EEDA:users/foo').GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
     # Project asset ID ("projects/**").
@@ -377,8 +361,7 @@ def test_eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:projects/foo')
-    if not ds.GetLayer(0):
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 
@@ -392,8 +375,7 @@ def test_eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:projects/foo/bar/baz')
-    if not ds.GetLayer(0):
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 
@@ -407,8 +389,7 @@ def test_eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:foo')
-    if not ds.GetLayer(0):
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 
@@ -422,8 +403,7 @@ def test_eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:projects/foo/assets/bar')
-    if not ds.GetLayer(0):
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 

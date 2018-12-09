@@ -48,9 +48,7 @@ def test_ogr_dgnv8_1():
         return 'skip'
 
     ds = ogr.Open('data/test_dgnv8.dgn')
-    if ds is None:
-        gdaltest.post_reason('failed to open test file.')
-        return 'fail'
+    assert ds is not None, 'failed to open test file.'
 
     return 'success'
 
@@ -91,17 +89,13 @@ def test_ogr_dgnv8_3():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_dgnv8.dgn')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     shutil.copy('data/test_dgnv8.dgn', 'tmp/test_dgnv8.dgn')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/test_dgnv8.dgn')
     os.unlink('tmp/test_dgnv8.dgn')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 
@@ -162,24 +156,17 @@ def test_ogr_dgnv8_5():
     ds = None
     ds = ogr.Open(tmp_dgn)
     got_md = ds.GetMetadata_List('DGN')
-    if got_md != options:
-        print(got_md)
-        return 'fail'
+    assert got_md == options
     ds = None
 
     tmp2_dgn = 'tmp/ogr_dgnv8_5_2.dgn'
     gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
     ds = ogr.Open(tmp2_dgn)
-    if ds.GetMetadataItem('TITLE', 'DGN') != 'another_title' or ds.GetMetadataItem('APPLICATION', 'DGN') != 'application':
-        print(ds.GetMetadata('DGN'))
-        return 'fail'
+    assert ds.GetMetadataItem('TITLE', 'DGN') == 'another_title' and ds.GetMetadataItem('APPLICATION', 'DGN') == 'application', \
+        ds.GetMetadata('DGN')
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'my_layer':
-        print(lyr.GetName())
-        return 'fail'
-    if lyr.GetFeatureCount() != 0:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetName() == 'my_layer'
+    assert lyr.GetFeatureCount() == 0
     ds = None
 
     ds = gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn])
@@ -190,12 +177,8 @@ def test_ogr_dgnv8_5():
     ds = None
     ds = ogr.Open(tmp2_dgn, update=1)
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'a_layer':
-        print(lyr.GetName())
-        return 'fail'
-    if lyr.GetFeatureCount() != 1:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetName() == 'a_layer'
+    assert lyr.GetFeatureCount() == 1
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 3)':
         f.DumpReadable()

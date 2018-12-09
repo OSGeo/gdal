@@ -45,55 +45,38 @@ def vsifile_generic(filename):
     start_time = time.time()
 
     fp = gdal.VSIFOpenL(filename, 'wb+')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
 
-    if gdal.VSIFWriteL('0123456789', 1, 10, fp) != 10:
-        return 'fail'
+    assert gdal.VSIFWriteL('0123456789', 1, 10, fp) == 10
 
-    if gdal.VSIFFlushL(fp) != 0:
-        return 'fail'
+    assert gdal.VSIFFlushL(fp) == 0
 
-    if gdal.VSIFTruncateL(fp, 20) != 0:
-        return 'fail'
+    assert gdal.VSIFTruncateL(fp, 20) == 0
 
-    if gdal.VSIFTellL(fp) != 10:
-        return 'fail'
+    assert gdal.VSIFTellL(fp) == 10
 
-    if gdal.VSIFTruncateL(fp, 5) != 0:
-        return 'fail'
+    assert gdal.VSIFTruncateL(fp, 5) == 0
 
-    if gdal.VSIFTellL(fp) != 10:
-        return 'fail'
+    assert gdal.VSIFTellL(fp) == 10
 
-    if gdal.VSIFSeekL(fp, 0, 2) != 0:
-        return 'fail'
+    assert gdal.VSIFSeekL(fp, 0, 2) == 0
 
-    if gdal.VSIFTellL(fp) != 5:
-        return 'fail'
+    assert gdal.VSIFTellL(fp) == 5
 
     gdal.VSIFWriteL('XX', 1, 2, fp)
     gdal.VSIFCloseL(fp)
 
     statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    if statBuf.size != 7:
-        print(statBuf.size)
-        return 'fail'
-    if abs(start_time - statBuf.mtime) > 2:
-        print(statBuf.mtime)
-        return 'fail'
+    assert statBuf.size == 7
+    assert abs(start_time - statBuf.mtime) <= 2
 
     fp = gdal.VSIFOpenL(filename, 'rb')
     buf = gdal.VSIFReadL(1, 7, fp)
-    if gdal.VSIFWriteL('a', 1, 1, fp) != 0:
-        return 'fail'
-    if gdal.VSIFTruncateL(fp, 0) == 0:
-        return 'fail'
+    assert gdal.VSIFWriteL('a', 1, 1, fp) == 0
+    assert gdal.VSIFTruncateL(fp, 0) != 0
     gdal.VSIFCloseL(fp)
 
-    if buf.decode('ascii') != '01234XX':
-        print(buf.decode('ascii'))
-        return 'fail'
+    assert buf.decode('ascii') == '01234XX'
 
     # Test append mode on existing file
     fp = gdal.VSIFOpenL(filename, 'ab')
@@ -101,16 +84,12 @@ def vsifile_generic(filename):
     gdal.VSIFCloseL(fp)
 
     statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    if statBuf.size != 9:
-        print(statBuf.size)
-        return 'fail'
+    assert statBuf.size == 9
 
-    if gdal.Unlink(filename) != 0:
-        return 'fail'
+    assert gdal.Unlink(filename) == 0
 
     statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG)
-    if statBuf is not None:
-        return 'fail'
+    assert statBuf is None
 
     # Test append mode on non existing file
     fp = gdal.VSIFOpenL(filename, 'ab')
@@ -118,12 +97,9 @@ def vsifile_generic(filename):
     gdal.VSIFCloseL(fp)
 
     statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    if statBuf.size != 2:
-        print(statBuf.size)
-        return 'fail'
+    assert statBuf.size == 2
 
-    if gdal.Unlink(filename) != 0:
-        return 'fail'
+    assert gdal.Unlink(filename) == 0
 
     return 'success'
 
@@ -182,9 +158,7 @@ def test_vsifile_3():
     statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     gdal.Unlink(filename)
 
-    if statBuf.size != 10 * 1024 * 1024 * 1024:
-        print(statBuf.size)
-        return 'fail'
+    assert statBuf.size == 10 * 1024 * 1024 * 1024
 
     return 'success'
 
@@ -199,8 +173,7 @@ def test_vsifile_4():
     # print(len(data))
     gdal.VSIFSeekL(fp, 0, 0)
     data = gdal.VSIFReadL(1, 1000000, fp)
-    if not data:
-        return 'fail'
+    assert data
     gdal.VSIFCloseL(fp)
 
     return 'success'
@@ -298,9 +271,7 @@ def test_vsifile_6():
     got_data = gdal.VSIFReadL(1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
 
-    if ref_data != got_data:
-        print(got_data)
-        return 'fail'
+    assert ref_data == got_data
 
     # Real test now
     gdal.SetConfigOption('VSI_CACHE', 'YES')
@@ -310,9 +281,7 @@ def test_vsifile_6():
     got_data = gdal.VSIFReadL(1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
 
-    if ref_data != got_data:
-        print(got_data)
-        return 'fail'
+    assert ref_data == got_data
 
     gdal.Unlink('tmp/vsifile_6.bin')
 
@@ -329,31 +298,22 @@ def test_vsifile_7():
 
     # Test extending file beyond reasonable limits in write mode
     fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'wb')
-    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) != 0:
-        return 'fail'
-    if gdal.VSIStatL('/vsimem/vsifile_7.bin').size != 0:
-        return 'fail'
+    assert gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0
+    assert gdal.VSIStatL('/vsimem/vsifile_7.bin').size == 0
     gdal.PushErrorHandler()
     ret = gdal.VSIFWriteL('a', 1, 1, fp)
     gdal.PopErrorHandler()
-    if ret != 0:
-        return 'fail'
-    if gdal.VSIStatL('/vsimem/vsifile_7.bin').size != 0:
-        return 'fail'
+    assert ret == 0
+    assert gdal.VSIStatL('/vsimem/vsifile_7.bin').size == 0
     gdal.VSIFCloseL(fp)
 
     # Test seeking  beyond file size in read-only mode
     fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'rb')
-    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) != 0:
-        return 'fail'
-    if gdal.VSIFEofL(fp) != 0:
-        return 'fail'
-    if gdal.VSIFTellL(fp) != 0x7FFFFFFFFFFFFFFF:
-        return 'fail'
-    if gdal.VSIFReadL(1, 1, fp):
-        return 'fail'
-    if gdal.VSIFEofL(fp) != 1:
-        return 'fail'
+    assert gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0
+    assert gdal.VSIFEofL(fp) == 0
+    assert gdal.VSIFTellL(fp) == 0x7FFFFFFFFFFFFFFF
+    assert not gdal.VSIFReadL(1, 1, fp)
+    assert gdal.VSIFEofL(fp) == 1
     gdal.VSIFCloseL(fp)
 
     gdal.Unlink('/vsimem/vsifile_7.bin')
@@ -371,10 +331,8 @@ def test_vsifile_8():
     fp = gdal.VSIFOpenL('/vsimem/mydir/a', 'wb')
     gdal.VSIFCloseL(fp)
     gdal.Rename('/vsimem/mydir', '/vsimem/newdir'.encode('ascii').decode('ascii'))
-    if gdal.VSIStatL('/vsimem/newdir') is None:
-        return 'fail'
-    if gdal.VSIStatL('/vsimem/newdir/a') is None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/newdir') is not None
+    assert gdal.VSIStatL('/vsimem/newdir/a') is not None
     gdal.Unlink('/vsimem/newdir/a')
     gdal.Rmdir('/vsimem/newdir')
 
@@ -387,12 +345,10 @@ def test_vsifile_8():
 def test_vsifile_9():
 
     lst = gdal.ReadDir('.')
-    if len(lst) < 4:
-        return 'fail'
+    assert len(lst) >= 4
     # Test truncation
     lst_truncated = gdal.ReadDir('.', int(len(lst) / 2))
-    if len(lst_truncated) <= int(len(lst) / 2):
-        return 'fail'
+    assert len(lst_truncated) > int(len(lst) / 2)
 
     gdal.Mkdir('/vsimem/mydir', 438)
     for i in range(10):
@@ -400,12 +356,10 @@ def test_vsifile_9():
         gdal.VSIFCloseL(fp)
 
     lst = gdal.ReadDir('/vsimem/mydir')
-    if len(lst) < 4:
-        return 'fail'
+    assert len(lst) >= 4
     # Test truncation
     lst_truncated = gdal.ReadDir('/vsimem/mydir', int(len(lst) / 2))
-    if len(lst_truncated) <= int(len(lst) / 2):
-        return 'fail'
+    assert len(lst_truncated) > int(len(lst) / 2)
 
     for i in range(10):
         gdal.Unlink('/vsimem/mydir/%d' % i)
@@ -477,36 +431,24 @@ a""")
     if contents is None:
         gdal.Unlink('/vsimem/vsifile_10.tar')
         return 'skip'
-    if contents != ['test.txt', 'huge.txt', 'small.txt']:
-        print(contents)
-        return 'fail'
-    if gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/test.txt').size != 3:
-        print(gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/test.txt').size)
-        return 'fail'
-    if gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/huge.txt').size != 3888:
-        print(gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/huge.txt').size)
-        return 'fail'
-    if gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/small.txt').size != 1:
-        print(gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/small.txt').size)
-        return 'fail'
+    assert contents == ['test.txt', 'huge.txt', 'small.txt']
+    assert gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/test.txt').size == 3
+    assert gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/huge.txt').size == 3888
+    assert gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/small.txt').size == 1
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
                            """FUZZER_FRIENDLY_ARCHIVE
 ***NEWFILE***:x
 abc""")
     contents = gdal.ReadDir('/vsitar//vsimem/vsifile_10.tar')
-    if contents != ['x']:
-        print(contents)
-        return 'fail'
+    assert contents == ['x']
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
                            """FUZZER_FRIENDLY_ARCHIVE
 ***NEWFILE***:x
 abc***NEWFILE***:""")
     contents = gdal.ReadDir('/vsitar//vsimem/vsifile_10.tar')
-    if contents != ['x']:
-        print(contents)
-        return 'fail'
+    assert contents == ['x']
 
     gdal.Unlink('/vsimem/vsifile_10.tar')
 
@@ -522,12 +464,9 @@ def test_vsifile_11():
 
     f = gdal.VSIFOpenL('/vsisubfile/0_,/vsimem/vsifile_11', 'wb')
     gdal.VSIFWriteL('0123456789', 1, 10, f)
-    if gdal.VSIFTruncateL(f, 10 + 4096 + 2) != 0:
-        return 'fail'
-    if gdal.VSIFTellL(f) != 10:
-        return 'fail'
-    if gdal.VSIFTruncateL(f, 0) != -1:
-        return 'fail'
+    assert gdal.VSIFTruncateL(f, 10 + 4096 + 2) == 0
+    assert gdal.VSIFTellL(f) == 10
+    assert gdal.VSIFTruncateL(f, 0) == -1
     gdal.VSIFCloseL(f)
 
     f = gdal.VSIFOpenL('/vsimem/vsifile_11', 'rb')
@@ -535,9 +474,7 @@ def test_vsifile_11():
     gdal.VSIFCloseL(f)
     import struct
     data = struct.unpack('B' * len(data), data)
-    if data[0] != 48 or data[9] != 57 or data[10] != 0 or data[10 + 4096 + 2 - 1] != 0:
-        print(data)
-        return 'fail'
+    assert data[0] == 48 and data[9] == 57 and data[10] == 0 and data[10 + 4096 + 2 - 1] == 0
 
     gdal.Unlink('/vsimem/vsifile_11')
 
@@ -558,20 +495,15 @@ def test_vsifile_12():
     block_size = 65536
     f = gdal.VSIFOpenL(target_dir + '/vsifile_12', 'wb')
     gdal.VSIFWriteL('a', 1, 1, f)
-    if gdal.VSIFTruncateL(f, block_size * 2) != 0:
-        return 'fail'
+    assert gdal.VSIFTruncateL(f, block_size * 2) == 0
     ret = gdal.VSIFGetRangeStatusL(f, 0, 1)
     # We could get unknown on nfs
     if ret == gdal.VSI_RANGE_STATUS_UNKNOWN:
         print('Range status unknown')
     else:
-        if ret != gdal.VSI_RANGE_STATUS_DATA:
-            print(ret)
-            return 'fail'
+        assert ret == gdal.VSI_RANGE_STATUS_DATA
         ret = gdal.VSIFGetRangeStatusL(f, block_size * 2 - 1, 1)
-        if ret != gdal.VSI_RANGE_STATUS_HOLE:
-            print(ret)
-            return 'fail'
+        assert ret == gdal.VSI_RANGE_STATUS_HOLE
     gdal.VSIFCloseL(f)
 
     gdal.Unlink(target_dir + '/vsifile_12')
@@ -632,31 +564,24 @@ def test_vsifile_14():
 def test_vsifile_15():
 
     fp = gdal.VSIFOpenL('/vsigzip/data/corrupted_z_buf_error.gz', 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
     file_len = 0
     while not gdal.VSIFEofL(fp):
         with gdaltest.error_handler():
             file_len += len(gdal.VSIFReadL(1, 4, fp))
-    if file_len != 6469:
-        return 'fail'
+    assert file_len == 6469
 
     with gdaltest.error_handler():
         file_len += len(gdal.VSIFReadL(1, 4, fp))
-    if file_len != 6469:
-        return 'fail'
+    assert file_len == 6469
 
     with gdaltest.error_handler():
-        if gdal.VSIFSeekL(fp, 0, 2) == 0:
-            return 'fail'
+        assert gdal.VSIFSeekL(fp, 0, 2) != 0
 
-    if gdal.VSIFSeekL(fp, 0, 0) != 0:
-        return 'fail'
+    assert gdal.VSIFSeekL(fp, 0, 0) == 0
 
     len_read = len(gdal.VSIFReadL(1, file_len, fp))
-    if len_read != file_len:
-        print(len_read)
-        return 'fail'
+    assert len_read == file_len
 
     gdal.VSIFCloseL(fp)
 
@@ -685,11 +610,9 @@ def test_vsifile_16():
 
 def test_vsifile_17():
 
-    if gdal.GetActualURL('foo') is not None:
-        return 'fail'
+    assert gdal.GetActualURL('foo') is None
 
-    if gdal.GetSignedURL('foo') is not None:
-        return 'fail'
+    assert gdal.GetSignedURL('foo') is None
 
     return 'success'
 
@@ -700,9 +623,7 @@ def test_vsifile_17():
 def test_vsifile_18():
 
     prefixes = gdal.GetFileSystemsPrefixes()
-    if '/vsimem/' not in prefixes:
-        print(prefixes)
-        return 'fail'
+    assert '/vsimem/' in prefixes
 
     return 'success'
 
@@ -717,9 +638,7 @@ def test_vsifile_19():
         # Check that the options is XML correct
         if options is not None:
             ret = gdal.ParseXMLString(options)
-            if ret is None:
-                print(prefix, options)
-                return 'fail'
+            assert ret is not None, (prefix, options)
 
     return 'success'
 
@@ -747,8 +666,7 @@ def test_vsifile_21():
     data = 'This is some data'
 
     vsifile = gdal.VSIFOpenL(filename, 'wb')
-    if gdal.VSIFWriteL(data, 1, len(data), vsifile) != len(data):
-        return 'fail'
+    assert gdal.VSIFWriteL(data, 1, len(data), vsifile) == len(data)
     gdal.VSIFCloseL(vsifile)
 
     vsifile = gdal.VSIFOpenL(filename, 'rb')
@@ -757,19 +675,16 @@ def test_vsifile_21():
     gdal.VSIFSeekL(vsifile, 0, 0)
     data_read = gdal.VSIFReadL(1, vsilen, vsifile)
     data_mem = gdal.VSIGetMemFileBuffer_unsafe(filename)
-    if data_read != data_mem[:]:
-        return 'fail'
+    assert data_read == data_mem[:]
     gdal.VSIFCloseL(vsifile)
     vsifile_write = gdal.VSIFOpenL(filename_write, 'wb')
-    if gdal.VSIFWriteL(data_mem, 1, len(data_mem), vsifile_write) != len(data_mem):
-        return 'fail'
+    assert gdal.VSIFWriteL(data_mem, 1, len(data_mem), vsifile_write) == len(data_mem)
     gdal.VSIFCloseL(vsifile_write)
     gdal.Unlink(filename)
     gdal.Unlink(filename_write)
     with gdaltest.error_handler():
         data3 = gdal.VSIGetMemFileBuffer_unsafe(filename)
-        if data3 != None:
-            return 'fail'
+        assert data3 == None
 
     return 'success'
 
@@ -777,33 +692,23 @@ def test_vsifile_21():
 def test_vsifile_22():
     # VSIOpenL doesn't set errorno
     gdal.VSIErrorReset()
-    if gdal.VSIGetLastErrorNo() != 0:
-        gdaltest.post_reason("Expected Err=0 after VSIErrorReset(), got %d" % gdal.VSIGetLastErrorNo())
-        return 'fail'
+    assert gdal.VSIGetLastErrorNo() == 0, \
+        ("Expected Err=0 after VSIErrorReset(), got %d" % gdal.VSIGetLastErrorNo())
 
     fp = gdal.VSIFOpenL('tmp/not-existing', 'r')
-    if fp is not None:
-        gdaltest.post_reason("Expected None from VSIFOpenL")
-        return 'fail'
-    if gdal.VSIGetLastErrorNo() != 0:
-        gdaltest.post_reason("Expected Err=0 from VSIFOpenL, got %d" % gdal.VSIGetLastErrorNo())
-        return 'fail'
+    assert fp is None, "Expected None from VSIFOpenL"
+    assert gdal.VSIGetLastErrorNo() == 0, \
+        ("Expected Err=0 from VSIFOpenL, got %d" % gdal.VSIGetLastErrorNo())
 
     # VSIOpenExL does
     fp = gdal.VSIFOpenExL('tmp/not-existing', 'r', 1)
-    if fp is not None:
-        gdaltest.post_reason("Expected None from VSIFOpenExL")
-        return 'fail'
-    if gdal.VSIGetLastErrorNo() != 1:
-        gdaltest.post_reason("Expected Err=1 from VSIFOpenExL, got %d" % gdal.VSIGetLastErrorNo())
-        return 'fail'
-    if len(gdal.VSIGetLastErrorMsg()) == 0:
-        gdaltest.post_reason("Expected a VSI error message")
-        return 'fail'
+    assert fp is None, "Expected None from VSIFOpenExL"
+    assert gdal.VSIGetLastErrorNo() == 1, \
+        ("Expected Err=1 from VSIFOpenExL, got %d" % gdal.VSIGetLastErrorNo())
+    assert len(gdal.VSIGetLastErrorMsg()) != 0, "Expected a VSI error message"
     gdal.VSIErrorReset()
-    if gdal.VSIGetLastErrorNo() != 0:
-        gdaltest.post_reason("Expected Err=0 after VSIErrorReset(), got %d" % gdal.VSIGetLastErrorNo())
-        return 'fail'
+    assert gdal.VSIGetLastErrorNo() == 0, \
+        ("Expected Err=0 after VSIErrorReset(), got %d" % gdal.VSIGetLastErrorNo())
 
     return 'success'
 
@@ -815,9 +720,7 @@ def test_vsifile_22():
 def test_vsitar_bug_675():
 
     content = gdal.ReadDir('/vsitar/data/tar_with_star_base256_fields.tar')
-    if len(content) != 1:
-        print(content)
-        return 'fail'
+    assert len(content) == 1
     return 'success'
 
 ###############################################################################
@@ -856,19 +759,15 @@ def test_vsigzip_multi_thread():
 def test_vsisync():
 
     with gdaltest.error_handler():
-        if gdal.Sync('/i_do/not/exist', '/vsimem/'):
-            return 'fail'
+        assert not gdal.Sync('/i_do/not/exist', '/vsimem/')
 
     with gdaltest.error_handler():
-        if gdal.Sync('vsifile.py', '/i_do/not/exist'):
-            return 'fail'
+        assert not gdal.Sync('vsifile.py', '/i_do/not/exist')
 
     # Test copying a file
     for i in range(2):
-        if not gdal.Sync('vsifile.py', '/vsimem/'):
-            return 'fail'
-        if gdal.VSIStatL('/vsimem/vsifile.py').size != gdal.VSIStatL('vsifile.py').size:
-            return 'fail'
+        assert gdal.Sync('vsifile.py', '/vsimem/')
+        assert gdal.VSIStatL('/vsimem/vsifile.py').size == gdal.VSIStatL('vsifile.py').size
     gdal.Unlink('/vsimem/vsifile.py')
 
     # Test copying the content of a directory
@@ -879,20 +778,13 @@ def test_vsisync():
 
     if sys.platform != 'win32':
         with gdaltest.error_handler():
-            if gdal.Sync('/vsimem/test_sync/', '/i_do_not/exist'):
-                return 'fail'
+            assert not gdal.Sync('/vsimem/test_sync/', '/i_do_not/exist')
 
-    if not gdal.Sync('/vsimem/test_sync/', '/vsimem/out'):
-        return 'fail'
-    if gdal.ReadDir('/vsimem/out') != [ 'foo.txt', 'subdir' ]:
-        print(gdal.ReadDir('/vsimem/out'))
-        return 'fail'
-    if gdal.ReadDir('/vsimem/out/subdir') != [ 'bar.txt' ]:
-        print(gdal.ReadDir('/vsimem/out/subdir'))
-        return 'fail'
+    assert gdal.Sync('/vsimem/test_sync/', '/vsimem/out')
+    assert gdal.ReadDir('/vsimem/out') == [ 'foo.txt', 'subdir' ]
+    assert gdal.ReadDir('/vsimem/out/subdir') == [ 'bar.txt' ]
     # Again
-    if not gdal.Sync('/vsimem/test_sync/', '/vsimem/out'):
-        return 'fail'
+    assert gdal.Sync('/vsimem/test_sync/', '/vsimem/out')
 
     gdal.RmdirRecursive('/vsimem/out')
 
@@ -901,19 +793,12 @@ def test_vsisync():
     def my_progress(pct, message, user_data):
         pct_values.append(pct)
 
-    if not gdal.Sync('/vsimem/test_sync', '/vsimem/out', callback = my_progress):
-        return 'fail'
+    assert gdal.Sync('/vsimem/test_sync', '/vsimem/out', callback = my_progress)
 
-    if pct_values != [0.5, 1.0]:
-        print(pct_values)
-        return 'fail'
+    assert pct_values == [0.5, 1.0]
 
-    if gdal.ReadDir('/vsimem/out') != [ 'test_sync' ]:
-        print(gdal.ReadDir('/vsimem/out'))
-        return 'fail'
-    if gdal.ReadDir('/vsimem/out/test_sync') != [ 'foo.txt', 'subdir' ]:
-        print(gdal.ReadDir('/vsimem/out/test_sync'))
-        return 'fail'
+    assert gdal.ReadDir('/vsimem/out') == [ 'test_sync' ]
+    assert gdal.ReadDir('/vsimem/out/test_sync') == [ 'foo.txt', 'subdir' ]
 
     gdal.RmdirRecursive('/vsimem/test_sync')
     gdal.RmdirRecursive('/vsimem/out')
@@ -927,18 +812,15 @@ def test_vsifile_opendir():
 
     # Non existing dir
     d = gdal.OpenDir('/vsimem/i_dont_exist')
-    if d:
-        return 'fail'
+    assert not d
 
     gdal.Mkdir('/vsimem/vsifile_opendir', 0o755)
 
     # Empty dir
     d = gdal.OpenDir('/vsimem/vsifile_opendir')
-    if not d:
-        return 'fail'
+    assert d
     entry = gdal.GetNextDirEntry(d)
-    if entry:
-        return 'fail'
+    assert not entry
     gdal.CloseDir(d)
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_opendir/test', 'foo')
@@ -950,74 +832,44 @@ def test_vsifile_opendir():
     d = gdal.OpenDir('/vsimem/vsifile_opendir')
 
     entry = gdal.GetNextDirEntry(d)
-    if entry.name != 'subdir':
-        print(entry.name)
-        return 'fail'
-    if entry.mode != 16384:
-        print(entry.mode)
-        return 'fail'
+    assert entry.name == 'subdir'
+    assert entry.mode == 16384
 
     entry = gdal.GetNextDirEntry(d)
-    if entry.name != 'subdir/subdir2':
-        print(entry.name)
-        return 'fail'
-    if entry.mode != 16384:
-        print(entry.mode)
-        return 'fail'
+    assert entry.name == 'subdir/subdir2'
+    assert entry.mode == 16384
 
     entry = gdal.GetNextDirEntry(d)
-    if entry.name != 'subdir/subdir2/test2':
-        print(entry.name)
-        return 'fail'
-    if entry.mode != 32768:
-        print(entry.mode)
-        return 'fail'
+    assert entry.name == 'subdir/subdir2/test2'
+    assert entry.mode == 32768
 
     entry = gdal.GetNextDirEntry(d)
-    if entry.name != 'test':
-        print(entry.name)
-        return 'fail'
-    if entry.mode != 32768:
-        print(entry.mode)
-        return 'fail'
-    if not entry.modeKnown:
-        return 'fail'
-    if entry.size != 3:
-        return 'fail'
-    if not entry.sizeKnown:
-        return 'fail'
-    if entry.mtime == 0:
-        return 'fail'
-    if not entry.mtimeKnown:
-        return 'fail'
-    if entry.extra:
-        return 'fail'
+    assert entry.name == 'test'
+    assert entry.mode == 32768
+    assert entry.modeKnown
+    assert entry.size == 3
+    assert entry.sizeKnown
+    assert entry.mtime != 0
+    assert entry.mtimeKnown
+    assert not entry.extra
 
     entry = gdal.GetNextDirEntry(d)
-    if entry:
-        return 'fail'
+    assert not entry
     gdal.CloseDir(d)
 
     # Only top level
     d = gdal.OpenDir('/vsimem/vsifile_opendir', 0)
     entry = gdal.GetNextDirEntry(d)
-    if entry.name != 'subdir':
-        print(entry.name)
-        return 'fail'
+    assert entry.name == 'subdir'
     entry = gdal.GetNextDirEntry(d)
-    if entry.name != 'test':
-        print(entry.name)
-        return 'fail'
+    assert entry.name == 'test'
     entry = gdal.GetNextDirEntry(d)
-    if entry:
-        return 'fail'
+    assert not entry
     gdal.CloseDir(d)
 
     # Depth 1
     files = [l_entry.name for l_entry in gdal.listdir('/vsimem/vsifile_opendir', 1)]
-    if files != ['subdir', 'subdir/subdir2', 'test']:
-        print(files)
-        return 'fail'
+    assert files == ['subdir', 'subdir/subdir2', 'test']
 
     gdal.RmdirRecursive('/vsimem/vsifile_opendir')
 

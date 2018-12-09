@@ -66,9 +66,8 @@ def test_ingr_3():
 
     ds = gdal.Open('data/8bit_pal.cot')
     ct = ds.GetRasterBand(1).GetRasterColorTable()
-    if ct.GetCount() != 256 or ct.GetColorEntry(8) != (8, 8, 8, 255):
-        gdaltest.post_reason('Wrong color table entry.')
-        return 'fail'
+    assert ct.GetCount() == 256 and ct.GetColorEntry(8) == (8, 8, 8, 255), \
+        'Wrong color table entry.'
 
     return 'success'
 
@@ -172,9 +171,7 @@ def test_ingr_14():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 11466 and cs != 11095:
-        print(cs)
-        return 'fail'
+    assert cs == 11466 or cs == 11095
 
     return 'success'
 
@@ -221,10 +218,7 @@ def test_ingr_17():
 
     gdal.GetDriverByName('INGR').Delete('/vsimem/ingr_17.rle')
 
-    if got_cs != ref_cs:
-        print(got_cs)
-        print(ref_cs)
-        return 'fail'
+    assert got_cs == ref_cs
 
     return 'success'
 
@@ -245,15 +239,13 @@ def test_ingr_18():
 
     got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
 
-    if got_data != expected_data:
-        return 'fail'
+    assert got_data == expected_data
 
     ds.FlushCache()
 
     got_data = ds.ReadRaster(0, ds.RasterYSize - 1, ds.RasterXSize, 1)
 
-    if got_data != expected_data:
-        return 'fail'
+    assert got_data == expected_data
 
     return 'success'
 

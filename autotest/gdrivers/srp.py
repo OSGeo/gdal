@@ -50,20 +50,14 @@ def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
     ret = tst.testOpen(check_prj=srs.ExportToWkt(), check_gt=(500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0))
 
     ds = gdal.Open('data/' + filename)
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
 
     ct = ds.GetRasterBand(1).GetColorTable()
-    if ct.GetCount() != 4:
-        return 'fail'
+    assert ct.GetCount() == 4
 
-    if ct.GetColorEntry(0) != (0, 0, 0, 255):
-        print(ct.GetColorEntry(0))
-        return 'fail'
+    assert ct.GetColorEntry(0) == (0, 0, 0, 255)
 
-    if ct.GetColorEntry(1) != (255, 0, 0, 255):
-        print(ct.GetColorEntry(1))
-        return 'fail'
+    assert ct.GetColorEntry(1) == (255, 0, 0, 255)
 
     expected_md = ['SRP_CLASSIFICATION=U',
                    'SRP_CREATIONDATE=20120505',
@@ -77,10 +71,7 @@ def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
     got_md = ds.GetMetadata()
     for md in expected_md:
         (key, value) = md.split('=')
-        if key not in got_md or got_md[key] != value:
-            gdaltest.post_reason('did not find %s' % md)
-            print(got_md)
-            return 'fail'
+        assert key in got_md and got_md[key] == value, ('did not find %s' % md)
 
     return 'success'
 
@@ -118,14 +109,10 @@ def test_srp_5():
     ds = gdal.Open('data/USRP_PCB0/TRANSH01.THF')
     gdal.SetConfigOption('SRP_SINGLE_GEN_IN_THF_AS_DATASET', None)
     subdatasets = ds.GetMetadata('SUBDATASETS')
-    if subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' and \
-       subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG':
-        print(subdatasets)
-        return 'fail'
-    if subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' and \
-       subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG':
-        print(subdatasets)
-        return 'fail'
+    assert (subdatasets['SUBDATASET_1_NAME'] == 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' or \
+       subdatasets['SUBDATASET_1_NAME'] == 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG')
+    assert (subdatasets['SUBDATASET_1_DESC'] == 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' or \
+       subdatasets['SUBDATASET_1_DESC'] == 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG')
 
     expected_md = ['SRP_CLASSIFICATION=U',
                    'SRP_CREATIONDATE=20120505',
@@ -135,10 +122,7 @@ def test_srp_5():
     got_md = ds.GetMetadata()
     for md in expected_md:
         (key, value) = md.split('=')
-        if key not in got_md or got_md[key] != value:
-            gdaltest.post_reason('did not find %s' % md)
-            print(got_md)
-            return 'fail'
+        assert key in got_md and got_md[key] == value, ('did not find %s' % md)
 
     return 'success'
 

@@ -38,6 +38,7 @@ from osgeo import osr
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Netcdf CF compliance Functions
@@ -184,10 +185,8 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
 
     # There should be a ERRORS detected summary
     if 'ERRORS detected' not in ret:
-        gdaltest.post_reason('ERROR with command - ' + command)
-        print(ret)
         print(err)
-        return 'fail'
+        pytest.fail('ERROR with command - ' + command)
 
     output_all = ret
     output_err = ''
@@ -660,10 +659,8 @@ def test_netcdf_cf_5():
         sr.ImportFromWkt(prj)
         lat_origin = sr.GetProjParm('latitude_of_origin')
 
-        if lat_origin != 60:
-            gdaltest.post_reason('Latitude of origin in %s does not match expected: %f'
+        assert lat_origin == 60, ('Latitude of origin in %s does not match expected: %f'
                                  % (ifile, lat_origin))
-            return 'fail'
 
     return 'success'
 

@@ -117,14 +117,12 @@ def test_ogr_ingres_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
-                                          max_error=0.000000001) != 0:
-            return 'fail'
+        assert (ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
+                                          max_error=0.000000001) == 0)
 
         for fld in range(3):
-            if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason('Attribute %d does not match' % fld)
-                return 'fail'
+            assert orig_feat.GetField(fld) == read_feat.GetField(fld), \
+                ('Attribute %d does not match' % fld)
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
@@ -224,18 +222,14 @@ def test_ogr_ingres_7():
     result = gdaltest.ingres_lyr.CreateField(field_defn)
     field_defn.Destroy()
 
-    if result is not 0:
-        gdaltest.post_reason('CreateField failed!')
-        return 'fail'
+    assert result is 0, 'CreateField failed!'
 
     ####################################################################
     # Apply a value to this field in one feature.
 
     gdaltest.ingres_lyr.SetAttributeFilter("prfedea = '35043423'")
     feat_read = gdaltest.ingres_lyr.GetNextFeature()
-    if feat_read is None:
-        gdaltest.post_reason('failed to read target feature!')
-        return 'fail'
+    assert feat_read is not None, 'failed to read target feature!'
 
     gdaltest.ingres_fid = feat_read.GetFID()
 
@@ -265,9 +259,8 @@ def test_ogr_ingres_8():
     if gdaltest.ingres_ds is None:
         return 'skip'
 
-    if not gdaltest.ingres_lyr.TestCapability('DeleteFeature'):
-        gdaltest.post_reason('DeleteFeature capability test failed.')
-        return 'fail'
+    assert gdaltest.ingres_lyr.TestCapability('DeleteFeature'), \
+        'DeleteFeature capability test failed.'
 
     old_count = gdaltest.ingres_lyr.GetFeatureCount()
 
@@ -275,9 +268,8 @@ def test_ogr_ingres_8():
     # Delete target feature.
 
     target_fid = gdaltest.ingres_fid
-    if gdaltest.ingres_lyr.DeleteFeature(target_fid) != 0:
-        gdaltest.post_reason('DeleteFeature returned error code.')
-        return 'fail'
+    assert gdaltest.ingres_lyr.DeleteFeature(target_fid) == 0, \
+        'DeleteFeature returned error code.'
 
     ####################################################################
     # Verify that count has dropped by one, and that the feature in question
@@ -287,9 +279,7 @@ def test_ogr_ingres_8():
         gdaltest.post_reason('got feature count of %d, not expected %d.'
                              % (new_count, old_count - 1))
 
-    if gdaltest.ingres_lyr.GetFeature(target_fid) is not None:
-        gdaltest.post_reason('Got deleted feature!')
-        return 'fail'
+    assert gdaltest.ingres_lyr.GetFeature(target_fid) is None, 'Got deleted feature!'
 
     return 'success'
 

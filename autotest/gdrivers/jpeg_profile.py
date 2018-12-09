@@ -62,8 +62,7 @@ def test_jpeg_copy_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.jpg')
@@ -71,8 +70,7 @@ def test_jpeg_copy_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
@@ -103,8 +101,7 @@ def test_jpeg_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.jpg')
@@ -112,8 +109,7 @@ def test_jpeg_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
@@ -157,11 +153,9 @@ def test_jpeg_copy_icc_64K():
     except OSError:
         pass
 
-    if comment != 'foo':
-        return 'fail'
+    assert comment == 'foo'
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.jpg')
@@ -174,8 +168,7 @@ def test_jpeg_copy_icc_64K():
     except OSError:
         pass
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with GetMetadataItem()
     ds2 = gdal.Open('tmp/icc_test.jpg')
@@ -188,8 +181,7 @@ def test_jpeg_copy_icc_64K():
     except OSError:
         pass
 
-    if source_icc_profile != icc:
-        return 'fail'
+    assert source_icc_profile == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')

@@ -67,16 +67,11 @@ def test_vrtmask_1():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ds.GetRasterBand(1).GetMaskFlags())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+        'did not get expected mask flags'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4672, 'did not get expected mask band checksum'
 
     ds = None
 
@@ -113,16 +108,10 @@ def test_vrtmask_2():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    if ds.GetRasterBand(1).GetMaskFlags() != 0:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ds.GetRasterBand(1).GetMaskFlags())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == 0, 'did not get expected mask flags'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 4873:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4873, 'did not get expected mask band checksum'
 
     ds = None
 
@@ -155,11 +144,7 @@ def test_vrtmask_3():
 
     os.remove('tmp/vrtmask_3.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
     return 'success'
 
@@ -189,11 +174,7 @@ def test_vrtmask_4():
 
     os.remove('tmp/vrtmask_4.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
     return 'success'
 
@@ -220,11 +201,7 @@ def test_vrtmask_5():
 
     os.remove('tmp/vrtmask_5.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
     return 'success'
 
@@ -252,11 +229,7 @@ def test_vrtmask_6():
 
     os.remove('tmp/vrtmask_6.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
     return 'success'
 
@@ -303,17 +276,9 @@ def test_vrtmask_7():
         pass
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
 
-    if alpha_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected alpha band checksum')
-        print(alpha_cs)
-        print(expected_msk_cs)
-        return 'fail'
+    assert alpha_cs == expected_msk_cs, 'did not get expected alpha band checksum'
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
     return 'success'
 
@@ -337,9 +302,7 @@ def test_vrtmask_8():
 
     os.remove('tmp/vrtmask_8.vrt')
 
-    if flags != gdal.GMF_ALL_VALID:
-        print(flags)
-        return 'fail'
+    assert flags == gdal.GMF_ALL_VALID
 
     return 'success'
 
@@ -363,14 +326,9 @@ def test_vrtmask_9():
 
     os.remove('tmp/vrtmask_9_src.tif')
     os.remove('tmp/vrtmask_9_dst.tif')
-    if err != '':
-        gdaltest.post_reason('unexpected output on standard err')
-        print(err)
-        return 'fail'
+    assert err == '', 'unexpected output on standard err'
 
-    if flags != gdal.GMF_ALL_VALID:
-        print(flags)
-        return 'fail'
+    assert flags == gdal.GMF_ALL_VALID
 
     return 'success'
 
@@ -397,8 +355,7 @@ def test_vrtmask_10():
     os.remove('tmp/vrtmask_10_2.vrt')
     os.remove('tmp/vrtmask_10_3.tif')
 
-    if cs_ref != cs_got:
-        return 'fail'
+    assert cs_ref == cs_got
 
     return 'success'
 
@@ -412,32 +369,25 @@ def test_vrtmask_11():
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).CreateMaskBand(0)
-    if ret == 0:
-        gdaltest.post_reason('expected an error, but got success')
-        return 'fail'
+    assert ret != 0, 'expected an error, but got success'
 
     # This VRT dataset has already a mask band
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
         ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    if ret == 0:
-        gdaltest.post_reason('expected an error, but got success')
-        return 'fail'
+    assert ret != 0, 'expected an error, but got success'
 
     # This VRT band has already a mask band
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.GetRasterBand(1).CreateMaskBand(0)
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).CreateMaskBand(0)
-    if ret == 0:
-        gdaltest.post_reason('expected an error, but got success')
-        return 'fail'
+    assert ret != 0, 'expected an error, but got success'
 
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     return 'success'
 

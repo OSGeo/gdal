@@ -45,10 +45,7 @@ def test_vrtmisc_1():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4323:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4323, 'did not get expected checksum'
 
     return 'success'
 
@@ -62,10 +59,7 @@ def test_vrtmisc_2():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4159:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4159, 'did not get expected checksum'
 
     return 'success'
 
@@ -89,10 +83,7 @@ def test_vrtmisc_3():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4159:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4159, 'did not get expected checksum'
 
     return 'success'
 
@@ -108,14 +99,8 @@ def test_vrtmisc_4():
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
 
-    if cs1 != 4323:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs1)
-        return 'fail'
-    if cs2 != 4323:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs2)
-        return 'fail'
+    assert cs1 == 4323, 'did not get expected checksum'
+    assert cs2 == 4323, 'did not get expected checksum'
 
     return 'success'
 
@@ -131,14 +116,8 @@ def test_vrtmisc_5():
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
 
-    if cs1 != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs1)
-        return 'fail'
-    if cs2 != 4323:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs2)
-        return 'fail'
+    assert cs1 == 4672, 'did not get expected checksum'
+    assert cs2 == 4323, 'did not get expected checksum'
 
     return 'success'
 
@@ -154,14 +133,8 @@ def test_vrtmisc_6():
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
 
-    if cs1 != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs1)
-        return 'fail'
-    if cs2 != 4323:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs2)
-        return 'fail'
+    assert cs1 == 4672, 'did not get expected checksum'
+    assert cs2 == 4323, 'did not get expected checksum'
 
     return 'success'
 
@@ -177,14 +150,8 @@ def test_vrtmisc_7():
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
 
-    if cs1 != 4159:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs1)
-        return 'fail'
-    if cs2 != 4159:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs2)
-        return 'fail'
+    assert cs1 == 4159, 'did not get expected checksum'
+    assert cs2 == 4159, 'did not get expected checksum'
 
     return 'success'
 
@@ -200,14 +167,8 @@ def test_vrtmisc_8():
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
 
-    if cs1 != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs1)
-        return 'fail'
-    if cs2 != 4159:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs2)
-        return 'fail'
+    assert cs1 == 4672, 'did not get expected checksum'
+    assert cs2 == 4159, 'did not get expected checksum'
 
     return 'success'
 
@@ -223,14 +184,8 @@ def test_vrtmisc_9():
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
 
-    if cs1 != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs1)
-        return 'fail'
-    if cs2 != 4159:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs2)
-        return 'fail'
+    assert cs1 == 4672, 'did not get expected checksum'
+    assert cs2 == 4159, 'did not get expected checksum'
 
     return 'success'
 
@@ -269,29 +224,17 @@ def test_vrtmisc_10():
     ds = None
 
     ds = gdal.Open("/vsimem/vrtmisc_10.vrt", gdal.GA_Update)
-    if ds.GetMetadata() != {'foo': 'bar'}:
-        print(ds.GetMetadata())
-        return 'fail'
-    if ds.GetMetadata('some_domain') != {'bar': 'baz'}:
-        print(ds.GetMetadata('some_domain'))
-        return 'fail'
-    if ds.GetMetadata_List('xml:a_xml_domain')[0] != '<some_xml />\n':
-        print(ds.GetMetadata_List('xml:a_xml_domain'))
-        return 'fail'
+    assert ds.GetMetadata() == {'foo': 'bar'}
+    assert ds.GetMetadata('some_domain') == {'bar': 'baz'}
+    assert ds.GetMetadata_List('xml:a_xml_domain')[0] == '<some_xml />\n'
     # Empty default domain
     ds.SetMetadata({})
     ds = None
 
     ds = gdal.Open("/vsimem/vrtmisc_10.vrt")
-    if ds.GetMetadata() != {}:
-        print(ds.GetMetadata())
-        return 'fail'
-    if ds.GetMetadata('some_domain') != {'bar': 'baz'}:
-        print(ds.GetMetadata('some_domain'))
-        return 'fail'
-    if ds.GetMetadata_List('xml:a_xml_domain')[0] != '<some_xml />\n':
-        print(ds.GetMetadata_List('xml:a_xml_domain'))
-        return 'fail'
+    assert ds.GetMetadata() == {}
+    assert ds.GetMetadata('some_domain') == {'bar': 'baz'}
+    assert ds.GetMetadata_List('xml:a_xml_domain')[0] == '<some_xml />\n'
     ds = None
 
     gdal.Unlink("/vsimem/vrtmisc_10.vrt")
@@ -329,8 +272,7 @@ def test_vrtmisc_11():
 
     gdal.Unlink("tmp/vrtmisc_11.vrt")
 
-    if data.find('<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>') < 0:
-        return 'fail'
+    assert data.find('<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>') >= 0
 
     return "success"
 
@@ -359,15 +301,12 @@ def test_vrtmisc_12():
     ds = None
 
     ds = gdal.Open("/vsimem/vrtmisc_12.vrt", gdal.GA_Update)
-    if ds.GetRasterBand(1).GetNoDataValue() != 123:
-        return 'fail'
-    if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 123
+    assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
     ds = None
 
     ds = gdal.Open("/vsimem/vrtmisc_12.vrt")
-    if ds.GetRasterBand(1).GetNoDataValue() is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
     ds = None
 
     gdal.Unlink("/vsimem/vrtmisc_12.vrt")
@@ -382,8 +321,7 @@ def test_vrtmisc_13():
 
     ds = gdal.Open('data/oddsize1bit.tif')
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
-    if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        return 'fail'
+    assert out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
     return "success"
 
@@ -403,10 +341,8 @@ def test_vrtmisc_14():
     gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
     gdal.Unlink("/vsimem/vrtmisc_14.vrt")
 
-    if content.find('<SrcRect xOff="0" yOff="0" xSize="123456789" ySize="1"') < 0 or \
-       content.find('<DstRect xOff="0" yOff="0" xSize="123456789" ySize="1"') < 0:
-        print(content)
-        return 'fail'
+    assert (content.find('<SrcRect xOff="0" yOff="0" xSize="123456789" ySize="1"') >= 0 and \
+       content.find('<DstRect xOff="0" yOff="0" xSize="123456789" ySize="1"') >= 0)
 
     src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options=['SPARSE_OK=YES', 'TILED=YES'])
     gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
@@ -418,10 +354,8 @@ def test_vrtmisc_14():
     gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
     gdal.Unlink("/vsimem/vrtmisc_14.vrt")
 
-    if content.find('<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"') < 0 or \
-       content.find('<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"') < 0:
-        print(content)
-        return 'fail'
+    assert (content.find('<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"') >= 0 and \
+       content.find('<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"') >= 0)
 
     return "success"
 
@@ -433,8 +367,7 @@ def test_vrtmisc_15():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_15.tif', 1, 1, options=['PIXELTYPE=SIGNEDBYTE'])
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
-    if out_ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
-        return 'fail'
+    assert out_ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
     ds = None
     gdal.Unlink('/vsimem/vrtmisc_15.tif')
 
@@ -451,25 +384,15 @@ def test_vrtmisc_16():
     content = gdal.VSIFReadL(1, 100000, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
 
-    if content.find('<SrcRect xOff="0" yOff="0" xSize="952" ySize="1189"') < 0:
-        print(content)
-        return 'fail'
-    if content.find('<DstRect xOff="0" yOff="0" xSize="952" ySize="1189"') < 0:
-        print(content)
-        return 'fail'
-    if content.find('<SrcRect xOff="0" yOff="0" xSize="494" ySize="893"') < 0:
-        print(content)
-        return 'fail'
-    if content.find('<DstRect xOff="1680" yOff="5922" xSize="494" ySize="893"') < 0:
-        print(content)
-        return 'fail'
+    assert content.find('<SrcRect xOff="0" yOff="0" xSize="952" ySize="1189"') >= 0
+    assert content.find('<DstRect xOff="0" yOff="0" xSize="952" ySize="1189"') >= 0
+    assert content.find('<SrcRect xOff="0" yOff="0" xSize="494" ySize="893"') >= 0
+    assert content.find('<DstRect xOff="1680" yOff="5922" xSize="494" ySize="893"') >= 0
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtmisc_16.tif', gdal.Open('/vsimem/vrtmisc_16.vrt'))
     ds = gdal.Open('/vsimem/vrtmisc_16.tif')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 206:
-        print(cs)
-        return 'fail'
+    assert cs == 206
     gdal.Unlink('/vsimem/vrtmisc_16.tif')
     gdal.Unlink('/vsimem/vrtmisc_16.vrt')
 
@@ -497,9 +420,7 @@ def test_vrtmisc_16():
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtmisc_16.tif', gdal.Open('/vsimem/vrtmisc_16.vrt'))
     ds = gdal.Open('/vsimem/vrtmisc_16.tif')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 206:
-        print(cs)
-        return 'fail'
+    assert cs == 206
     gdal.Unlink('/vsimem/vrtmisc_16.tif')
     gdal.Unlink('/vsimem/vrtmisc_16.vrt')
 
@@ -518,8 +439,7 @@ def test_vrtmisc_17():
 
     gdal.Unlink('/vsimem/vrtmisc_17.vrt')
 
-    if xml_vrt.find('xml:VRT') >= 0:
-        return 'fail'
+    assert xml_vrt.find('xml:VRT') < 0
 
     return "success"
 
@@ -532,14 +452,11 @@ def test_vrtmisc_18():
     ds = gdal.Open('data/byte.vrt')
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
     xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
     vrt_ds = None
 
-    if xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') < 0 and \
-       xml_vrt.find('<SourceFilename relativeToVRT="1">data\\byte.tif</SourceFilename>') < 0:
-        print(xml_vrt)
-        return 'fail'
+    assert (xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') >= 0 or \
+       xml_vrt.find('<SourceFilename relativeToVRT="1">data\\byte.tif</SourceFilename>') >= 0)
 
     return "success"
 
@@ -557,34 +474,26 @@ def test_vrtmisc_rat():
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_rat.vrt', ds)
 
     xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
     vrt_ds = None
 
-    if xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') < 0:
-        print(xml_vrt)
-        return 'fail'
+    assert xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') >= 0
 
     vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format='VRT', srcWin=[0, 0, 1, 1])
 
     xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
     vrt_ds = None
 
-    if xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') < 0:
-        print(xml_vrt)
-        return 'fail'
+    assert xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') >= 0
 
     ds = None
 
     vrt_ds = gdal.Open('/vsimem/vrtmisc_rat.vrt', gdal.GA_Update)
     rat = vrt_ds.GetRasterBand(1).GetDefaultRAT()
-    if rat is None or rat.GetColumnCount() != 1:
-        return 'fail'
+    assert rat is not None and rat.GetColumnCount() == 1
     vrt_ds.GetRasterBand(1).SetDefaultRAT(None)
-    if vrt_ds.GetRasterBand(1).GetDefaultRAT() is not None:
-        return 'fail'
+    assert vrt_ds.GetRasterBand(1).GetDefaultRAT() is None
     vrt_ds = None
 
     ds = None
@@ -604,11 +513,9 @@ def test_vrtmisc_colortable():
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (255, 255, 255, 255))
     ds.GetRasterBand(1).SetColorTable(ct)
-    if ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorTable().GetCount() == 1
     ds.GetRasterBand(1).SetColorTable(None)
-    if ds.GetRasterBand(1).GetColorTable() is not None:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorTable() is None
 
     return 'success'
 
@@ -627,9 +534,7 @@ def test_vrtmisc_histogram():
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     ds = None
 
-    if hist != (1.0, 2.0, 2, [3000000000, 4]):
-        print(hist)
-        return 'fail'
+    assert hist == (1.0, 2.0, 2, [3000000000, 4])
 
     gdal.Unlink(tmpfile)
     return 'success'

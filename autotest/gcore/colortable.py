@@ -66,9 +66,7 @@ def test_colortable_2():
             else:
                 o_v = o_data[j]
 
-            if g_data[j] != o_v:
-                gdaltest.post_reason('color table mismatch')
-                return 'fail'
+            assert g_data[j] == o_v, 'color table mismatch'
 
     return 'success'
 
@@ -86,11 +84,9 @@ def test_colortable_3():
 
     ct.CreateColorRamp(0, (255, 0, 0), 255, (0, 0, 255))
 
-    if ct.GetColorEntry(0) != (255, 0, 0, 255):
-        return 'fail'
+    assert ct.GetColorEntry(0) == (255, 0, 0, 255)
 
-    if ct.GetColorEntry(255) != (0, 0, 255, 255):
-        return 'fail'
+    assert ct.GetColorEntry(255) == (0, 0, 255, 255)
 
     return 'success'
 

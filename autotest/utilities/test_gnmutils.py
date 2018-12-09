@@ -48,10 +48,7 @@ def test_gnmmanage_1():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" tmp')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     try:
         os.stat('tmp/test_gnm')
@@ -72,16 +69,10 @@ def test_gnmmanage_2():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/pipes.shp tmp/test_gnm')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/wells.shp tmp/test_gnm')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     return 'success'
 
@@ -96,12 +87,9 @@ def test_gnmmanage_3():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' info tmp/test_gnm')
 
-    if ret.find('Network version: 1.0.') == -1:
-        return 'fail'
-    if ret.find('Network name: test_gnm.') == -1:
-        return 'fail'
-    if ret.find('Network description') == -1:
-        return 'fail'
+    assert ret.find('Network version: 1.0.') != -1
+    assert ret.find('Network name: test_gnm.') != -1
+    assert ret.find('Network description') != -1
 
     return 'success'
 
@@ -115,8 +103,7 @@ def test_gnmmanage_4():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' autoconnect 0.000001 tmp/test_gnm')
-    if ret.find('success') == -1:
-        return 'fail'
+    assert ret.find('success') != -1
 
     return 'success'
 
@@ -132,8 +119,7 @@ def test_gnmanalyse_1():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' dijkstra 61 50 tmp/test_gnm')
-    if ret.find('Feature Count: 19') == -1:
-        return 'fail'
+    assert ret.find('Feature Count: 19') != -1
 
     return 'success'
 
@@ -149,8 +135,7 @@ def test_gnmanalyse_2():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' kpaths 61 50 3 tmp/test_gnm')
-    if ret.find('Feature Count: 61') == -1:
-        return 'fail'
+    assert ret.find('Feature Count: 61') != -1
 
     return 'success'
 
@@ -163,10 +148,7 @@ def test_gnm_cleanup():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' delete tmp/test_gnm')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     try:
         os.stat('tmp/test_gnm')

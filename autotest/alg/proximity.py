@@ -34,6 +34,7 @@ import sys
 import gdaltest
 
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fairly default case.
@@ -62,8 +63,7 @@ def test_proximity_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -97,8 +97,7 @@ def test_proximity_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -132,8 +131,7 @@ def test_proximity_3():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 

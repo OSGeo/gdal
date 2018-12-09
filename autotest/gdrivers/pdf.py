@@ -34,6 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 sys.path.append('../osr')
 
@@ -125,13 +126,9 @@ def pdf_online_1():
         return 'skip'
 
     ds = gdal.Open('tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterXSize != 1241:
-        gdaltest.post_reason('bad dimensions')
-        print(ds.RasterXSize)
-        return 'fail'
+    assert ds.RasterXSize == 1241, 'bad dimensions'
 
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
@@ -148,22 +145,13 @@ def pdf_online_1():
             # The remote file has been updated...
             other_expected_gt = (-77.112328333299928, 9.1666560000165691e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
             for j in range(6):
-                if abs(gt[j] - other_expected_gt[j]) > 1e-15:
-                    gdaltest.post_reason('bad geotransform')
-                    print(gt)
-                    print(other_expected_gt)
-                    return 'fail'
+                assert abs(gt[j] - other_expected_gt[j]) <= 1e-15, 'bad geotransform'
 
-    if wkt.find('GEOGCS["WGS 84"') != 0:
-        gdaltest.post_reason('bad WKT')
-        print(wkt)
-        return 'fail'
+    assert wkt.find('GEOGCS["WGS 84"') == 0, 'bad WKT'
 
     if pdf_checksum_available():
         cs = ds.GetRasterBand(1).Checksum()
-        if cs == 0:
-            gdaltest.post_reason('bad checksum')
-            return 'fail'
+        assert cs != 0, 'bad checksum'
 
     return 'success'
 
@@ -181,8 +169,7 @@ def pdf_online_2():
         return 'skip'
 
     ds = gdal.Open('PDF:1:tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
@@ -199,15 +186,9 @@ def pdf_online_2():
             # The remote file has been updated...
             other_expected_gt = (-77.112328333299928, 9.1666560000165691e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
             for j in range(6):
-                if abs(gt[j] - other_expected_gt[j]) > 1e-15:
-                    gdaltest.post_reason('bad geotransform')
-                    print(gt)
-                    print(other_expected_gt)
-                    return 'fail'
+                assert abs(gt[j] - other_expected_gt[j]) <= 1e-15, 'bad geotransform'
 
-    if wkt.find('GEOGCS["WGS 84"') != 0:
-        print(wkt)
-        return 'fail'
+    assert wkt.find('GEOGCS["WGS 84"') == 0
 
     return 'success'
 
@@ -223,8 +204,7 @@ def pdf_1():
     gdal.SetConfigOption('GDAL_PDF_DPI', '200')
     ds = gdal.Open('data/adobe_style_geospatial.pdf')
     gdal.SetConfigOption('GDAL_PDF_DPI', None)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
@@ -235,25 +215,15 @@ def pdf_1():
         expected_gt = (333274.61654367246, 31.764802242655662, 0.0, 4940391.7593506984, 0.0, -31.794745501708238)
 
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-6:
-            gdaltest.post_reason('bad geotransform')
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-6, 'bad geotransform'
 
     expected_wkt = 'PROJCS["WGS_1984_UTM_Zone_20N",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-63.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
-    if wkt != expected_wkt:
-        gdaltest.post_reason('bad WKT')
-        print(wkt)
-        return 'fail'
+    assert wkt == expected_wkt, 'bad WKT'
 
     if pdf_checksum_available():
         cs = ds.GetRasterBand(1).Checksum()
         # if cs != 17740 and cs != 19346:
-        if cs == 0:
-            gdaltest.post_reason('bad checksum')
-            print(cs)
-            return 'fail'
+        assert cs != 0, 'bad checksum'
 
     neatline = ds.GetMetadataItem('NEATLINE')
     got_geom = ogr.CreateGeometryFromWkt(neatline)
@@ -263,9 +233,8 @@ def pdf_1():
         expected_geom = ogr.CreateGeometryFromWkt('POLYGON ((338304.150125828920864 4896673.639421294443309,338304.177293475600891 4933414.799376524984837,382774.271384406310972 4933414.546264361590147,382774.767329963855445 4896674.273581005632877,338304.150125828920864 4896673.639421294443309))')
 
     if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        gdaltest.post_reason('bad neatline')
         print(neatline)
-        return 'fail'
+        pytest.fail('bad neatline')
 
     return 'success'
 
@@ -370,9 +339,8 @@ def pdf_ogcbp_lcc():
     sr1 = osr.SpatialReference(wkt)
     sr2 = osr.SpatialReference(out_wkt)
     if sr1.IsSame(sr2) == 0:
-        gdaltest.post_reason('wrong wkt')
         print(sr2.ExportToPrettyWkt())
-        return 'fail'
+        pytest.fail('wrong wkt')
 
     return 'success'
 
@@ -515,16 +483,11 @@ def pdf_rgba_default_compression(options_param=None):
     if cs4 < 0:
         return 'skip'
 
-    if content.find('Type = dictionary, Num = 3, Gen = 0') != 0 or \
-       content.find('      Type = dictionary, Num = 3, Gen = 0') < 0:
-        gdaltest.post_reason('wrong object dump')
-        print(content)
-        return 'fail'
+    assert (content.find('Type = dictionary, Num = 3, Gen = 0') == 0 and \
+       content.find('      Type = dictionary, Num = 3, Gen = 0') >= 0), \
+        'wrong object dump'
 
-    if cs4 == 0:
-        gdaltest.post_reason('wrong checksum')
-        print(cs4)
-        return 'fail'
+    assert cs4 != 0, 'wrong checksum'
 
     if cs1 != src_cs1 or cs2 != src_cs2 or cs3 != src_cs3 or cs4 != src_cs4:
         print(cs1)
@@ -638,13 +601,9 @@ def pdf_xmp():
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_xmp.pdf')
 
-    if ref_md[0] != got_md[0]:
-        print(got_md[0])
-        return 'fail'
+    assert ref_md[0] == got_md[0]
 
-    if len(base_md) != 2:  # NEATLINE and DPI
-        print(base_md)
-        return 'fail'
+    assert len(base_md) == 2
 
     return 'success'
 
@@ -684,15 +643,12 @@ def pdf_info():
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_info.pdf')
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_info_2.pdf')
 
-    if md['AUTHOR'] != val or \
-       md['CREATOR'] != 'creator' or \
-       md['KEYWORDS'] != 'keywords' or \
-       md['PRODUCER'] != 'producer' or \
-       md['SUBJECT'] != 'subject' or \
-       md['TITLE'] != 'title':
-        gdaltest.post_reason("metadata doesn't match")
-        print(md)
-        return 'fail'
+    assert (md['AUTHOR'] == val and \
+       md['CREATOR'] == 'creator' and \
+       md['KEYWORDS'] == 'keywords' and \
+       md['PRODUCER'] == 'producer' and \
+       md['SUBJECT'] == 'subject' and \
+       md['TITLE'] == 'title'), "metadata doesn't match"
 
     return 'success'
 
@@ -718,8 +674,7 @@ def pdf_update_gt():
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds = None
 
-    if os.path.exists('tmp/pdf_update_gt.pdf.aux.xml'):
-        return 'fail'
+    assert not os.path.exists('tmp/pdf_update_gt.pdf.aux.xml')
 
     # Check geotransform
     ds = gdal.Open('tmp/pdf_update_gt.pdf')
@@ -728,10 +683,7 @@ def pdf_update_gt():
 
     expected_gt = [2, 1, 0, 49, 0, -1]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('did not get expected gt')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
 
     # Clear geotransform
     ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
@@ -745,10 +697,7 @@ def pdf_update_gt():
 
     expected_gt = [0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('did not get expected gt')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
 
     # Set geotransform again
     ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
@@ -763,10 +712,7 @@ def pdf_update_gt():
 
     expected_gt = [3, 1, 0, 50, 0, -1]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('did not get expected gt')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
 
     gdaltest.pdf_drv.Delete('tmp/pdf_update_gt.pdf')
 
@@ -796,10 +742,7 @@ def pdf_update_info():
     author = ds.GetMetadataItem('AUTHOR')
     ds = None
 
-    if author != 'author':
-        gdaltest.post_reason('did not get expected metadata')
-        print(author)
-        return 'fail'
+    assert author == 'author', 'did not get expected metadata'
 
     # Update info
     ds = gdal.Open('tmp/pdf_update_info.pdf', gdal.GA_Update)
@@ -811,10 +754,7 @@ def pdf_update_info():
     author = ds.GetMetadataItem('AUTHOR')
     ds = None
 
-    if author != 'author2':
-        gdaltest.post_reason('did not get expected metadata')
-        print(author)
-        return 'fail'
+    assert author == 'author2', 'did not get expected metadata'
 
     # Clear info
     ds = gdal.Open('tmp/pdf_update_info.pdf', gdal.GA_Update)
@@ -823,19 +763,15 @@ def pdf_update_info():
 
     # Check PAM doesn't exist
     if os.path.exists('tmp/pdf_update_info.pdf.aux.xml'):
-        gdaltest.post_reason('did not expected .aux.xml')
         print(author)
-        return 'fail'
+        pytest.fail('did not expected .aux.xml')
 
     # Check
     ds = gdal.Open('tmp/pdf_update_info.pdf')
     author = ds.GetMetadataItem('AUTHOR')
     ds = None
 
-    if author is not None:
-        gdaltest.post_reason('did not get expected metadata')
-        print(author)
-        return 'fail'
+    assert author is None, 'did not get expected metadata'
 
     gdaltest.pdf_drv.Delete('tmp/pdf_update_info.pdf')
 
@@ -865,10 +801,7 @@ def pdf_update_xmp():
     xmp = ds.GetMetadata('xml:XMP')[0]
     ds = None
 
-    if xmp != "<?xpacket begin='a'/><a/>":
-        gdaltest.post_reason('did not get expected metadata')
-        print(xmp)
-        return 'fail'
+    assert xmp == "<?xpacket begin='a'/><a/>", 'did not get expected metadata'
 
     # Update info
     ds = gdal.Open('tmp/pdf_update_xmp.pdf', gdal.GA_Update)
@@ -880,15 +813,11 @@ def pdf_update_xmp():
     xmp = ds.GetMetadata('xml:XMP')[0]
     ds = None
 
-    if xmp != "<?xpacket begin='a'/><a_updated/>":
-        gdaltest.post_reason('did not get expected metadata')
-        print(xmp)
-        return 'fail'
+    assert xmp == "<?xpacket begin='a'/><a_updated/>", 'did not get expected metadata'
 
     # Check PAM doesn't exist
-    if os.path.exists('tmp/pdf_update_xmp.pdf.aux.xml'):
-        gdaltest.post_reason('did not expected .aux.xml')
-        return 'fail'
+    assert not os.path.exists('tmp/pdf_update_xmp.pdf.aux.xml'), \
+        'did not expected .aux.xml'
 
     # Clear info
     ds = gdal.Open('tmp/pdf_update_xmp.pdf', gdal.GA_Update)
@@ -900,10 +829,7 @@ def pdf_update_xmp():
     xmp = ds.GetMetadata('xml:XMP')
     ds = None
 
-    if xmp is not None:
-        gdaltest.post_reason('did not get expected metadata')
-        print(xmp)
-        return 'fail'
+    assert xmp is None, 'did not get expected metadata'
 
     gdaltest.pdf_drv.Delete('tmp/pdf_update_xmp.pdf')
 
@@ -979,26 +905,14 @@ def pdf_update_gcps(dpi=300):
 
     ds = None
 
-    if got_wkt == '':
-        gdaltest.post_reason('did not expect null GetProjectionRef')
-        print(got_wkt)
-        return 'fail'
+    assert got_wkt != '', 'did not expect null GetProjectionRef'
 
-    if got_gcp_wkt != '':
-        gdaltest.post_reason('did not expect non null GetGCPProjection')
-        print(got_gcp_wkt)
-        return 'fail'
+    assert got_gcp_wkt == '', 'did not expect non null GetGCPProjection'
 
     for i in range(6):
-        if abs(got_gt[i] - src_gt[i]) > 1e-8:
-            gdaltest.post_reason('did not get expected gt')
-            print(got_gt)
-            return 'fail'
+        assert abs(got_gt[i] - src_gt[i]) <= 1e-8, 'did not get expected gt'
 
-    if got_gcp_count != 0:
-        gdaltest.post_reason('did not expect GCPs')
-        print(got_gcp_count)
-        return 'fail'
+    assert got_gcp_count == 0, 'did not expect GCPs'
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_lr = ogr.Geometry(ogr.wkbLinearRing)
@@ -1009,10 +923,9 @@ def pdf_update_gcps(dpi=300):
     expected_geom.AddGeometry(expected_lr)
 
     if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error) != 0:
-        gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
         print('expected : %s' % expected_geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('bad neatline')
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1100,37 +1013,22 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
     got_neatline = ds.GetMetadataItem('NEATLINE')
     ds = None
 
-    if got_wkt != '':
-        gdaltest.post_reason('did not expect non null GetProjectionRef')
-        print(got_wkt)
-        return 'fail'
+    assert got_wkt == '', 'did not expect non null GetProjectionRef'
 
-    if got_gcp_wkt == '':
-        gdaltest.post_reason('did not expect null GetGCPProjection')
-        print(got_gcp_wkt)
-        return 'fail'
+    assert got_gcp_wkt != '', 'did not expect null GetGCPProjection'
 
     expected_gt = [0, 1, 0, 0, 0, 1]
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('did not get expected gt')
-            print(got_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
 
-    if got_gcp_count != len(gcp):
-        gdaltest.post_reason('did not get expected GCP count')
-        print(got_gcp_count)
-        return 'fail'
+    assert got_gcp_count == len(gcp), 'did not get expected GCP count'
 
     for i in range(got_gcp_count):
-        if abs(got_gcps[i].GCPX - vrt_gcps[i].GCPX) > 1e-5 or \
-           abs(got_gcps[i].GCPY - vrt_gcps[i].GCPY) > 1e-5 or \
-           abs(got_gcps[i].GCPPixel - vrt_gcps[i].GCPPixel) > 1e-5 or \
-           abs(got_gcps[i].GCPLine - vrt_gcps[i].GCPLine) > 1e-5:
-            gdaltest.post_reason('did not get expected GCP (%d)' % i)
-            print(got_gcps[i])
-            print(vrt_gcps[i])
-            return 'fail'
+        assert (abs(got_gcps[i].GCPX - vrt_gcps[i].GCPX) <= 1e-5 and \
+           abs(got_gcps[i].GCPY - vrt_gcps[i].GCPY) <= 1e-5 and \
+           abs(got_gcps[i].GCPPixel - vrt_gcps[i].GCPPixel) <= 1e-5 and \
+           abs(got_gcps[i].GCPLine - vrt_gcps[i].GCPLine) <= 1e-5), \
+            ('did not get expected GCP (%d)' % i)
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     # Not sure this is really what we want, but without any geotransform, we cannot
@@ -1138,10 +1036,9 @@ def pdf_set_5_gcps_ogc_bp(dpi=300):
     expected_geom = ogr.CreateGeometryFromWkt('POLYGON ((2 8,2 10,2 18,16 18,16 8,2 8))')
 
     if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
         print('expected : %s' % expected_geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('bad neatline')
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1184,20 +1081,15 @@ def pdf_set_neatline(geo_encoding, dpi=300):
     ds = None
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-7:
-            gdaltest.post_reason('did not get expected gt')
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-7, 'did not get expected gt'
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
     if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error) != 0:
-        gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
         print('expected : %s' % expected_geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('bad neatline')
 
     # Test SetMetadataItem()
     ds = gdal.Open(out_filename, gdal.GA_Update)
@@ -1219,20 +1111,17 @@ def pdf_set_neatline(geo_encoding, dpi=300):
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
 
     for i in range(6):
-        if (expected_gt[i] == 0 and abs(got_gt[i] - expected_gt[i]) > 1e-7) or \
-           (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) > 1e-7):
-            gdaltest.post_reason('did not get expected gt')
-            print(got_gt)
-            return 'fail'
+        assert (not (expected_gt[i] == 0 and abs(got_gt[i] - expected_gt[i]) > 1e-7) or \
+           (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) > 1e-7)), \
+            'did not get expected gt'
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
     if ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error) != 0:
-        gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
         print('expected : %s' % expected_geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('bad neatline')
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1272,9 +1161,7 @@ def pdf_check_identity_iso32000():
 
     gdaltest.pdf_drv.Delete(out_filename)
 
-    if data_ref != data_got:
-        gdaltest.post_reason('content does not match reference content')
-        return 'fail'
+    assert data_ref == data_got, 'content does not match reference content'
 
     return 'success'
 
@@ -1306,9 +1193,7 @@ def pdf_check_identity_ogc_bp():
 
     gdaltest.pdf_drv.Delete(out_filename)
 
-    if data_ref != data_got:
-        gdaltest.post_reason('content does not match reference content')
-        return 'fail'
+    assert data_ref == data_got, 'content does not match reference content'
 
     return 'success'
 
@@ -1330,10 +1215,8 @@ def pdf_layers():
     ds = None
 
     # if layers != ['LAYER_00_INIT_STATE=ON', 'LAYER_00_NAME=New_Data_Frame', 'LAYER_01_INIT_STATE=ON', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_INIT_STATE=ON', 'LAYER_02_NAME=Layers', 'LAYER_03_INIT_STATE=ON', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_INIT_STATE=ON', 'LAYER_04_NAME=Layers.Graticule']:
-    if layers != ['LAYER_00_NAME=New_Data_Frame', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_NAME=Layers', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_NAME=Layers.Graticule']:
-        gdaltest.post_reason('did not get expected layers')
-        print(layers)
-        return 'fail'
+    assert layers == ['LAYER_00_NAME=New_Data_Frame', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_NAME=Layers', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_NAME=Layers.Graticule'], \
+        'did not get expected layers'
 
     if not pdf_checksum_available():
         return 'skip'
@@ -1345,9 +1228,7 @@ def pdf_layers():
     ds = None
     gdal.SetConfigOption('GDAL_PDF_LAYERS_OFF', None)
 
-    if cs2 == cs1:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs2 != cs1, 'did not get expected checksum'
 
     # Turn the other layer on
     gdal.SetConfigOption('GDAL_PDF_LAYERS', 'Layers')
@@ -1357,18 +1238,14 @@ def pdf_layers():
     gdal.SetConfigOption('GDAL_PDF_LAYERS', None)
 
     # So the end result must be identical
-    if cs3 != cs2:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs3 == cs2, 'did not get expected checksum'
 
     # Turn another sublayer on
     ds = gdal.OpenEx('data/adobe_style_geospatial.pdf', open_options=['LAYERS=Layers.Measured_Grid'])
     cs4 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs4 == cs1 or cs4 == cs2:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert not (cs4 == cs1 or cs4 == cs2), 'did not get expected checksum'
 
     return 'success'
 
@@ -1409,10 +1286,8 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_custom_layout.pdf')
 
     if pdf_is_poppler() or pdf_is_pdfium():
-        if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo']:
-            gdaltest.post_reason('did not get expected layers')
-            print(layers)
-            return 'fail'
+        assert layers == ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo'], \
+            'did not get expected layers'
 
     return 'success'
 
@@ -1476,14 +1351,10 @@ def pdf_extra_rasters():
     os.unlink('tmp/subbyte.vrt')
 
     if pdf_is_poppler() or pdf_is_pdfium():
-        if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=subbyte']:
-            gdaltest.post_reason('did not get expected layers')
-            print(layers)
-            return 'fail'
-    if pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174 and cs != 8165):
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+        assert layers == ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=subbyte'], \
+            'did not get expected layers'
+    assert not (pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174 and cs != 8165)), \
+        'bad checksum'
 
     return 'success'
 
@@ -1561,14 +1432,10 @@ def pdf_write_ogr():
             for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     print('Checksum %s: %d' % (roi, cs_tab[i]))
-                    print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]))
-                    return 'fail'
+                    pytest.fail('Checksum %s: %d' % (rendering_options[j], cs_tab[j]))
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
-        if abs(cs_tab[len(rendering_options) - 1]) != cs_ref:
-            print(cs_ref)
-            print(cs_tab[len(rendering_options) - 1])
-            return 'fail'
+        assert abs(cs_tab[len(rendering_options) - 1]) == cs_ref
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr.pdf')
 
@@ -1576,16 +1443,11 @@ def pdf_write_ogr():
     gdal.Unlink('tmp/test.vrt')
 
     if pdf_is_poppler() or pdf_is_pdfium():
-        if layers != ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text']:
-            gdaltest.post_reason('did not get expected layers')
-            print(layers)
-            return 'fail'
+        assert layers == ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text'], \
+            'did not get expected layers'
 
     # Should have filtered out id = 4
-    if feature_count != 3:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feature_count)
-        return 'fail'
+    assert feature_count == 3, 'did not get expected feature count'
 
     return 'success'
 
@@ -1648,10 +1510,7 @@ def pdf_write_ogr_with_reprojection():
     gdal.Unlink('tmp/test.vrt')
 
     # Should have filtered out id = 6
-    if feature_count != 5:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feature_count)
-        return 'fail'
+    assert feature_count == 5, 'did not get expected feature count'
 
     return 'success'
 
@@ -1674,12 +1533,9 @@ def pdf_jpeg_direct_copy():
 
     ds = gdal.Open('tmp/pdf_jpeg_direct_copy.pdf')
     # No XMP at PDF level
-    if ds.GetMetadata('xml:XMP') is not None:
-        return 'fail'
-    if ds.RasterXSize != 20:
-        return 'fail'
-    if pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0:
-        return 'fail'
+    assert ds.GetMetadata('xml:XMP') is None
+    assert ds.RasterXSize == 20
+    assert not (pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0)
     ds = None
 
     # But we can find the original XMP from the JPEG file !
@@ -1690,8 +1546,7 @@ def pdf_jpeg_direct_copy():
 
     gdal.Unlink('tmp/pdf_jpeg_direct_copy.pdf')
 
-    if offset == -1:
-        return 'fail'
+    assert offset != -1
 
     return 'success'
 
@@ -1726,12 +1581,9 @@ def pdf_jpeg_in_vrt_direct_copy():
 
     ds = gdal.Open('tmp/pdf_jpeg_in_vrt_direct_copy.pdf')
     # No XMP at PDF level
-    if ds.GetMetadata('xml:XMP') is not None:
-        return 'fail'
-    if ds.RasterXSize != 20:
-        return 'fail'
-    if pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0:
-        return 'fail'
+    assert ds.GetMetadata('xml:XMP') is None
+    assert ds.RasterXSize == 20
+    assert not (pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0)
     ds = None
 
     # But we can find the original XMP from the JPEG file !
@@ -1742,8 +1594,7 @@ def pdf_jpeg_in_vrt_direct_copy():
 
     gdal.Unlink('tmp/pdf_jpeg_in_vrt_direct_copy.pdf')
 
-    if offset == -1:
-        return 'fail'
+    assert offset != -1
 
     return 'success'
 
@@ -1781,15 +1632,9 @@ def pdf_georef_on_image(src_filename='data/byte.tif'):
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_georef_on_image.pdf')
 
-    if got_wkt == '':
-        gdaltest.post_reason('did not get projection')
-        return 'fail'
+    assert got_wkt != '', 'did not get projection'
 
-    if pdf_checksum_available() and src_cs != got_cs:
-        gdaltest.post_reason('did not get same checksum')
-        print(src_cs)
-        print(got_cs)
-        return 'fail'
+    assert not pdf_checksum_available() or src_cs == got_cs, 'did not get same checksum'
 
     return 'success'
 
@@ -1816,14 +1661,9 @@ def pdf_write_huge():
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
         ds = None
         ds = gdal.Open(tmp_filename)
-        if int(ds.GetMetadataItem('DPI')) != 96:
-            print(ds.GetMetadataItem('DPI'))
-            return 'fail'
-        if ds.RasterXSize != src_ds.RasterXSize or \
-                ds.RasterYSize != src_ds.RasterYSize:
-            print(ds.RasterXSize)
-            print(ds.RasterYSize)
-            return 'fail'
+        assert int(ds.GetMetadataItem('DPI')) == 96
+        assert (ds.RasterXSize == src_ds.RasterXSize and \
+                ds.RasterYSize == src_ds.RasterYSize)
         ds = None
 
         gdal.ErrorReset()
@@ -1831,13 +1671,10 @@ def pdf_write_huge():
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=['DPI=72'])
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
-        if msg == '':
-            return 'fail'
+        assert msg != ''
         ds = None
         ds = gdal.Open(tmp_filename)
-        if int(ds.GetMetadataItem('DPI')) != 72:
-            print(ds.GetMetadataItem('DPI'))
-            return 'fail'
+        assert int(ds.GetMetadataItem('DPI')) == 72
         ds = None
 
         src_ds = None
@@ -1849,13 +1686,10 @@ def pdf_write_huge():
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=[option])
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
-        if msg == '':
-            return 'fail'
+        assert msg != ''
         ds = None
         ds = gdal.Open(tmp_filename)
-        if int(ds.GetMetadataItem('DPI')) != 72:
-            print(ds.GetMetadataItem('DPI'))
-            return 'fail'
+        assert int(ds.GetMetadataItem('DPI')) == 72
         ds = None
 
         src_ds = None
@@ -1888,25 +1722,17 @@ def pdf_overviews():
     ds.GetRasterBand(1).GetOverview(-1)
     ds.GetRasterBand(1).GetOverview(10)
     if before >= 1:
-        if not pdf_is_pdfium():
-            gdaltest.post_reason('No overview expected at this point!')
-            return 'fail'
+        assert pdf_is_pdfium(), 'No overview expected at this point!'
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != 5934:
-            print(cs)
-            return 'fail'
+        assert cs == 5934
     elif pdf_is_pdfium():
         gdaltest.post_reason('Overview expected at this point!')
         return 'fail'
     ds.BuildOverviews('NONE', [2])
     after = ds.GetRasterBand(1).GetOverviewCount()
-    if after != 1:
-        print(after)
-        return 'fail'
+    assert after == 1
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 0:
-        print(cs)
-        return 'fail'
+    assert cs == 0
     ds = None
 
     gdaltest.pdf_drv.Delete(tmp_filename)
@@ -1928,19 +1754,16 @@ def pdf_password():
     # No password
     with gdaltest.error_handler():
         ds = gdal.Open('data/byte_enc.pdf')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Wrong password
     with gdaltest.error_handler():
         ds = gdal.OpenEx('data/byte_enc.pdf', open_options=['USER_PWD=wrong_password'])
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Correct password
     ds = gdal.OpenEx('data/byte_enc.pdf', open_options=['USER_PWD=user_password'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     import test_cli_utilities
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -1954,15 +1777,13 @@ def pdf_password():
     open('tmp/password.txt', 'wb').write('wrong_password'.encode('ASCII'))
     ret = os.system(cmd_line)
     os.unlink('tmp/password.txt')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # Test ASK_INTERACTIVE with correct password
     open('tmp/password.txt', 'wb').write('user_password'.encode('ASCII'))
     ret = os.system(cmd_line)
     os.unlink('tmp/password.txt')
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     return 'success'
 
@@ -1983,39 +1804,26 @@ def pdf_multipage():
     ds = gdal.Open('data/byte_and_rgbsmall_2pages.pdf')
     subdatasets = ds.GetSubDatasets()
     expected_subdatasets = [('PDF:1:data/byte_and_rgbsmall_2pages.pdf', 'Page 1 of data/byte_and_rgbsmall_2pages.pdf'), ('PDF:2:data/byte_and_rgbsmall_2pages.pdf', 'Page 2 of data/byte_and_rgbsmall_2pages.pdf')]
-    if subdatasets != expected_subdatasets:
-        gdaltest.post_reason('did not get expected subdatasets')
-        print(subdatasets)
-        print(expected_subdatasets)
-        return 'fail'
+    assert subdatasets == expected_subdatasets, 'did not get expected subdatasets'
     ds = None
 
     ds = gdal.Open('PDF:1:data/byte_and_rgbsmall_2pages.pdf')
-    if ds.RasterXSize != 20:
-        gdaltest.post_reason('wrong width')
-        print(ds.RasterXSize)
-        return 'fail'
+    assert ds.RasterXSize == 20, 'wrong width'
 
     ds2 = gdal.Open('PDF:2:data/byte_and_rgbsmall_2pages.pdf')
-    if ds2.RasterXSize != 50:
-        gdaltest.post_reason('wrong width')
-        print(ds2.RasterXSize)
-        return 'fail'
+    assert ds2.RasterXSize == 50, 'wrong width'
 
     with gdaltest.error_handler():
         ds3 = gdal.Open('PDF:0:data/byte_and_rgbsmall_2pages.pdf')
-    if ds3 is not None:
-        return 'fail'
+    assert ds3 is None
 
     with gdaltest.error_handler():
         ds3 = gdal.Open('PDF:3:data/byte_and_rgbsmall_2pages.pdf')
-    if ds3 is not None:
-        return 'fail'
+    assert ds3 is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('PDF:1:/does/not/exist.pdf')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -2031,13 +1839,10 @@ def pdf_metadata():
     gdal.Translate('tmp/pdf_metadata.pdf', 'data/byte.tif', format='PDF', metadataOptions=['FOO=BAR'])
     ds = gdal.Open('tmp/pdf_metadata.pdf')
     md = ds.GetMetadata()
-    if 'FOO' not in md:
-        print(md)
-        return 'fail'
+    assert 'FOO' in md
     ds = None
     ds = gdal.Open('tmp/pdf_metadata.pdf')
-    if ds.GetMetadataItem('FOO') != 'BAR':
-        return 'fail'
+    assert ds.GetMetadataItem('FOO') == 'BAR'
     ds = None
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_metadata.pdf')
@@ -2057,19 +1862,15 @@ def pdf_pam_georef():
 
     # Default behaviour should result in no PAM file
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds)
-    if os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
-        return 'fail'
+    assert not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml')
 
     # Now disable internal georeferencing, so georef should go to PAM
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options=['GEO_ENCODING=NONE'])
-    if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
-        return 'fail'
+    assert os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml')
 
     ds = gdal.Open('tmp/pdf_pam_georef.pdf')
-    if ds.GetGeoTransform() != src_ds.GetGeoTransform():
-        return 'fail'
-    if ds.GetProjectionRef() != src_ds.GetProjectionRef():
-        return 'fail'
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetProjectionRef() == src_ds.GetProjectionRef()
     ds = None
 
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_pam_georef.pdf')

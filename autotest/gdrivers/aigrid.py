@@ -55,24 +55,17 @@ def test_aigrid_2():
 
     gt = ds.GetGeoTransform()
 
-    if gt[0] != -0.5 or gt[1] != 1.0 or gt[2] != 0.0 \
-       or gt[3] != 0.5 or gt[4] != 0.0 or gt[5] != -1.0:
-        gdaltest.post_reason('Aigrid geotransform wrong.')
-        return 'fail'
+    assert gt[0] == -0.5 and gt[1] == 1.0 and gt[2] == 0.0 and gt[3] == 0.5 and gt[4] == 0.0 and gt[5] == -1.0, \
+        'Aigrid geotransform wrong.'
 
     prj = ds.GetProjection()
-    if prj.find('PROJCS["UTM Zone 55, Southern Hemisphere",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994"') == -1:
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj.find('PROJCS["UTM Zone 55, Southern Hemisphere",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994"') != -1, \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != 255:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == 255, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('Data type is not Byte!')
-        return 'fail'
+    assert band1.DataType == gdal.GDT_Byte, 'Data type is not Byte!'
 
     return 'success'
 
@@ -84,17 +77,12 @@ def test_aigrid_3():
 
     ds = gdal.Open('data/abc3x1')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
-    if cm.GetCount() != 256 \
-       or cm.GetColorEntry(0) != (95, 113, 150, 255)\
-       or cm.GetColorEntry(1) != (95, 57, 29, 255):
-        gdaltest.post_reason('Wrong colormap entries')
-        return 'fail'
+    assert cm.GetCount() == 256 and cm.GetColorEntry(0) == (95, 113, 150, 255) and cm.GetColorEntry(1) == (95, 57, 29, 255), \
+        'Wrong colormap entries'
 
     cm = None
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 255.0:
-        gdaltest.post_reason('Wrong nodata value.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255.0, 'Wrong nodata value.'
 
     return 'success'
 ###############################################################################
@@ -114,17 +102,12 @@ def test_aigrid_5():
 
     ds = gdal.Open('data/ABC3X1UC')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
-    if cm.GetCount() != 256 \
-       or cm.GetColorEntry(0) != (95, 113, 150, 255)\
-       or cm.GetColorEntry(1) != (95, 57, 29, 255):
-        gdaltest.post_reason('Wrong colormap entries')
-        return 'fail'
+    assert cm.GetCount() == 256 and cm.GetColorEntry(0) == (95, 113, 150, 255) and cm.GetColorEntry(1) == (95, 57, 29, 255), \
+        'Wrong colormap entries'
 
     cm = None
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 255.0:
-        gdaltest.post_reason('Wrong nodata value.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255.0, 'Wrong nodata value.'
 
     return 'success'
 
@@ -136,13 +119,9 @@ def test_aigrid_6():
 
     ds = gdal.Open('data/aigrid_sta_24bytes/teststa')
 
-    if ds.GetRasterBand(1).GetMinimum() != 0.0:
-        gdaltest.post_reason('Wrong minimum')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 
-    if ds.GetRasterBand(1).GetMaximum() != 2.0:
-        gdaltest.post_reason('Wrong maximum')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaximum() == 2.0, 'Wrong maximum'
 
     return 'success'
 
@@ -190,53 +169,29 @@ def test_aigrid_online_1():
         print('Skipping RAT checking... OG Python bindings have no RAT API')
         return 'success'
 
-    if rat is None:
-        gdaltest.post_reason('No RAT found')
-        return 'fail'
+    assert rat is not None, 'No RAT found'
 
-    if rat.GetRowCount() != 2642:
-        gdaltest.post_reason('Wrong row count in RAT')
-        return 'fail'
+    assert rat.GetRowCount() == 2642, 'Wrong row count in RAT'
 
-    if rat.GetColumnCount() != 2:
-        gdaltest.post_reason('Wrong column count in RAT')
-        return 'fail'
+    assert rat.GetColumnCount() == 2, 'Wrong column count in RAT'
 
-    if rat.GetNameOfCol(0) != 'VALUE':
-        gdaltest.post_reason('Wrong name of col 0')
-        return 'fail'
+    assert rat.GetNameOfCol(0) == 'VALUE', 'Wrong name of col 0'
 
-    if rat.GetTypeOfCol(0) != gdal.GFT_Integer:
-        gdaltest.post_reason('Wrong type of col 0')
-        return 'fail'
+    assert rat.GetTypeOfCol(0) == gdal.GFT_Integer, 'Wrong type of col 0'
 
-    if rat.GetUsageOfCol(0) != gdal.GFU_MinMax:
-        gdaltest.post_reason('Wrong usage of col 0')
-        return 'fail'
+    assert rat.GetUsageOfCol(0) == gdal.GFU_MinMax, 'Wrong usage of col 0'
 
-    if rat.GetNameOfCol(1) != 'COUNT':
-        gdaltest.post_reason('Wrong name of col 1')
-        return 'fail'
+    assert rat.GetNameOfCol(1) == 'COUNT', 'Wrong name of col 1'
 
-    if rat.GetTypeOfCol(1) != gdal.GFT_Integer:
-        gdaltest.post_reason('Wrong type of col 1')
-        return 'fail'
+    assert rat.GetTypeOfCol(1) == gdal.GFT_Integer, 'Wrong type of col 1'
 
-    if rat.GetUsageOfCol(1) != gdal.GFU_PixelCount:
-        gdaltest.post_reason('Wrong usage of col 1')
-        return 'fail'
+    assert rat.GetUsageOfCol(1) == gdal.GFU_PixelCount, 'Wrong usage of col 1'
 
-    if rat.GetValueAsInt(2641, 0) != 3627:
-        gdaltest.post_reason('Wrong value in RAT')
-        return 'fail'
+    assert rat.GetValueAsInt(2641, 0) == 3627, 'Wrong value in RAT'
 
-    if ds.GetRasterBand(1).GetMinimum() != 0.0:
-        gdaltest.post_reason('Wrong minimum')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 
-    if ds.GetRasterBand(1).GetMaximum() != 3627.0:
-        gdaltest.post_reason('Wrong maximum')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaximum() == 3627.0, 'Wrong maximum'
 
     return 'success'
 

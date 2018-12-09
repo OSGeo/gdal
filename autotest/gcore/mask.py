@@ -44,27 +44,17 @@ def test_mask_1():
 
     ds = gdal.Open('data/byte.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
 
-    if band.GetMaskFlags() != gdal.GMF_ALL_VALID:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_ALL_VALID, 'Did not get expected mask.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 4873:
-        gdaltest.post_reason('Got wrong mask checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4873, 'Got wrong mask checksum'
 
     my_min, my_max, mean, stddev = band.GetMaskBand().ComputeStatistics(0)
-    if (my_min, my_max, mean, stddev) != (255, 255, 255, 0):
-        gdaltest.post_reason('Got wrong mask stats')
-        print(my_min, my_max, mean, stddev)
-        return 'fail'
+    assert (my_min, my_max, mean, stddev) == (255, 255, 255, 0), 'Got wrong mask stats'
 
     return 'success'
 
@@ -76,21 +66,14 @@ def test_mask_2():
 
     ds = gdal.Open('data/byte.vrt')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
 
-    if band.GetMaskFlags() != gdal.GMF_NODATA:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_NODATA, 'Did not get expected mask.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 4209:
-        gdaltest.post_reason('Got wrong mask checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4209, 'Got wrong mask checksum'
 
     return 'success'
 
@@ -102,23 +85,17 @@ def test_mask_3():
 
     ds = gdal.Open('data/stefan_full_rgba.png')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     # Test first mask.
 
     band = ds.GetRasterBand(1)
 
-    if band.GetMaskFlags() != gdal.GMF_ALPHA + gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET, \
+        'Did not get expected mask.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 10807:
-        gdaltest.post_reason('Got wrong mask checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 10807, 'Got wrong mask checksum'
 
     # Verify second and third same as first.
 
@@ -128,22 +105,16 @@ def test_mask_3():
     # We have commented the following tests as SWIG >= 1.3.37 is buggy !
     #  or str(band_2.GetMaskBand()) != str(band.GetMaskBand()) \
     #   or str(band_3.GetMaskBand()) != str(band.GetMaskBand())
-    if band_2.GetMaskFlags() != band.GetMaskFlags() \
-       or band_3.GetMaskFlags() != band.GetMaskFlags():
-        gdaltest.post_reason('Band 2 or 3 does not seem to match first mask')
-        return 'fail'
+    assert band_2.GetMaskFlags() == band.GetMaskFlags() and band_3.GetMaskFlags() == band.GetMaskFlags(), \
+        'Band 2 or 3 does not seem to match first mask'
 
     # Verify alpha has no mask.
     band = ds.GetRasterBand(4)
-    if band.GetMaskFlags() != gdal.GMF_ALL_VALID:
-        gdaltest.post_reason('Did not get expected mask for alpha.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_ALL_VALID, \
+        'Did not get expected mask for alpha.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 36074:
-        gdaltest.post_reason('Got wrong alpha mask checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 36074, 'Got wrong alpha mask checksum'
 
     return 'success'
 
@@ -155,9 +126,7 @@ def test_mask_4():
 
     src_ds = gdal.Open('../gdrivers/data/masked.jpg')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     # NOTE: for now we copy to PNM since it does everything (overviews too)
     # externally. Should eventually test with gtiff, hfa.
@@ -166,19 +135,14 @@ def test_mask_4():
     src_ds = None
 
     # confirm we got the custom mask on the copied dataset.
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ds.GetRasterBand(1).GetMaskFlags())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+        'did not get expected mask flags'
 
     msk = ds.GetRasterBand(1).GetMaskBand()
     cs = msk.Checksum()
     expected_cs = 770
 
-    if cs != expected_cs:
-        gdaltest.post_reason('Did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == expected_cs, 'Did not get expected checksum'
 
     msk = None
     ds = None
@@ -199,9 +163,7 @@ def test_mask_5():
 
     ds = gdal.Open('tmp/mask_4.pnm', gdal.GA_Update)
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     # So that we instantiate the mask band before.
     ds.GetRasterBand(1).GetMaskFlags()
@@ -211,19 +173,13 @@ def test_mask_5():
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
 
-    if ovr.GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ovr.GetMaskFlags())
-        return 'fail'
+    assert ovr.GetMaskFlags() == gdal.GMF_PER_DATASET, 'did not get expected mask flags'
 
     msk = ovr.GetMaskBand()
     cs = msk.Checksum()
     expected_cs = 20505
 
-    if cs != expected_cs:
-        gdaltest.post_reason('Did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == expected_cs, 'Did not get expected checksum'
     ovr = None
     msk = None
     ds = None
@@ -234,19 +190,13 @@ def test_mask_5():
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
 
-    if ovr.GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ovr.GetMaskFlags())
-        return 'fail'
+    assert ovr.GetMaskFlags() == gdal.GMF_PER_DATASET, 'did not get expected mask flags'
 
     msk = ovr.GetMaskBand()
     cs = msk.Checksum()
     expected_cs = 20505
 
-    if cs != expected_cs:
-        gdaltest.post_reason('Did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == expected_cs, 'Did not get expected checksum'
 
     ovr = None
     msk = None
@@ -265,21 +215,14 @@ def test_mask_6():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
 
-    if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 100:
-        gdaltest.post_reason('Got wrong mask checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 100, 'Got wrong mask checksum'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
@@ -294,22 +237,15 @@ def test_mask_7():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test3_with_1mask_1bit.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
-        if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
-            gdaltest.post_reason('Did not get expected mask.')
-            return 'fail'
+        assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
 
         cs = band.GetMaskBand().Checksum()
-        if cs != 100:
-            gdaltest.post_reason('Got wrong mask checksum')
-            print(cs)
-            return 'fail'
+        assert cs == 100, 'Got wrong mask checksum'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
@@ -324,21 +260,14 @@ def test_mask_8():
 
     ds = gdal.Open('data/test_with_mask_8bit.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
 
-    if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 1222:
-        gdaltest.post_reason('Got wrong mask checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 1222, 'Got wrong mask checksum'
 
     return 'success'
 
@@ -351,22 +280,15 @@ def test_mask_9():
 
     ds = gdal.Open('data/test3_with_mask_1bit.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
-        if band.GetMaskFlags() != 0:
-            gdaltest.post_reason('Did not get expected mask.')
-            return 'fail'
+        assert band.GetMaskFlags() == 0, 'Did not get expected mask.'
 
         cs = band.GetMaskBand().Checksum()
-        if cs != 100:
-            gdaltest.post_reason('Got wrong mask checksum')
-            print(cs)
-            return 'fail'
+        assert cs == 100, 'Got wrong mask checksum'
 
     return 'success'
 
@@ -379,22 +301,15 @@ def test_mask_10():
 
     ds = gdal.Open('data/test3_with_mask_8bit.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
-        if band.GetMaskFlags() != 0:
-            gdaltest.post_reason('Did not get expected mask.')
-            return 'fail'
+        assert band.GetMaskFlags() == 0, 'Did not get expected mask.'
 
         cs = band.GetMaskBand().Checksum()
-        if cs != 1222:
-            gdaltest.post_reason('Got wrong mask checksum')
-            print(cs)
-            return 'fail'
+        assert cs == 1222, 'Got wrong mask checksum'
 
     return 'success'
 
@@ -408,49 +323,31 @@ def test_mask_11():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit_and_ovr.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     band = ds.GetRasterBand(1)
 
     # Let's fetch the mask
-    if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 100:
-        gdaltest.post_reason('Got wrong mask checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 100, 'Got wrong mask checksum'
 
     # Let's fetch the overview
     band = ds.GetRasterBand(1).GetOverview(0)
     cs = band.Checksum()
-    if cs != 1126:
-        gdaltest.post_reason('Got wrong overview checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 1126, 'Got wrong overview checksum'
 
     # Let's fetch the mask of the overview
-    if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
 
     cs = band.GetMaskBand().Checksum()
-    if cs != 25:
-        gdaltest.post_reason('Got wrong checksum for the mask of the overview')
-        print(cs)
-        return 'fail'
+    assert cs == 25, 'Got wrong checksum for the mask of the overview'
 
     # Let's fetch the overview of the mask == the mask of the overview
     band = ds.GetRasterBand(1).GetMaskBand().GetOverview(0)
     cs = band.Checksum()
-    if cs != 25:
-        gdaltest.post_reason('Got wrong checksum for the overview of the mask')
-        print(cs)
-        return 'fail'
+    assert cs == 25, 'Got wrong checksum for the overview of the mask'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
@@ -466,50 +363,32 @@ def test_mask_12():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test3_with_mask_1bit_and_ovr.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
     for i in (1, 2, 3):
         band = ds.GetRasterBand(i)
 
         # Let's fetch the mask
-        if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
-            gdaltest.post_reason('Did not get expected mask.')
-            return 'fail'
+        assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
 
         cs = band.GetMaskBand().Checksum()
-        if cs != 100:
-            gdaltest.post_reason('Got wrong mask checksum')
-            print(cs)
-            return 'fail'
+        assert cs == 100, 'Got wrong mask checksum'
 
         # Let's fetch the overview
         band = ds.GetRasterBand(i).GetOverview(0)
         cs = band.Checksum()
-        if cs != 1126:
-            gdaltest.post_reason('Got wrong overview checksum')
-            print(cs)
-            return 'fail'
+        assert cs == 1126, 'Got wrong overview checksum'
 
         # Let's fetch the mask of the overview
-        if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
-            gdaltest.post_reason('Did not get expected mask.')
-            return 'fail'
+        assert band.GetMaskFlags() == gdal.GMF_PER_DATASET, 'Did not get expected mask.'
 
         cs = band.GetMaskBand().Checksum()
-        if cs != 25:
-            gdaltest.post_reason('Got wrong checksum for the mask of the overview')
-            print(cs)
-            return 'fail'
+        assert cs == 25, 'Got wrong checksum for the mask of the overview'
 
         # Let's fetch the overview of the mask == the mask of the overview
         band = ds.GetRasterBand(i).GetMaskBand().GetOverview(0)
         cs = band.Checksum()
-        if cs != 25:
-            gdaltest.post_reason('Got wrong checksum for the overview of the mask')
-            print(cs)
-            return 'fail'
+        assert cs == 25, 'Got wrong checksum for the overview of the mask'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
@@ -525,9 +404,7 @@ def test_mask_13():
 
     src_ds = gdal.Open('data/byte.tif')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.CreateCopy('tmp/byte_with_mask.tif', src_ds)
@@ -536,18 +413,12 @@ def test_mask_13():
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 0:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask')
-        return 'fail'
+    assert cs == 0, 'Got wrong checksum for the mask'
 
     ds.GetRasterBand(1).GetMaskBand().Fill(1)
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask'
 
     ds = None
 
@@ -559,15 +430,11 @@ def test_mask_13():
 
     ds = gdal.Open('tmp/byte_with_mask.tif')
 
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('wrong mask flags')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+        'wrong mask flags'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask'
 
     ds = None
 
@@ -590,9 +457,7 @@ def test_mask_14():
 
     src_ds = gdal.Open('data/byte.tif')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     drv = gdal.GetDriverByName('GTiff')
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
@@ -604,45 +469,31 @@ def test_mask_14():
     with gdaltest.error_handler():
         with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
             ret = ds.CreateMaskBand(0)
-    if ret == 0:
-        gdaltest.post_reason('Error expected')
-        return 'fail'
+    assert ret != 0, 'Error expected'
 
     with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
         ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    if ret != 0:
-        gdaltest.post_reason('Creation failed')
-        return 'fail'
+    assert ret == 0, 'Creation failed'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 0:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask (1)')
-        return 'fail'
+    assert cs == 0, 'Got wrong checksum for the mask (1)'
 
     ds.GetRasterBand(1).GetMaskBand().Fill(1)
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask (2)')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask (2)'
 
     # This TIFF dataset has already an internal mask band
     with gdaltest.error_handler():
         with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
             ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    if ret == 0:
-        gdaltest.post_reason('Error expected')
-        return 'fail'
+    assert ret != 0, 'Error expected'
 
     # This TIFF dataset has already an internal mask band
     with gdaltest.error_handler():
         with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
             ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    if ret == 0:
-        gdaltest.post_reason('Error expected')
-        return 'fail'
+    assert ret != 0, 'Error expected'
 
     ds = None
 
@@ -656,17 +507,13 @@ def test_mask_14():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('tmp/byte_with_mask.tif')
 
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('wrong mask flags')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+        'wrong mask flags'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask (3)')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask (3)'
 
     # Test fix for #5884
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
@@ -675,13 +522,9 @@ def test_mask_14():
     out_ds = drv.CreateCopy('/vsimem/byte_with_mask.tif', ds, options=['COMPRESS=JPEG'])
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
     gdal.SetCacheMax(old_val)
-    if out_ds.GetRasterBand(1).Checksum() == 0:
-        return 'fail'
+    assert out_ds.GetRasterBand(1).Checksum() != 0
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask (4)')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask (4)'
     out_ds = None
     drv.Delete('/vsimem/byte_with_mask.tif')
 
@@ -699,9 +542,7 @@ def mask_and_ovr(order, method):
 
     src_ds = gdal.Open('data/byte.tif')
 
-    if src_ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert src_ds is not None, 'Failed to open test dataset.'
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.CreateCopy('tmp/byte_with_ovr_and_mask.tif', src_ds)
@@ -757,29 +598,19 @@ def mask_and_ovr(order, method):
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif')
 
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('wrong mask flags')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+        'wrong mask flags'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask'
 
     cs = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
-    if cs != 100:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask of the first overview')
-        return 'fail'
+    assert cs == 100, 'Got wrong checksum for the mask of the first overview'
 
     cs = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
-    if cs != 25:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask of the second overview')
-        return 'fail'
+    assert cs == 25, 'Got wrong checksum for the mask of the second overview'
 
     ds = None
 
@@ -827,23 +658,16 @@ def test_mask_19():
 
     ds = gdal.Open('data/test_nodatavalues.tif')
 
-    if ds is None:
-        gdaltest.post_reason('Failed to open test dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open test dataset.'
 
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET + gdal.GMF_NODATA:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ds.GetRasterBand(1).GetMaskFlags())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET + gdal.GMF_NODATA, \
+        'did not get expected mask flags'
 
     msk = ds.GetRasterBand(1).GetMaskBand()
     cs = msk.Checksum()
     expected_cs = 11043
 
-    if cs != expected_cs:
-        gdaltest.post_reason('Did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == expected_cs, 'Did not get expected checksum'
 
     msk = None
     ds = None
@@ -868,14 +692,12 @@ def test_mask_20():
         ds.GetRasterBand(1).Fill(nodatavalue[i])
         ds.GetRasterBand(1).SetNoDataValue(nodatavalue[i])
 
-        if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_NODATA:
-            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
-            return 'fail'
+        assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_NODATA, \
+            ('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
 
         msk = ds.GetRasterBand(1).GetMaskBand()
-        if msk.Checksum() != 0:
-            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
-            return 'fail'
+        assert msk.Checksum() == 0, \
+            ('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
 
         msk = None
         ds = None
@@ -905,14 +727,12 @@ def test_mask_21():
         ds.GetRasterBand(2).Fill(nodatavalue[i])
         ds.GetRasterBand(3).Fill(nodatavalue[i])
 
-        if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET + gdal.GMF_NODATA:
-            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
-            return 'fail'
+        assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET + gdal.GMF_NODATA, \
+            ('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
 
         msk = ds.GetRasterBand(1).GetMaskBand()
-        if msk.Checksum() != 0:
-            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
-            return 'fail'
+        assert msk.Checksum() == 0, \
+            ('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
 
         msk = None
         ds = None
@@ -931,18 +751,12 @@ def test_mask_22():
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 0:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask')
-        return 'fail'
+    assert cs == 0, 'Got wrong checksum for the mask'
 
     ds.GetRasterBand(1).GetMaskBand().Fill(1)
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask'
 
     ds = None
 
@@ -954,15 +768,11 @@ def test_mask_22():
 
     ds = gdal.Open('tmp/mask_22.tif')
 
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('wrong mask flags')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+        'wrong mask flags'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 400:
-        print(cs)
-        gdaltest.post_reason('Got wrong checksum for the mask')
-        return 'fail'
+    assert cs == 400, 'Got wrong checksum for the mask'
 
     ds = None
 
@@ -1008,8 +818,7 @@ def test_mask_23():
     drv.Delete('tmp/mask_23_dst.tif')
 
     # 'ERROR 1: TIFFRewriteDirectory:Error fetching directory count' was triggered before
-    if error_msg != '':
-        return 'fail'
+    assert error_msg == ''
 
     return 'success'
 
@@ -1026,29 +835,22 @@ def test_mask_24():
     ds.GetRasterBand(3).Fill(65565)
     ds.GetRasterBand(4).Fill(65565)
 
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALPHA + gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET, \
+        'Did not get expected mask.'
     mask = ds.GetRasterBand(1).GetMaskBand()
 
     # IRasterIO() optimized case
     import struct
-    if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 255:
-        print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
-        return 'fail'
+    assert struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] == 255
 
     # IReadBlock() code path
     (blockx, blocky) = mask.GetBlockSize()
-    if struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0] != 255:
-        print(struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0])
-        return 'fail'
+    assert struct.unpack('B' * blockx * blocky, mask.ReadBlock(0, 0))[0] == 255
     mask.FlushCache()
 
     # Test special case where dynamics is only 0-255
     ds.GetRasterBand(4).Fill(255)
-    if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 1:
-        print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
-        return 'fail'
+    assert struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] == 1
 
     ds = None
 
@@ -1063,19 +865,15 @@ def test_mask_24():
 def test_mask_25():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1)
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     ds = None
 
     # No INTERNAL_MASK_FLAGS_x metadata
     gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif.msk', 1, 1)
     ds = gdal.Open('/vsimem/mask_25.tif')
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 3:
-        print(cs)
-        return 'fail'
+    assert cs == 3
     ds = None
     gdal.Unlink('/vsimem/mask_25.tif')
     gdal.Unlink('/vsimem/mask_25.tif.msk')
@@ -1085,12 +883,9 @@ def test_mask_25():
     ds.GetRasterBand(1).CreateMaskBand(0)
     ds = None
     ds = gdal.Open('/vsimem/mask_25.tif')
-    if ds.GetRasterBand(1).GetMaskFlags() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == 0
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 0:
-        print(cs)
-        return 'fail'
+    assert cs == 0
     ds = None
     gdal.Unlink('/vsimem/mask_25.tif')
     gdal.Unlink('/vsimem/mask_25.tif.msk')
@@ -1102,8 +897,7 @@ def test_mask_25():
     ds = None
     ds = gdal.Open('/vsimem/mask_25.tif')
     with gdaltest.error_handler():
-        if ds.GetRasterBand(2).GetMaskFlags() != gdal.GMF_ALL_VALID:
-            return 'fail'
+        assert ds.GetRasterBand(2).GetMaskFlags() == gdal.GMF_ALL_VALID
     ds = None
     gdal.Unlink('/vsimem/mask_25.tif')
     gdal.Unlink('/vsimem/mask_25.tif.msk')
@@ -1112,8 +906,7 @@ def test_mask_25():
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1, 2)
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
-        if ds.GetRasterBand(2).CreateMaskBand(0) == 0:
-            return 'fail'
+        assert ds.GetRasterBand(2).CreateMaskBand(0) != 0
     ds = None
     gdal.Unlink('/vsimem/mask_25.tif')
     gdal.Unlink('/vsimem/mask_25.tif.msk')
@@ -1136,16 +929,13 @@ def test_mask_26():
     ds.GetRasterBand(1).Fill(65565)
     ds.GetRasterBand(2).Fill(65565)
 
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALPHA + gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('Did not get expected mask.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET, \
+        'Did not get expected mask.'
     mask = ds.GetRasterBand(1).GetMaskBand()
 
     # IRasterIO() optimized case
     import struct
-    if struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] != 255:
-        print(struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0])
-        return 'fail'
+    assert struct.unpack('B', mask.ReadRaster(0, 0, 1, 1))[0] == 255
 
     ds = None
 
@@ -1173,14 +963,12 @@ def test_mask_27():
         ds.GetRasterBand(1).Fill(nodatavalue[i], 10)
         ds.GetRasterBand(1).SetNoDataValue(nodatavalue[i])
 
-        if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_NODATA:
-            gdaltest.post_reason('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
-            return 'fail'
+        assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_NODATA, \
+            ('did not get expected mask flags for type %s' % gdal.GetDataTypeName(typ))
 
         msk = ds.GetRasterBand(1).GetMaskBand()
-        if msk.Checksum() != 0:
-            gdaltest.post_reason('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
-            return 'fail'
+        assert msk.Checksum() == 0, \
+            ('did not get expected mask checksum for type %s : %d' % gdal.GetDataTypeName(typ, msk.Checksum()))
 
         msk = None
         ds = None

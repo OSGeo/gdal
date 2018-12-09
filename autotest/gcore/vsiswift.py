@@ -70,16 +70,12 @@ def test_vsiswift_real_server_errors():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift/foo/bar')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('SWIFT_STORAGE_URL') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('SWIFT_STORAGE_URL') >= 0
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift_streaming/foo/bar')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('SWIFT_STORAGE_URL') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('SWIFT_STORAGE_URL') >= 0
 
     gdal.SetConfigOption('SWIFT_STORAGE_URL', 'http://0.0.0.0')
 
@@ -87,9 +83,7 @@ def test_vsiswift_real_server_errors():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift/foo/bar')
-    if f is not None or gdal.VSIGetLastErrorMsg().find('SWIFT_AUTH_TOKEN') < 0:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.VSIGetLastErrorMsg().find('SWIFT_AUTH_TOKEN') >= 0
 
     gdal.SetConfigOption('SWIFT_AUTH_TOKEN', 'SWIFT_AUTH_TOKEN')
 
@@ -105,9 +99,7 @@ def test_vsiswift_real_server_errors():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         f = open_for_read('/vsiswift_streaming/foo/bar.baz')
-    if f is not None:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None, gdal.VSIGetLastErrorMsg()
 
     return 'success'
 
@@ -184,14 +176,11 @@ def test_vsiswift_fake_auth_v1_url():
     handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-    if data != 'foo':
-        print(data)
-        return 'fail'
+    assert data == 'foo'
 
     # authentication is reused
 
@@ -215,14 +204,11 @@ def test_vsiswift_fake_auth_v1_url():
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/baz')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-    if data != 'bar':
-        print(data)
-        return 'fail'
+    assert data == 'bar'
 
     return 'success'
 
@@ -247,8 +233,7 @@ def test_vsiswift_fake_auth_storage_url_and_auth_token():
     handler.add('GET', '/v1/AUTH_something/foo/bar', 501)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
-        if f is None:
-            return 'fail'
+        assert f is not None
         gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
@@ -275,14 +260,11 @@ def test_vsiswift_fake_auth_storage_url_and_auth_token():
     handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method=method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-    if data != 'foo':
-        print(data)
-        return 'fail'
+    assert data == 'foo'
 
     return 'success'
 
@@ -327,8 +309,7 @@ def test_vsiswift_stat():
     handler.add('GET', '/v1/AUTH_something/foo', 200, {}, "blabla")
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiswift/foo')
-        if stat_res is None or not stat.S_ISDIR(stat_res.mode):
-            return 'fail'
+        assert stat_res is not None and stat.S_ISDIR(stat_res.mode)
 
     return 'success'
 
@@ -370,34 +351,25 @@ def test_vsiswift_fake_readdir():
     with gdaltest.config_option('SWIFT_MAX_KEYS', '1'):
         with webserver.install_http_handler(handler):
             f = open_for_read('/vsiswift/foo/bar.baz')
-        if f is None:
-            return 'fail'
+        assert f is not None
         gdal.VSIFCloseL(f)
 
     dir_contents = gdal.ReadDir('/vsiswift/foo')
-    if dir_contents != ['bar.baz', 'mysubdir']:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents == ['bar.baz', 'mysubdir']
     stat_res = gdal.VSIStatL('/vsiswift/foo/bar.baz')
-    if stat_res.size != 123456:
-        print(stat_res.size)
-        return 'fail'
-    if stat_res.mtime != 1:
-        return 'fail'
+    assert stat_res.size == 123456
+    assert stat_res.mtime == 1
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir('/vsiswift/foo/bar.baz')
-    if dir_contents is not None:
-        return 'fail'
+    assert dir_contents is None
 
     # Test error on ReadDir()
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000&prefix=error_test%2F', 500)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/foo/error_test/')
-    if dir_contents is not None:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents is None
 
     # List containers (empty result)
     handler = webserver.SequentialHandler()
@@ -406,9 +378,7 @@ def test_vsiswift_fake_readdir():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
-    if dir_contents != ['.']:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents == ['.']
 
     # List containers
     gdal.VSICurlClearCache()
@@ -420,9 +390,7 @@ def test_vsiswift_fake_readdir():
            ] """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
-    if dir_contents != ['mycontainer1', 'mycontainer2']:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents == ['mycontainer1', 'mycontainer2']
 
     # ReadDir() with a file and directory of same names
     gdal.VSICurlClearCache()
@@ -437,18 +405,14 @@ def test_vsiswift_fake_readdir():
              { "subdir": "foo/"} ] """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
-    if dir_contents != ['foo', 'foo/']:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents == ['foo', 'foo/']
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000', 200,
                 {'Content-type': 'application/json'}, "[]")
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/foo/')
-    if dir_contents != ['.']:
-        print(dir_contents)
-        return 'fail'
+    assert dir_contents == ['.']
 
     return 'success'
 
@@ -465,8 +429,7 @@ def test_vsiswift_fake_write():
 
     # Test creation of BlockBob
     f = gdal.VSIFOpenL('/vsiswift/test_copy/file.bin', 'wb')
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     handler = webserver.SequentialHandler()
 
@@ -528,8 +491,7 @@ def test_vsiswift_fake_unlink():
     handler.add('DELETE', '/v1/AUTH_something/foo/bar', 202, {'Connection': 'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsiswift/foo/bar')
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Failure
     handler = webserver.SequentialHandler()
@@ -539,8 +501,7 @@ def test_vsiswift_fake_unlink():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsiswift/foo/bar')
-    if ret != -1:
-        return 'fail'
+    assert ret == -1
 
     return 'success'
 
@@ -557,8 +518,7 @@ def test_vsiswift_fake_mkdir_rmdir():
 
     # Invalid name
     ret = gdal.Mkdir('/vsiswift', 0)
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo/dir/', 404, {'Connection': 'close'})
@@ -566,8 +526,7 @@ def test_vsiswift_fake_mkdir_rmdir():
     handler.add('PUT', '/v1/AUTH_something/foo/dir/', 201)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiswift/foo/dir', 0)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Try creating already existing directory
     handler = webserver.SequentialHandler()
@@ -578,13 +537,11 @@ def test_vsiswift_fake_mkdir_rmdir():
                 """[ { "subdir": "dir/" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiswift/foo/dir', 0)
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # Invalid name
     ret = gdal.Rmdir('/vsiswift')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.VSICurlClearCache()
 
@@ -597,8 +554,7 @@ def test_vsiswift_fake_mkdir_rmdir():
                 """[ { "name": "it_is_a_file/", "bytes": 0, "last_modified": "1970-01-01T00:00:01" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/it_is_a_file')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # Valid
     handler = webserver.SequentialHandler()
@@ -611,8 +567,7 @@ def test_vsiswift_fake_mkdir_rmdir():
     handler.add('DELETE', '/v1/AUTH_something/foo/dir/', 204)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir')
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Try deleting already deleted directory
     handler = webserver.SequentialHandler()
@@ -620,8 +575,7 @@ def test_vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.VSICurlClearCache()
 
@@ -638,8 +592,7 @@ def test_vsiswift_fake_mkdir_rmdir():
                 """[ { "name": "dir_nonempty/some_file", "bytes": 0, "last_modified": "1970-01-01T00:00:01" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir_nonempty')
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     return 'success'
 
@@ -676,119 +629,85 @@ def vsiswift_extra_1():
     if swift_resource.find('/') < 0:
         path = '/vsiswift/' + swift_resource
         statres = gdal.VSIStatL(path)
-        if statres is None or not stat.S_ISDIR(statres.mode):
-            print('%s is not a valid bucket' % path)
-            return 'fail'
+        assert statres is not None and stat.S_ISDIR(statres.mode), \
+            ('%s is not a valid bucket' % path)
 
         readdir = gdal.ReadDir(path)
-        if readdir is None:
-            print('ReadDir() should not return empty list')
-            return 'fail'
+        assert readdir is not None, 'ReadDir() should not return empty list'
         for filename in readdir:
             if filename != '.':
                 subpath = path + '/' + filename
-                if gdal.VSIStatL(subpath) is None:
-                    print('Stat(%s) should not return an error' % subpath)
-                    return 'fail'
+                assert gdal.VSIStatL(subpath) is not None, \
+                    ('Stat(%s) should not return an error' % subpath)
 
         unique_id = 'vsiswift_test'
         subpath = path + '/' + unique_id
         ret = gdal.Mkdir(subpath, 0)
-        if ret < 0:
-            print('Mkdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
         readdir = gdal.ReadDir(path)
-        if unique_id not in readdir:
-            print('ReadDir(%s) should contain %s' % (path, unique_id))
-            print(readdir)
-            return 'fail'
+        assert unique_id in readdir, \
+            ('ReadDir(%s) should contain %s' % (path, unique_id))
 
         ret = gdal.Mkdir(subpath, 0)
-        if ret == 0:
-            print('Mkdir(%s) repeated should return an error' % subpath)
-            return 'fail'
+        assert ret != 0, ('Mkdir(%s) repeated should return an error' % subpath)
 
         ret = gdal.Rmdir(subpath)
-        if ret < 0:
-            print('Rmdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
         readdir = gdal.ReadDir(path)
-        if unique_id in readdir:
-            print('ReadDir(%s) should not contain %s' % (path, unique_id))
-            print(readdir)
-            return 'fail'
+        assert unique_id not in readdir, \
+            ('ReadDir(%s) should not contain %s' % (path, unique_id))
 
         ret = gdal.Rmdir(subpath)
-        if ret == 0:
-            print('Rmdir(%s) repeated should return an error' % subpath)
-            return 'fail'
+        assert ret != 0, ('Rmdir(%s) repeated should return an error' % subpath)
 
         ret = gdal.Mkdir(subpath, 0)
-        if ret < 0:
-            print('Mkdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
 
         ret = gdal.Rmdir(subpath)
-        if ret == 0:
-            print('Rmdir(%s) on non empty directory should return an error' % subpath)
-            return 'fail'
+        assert ret != 0, \
+            ('Rmdir(%s) on non empty directory should return an error' % subpath)
 
         f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
-        if data != 'hello':
-            print(data)
-            return 'fail'
+        assert data == 'hello'
         gdal.VSIFCloseL(f)
 
         ret = gdal.Unlink(subpath + '/test.txt')
-        if ret < 0:
-            print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
-            return 'fail'
+        assert ret >= 0, \
+            ('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
 
         ret = gdal.Rmdir(subpath)
-        if ret < 0:
-            print('Rmdir(%s) should not return an error' % subpath)
-            return 'fail'
+        assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
 
         return 'success'
 
     f = open_for_read('/vsiswift/' + swift_resource)
-    if f is None:
-        return 'fail'
+    assert f is not None
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
-    if len(ret) != 1:
-        print(ret)
-        return 'fail'
+    assert len(ret) == 1
 
     # Same with /vsiswift_streaming/
     f = open_for_read('/vsiswift_streaming/' + swift_resource)
-    if f is None:
-        return 'fail'
+    assert f is not None
     ret = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
-    if len(ret) != 1:
-        print(ret)
-        return 'fail'
+    assert len(ret) == 1
 
     # Invalid resource
     gdal.ErrorReset()
     f = open_for_read('/vsiswift_streaming/' + swift_resource + '/invalid_resource.baz')
-    if f is not None:
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    assert f is None, gdal.VSIGetLastErrorMsg()
 
     return 'success'
 

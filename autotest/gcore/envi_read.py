@@ -47,9 +47,7 @@ def test_envi_1():
 
     gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', None)
 
-    if len(filelist) != 2:
-        gdaltest.post_reason('did not get expected file list.')
-        return 'fail'
+    assert len(filelist) == 2, 'did not get expected file list.'
 
     return 'success'
 

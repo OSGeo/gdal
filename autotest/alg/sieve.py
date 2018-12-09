@@ -35,6 +35,7 @@ import sys
 import gdaltest
 
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fairly default case.
@@ -63,8 +64,7 @@ def test_sieve_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -94,8 +94,7 @@ def test_sieve_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -126,8 +125,7 @@ def test_sieve_3():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -157,8 +155,7 @@ def test_sieve_4():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 
@@ -189,8 +186,7 @@ def test_sieve_5():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -228,8 +224,7 @@ def test_sieve_6():
     cs = band.Checksum()
     if (size == 102 and cs != 60955) or (size == 3002 and cs != 63178):
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
 
     return 'success'
 
@@ -286,8 +281,7 @@ NODATA_value 0
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -335,8 +329,7 @@ cellsize     60.000000000000
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 

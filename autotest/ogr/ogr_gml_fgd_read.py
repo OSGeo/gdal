@@ -66,28 +66,21 @@ def test_ogr_gml_fgd_1():
     gdaltest.have_gml_fgd_reader = 1
 
     # check number of layers
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('Wrong layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'Wrong layer count'
 
     lyr = ds.GetLayer(0)
 
     # check the SRS
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(6668)   # JGD2011
-    if not sr.IsSame(lyr.GetSpatialRef()):
-        gdaltest.post_reason('Wrong SRS')
-        return 'fail'
+    assert sr.IsSame(lyr.GetSpatialRef()), 'Wrong SRS'
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (133.123456789 34.123456789)'):
-        gdaltest.post_reason('Wrong geometry')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'POINT (133.123456789 34.123456789)'), \
+        'Wrong geometry'
 
-    if feat.GetField('devDate') != '2015-01-07':
-        gdaltest.post_reason('Wrong attribute value')
-        return 'fail'
+    assert feat.GetField('devDate') == '2015-01-07', 'Wrong attribute value'
 
     return 'success'
 
@@ -103,30 +96,22 @@ def test_ogr_gml_fgd_2():
     ds = ogr.Open(_fgd_dir + 'BldA.xml')
 
     # check number of layers
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('Wrong layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'Wrong layer count'
 
     lyr = ds.GetLayer(0)
 
     # check the SRS
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(6668)   # JGD2011
-    if not sr.IsSame(lyr.GetSpatialRef()):
-        gdaltest.post_reason('Wrong SRS')
-        return 'fail'
+    assert sr.IsSame(lyr.GetSpatialRef()), 'Wrong SRS'
 
     wkt = 'POLYGON ((139.718509733734 35.6952171397133,139.718444177734 35.6953121947133,139.718496754142 35.6953498949667,139.718550483734 35.6952359447133,139.718509733734 35.6952171397133))'
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, wkt):
-        gdaltest.post_reason('Wrong geometry')
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, wkt), 'Wrong geometry'
 
-    if feat.GetField('devDate') != '2017-03-07':
-        gdaltest.post_reason('Wrong attribute value')
-        return 'fail'
+    assert feat.GetField('devDate') == '2017-03-07', 'Wrong attribute value'
 
     return 'success'
 

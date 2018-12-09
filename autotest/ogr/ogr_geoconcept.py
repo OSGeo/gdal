@@ -46,21 +46,14 @@ def test_ogr_gxt_1():
 
     gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD.gxt')
 
-    if gdaltest.gxt_ds is None:
-        return 'fail'
+    assert gdaltest.gxt_ds is not None
 
-    if gdaltest.gxt_ds.GetLayerCount() != 1:
-        gdaltest.post_reason('Got wrong layer count.')
-        return 'fail'
+    assert gdaltest.gxt_ds.GetLayerCount() == 1, 'Got wrong layer count.'
 
     lyr = gdaltest.gxt_ds.GetLayer(0)
-    if lyr.GetName() != '000_GRD.000_GRD':
-        gdaltest.post_reason('got unexpected layer name.')
-        return 'fail'
+    assert lyr.GetName() == '000_GRD.000_GRD', 'got unexpected layer name.'
 
-    if lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason('got wrong feature count.')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 10, 'got wrong feature count.'
 
     expect = ['000-2007-0050-7130-LAMB93',
               '000-2007-0595-7130-LAMB93',
@@ -74,24 +67,20 @@ def test_ogr_gxt_1():
               '000-2007-0050-6585-LAMB93']
 
     tr = ogrtest.check_features_against_list(lyr, 'idSel', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
+    assert (ogrtest.check_feature_geometry(feat,
                                       'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
-                                      max_error=0.000000001) != 0:
-        return 'fail'
+                                      max_error=0.000000001) == 0)
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Lambert 93",GEOGCS["unnamed",DATUM["ITRS-89",SPHEROID["GRS 80",6378137,298.257222099657],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",44],PARAMETER["standard_parallel_2",49],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000]]')
 
-    if not lyr.GetSpatialRef().IsSame(srs):
-        gdaltest.post_reason('SRS is not the one expected.')
-        return 'fail'
+    assert lyr.GetSpatialRef().IsSame(srs), 'SRS is not the one expected.'
 
     return 'success'
 
@@ -103,21 +92,14 @@ def test_ogr_gxt_2():
 
     gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD_TAB.txt')
 
-    if gdaltest.gxt_ds is None:
-        return 'fail'
+    assert gdaltest.gxt_ds is not None
 
-    if gdaltest.gxt_ds.GetLayerCount() != 1:
-        gdaltest.post_reason('Got wrong layer count.')
-        return 'fail'
+    assert gdaltest.gxt_ds.GetLayerCount() == 1, 'Got wrong layer count.'
 
     lyr = gdaltest.gxt_ds.GetLayer(0)
-    if lyr.GetName() != '000_GRD.000_GRD':
-        gdaltest.post_reason('got unexpected layer name.')
-        return 'fail'
+    assert lyr.GetName() == '000_GRD.000_GRD', 'got unexpected layer name.'
 
-    if lyr.GetFeatureCount() != 5:
-        gdaltest.post_reason('got wrong feature count.')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 5, 'got wrong feature count.'
 
     expect = ['000-2007-0050-7130-LAMB93',
               '000-2007-0595-7130-LAMB93',
@@ -126,17 +108,15 @@ def test_ogr_gxt_2():
               '000-2007-0050-6585-LAMB93']
 
     tr = ogrtest.check_features_against_list(lyr, 'idSel', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat,
+    assert (ogrtest.check_feature_geometry(feat,
                                       'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
-                                      max_error=0.000000001) != 0:
-        return 'fail'
+                                      max_error=0.000000001) == 0)
 
     return 'success'
 
@@ -176,9 +156,7 @@ def test_ogr_gxt_3():
     feat = src_lyr.GetNextFeature()
     while feat is not None:
         dst_feat.SetFrom(feat)
-        if gxt_lyr.CreateFeature(dst_feat) != 0:
-            gdaltest.post_reason('CreateFeature failed.')
-            return 'fail'
+        assert gxt_lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
         feat = src_lyr.GetNextFeature()
 
@@ -188,45 +166,38 @@ def test_ogr_gxt_3():
     gdaltest.gxt_ds = ogr.Open('tmp/tmp.gxt')
     gxt_lyr = gdaltest.gxt_ds.GetLayerByName('points.points')
 
-    if not gxt_lyr.GetSpatialRef().IsSame(srs):
-        gdaltest.post_reason('Output SRS is not the one expected.')
-        return 'fail'
+    assert gxt_lyr.GetSpatialRef().IsSame(srs), 'Output SRS is not the one expected.'
 
     expect = ['PID1', 'PID2']
 
     tr = ogrtest.check_features_against_list(gxt_lyr, 'Primary_ID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     gxt_lyr.ResetReading()
 
     expect = ['SID1', 'SID2']
 
     tr = ogrtest.check_features_against_list(gxt_lyr, 'Secondary_ID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     gxt_lyr.ResetReading()
 
     expect = ['TID1', None]
 
     tr = ogrtest.check_features_against_list(gxt_lyr, 'Third_ID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     gxt_lyr.ResetReading()
 
     feat = gxt_lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT(0 1)',
-                                      max_error=0.000000001) != 0:
-        return 'fail'
+    assert (ogrtest.check_feature_geometry(feat, 'POINT(0 1)',
+                                      max_error=0.000000001) == 0)
 
     feat = gxt_lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'POINT(2 3)',
-                                      max_error=0.000000001) != 0:
-        return 'fail'
+    assert (ogrtest.check_feature_geometry(feat, 'POINT(2 3)',
+                                      max_error=0.000000001) == 0)
 
     return 'success'
 

@@ -44,10 +44,7 @@ def test_gdalinfo_lib_1():
     ds = gdal.Open('../gcore/data/byte.tif')
 
     ret = gdal.Info(ds)
-    if ret.find('Driver: GTiff/GeoTIFF') == -1:
-        gdaltest.post_reason('did not get expected string.')
-        print(ret)
-        return 'fail'
+    assert ret.find('Driver: GTiff/GeoTIFF') != -1, 'did not get expected string.'
 
     return 'success'
 
@@ -60,10 +57,7 @@ def test_gdalinfo_lib_2():
     ds = gdal.Open('../gcore/data/byte.tif')
 
     ret = gdal.Info(ds, format='json')
-    if ret['driverShortName'] != 'GTiff':
-        gdaltest.post_reason('wrong value for driverShortName.')
-        print(ret)
-        return 'fail'
+    assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
 
     return 'success'
 
@@ -76,17 +70,12 @@ def test_gdalinfo_lib_3():
     ds = gdal.Open('../gdrivers/data/fake_nsif.ntf')
 
     ret = gdal.Info(ds, format='json')
-    if 'TRE' in ret['metadata']:
-        gdaltest.post_reason('got unexpected extra MD.')
-        print(ret)
-        return 'fail'
+    assert 'TRE' not in ret['metadata'], 'got unexpected extra MD.'
 
     options = gdal.InfoOptions(format='json', extraMDDomains=['TRE'])
     ret = gdal.Info(ds, options=options)
-    if ret['metadata']['TRE']['BLOCKA'].find('010000001000000000') == -1:
-        gdaltest.post_reason('did not get extra MD.')
-        print(ret)
-        return 'fail'
+    assert ret['metadata']['TRE']['BLOCKA'].find('010000001000000000') != -1, \
+        'did not get extra MD.'
 
     return 'success'
 
@@ -99,9 +88,7 @@ def test_gdalinfo_lib_4():
     ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
 
     ret = gdal.Info(ds, allMetadata=True, format='json')
-    if 'xml:XMP' not in ret['metadata']:
-        print(ret)
-        return 'fail'
+    assert 'xml:XMP' in ret['metadata']
 
     return 'success'
 
@@ -118,15 +105,11 @@ def test_gdalinfo_lib_5():
                     stats=True, approxStats=True, computeChecksum=True,
                     showGCPs=False, showMetadata=False, showRAT=False,
                     showColorTable=False, listMDD=True, showFileList=False)
-    if 'files' in ret:
-        return 'fail'
+    assert 'files' not in ret
     band = ret['bands'][0]
-    if 'computedMin' not in band:
-        return 'fail'
-    if 'histogram' not in band:
-        return 'fail'
-    if 'checksum' not in band:
-        return 'fail'
+    assert 'computedMin' in band
+    assert 'histogram' in band
+    assert 'checksum' in band
 
     ds = None
 
@@ -141,10 +124,7 @@ def test_gdalinfo_lib_5():
 def test_gdalinfo_lib_6():
 
     ret = gdal.Info('../gcore/data/byte.tif', options='-json')
-    if ret['driverShortName'] != 'GTiff':
-        gdaltest.post_reason('wrong value for driverShortName.')
-        print(ret)
-        return 'fail'
+    assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
 
     return 'success'
 
@@ -155,10 +135,7 @@ def test_gdalinfo_lib_6():
 def test_gdalinfo_lib_7():
 
     ret = gdal.Info('../gcore/data/byte.tif'.encode('ascii').decode('ascii'), options='-json'.encode('ascii').decode('ascii'))
-    if ret['driverShortName'] != 'GTiff':
-        gdaltest.post_reason('wrong value for driverShortName.')
-        print(ret)
-        return 'fail'
+    assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
 
     return 'success'
 
@@ -169,10 +146,7 @@ def test_gdalinfo_lib_nodatavalues():
 
     ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of VRT -b 1 -b 1 -b 1 -mo "NODATA_VALUES=0 1 2"')
     ret = gdal.Info(ds)
-    if ret.find('PER_DATASET NODATA') < 0:
-        gdaltest.post_reason('wrong value for mask flags.')
-        print(ret)
-        return 'fail'
+    assert ret.find('PER_DATASET NODATA') >= 0, 'wrong value for mask flags.'
 
     return 'success'
 

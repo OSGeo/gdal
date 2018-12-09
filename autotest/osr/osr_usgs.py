@@ -51,14 +51,8 @@ def test_osr_usgs_1():
          0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
         15)
 
-    if abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 47.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 62.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) - 54.5) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) - 45.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) > 0.0000005:
-        gdaltest.post_reason('Can not import Equidistant Conic projection.')
-        return 'fail'
+    assert abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 47.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 62.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) - 54.5) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) - 45.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) <= 0.0000005, \
+        'Can not import Equidistant Conic projection.'
 
     return 'success'
 
@@ -85,13 +79,8 @@ def test_osr_usgs_2():
 
     (proj_code, _, parms, datum_code) = srs.ExportToUSGS()
 
-    if proj_code != 4 or datum_code != 0 \
-       or abs(gdal.PackedDMSToDec(parms[2]) - 33.90363403) > 0.0000005 \
-       or abs(gdal.PackedDMSToDec(parms[3]) - 33.62529003) > 0.0000005 \
-       or abs(gdal.PackedDMSToDec(parms[4]) - -117.4745429) > 0.0000005 \
-       or abs(gdal.PackedDMSToDec(parms[5]) - 33.76446203) > 0.0000005:
-        gdaltest.post_reason('Can not import Lambert Conformal Conic projection.')
-        return 'fail'
+    assert proj_code == 4 and datum_code == 0 and abs(gdal.PackedDMSToDec(parms[2]) - 33.90363403) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[3]) - 33.62529003) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[4]) - -117.4745429) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[5]) - 33.76446203) <= 0.0000005, \
+        'Can not import Lambert Conformal Conic projection.'
 
     return 'success'
 

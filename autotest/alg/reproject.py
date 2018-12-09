@@ -36,6 +36,7 @@ import gdaltest
 
 from osgeo import gdal
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test a trivial case.
@@ -61,8 +62,7 @@ def test_reproject_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################
@@ -94,8 +94,7 @@ def test_reproject_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
     return 'success'
 
 ###############################################################################

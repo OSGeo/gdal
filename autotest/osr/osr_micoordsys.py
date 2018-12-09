@@ -33,6 +33,7 @@ import sys
 
 import gdaltest
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromMICoordSys() function.
@@ -51,8 +52,7 @@ def test_osr_micoordsys_1():
        or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) > 0.0000005 \
        or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) > 0.0000005:
         print(srs.ExportToPrettyWkt())
-        gdaltest.post_reason('Can not export Lambert Conformal Conic projection.')
-        return 'fail'
+        pytest.fail('Can not export Lambert Conformal Conic projection.')
 
     return 'success'
 
@@ -79,10 +79,8 @@ def test_osr_micoordsys_2():
 
     proj = srs.ExportToMICoordSys()
 
-    if proj != 'Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0':
-        print(proj)
-        gdaltest.post_reason('Can not import Lambert Conformal Conic projection.')
-        return 'fail'
+    assert proj == 'Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0', \
+        'Can not import Lambert Conformal Conic projection.'
 
     return 'success'
 
@@ -98,23 +96,17 @@ def test_osr_micoordsys_3():
 
     proj = srs.ExportToMICoordSys()
 
-    if proj != 'Earth Projection 10, 157, "m", 0':
-        print(proj)
-        return 'fail'
+    assert proj == 'Earth Projection 10, 157, "m", 0'
 
     srs = osr.SpatialReference()
     srs.ImportFromMICoordSys('Earth Projection 10, 157, "m", 0')
     wkt = srs.ExportToWkt()
-    if wkt.find('EXTENSION["PROJ4"') < 0:
-        print(wkt)
-        return 'fail'
+    assert wkt.find('EXTENSION["PROJ4"') >= 0
 
     # Transform again to MITAB (we no longer have the EPSG code, so we rely on PROJ4 extension node)
     proj = srs.ExportToMICoordSys()
 
-    if proj != 'Earth Projection 10, 157, "m", 0':
-        print(proj)
-        return 'fail'
+    assert proj == 'Earth Projection 10, 157, "m", 0'
 
     return 'success'
 

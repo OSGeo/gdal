@@ -83,10 +83,7 @@ def test_rasterize_1():
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
                               burn_values=[200, 220, 240])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 
@@ -129,10 +126,7 @@ def test_rasterize_2():
                               options=["ALL_TOUCHED=TRUE"])
     gdal.PopErrorHandler()
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 
@@ -186,10 +180,7 @@ def test_rasterize_3():
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
                               burn_values=[10, 10, 55], options=["BURN_VALUE_FROM=Z"])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 
@@ -246,10 +237,7 @@ def test_rasterize_4():
     err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
                               options=["ATTRIBUTE=CELSIUS"])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
     expected = 16265
@@ -315,10 +303,7 @@ def test_rasterize_5():
                               burn_values=[100, 110, 120],
                               options=["MERGE_ALG=ADD"])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 

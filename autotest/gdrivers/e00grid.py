@@ -65,12 +65,10 @@ def test_e00grid_1():
 
     if ret == 'success':
         ds = gdal.Open('data/fake_e00grid.e00')
-        if ds.GetRasterBand(1).GetNoDataValue() != -32767:
-            gdaltest.post_reason('did not get expected nodata value')
-            return 'fail'
-        if ds.GetRasterBand(1).GetUnitType() != 'ft':
-            gdaltest.post_reason('did not get expected nodata value')
-            return 'fail'
+        assert ds.GetRasterBand(1).GetNoDataValue() == -32767, \
+            'did not get expected nodata value'
+        assert ds.GetRasterBand(1).GetUnitType() == 'ft', \
+            'did not get expected nodata value'
 
     return ret
 
@@ -108,28 +106,17 @@ def test_e00grid_2():
         line0 = ds.ReadRaster(0, 0, 5, 1)
         ds.ReadRaster(0, 1, 5, 1)
         line2 = ds.ReadRaster(0, 2, 5, 1)
-        if line0 == line2:
-            gdaltest.post_reason('should not have gotten the same values')
-            return 'fail'
+        assert line0 != line2, 'should not have gotten the same values'
         ds.ReadRaster(0, 0, 5, 1)
         line2_bis = ds.ReadRaster(0, 2, 5, 1)
-        if line2 != line2_bis:
-            gdaltest.post_reason('did not get the same values for the same line')
-            return 'fail'
+        assert line2 == line2_bis, 'did not get the same values for the same line'
 
-        if ds.GetRasterBand(1).GetMinimum() != 1:
-            gdaltest.post_reason('did not get expected minimum value')
-            print(ds.GetRasterBand(1).GetMinimum())
-            return 'fail'
-        if ds.GetRasterBand(1).GetMaximum() != 50:
-            gdaltest.post_reason('did not get expected maximum value')
-            print(ds.GetRasterBand(1).GetMaximum())
-            return 'fail'
+        assert ds.GetRasterBand(1).GetMinimum() == 1, \
+            'did not get expected minimum value'
+        assert ds.GetRasterBand(1).GetMaximum() == 50, \
+            'did not get expected maximum value'
         stats = ds.GetRasterBand(1).GetStatistics(False, True)
-        if stats != [1.0, 50.0, 25.5, 24.5]:
-            gdaltest.post_reason('did not get expected statistics')
-            print(stats)
-            return 'fail'
+        assert stats == [1.0, 50.0, 25.5, 24.5], 'did not get expected statistics'
 
     return ret
 

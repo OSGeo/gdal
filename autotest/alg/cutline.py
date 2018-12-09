@@ -112,9 +112,7 @@ def test_cutline_4():
 </VRTDataset>""")
     out_ds = gdal.Translate('', ds, options='-of MEM -outsize 50%% 50%%')
     cs = out_ds.GetRasterBand(1).Checksum()
-    if cs != 5170:
-        print(cs)
-        return 'fail'
+    assert cs == 5170
 
     gdal.Unlink('/vsimem/utmsmall.tif')
 

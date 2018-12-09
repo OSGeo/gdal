@@ -47,42 +47,25 @@ def test_nearblack_1():
         return 'skip'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
     ds = gdal.Open('tmp/nearblack1.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 21106:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum band 1')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 21106, 'Bad checksum band 1'
 
-    if ds.GetRasterBand(2).Checksum() != 20736:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum band 2')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 20736, 'Bad checksum band 2'
 
-    if ds.GetRasterBand(3).Checksum() != 21309:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum band 3')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 21309, 'Bad checksum band 3'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
     src_ds = None
     ds = None
@@ -100,13 +83,9 @@ def test_nearblack_2():
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -setalpha -nb 0 -of GTiff -o tmp/nearblack2.tif -co TILED=YES')
 
     ds = gdal.Open('tmp/nearblack2.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(4).Checksum() != 22002:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Bad checksum band 0')
-        return 'fail'
+    assert ds.GetRasterBand(4).Checksum() == 22002, 'Bad checksum band 0'
 
     ds = None
 
@@ -124,13 +103,9 @@ def test_nearblack_3():
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setalpha -nb 0 -of GTiff tmp/nearblack3.tif')
 
     ds = gdal.Open('tmp/nearblack3.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(4).Checksum() != 22002:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Bad checksum band 0')
-        return 'fail'
+    assert ds.GetRasterBand(4).Checksum() == 22002, 'Bad checksum band 0'
 
     ds = None
 
@@ -150,13 +125,9 @@ def test_nearblack_4():
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -q -setalpha -white -nb 0 -of GTiff tmp/nearblack4_src.tif -o tmp/nearblack4.tif')
 
     ds = gdal.Open('tmp/nearblack4.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(4).Checksum() != 24151:
-        print(ds.GetRasterBand(4).Checksum())
-        gdaltest.post_reason('Bad checksum band 0')
-        return 'fail'
+    assert ds.GetRasterBand(4).Checksum() == 24151, 'Bad checksum band 0'
 
     ds = None
 
@@ -173,13 +144,10 @@ def test_nearblack_5():
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif --config GDAL_TIFF_INTERNAL_MASK NO -setmask -nb 0 -of GTiff -o tmp/nearblack5.tif -co TILED=YES')
 
     ds = gdal.Open('tmp/nearblack5.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 22002:
-        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        gdaltest.post_reason('Bad checksum mask band')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 22002, \
+        'Bad checksum mask band'
 
     ds = None
 
@@ -199,13 +167,10 @@ def test_nearblack_6():
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setmask -nb 0 -of GTiff tmp/nearblack6.tif')
 
     ds = gdal.Open('tmp/nearblack6.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 22002:
-        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-        gdaltest.post_reason('Bad checksum mask band')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 22002, \
+        'Bad checksum mask band'
 
     ds = None
 
@@ -222,17 +187,11 @@ def test_nearblack_7():
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' data/whiteblackred.tif -o tmp/nearblack7.tif -color 0,0,0 -color 255,255,255 -of GTiff')
 
     ds = gdal.Open('tmp/nearblack7.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 418 or \
-       ds.GetRasterBand(2).Checksum() != 0 or \
-       ds.GetRasterBand(3).Checksum() != 0:
-        print(ds.GetRasterBand(1).Checksum())
-        print(ds.GetRasterBand(2).Checksum())
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert (ds.GetRasterBand(1).Checksum() == 418 and \
+       ds.GetRasterBand(2).Checksum() == 0 and \
+       ds.GetRasterBand(3).Checksum() == 0), 'Bad checksum'
 
     ds = None
 
@@ -251,29 +210,16 @@ def test_nearblack_8():
     src_ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' tmp/nearblack8.tif -nb 0')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/nearblack8.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 21106:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum band 1')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 21106, 'Bad checksum band 1'
 
-    if ds.GetRasterBand(2).Checksum() != 20736:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum band 2')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 20736, 'Bad checksum band 2'
 
-    if ds.GetRasterBand(3).Checksum() != 21309:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum band 3')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 21309, 'Bad checksum band 3'
 
     return 'success'
 

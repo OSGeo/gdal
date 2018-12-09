@@ -77,43 +77,38 @@ def test_ogr_wktempty_test_partial_empty_geoms():
     wkt = 'MULTIPOINT (1 1)'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPoint))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multipoint with an empty point and a valid point
     geom = ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY')
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPoint))
     geom.AddGeometry(ogr.CreateGeometryFromWkt('POINT (1 1)'))
     wkt = 'MULTIPOINT (1 1)'
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multilinestring with a valid string and an empty linestring
     wkt = 'MULTILINESTRING ((0 1,2 3,4 5,0 1))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLineString))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multilinestring with an empty linestring and a valid linestring
     geom = ogr.CreateGeometryFromWkt('MULTILINESTRING EMPTY')
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLineString))
     geom.AddGeometry(ogr.CreateGeometryFromWkt('LINESTRING (0 1,2 3,4 5,0 1)'))
     wkt = 'MULTILINESTRING ((0 1,2 3,4 5,0 1))'
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Polygon with a valid external ring and an empty internal ring
     wkt = 'POLYGON ((100 0,100 10,110 10,100 0))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLinearRing))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Polygon with an empty external ring and a valid internal ring
     wkt = 'POLYGON EMPTY'
@@ -126,26 +121,23 @@ def test_ogr_wktempty_test_partial_empty_geoms():
     ring.AddPoint_2D(0, 10)
     ring.AddPoint_2D(0, 0)
     geom.AddGeometry(ring)
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multipolygon with a valid polygon and an empty polygon
     wkt = 'MULTIPOLYGON (((0 0,0 10,10 10,0 0)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPolygon))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multipolygon with an empty polygon and a valid polygon
     geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON EMPTY')
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPolygon))
     geom.AddGeometry(ogr.CreateGeometryFromWkt('POLYGON ((100 0,100 10,110 10,100 0))'))
     wkt = 'MULTIPOLYGON (((100 0,100 10,110 10,100 0)))'
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     return 'success'
 

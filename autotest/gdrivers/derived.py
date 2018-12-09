@@ -39,8 +39,7 @@ def test_derived_test1():
     filename = "../gcore/data/cfloat64.tif"
     gdal.ErrorReset()
     ds = gdal.Open(filename)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
     got_dsds = ds.GetMetadata('DERIVED_SUBDATASETS')
     expected_gt = ds.GetGeoTransform()
     expected_prj = ds.GetProjection()
@@ -68,8 +67,7 @@ def test_derived_test1():
         val = expected_dsds[key]
         if key.endswith('_NAME'):
             ds = gdal.Open(val)
-            if ds is None or gdal.GetLastErrorMsg() != '':
-                return 'fail'
+            assert ds is not None and gdal.GetLastErrorMsg() == ''
             gt = ds.GetGeoTransform()
             if gt != expected_gt:
                 import pprint
@@ -87,8 +85,7 @@ def test_derived_test2():
     filename = "../gcore/data/cint_sar.tif"
     gdal.ErrorReset()
     ds = gdal.Open(filename)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
     got_dsds = ds.GetMetadata('DERIVED_SUBDATASETS')
     expected_dsds = {'DERIVED_SUBDATASET_1_NAME': 'DERIVED_SUBDATASET:AMPLITUDE:../gcore/data/cint_sar.tif',
                      'DERIVED_SUBDATASET_1_DESC': 'Amplitude of input bands from ../gcore/data/cint_sar.tif',
@@ -122,8 +119,7 @@ def test_derived_test2():
         val = expected_dsds[key]
         if key.endswith('_NAME'):
             ds = gdal.Open(val)
-            if ds is None or gdal.GetLastErrorMsg() != '':
-                return 'fail'
+            assert ds is not None and gdal.GetLastErrorMsg() == ''
             cs = ds.GetRasterBand(1).Checksum()
             if expected_cs[key] != cs:
                 import pprint
@@ -140,24 +136,20 @@ def test_derived_test3():
     with gdaltest.error_handler():
         # Missing filename
         ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('DERIVED_SUBDATASET:invalid_alg:../gcore/data/byte.tif')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:dataset_does_not_exist')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         # Raster with zero band
         ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:data/CSK_DGM.h5')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     for function in ['real', 'imag', 'complex', 'mod', 'phase', 'conj',
                      'sum', 'diff', 'mul', 'cmul', 'inv', 'intensity',

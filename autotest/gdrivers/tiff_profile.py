@@ -65,8 +65,7 @@ def test_tiff_write_icc():
     except OSError:
         pass
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds = gdal.Open('tmp/icc_test.tiff')
@@ -79,8 +78,7 @@ def test_tiff_write_icc():
     except OSError:
         pass
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with GetMetadataItem()
     ds = gdal.Open('tmp/icc_test.tiff')
@@ -93,8 +91,7 @@ def test_tiff_write_icc():
     except OSError:
         pass
 
-    if source_icc_profile != icc:
-        return 'fail'
+    assert source_icc_profile == icc
 
     driver.Delete('tmp/icc_test.tiff')
 
@@ -123,8 +120,7 @@ def test_tiff_copy_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test2.tiff')
@@ -132,8 +128,7 @@ def test_tiff_copy_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
@@ -163,8 +158,7 @@ def test_tiff_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test2.tiff')
@@ -172,8 +166,7 @@ def test_tiff_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
@@ -215,8 +208,7 @@ def test_tiff_copy_options_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -225,16 +217,14 @@ def test_tiff_copy_options_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
-    if tifftag_transferfunction2 != tifftag_transferfunction:
-        return 'fail'
+    assert tifftag_transferfunction2 == tifftag_transferfunction
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test2.tiff')
@@ -245,8 +235,7 @@ def test_tiff_copy_options_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -255,16 +244,14 @@ def test_tiff_copy_options_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
-    if tifftag_transferfunction2 != tifftag_transferfunction:
-        return 'fail'
+    assert tifftag_transferfunction2 == tifftag_transferfunction
 
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
@@ -304,8 +291,7 @@ def test_tiff_copy_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -314,16 +300,14 @@ def test_tiff_copy_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
-    if tifftag_transferfunction2 != tifftag_transferfunction:
-        return 'fail'
+    assert tifftag_transferfunction2 == tifftag_transferfunction
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test2.tiff')
@@ -334,8 +318,7 @@ def test_tiff_copy_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -344,16 +327,14 @@ def test_tiff_copy_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
-    if tifftag_transferfunction2 != tifftag_transferfunction:
-        return 'fail'
+    assert tifftag_transferfunction2 == tifftag_transferfunction
 
     driver.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test2.tiff')
@@ -384,16 +365,14 @@ def test_tiff_update_icc():
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Reopen the file to verify it was written.
     ds = gdal.Open('tmp/icc_test.tiff')
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver.Delete('tmp/icc_test.tiff')
 
@@ -428,8 +407,7 @@ def test_tiff_update_colorimetric():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -438,16 +416,14 @@ def test_tiff_update_colorimetric():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
-    if tifftag_transferfunction2 != tifftag_transferfunction:
-        return 'fail'
+    assert tifftag_transferfunction2 == tifftag_transferfunction
 
     # Reopen the file to verify it was written.
     ds = gdal.Open('tmp/icc_test.tiff')
@@ -457,8 +433,7 @@ def test_tiff_update_colorimetric():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -467,16 +442,14 @@ def test_tiff_update_colorimetric():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
     tifftag_transferfunction2 = (
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_RED'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_GREEN'] + ']'),
         eval('[' + md['TIFFTAG_TRANSFERFUNCTION_BLUE'] + ']'))
 
-    if tifftag_transferfunction2 != tifftag_transferfunction:
-        return 'fail'
+    assert tifftag_transferfunction2 == tifftag_transferfunction
 
     driver.Delete('tmp/icc_test.tiff')
 

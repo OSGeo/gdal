@@ -41,6 +41,7 @@ from osgeo import gdal
 from osgeo import osr
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Verify that we always getting the same image when warping.
@@ -61,9 +62,7 @@ def test_warp_1():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -80,9 +79,7 @@ def test_warp_1_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -99,9 +96,7 @@ def test_warp_1_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -118,9 +113,7 @@ def test_warp_1_float():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -137,9 +130,7 @@ def test_warp_2():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -156,9 +147,7 @@ def test_warp_2_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -175,9 +164,7 @@ def test_warp_2_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -194,9 +181,7 @@ def test_warp_2_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -213,9 +198,7 @@ def test_warp_3():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -232,9 +215,7 @@ def test_warp_3_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -251,9 +232,7 @@ def test_warp_3_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -270,9 +249,7 @@ def test_warp_3_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -289,9 +266,7 @@ def test_warp_3_float_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -308,9 +283,7 @@ def test_warp_4():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -327,9 +300,7 @@ def test_warp_4_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -346,9 +317,7 @@ def test_warp_4_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -365,9 +334,7 @@ def test_warp_4_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -384,9 +351,7 @@ def test_warp_4_short_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -403,9 +368,7 @@ def test_warp_4_float_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -422,9 +385,7 @@ def test_warp_5():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -441,9 +402,7 @@ def test_warp_5_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -495,9 +454,7 @@ def test_warp_9():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -514,9 +471,7 @@ def test_warp_10():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -726,10 +681,7 @@ def warp_19_internal(size, datatype, resampling_string):
 
     gdaltest.tiff_drv.Delete('tmp/testwarp.tif')
 
-    if checksum != checksum_ref:
-        print('got %d, expected %d' % (checksum, checksum_ref))
-        gdaltest.post_reason('Result different from source')
-        return 'fail'
+    assert checksum == checksum_ref, 'Result different from source'
 
     gdaltest.tiff_drv.Delete('tmp/test.tif')
 
@@ -764,9 +716,8 @@ def test_warp_19():
         print('Testing size = %d ...' % size)
         for method in methods:
             for datatype in datatypes:
-                if warp_19_internal(size, datatype, method) != 'success':
-                    print('fail with size = %d, data type = %d and method %s' % (size, datatype, method))
-                    return 'fail'
+                assert warp_19_internal(size, datatype, method) == 'success', \
+                    ('fail with size = %d, data type = %d and method %s' % (size, datatype, method))
 
     return 'success'
 
@@ -949,9 +900,7 @@ def test_warp_24():
     ds = gdal.Warp('', ds_ref, options='-of MEM -r bilinear')
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != cs_ref:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == cs_ref, 'did not get expected checksum'
 
     return 'success'
 
@@ -965,9 +914,7 @@ def test_warp_25():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == 4672, 'did not get expected checksum'
 
     return 'success'
 
@@ -987,9 +934,7 @@ def test_warp_26():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == 4672, 'did not get expected checksum'
 
     os.unlink('tmp/warp_25_gcp.vrt')
     os.unlink('tmp/warp_25_warp.vrt')
@@ -1063,8 +1008,7 @@ def test_warp_27():
     ref_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != ref_cs:
-        return 'fail'
+    assert cs == ref_cs
 
     gdal.Unlink('tmp/warp_27.tif')
     gdal.Unlink('tmp/warp_27_ref.tif')
@@ -1081,11 +1025,7 @@ def test_warp_28():
     ds = gdal.Open('data/utm_alpha_noinit.vrt')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
-    if cs1 == 0 or cs2 == 0:
-        gdaltest.post_reason('bad checksum')
-        print(cs1)
-        print(cs2)
-        return 'fail'
+    assert not (cs1 == 0 or cs2 == 0), 'bad checksum'
     ds = None
 
     return 'success'
@@ -1109,8 +1049,7 @@ def test_warp_29():
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
-    if cs_monothread != cs_multithread:
-        return 'fail'
+    assert cs_monothread == cs_multithread
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
@@ -1121,8 +1060,7 @@ def test_warp_29():
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
-    if cs_monothread != cs_multithread:
-        return 'fail'
+    assert cs_monothread == cs_multithread
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
 
@@ -1135,8 +1073,7 @@ def test_warp_29():
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
-    if got_cs != src_ds.GetRasterBand(1).Checksum():
-        return 'fail'
+    assert got_cs == src_ds.GetRasterBand(1).Checksum()
 
     ds = gdal.Open('data/byte_tps.vrt')
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
@@ -1147,8 +1084,7 @@ def test_warp_29():
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
-    if got_cs != src_ds.GetRasterBand(1).Checksum():
-        return 'fail'
+    assert got_cs == src_ds.GetRasterBand(1).Checksum()
 
     src_ds = None
 
@@ -1210,8 +1146,7 @@ def test_warp_30():
                               cbk_user_data)  # Progress callback user data
     gdal.PopErrorHandler()
 
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
@@ -1228,8 +1163,7 @@ def test_warp_30():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
 
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.Unlink('/vsimem/warp_30.tif')
 
@@ -1250,9 +1184,7 @@ def test_warp_31():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1271,9 +1203,7 @@ def test_warp_32():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1292,9 +1222,7 @@ def test_warp_33():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1313,9 +1241,7 @@ def test_warp_34():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1334,9 +1260,7 @@ def test_warp_35():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1355,9 +1279,7 @@ def test_warp_36():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1379,8 +1301,7 @@ def test_warp_37():
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, None, dst_wkt)
     gdal.PopErrorHandler()
     gdal.ErrorReset()
-    if tmp_ds is not None:
-        return 'fail'
+    assert tmp_ds is None
 
     # Incompatible projection (UTM 40 is on the other side of the earth w.r.t UTM 11)
     sr = osr.SpatialReference()
@@ -1392,8 +1313,7 @@ def test_warp_37():
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, None, dst_wkt)
     gdal.PopErrorHandler()
     gdal.ErrorReset()
-    if tmp_ds is not None:
-        return 'fail'
+    assert tmp_ds is None
 
     return 'success'
 
@@ -1425,10 +1345,7 @@ def test_warp_38():
 
     # Should exactly match the source file.
     exp_cs = 30546
-    if cs != exp_cs:
-        gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
-            cs, exp_cs))
-        return 'fail'
+    assert cs == exp_cs
 
     os.unlink(out_file)
     return 'success'
@@ -1461,10 +1378,7 @@ def test_warp_39():
 
     # Should exactly match the source file.
     exp_cs = 30546
-    if cs != exp_cs:
-        gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
-            cs, exp_cs))
-        return 'fail'
+    assert cs == exp_cs
 
     os.unlink(out_file)
     return 'success'
@@ -1485,9 +1399,7 @@ def test_warp_40():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1511,15 +1423,12 @@ def test_warp_41():
 </VRTDataset>""")
 
     vrt_ds = gdal.AutoCreateWarpedVRT(src_ds, None, None, gdal.GRA_NearestNeighbour, 0.3)
-    if vrt_ds.RasterXSize != src_ds.RasterXSize:
-        return 'fail'
-    if vrt_ds.RasterYSize != src_ds.RasterYSize:
-        return 'fail'
+    assert vrt_ds.RasterXSize == src_ds.RasterXSize
+    assert vrt_ds.RasterYSize == src_ds.RasterYSize
     src_gt = src_ds.GetGeoTransform()
     vrt_gt = vrt_ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - vrt_gt[i]) > 1e-5:
-            return 'fail'
+        assert abs(src_gt[i] - vrt_gt[i]) <= 1e-5
 
     return 'success'
 
@@ -1540,9 +1449,7 @@ def test_warp_42():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1561,9 +1468,7 @@ def test_warp_43():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1582,9 +1487,7 @@ def test_warp_44():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1603,9 +1506,7 @@ def test_warp_45():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1624,9 +1525,7 @@ def test_warp_46():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1645,9 +1544,7 @@ def test_warp_47():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1666,9 +1563,7 @@ def test_warp_48():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1687,9 +1582,7 @@ def test_warp_49():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1708,9 +1601,7 @@ def test_warp_50():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1729,9 +1620,7 @@ def test_warp_51():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+    assert maxdiff <= 1, 'Image too different from reference'
 
     return 'success'
 
@@ -1775,14 +1664,10 @@ def test_warp_52():
                        resampleAlg=gdal.GRA_Cubic)
 
     end = time.time()
-    if end - start > 5:
-        gdaltest.post_reason('processing time was way too long')
-        return 'fail'
+    assert end - start <= 5, 'processing time was way too long'
 
     cs = out_ds.GetRasterBand(4).Checksum()
-    if cs != 3188:
-        print(cs)
-        return 'fail'
+    assert cs == 3188
 
     return 'success'
 
@@ -1819,10 +1704,7 @@ def test_warp_53():
                 if cs1 not in expected_cs or cs2 not in [3903, 4138]:
                     print(typestr)
                     print(option)
-                    print(alg_name)
-                    print(cs1)
-                    print(cs2)
-                    return 'fail'
+                    pytest.fail(alg_name)
 
     return 'success'
 
@@ -1839,11 +1721,7 @@ def test_warp_54():
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
-        if expected_cs != got_cs:
-            print(i)
-            print(got_cs)
-            print(expected_cs)
-            return 'fail'
+        assert expected_cs == got_cs, i
 
     # Int16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
@@ -1852,11 +1730,7 @@ def test_warp_54():
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
-        if expected_cs != got_cs:
-            print(i)
-            print(got_cs)
-            print(expected_cs)
-            return 'fail'
+        assert expected_cs == got_cs, i
 
     # Test NBITS
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
@@ -1867,11 +1741,7 @@ def test_warp_54():
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
-        if expected_cs != got_cs:
-            print(i)
-            print(got_cs)
-            print(expected_cs)
-            return 'fail'
+        assert expected_cs == got_cs, i
     dst_ds = None
 
     gdal.Unlink('/vsimem/warp_54.tif')
@@ -1887,9 +1757,7 @@ def test_warp_55():
 
     ds = gdal.Open('data/warpedvrt_with_ovr.vrt')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 25128:
-        print(cs)
-        return 'fail'
+    assert cs == 25128
     ds = None
 
     return 'success'
@@ -1923,9 +1791,8 @@ def test_warp_56():
 
         exp = 0 if off < 1 else 100 * (off - 1)**2
         warped = pix_ds.GetRasterBand(1).ReadAsArray()[0, 0]
-        if abs(warped - exp) > 0.6:
-            gdaltest.post_reason('offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped))
-            return 'fail'
+        assert abs(warped - exp) <= 0.6, \
+            'offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped)
 
     return 'success'
 

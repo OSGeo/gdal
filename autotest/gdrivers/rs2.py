@@ -71,9 +71,7 @@ def test_rs2_3():
                     'SAMP_NUM_COEFF': 'pixelNumeratorCoefficients',
                     'SAMP_OFF': 'pixelOffset',
                     'SAMP_SCALE': 'pixelScale'}
-    if got_rpc != expected_rpc:
-        print(got_rpc)
-        return 'fail'
+    assert got_rpc == expected_rpc
     return 'success'
 
 

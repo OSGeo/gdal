@@ -57,8 +57,7 @@ def test_tps_1():
         transformer = gdal.Transformer(ds, None,
                                        ['DST_SRS=' + utm_wkt,
                                         'METHOD=GCP_TPS'])
-    if transformer is not None:
-        return 'fail'
+    assert transformer is None
 
     return 'success'
 

@@ -36,6 +36,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test gdaldem hillshade
@@ -45,30 +46,20 @@ def test_gdaldem_lib_hillshade():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 45587:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 45587, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
@@ -83,30 +74,20 @@ def test_gdaldem_lib_hillshade_float():
 
     src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format='MEM', outputType=gdal.GDT_Float32)
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 45587:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 45587, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
@@ -121,30 +102,20 @@ def test_gdaldem_lib_hillshade_float_png():
 
     src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format='MEM', outputType=gdal.GDT_Float32)
     ds = gdal.DEMProcessing('/vsimem/test_gdaldem_lib_hillshade_float_png.png', src_ds, 'hillshade', format='PNG', scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 45587:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 45587, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
@@ -161,30 +132,20 @@ def test_gdaldem_lib_hillshade_combined():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', combined=True, scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 43876:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 43876, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
@@ -199,30 +160,20 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', alg='ZevenbergenThorne', scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 46544:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 46544, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
@@ -237,30 +188,20 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', alg='ZevenbergenThorne', combined=True, scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 43112:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 43112, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
@@ -275,14 +216,10 @@ def test_gdaldem_lib_hillshade_compute_edges():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True, scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 50239:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 50239, 'Bad checksum'
 
     ds = None
 
@@ -296,14 +233,10 @@ def test_gdaldem_lib_hillshade_compute_edges_float():
 
     src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format='MEM', outputType=gdal.GDT_Float32)
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True, scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 50239:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 50239, 'Bad checksum'
 
     ds = None
 
@@ -332,12 +265,9 @@ def test_gdaldem_lib_hillshade_azimuth():
 
     # Light from the east
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', azimuth=90, scale=111120, zFactor=100)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds_ref = gdal.Open('data/pyramid_shaded_ref.tif')
-    if gdaltest.compare_ds(ds, ds_ref, verbose=1) > 1:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert gdaltest.compare_ds(ds, ds_ref, verbose=1) <= 1, 'Bad checksum'
     ds = None
     ds_ref = None
 
@@ -351,14 +281,10 @@ def test_gdaldem_lib_hillshade_multidirectional():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', multiDirectional=True, computeEdges=True, scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 51784:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 51784, 'Bad checksum'
 
     ds = None
 
@@ -372,14 +298,10 @@ def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', alg='ZevenbergenThorne', multiDirectional=True, computeEdges=True, scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 50860:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 50860, 'Bad checksum'
 
     ds = None
 
@@ -393,40 +315,24 @@ def test_gdaldem_lib_color_relief():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 55009:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 55009, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 37543:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 37543, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47711:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47711, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
     ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', addAlpha=True)
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('Bad RasterCount')
-        return 'fail'
+    assert ds.RasterCount == 4, 'Bad RasterCount'
 
     src_ds = None
     ds = None
@@ -441,14 +347,10 @@ def test_gdaldem_lib_tpi():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'tpi', format='MEM')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 60504:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 60504, 'Bad checksum'
 
     ds = None
 
@@ -462,14 +364,10 @@ def test_gdaldem_lib_tri():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 61143:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 61143, 'Bad checksum'
 
     ds = None
 
@@ -483,14 +381,10 @@ def test_gdaldem_lib_roughness():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'roughness', format='MEM')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 38624:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 38624, 'Bad checksum'
 
     ds = None
 
@@ -504,14 +398,10 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'slope', format='MEM', alg='ZevenbergenThorne', scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 64393:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 64393, 'Bad checksum'
 
     return 'success'
 
@@ -523,14 +413,10 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'aspect', format='MEM', alg='ZevenbergenThorne', scale=111120, zFactor=30)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 50539:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 50539, 'Bad checksum'
 
     return 'success'
 
@@ -554,14 +440,10 @@ def test_gdaldem_lib_nodata():
         src_ds.GetRasterBand(1).Fill(value)
 
         ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
-        if ds is None:
-            return 'fail'
+        assert ds is not None
 
         cs = ds.GetRasterBand(1).Checksum()
-        if cs != 0:
-            gdaltest.post_reason('Bad checksum')
-            print(cs)
-            return 'fail'
+        assert cs == 0, 'Bad checksum'
 
         src_ds = None
         ds = None
@@ -573,18 +455,14 @@ def test_gdaldem_lib_nodata():
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
         print(ds.ReadAsArray())
-        return 'fail'
+        pytest.fail('Bad checksum')
 
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True)
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 10:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
         print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
-        return 'fail'
+        pytest.fail('Bad checksum')
 
     # Same with floating point
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1, gdal.GDT_Float32)
@@ -594,18 +472,14 @@ def test_gdaldem_lib_nodata():
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
         print(ds.ReadAsArray())
-        return 'fail'
+        pytest.fail('Bad checksum')
 
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', computeEdges=True)
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 10:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
         print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
-        return 'fail'
+        pytest.fail('Bad checksum')
 
     return 'success'
 

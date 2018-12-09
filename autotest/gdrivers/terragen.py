@@ -51,8 +51,7 @@ def test_terragen_2():
     gdal.Translate('/vsimem/out.ter', 'data/float32.tif', options='-of TERRAGEN -co MINUSERPIXELVALUE=74 -co MAXUSERPIXELVALUE=255')
     gdal.Translate('/vsimem/out.tif', '/vsimem/out.ter', options='-unscale')
     ds = gdal.Open('/vsimem/out.tif')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
     gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.ter')
     gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.tif')

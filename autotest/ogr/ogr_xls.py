@@ -46,51 +46,33 @@ def test_ogr_xls_1():
     if drv is None:
         return 'skip'
 
-    if drv.TestCapability("foo") != 0:
-        return 'fail'
+    assert drv.TestCapability("foo") == 0
 
     ds = ogr.Open('data/test972000xp.xls')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.TestCapability("foo") != 0:
-        return 'fail'
+    assert ds.TestCapability("foo") == 0
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'Feuille1':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Feuille1', 'bad layer name'
 
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbNone, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.GetFeatureCount() != 3:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 3
 
-    if lyr.TestCapability("foo") != 0:
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
-    if lyr.GetLayerDefn().GetFieldCount() != 5:
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 5
 
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger or \
-       lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTReal or \
-       lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTString or \
-       lyr.GetLayerDefn().GetFieldDefn(3).GetType() != ogr.OFTDate or \
-       lyr.GetLayerDefn().GetFieldDefn(4).GetType() != ogr.OFTDateTime:
-        return 'fail'
+    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTReal and \
+       lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTDate and \
+       lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDateTime)
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsInteger(0) != 1 or \
@@ -104,8 +86,7 @@ def test_ogr_xls_1():
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        return 'fail'
+    assert feat is None
 
     return 'success'
 
@@ -124,9 +105,7 @@ def test_ogr_xls_2():
 
     lyr = ds.GetLayer(0)
 
-    if lyr.GetFeatureCount() != 4:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 4
 
     gdal.SetConfigOption('OGR_XLS_HEADERS', None)
 
@@ -147,8 +126,7 @@ def test_ogr_xls_3():
 
     lyr = ds.GetLayer(0)
 
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
 
     gdal.SetConfigOption('OGR_XLS_FIELD_TYPES', None)
 
@@ -170,9 +148,7 @@ def test_ogr_xls_4():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test972000xp.xls')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 

@@ -85,9 +85,7 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
         gdaltest.post_reason('could not open DB. Driver probably misconfigured')
         return 'skip'
 
-    if ogrtest.pgeo_ds.GetLayerCount() != 3:
-        gdaltest.post_reason('did not get expected layer count')
-        return 'fail'
+    assert ogrtest.pgeo_ds.GetLayerCount() == 3, 'did not get expected layer count'
 
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -104,10 +102,7 @@ def ogr_pgeo_1(tested_driver='PGeo', other_driver='MDB'):
         return 'fail'
 
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 9418:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 9418, 'did not get expected feature count'
 
     return 'success'
 
@@ -132,10 +127,7 @@ def ogr_pgeo_2():
     lyr.SetSpatialFilterRect(bbox[0], bbox[1], bbox[2], bbox[3])
 
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 6957:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 6957, 'did not get expected feature count'
 
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
@@ -148,10 +140,7 @@ def ogr_pgeo_2():
     # Check that geometry filter is well cleared
     lyr.SetSpatialFilter(None)
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 9418:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 9418, 'did not get expected feature count'
 
     return 'success'
 
@@ -167,10 +156,7 @@ def ogr_pgeo_3():
     lyr.SetAttributeFilter('OBJECTID=1')
 
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 1:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 1, 'did not get expected feature count'
 
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
@@ -183,10 +169,7 @@ def ogr_pgeo_3():
     # Check that attribute filter is well cleared (#3706)
     lyr.SetAttributeFilter(None)
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 9418:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 9418, 'did not get expected feature count'
 
     return 'success'
 
@@ -201,10 +184,7 @@ def ogr_pgeo_4():
     sql_lyr = ogrtest.pgeo_ds.ExecuteSQL('SELECT * FROM SDPipes WHERE OBJECTID = 1')
 
     feat_count = sql_lyr.GetFeatureCount()
-    if feat_count != 1:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 1, 'did not get expected feature count'
 
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
@@ -249,9 +229,7 @@ def ogr_pgeo_6():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "tmp/cache/Autodesk Test.mdb"')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 
@@ -269,9 +247,7 @@ def ogr_pgeo_7():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "tmp/cache/Autodesk Test.mdb" -sql "SELECT * FROM SDPipes"')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 

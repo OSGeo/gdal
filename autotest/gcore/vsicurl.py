@@ -50,8 +50,7 @@ def test_vsicurl_1():
         return 'skip'
 
     ds = ogr.Open('/vsizip/vsicurl/http://publicfiles.dep.state.fl.us/dear/BWR_GIS/2007NWFLULC/NWFWMD2007LULC.zip')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -67,8 +66,7 @@ def vsicurl_2():
         return 'skip'
 
     ds = gdal.Open('/vsizip//vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -84,8 +82,7 @@ def vsicurl_3():
         return 'skip'
 
     ds = ogr.Open('/vsizip/vsicurl/http://www.iucnredlist.org/spatial-data/MAMMALS_TERRESTRIAL.zip')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -101,8 +98,7 @@ def test_vsicurl_4():
         return 'skip'
 
     ds = ogr.Open('/vsizip/vsicurl/http://lelserver.env.duke.edu:8080/LandscapeTools/export/49/Downloads/1_Habitats.zip')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -118,8 +114,7 @@ def test_vsicurl_5():
         return 'skip'
 
     ds = gdal.Open('/vsicurl/http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/N34W119_DEM.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -135,8 +130,7 @@ def vsicurl_6_disabled():
         return 'skip'
 
     fl = gdal.ReadDir('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif')
-    if not fl:
-        return 'fail'
+    assert fl
 
     return 'success'
 
@@ -152,8 +146,7 @@ def test_vsicurl_7():
         return 'skip'
 
     fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
-    if not fl:
-        return 'fail'
+    assert fl
 
     return 'success'
 
@@ -171,8 +164,7 @@ def vsicurl_8():
     ds1 = gdal.Open('/vsigzip//vsicurl/http://dds.cr.usgs.gov/pub/data/DEM/250/notavail/C/chipicoten-w.gz')
     gdal.Open('/vsizip//vsicurl/http://edcftp.cr.usgs.gov/pub/data/landcover/files/2009/biso/gokn09b_dnbr.zip/nps-serotnbsp-9001-20090321_rd.tif')
     cs = ds1.GetRasterBand(1).Checksum()
-    if cs != 61342:
-        return 'fail'
+    assert cs == 61342
 
     return 'success'
 
@@ -195,8 +187,7 @@ def test_vsicurl_9():
         filename = filename.encode('utf-8')
 
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/' + filename)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -212,8 +203,7 @@ def test_vsicurl_10():
         return 'skip'
 
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/xx%E4%B8%AD%E6%96%87.%E4%B8%AD%E6%96%87')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     return 'success'
 
@@ -236,8 +226,7 @@ def test_vsicurl_11():
     gdal.VSIFCloseL(f)
 
     filelist = gdal.ReadDir('/vsicurl/http://download.osgeo.org/gdal/data/gtiff')
-    if filelist is None or not filelist:
-        return 'fail'
+    assert filelist is not None and filelist
 
     return 'success'
 
@@ -325,8 +314,7 @@ def test_vsicurl_test_redirect():
 
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_redirect/test.bin' % gdaltest.webserver_port, 'rb')
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     gdal.VSIFSeekL(f, 0, 2)
     if gdal.VSIFTellL(f) != 1000000:
@@ -414,9 +402,7 @@ def test_vsicurl_test_retry():
         if f:
             data_len = len(gdal.VSIFReadL(1, 1, f))
             gdal.VSIFCloseL(f)
-        if data_len != 0:
-            print(data_len)
-            return 'fail'
+        assert data_len == 0
 
     gdal.VSICurlClearCache()
 
@@ -428,19 +414,14 @@ def test_vsicurl_test_retry():
     handler.add('GET', '/test_retry/test.txt', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl?max_retry=2&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
-        if f is None:
-            return 'fail'
+        assert f is not None
         gdal.ErrorReset()
         with gdaltest.error_handler():
             data = gdal.VSIFReadL(1, 3, f).decode('ascii')
         error_msg = gdal.GetLastErrorMsg()
         gdal.VSIFCloseL(f)
-        if data != 'foo':
-            print(data)
-            return 'fail'
-        if error_msg.find('429') < 0:
-            print(error_msg)
-            return 'fail'
+        assert data == 'foo'
+        assert error_msg.find('429') >= 0
 
     return 'success'
 
@@ -459,8 +440,7 @@ def test_vsicurl_test_fallback_from_head_to_get():
     handler.add('GET', '/test_fallback_from_head_to_get', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         statres = gdal.VSIStatL('/vsicurl/http://localhost:%d/test_fallback_from_head_to_get' % gdaltest.webserver_port)
-    if statres.size != 3:
-        return 'fail'
+    assert statres.size == 3
 
     gdal.VSICurlClearCache()
 
@@ -491,18 +471,14 @@ def test_vsicurl_test_parse_html_filelist_apache():
 </body></html>""")
     with webserver.install_http_handler(handler):
         fl = gdal.ReadDir('/vsicurl/http://localhost:%d/mydir' % gdaltest.webserver_port)
-    if fl != ['foo.tif', 'foo%20with%20space.tif']:
-        print(fl)
-        return 'fail'
+    assert fl == ['foo.tif', 'foo%20with%20space.tif']
 
-    if gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/foo%%20with%%20space.tif' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is None:
-        return 'fail'
+    assert gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/foo%%20with%%20space.tif' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is not None
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/mydir/i_dont_exist', 404, {})
     with webserver.install_http_handler(handler):
-        if gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/i_dont_exist' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is not None:
-            return 'fail'
+        assert gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/i_dont_exist' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is None
 
     return 'success'
 

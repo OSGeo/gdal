@@ -89,43 +89,32 @@ def test_rasterlite_2():
             return 'skip'
         return 'fail'
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 3, 'expected 3 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('did not expect overview')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, 'did not expect overview'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 11746
-    if cs != expected_cs and cs != 11751:
-        gdaltest.post_reason('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 11751, \
+        ('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(2).Checksum()
     expected_cs = 19843
-    if cs != expected_cs and cs != 20088 and cs != 20083:
-        gdaltest.post_reason('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 20088 or cs == 20083, \
+        ('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).Checksum()
     expected_cs = 48911
-    if cs != expected_cs and cs != 47978:
-        gdaltest.post_reason('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 47978, \
+        ('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
-    if ds.GetProjectionRef().find('WGS_1984') == -1:
-        gdaltest.post_reason('projection_ref = %s' % ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS_1984') != -1, \
+        ('projection_ref = %s' % ds.GetProjectionRef())
 
     gt = ds.GetGeoTransform()
     expected_gt = (-180.0, 360. / ds.RasterXSize, 0.0, 90.0, 0.0, -180. / ds.RasterYSize)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15
 
     ds = None
 
@@ -142,31 +131,24 @@ def test_rasterlite_3():
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pyramids.sqlite,table=test')
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 3, 'expected 3 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('expected 1 overview')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, 'expected 1 overview'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 59551
-    if cs != expected_cs and cs != 59833:
-        gdaltest.post_reason('for overview of band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 59833, \
+        ('for overview of band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
     expected_cs = 59603
-    if cs != expected_cs and cs != 59588:
-        gdaltest.post_reason('for overview of band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 59588, \
+        ('for overview of band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).GetOverview(0).Checksum()
     expected_cs = 42173
-    if cs != expected_cs and cs != 42361:
-        gdaltest.post_reason('for overview of band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 42361, \
+        ('for overview of band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
 
@@ -183,25 +165,17 @@ def test_rasterlite_4():
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,minx=0,miny=0,maxx=180,maxy=90')
 
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('expected 1 band')
-        return 'fail'
+    assert ds.RasterCount == 1, 'expected 1 band'
 
-    if ds.RasterXSize != 169 or ds.RasterYSize != 85:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 169 and ds.RasterYSize == 85
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
-    if ct is None:
-        gdaltest.post_reason('did not get color table')
-        return 'fail'
+    assert ct is not None, 'did not get color table'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 36473
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
 
@@ -218,32 +192,25 @@ def test_rasterlite_5():
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,bands=3')
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 3, 'expected 3 bands'
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
-    if ct is not None:
-        gdaltest.post_reason('did not expect color table')
-        return 'fail'
+    assert ct is None, 'did not expect color table'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 506
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(2).Checksum()
     expected_cs = 3842
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).Checksum()
     expected_cs = 59282
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
 
@@ -278,24 +245,18 @@ def test_rasterlite_6():
     # Test now CreateCopy()
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('RASTERLITE').CreateCopy('RASTERLITE:tmp/byte.sqlite,table=byte', src_ds)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('Wrong checksum')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum(), \
+        'Wrong checksum'
 
     gt = ds.GetGeoTransform()
     expected_gt = src_ds.GetGeoTransform()
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.GetProjectionRef().find('NAD27 / UTM zone 11N') == -1:
-        gdaltest.post_reason('Wrong SRS')
-        return 'fail'
+    assert ds.GetProjectionRef().find('NAD27 / UTM zone 11N') != -1, 'Wrong SRS'
 
     src_ds = None
     ds = None
@@ -319,29 +280,21 @@ def test_rasterlite_7():
     # Resampling method is not taken into account
     ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
 
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
-        gdaltest.post_reason('Wrong checksum for overview 0')
-        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192, \
+        'Wrong checksum for overview 0'
 
-    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
-        gdaltest.post_reason('Wrong checksum for overview 1')
-        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 233, \
+        'Wrong checksum for overview 1'
 
     # Reopen and test
     ds = None
     ds = gdal.Open('tmp/byte.sqlite')
 
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
-        gdaltest.post_reason('Wrong checksum for overview 0')
-        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192, \
+        'Wrong checksum for overview 0'
 
-    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
-        gdaltest.post_reason('Wrong checksum for overview 1')
-        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 233, \
+        'Wrong checksum for overview 1'
 
     return 'success'
 
@@ -361,8 +314,7 @@ def test_rasterlite_8():
 
     ds.BuildOverviews(overviewlist=[])
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
 
     return 'success'
 
@@ -427,15 +379,11 @@ def test_rasterlite_11():
     ds = None
     ds = gdal.Open('tmp/byte.sqlite')
 
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1152:
-        gdaltest.post_reason('Wrong checksum for overview 0')
-        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152, \
+        'Wrong checksum for overview 0'
 
-    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 215:
-        gdaltest.post_reason('Wrong checksum for overview 1')
-        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 215, \
+        'Wrong checksum for overview 1'
 
     return 'success'
 
@@ -452,9 +400,7 @@ def test_rasterlite_12():
         return 'skip'
 
     ds = gdal.Open('data/byte.rasterlite')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
     return 'success'
 
 ###############################################################################
@@ -473,9 +419,7 @@ def test_rasterlite_13():
         return 'skip'
 
     ds = gdal.Open('data/byte.rasterlite.sql')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
     return 'success'
 
 ###############################################################################

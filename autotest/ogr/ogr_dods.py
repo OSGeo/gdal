@@ -54,8 +54,7 @@ def ogr_dods_1():
 
     gdaltest.dods_ds = ogr.Open('DODS:' + srv)
 
-    if gdaltest.dods_ds is None:
-        return 'fail'
+    assert gdaltest.dods_ds is not None
 
     try:
         gdaltest.dods_profiles = gdaltest.dods_ds.GetLayerByName('profiles')
@@ -84,17 +83,11 @@ def ogr_dods_2():
     gdaltest.dods_profiles.ResetReading()
     feat = gdaltest.dods_profiles.GetNextFeature()
 
-    if feat.GetField('time') != -1936483200000:
-        gdaltest.post_reason('time wrong')
-        return 'fail'
+    assert feat.GetField('time') == -1936483200000, 'time wrong'
 
-    if feat.GetField('profile.depth') != [0, 10, 20, 30, 39]:
-        gdaltest.post_reason('depth wrong')
-        return 'fail'
+    assert feat.GetField('profile.depth') == [0, 10, 20, 30, 39], 'depth wrong'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-            != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)') == 0
 
     feat.Destroy()
 
@@ -120,8 +113,7 @@ def ogr_dods_3():
     expect = [0, 10, 20, 30, 39]
     tr = ogrtest.check_features_against_list(gdaltest.dods_normalized,
                                              'depth', expect)
-    if tr == 0:
-        return 'fail'
+    assert tr != 0
 
     expected = [14.8100004196167, 14.8100004196167, 14.8100004196167, 14.60999965667725, 14.60999965667725]
 
@@ -129,17 +121,11 @@ def ogr_dods_3():
     for i in range(5):
         feat = gdaltest.dods_normalized.GetNextFeature()
 
-        if feat.GetField('time') != -1936483200000:
-            gdaltest.post_reason('time wrong')
-            return 'fail'
+        assert feat.GetField('time') == -1936483200000, 'time wrong'
 
-        if abs(feat.GetField('T_20') - expected[i]) > 0.001:
-            gdaltest.post_reason('T_20 wrong')
-            return 'fail'
+        assert abs(feat.GetField('T_20') - expected[i]) <= 0.001, 'T_20 wrong'
 
-        if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-                != 0:
-            return 'fail'
+        assert ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)') == 0
 
         feat.Destroy()
         feat = None
@@ -165,19 +151,14 @@ def ogr_dods_4():
     gdaltest.dods_lines.ResetReading()
     feat = gdaltest.dods_lines.GetNextFeature()
 
-    if feat.GetField('time') != -1936483200000:
-        gdaltest.post_reason('time wrong')
-        return 'fail'
+    assert feat.GetField('time') == -1936483200000, 'time wrong'
 
-    if feat.GetField('profile.depth') != [0, 10, 20, 30, 39]:
-        gdaltest.post_reason('depth wrong')
-        return 'fail'
+    assert feat.GetField('profile.depth') == [0, 10, 20, 30, 39], 'depth wrong'
 
     wkt_geom = 'LINESTRING (0.00000000 14.81000042,10.00000000 14.81000042,20.00000000 14.81000042,30.00000000 14.60999966,39.00000000 14.60999966)'
 
-    if ogrtest.check_feature_geometry(feat, wkt_geom) != 0:
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, wkt_geom) == 0, \
+        feat.GetGeometryRef().ExportToWkt()
 
     feat.Destroy()
 
@@ -204,15 +185,13 @@ def ogr_dods_5():
         return 'skip'
 
     grid_ds = ogr.Open('DODS:' + srv)
-    if grid_ds is None:
-        return 'fail'
+    assert grid_ds is not None
 
     lat_lyr = grid_ds.GetLayerByName('latitude')
 
     expect = [-0.53166663646698]
     tr = ogrtest.check_features_against_list(lat_lyr, 'latitude', expect)
-    if tr == 0:
-        return 'fail'
+    assert tr != 0
 
     return 'success'
 

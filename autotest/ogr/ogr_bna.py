@@ -50,19 +50,16 @@ def test_ogr_bna_1():
     expect = ['PID5', 'PID4']
 
     tr = ogrtest.check_features_against_list(lyr, 'Primary ID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (573.736 476.563)',
-                                      max_error=0.0001) != 0:
-        return 'fail'
+    assert (ogrtest.check_feature_geometry(feat, 'POINT (573.736 476.563)',
+                                      max_error=0.0001) == 0)
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (532.991 429.121)',
-                                      max_error=0.0001) != 0:
-        return 'fail'
+    assert (ogrtest.check_feature_geometry(feat, 'POINT (532.991 429.121)',
+                                      max_error=0.0001) == 0)
 
     return 'success'
 
@@ -79,13 +76,11 @@ def test_ogr_bna_2():
     expect = ['PID3']
 
     tr = ogrtest.check_features_against_list(lyr, 'Primary ID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (224.598 307.425,333.043 341.461,396.629 304.952)', max_error=0.0001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'LINESTRING (224.598 307.425,333.043 341.461,396.629 304.952)', max_error=0.0001) == 0
 
     return 'success'
 
@@ -102,26 +97,20 @@ def test_ogr_bna_3():
     expect = ['PID2', 'PID1', 'PID7', 'PID8', 'PID9', 'PID10']
 
     tr = ogrtest.check_features_against_list(lyr, 'Primary ID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error=0.0001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error=0.0001) == 0
     feat = lyr.GetFeature(2)
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error=0.0001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error=0.0001) == 0
     feat = lyr.GetFeature(3)
-    if ogrtest.check_feature_geometry(feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error=0.0001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error=0.0001) == 0
     feat = lyr.GetFeature(4)
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)))', max_error=0.0001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)))', max_error=0.0001) == 0
     feat = lyr.GetFeature(5)
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)))', max_error=0.0001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)))', max_error=0.0001) == 0
 
     return 'success'
 
@@ -138,8 +127,7 @@ def test_ogr_bna_4():
     expect = ['PID6']
 
     tr = ogrtest.check_features_against_list(lyr, 'Primary ID', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     lyr.ResetReading()
     lyr.GetNextFeature()
@@ -152,19 +140,16 @@ def test_ogr_bna_4():
 
 def ogr_bna_check_content(lyr1, lyr2):
 
-    if lyr1.GetFeatureCount() != lyr2.GetFeatureCount():
-        return 'fail'
+    assert lyr1.GetFeatureCount() == lyr2.GetFeatureCount()
 
     feat1 = lyr1.GetNextFeature()
     feat2 = lyr2.GetNextFeature()
     while feat1 is not None:
         for i in range(lyr1.GetLayerDefn().GetFieldCount()):
-            if feat1.GetField(i) != feat2.GetField(i):
-                return 'fail'
+            assert feat1.GetField(i) == feat2.GetField(i)
 
-        if ogrtest.check_feature_geometry(feat1, feat2.GetGeometryRef(),
-                                          max_error=0.000000001) != 0:
-            return 'fail'
+        assert (ogrtest.check_feature_geometry(feat1, feat2.GetGeometryRef(),
+                                          max_error=0.000000001) == 0)
 
         feat1 = lyr1.GetNextFeature()
         feat2 = lyr2.GetNextFeature()
@@ -192,9 +177,7 @@ def ogr_bna_write(creation_options):
 
         while feat is not None:
             dst_feat.SetFrom(feat)
-            if dst_lyr.CreateFeature(dst_feat) != 0:
-                gdaltest.post_reason('CreateFeature failed.')
-                return 'fail'
+            assert dst_lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
             feat = src_lyr.GetNextFeature()
 
@@ -225,18 +208,14 @@ def test_ogr_bna_6():
     ret = ogr_bna_write(['LINEFORMAT=LF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
 
     size = os.stat('tmp/out.bna').st_size
-    if size != 1601:
-        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1601))
-        return 'fail'
+    assert size == 1601, ('Got size %d. Expected %d' % (size, 1601))
 
     os.remove('tmp/out.bna')
 
     ret = ogr_bna_write(['LINEFORMAT=CRLF', 'MULTILINE=NO', 'COORDINATE_PRECISION=3'])
 
     size = os.stat('tmp/out.bna').st_size
-    if size != 1611:
-        gdaltest.post_reason('Got size %d. Expected %d' % (size, 1611))
-        return 'fail'
+    assert size == 1611, ('Got size %d. Expected %d' % (size, 1611))
 
     return 'success'
 

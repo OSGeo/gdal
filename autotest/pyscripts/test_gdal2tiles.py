@@ -68,9 +68,8 @@ def test_gdal2tiles_py_simple():
     ds = None
 
     for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
-        if not os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename):
-            gdaltest.post_reason('%s missing' % filename)
-            return 'fail'
+        assert os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename), \
+            ('%s missing' % filename)
 
     return 'success'
 
@@ -104,9 +103,7 @@ def test_gdal2tiles_py_zoom_option():
     ds = None
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
-    if ds is None:
-        gdaltest.post_reason('did not get kml')
-        return 'fail'
+    assert ds is not None, 'did not get kml'
 
     return 'success'
 
@@ -262,21 +259,15 @@ def _test_utf8(should_raise_unicode=False,
         gdaltest.post_reason('Should be handling filenames with utf8 characters in this context')
         return 'fail'
 
-    if should_raise_unicode:
-        gdaltest.post_reason(
-            'Should not be handling filenames with utf8 characters in this context')
-        return 'fail'
+    assert not should_raise_unicode, \
+        'Should not be handling filenames with utf8 characters in this context'
 
     if should_display_warning:
-        if "WARNING" not in ret or "LC_CTYPE" not in ret:
-            gdaltest.post_reason(
-                'Should display a warning message about LC_CTYPE variable')
-            return 'fail'
+        assert "WARNING" in ret and "LC_CTYPE" in ret, \
+            'Should display a warning message about LC_CTYPE variable'
     else:
-        if "WARNING" in ret and "LC_CTYPE" in ret:
-            gdaltest.post_reason(
-                'Should not display a warning message about LC_CTYPE variable')
-            return 'fail'
+        assert not ("WARNING" in ret and "LC_CTYPE" in ret), \
+            'Should not display a warning message about LC_CTYPE variable'
 
     try:
         shutil.rmtree(out_folder)
@@ -315,23 +306,19 @@ def test_exclude_transparent_tiles():
         # First row totally transparent - no tiles
         tiles_folder = os.path.join(output_folder, '15', '21898')
         dir_files = os.listdir(tiles_folder)
-        if dir_files:
-            gdaltest.post_reason('Generated empty tiles for row 21898: %s' % dir_files)
-            return 'fail'
+        assert not dir_files, ('Generated empty tiles for row 21898: %s' % dir_files)
 
         # Second row - only 2 non-transparent tiles
         tiles_folder = os.path.join(output_folder, '15', '21899')
         dir_files = sorted(os.listdir(tiles_folder))
-        if ['22704.png', '22705.png'] != dir_files:
-            gdaltest.post_reason('Generated empty tiles for row 21899: %s' % dir_files)
-            return 'fail'
+        assert ['22704.png', '22705.png'] == dir_files, \
+            ('Generated empty tiles for row 21899: %s' % dir_files)
 
         # Third row - only 1 non-transparent tile
         tiles_folder = os.path.join(output_folder, '15', '21900')
         dir_files = os.listdir(tiles_folder)
-        if ['22705.png'] != dir_files:
-            gdaltest.post_reason('Generated empty tiles for row 21900: %s' % dir_files)
-            return 'fail'
+        assert ['22705.png'] == dir_files, \
+            ('Generated empty tiles for row 21900: %s' % dir_files)
 
         return 'success'
 

@@ -60,9 +60,7 @@ def test_hfa_write_desc():
 
     new_ds = gdal.Open('tmp/test_desc.img')
     bnd = new_ds.GetRasterBand(1)
-    if bnd.GetDescription() != 'CustomBandName':
-        gdaltest.post_reason('Didnt get custom band name.')
-        return 'fail'
+    assert bnd.GetDescription() == 'CustomBandName', 'Didnt get custom band name.'
 
     bnd = None
     new_ds = None
@@ -85,10 +83,7 @@ def test_hfa_write_4bit():
     ds = gdal.Open('tmp/4bit.img')
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 252:
-        gdaltest.post_reason('Got wrong checksum on 4bit image.')
-        print(cs)
-        return 'fail'
+    assert cs == 252, 'Got wrong checksum on 4bit image.'
 
     ds = None
 
@@ -111,10 +106,7 @@ def test_hfa_write_4bit_compressed():
     ds = gdal.Open('tmp/4bitc.img')
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 252:
-        gdaltest.post_reason('Got wrong checksum on 4bit image.')
-        print(cs)
-        return 'fail'
+    assert cs == 252, 'Got wrong checksum on 4bit image.'
 
     ds = None
 
@@ -137,10 +129,7 @@ def test_hfa_write_nd_invalid():
     ds = gdal.Open('tmp/ndinvalid.img')
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 29754:
-        gdaltest.post_reason('Got wrong checksum on invalid image.')
-        print(cs)
-        return 'fail'
+    assert cs == 29754, 'Got wrong checksum on invalid image.'
 
     ds = None
 
@@ -160,10 +149,7 @@ def test_hfa_update_overviews():
     ds = gdal.Open('tmp/small.img', gdal.GA_Update)
     result = ds.BuildOverviews(overviewlist=[2])
 
-    if result != 0:
-        print(result)
-        gdaltest.post_reason('BuildOverviews() failed.')
-        return 'fail'
+    assert result == 0, 'BuildOverviews() failed.'
     ds = None
 
     return 'success'
@@ -177,19 +163,13 @@ def test_hfa_clean_external_overviews():
     ds = gdal.Open('tmp/small.img', gdal.GA_Update)
     result = ds.BuildOverviews(overviewlist=[])
 
-    if result != 0:
-        gdaltest.post_reason('BuildOverviews() failed.')
-        return 'fail'
+    assert result == 0, 'BuildOverviews() failed.'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('Overviews still exist.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, 'Overviews still exist.'
 
     ds = None
     ds = gdal.Open('tmp/small.img')
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('Overviews still exist.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, 'Overviews still exist.'
     ds = None
 
     try:
@@ -234,10 +214,7 @@ def test_hfa_use_rrd():
     result = ds.BuildOverviews(overviewlist=[2])
     gdal.SetConfigOption('HFA_USE_RRD', old_value)
 
-    if result != 0:
-        print(result)
-        gdaltest.post_reason('BuildOverviews() failed.')
-        return 'fail'
+    assert result == 0, 'BuildOverviews() failed.'
     ds = None
 
     try:
@@ -247,10 +224,8 @@ def test_hfa_use_rrd():
         return 'fail'
 
     ds = gdal.Open('tmp/small.img')
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 26148:
-        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        gdaltest.post_reason('Unexpected checksum.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 26148, \
+        'Unexpected checksum.'
 
     ds = None
 

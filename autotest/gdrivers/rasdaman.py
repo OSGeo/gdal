@@ -62,9 +62,7 @@ def test_rasdaman_1():
         return 'skip'
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 61774:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == 61774, 'did not get expected checksum'
 
     return 'success'
 

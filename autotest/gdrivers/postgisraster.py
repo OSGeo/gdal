@@ -130,8 +130,7 @@ def test_postgisraster_test_open_error2():
     # removed mode, as it defaults to one raster per row
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     return 'success'
 
 ###############################################################################
@@ -329,8 +328,7 @@ def test_postgisraster_test_create_copy_and_delete():
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict=True)
 
-        if new_ds is None:
-            return 'fail'
+        assert new_ds is not None
 
     deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
@@ -365,17 +363,13 @@ def test_postgisraster_test_create_copy_and_delete_phases():
 
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy' mode=2")
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-        if cs != [30111, 32302, 40026]:
-            print(cs)
-            return 'fail'
+        assert cs == [30111, 32302, 40026]
         ds = None
 
         # should delete all raster parts over 50
         deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid>50'")
 
-        if deleted:
-            gdaltest.post_reason('Delete returned an error.')
-            return 'fail'
+        assert not deleted, 'Delete returned an error.'
 
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
@@ -397,9 +391,7 @@ def test_postgisraster_test_create_copy_and_delete_phases():
 
         deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid<=25'")
 
-        if deleted:
-            gdaltest.post_reason('Delete returned an error.')
-            return 'fail'
+        assert not deleted, 'Delete returned an error.'
 
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
@@ -420,9 +412,7 @@ def test_postgisraster_test_create_copy_and_delete_phases():
 
         deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
-        if deleted:
-            gdaltest.post_reason('Delete returned an error.')
-            return 'fail'
+        assert not deleted, 'Delete returned an error.'
 
     return 'success'
 
@@ -444,16 +434,12 @@ def test_postgisraster_test_norid():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if src_md[k].find('ST_UpperLeftX') < 0 or src_md[k].find('ST_UpperLeftY') < 0:
-                print(src_md[k])
-                return 'fail'
+            assert src_md[k].find('ST_UpperLeftX') >= 0 and src_md[k].find('ST_UpperLeftY') >= 0
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_noid' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 
@@ -478,16 +464,12 @@ def test_postgisraster_test_serial():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if not re.search("where='\"serialid\" = \d+'", src_md[k]):
-                print(k, ':', src_md[k])
-                return 'fail'
+            assert re.search("where='\"serialid\" = \d+'", src_md[k]), (k, ':', src_md[k])
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_serial' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 
@@ -512,16 +494,12 @@ def test_postgisraster_test_unique():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if not re.search("where='\"uniq\" = \d+'", src_md[k]):
-                print(k, ':', src_md[k])
-                return 'fail'
+            assert re.search("where='\"uniq\" = \d+'", src_md[k]), (k, ':', src_md[k])
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 
@@ -532,9 +510,7 @@ def test_postgisraster_test_constraint():
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 
@@ -545,9 +521,7 @@ def test_postgisraster_test_constraint_with_spi():
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint_with_spi' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 
@@ -572,9 +546,7 @@ def test_postgisraster_test_outdb():
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     expected_cs = [30111, 32302, 40026] if has_guc else [0, 0, 0]
-    if cs != expected_cs:
-        print(cs)
-        return 'fail'
+    assert cs == expected_cs
 
     return 'success'
 
@@ -585,9 +557,7 @@ def test_postgisraster_test_outdb_client_side():
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 
@@ -599,9 +569,7 @@ def test_postgisraster_test_outdb_client_side_force_ireadblock():
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
     with gdaltest.SetCacheMax(0):
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 
@@ -612,9 +580,7 @@ def test_postgisraster_test_outdb_client_side_if_possible():
         return 'skip'
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side_if_possible")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        print(cs)
-        return 'fail'
+    assert cs == [30111, 32302, 40026]
 
     return 'success'
 

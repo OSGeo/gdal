@@ -58,15 +58,9 @@ def test_snodas_1():
     if ret == 'success':
         ds = gdal.Open('data/fake_snodas.hdr')
         ds.GetFileList()
-        if ds.GetRasterBand(1).GetNoDataValue() != -9999:
-            print(ds.GetRasterBand(1).GetNoDataValue())
-            return 'fail'
-        if ds.GetRasterBand(1).GetMinimum() != 0:
-            print(ds.GetRasterBand(1).GetMinimum())
-            return 'fail'
-        if ds.GetRasterBand(1).GetMaximum() != 429:
-            print(ds.GetRasterBand(1).GetMaximum())
-            return 'fail'
+        assert ds.GetRasterBand(1).GetNoDataValue() == -9999
+        assert ds.GetRasterBand(1).GetMinimum() == 0
+        assert ds.GetRasterBand(1).GetMaximum() == 429
 
     return ret
 

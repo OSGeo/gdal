@@ -94,30 +94,18 @@ def test_ogr_wfs_mapserver():
         gdaltest.post_reason('did not managed to open WFS datastore')
         return 'skip'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'did not get expected layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'park':
-        gdaltest.post_reason('did not get expected layer name')
-        print(lyr.GetName())
-        return 'fail'
+    assert lyr.GetName() == 'park', 'did not get expected layer name'
 
     sr = lyr.GetSpatialRef()
     sr2 = osr.SpatialReference()
     sr2.ImportFromEPSG(42304)
-    if not sr.IsSame(sr2):
-        gdaltest.post_reason('did not get expected SRS')
-        print(sr)
-        return 'fail'
+    assert sr.IsSame(sr2), 'did not get expected SRS'
 
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 46:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 46, 'did not get expected feature count'
 
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -145,28 +133,17 @@ def test_ogr_wfs_geoserver():
     gdaltest.geoserver_wfs = True
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points')
-    if ds is None:
-        gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'fail'
+    assert ds is not None, 'did not managed to open WFS datastore'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'did not get expected layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'za:za_points':
-        gdaltest.post_reason('did not get expected layer name')
-        print(lyr.GetName())
-        return 'fail'
+    assert lyr.GetName() == 'za:za_points', 'did not get expected layer name'
 
     sr = lyr.GetSpatialRef()
     sr2 = osr.SpatialReference()
     sr2.ImportFromEPSG(4326)
-    if not sr.IsSame(sr2):
-        gdaltest.post_reason('did not get expected SRS')
-        print(sr)
-        return 'fail'
+    assert sr.IsSame(sr2), 'did not get expected SRS'
 
     feat_count = lyr.GetFeatureCount()
     if feat_count < 14000:
@@ -179,9 +156,7 @@ def test_ogr_wfs_geoserver():
         print(feat_count)
         return 'fail'
 
-    if not lyr.TestCapability(ogr.OLCFastFeatureCount):
-        gdaltest.post_reason('did not get OLCFastFeatureCount')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount), 'did not get OLCFastFeatureCount'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi&MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
@@ -227,10 +202,8 @@ def test_ogr_wfs_geoserver():
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("MAINPAGE is not null and NAME >= 'a' and NAME LIKE 'mu%%eam'")
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 1:
-        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (1)')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 1, \
+        'did not get expected feature count after SetAttributeFilter (1)'
     feat = lyr.GetNextFeature()
     if feat.GetField('gml_id') != 'poi.1':
         gdaltest.post_reason('did not get expected feature (3)')
@@ -241,10 +214,8 @@ def test_ogr_wfs_geoserver():
         # This GeoServer version doesn't understand <GmlObjectId>
         lyr.SetAttributeFilter("gml_id = 'poi.1'")
         feat_count = lyr.GetFeatureCount()
-        if feat_count != 1:
-            gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
-            print(feat_count)
-            return 'fail'
+        assert feat_count == 1, \
+            'did not get expected feature count after SetAttributeFilter (2)'
         feat = lyr.GetNextFeature()
         if feat.GetField('gml_id') != 'poi.1':
             gdaltest.post_reason('did not get expected feature (4)')
@@ -266,30 +237,18 @@ def test_ogr_wfs_geoserver_json():
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=json')
-    if ds is None:
-        gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'fail'
+    assert ds is not None, 'did not managed to open WFS datastore'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'did not get expected layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'za:za_points':
-        gdaltest.post_reason('did not get expected layer name')
-        print(lyr.GetName())
-        return 'fail'
+    assert lyr.GetName() == 'za:za_points', 'did not get expected layer name'
 
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 10:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 10, 'did not get expected feature count'
 
-    if not lyr.TestCapability(ogr.OLCFastFeatureCount):
-        gdaltest.post_reason('did not get OLCFastFeatureCount')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount), \
+        'did not get OLCFastFeatureCount'
 
     feat = lyr.GetNextFeature()
     # if feat.GetField('name') != 'Alexander Bay' or \
@@ -314,30 +273,18 @@ def test_ogr_wfs_geoserver_shapezip():
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=SHAPE-ZIP')
-    if ds is None:
-        gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'fail'
+    assert ds is not None, 'did not managed to open WFS datastore'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'did not get expected layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'za:za_points':
-        gdaltest.post_reason('did not get expected layer name')
-        print(lyr.GetName())
-        return 'fail'
+    assert lyr.GetName() == 'za:za_points', 'did not get expected layer name'
 
     feat_count = lyr.GetFeatureCount()
-    if feat_count != 10:
-        gdaltest.post_reason('did not get expected feature count')
-        print(feat_count)
-        return 'fail'
+    assert feat_count == 10, 'did not get expected feature count'
 
-    if not lyr.TestCapability(ogr.OLCFastFeatureCount):
-        gdaltest.post_reason('did not get OLCFastFeatureCount')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount), \
+        'did not get OLCFastFeatureCount'
 
     feat = lyr.GetNextFeature()
     # if feat.GetField('name') != 'Alexander Bay' or \
@@ -373,18 +320,13 @@ def test_ogr_wfs_geoserver_paging():
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.0.0')
     gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', None)
     gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', None)
-    if ds is None:
-        gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'fail'
+    assert ds is not None, 'did not managed to open WFS datastore'
 
     lyr = ds.GetLayer(0)
     feature_count_wfs100 = lyr.GetFeatureCount()
     ds = None
 
-    if feature_count_wfs100 != feature_count_ref:
-        print(feature_count_wfs100)
-        print(feature_count_ref)
-        return 'fail'
+    assert feature_count_wfs100 == feature_count_ref
 
     # Test with WFS 1.1.0
     gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', 'ON')
@@ -392,9 +334,7 @@ def test_ogr_wfs_geoserver_paging():
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.1.0')
     gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', None)
     gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', None)
-    if ds is None:
-        gdaltest.post_reason('did not managed to open WFS datastore')
-        return 'fail'
+    assert ds is not None, 'did not managed to open WFS datastore'
 
     lyr = ds.GetLayer(0)
     feature_count_wfs110 = lyr.GetFeatureCount()
@@ -407,15 +347,9 @@ def test_ogr_wfs_geoserver_paging():
         feat = lyr.GetNextFeature()
     ds = None
 
-    if feature_count_wfs110 != feature_count_ref:
-        print(feature_count_wfs100)
-        print(feature_count_ref)
-        return 'fail'
+    assert feature_count_wfs110 == feature_count_ref, feature_count_wfs100
 
-    if feature_count_wfs110_at_hand != feature_count_ref:
-        print(feature_count_wfs110_at_hand)
-        print(feature_count_ref)
-        return 'fail'
+    assert feature_count_wfs110_at_hand == feature_count_ref
 
     return 'success'
 ###############################################################################
@@ -442,18 +376,12 @@ def test_ogr_wfs_deegree():
         return 'fail'
 
     lyr = ds.GetLayerByName('app:SGID024_Springs')
-    if lyr.GetName() != 'app:SGID024_Springs':
-        gdaltest.post_reason('did not get expected layer name')
-        print(lyr.GetName())
-        return 'fail'
+    assert lyr.GetName() == 'app:SGID024_Springs', 'did not get expected layer name'
 
     sr = lyr.GetSpatialRef()
     sr2 = osr.SpatialReference()
     sr2.ImportFromEPSG(26912)
-    if not sr.IsSame(sr2):
-        gdaltest.post_reason('did not get expected SRS')
-        print(sr)
-        return 'fail'
+    assert sr.IsSame(sr2), 'did not get expected SRS'
 
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
@@ -471,9 +399,8 @@ def test_ogr_wfs_deegree():
     if feat_count != 12:
         if gdal.GetLastErrorMsg().find('XML parsing of GML file failed') < 0 and \
            gdal.GetLastErrorMsg().find('No suitable driver found') < 0:
-            gdaltest.post_reason('did not get expected feature count after SetAttributeFilter')
             print(feat_count)
-            return 'fail'
+            pytest.fail('did not get expected feature count after SetAttributeFilter')
 
     # Test attribute filter with gml_id
     # lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
@@ -502,9 +429,7 @@ def test_ogr_wfs_test_ogrsf():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro "WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10" app:SGID024_Springs')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 
@@ -627,8 +552,7 @@ def test_ogr_wfs_geoserver_wfst():
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?VERSION=1.1.0', update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayerByName('za:za_points')
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
@@ -647,42 +571,30 @@ def test_ogr_wfs_geoserver_wfst():
     print('Feature %d created !' % feat.GetFID())
 
     feat.SetField('type', 'type_modified_by_ogr_wfs_8_test')
-    if lyr.SetFeature(feat) != 0:
-        gdaltest.post_reason('cannot update feature')
-        return 'fail'
+    assert lyr.SetFeature(feat) == 0, 'cannot update feature'
     print('Feature %d updated !' % feat.GetFID())
 
-    if lyr.DeleteFeature(feat.GetFID()) != 0:
-        gdaltest.post_reason('could not delete feature')
-        return 'fail'
+    assert lyr.DeleteFeature(feat.GetFID()) == 0, 'could not delete feature'
 
     print('Feature %d deleted !' % feat.GetFID())
 
     # Test transactions
-    if lyr.StartTransaction() != 0:
-        gdaltest.post_reason('CommitTransaction() failed')
-        return 'fail'
+    assert lyr.StartTransaction() == 0, 'CommitTransaction() failed'
 
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
     # feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test')
-    if lyr.CreateFeature(feat) != 0:
-        gdaltest.post_reason('cannot create feature')
-        return 'fail'
+    assert lyr.CreateFeature(feat) == 0, 'cannot create feature'
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
     # feat.SetField('name', 'name_set_by_ogr_wfs_8_test_2')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test_2')
-    if lyr.CreateFeature(feat) != 0:
-        gdaltest.post_reason('cannot create feature')
-        return 'fail'
+    assert lyr.CreateFeature(feat) == 0, 'cannot create feature'
 
-    if lyr.CommitTransaction() != 0:
-        gdaltest.post_reason('CommitTransaction() failed')
-        return 'fail'
+    assert lyr.CommitTransaction() == 0, 'CommitTransaction() failed'
 
     # Retrieve inserted features
     print('Retrieving created features gml:id')
@@ -696,9 +608,7 @@ def test_ogr_wfs_geoserver_wfst():
     count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 
-    if count != 2:
-        gdaltest.post_reason('did not get expected feature count')
-        return 'fail'
+    assert count == 2, 'did not get expected feature count'
 
     # Delete a bunch of features
     print('Deleting created features')
@@ -720,8 +630,7 @@ def test_ogr_wfs_deegree_wfst():
         return 'skip'
 
     ds = ogr.Open('WFS:http://testing.deegree.org/deegree-wfs/services', update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayerByName('app:CountyBoundaries_edited')
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
@@ -777,16 +686,12 @@ def test_ogr_wfs_ionic_wfst():
     feat.SetField('TOTAL_EMPLOYEES', '10')
 
     ret = lyr.CreateFeature(feat)
-    if ret != 0:
-        print('fail on CreateFeature')
-        return 'fail'
+    assert ret == 0, 'fail on CreateFeature'
 
     gmlid = feat.GetField('gml_id')
 
     ret = lyr.SetFeature(feat)
-    if ret != 0:
-        print('fail on SetFeature')
-        return 'fail'
+    assert ret == 0, 'fail on SetFeature'
 
     ds.ExecuteSQL("DELETE FROM wfs:BUSINESS WHERE gml_id = '%s'" % gmlid)
 
@@ -803,16 +708,14 @@ def test_ogr_wfs_ionic_sql():
         return 'skip'
 
     ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.ExecuteSQL("SELECT name FROM \"wfs:BUSINESS\" WHERE total_employees = 105")
     count = lyr.GetFeatureCount()
 
     ds.ReleaseResultSet(lyr)
 
-    if count != 1:
-        return 'fail'
+    assert count == 1
 
     return 'success'
 
@@ -829,30 +732,20 @@ def test_ogr_wfs_xmldescriptionfile():
     index = feature_defn.GetFieldIndex('name')
     sr = lyr.GetSpatialRef()
 
-    if index != 1:
-        print(index)
-        return 'fail'
+    assert index == 1
 
     wkt = sr.ExportToWkt()
-    if wkt.find('WGS 84') == -1:
-        print(wkt)
-        return 'fail'
+    assert wkt.find('WGS 84') != -1
 
     layermetadata = ds.GetLayerByName('WFSLayerMetadata')
     count_layers = layermetadata.GetFeatureCount()
-    if count_layers != ds.GetLayerCount():
-        gdaltest.post_reason('count_layers != ds.GetLayerCount()')
-        print(count_layers)
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert count_layers == ds.GetLayerCount(), 'count_layers != ds.GetLayerCount()'
 
     getcapabilitieslayer = ds.GetLayerByName('WFSGetCapabilities')
     getcapabilitieslayer_feat = getcapabilitieslayer.GetNextFeature()
     getcapabilitieslayer_content = getcapabilitieslayer_feat.GetFieldAsString(0)
-    if getcapabilitieslayer_content.find('<WFS_Capabilities') != 0:
-        gdaltest.post_reason('did not get expected result')
-        print(getcapabilitieslayer_content)
-        return 'fail'
+    assert getcapabilitieslayer_content.find('<WFS_Capabilities') == 0, \
+        'did not get expected result'
 
     ds = None
 
@@ -876,35 +769,27 @@ def test_ogr_wfs_xmldescriptionfile_to_be_updated():
 
     # Should only emit GetCapabilities and serialize it
     ds = ogr.Open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     f = open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'rt')
     content = f.read()
-    if content.find('WFS_Capabilities') == -1:
-        print(content)
-        gdaltest.post_reason('XML description file was not filled as expected')
-        return 'fail'
-    if content.find('<OGRWFSLayer') != -1:
-        print(content)
-        gdaltest.post_reason('XML description file was not filled as expected')
-        return 'fail'
+    assert content.find('WFS_Capabilities') != -1, \
+        'XML description file was not filled as expected'
+    assert content.find('<OGRWFSLayer') == -1, \
+        'XML description file was not filled as expected'
     f.close()
 
     # Should emit DescribeFeatureType and serialize its result
     ds = ogr.Open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds.GetLayerByName('za:za_points').GetLayerDefn()
     ds = None
 
     f = open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'rt')
     content = f.read()
-    if content.find('<OGRWFSLayer name="za:za_points">') == -1:
-        print(content)
-        gdaltest.post_reason('XML description file was not filled as expected')
-        return 'fail'
+    assert content.find('<OGRWFSLayer name="za:za_points">') != -1, \
+        'XML description file was not filled as expected'
     f.close()
 
     os.unlink('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
@@ -949,8 +834,7 @@ def test_ogr_wfs_deegree_gml321():
     lyr = ds.GetLayerByName("ad:Address")
     gdal.ErrorReset()
     lyr.GetFeatureCount()
-    if gdal.GetLastErrorMsg() != '':
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     return 'success'
 
@@ -973,9 +857,8 @@ def test_ogr_wfs_deegree_wfs200():
     count = lyr.GetFeatureCount()
     if count != 1:
         if gdal.GetLastErrorMsg().find('HTTP error code : 500') < 0:
-            gdaltest.post_reason("OBJECTID = 5 filter failed")
             print(count)
-            return 'fail'
+            pytest.fail("OBJECTID = 5 filter failed")
     else:
         feat = lyr.GetNextFeature()
         if feat.GetFieldAsInteger('OBJECTID') != 5:
@@ -1003,11 +886,8 @@ def test_ogr_wfs_deegree_wfs200():
     spatialfiltercount = lyr.GetFeatureCount()
     lyr.SetSpatialFilter(None)
     allcount = lyr.GetFeatureCount()
-    if allcount != spatialfiltercount or allcount == 0:
-        gdaltest.post_reason('spatialfiltercount != allcount')
-        print(spatialfiltercount)
-        print(allcount)
-        return 'fail'
+    assert allcount == spatialfiltercount and allcount != 0, \
+        'spatialfiltercount != allcount'
 
     return 'success'
 
@@ -1122,8 +1002,7 @@ def test_ogr_wfs_vsimem_fail_because_not_enabled(with_and_without_streaming):
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -1136,8 +1015,7 @@ def test_ogr_wfs_vsimem_fail_because_no_get_capabilities(with_and_without_stream
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -1153,11 +1031,8 @@ def test_ogr_wfs_vsimem_fail_because_empty_response(with_and_without_streaming):
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Empty content returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Empty content returned by server') >= 0
 
     return 'success'
 
@@ -1173,11 +1048,8 @@ def test_ogr_wfs_vsimem_fail_because_no_WFS_Capabilities(with_and_without_stream
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Cannot find <WFS_Capabilities>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Cannot find <WFS_Capabilities>') >= 0
 
     return 'success'
 
@@ -1193,11 +1065,8 @@ def test_ogr_wfs_vsimem_fail_because_exception(with_and_without_streaming):
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Error returned by server : <ServiceExceptionReport/>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Error returned by server : <ServiceExceptionReport/>') >= 0
 
     return 'success'
 
@@ -1213,11 +1082,8 @@ def test_ogr_wfs_vsimem_fail_because_invalid_xml_capabilities(with_and_without_s
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Invalid XML content : <invalid_xml') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Invalid XML content : <invalid_xml') >= 0
 
     return 'success'
 
@@ -1235,11 +1101,8 @@ def test_ogr_wfs_vsimem_fail_because_missing_featuretypelist(with_and_without_st
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Cannot find <FeatureTypeList>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Cannot find <FeatureTypeList>') >= 0
 
     return 'success'
 
@@ -1255,11 +1118,8 @@ def test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file(with_and_without_stream
     gdal.PushErrorHandler()
     ds = ogr.Open('/vsimem/caps.xml')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Parse error at EOF, not all elements have been closed') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Parse error at EOF, not all elements have been closed') >= 0
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
                            """<foo><WFS_Capabilities/></foo>
@@ -1268,11 +1128,8 @@ def test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file(with_and_without_stream
     gdal.PushErrorHandler()
     ds = ogr.Open('/vsimem/caps.xml')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Cannot find <WFS_Capabilities>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Cannot find <WFS_Capabilities>') >= 0
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
                            """<WFS_Capabilities version="1.1.0">
@@ -1288,11 +1145,8 @@ def test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file(with_and_without_stream
     gdal.PushErrorHandler()
     ds = ogr.Open('/vsimem/caps.xml')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
-    if gdal.GetLastErrorMsg().find('Cannot find base URL') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ds is None
+    assert gdal.GetLastErrorMsg().find('Cannot find base URL') >= 0
 
     gdal.FileFromMemBuffer('/vsimem/caps.xml',
                            """<WFS_Capabilities version="1.1.0">
@@ -1314,10 +1168,8 @@ def test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file(with_and_without_stream
 """)
 
     ds = ogr.Open('/vsimem/caps.xml')
-    if ds is None:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
 
     return 'success'
 
@@ -1339,24 +1191,17 @@ def test_ogr_wfs_vsimem_wfs110_minimal_instance(with_and_without_streaming):
 </WFS_Capabilities>
 """)
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
-    if ds is None:
-        return 'fail'
-    if ds.GetLayerCount() != 0:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 0
 
-    if ds.GetMetadataDomainList() != ['', 'xml:capabilities']:
-        return 'fail'
-    if ds.GetMetadata() != {'TITLE': 'LDS Testing'}:
-        print(ds.GetMetadata())
-        return 'fail'
-    if len(ds.GetMetadata_List("xml:capabilities")) != 1:
-        return 'fail'
+    assert ds.GetMetadataDomainList() == ['', 'xml:capabilities']
+    assert ds.GetMetadata() == {'TITLE': 'LDS Testing'}
+    assert len(ds.GetMetadata_List("xml:capabilities")) == 1
 
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     return 'success'
 
@@ -1379,23 +1224,18 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype(with_and_wi
 </WFS_Capabilities>
 """)
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
-    if ds is None:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'my_layer':
-        return 'fail'
+    assert lyr.GetName() == 'my_layer'
 
     # Missing DescribeFeatureType
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert lyr_defn.GetFieldCount() == 0
 
     lyr_defn = lyr.GetLayerDefn()
 
@@ -1419,10 +1259,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype(with_and_wi
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert lyr_defn.GetFieldCount() == 0
 
     return 'success'
 
@@ -1444,10 +1282,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema(with
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert lyr_defn.GetFieldCount() == 0
 
     return 'success'
 
@@ -1485,40 +1321,34 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(with_and_without_st
 """)
 
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 8:
-        return 'fail'
-    if lyr_defn.GetGeomFieldCount() != 1:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 8
+    assert lyr_defn.GetGeomFieldCount() == 1
 
     ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['EXPOSE_GML_ID=NO'])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 7:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 7
 
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'YES')
     ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['EXPOSE_GML_ID=NO'])
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 7:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 7
 
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'NO')
     ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['EXPOSE_GML_ID=YES'])
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 8:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 8
 
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'NO')
     ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint')
     gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 7:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 7
 
     return 'success'
 
@@ -1535,14 +1365,13 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(with_a
 
     ds = ogr.Open('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'my_layer':
-        return 'fail'
+    assert lyr.GetName() == 'my_layer'
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'rb')
     data = gdal.VSIFReadL(1, 100000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    if data != """<OGRWFSDataSource>
+    assert data == """<OGRWFSDataSource>
   <URL>/vsimem/wfs_endpoint</URL>
   <WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
@@ -1553,9 +1382,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(with_a
     </FeatureTypeList>
   </WFS_Capabilities>
 </OGRWFSDataSource>
-""":
-        print(data)
-        return 'fail'
+"""
 
     ds = ogr.Open('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
     lyr = ds.GetLayer(0)
@@ -1565,7 +1392,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(with_a
     f = gdal.VSIFOpenL('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'rb')
     data = gdal.VSIFReadL(1, 100000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    if data != """<OGRWFSDataSource>
+    assert data == """<OGRWFSDataSource>
   <URL>/vsimem/wfs_endpoint</URL>
   <WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
@@ -1598,9 +1425,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(with_a
     </schema>
   </OGRWFSLayer>
 </OGRWFSDataSource>
-""":
-        print(data)
-        return 'fail'
+"""
 
     gdal.FileFromMemBuffer('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml',
                            """<OGRWFSDataSource>
@@ -1632,8 +1457,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(with_a
 
     ds = ogr.Open('/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldCount() != 2:
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
     ds = None
 
     return 'success'
@@ -1652,11 +1476,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits(with_an
     gdal.PushErrorHandler()
     count = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if count != 0:
-        print(count)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert count == 0
 
     return 'success'
 
@@ -1697,11 +1518,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits(with_
     gdal.PushErrorHandler()
     count = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if count != 0:
-        print(count)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert count == 0
 
     return 'success'
 
@@ -1722,11 +1540,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits(with_
     gdal.PushErrorHandler()
     count = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if count != 0:
-        print(count)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert count == 0
 
     return 'success'
 
@@ -1747,11 +1562,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_Featu
     gdal.PushErrorHandler()
     count = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if count != 0:
-        print(count)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert count == 0
 
     return 'success'
 
@@ -1772,11 +1584,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml(w
     gdal.PushErrorHandler()
     count = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if count != 0:
-        print(count)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert count == 0
 
     return 'success'
 
@@ -1797,11 +1606,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExcept
     gdal.PushErrorHandler()
     count = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if count != 0:
-        print(count)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert count == 0
 
     return 'success'
 
@@ -1821,11 +1627,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numbe
     gdal.PushErrorHandler()
     count = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if count != 0:
-        print(count)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert count == 0
 
     return 'success'
 
@@ -1855,9 +1658,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 </wfs:FeatureCollection>""")
 
     count = lyr.GetFeatureCount()
-    if count != 1:
-        print(count)
-        return 'fail'
+    assert count == 1
 
     return 'success'
 
@@ -1875,10 +1676,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature(with_and_without_str
     gdal.PushErrorHandler()
     f = lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if f is not None:
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert f is None
 
     return 'success'
 
@@ -1900,10 +1699,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature(with_and_without_str
     gdal.PushErrorHandler()
     f = lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if f is not None:
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert f is None
 
     return 'success'
 
@@ -1925,11 +1722,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature(with_and_without_s
     gdal.PushErrorHandler()
     f = lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('Error returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-    if f is not None:
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Error returned by server') >= 0
+    assert f is None
 
     return 'success'
 
@@ -2014,9 +1808,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent(with_and_without_streaming):
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     lyr = ds.GetLayer(0)
-    if lyr.GetExtent() != (2, 2, 49, 49):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (2, 2, 49, 49)
 
     return 'success'
 
@@ -2037,11 +1829,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature(with_and_w
     gdal.PushErrorHandler()
     extent = lyr.GetExtent()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if extent != (0, 0, 0, 0):
-        print(extent)
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert extent == (0, 0, 0, 0)
 
     return 'success'
 
@@ -2105,23 +1894,17 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(with_and_without_st
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     lyr = ds.GetLayer(0)
-    if lyr.GetExtent() != (-180.0, 180.0, -90.0, 90.0):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (-180.0, 180.0, -90.0, 90.0)
 
     lyr = ds.GetLayer(1)
     gdal.PushErrorHandler()
     got_extent = lyr.GetExtent()
     gdal.PopErrorHandler()
-    if got_extent != (0.0, 0.0, 0.0, 0.0):
-        print(got_extent)
-        return 'fail'
+    assert got_extent == (0.0, 0.0, 0.0, 0.0)
 
     ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options=['TRUST_CAPABILITIES_BOUNDS=YES'])
     lyr = ds.GetLayer(1)
-    if lyr.GetExtent() != (-170.0, 170.0, -80.0, 80.0):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (-170.0, 170.0, -80.0, 80.0)
 
     osr_ct.test_osr_ct_1()
     if gdaltest.have_proj4 == 1:
@@ -2134,9 +1917,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(with_and_without_st
         expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
         got_extent = lyr.GetExtent()
         for i in range(4):
-            if abs(expected_extent[i] - got_extent[i]) > 1e-5:
-                print(got_extent)
-                return 'fail'
+            assert abs(expected_extent[i] - got_extent[i]) <= 1e-5
 
     return 'success'
 
@@ -2269,10 +2050,8 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     f = lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        return 'fail'
-    if f is not None:
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
+    assert f is None
 
     return 'success'
 
@@ -2321,8 +2100,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     lyr.SetAttributeFilter("gml_id = 'my_layer.1' OR gml_id = 'my_layer.1'")
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     return 'success'
 
@@ -2371,8 +2149,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     lyr.SetAttributeFilter("(str = 'str' AND short = 1 AND float = 1.2) OR str LIKE 'st%' OR boolean IS NOT NULL OR int > 1 OR int >= 1 or int != 2 or int < 2000000000 or int <= 2000000000")
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     return 'success'
 
@@ -2421,100 +2198,72 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape)")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_Intersects') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_Intersects') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, 5)")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 2 of ST_Intersects') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 2 of ST_Intersects') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_MakeEnvelope') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_MakeEnvelope') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,'a'))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 4 of ST_MakeEnvelope') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 4 of ST_MakeEnvelope') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,1,3.5))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 5 of ST_MakeEnvelope') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 5 of ST_MakeEnvelope') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,1,'not_a_srs'))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 5 of ST_MakeEnvelope') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 5 of ST_MakeEnvelope') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,1,-5))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 5 of ST_MakeEnvelope') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 5 of ST_MakeEnvelope') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText(1,2,3))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_GeomFromText') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_GeomFromText') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText(1))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 1 of ST_GeomFromText') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 1 of ST_GeomFromText') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText('INVALID_GEOM'))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 1 of ST_GeomFromText') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 1 of ST_GeomFromText') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText('POINT(0 0)', 'invalid_srs'))")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 2 of ST_GeomFromText') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 2 of ST_GeomFromText') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_DWithin(shape)")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_DWithin') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_DWithin') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_DWithin(shape,'a',5)")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 2 of ST_DWithin') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 2 of ST_DWithin') < 0)
 
     gdal.PushErrorHandler()
     ret = lyr.SetAttributeFilter("ST_DWithin(shape,shape,'a')")
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 3 of ST_DWithin') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 3 of ST_DWithin') < 0)
 
     # Now valid requests
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%3E%3Cgml:lowerCorner%3E48.5%201.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E49.5%202.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%3E%3Cgml:lowerCorner%3E48.5%201.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E49.5%202.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22EPSG:4326%22%3E%3Cgml:lowerCorner%3E1.5%2048.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E2.5%2049.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::32630%22%3E%3Cgml:lowerCorner%3E380000%205370000%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E470000%205490000%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3C%2FFilter%3E',
@@ -2526,8 +2275,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
                            "ST_Intersects(shape, ST_MakeEnvelope(380000,5370000,470000,5490000,32630))")
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Polygon%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%20gml:id%3D%22id1%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E48.5%201.5%2049.5%202.5%2049.5%202.5%2048.5%202.5%2048.5%201.5%3C%2Fgml:posList%3E%3C%2Fgml:LinearRing%3E%3C%2Fgml:exterior%3E%3C%2Fgml:Polygon%3E%3C%2FIntersects%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Polygon%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%20gml:id%3D%22id2%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E48.5%201.5%2049.5%202.5%2049.5%202.5%2048.5%202.5%2048.5%201.5%3C%2Fgml:posList%3E%3C%2Fgml:LinearRing%3E%3C%2Fgml:exterior%3E%3C%2Fgml:Polygon%3E%3C%2FIntersects%3E%3C%2FOr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Polygon%20srsName%3D%22EPSG:4326%22%20gml:id%3D%22id3%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E1.5%2048.5%202.5%2049.5%202.5%2049.5%202.5%2048.5%201.5%2048.5%3C%2Fgml:posList%3E%3C%2Fgml:LinearRing%3E%3C%2Fgml:exterior%3E%3C%2Fgml:Polygon%3E%3C%2FIntersects%3E%3C%2FOr%3E%3C%2FFilter%3E',
                            content)
@@ -2537,8 +2285,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
                            "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 'EPSG:4326'))")
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CDWithin%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%3E%3Cgml:lowerCorner%3E48.5%201.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E49.5%202.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3CDistance%20unit%3D%22m%22%3E5%3C%2FDistance%3E%3C%2FDWithin%3E%3C%2FFilter%3E',
                            content)
@@ -2546,15 +2293,13 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     lyr.SetAttributeFilter("ST_DWithin(shape,ST_MakeEnvelope(1.5,48.5,2.5,49.5),5)")
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))')) OR " +
                             "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 4326)) OR " +
                             "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 'EPSG:4326'))")
     f = sql_lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case
@@ -2562,8 +2307,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if f is not None:
-        return 'fail'
+    assert f is None
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -2613,14 +2357,12 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     lyr.SetSpatialFilterRect(1, 48, 3, 50)
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     if gdal.GetConfigOption('OGR_WFS_USE_STREAMING') == 'NO':
         lyr.SetSpatialFilterRect(1.5, 48.5, 2.5, 49.5)
         f = lyr.GetNextFeature()
-        if f is None:
-            return 'fail'
+        assert f is not None
 
         lyr.SetSpatialFilter(None)
         lyr.ResetReading()
@@ -2628,8 +2370,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         lyr.ResetReading()
         lyr.SetSpatialFilterRect(1, 48, 3, 50)
         f = lyr.GetNextFeature()
-        if f is None:
-            return 'fail'
+        assert f is not None
 
     return 'success'
 
@@ -2679,8 +2420,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     lyr.SetAttributeFilter("str = 'str'")
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     return 'success'
 
@@ -2770,8 +2510,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     wfs_insert_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
 <wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
@@ -2792,8 +2531,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.FileFromMemBuffer(wfs_insert_url, "<invalid_xml")
 
@@ -2801,8 +2539,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.FileFromMemBuffer(wfs_insert_url, "<ServiceExceptionReport/>")
 
@@ -2810,9 +2547,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0)
 
     gdal.FileFromMemBuffer(wfs_insert_url, "<dummy_xml/>")
 
@@ -2820,9 +2555,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0)
 
     gdal.FileFromMemBuffer(wfs_insert_url,
                            """<TransactionResponse>
@@ -2833,8 +2566,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.FileFromMemBuffer(wfs_insert_url,
                            """<TransactionResponse>
@@ -2850,8 +2582,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.FileFromMemBuffer(wfs_insert_url,
                            """<TransactionResponse>
@@ -2866,142 +2597,109 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL('SELECT _LAST_INSERTED_FIDS_ FROM not_existing_layer')
     gdal.PopErrorHandler()
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
 
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
-    if f.GetFID() != 100:
-        return 'fail'
+    assert ret == 0
+    assert f.GetFID() == 100
 
     sql_lyr = ds.ExecuteSQL('SELECT _LAST_INSERTED_FIDS_ FROM my_layer')
     got_f = sql_lyr.GetNextFeature()
-    if got_f is not None:
-        return 'fail'
+    assert got_f is None
     ds.ReleaseResultSet(sql_lyr)
 
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot insert a feature when gml_id field is already set') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot insert a feature when gml_id field is already set') < 0)
 
     # Empty StartTransaction + CommitTransaction
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     ret = lyr.CommitTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Empty StartTransaction + RollbackTransaction
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     ret = lyr.RollbackTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Isolated CommitTransaction
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # Isolated RollbackTransaction
     gdal.PushErrorHandler()
     ret = lyr.RollbackTransaction()
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     # 2 StartTransaction in a row
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     gdal.PushErrorHandler()
     ret = lyr.StartTransaction()
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
     ret = lyr.RollbackTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     # Missing TransactionSummary
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Only 0 features were inserted whereas 1 where expected') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Only 0 features were inserted whereas 1 where expected') < 0)
 
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.FileFromMemBuffer(wfs_insert_url, "<invalid_xml")
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0)
 
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.FileFromMemBuffer(wfs_insert_url, "<dummy_xml/>")
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0)
 
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.FileFromMemBuffer(wfs_insert_url, "<ServiceExceptionReport/>")
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0)
 
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.FileFromMemBuffer(wfs_insert_url,
                            """<TransactionResponse>
@@ -3011,17 +2709,13 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find node InsertResults') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot find node InsertResults') < 0)
 
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.FileFromMemBuffer(wfs_insert_url,
                            """<TransactionResponse>
@@ -3032,17 +2726,13 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Inconsistent InsertResults: did not get expected FID count') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Inconsistent InsertResults: did not get expected FID count') < 0)
 
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.FileFromMemBuffer(wfs_insert_url,
                            """<TransactionResponse>
@@ -3056,17 +2746,13 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find fid') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot find fid') < 0)
 
     ret = lyr.StartTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.FileFromMemBuffer(wfs_insert_url,
                            """<TransactionResponse>
@@ -3079,13 +2765,11 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
 </TransactionResponse>
 """)
     ret = lyr.CommitTransaction()
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     sql_lyr = ds.ExecuteSQL('SELECT _LAST_INSERTED_FIDS_ FROM my_layer')
     f = sql_lyr.GetNextFeature()
-    if f.gml_id != 'my_layer.100':
-        return 'fail'
+    assert f.gml_id == 'my_layer.100'
     sql_lyr.ResetReading()
     sql_lyr.SetNextByIndex(0)
     sql_lyr.GetFeature(0)
@@ -3131,8 +2815,7 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
     f.SetField('double', 2.34)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
     ret = lyr.CreateFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     gdal.Unlink(wfs_insert_url)
     wfs_insert_url = None
@@ -3155,25 +2838,20 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot update a feature when gml_id field is not set') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot update a feature when gml_id field is not set') < 0)
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('gml_id', 'my_layer.1')
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ret != 0, gdal.GetLastErrorMsg()
 
     wfs_update_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
 <wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
@@ -3220,9 +2898,7 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Empty content returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Empty content returned by server') < 0)
 
     gdal.FileFromMemBuffer(wfs_update_url, "<invalid_xmm")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3230,9 +2906,7 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0)
 
     gdal.FileFromMemBuffer(wfs_update_url, "<ServiceExceptionReport/>")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3240,9 +2914,7 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0)
 
     gdal.FileFromMemBuffer(wfs_update_url, "<foo/>")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3250,17 +2922,13 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0)
 
     gdal.FileFromMemBuffer(wfs_update_url, "<TransactionResponse/>")
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('gml_id', 'my_layer.1')
     ret = lyr.SetFeature(f)
-    if ret != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ret == 0, gdal.GetLastErrorMsg()
 
     gdal.Unlink(wfs_update_url)
     wfs_update_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
@@ -3314,8 +2982,7 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
     f.SetField('double', 2.34)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
     ret = lyr.SetFeature(f)
-    if ret != 0:
-        return 'fail'
+    assert ret == 0
 
     return 'success'
 
@@ -3334,9 +3001,7 @@ def test_ogr_wfs_vsimem_wfs110_deletefeature(with_and_without_streaming):
     gdal.PushErrorHandler()
     ret = lyr.DeleteFeature(200)
     gdal.PopErrorHandler()
-    if ret == 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ret != 0, gdal.GetLastErrorMsg()
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.200%22%2F%3E%3C%2FFilter%3E',
                            """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -3364,9 +3029,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     ret = lyr.DeleteFeature(200)
     gdal.PopErrorHandler()
-    if ret == 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ret != 0, gdal.GetLastErrorMsg()
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
@@ -3390,9 +3053,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     ret = lyr.DeleteFeature(200)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Empty content returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Empty content returned by server') < 0)
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
@@ -3400,9 +3061,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     ret = lyr.DeleteFeature(200)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0)
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
@@ -3410,17 +3069,13 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     ret = lyr.DeleteFeature(200)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert not (ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0)
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update=1)
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer(wfs_delete_url, "<TransactionResponse/>")
     ret = lyr.DeleteFeature(200)
-    if ret != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert ret == 0, gdal.GetLastErrorMsg()
 
     gdal.Unlink(wfs_delete_url)
     wfs_delete_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
@@ -3441,49 +3096,37 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     gdal.ErrorReset()
     sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE gml_id = 'my_layer.200'")
-    if gdal.GetLastErrorMsg() != '':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("DELETE FROM ")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("DELETE FROM non_existing_layer WHERE truc")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('Unknown layer') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Unknown layer') >= 0
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer BLA")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('WHERE clause missing') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('WHERE clause missing') >= 0
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE -")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') >= 0
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE ogr_geometry = 'POINT'")
     gdal.PopErrorHandler()
-    if sql_lyr is not None or gdal.GetLastErrorMsg() == '':
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert sql_lyr is None and gdal.GetLastErrorMsg() != ''
 
     return 'success'
 
@@ -3534,8 +3177,7 @@ def test_ogr_wfs_vsimem_wfs110_schema_not_understood(with_and_without_streaming)
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 0
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint_schema_not_understood')
     lyr = ds.GetLayer(0)
@@ -3575,8 +3217,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint_schema_not_understood?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&MAXFEATURES=1', content)
 
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 8:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 8
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint_schema_not_understood?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer', content)
 
@@ -3624,8 +3265,7 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 0
 
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
@@ -3635,8 +3275,7 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 0
 
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
@@ -3646,8 +3285,7 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 0
 
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
@@ -3657,8 +3295,7 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if lyr_defn.GetFieldCount() != 0:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 0
 
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
@@ -3690,13 +3327,11 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
 
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 2:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 2
 
     lyr = ds.GetLayer(1)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 2:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 2
 
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
@@ -3718,8 +3353,7 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
 
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 2:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 2
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer2',
                            """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
@@ -3738,8 +3372,7 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
 """)
     lyr = ds.GetLayer(1)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 2:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 2
 
     return 'success'
 
@@ -3793,8 +3426,7 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns(with_and_w
 
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 2:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 2
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers_different_ns?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=ns1:my_layer',
                            """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -3817,8 +3449,7 @@ xsi:schemaLocation="http://ns1 /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 """)
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers_different_ns?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=ns2:my_layer',
                            """<xsd:schema xmlns:ns2="http://ns2" xmlns:ns2="http://ns2" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
@@ -3838,8 +3469,7 @@ xsi:schemaLocation="http://ns1 /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 """)
     lyr = ds.GetLayer(1)
     lyr_defn = lyr.GetLayerDefn()
-    if lyr_defn.GetFieldCount() != 3:
-        return 'fail'
+    assert lyr_defn.GetFieldCount() == 3
 
     return 'success'
 
@@ -3928,9 +3558,7 @@ def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming):
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_paging')
     lyr = ds.GetLayer(0)
-    if lyr.GetMetadata() != {'ABSTRACT': 'abstract', 'KEYWORD_1': 'keyword', 'TITLE': 'title'}:
-        print(lyr.GetMetadata())
-        return 'fail'
+    assert lyr.GetMetadata() == {'ABSTRACT': 'abstract', 'KEYWORD_1': 'keyword', 'TITLE': 'title'}
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
                            """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
@@ -4012,22 +3640,19 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 """)
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     if f.gml_id != 'my_layer.1':
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     if f.gml_id != 'my_layer.2':
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     if f.gml_id != 'my_layer.3':
         f.DumpReadable()
         return 'fail'
@@ -4165,8 +3790,7 @@ def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
 """)
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     # We currently invert... A bit weird. See comment in code. Probably inappropriate
     if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
         f.DumpReadable()
@@ -4244,8 +3868,7 @@ Content-Disposition: attachment; filename=my.json
 """)
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     # We currently invert... A bit weird. See comment in code. Probably inappropriate
     if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
         f.DumpReadable()
@@ -4276,8 +3899,7 @@ Content-Disposition: attachment; filename=my.json
 """)
 
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart')
     lyr = ds.GetLayer(0)
@@ -4298,8 +3920,7 @@ str,"POINT(2 49)"
 --my_boundary--
 """)
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     # We currently invert... A bit weird. See comment in code. Probably inappropriate
     if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
         f.DumpReadable()
@@ -4385,8 +4006,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if f is not None:
-        return 'fail'
+    assert f is None
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -4399,9 +4019,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if f is not None or gdal.GetLastErrorMsg().find('Empty content returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.GetLastErrorMsg().find('Empty content returned by server') >= 0
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -4414,9 +4032,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if f is not None or gdal.GetLastErrorMsg().find('Error returned by server') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.GetLastErrorMsg().find('Error returned by server') >= 0
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -4429,9 +4045,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if f is not None or gdal.GetLastErrorMsg().find('Error: cannot parse') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.GetLastErrorMsg().find('Error: cannot parse') >= 0
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -4444,9 +4058,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler()
     f = sql_lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if f is not None or gdal.GetLastErrorMsg().find('Error: cannot parse') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert f is None and gdal.GetLastErrorMsg().find('Error: cannot parse') >= 0
 
     ds.ReleaseResultSet(sql_lyr)
 
@@ -4555,10 +4167,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if fc != 2:
-        print(gdal.GetLastErrorMsg())
-        print(fc)
-        return 'fail'
+    assert fc == 2, gdal.GetLastErrorMsg()
 
     # Empty content returned by server
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
@@ -4566,9 +4175,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if fc != 2:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert fc == 2, gdal.GetLastErrorMsg()
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
@@ -4576,9 +4183,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if fc != 2:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert fc == 2, gdal.GetLastErrorMsg()
 
     # Server exception
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
@@ -4586,9 +4191,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if fc != 2:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert fc == 2, gdal.GetLastErrorMsg()
 
     # Missing FeatureCollection
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
@@ -4596,9 +4199,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if fc != 2:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert fc == 2, gdal.GetLastErrorMsg()
 
     # Missing FeatureCollection.numberMatched
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
@@ -4606,9 +4207,7 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if fc != 2:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert fc == 2, gdal.GetLastErrorMsg()
 
     # Valid
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits',
@@ -4628,9 +4227,7 @@ xsi:schemaLocation="http://foo blabla
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     fc = sql_lyr.GetFeatureCount()
     gdal.PopErrorHandler()
-    if fc != 3:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert fc == 3, gdal.GetLastErrorMsg()
 
     sql_lyr.TestCapability('foo')
     sql_lyr.GetLayerDefn()
@@ -4753,23 +4350,17 @@ xsi:schemaLocation="http://foo blabla
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2 WHERE lyr1.OGR_GEOMETRY IS NOT NULL")
     gdal.PopErrorHandler()
-    if sql_lyr is not None or gdal.GetLastErrorMsg().find('Unsupported WHERE clause') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert sql_lyr is None and gdal.GetLastErrorMsg().find('Unsupported WHERE clause') >= 0
 
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("SELECT * FROM lyr1 JOIN lyr2 ON lyr1.OGR_GEOMETRY IS NOT NULL")
     gdal.PopErrorHandler()
-    if sql_lyr is not None or gdal.GetLastErrorMsg().find('Unsupported JOIN clause') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert sql_lyr is None and gdal.GetLastErrorMsg().find('Unsupported JOIN clause') >= 0
 
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("SELECT 1 FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2")
     gdal.PopErrorHandler()
-    if sql_lyr is not None or gdal.GetLastErrorMsg().find('Only column names supported in column selection') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert sql_lyr is None and gdal.GetLastErrorMsg().find('Only column names supported in column selection') >= 0
 
     ds = None
 
@@ -5047,8 +4638,7 @@ def test_ogr_wfs_vsimem_wfs200_join_distinct(with_and_without_streaming):
   </wfs:member>
 </wfs:FeatureCollection>
 """)
-    if sql_lyr.GetFeatureCount() != 2:
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() == 2
 
     ds.ReleaseResultSet(sql_lyr)
 

@@ -35,6 +35,7 @@ from osgeo import osr
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/022gdeme
@@ -108,14 +109,11 @@ def test_usgsdem_5():
             print('')
             print('old = ', gt1)
             print('new = ', gt2)
-            gdaltest.post_reason('Geotransform differs.')
-            return 'fail'
+            pytest.fail('Geotransform differs.')
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS84')
-    if ds2.GetProjectionRef() != srs.ExportToWkt():
-        gdaltest.post_reason('Bad SRS.')
-        return 'fail'
+    assert ds2.GetProjectionRef() == srs.ExportToWkt(), 'Bad SRS.'
 
     ds2 = None
 
@@ -149,8 +147,7 @@ def test_usgsdem_6():
     data1 = f1.read()
     data2 = f2.read()
 
-    if data1 != data2:
-        return 'fail'
+    assert data1 == data2
 
     f1.close()
     f2.close()
@@ -171,11 +168,7 @@ def test_usgsdem_7():
                                                      options=['PRODUCT=CDED50K', 'TOPLEFT=80w,44n', 'RESAMPLE=Nearest', 'ZRESOLUTION=1.1', 'INTERNALNAME=GDAL'])
     gdal.PopErrorHandler()
 
-    if ds2.RasterXSize != 1201 or ds2.RasterYSize != 1201:
-        gdaltest.post_reason('Bad image dimensions.')
-        print(ds2.RasterXSize)
-        print(ds2.RasterYSize)
-        return 'fail'
+    assert ds2.RasterXSize == 1201 and ds2.RasterYSize == 1201, 'Bad image dimensions.'
 
     expected_gt = (-80.000104166666674, 0.000208333333333, 0, 44.000104166666667, 0, -0.000208333333333)
     got_gt = ds2.GetGeoTransform()
@@ -184,14 +177,11 @@ def test_usgsdem_7():
             print('')
             print('expected = ', expected_gt)
             print('got = ', got_gt)
-            gdaltest.post_reason('Geotransform differs.')
-            return 'fail'
+            pytest.fail('Geotransform differs.')
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD83')
-    if ds2.GetProjectionRef() != srs.ExportToWkt():
-        gdaltest.post_reason('Bad SRS.')
-        return 'fail'
+    assert ds2.GetProjectionRef() == srs.ExportToWkt(), 'Bad SRS.'
 
     ds2 = None
 

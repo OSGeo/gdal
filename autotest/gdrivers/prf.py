@@ -29,6 +29,7 @@ import sys
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 
@@ -43,39 +44,25 @@ def test_prf_2():
 
     ds = gdal.Open('./data/PRF/dem.x-dem')
 
-    if ds.RasterXSize != 4330:
-        gdaltest.post_reason('Invalid dataset width')
-        return 'fail'
+    assert ds.RasterXSize == 4330, 'Invalid dataset width'
 
-    if ds.RasterYSize != 4663:
-        gdaltest.post_reason('Invalid dataset height')
-        return 'fail'
+    assert ds.RasterYSize == 4663, 'Invalid dataset height'
 
     unittype = ds.GetRasterBand(1).GetUnitType()
-    if unittype != 'm':
-        gdaltest.post_reason('Failed to read elevation units from x-dem')
-        print(unittype)
-        return 'fail'
+    assert unittype == 'm', 'Failed to read elevation units from x-dem'
 
     datatype = ds.GetRasterBand(1).DataType
-    if datatype != gdal.GDT_Float32:
-        gdaltest.post_reason('Failed to read datatype')
-        return 'fail'
+    assert datatype == gdal.GDT_Float32, 'Failed to read datatype'
 
     expectedOvCount = 1
     if ds.GetRasterBand(1).GetOverviewCount() != expectedOvCount:
-        gdaltest.post_reason('did not get expected number of overviews')
         print('Overview count must be %d' % expectedOvCount)
         print('But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+        pytest.fail('did not get expected number of overviews')
 
     overview = ds.GetRasterBand(1).GetOverview(0)
-    if overview.XSize != 1082:
-        gdaltest.post_reason('Invalid dataset width %d' % overview.XSize)
-        return 'fail'
-    if overview.YSize != 1165:
-        gdaltest.post_reason('Invalid dataset height %d' % overview.YSize)
-        return 'fail'
+    assert overview.XSize == 1082, ('Invalid dataset width %d' % overview.XSize)
+    assert overview.YSize == 1165, ('Invalid dataset height %d' % overview.YSize)
 
     ds = None
 
@@ -88,10 +75,9 @@ def test_prf_3():
 
     expectedOvCount = 0
     if ds.GetRasterBand(1).GetOverviewCount() != expectedOvCount:
-        gdaltest.post_reason('did not get expected number of overviews')
         print('Overview count must be %d' % expectedOvCount)
         print('But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+        pytest.fail('did not get expected number of overviews')
 
     ds = None
 

@@ -66,16 +66,11 @@ def test_cals_3():
     tmp_ds.SetMetadataItem('TIFFTAG_XRESOLUTION', '600')
     tmp_ds.SetMetadataItem('TIFFTAG_YRESOLUTION', '600')
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_2.cal', tmp_ds)
-    if gdal.VSIStatL('/vsimem/cals_2.cal.aux.xml') is not None:
-        return 'fail'
-    if out_ds.GetRasterBand(1).Checksum() != 3883:
-        return 'fail'
-    if out_ds.GetMetadataItem('PIXEL_PATH') is not None:
-        return 'fail'
-    if out_ds.GetMetadataItem('TIFFTAG_XRESOLUTION') != '600':
-        return 'fail'
-    if out_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/cals_2.cal.aux.xml') is None
+    assert out_ds.GetRasterBand(1).Checksum() == 3883
+    assert out_ds.GetMetadataItem('PIXEL_PATH') is None
+    assert out_ds.GetMetadataItem('TIFFTAG_XRESOLUTION') == '600'
+    assert out_ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
     tmp_ds = None
     out_ds = None
     gdal.Unlink('/vsimem/cals_2_tmp.cal')
@@ -95,24 +90,21 @@ def test_cals_4():
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     # 2 bands
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     # 1 band but not 1-bit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     # Dimension > 999999
     src_ds = gdal.GetDriverByName('MEM').Create('', 1000000, 1, 1)
@@ -120,8 +112,7 @@ def test_cals_4():
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     # Invalid output filename
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
@@ -129,8 +120,7 @@ def test_cals_4():
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/not_existing_dir/cals_4.cal', src_ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        return 'fail'
+    assert out_ds is None
 
     return 'success'
 
@@ -145,12 +135,9 @@ def test_cals_5():
     src_ds.SetMetadataItem('PIXEL_PATH', '90')
     src_ds.SetMetadataItem('LINE_PROGRESSION', '270')
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_5.cal', src_ds)
-    if gdal.VSIStatL('/vsimem/cals_5.cal.aux.xml') is not None:
-        return 'fail'
-    if out_ds.GetMetadataItem('PIXEL_PATH') != '90':
-        return 'fail'
-    if out_ds.GetMetadataItem('LINE_PROGRESSION') != '270':
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/cals_5.cal.aux.xml') is None
+    assert out_ds.GetMetadataItem('PIXEL_PATH') == '90'
+    assert out_ds.GetMetadataItem('LINE_PROGRESSION') == '270'
     out_ds = None
     gdal.Unlink('/vsimem/cals_5.cal')
 

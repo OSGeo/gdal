@@ -46,19 +46,14 @@ def test_gdallocationinfo_1():
         return 'skip'
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdallocationinfo_path() + ' ../gcore/data/byte.tif 0 0')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ret = ret.replace('\r\n', '\n')
     expected_ret = """Report:
   Location: (0P,0L)
   Band 1:
     Value: 107"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
+    assert ret.find(expected_ret) == 0
 
     return 'success'
 
@@ -77,9 +72,7 @@ def test_gdallocationinfo_2():
     <Value>107</Value>
   </BandReport>
 </Report>"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
+    assert ret.find(expected_ret) == 0
 
     return 'success'
 
@@ -93,9 +86,7 @@ def test_gdallocationinfo_3():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -b 1 -valonly ../gcore/data/byte.tif 0 0')
     expected_ret = """107"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
+    assert ret.find(expected_ret) == 0
 
     return 'success'
 
@@ -113,9 +104,7 @@ def test_gdallocationinfo_4():
   Location: (0P,0L)
   Band 1:
     Value: 107"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
+    assert ret.find(expected_ret) == 0
 
     return 'success'
 
@@ -130,9 +119,7 @@ def test_gdallocationinfo_5():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -lifonly ../gcore/data/byte.vrt 0 0')
     expected_ret1 = """../gcore/data/byte.tif"""
     expected_ret2 = """../gcore/data\\byte.tif"""
-    if ret.find(expected_ret1) < 0 and ret.find(expected_ret2) < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find(expected_ret1) >= 0 or ret.find(expected_ret2) >= 0
 
     return 'success'
 
@@ -154,9 +141,7 @@ def test_gdallocationinfo_6():
 
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdallocationinfo_6.tif')
     expected_ret = """Value: 130"""
-    if ret.find(expected_ret) < 0:
-        print(ret)
-        return 'fail'
+    assert ret.find(expected_ret) >= 0
 
     return 'success'
 

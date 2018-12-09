@@ -124,9 +124,7 @@ def test_ogr_sde_3():
     ds = ogr.Open(base, update=1)
 
     ds2 = ogr.Open(base, update=1)
-    if ds2 is not None:
-        gdaltest.post_reason('A locked version was able to be opened')
-        return 'fail'
+    assert ds2 is None, 'A locked version was able to be opened'
 
     ds.Destroy()
 
@@ -195,9 +193,8 @@ def test_ogr_sde_5():
     ds3 = ogr.Open(base)
     l3 = ds3.GetLayerByName('SDE.TPOLY')
     f3 = l3.GetFeature(1)
-    if f3.GetField("PRFEDEA") != "SDE.TESTING":
-        gdaltest.post_reason('versioned editing failed for child version SDE.TESTING')
-        return 'fail'
+    assert f3.GetField("PRFEDEA") == "SDE.TESTING", \
+        'versioned editing failed for child version SDE.TESTING'
 
     ds3.Destroy()
     del ds3
@@ -205,9 +202,8 @@ def test_ogr_sde_5():
     ds4 = ogr.Open(default)
     l4 = ds4.GetLayerByName('SDE.TPOLY')
     f4 = l4.GetFeature(1)
-    if f4.GetField("PRFEDEA") != "SDE.DEFAULT":
-        gdaltest.post_reason('versioned editing failed for parent version SDE.DEFAULT')
-        return 'fail'
+    assert f4.GetField("PRFEDEA") == "SDE.DEFAULT", \
+        'versioned editing failed for parent version SDE.DEFAULT'
 
     idx = f4.GetFieldIndex('WHEN')
     df = f4.GetField(idx)

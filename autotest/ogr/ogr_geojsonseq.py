@@ -56,12 +56,10 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(3 4)'))
     lyr.CreateFeature(f)
 
-    if ds.TestCapability(ogr.ODsCCreateLayer):
-        return 'fail'
+    assert not ds.TestCapability(ogr.ODsCCreateLayer)
 
     with gdaltest.error_handler():
-        if ds.CreateLayer('foo') is not None:
-            return 'fail'
+        assert ds.CreateLayer('foo') is None
 
     ds = None
 
@@ -69,11 +67,9 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     first = gdal.VSIFReadL(1, 1, f).decode('ascii')
     gdal.VSIFCloseL(f)
     if expect_rs:
-        if first != '\x1e':
-            return 'fail'
+        assert first == '\x1e'
     else:
-        if first != '{':
-            return 'fail'
+        assert first == '{'
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
@@ -86,8 +82,7 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
         f.DumpReadable()
         return 'fail'
-    if lyr.GetNextFeature() is not None:
-        return 'fail'
+    assert lyr.GetNextFeature() is None
     ds = None
 
     ogr.GetDriverByName('GeoJSONSeq').DeleteDataSource(filename)
@@ -112,9 +107,7 @@ def test_ogr_geojsonseq_inline():
     ds = ogr.Open("""{"type":"Feature","properties":{},"geometry":null}
 {"type":"Feature","properties":{},"geometry":null}""")
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 2:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
     return 'success'
 
 
@@ -122,9 +115,7 @@ def test_ogr_geojsonseq_prefix():
 
     ds = ogr.Open("""GeoJSONSeq:data/test.geojsonl""")
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 2:
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
     return 'success'
 
 
@@ -134,9 +125,7 @@ def test_ogr_geojsonseq_seq_geometries():
         ds = ogr.Open("""{"type":"Point","coordinates":[2,49]}
     {"type":"Point","coordinates":[3,50]}""")
         lyr = ds.GetLayer(0)
-        if lyr.GetFeatureCount() != 2:
-            print(lyr.GetFeatureCount())
-            return 'fail'
+        assert lyr.GetFeatureCount() == 2
         f = lyr.GetNextFeature()
         if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
             f.DumpReadable()
@@ -185,8 +174,7 @@ def test_ogr_geojsonseq_read_rs_json_pretty():
     if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
         f.DumpReadable()
         return 'fail'
-    if lyr.GetNextFeature() is not None:
-        return 'fail'
+    assert lyr.GetNextFeature() is None
     return 'success'
 
 
@@ -199,9 +187,7 @@ def test_ogr_geojsonseq_test_ogrsf():
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.geojsonl')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     return 'success'
 

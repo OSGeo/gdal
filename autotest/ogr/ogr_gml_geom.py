@@ -58,9 +58,7 @@ def test_gml_geom(unit):
 
     gml = geom_wkt.ExportToGML()
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
     ######################################################################
     # Create geometry from GML.
@@ -83,10 +81,8 @@ def test_gml_geom(unit):
 def test_gml_space_test():
     gml = '<gml:LineString xmlns:foo="http://bar"><gml:coordinates xmlns:foo="http://bar" decimal="." cs="," ts=" ">189999.99995605,624999.99998375 200000.00005735,624999.99998375 200000.00005735,612499.99997125 195791.3593843,612499.99997125 193327.3749823,612499.99997125 189999.99995605,612499.99997125 189999.99995605,619462.31247125 189999.99995605,624999.99998375 \n</gml:coordinates></gml:LineString>'
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom is None or geom.GetGeometryType() is not ogr.wkbLineString \
-       or geom.GetPointCount() != 8:
-        gdaltest.post_reason('GML not correctly parsed')
-        return 'fail'
+    assert geom is not None and geom.GetGeometryType() is ogr.wkbLineString and geom.GetPointCount() == 8, \
+        'GML not correctly parsed'
 
     return 'success'
 
@@ -100,9 +96,7 @@ def test_gml_pos_point():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POINT (31 29 16)':
-        gdaltest.post_reason('<gml:pos> not correctly parsed')
-        return 'fail'
+    assert geom.ExportToWkt() == 'POINT (31 29 16)', '<gml:pos> not correctly parsed'
 
     return 'success'
 
@@ -135,9 +129,8 @@ def test_gml_pos_polygon():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))':
-        gdaltest.post_reason('<gml:Polygon> not correctly parsed')
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))', \
+        '<gml:Polygon> not correctly parsed'
 
     return 'success'
 
@@ -151,9 +144,8 @@ def test_gml_posList_line():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'LINESTRING (31 42,53 64,55 76)':
-        gdaltest.post_reason('<gml:posList> not correctly parsed')
-        return 'fail'
+    assert geom.ExportToWkt() == 'LINESTRING (31 42,53 64,55 76)', \
+        '<gml:posList> not correctly parsed'
 
     return 'success'
 
@@ -167,9 +159,8 @@ def test_gml_posList_line3d():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'LINESTRING (31 42 1,53 64 2,55 76 3)':
-        gdaltest.post_reason('<gml:posList> not correctly parsed')
-        return 'fail'
+    assert geom.ExportToWkt() == 'LINESTRING (31 42 1,53 64 2,55 76 3)', \
+        '<gml:posList> not correctly parsed'
 
     return 'success'
 
@@ -184,9 +175,8 @@ def test_gml_posList_line3d_2():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'LINESTRING (31 42 1,53 64 2,55 76 3)':
-        gdaltest.post_reason('<gml:posList> not correctly parsed')
-        return 'fail'
+    assert geom.ExportToWkt() == 'LINESTRING (31 42 1,53 64 2,55 76 3)', \
+        '<gml:posList> not correctly parsed'
 
     return 'success'
 
@@ -199,9 +189,8 @@ def test_gml_polygon():
     gml = '<Polygon><exterior><LinearRing><posList>0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior><interior xmlns:foo="http://bar"><LinearRing><posList xmlns:foo="http://bar">1 1 2 1 2 2 1 2 1 1</posList></LinearRing></interior></Polygon>'
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))':
-        gdaltest.post_reason('<gml:Polygon> not correctly parsed')
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))', \
+        '<gml:Polygon> not correctly parsed'
 
     return 'success'
 
@@ -239,13 +228,10 @@ def test_gml_out_point_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:31] != '<gml:Point srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        return 'fail'
+    assert gml[0:31] == '<gml:Point srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     return 'success'
 
@@ -259,13 +245,10 @@ def test_gml_out_point3d_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:31] != '<gml:Point srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        return 'fail'
+    assert gml[0:31] == '<gml:Point srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     return 'success'
 
@@ -279,13 +262,10 @@ def test_gml_out_linestring_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:36] != '<gml:LineString srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        return 'fail'
+    assert gml[0:36] == '<gml:LineString srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     return 'success'
 
@@ -299,13 +279,10 @@ def test_gml_out_polygon_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:33] != '<gml:Polygon srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        return 'fail'
+    assert gml[0:33] == '<gml:Polygon srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     return 'success'
 
@@ -319,13 +296,10 @@ def test_gml_out_multipoint_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:36] != '<gml:MultiPoint srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        return 'fail'
+    assert gml[0:36] == '<gml:MultiPoint srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     return 'success'
 
@@ -339,13 +313,10 @@ def test_gml_out_multilinestring_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:41] != '<gml:MultiLineString srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        return 'fail'
+    assert gml[0:41] == '<gml:MultiLineString srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     return 'success'
 
@@ -359,20 +330,14 @@ def test_gml_out_multipolygon_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:38] != '<gml:MultiPolygon srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        print(gml)
-        return 'fail'
+    assert gml[0:38] == '<gml:MultiPolygon srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     # Verify we have no other srsName's on subelements.
-    if gml[39:].find('srsName') != -1:
-        gdaltest.post_reason('Got extra srsName attributes on subelements.')
-        print(gml)
-        return 'fail'
+    assert gml[39:].find('srsName') == -1, \
+        'Got extra srsName attributes on subelements.'
 
     return 'success'
 
@@ -386,14 +351,10 @@ def test_gml_out_geometrycollection_srs():
 
     gml = _CreateGMLWithSRSFromWkt(wkt, 4326)
 
-    if gml is None or not gml:
-        gdaltest.post_reason('Conversion to GML failed.')
-        return 'fail'
+    assert gml is not None and gml, 'Conversion to GML failed.'
 
-    if gml[0:39] != '<gml:MultiGeometry srsName="EPSG:4326">':
-        gdaltest.post_reason('No srsName attribute in GML output')
-        print(gml)
-        return 'fail'
+    assert gml[0:39] == '<gml:MultiGeometry srsName="EPSG:4326">', \
+        'No srsName attribute in GML output'
 
     return 'success'
 
@@ -416,10 +377,8 @@ def test_gml_Box():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((1 2 0,3 2 0,3 4 0,1 4 0,1 2 0))':
-        gdaltest.post_reason('<gml:Box> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((1 2 0,3 2 0,3 4 0,1 4 0,1 2 0))', \
+        '<gml:Box> not correctly parsed'
 
     return 'success'
 
@@ -436,10 +395,8 @@ def test_gml_Envelope():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((1 2,3 2,3 4,1 4,1 2))':
-        gdaltest.post_reason('<gml:Envelope> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((1 2,3 2,3 4,1 4,1 2))', \
+        '<gml:Envelope> not correctly parsed'
 
     return 'success'
 
@@ -459,10 +416,8 @@ def test_gml_Curve():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'LINESTRING (1 2,3 4)':
-        gdaltest.post_reason('<gml:Curve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'LINESTRING (1 2,3 4)', \
+        '<gml:Curve> not correctly parsed'
 
     return 'success'
 
@@ -487,10 +442,8 @@ def test_gml_Curve_with_pointProperty():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'LINESTRING (1 2,3 4)':
-        gdaltest.post_reason('<gml:Curve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'LINESTRING (1 2,3 4)', \
+        '<gml:Curve> not correctly parsed'
 
     return 'success'
 
@@ -515,10 +468,8 @@ def test_gml_MultiCurve():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTILINESTRING ((1 2,2 3),(3 4,4 5))':
-        gdaltest.post_reason('<gml:MultiCurve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTILINESTRING ((1 2,2 3),(3 4,4 5))', \
+        '<gml:MultiCurve> not correctly parsed'
 
     return 'success'
 
@@ -598,10 +549,8 @@ def test_gml_MultiSurface():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3),(3 4,5 6,7 8,3 4)),((4 5,6 7,8 9,4 5)))':
-        gdaltest.post_reason('<gml:MultiSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3),(3 4,5 6,7 8,3 4)),((4 5,6 7,8 9,4 5)))', \
+        '<gml:MultiSurface> not correctly parsed'
 
     return 'success'
 
@@ -652,10 +601,8 @@ def test_gml_MultiSurface_surfaceMembers():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3)),((3 4,5 6,7 8,3 4)),((30 40,50 60,70 80,30 40)))':
-        gdaltest.post_reason('<gml:MultiSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTIPOLYGON (((1 2,3 4,5 6,1 2),(2 3,4 5,6 7,2 3)),((3 4,5 6,7 8,3 4)),((30 40,50 60,70 80,30 40)))', \
+        '<gml:MultiSurface> not correctly parsed'
 
     return 'success'
 
@@ -675,10 +622,8 @@ def test_gml_MultiCurve_curveMembers():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTILINESTRING ((0 0,1 1))':
-        gdaltest.post_reason('<gml:MultiCurve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTILINESTRING ((0 0,1 1))', \
+        '<gml:MultiCurve> not correctly parsed'
 
     return 'success'
 
@@ -697,10 +642,8 @@ def test_gml_MultiGeometry_geometryMembers():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'GEOMETRYCOLLECTION (LINESTRING (0 0,1 1))':
-        gdaltest.post_reason('<gml:MultiGeometry> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'GEOMETRYCOLLECTION (LINESTRING (0 0,1 1))', \
+        '<gml:MultiGeometry> not correctly parsed'
 
     return 'success'
 
@@ -723,10 +666,8 @@ def test_gml_CompositeCurve_curveMembers():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'LINESTRING (0 0,1 1,2 2)':
-        gdaltest.post_reason('<gml:CompositeCurve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'LINESTRING (0 0,1 1,2 2)', \
+        '<gml:CompositeCurve> not correctly parsed'
 
     return 'success'
 
@@ -749,10 +690,8 @@ def test_gml_MultiCurve_pointMembers():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTIPOINT (0 0,1 1)':
-        gdaltest.post_reason('<gml:MultiPoint> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTIPOINT (0 0,1 1)', \
+        '<gml:MultiPoint> not correctly parsed'
 
     return 'success'
 ###############################################################################
@@ -779,10 +718,8 @@ def test_gml_Solid():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYHEDRALSURFACE Z (((1 2 0,3 4 0,5 6 0,1 2 0)))':
-        gdaltest.post_reason('<gml:Solid> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYHEDRALSURFACE Z (((1 2 0,3 4 0,5 6 0,1 2 0)))', \
+        '<gml:Solid> not correctly parsed'
 
     return 'success'
 
@@ -808,10 +745,8 @@ def test_gml_OrientableSurface():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((-213.475 24.989 0,-213.475 24.989 8,-215.704 25.077 8,-215.704 25.077 0,-213.475 24.989 0))':
-        gdaltest.post_reason('<gml:OrientableSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((-213.475 24.989 0,-213.475 24.989 8,-215.704 25.077 8,-215.704 25.077 0,-213.475 24.989 0))', \
+        '<gml:OrientableSurface> not correctly parsed'
 
     return 'success'
 
@@ -831,10 +766,8 @@ def test_gml_Triangle():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'TRIANGLE ((0 0,0 1,1 1,0 0))':
-        gdaltest.post_reason('<gml:Triangle> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'TRIANGLE ((0 0,0 1,1 1,0 0))', \
+        '<gml:Triangle> not correctly parsed'
 
     # check the conversion of Triangle from OGR -> GML
     wkt_original = 'TRIANGLE ((0 0,0 1,0 1,0 0))'
@@ -843,9 +776,8 @@ def test_gml_Triangle():
     gml_string = triangle.ExportToGML(opts)
 
     if gml_string != '<gml:Triangle><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 0 1 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Triangle>':
-        gdaltest.post_reason('incorrect conversion from OGR -> GML for OGRTriangle')
         print(geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('incorrect conversion from OGR -> GML for OGRTriangle')
 
     return 'success'
 
@@ -865,10 +797,8 @@ def test_gml_Rectangle():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
-        gdaltest.post_reason('<gml:Rectangle> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,1 0,0 0))', \
+        '<gml:Rectangle> not correctly parsed'
 
     return 'success'
 
@@ -908,10 +838,8 @@ def test_gml_PolyhedralSurface():
 
     # NOTE - this is actually an invalid PolyhedralSurface
     # need to assert geom.IsValid() == True to determine the validity of the geometry
-    if geom.ExportToWkt() != 'POLYHEDRALSURFACE Z (((1 2 3,4 5 6,7 8 9,1 2 3)),((10 11 12,13 14 15,16 17 18,10 11 12),(19 20 21,22 23 24,25 26 27,19 20 21)))':
-        gdaltest.post_reason('<gml:PolyhedralSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYHEDRALSURFACE Z (((1 2 3,4 5 6,7 8 9,1 2 3)),((10 11 12,13 14 15,16 17 18,10 11 12),(19 20 21,22 23 24,25 26 27,19 20 21)))', \
+        '<gml:PolyhedralSurface> not correctly parsed'
 
     # 1 patch and 2 rings
     gml = """<gml:PolyhedralSurface>
@@ -936,10 +864,8 @@ def test_gml_PolyhedralSurface():
 
     # NOTE - this is actually an invalid PolyhedralSurface
     # need to assert geom.IsValid() == True to determine the validity of the geometry
-    if geom.ExportToWkt() != 'POLYHEDRALSURFACE Z (((1 2 3,4 5 6,7 8 9,1 2 3)),((10 11 12,13 14 15,16 17 18,10 11 12)))':
-        gdaltest.post_reason('<gml:PolyhedralSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYHEDRALSURFACE Z (((1 2 3,4 5 6,7 8 9,1 2 3)),((10 11 12,13 14 15,16 17 18,10 11 12)))', \
+        '<gml:PolyhedralSurface> not correctly parsed'
 
     # Variations of empty PolyhedralSurface
     gml_strings = ['<gml:PolyhedralSurface></gml:PolyhedralSurface>',
@@ -955,10 +881,8 @@ def test_gml_PolyhedralSurface():
 
     for string in gml_strings:
         geom = ogr.CreateGeometryFromGML(string)
-        if geom.ExportToWkt() != 'POLYHEDRALSURFACE EMPTY':
-            gdaltest.post_reason('Empty <gml:PolyhedralSurface> not correctly parsed')
-            print(geom.ExportToWkt())
-            return 'fail'
+        assert geom.ExportToWkt() == 'POLYHEDRALSURFACE EMPTY', \
+            'Empty <gml:PolyhedralSurface> not correctly parsed'
 
     # Conversion from OGR -> GML
     wkt_original = 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),\
@@ -971,15 +895,13 @@ def test_gml_PolyhedralSurface():
     opts = ["FORMAT=GML3"]
     string = ps.ExportToGML(opts)
     if string != '<gml:PolyhedralSurface><gml:polygonPatches><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 0 1 0 1 1 0 1 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 1 0 1 1 0 1 0 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 1 0 0 1 0 1 0 0 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">1 1 0 1 1 1 1 0 1 1 0 0 1 1 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 0 0 1 1 1 1 1 1 1 0 0 1 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 1 1 0 1 1 1 1 0 1 1 0 0 1</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch></gml:polygonPatches></gml:PolyhedralSurface>':
-        gdaltest.post_reason('incorrect parsing of OGR -> GML for PolyhedralSurface')
         print(geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('incorrect parsing of OGR -> GML for PolyhedralSurface')
 
     g2 = ogr.CreateGeometryFromGML(string)
     if g2.Equals(ps) != 1:
-        gdaltest.post_reason('incorrect round-tripping')
         print(geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('incorrect round-tripping')
 
     # empty geometry
     wkt_original = 'POLYHEDRALSURFACE EMPTY'
@@ -987,9 +909,8 @@ def test_gml_PolyhedralSurface():
     opts = ["FORMAT=GML3"]
     string = ps.ExportToGML(opts)
     if string != '<gml:PolyhedralSurface><gml:polygonPatches></gml:polygonPatches></gml:PolyhedralSurface>':
-        gdaltest.post_reason('incorrect parsing of OGR -> GML for empty PolyhedralSurface')
         print(geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('incorrect parsing of OGR -> GML for empty PolyhedralSurface')
 
     # several polygon patches (and test that non elements such as comments are parsed OK)
     gml = """<gml:PolyhedralSurface>
@@ -1016,10 +937,8 @@ def test_gml_PolyhedralSurface():
             </gml:PolyhedralSurface>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYHEDRALSURFACE (((1 2 3,4 5 6,7 8 9,1 2 3))),POLYHEDRALSURFACE (((1 2 3,4 5 6,7 8 9,1 2 3))))':
-        gdaltest.post_reason('<gml:PolyhedralSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'GEOMETRYCOLLECTION (POLYHEDRALSURFACE (((1 2 3,4 5 6,7 8 9,1 2 3))),POLYHEDRALSURFACE (((1 2 3,4 5 6,7 8 9,1 2 3))))', \
+        '<gml:PolyhedralSurface> not correctly parsed'
 
     # Test PolyhedralSurface with curve section (which we linearize since the SF PolyhedralSurface doesn't support curves)
     gml = """<gml:PolyhedralSurface>
@@ -1049,10 +968,8 @@ def test_gml_PolyhedralSurface():
             </gml:PolyhedralSurface>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt().find('POLYHEDRALSURFACE (((0 -1,0 1,') < 0:
-        gdaltest.post_reason('<gml:PolyhedralSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt().find('POLYHEDRALSURFACE (((0 -1,0 1,') >= 0, \
+        '<gml:PolyhedralSurface> not correctly parsed'
 
     return 'success'
 
@@ -1078,10 +995,8 @@ def test_gml_Tin():
 
     # NOTE - this is actually an invalid TIN surface, as the triangle is incorrect
     # need to assert geom.IsValid() == True to determine the validity of the geometry
-    if geom.ExportToWkt() != 'TIN Z (((0 0 1,0 1 1,1 1 1,1 0 1,0 0 1)))':
-        gdaltest.post_reason('<gml:Tin> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'TIN Z (((0 0 1,0 1 1,1 1 1,1 0 1,0 0 1)))', \
+        '<gml:Tin> not correctly parsed'
 
     # Test for gml:TriangulatedSurface
     gml = """<gml:TriangulatedSurface>
@@ -1105,10 +1020,8 @@ def test_gml_Tin():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))':
-        gdaltest.post_reason('<gml:Tin> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))', \
+        '<gml:Tin> not correctly parsed'
 
     # substituting gml:trianglePatches for gml:patches
     gml = """<gml:TriangulatedSurface>
@@ -1132,10 +1045,8 @@ def test_gml_Tin():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))':
-        gdaltest.post_reason('<gml:Tin> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))', \
+        '<gml:Tin> not correctly parsed'
 
     # Part 2 - Create GML File from OGR Geometries
     wkt_original = 'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))'
@@ -1145,9 +1056,8 @@ def test_gml_Tin():
     gml_string = tin.ExportToGML(opts)
 
     if gml_string != '<gml:TriangulatedSurface><gml:patches><gml:Triangle><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 0 1 0 1 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Triangle><gml:Triangle><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 1 0 1 1 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Triangle></gml:patches></gml:TriangulatedSurface>':
-        gdaltest.post_reason('OGRGeometry::TriangulatedSurface incorrectly converted')
         print(geom.ExportToWkt())
-        return 'fail'
+        pytest.fail('OGRGeometry::TriangulatedSurface incorrectly converted')
 
     return 'success'
 
@@ -1185,13 +1095,9 @@ def test_gml_ConcatenatedDeduplication():
     geom = ogr.CreateGeometryFromGML(gml)
 
     expected_wkt = 'CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1)))'
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) == 0
 
-    if ogrtest.have_geos() and not geom.IsValid():
-        gdaltest.post_reason('geometry not valid')
-        return 'fail'
+    assert not ogrtest.have_geos() or geom.IsValid(), 'geometry not valid'
 
     return 'success'
 
@@ -1204,18 +1110,12 @@ def gml_out_precision():
     geom = ogr.CreateGeometryFromWkt('POINT(93538.15 1.23456789)')
     expected_gml = '<gml:Point><gml:coordinates>93538.15,1.23456789</gml:coordinates></gml:Point>'
     got_gml = geom.ExportToGML()
-    if got_gml != expected_gml:
-        gdaltest.post_reason('did not get expected gml')
-        print(got_gml)
-        return 'fail'
+    assert got_gml == expected_gml, 'did not get expected gml'
 
     geom = ogr.CreateGeometryFromWkt('POINT(93538.55 1234567.89)')
     expected_gml = '<gml:Point><gml:coordinates>93538.55,1234567.89</gml:coordinates></gml:Point>'
     got_gml = geom.ExportToGML()
-    if got_gml != expected_gml:
-        gdaltest.post_reason('did not get expected gml')
-        print(got_gml)
-        return 'fail'
+    assert got_gml == expected_gml, 'did not get expected gml'
 
     return 'success'
 
@@ -1381,18 +1281,16 @@ def test_gml_invalid_geoms():
         geom = ogr.CreateGeometryFromGML(gml)
         gdal.PopErrorHandler()
         if geom is None:
-            if expected_wkt is not None:
-                gdaltest.post_reason('did not get expected result for %s. Got None instead of %s' % (gml, expected_wkt))
-                return 'fail'
+            assert expected_wkt is None, \
+                ('did not get expected result for %s. Got None instead of %s' % (gml, expected_wkt))
         else:
             wkt = geom.ExportToWkt()
             if expected_wkt is None:
                 gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
                 return 'fail'
             else:
-                if wkt != expected_wkt:
-                    gdaltest.post_reason('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
-                    return 'fail'
+                assert wkt == expected_wkt, \
+                    ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
     return 'success'
 
@@ -1422,9 +1320,7 @@ def test_gml_write_gml3_geometries():
             gml_out = geom.ExportToGML(['FORMAT=GML3', 'GML3_LINESTRING_ELEMENT=curve'])
         else:
             gml_out = geom.ExportToGML(['FORMAT=GML3'])
-        if gml_out != gml_in:
-            gdaltest.post_reason('got %s, instead of %s' % (gml_out, gml_in))
-            return 'fail'
+        assert gml_out == gml_in, ('got %s, instead of %s' % (gml_out, gml_in))
 
     return 'success'
 
@@ -1447,63 +1343,49 @@ def test_gml_write_gml3_srs():
     geom.AssignSpatialReference(sr32631)
     gml3 = geom.ExportToGML(options=['FORMAT=GML3'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4500000</gml:pos></gml:Point>'
-    if gml3 != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
-        return 'fail'
+    assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
     # Should perform the needed coordinate order swapping
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
     gml3 = geom.ExportToGML(options=['FORMAT=GML3'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
-    if gml3 != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
-        return 'fail'
+    assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
     # Should not change the coordinate order.
     geom = ogr.CreateGeometryFromWkt('POINT(49 2)')
     geom.AssignSpatialReference(srlatlong)
     gml3 = geom.ExportToGML(options=['FORMAT=GML3'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
-    if gml3 != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
-        return 'fail'
+    assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
     # Legacy SRS format
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
     gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'GML3_LONGSRS=NO'])
     expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
-    if gml3 != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
-        return 'fail'
+    assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
     # Test SRSNAME_FORMAT=SHORT
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
     gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'SRSNAME_FORMAT=SHORT'])
     expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
-    if gml3 != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
-        return 'fail'
+    assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
     # Test SRSNAME_FORMAT=SRSNAME_FORMAT
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
     gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URN'])
     expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
-    if gml3 != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
-        return 'fail'
+    assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
     # Test SRSNAME_FORMAT=OGC_URL
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
     geom.AssignSpatialReference(srlonglat)
     gml3 = geom.ExportToGML(options=['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URL'])
     expected_gml = '<gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>49 2</gml:pos></gml:Point>'
-    if gml3 != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
-        return 'fail'
+    assert gml3 == expected_gml, ('got %s, instead of %s' % (gml3, expected_gml))
 
     return 'success'
 
@@ -1518,9 +1400,7 @@ def test_gml_nested():
     gml += '</gml:geometryMember></gml:MultiGeometry>' * 31
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom is None:
-        gdaltest.post_reason('expected a geometry')
-        return 'fail'
+    assert geom is not None, 'expected a geometry'
 
     gml = '<gml:MultiGeometry><gml:geometryMember>' * 32
     gml += '<gml:MultiPolygon></gml:MultiPolygon>'
@@ -1529,9 +1409,7 @@ def test_gml_nested():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromGML(gml)
     gdal.PopErrorHandler()
-    if geom is not None:
-        gdaltest.post_reason('expected None')
-        return 'fail'
+    assert geom is None, 'expected None'
 
     return 'success'
 
@@ -1545,10 +1423,8 @@ def test_gml_SimplePolygon():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((0 0,1 0,1 1,0 1,0 0))':
-        gdaltest.post_reason('<gmlce:SimplePolygon> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((0 0,1 0,1 1,0 1,0 0))', \
+        '<gmlce:SimplePolygon> not correctly parsed'
 
     return 'success'
 
@@ -1562,10 +1438,8 @@ def test_gml_SimpleRectangle():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((0 0,1 0,1 1,0 1,0 0))':
-        gdaltest.post_reason('<gmlce:SimpleRectangle> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((0 0,1 0,1 1,0 1,0 0))', \
+        '<gmlce:SimpleRectangle> not correctly parsed'
 
     return 'success'
 
@@ -1579,10 +1453,8 @@ def test_gml_SimpleTriangle():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'TRIANGLE ((0 0,1 0,1 1,0 0))':
-        gdaltest.post_reason('<gmlce:SimpleTriangle> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'TRIANGLE ((0 0,1 0,1 1,0 0))', \
+        '<gmlce:SimpleTriangle> not correctly parsed'
 
     return 'success'
 
@@ -1596,10 +1468,8 @@ def test_gml_SimpleMultiPoint():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTIPOINT (0 1,2 3)':
-        gdaltest.post_reason('<gmlce:SimpleMultiPoint> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTIPOINT (0 1,2 3)', \
+        '<gmlce:SimpleMultiPoint> not correctly parsed'
 
     return 'success'
 
@@ -1656,9 +1526,7 @@ def test_gml_CompositeCurveInRing():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,0 0))'
 
     return 'success'
 
@@ -1695,9 +1563,7 @@ def test_gml_CompositeSurface_in_surfaceMembers():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((2 0,2 1,3 1,3 0,2 0)))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((2 0,2 1,3 1,3 0,2 0)))'
 
     return 'success'
 
@@ -1751,9 +1617,7 @@ def test_gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25)),((0 0,0 -1,-1 -1,-1 0,0 0)))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25)),((0 0,0 -1,-1 -1,-1 0,0 0)))'
 
     return 'success'
 
@@ -1787,9 +1651,8 @@ def test_gml_Coordinates_ts_cs_decimal():
             gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
             return 'fail'
         else:
-            if wkt != expected_wkt:
-                gdaltest.post_reason('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
-                return 'fail'
+            assert wkt == expected_wkt, \
+                ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
     return 'success'
 
@@ -1831,9 +1694,8 @@ def test_gml_with_xml_header_and_comments():
             gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
             return 'fail'
         else:
-            if wkt != expected_wkt:
-                gdaltest.post_reason('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
-                return 'fail'
+            assert wkt == expected_wkt, \
+                ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
     return 'success'
 
@@ -1859,9 +1721,7 @@ def test_gml_srsDimension_topgeometry():
 
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if geom.ExportToWkt() != 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))'
 
     return 'success'
 
@@ -1874,20 +1734,14 @@ def test_gml_Arc():
     gml = "<gml:Arc><gml:posList>1 0 0 1 -1 0</gml:posList></gml:Arc>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 0,0 1,-1 0)')) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 0,0 1,-1 0)')) == 0
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:ArcString><gml:posList>1 0 0 1 -1 0</gml:posList></gml:ArcString></gml:segments></gml:Curve>'
-    if gml2 != expected_gml2:
-        print(gml2)
-        return 'fail'
+    assert gml2 == expected_gml2
 
     geom2 = ogr.CreateGeometryFromGML(gml2)
-    if not geom.Equals(geom2):
-        print(geom2)
-        return 'fail'
+    assert geom.Equals(geom2)
 
     return 'success'
 
@@ -1900,9 +1754,7 @@ def test_gml_ArcByBulge():
     gml = "<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (2 0,0 2,-2 0)')) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (2 0,0 2,-2 0)')) == 0
 
     return 'success'
 
@@ -1915,9 +1767,7 @@ def test_gml_ArcByCenterPoint():
     gml = "<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 4,-1 2,1 0)')) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 4,-1 2,1 0)')) == 0
 
     return 'success'
 
@@ -1977,9 +1827,7 @@ def test_gml_CompoundCurve_of_ArcByCenterPoint():
 </Surface>"""
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('POLYGON ((-80.4 33.86,-80.27 33.63,-80.305028054229538 33.622017309598967,-80.335422529369936 33.613343178471617,-80.366464292754429 33.606448070493634,-80.398003921948742 33.601365147653873,-80.429889693662162 33.598118851265042,-80.461968286017793 33.596724788982847,-80.494085487001527 33.597189662699385,-80.52608690656875 33.599511237590342,-80.557818688893789 33.603678352435914,-80.589128223167393 33.609670971175497,-80.619864849221443 33.617460275496377,-80.63 33.62,-80.39 33.85))')) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('POLYGON ((-80.4 33.86,-80.27 33.63,-80.305028054229538 33.622017309598967,-80.335422529369936 33.613343178471617,-80.366464292754429 33.606448070493634,-80.398003921948742 33.601365147653873,-80.429889693662162 33.598118851265042,-80.461968286017793 33.596724788982847,-80.494085487001527 33.597189662699385,-80.52608690656875 33.599511237590342,-80.557818688893789 33.603678352435914,-80.589128223167393 33.609670971175497,-80.619864849221443 33.617460275496377,-80.63 33.62,-80.39 33.85))')) == 0
 
     return 'success'
 
@@ -1992,9 +1840,7 @@ def test_gml_CircleByCenterPoint():
     gml = "<gml:CircleByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius></gml:CircleByCenterPoint>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (-1 2,3 2,-1 2)')) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (-1 2,3 2,-1 2)')) == 0
 
     return 'success'
 
@@ -2011,28 +1857,20 @@ def test_gml_Circle():
     geom = ogr.CreateGeometryFromGML(gml)
 
     expected_wkt = 'CIRCULARSTRING (-1 0,0 1,-0.707106781186547 -0.707106781186548,-0.923879532511287 -0.38268343236509,-1 0)'
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) == 0
 
     geom = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,2 0,0 0)')
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 1 1 2 0</gml:posList></gml:Circle></gml:segments></gml:Curve>'
-    if gml2 != expected_gml2:
-        print(gml2)
-        return 'fail'
+    assert gml2 == expected_gml2
 
     geom2 = ogr.CreateGeometryFromGML(gml2)
-    if geom2.ExportToWkt() != 'CIRCULARSTRING (0 0,1 1,2 0,1 -1,0 0)':
-        print(geom2)
-        return 'fail'
+    assert geom2.ExportToWkt() == 'CIRCULARSTRING (0 0,1 1,2 0,1 -1,0 0)'
 
     geom = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0 10,2 0 10,0 0 10)')
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:Circle><gml:posList srsDimension="3">0 0 10 1 1 10 2 0 10</gml:posList></gml:Circle></gml:segments></gml:Curve>'
-    if gml2 != expected_gml2:
-        print(gml2)
-        return 'fail'
+    assert gml2 == expected_gml2
 
     gml = """<gml:PolygonPatch>
                 <gml:exterior>
@@ -2053,9 +1891,7 @@ def test_gml_Circle():
     geom = ogr.CreateGeometryFromGML(gml)
 
     expected_wkt = 'CURVEPOLYGON ( CIRCULARSTRING (-1 0,0 1,-0.707106781186547 -0.707106781186548,-0.923879532511287 -0.38268343236509,-1 0))'
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
-        print(geom)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) == 0
 
     return 'success'
 
@@ -2067,26 +1903,18 @@ def test_gml_ArcString():
 
     gml = """<gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0</gml:posList></gml:ArcString>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0)':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'CIRCULARSTRING (-2 0,-1 -1,0 0)'
 
     gml = """<gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)'
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Curve><gml:segments><gml:ArcString><gml:posList>-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString></gml:segments></gml:Curve>'
-    if gml2 != expected_gml2:
-        print(gml2)
-        return 'fail'
+    assert gml2 == expected_gml2
 
     geom2 = ogr.CreateGeometryFromGML(gml2)
-    if geom2.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)':
-        print(geom2)
-        return 'fail'
+    assert geom2.ExportToWkt() == 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)'
 
     return 'success'
 
@@ -2100,30 +1928,21 @@ def test_gml_OGRCompoundCurve():
     geom = ogr.CreateGeometryFromWkt(wkt)
     gml = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml = '<gml:CompositeCurve><gml:curveMember><gml:LineString><gml:posList>0 0 1 1 2 0</gml:posList></gml:LineString></gml:curveMember></gml:CompositeCurve>'
-    if gml != expected_gml:
-        print(gml)
-        return 'fail'
+    assert gml == expected_gml
 
     # CompositeCurve of LineStringSegment
     gml = expected_gml
     geom = ogr.CreateGeometryFromGML(gml)
     # We simplify it in LINESTRING
-    if geom.ExportToWkt() != 'LINESTRING (0 0,1 1,2 0)':
-        # if geom.ExportToWkt() != wkt
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'LINESTRING (0 0,1 1,2 0)'
 
     # CompositeCurve of Arc
     gml = """<gml:CompositeCurve><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList>0 0 1 1 2 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:CompositeCurve>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0))'
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
-    if gml2 != gml:
-        print(gml2)
-        return 'fail'
+    assert gml2 == gml
 
     # CompositeCurve of 3 arcs
     gml = """<gml:CompositeCurve>
@@ -2132,9 +1951,7 @@ def test_gml_OGRCompoundCurve():
     <gml:curveMember><gml:Curve><gml:segments><gml:Arc><gml:posList>4 0 5 1 6 0</gml:posList></gml:Arc></gml:segments></gml:Curve></gml:curveMember>
     </gml:CompositeCurve>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,3 1,4 0),CIRCULARSTRING (4 0,5 1,6 0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,3 1,4 0),CIRCULARSTRING (4 0,5 1,6 0))'
 
     # Alternative syntax : Curve with 3 Arc segments
     gml = """<gml:Curve><gml:segments>
@@ -2143,9 +1960,7 @@ def test_gml_OGRCompoundCurve():
             <gml:Arc><gml:posList>4 0 5 1 6 0</gml:posList></gml:Arc>
             </gml:segments></gml:Curve>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,3 1,4 0),CIRCULARSTRING (4 0,5 1,6 0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,3 1,4 0),CIRCULARSTRING (4 0,5 1,6 0))'
 
     # Curve with LineStringSegment and Arc segments
     gml = """<gml:Curve><gml:segments>
@@ -2153,9 +1968,7 @@ def test_gml_OGRCompoundCurve():
             <gml:LineStringSegment><gml:posList>0 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
             </gml:segments></gml:Curve>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,0 0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,0 0))'
 
     # Composite curve of a LineString and a (Composite) Curve with an Arc and a LineString
     gml = """<gml:CompositeCurve>
@@ -2168,9 +1981,7 @@ def test_gml_OGRCompoundCurve():
     </gml:curveMember>
     </gml:CompositeCurve>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 0,0 0),CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,0 0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'COMPOUNDCURVE ((0 0,1 0,0 0),CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,0 0))'
 
     return 'success'
 
@@ -2183,44 +1994,33 @@ def test_gml_OGRCurvePolygon():
     # Test one CircularString
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))'
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:exterior></gml:Polygon>'
-    if gml2 != expected_gml2:
-        print(gml2)
-        return 'fail'
+    assert gml2 == expected_gml2
 
     # Test two CircularString
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))'
 
     # Test a LinearRing followed by a CircularString
     gml = """<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LinearRing></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'CURVEPOLYGON ((-2 -2,-2 2,2 2,2 -2,-2 -2),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))':
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'CURVEPOLYGON ((-2 -2,-2 2,2 2,2 -2,-2 -2),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))'
 
     # Test a CircularString followed by a LinearRing
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Circle><gml:posList>-1 0 1 2 3 0</gml:posList></gml:Circle></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:LinearRing><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    if ogrtest.check_feature_geometry(geom, 'CURVEPOLYGON (CIRCULARSTRING (-1 0,1 2,3 0,1.0 -2.0,-1 0),(-2 -2,-2 2,2 2,2 -2,-2 -2))') != 0:
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom, 'CURVEPOLYGON (CIRCULARSTRING (-1 0,1 2,3 0,1.0 -2.0,-1 0),(-2 -2,-2 2,2 2,2 -2,-2 -2))') == 0, \
+        geom.ExportToWkt()
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     geom2 = ogr.CreateGeometryFromGML(gml)
     expected_gml2 = '<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:ArcString><gml:posList>-1 0 1 2 3 0 1 -2 -1 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:exterior><gml:interior><gml:LineString><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LineString></gml:interior></gml:Polygon>'
     expected_geom2 = ogr.CreateGeometryFromGML(expected_gml2)
-    if ogrtest.check_feature_geometry(geom2, expected_geom2) != 0:
-        print(gml2)
-        return 'fail'
+    assert ogrtest.check_feature_geometry(geom2, expected_geom2) == 0, gml2
 
     return 'success'
 
@@ -2246,10 +2046,8 @@ def test_gml_OGRMultiSurface():
 </gml:MultiSurface>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)))':
-        gdaltest.post_reason('<gml:MultiSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)))', \
+        '<gml:MultiSurface> not correctly parsed'
 
     # MultiSurface of Polygon and CurvePolygon
     gml = """<gml:MultiSurface>
@@ -2270,10 +2068,8 @@ def test_gml_OGRMultiSurface():
 </gml:MultiSurface>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'MULTISURFACE (((0 0,0 1,1 1,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)))':
-        gdaltest.post_reason('<gml:MultiSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTISURFACE (((0 0,0 1,1 1,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)))', \
+        '<gml:MultiSurface> not correctly parsed'
 
     # MultiSurface of CurvePolygon and Polygon
     gml = """<gml:MultiSurface>
@@ -2294,17 +2090,13 @@ def test_gml_OGRMultiSurface():
 </gml:MultiSurface>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)),((0 0,0 1,1 1,0 0)))':
-        gdaltest.post_reason('<gml:MultiSurface> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)),((0 0,0 1,1 1,0 0)))', \
+        '<gml:MultiSurface> not correctly parsed'
 
     geom = ogr.CreateGeometryFromWkt('MULTISURFACE (CURVEPOLYGON((0 0,0 1,1 1,1 0,0 0)))')
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
     expected_gml2 = '<gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>'
-    if gml2 != expected_gml2:
-        print(gml2)
-        return 'fail'
+    assert gml2 == expected_gml2
 
     return 'success'
 
@@ -2318,15 +2110,11 @@ def test_gml_OGRMultiCurve():
     gml = """<gml:MultiCurve><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList>0 0 1 1 1 -1</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:MultiCurve>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'MULTICURVE (CIRCULARSTRING (0 0,1 1,1 -1))':
-        gdaltest.post_reason('<gml:MultiCurve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTICURVE (CIRCULARSTRING (0 0,1 1,1 -1))', \
+        '<gml:MultiCurve> not correctly parsed'
 
     gml2 = geom.ExportToGML(['FORMAT=GML3'])
-    if gml2 != gml:
-        print(gml2)
-        return 'fail'
+    assert gml2 == gml
 
     # MultiCurve of LineString and Arc
     gml = """<gml:MultiCurve>
@@ -2341,10 +2129,8 @@ def test_gml_OGRMultiCurve():
 </gml:MultiCurve>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'MULTICURVE ((0 0,1 1,1 -1),CIRCULARSTRING (0 0,1 1,1 -1))':
-        gdaltest.post_reason('<gml:MultiCurve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTICURVE ((0 0,1 1,1 -1),CIRCULARSTRING (0 0,1 1,1 -1))', \
+        '<gml:MultiCurve> not correctly parsed'
 
     # MultiCurve of Arc and LineString
     gml = """<gml:MultiCurve>
@@ -2359,10 +2145,8 @@ def test_gml_OGRMultiCurve():
 </gml:MultiCurve>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'MULTICURVE (CIRCULARSTRING (0 0,1 1,1 -1),(0 0,1 1,1 -1))':
-        gdaltest.post_reason('<gml:MultiCurve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTICURVE (CIRCULARSTRING (0 0,1 1,1 -1),(0 0,1 1,1 -1))', \
+        '<gml:MultiCurve> not correctly parsed'
 
     # MultiCurve of CompositeCurve
     gml = """<gml:MultiCurve>
@@ -2381,10 +2165,8 @@ def test_gml_OGRMultiCurve():
 </gml:MultiCurve>"""
 
     geom = ogr.CreateGeometryFromGML(gml)
-    if geom.ExportToWkt() != 'MULTICURVE (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1),(1 -1,1 1,1 -1)))':
-        gdaltest.post_reason('<gml:MultiCurve> not correctly parsed')
-        print(geom.ExportToWkt())
-        return 'fail'
+    assert geom.ExportToWkt() == 'MULTICURVE (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1),(1 -1,1 1,1 -1)))', \
+        '<gml:MultiCurve> not correctly parsed'
 
     return 'success'
 
@@ -2397,23 +2179,17 @@ def test_gml_write_gml_ns():
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
     gml = geom.ExportToGML(options=['NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml"><gml:coordinates>500000,4500000</gml:coordinates></gml:Point>'
-    if gml != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
-        return 'fail'
+    assert gml == expected_gml, ('got %s, instead of %s' % (gml, expected_gml))
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
     gml = geom.ExportToGML(options=['FORMAT=GML3', 'NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml"><gml:pos>500000 4500000</gml:pos></gml:Point>'
-    if gml != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
-        return 'fail'
+    assert gml == expected_gml, ('got %s, instead of %s' % (gml, expected_gml))
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
     gml = geom.ExportToGML(options=['FORMAT=GML32', 'GMLID=foo', 'NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml/3.2" gml:id="foo"><gml:pos>500000 4500000</gml:pos></gml:Point>'
-    if gml != expected_gml:
-        gdaltest.post_reason('got %s, instead of %s' % (gml, expected_gml))
-        return 'fail'
+    assert gml == expected_gml, ('got %s, instead of %s' % (gml, expected_gml))
 
     return 'success'
 

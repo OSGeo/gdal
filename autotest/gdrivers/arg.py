@@ -134,12 +134,10 @@ def test_arg_unsupported():
             if name == 'int64' or name == 'uint64':
                 with gdaltest.error_handler('CPLQuietErrorHandler'):
                     ds = gdal.Open('data/arg-' + name + '.arg')
-                if ds is not None:
-                    return 'fail'
+                assert ds is None
             else:
                 ds = gdal.Open('data/arg-' + name + '.arg')
-                if ds is None:
-                    return 'fail'
+                assert ds is not None
 
     return 'success'
 
@@ -155,8 +153,7 @@ def test_arg_getrastercount():
             if ds is None:
                 continue
 
-            if ds.RasterCount != 1:
-                return 'fail'
+            assert ds.RasterCount == 1
 
     return 'success'
 
@@ -174,13 +171,12 @@ def test_arg_getgeotransform():
 
             gt = ds.GetGeoTransform()
 
-            if gt[0] != 0 or \
-                    gt[1] != 1 or \
-                    gt[2] != 0 or \
-                    gt[3] != 2 or \
-                    gt[4] != 0 or \
-                    gt[5] != -1:
-                return 'fail'
+            assert (gt[0] == 0 and \
+                    gt[1] == 1 and \
+                    gt[2] == 0 and \
+                    gt[3] == 2 and \
+                    gt[4] == 0 and \
+                    gt[5] == -1)
 
     return 'success'
 
@@ -190,8 +186,7 @@ def test_arg_blocksize():
         return 'skip'
 
     tifDriver = gdal.GetDriverByName('GTiff')
-    if tifDriver is None:
-        return 'fail'
+    assert tifDriver is not None
 
     ds = gdal.Open('data/utm.tif')
     xsize = ds.RasterXSize
@@ -212,8 +207,7 @@ def test_arg_blocksize():
     os.remove('data/utm-uneven-blocks.tif')
     gdal.GetDriverByName('ARG').Delete('data/utm.arg')
 
-    if stat.st_size != (xsize * ysize):
-        return 'fail'
+    assert stat.st_size == (xsize * ysize)
 
     return 'success'
 
@@ -235,8 +229,7 @@ def test_arg_layername():
     ds.SetMetadataItem('LAYER', lyr)
 
     # did the layer name stick?
-    if ds.GetMetadata()['LAYER'] != lyr:
-        return 'fail'
+    assert ds.GetMetadata()['LAYER'] == lyr
 
     # copy the dataset to a new ARG
     ds2 = gdaltest.argDriver.CreateCopy('data/arg-int16-2.arg', ds, False)
@@ -253,8 +246,7 @@ def test_arg_layername():
     gdal.GetDriverByName('ARG').Delete('data/arg-int16-2.arg')
 
     # does the new dataset's layer match the layer set before copying
-    if lyr2 != lyr:
-        return 'fail'
+    assert lyr2 == lyr
 
     os.unlink('data/arg-int16.arg.aux.xml')
 
@@ -271,8 +263,7 @@ def test_arg_nodata():
 
     ds = gdal.Open('data/arg-int8.arg')
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 128:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 128
 
     return 'success'
 
@@ -289,8 +280,7 @@ def test_arg_byteorder():
         return 'skip'
 
     tifDriver = gdal.GetDriverByName('GTiff')
-    if tifDriver is None:
-        return 'fail'
+    assert tifDriver is not None
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:
@@ -302,12 +292,10 @@ def test_arg_byteorder():
                 continue
 
             dest = tifDriver.CreateCopy(basename + '.tif', orig, False)
-            if dest is None:
-                return 'fail'
+            assert dest is not None
 
             mirror = gdaltest.argDriver.CreateCopy(basename + '2.arg', dest, False)
-            if mirror is None:
-                return 'fail'
+            assert mirror is not None
 
             orig = None
             dest = None
@@ -325,8 +313,7 @@ def test_arg_byteorder():
             gdal.GetDriverByName('GTiff').Delete(basename + '.tif')
             gdal.GetDriverByName('ARG').Delete(basename + '2.arg')
 
-            if data1 != data2:
-                return 'fail'
+            assert data1 == data2
 
     return 'success'
 

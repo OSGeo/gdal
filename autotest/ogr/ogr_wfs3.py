@@ -69,8 +69,7 @@ def test_ogr_wfs3_errors():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # No Content-Type
     handler = webserver.SequentialHandler()
@@ -78,8 +77,7 @@ def test_ogr_wfs3_errors():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Unexpected Content-Type
     handler = webserver.SequentialHandler()
@@ -88,8 +86,7 @@ def test_ogr_wfs3_errors():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Invalid JSON
     handler = webserver.SequentialHandler()
@@ -98,8 +95,7 @@ def test_ogr_wfs3_errors():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Valid JSON but not collections array
     handler = webserver.SequentialHandler()
@@ -108,8 +104,7 @@ def test_ogr_wfs3_errors():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     # Valid JSON but collections is not an array
     handler = webserver.SequentialHandler()
@@ -119,8 +114,7 @@ def test_ogr_wfs3_errors():
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200,
@@ -128,14 +122,10 @@ def test_ogr_wfs3_errors():
                 '{ "collections" : [ null, {} ] }')
     with webserver.install_http_handler(handler):
         ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
-    if ds.GetLayerCount() != 0:
-        return 'fail'
-    if ds.GetLayer(-1) is not None:
-        return 'fail'
-    if ds.GetLayer(0) is not None:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 0
+    assert ds.GetLayer(-1) is None
+    assert ds.GetLayer(0) is None
 
     return 'success'
 
@@ -155,21 +145,17 @@ def test_ogr_wfs3_empty_layer():
                 '{ "collections" : [ { "name": "foo" }] }')
     with webserver.install_http_handler(handler):
         ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'foo':
-        return 'fail'
+    assert lyr.GetName() == 'foo'
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
                 {'Content-Type': 'application/geo+json'},
                 '{ "type": "FeatureCollection", "features": [] }')
     with webserver.install_http_handler(handler):
-        if lyr.GetLayerDefn().GetFieldCount() != 0:
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldCount() == 0
 
     return 'success'
 
@@ -202,8 +188,7 @@ def test_ogr_wfs3_fc_links_next_geojson():
                     }
                 ] }""")
     with webserver.install_http_handler(handler):
-        if lyr.GetLayerDefn().GetFieldCount() != 1:
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
@@ -275,8 +260,7 @@ def test_ogr_wfs3_fc_links_next_headers():
                     }
                 ] }""")
     with webserver.install_http_handler(handler):
-        if lyr.GetLayerDefn().GetFieldCount() != 1:
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
 
     handler = webserver.SequentialHandler()
     link_val = '<http://data.example.org/buildings.json>; rel="self"; type="application/geo+json"\r\nLink: <http://localhost:%d/wfs3/foo_next>; rel="next"; type="application/geo+json"' % gdaltest.webserver_port
@@ -339,9 +323,7 @@ def test_ogr_wfs3_spatial_filter():
     with webserver.install_http_handler(handler):
         ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
-    if lyr.GetExtent() != (-10.0, 15.0, 40.0, 50.0):
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (-10.0, 15.0, 40.0, 50.0)
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
@@ -355,8 +337,7 @@ def test_ogr_wfs3_spatial_filter():
                     }
                 ] }""")
     with webserver.install_http_handler(handler):
-        if lyr.GetLayerDefn().GetFieldCount() != 1:
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
 
     lyr.SetSpatialFilterRect(2, 49, 3, 50)
     handler = webserver.SequentialHandler()
@@ -376,8 +357,7 @@ def test_ogr_wfs3_spatial_filter():
                 ] }""")
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     lyr.SetSpatialFilter(None)
     lyr.ResetReading()
@@ -393,8 +373,7 @@ def test_ogr_wfs3_spatial_filter():
                 ] }""")
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     return 'success'
 
@@ -453,16 +432,14 @@ def test_ogr_wfs3_get_feature_count():
                 {'Content-Type': 'application/json'},
                 '{ "numberMatched": 1234 }')
     with webserver.install_http_handler(handler):
-        if lyr.GetFeatureCount() != 1234:
-            return 'fail'
+        assert lyr.GetFeatureCount() == 1234
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections/foo/items?resultType=hits', 200,
                 {'Content-Type': 'application/json'},
                 '{ "numberMatched": 1234 }')
     with webserver.install_http_handler(handler):
-        if lyr.GetFeatureCount() != 1234:
-            return 'fail'
+        assert lyr.GetFeatureCount() == 1234
 
     return 'success'
 
@@ -545,8 +522,7 @@ def test_ogr_wfs3_attribute_filter():
                 ] }""")
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     lyr.ResetReading()
     lyr.SetAttributeFilter("attr1 = 'foo' OR attr3 = 'bar'")
@@ -564,8 +540,7 @@ def test_ogr_wfs3_attribute_filter():
                 ] }""")
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     lyr.ResetReading()
     lyr.SetAttributeFilter(None)
@@ -583,8 +558,7 @@ def test_ogr_wfs3_attribute_filter():
                 ] }""")
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
 
     return 'success'
 

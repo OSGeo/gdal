@@ -73,13 +73,9 @@ def test_ogr_nas_1():
         pass
 
     ds = ogr.Open('tmp/cache/BKG_NAS_Peine.xml')
-    if ds is None:
-        gdaltest.post_reason('could not open dataset')
-        return 'fail'
+    assert ds is not None, 'could not open dataset'
 
-    if ds.GetLayerCount() != 41:
-        gdaltest.post_reason('did not get expected layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 41, 'did not get expected layer count'
 
     lyr = ds.GetLayerByName('AX_Wohnplatz')
     feat = lyr.GetNextFeature()
@@ -133,14 +129,9 @@ def test_ogr_nas_2():
         pass
 
     ds = ogr.Open('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
-    if ds is None:
-        gdaltest.post_reason('could not open dataset')
-        return 'fail'
+    assert ds is not None, 'could not open dataset'
 
-    if ds.GetLayerCount() != 85:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 85, 'did not get expected layer count'
 
     lyr = ds.GetLayerByName('AX_Flurstueck')
 
@@ -148,8 +139,7 @@ def test_ogr_nas_2():
     feat = lyr.GetNextFeature()
     while feat is not None and feat.GetField('identifier') != 'urn:adv:oid:DERP1234000002Iz':
         feat = lyr.GetNextFeature()
-    if feat is None:
-        return 'fail'
+    assert feat is not None
 
     # expected_geom = 'POLYGON ((350821.045 5532031.37,350924.309 5532029.513,350938.493 5532026.622,350951.435 5532021.471,350978.7 5532007.18,351026.406 5531971.088,351032.251 5531951.162,351080.623 5531942.67,351154.886 5531963.718,351207.689 5532019.797,351211.063 5532044.067,351203.83 5532074.034,351165.959 5532114.315,351152.85 5532135.774,351141.396 5532140.355,351110.659 5532137.542,351080.17 5532132.742,351002.887 5532120.75,350925.682 5532108.264,350848.556 5532095.285,350771.515 5532081.814,350769.548 5532071.196,350812.194 5532034.716,350821.045 5532031.37))'
     expected_geom = 'CURVEPOLYGON (COMPOUNDCURVE ((350821.045 5532031.37,350924.309 5532029.513,350938.493 5532026.622,350951.435 5532021.471,350978.7 5532007.18,351026.406 5531971.088,351032.251 5531951.16199999955),(351032.251 5531951.16199999955,351080.623 5531942.67,351154.886 5531963.718),(351154.886 5531963.718,351207.689 5532019.797),(351207.689 5532019.797,351211.063 5532044.06699999981,351203.83 5532074.034,351165.959 5532114.315,351152.85 5532135.774),(351152.85 5532135.774,351141.396 5532140.355),CIRCULARSTRING (351141.396 5532140.355,351110.659 5532137.542,351080.17 5532132.74199999962),CIRCULARSTRING (351080.17 5532132.74199999962,351002.887 5532120.75,350925.682 5532108.264),CIRCULARSTRING (350925.682 5532108.264,350848.556 5532095.285,350771.515 5532081.814),(350771.515 5532081.814,350769.548 5532071.196,350812.194 5532034.716,350821.045 5532031.37)))'
@@ -174,14 +164,9 @@ def test_ogr_nas_3():
         return 'skip'
 
     ds = ogr.Open('data/empty_nas.xml')
-    if ds is None:
-        gdaltest.post_reason('could not open dataset')
-        return 'fail'
+    assert ds is not None, 'could not open dataset'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'did not get expected layer count'
 
     ds = None
 
@@ -204,35 +189,24 @@ def test_ogr_nas_4():
         pass
 
     ds = ogr.Open('data/delete_nas.xml')
-    if ds is None:
-        gdaltest.post_reason('could not open dataset')
-        return 'fail'
+    assert ds is not None, 'could not open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'did not get expected layer count'
 
     del_lyr = ds.GetLayerByName('Delete')
 
-    if del_lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason('did not get expected number of features')
-        return 'fail'
+    assert del_lyr.GetFeatureCount() == 3, 'did not get expected number of features'
 
     del_lyr.ResetReading()
     feat = del_lyr.GetNextFeature()
 
-    if feat.GetField('context') != 'Delete':
-        gdaltest.post_reason('did not get expected context')
-        return 'fail'
+    assert feat.GetField('context') == 'Delete', 'did not get expected context'
 
-    if feat.GetField('typeName') != 'AX_Namensnummer':
-        gdaltest.post_reason('did not get expected typeName')
-        return 'fail'
+    assert feat.GetField('typeName') == 'AX_Namensnummer', \
+        'did not get expected typeName'
 
-    if feat.GetField('FeatureId') != 'DENW44AL00000HJU20100730T092847Z':
-        gdaltest.post_reason('did not get expected FeatureId')
-        return 'fail'
+    assert feat.GetField('FeatureId') == 'DENW44AL00000HJU20100730T092847Z', \
+        'did not get expected FeatureId'
 
     del_lyr = None
     ds = None
@@ -261,45 +235,30 @@ def test_ogr_nas_5():
         pass
 
     ds = ogr.Open('data/replace_nas.xml')
-    if ds is None:
-        gdaltest.post_reason('could not open dataset')
-        return 'fail'
+    assert ds is not None, 'could not open dataset'
 
-    if ds.GetLayerCount() != 3:
-        gdaltest.post_reason('did not get expected layer count')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == 3, 'did not get expected layer count'
 
     # Check the delete operation created for the replace
 
     del_lyr = ds.GetLayerByName('Delete')
 
-    if del_lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('did not get expected number of features')
-        return 'fail'
+    assert del_lyr.GetFeatureCount() == 1, 'did not get expected number of features'
 
     del_lyr.ResetReading()
     feat = del_lyr.GetNextFeature()
 
-    if feat.GetField('context') != 'Replace':
-        gdaltest.post_reason('did not get expected context')
-        return 'fail'
+    assert feat.GetField('context') == 'Replace', 'did not get expected context'
 
-    if feat.GetField('replacedBy') != 'DENW44AL00003IkM20110429T070635Z':
-        gdaltest.post_reason('did not get expected replacedBy')
-        return 'fail'
+    assert feat.GetField('replacedBy') == 'DENW44AL00003IkM20110429T070635Z', \
+        'did not get expected replacedBy'
 
-    if feat.GetField('safeToIgnore') != 'false':
-        gdaltest.post_reason('did not get expected safeToIgnore')
-        return 'fail'
+    assert feat.GetField('safeToIgnore') == 'false', 'did not get expected safeToIgnore'
 
-    if feat.GetField('typeName') != 'AX_Flurstueck':
-        gdaltest.post_reason('did not get expected typeName')
-        return 'fail'
+    assert feat.GetField('typeName') == 'AX_Flurstueck', 'did not get expected typeName'
 
-    if feat.GetField('FeatureId') != 'DENW44AL00003IkM20100809T071726Z':
-        gdaltest.post_reason('did not get expected FeatureId')
-        return 'fail'
+    assert feat.GetField('FeatureId') == 'DENW44AL00003IkM20100809T071726Z', \
+        'did not get expected FeatureId'
 
     del_lyr = None
 
@@ -307,20 +266,15 @@ def test_ogr_nas_5():
 
     lyr = ds.GetLayerByName('AX_Flurstueck')
 
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('did not get expected number of features')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1, 'did not get expected number of features'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
-    if feat.GetField('gml_id') != 'DENW44AL00003IkM20110429T070635Z':
-        gdaltest.post_reason('did not get expected gml_id')
-        return 'fail'
+    assert feat.GetField('gml_id') == 'DENW44AL00003IkM20110429T070635Z', \
+        'did not get expected gml_id'
 
-    if feat.GetField('stelle') != 5212:
-        gdaltest.post_reason('did not get expected stelle')
-        return 'fail'
+    assert feat.GetField('stelle') == 5212, 'did not get expected stelle'
 
     lyr = None
 
