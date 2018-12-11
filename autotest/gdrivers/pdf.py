@@ -123,7 +123,7 @@ def pdf_checksum_available():
         return gdaltest.pdf_is_checksum_available
 
     (_, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
-    if err.find('pdftoppm version') == 0:
+    if err.startswith('pdftoppm version'):
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
     print('Cannot compute to checksum due to missing pdftoppm')
@@ -166,7 +166,7 @@ def test_pdf_online_1(poppler_or_pdfium):
             for j in range(6):
                 assert abs(gt[j] - other_expected_gt[j]) <= 1e-15, 'bad geotransform'
 
-    assert wkt.find('GEOGCS["WGS 84"') == 0, 'bad WKT'
+    assert wkt.startswith('GEOGCS["WGS 84"'), 'bad WKT'
 
     if pdf_checksum_available():
         cs = ds.GetRasterBand(1).Checksum()
@@ -202,7 +202,7 @@ def test_pdf_online_2(poppler_or_pdfium):
             for j in range(6):
                 assert abs(gt[j] - other_expected_gt[j]) <= 1e-15, 'bad geotransform'
 
-    assert wkt.find('GEOGCS["WGS 84"') == 0
+    assert wkt.startswith('GEOGCS["WGS 84"')
 
 ###############################################################################
 # Test Adobe style geospatial pdf
@@ -456,8 +456,8 @@ def pdf_rgba_default_compression(options_param=None):
     if cs4 < 0:
         pytest.skip()
 
-    assert (content.find('Type = dictionary, Num = 3, Gen = 0') == 0 and \
-       content.find('      Type = dictionary, Num = 3, Gen = 0') >= 0), \
+    assert (content.startswith('Type = dictionary, Num = 3, Gen = 0') and \
+       '      Type = dictionary, Num = 3, Gen = 0' in content), \
         'wrong object dump'
 
     assert cs4 != 0, 'wrong checksum'
@@ -1292,7 +1292,7 @@ def test_pdf_write_ogr(poppler_or_pdfium):
             ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options=['RENDERING_OPTIONS=%s' % opt])
             cs = ds.GetRasterBand(1).Checksum()
             # When misconfigured Poppler with fonts, use this to avoid error
-            if opt.find('TEXT') >= 0 and gdal.GetLastErrorMsg().find('font') >= 0:
+            if 'TEXT' in opt and gdal.GetLastErrorMsg().find('font') >= 0:
                 cs = -cs
             cs_tab.append(cs)
             ds = None

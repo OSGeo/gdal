@@ -1863,7 +1863,7 @@ def test_ogr_gml_52():
         srs = lyr.GetSpatialRef()
         assert srs is not None
         wkt = srs.ExportToWkt()
-        assert wkt.find('3067') >= 0
+        assert '3067' in wkt
 
         feat = lyr.GetNextFeature()
         if feat.GetField('gid') != '1' or \
@@ -2513,7 +2513,7 @@ def test_ogr_gml_65():
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-        assert data.find(expected) >= 0
+        assert expected in data
 
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
@@ -3170,7 +3170,7 @@ def test_ogr_gml_73():
         lyr = ds.GetLayer(i)
         sr = lyr.GetSpatialRef()
         got_wkt = sr.ExportToWkt()
-        assert got_wkt.find('4326') >= 0, 'did not get expected SRS'
+        assert '4326' in got_wkt, 'did not get expected SRS'
 
         feat = lyr.GetNextFeature()
         geom = feat.GetGeometryRef()
@@ -3406,7 +3406,7 @@ def test_ogr_gml_79():
             data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
             gdal.VSIFCloseL(f)
 
-        assert data.find(expected_srsname) >= 0 and data.find(expected_coords) >= 0, \
+        assert expected_srsname in data and expected_coords in data, \
             srsname_format
 
     gdal.Unlink('/vsimem/ogr_gml_79.xml')
@@ -3503,14 +3503,14 @@ def test_ogr_gml_82():
     if f is not None:
         data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
         gdal.VSIFCloseL(f)
-    assert data.find('gml:FeatureCollection') >= 0
+    assert 'gml:FeatureCollection' in data
 
     f = gdal.VSIFOpenL("/vsimem/ogr_gml_82.xsd", "rb")
     if f is not None:
         data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
         gdal.VSIFCloseL(f)
-    assert data.find('name = "FeatureCollection"') < 0
-    assert data.find('gmlsf') < 0
+    assert 'name = "FeatureCollection"' not in data
+    assert 'gmlsf' not in data
 
     gdal.Unlink('/vsimem/ogr_gml_82.gml')
     gdal.Unlink('/vsimem/ogr_gml_82.xsd')

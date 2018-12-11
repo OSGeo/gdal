@@ -96,7 +96,7 @@ def test_osr_micoordsys_3():
     srs = osr.SpatialReference()
     srs.ImportFromMICoordSys('Earth Projection 10, 157, "m", 0')
     wkt = srs.ExportToWkt()
-    assert wkt.find('EXTENSION["PROJ4"') >= 0
+    assert 'EXTENSION["PROJ4"' in wkt
 
     # Transform again to MITAB (we no longer have the EPSG code, so we rely on PROJ4 extension node)
     proj = srs.ExportToMICoordSys()

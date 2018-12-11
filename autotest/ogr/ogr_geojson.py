@@ -1103,7 +1103,7 @@ def test_ogr_geojson_26():
 
     gdal.Unlink('/vsimem/ogr_geojson_26.json')
 
-    assert data.find('{ "type": "Feature", "id": 1234567890123, "properties": { "int64": 1234567890123, "int64list": [ 1234567890123 ] }, "geometry": null }') >= 0
+    assert '{ "type": "Feature", "id": 1234567890123, "properties": { "int64": 1234567890123, "int64list": [ 1234567890123 ] }, "geometry": null }' in data
 
 ###############################################################################
 # Test workaround for 64bit values (returned as strings)
@@ -1530,7 +1530,7 @@ def test_ogr_geojson_37():
 
     gdal.Unlink('/vsimem/ogr_geojson_37.json')
 
-    assert data.find('"bool": false, "not_bool": 0, "bool_list": [ false, true ], "notbool_list": [ 0, 3 ]') >= 0
+    assert '"bool": false, "not_bool": 0, "bool_list": [ false, true ], "notbool_list": [ 0, 3 ]' in data
 
 ###############################################################################
 # Test datetime/date/time type support
@@ -2076,16 +2076,16 @@ def test_ogr_geojson_45():
 
     gdal.Unlink('/vsimem/ogr_geojson_45.json')
 
-    assert (data.find('"bbox": [ 0, 1, 2, 0, 1, 2 ],') >= 0 and \
-       data.find('"foo": "bar"') >= 0 and data.find('"bar": "baz"') >= 0 and \
-       data.find('"foo_feature": "bar_feature"') >= 0 and \
-       data.find('"foo_gc": "bar_gc"') >= 0 and \
-       data.find('"foo_point": "bar_point"') >= 0 and data.find('3') >= 0 and \
-       data.find('"foo_linestring": "bar_linestring"') >= 0 and data.find('4') >= 0 and \
-       data.find('"foo_multipoint": "bar_multipoint"') >= 0 and data.find('5') >= 0 and \
-       data.find('"foo_multilinestring": "bar_multilinestring"') >= 0 and data.find('6') >= 0 and \
-       data.find('"foo_polygon": "bar_polygon"') >= 0 and data.find('7') >= 0 and \
-       data.find('"foo_multipolygon": "bar_multipolygon"') >= 0 and data.find('8') >= 0)
+    assert ('"bbox": [ 0, 1, 2, 0, 1, 2 ],' in data and \
+       '"foo": "bar"' in data and '"bar": "baz"' in data and \
+       '"foo_feature": "bar_feature"' in data and \
+       '"foo_gc": "bar_gc"' in data and \
+       '"foo_point": "bar_point"' in data and '3' in data and \
+       '"foo_linestring": "bar_linestring"' in data and '4' in data and \
+       '"foo_multipoint": "bar_multipoint"' in data and '5' in data and \
+       '"foo_multilinestring": "bar_multilinestring"' in data and '6' in data and \
+       '"foo_polygon": "bar_polygon"' in data and '7' in data and \
+       '"foo_multipolygon": "bar_multipolygon"' in data and '8' in data)
 
     # Test native support with string id
     src_ds = gdal.OpenEx("""{
@@ -2159,7 +2159,7 @@ def test_ogr_geojson_46():
 
     gdal.Unlink('/vsimem/ogr_geojson_46.json')
 
-    assert data.find('{ "myprop": { "a": "b" } }') >= 0
+    assert '{ "myprop": { "a": "b" } }' in data
 
 ###############################################################################
 # Test update support
@@ -2194,9 +2194,9 @@ def test_ogr_geojson_47():
         data = None
 
     # we don't want crs if there's no in the source
-    assert (data.find('"foo": "bar"') >= 0 and data.find('"bar": "baz"') >= 0 and \
-       data.find('crs') < 0 and \
-       data.find('"myprop": "another_value"') >= 0)
+    assert ('"foo": "bar"' in data and '"bar": "baz"' in data and \
+       'crs' not in data and \
+       '"myprop": "another_value"' in data)
 
     # Test append support
     ds = ogr.Open('/vsimem/ogr_geojson_47.json', update=1)
@@ -2239,11 +2239,11 @@ def test_ogr_geojson_47():
         data = None
 
     # we don't want crs if there's no in the source
-    assert (data.find('"foo": "bar"') >= 0 and data.find('"bar": "baz"') >= 0 and \
-       data.find('crs') < 0 and \
-       data.find('"myprop": "another_value"') >= 0 and \
-       data.find('"myprop": "value_of_point_4_5"') >= 0 and \
-       data.find('id') < 0)
+    assert ('"foo": "bar"' in data and '"bar": "baz"' in data and \
+       'crs' not in data and \
+       '"myprop": "another_value"' in data and \
+       '"myprop": "value_of_point_4_5"' in data and \
+       'id' not in data)
 
     gdal.Unlink('/vsimem/ogr_geojson_47.json')
 
@@ -2290,7 +2290,7 @@ def test_ogr_geojson_47():
     else:
         data = None
 
-    assert data.find('something') >= 0
+    assert 'something' in data
 
     # Test appending to feature collection with "bbox"
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json', """{ "type": "FeatureCollection", "bbox": [0,0,0,0], "features": [ { "type": "Feature", "geometry": { "type": "Point", "coordinates": [0,0]} } ]}""")
@@ -2311,7 +2311,7 @@ def test_ogr_geojson_47():
     else:
         data = None
 
-    assert data.find('bbox') >= 0
+    assert 'bbox' in data
 
     gdal.Unlink('/vsimem/ogr_geojson_47.json')
 
@@ -2345,11 +2345,11 @@ def test_ogr_geojson_48():
     gdal.Unlink('/vsimem/ogr_geojson_48.json')
 
     # we don't want crs if there's no in the source
-    assert (data.find('"bar": "baz"') >= 0 and \
-       data.find('"bbox": [ 3.0, 50.0, 3.0, 50.0 ]') >= 0 and \
-       data.find('crs') < 0 and \
-       data.find('FeatureCollection') < 0 and \
-       data.find('"myprop": "another_value"') >= 0)
+    assert ('"bar": "baz"' in data and \
+       '"bbox": [ 3.0, 50.0, 3.0, 50.0 ]' in data and \
+       'crs' not in data and \
+       'FeatureCollection' not in data and \
+       '"myprop": "another_value"' in data)
 
 ###############################################################################
 # Test ARRAY_AS_STRING
@@ -2401,7 +2401,7 @@ def test_ogr_geojson_50():
 
     gdal.Unlink('/vsimem/ogr_geojson_50.json')
 
-    assert data.find('1.23456789012456') >= 0 or data.find('5268.813 ') >= 0
+    assert '1.23456789012456' in data or '5268.813 ' in data
 
     # If SIGNIFICANT_FIGURES is explicitly specified, and COORDINATE_PRECISION not,
     # then it also applies to coordinates
@@ -2420,7 +2420,7 @@ def test_ogr_geojson_50():
 
     gdal.Unlink('/vsimem/ogr_geojson_50.json')
 
-    assert data.find('1.23456789012456') >= 0 or data.find('-5') >= 0
+    assert '1.23456789012456' in data or '-5' in data
 
     # If SIGNIFICANT_FIGURES is explicitly specified, and COORDINATE_PRECISION too,
     # then SIGNIFICANT_FIGURES only applies to non-coordinates floating point values.
@@ -2440,7 +2440,7 @@ def test_ogr_geojson_50():
 
     gdal.Unlink('/vsimem/ogr_geojson_50.json')
 
-    assert data.find('0.00001234') >= 0 and data.find('1.23456789012456') >= 0
+    assert '0.00001234' in data and '1.23456789012456' in data
 
 ###############################################################################
 # Test writing empty geometries
@@ -2490,19 +2490,19 @@ def test_ogr_geojson_51():
 
     gdal.Unlink('/vsimem/ogr_geojson_51.json')
 
-    assert data.find('{ "id": 1 }, "geometry": null') >= 0
+    assert '{ "id": 1 }, "geometry": null' in data
 
-    assert data.find('{ "id": 2 }, "geometry": { "type": "LineString", "coordinates": [ ] } }') >= 0
+    assert '{ "id": 2 }, "geometry": { "type": "LineString", "coordinates": [ ] } }' in data
 
-    assert data.find('{ "id": 3 }, "geometry": { "type": "Polygon", "coordinates": [ ] } }') >= 0
+    assert '{ "id": 3 }, "geometry": { "type": "Polygon", "coordinates": [ ] } }' in data
 
-    assert data.find('{ "id": 4 }, "geometry": { "type": "MultiPoint", "coordinates": [ ] } }') >= 0
+    assert '{ "id": 4 }, "geometry": { "type": "MultiPoint", "coordinates": [ ] } }' in data
 
-    assert data.find('{ "id": 5 }, "geometry": { "type": "MultiLineString", "coordinates": [ ] } }') >= 0
+    assert '{ "id": 5 }, "geometry": { "type": "MultiLineString", "coordinates": [ ] } }' in data
 
-    assert data.find('{ "id": 6 }, "geometry": { "type": "MultiPolygon", "coordinates": [ ] } }') >= 0
+    assert '{ "id": 6 }, "geometry": { "type": "MultiPolygon", "coordinates": [ ] } }' in data
 
-    assert data.find('{ "id": 7 }, "geometry": { "type": "GeometryCollection", "geometries": [ ] } }') >= 0
+    assert '{ "id": 7 }, "geometry": { "type": "GeometryCollection", "geometries": [ ] } }' in data
 
 ###############################################################################
 # Test NULL type detection
@@ -2551,7 +2551,7 @@ def test_ogr_geojson_53():
 
     gdal.Unlink('/vsimem/ogr_geojson_53.json')
 
-    assert data.find('{ "type": "Point", "coordinates": [ 1.0, 2.0, 3.0 ] }') >= 0
+    assert '{ "type": "Point", "coordinates": [ 1.0, 2.0, 3.0 ] }' in data
 
 ###############################################################################
 # Test NULL type detection when first value is null
@@ -3067,9 +3067,9 @@ def test_ogr_geojson_60():
     gdal.VSIFCloseL(fp)
 
     gdal.Unlink('/vsimem/ogr_geojson_60.json')
-    assert (data.find('"properties": { "foo": "bar" }') >= 0 and \
-       data.find('"properties": { "foo": null }') >= 0 and \
-       data.find('"properties": { }') >= 0)
+    assert ('"properties": { "foo": "bar" }' in data and \
+       '"properties": { "foo": null }' in data and \
+       '"properties": { }' in data)
 
 
 ###############################################################################
@@ -3290,75 +3290,75 @@ def test_ogr_geojson_id_field_and_id_type():
 
     gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', options='-f GeoJSON -lco ID_TYPE=String -preserve_fid -limit 1 -fid 2')
     got = read_file('/vsimem/out.json')
-    assert got.find('"id": "2", "properties": { "AREA": 261752.781, "EAS_ID": 171, "PRFEDEA": "35043414" }') >= 0
+    assert '"id": "2", "properties": { "AREA": 261752.781, "EAS_ID": 171, "PRFEDEA": "35043414" }' in got
 
     gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', options='-f GeoJSON -lco ID_TYPE=Integer -preserve_fid -limit 1 -fid 2')
     got = read_file('/vsimem/out.json')
-    assert got.find('"id": 2, "properties": { "AREA": 261752.781, "EAS_ID": 171, "PRFEDEA": "35043414" }') >= 0
+    assert '"id": 2, "properties": { "AREA": 261752.781, "EAS_ID": 171, "PRFEDEA": "35043414" }' in got
 
     gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format='GeoJSON', layerCreationOptions=['ID_FIELD=EAS_ID'], limit=1)
     got = read_file('/vsimem/out.json')
-    assert got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     src_ds = gdal.OpenEx('/vsimem/out.json', open_options=['NATIVE_DATA=YES'])
     gdal.VectorTranslate('/vsimem/out2.json', src_ds, format='GeoJSON')
     src_ds = None
     got = read_file('/vsimem/out2.json')
     gdal.Unlink('/vsimem/out2.json')
-    assert got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     src_ds = gdal.OpenEx('/vsimem/out.json', open_options=['NATIVE_DATA=YES'])
     gdal.VectorTranslate('/vsimem/out2.json', src_ds, format='GeoJSON', layerCreationOptions=['ID_TYPE=String'])
     src_ds = None
     got = read_file('/vsimem/out2.json')
     gdal.Unlink('/vsimem/out2.json')
-    assert got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     src_ds = gdal.OpenEx('/vsimem/out.json', open_options=['NATIVE_DATA=YES'])
     gdal.VectorTranslate('/vsimem/out2.json', src_ds, format='GeoJSON', layerCreationOptions=['ID_TYPE=Integer'])
     src_ds = None
     got = read_file('/vsimem/out2.json')
     gdal.Unlink('/vsimem/out2.json')
-    assert got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     gdal.Unlink('/vsimem/out.json')
 
     gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format='GeoJSON', layerCreationOptions=['ID_FIELD=EAS_ID', 'ID_TYPE=String'], limit=1)
     got = read_file('/vsimem/out.json')
-    assert got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     src_ds = gdal.OpenEx('/vsimem/out.json', open_options=['NATIVE_DATA=YES'])
     gdal.VectorTranslate('/vsimem/out2.json', src_ds, format='GeoJSON')
     src_ds = None
     got = read_file('/vsimem/out2.json')
     gdal.Unlink('/vsimem/out2.json')
-    assert got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     src_ds = gdal.OpenEx('/vsimem/out.json', open_options=['NATIVE_DATA=YES'])
     gdal.VectorTranslate('/vsimem/out2.json', src_ds, format='GeoJSON', layerCreationOptions=['ID_TYPE=String'])
     src_ds = None
     got = read_file('/vsimem/out2.json')
     gdal.Unlink('/vsimem/out2.json')
-    assert got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     src_ds = gdal.OpenEx('/vsimem/out.json', open_options=['NATIVE_DATA=YES'])
     gdal.VectorTranslate('/vsimem/out2.json', src_ds, format='GeoJSON', layerCreationOptions=['ID_TYPE=Integer'])
     src_ds = None
     got = read_file('/vsimem/out2.json')
     gdal.Unlink('/vsimem/out2.json')
-    assert got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') >= 0
+    assert '"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }' in got
 
     gdal.Unlink('/vsimem/out.json')
 
     gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format='GeoJSON', layerCreationOptions=['ID_FIELD=PRFEDEA'], limit=1)
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
-    assert got.find('"id": "35043411", "properties": { "AREA": 215229.266, "EAS_ID": 168 }') >= 0
+    assert '"id": "35043411", "properties": { "AREA": 215229.266, "EAS_ID": 168 }' in got
 
     gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format='GeoJSON', layerCreationOptions=['ID_FIELD=PRFEDEA', 'ID_TYPE=Integer'], limit=1)
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
-    assert got.find('"id": 35043411, "properties": { "AREA": 215229.266, "EAS_ID": 168 }') >= 0
+    assert '"id": 35043411, "properties": { "AREA": 215229.266, "EAS_ID": 168 }' in got
 
 ###############################################################################
 

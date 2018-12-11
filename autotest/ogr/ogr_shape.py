@@ -1110,7 +1110,7 @@ def test_ogr_shape_29():
     for filename in lst:
         assert filename in ['.', '..', 'UPPERCASE.SHP', 'UPPERCASE.SHX', 'UPPERCASE.DBF', 'UPPERCASE.CPG'], \
             lst
-        assert filename.find('packed') < 0, lst
+        assert 'packed' not in filename, lst
 
     
 ###############################################################################

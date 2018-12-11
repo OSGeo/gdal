@@ -287,7 +287,7 @@ def test_gdal_grid_3():
     # Create a GDAL dataset from the values of "grid.csv".
     print('Step 2: Trying SSE optimized version...')
     (_, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on --config GDAL_USE_AVX NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
-    if err.find('SSE') >= 0:
+    if 'SSE' in err:
         print('...SSE optimized version used')
     else:
         print('...SSE optimized version NOT used')
@@ -314,7 +314,7 @@ def test_gdal_grid_3():
     # Create a GDAL dataset from the values of "grid.csv".
     print('Step 3: Trying AVX optimized version...')
     (_, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' --debug on -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
-    if err.find('AVX') >= 0:
+    if 'AVX' in err:
         print('...AVX optimized version used')
     else:
         print('...AVX optimized version NOT used')

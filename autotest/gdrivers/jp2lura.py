@@ -418,7 +418,7 @@ def test_jp2lura_12():
 
     gdaltest.jp2lura_drv.Delete('tmp/jp2lura_12.jp2')
 
-    assert wkt.find('32631') >= 0
+    assert '32631' in wkt
 
     # Override geotransform
     shutil.copy('data/byte.jp2', 'tmp/jp2lura_12.jp2')
@@ -458,7 +458,7 @@ def test_jp2lura_13():
     wkt = ds.GetGCPProjection()
     assert count == 4
     assert len(gcps) == 4
-    assert wkt.find('4326') >= 0
+    assert '4326' in wkt
     ds = None
 
     # Override GCP
@@ -479,7 +479,7 @@ def test_jp2lura_13():
 
     assert count == 1
     assert len(gcps) == 1
-    assert wkt.find('32631') >= 0
+    assert '32631' in wkt
 
 ###############################################################################
 # Check that we get GCPs even there's no projection info
@@ -1749,7 +1749,7 @@ def test_jp2lura_49():
             print('Expected ' + str(expected_gt))
             pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
@@ -1804,7 +1804,7 @@ def test_jp2lura_49():
             print('Expected ' + str(expected_gt))
             pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))

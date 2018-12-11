@@ -267,7 +267,7 @@ def test_hdf5_10():
 
     ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/SBI')
     got_gcpprojection = ds.GetGCPProjection()
-    assert got_gcpprojection.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == 0
+    assert got_gcpprojection.startswith('GEOGCS["WGS 84",DATUM["WGS_1984"')
 
     got_gcps = ds.GetGCPs()
     assert len(got_gcps) == 4
@@ -292,7 +292,7 @@ def test_hdf5_11():
 
     ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/SBI')
     got_projection = ds.GetProjection()
-    assert got_projection.find('PROJCS["Transverse_Mercator",GEOGCS["WGS 84",DATUM["WGS_1984"') == 0
+    assert got_projection.startswith('PROJCS["Transverse_Mercator",GEOGCS["WGS 84",DATUM["WGS_1984"')
 
     got_gt = ds.GetGeoTransform()
     expected_gt = (275592.5, 2.5, 0.0, 4998152.5, 0.0, -2.5)
@@ -314,7 +314,7 @@ def test_hdf5_12():
 
     ds = gdal.Open('tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf')
     got_projection = ds.GetProjection()
-    assert got_projection.find('Azimuthal_Equidistant') >= 0
+    assert 'Azimuthal_Equidistant' in got_projection
 
     got_gt = ds.GetGeoTransform()
     expected_gt = (-240890.02470187756, 1001.7181388478905, 0.0, 239638.21326987055, 0.0, -1000.3790932482976)

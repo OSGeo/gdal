@@ -47,7 +47,7 @@ def test_jp2metadata_1():
 
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
-    assert wkt.find('PROJCS["ETRS89') == 0
+    assert wkt.startswith('PROJCS["ETRS89')
     expected_gt = (356000.0, 0.5, 0.0, 7596000.0, 0.0, -0.5)
     for i in range(6):
         assert abs(gt[i] - expected_gt[i]) <= 1e-5

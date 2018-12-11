@@ -204,7 +204,7 @@ def test_gdalinfo_11():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --version', check_memleak=False)
-    assert ret.find(gdal.VersionInfo('--version')) == 0
+    assert ret.startswith(gdal.VersionInfo('--version'))
 
 ###############################################################################
 # Test gdalinfo --build
@@ -216,7 +216,7 @@ def test_gdalinfo_12():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --build', check_memleak=False)
     ret = ret.replace('\r\n', '\n')
-    assert ret.find(gdal.VersionInfo('BUILD_INFO')) == 0
+    assert ret.startswith(gdal.VersionInfo('BUILD_INFO'))
 
 ###############################################################################
 # Test gdalinfo --license
@@ -228,7 +228,7 @@ def test_gdalinfo_13():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --license', check_memleak=False)
     ret = ret.replace('\r\n', '\n')
-    if ret.find(gdal.VersionInfo('LICENSE')) != 0:
+    if not ret.startswith(gdal.VersionInfo('LICENSE')):
         print(gdal.VersionInfo('LICENSE'))
         if gdaltest.is_travis_branch('mingw'):
             return 'expected_fail'
@@ -244,7 +244,7 @@ def test_gdalinfo_14():
         pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --config', check_memleak=False)
-    assert err.find('--config option given without a key and value argument') >= 0
+    assert '--config option given without a key and value argument' in err
 
 ###############################################################################
 # Test erroneous use of --mempreload.
@@ -255,7 +255,7 @@ def test_gdalinfo_15():
         pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --mempreload', check_memleak=False)
-    assert err.find('--mempreload option given without directory path') >= 0
+    assert '--mempreload option given without directory path' in err
 
 ###############################################################################
 # Test --mempreload
@@ -266,7 +266,7 @@ def test_gdalinfo_16():
         pytest.skip()
 
     (ret, _) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak=False)
-    assert ret.find('Driver: GTiff/GeoTIFF') == 0
+    assert ret.startswith('Driver: GTiff/GeoTIFF')
 
 ###############################################################################
 # Test erroneous use of --debug.
@@ -277,7 +277,7 @@ def test_gdalinfo_17():
         pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug', check_memleak=False)
-    assert err.find('--debug option given without debug level') >= 0
+    assert '--debug option given without debug level' in err
 
 ###############################################################################
 # Test erroneous use of --optfile.
@@ -288,10 +288,10 @@ def test_gdalinfo_18():
         pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak=False)
-    assert err.find('--optfile option given without filename') >= 0
+    assert '--optfile option given without filename' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak=False)
-    assert err.find('Unable to open optfile') >= 0
+    assert 'Unable to open optfile' in err
 
 ###############################################################################
 # Test --optfile
@@ -307,7 +307,7 @@ def test_gdalinfo_19():
     f.close()
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --optfile tmp/optfile.txt', check_memleak=False)
     os.unlink('tmp/optfile.txt')
-    assert ret.find('Driver: GTiff/GeoTIFF') == 0
+    assert ret.startswith('Driver: GTiff/GeoTIFF')
 
 ###############################################################################
 # Test --formats
@@ -318,7 +318,7 @@ def test_gdalinfo_20():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --formats', check_memleak=False)
-    assert ret.find('GTiff -raster- (rw+vs): GeoTIFF') >= 0
+    assert 'GTiff -raster- (rw+vs): GeoTIFF' in ret
 
 ###############################################################################
 # Test erroneous use of --format.
@@ -329,10 +329,10 @@ def test_gdalinfo_21():
         pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak=False)
-    assert err.find('--format option given without a format code') >= 0
+    assert '--format option given without a format code' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak=False)
-    assert err.find('--format option given with format') >= 0
+    assert '--format option given with format' in err
 
 ###############################################################################
 # Test --format
@@ -356,7 +356,7 @@ def test_gdalinfo_22():
         'Creation Datatypes',
         '<CreationOptionList>']
     for expected_string in expected_strings:
-        assert ret.find(expected_string) >= 0, ('did not find %s' % expected_string)
+        assert expected_string in ret, ('did not find %s' % expected_string)
 
     
 ###############################################################################
@@ -368,7 +368,7 @@ def test_gdalinfo_23():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --help-general', check_memleak=False)
-    assert ret.find('Generic GDAL utility command options') >= 0
+    assert 'Generic GDAL utility command options' in ret
 
 ###############################################################################
 # Test --locale
@@ -379,7 +379,7 @@ def test_gdalinfo_24():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --locale C ../gcore/data/byte.tif', check_memleak=False)
-    assert ret.find('Driver: GTiff/GeoTIFF') == 0
+    assert ret.startswith('Driver: GTiff/GeoTIFF')
 
 ###############################################################################
 # Test -listmdd
@@ -390,8 +390,8 @@ def test_gdalinfo_25():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak=False)
-    assert ret.find('Metadata domains:') >= 0
-    assert ret.find('  xml:XMP') >= 0
+    assert 'Metadata domains:' in ret
+    assert '  xml:XMP' in ret
 
 ###############################################################################
 # Test -mdd all
@@ -402,7 +402,7 @@ def test_gdalinfo_26():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak=False)
-    assert ret.find('Metadata (xml:XMP)') >= 0
+    assert 'Metadata (xml:XMP)' in ret
 
 ###############################################################################
 # Test -oo
@@ -413,7 +413,7 @@ def test_gdalinfo_27():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak=False)
-    assert ret.find('Type=Float64') >= 0
+    assert 'Type=Float64' in ret
 
 ###############################################################################
 # Simple -json test

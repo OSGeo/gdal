@@ -241,9 +241,9 @@ def test_ogrmerge_8():
         gdal.VSIFCloseL(f)
     gdal.Unlink('tmp/out.vrt')
 
-    assert content.find('<SrcSRS>EPSG:32630</SrcSRS>') >= 0
+    assert '<SrcSRS>EPSG:32630</SrcSRS>' in content
 
-    assert content.find('<TargetSRS>EPSG:4326</TargetSRS>') >= 0
+    assert '<TargetSRS>EPSG:4326</TargetSRS>' in content
 
 ###############################################################################
 # Test -s_srs -t_srs in default mode
@@ -269,9 +269,9 @@ def test_ogrmerge_9():
         gdal.VSIFCloseL(f)
     gdal.Unlink('tmp/out.vrt')
 
-    assert content.find('<SrcSRS>EPSG:32630</SrcSRS>') >= 0
+    assert '<SrcSRS>EPSG:32630</SrcSRS>' in content
 
-    assert content.find('<TargetSRS>EPSG:4326</TargetSRS>') >= 0
+    assert '<TargetSRS>EPSG:4326</TargetSRS>' in content
 
 ###############################################################################
 # Test -a_srs in -single mode
@@ -297,7 +297,7 @@ def test_ogrmerge_10():
         gdal.VSIFCloseL(f)
     gdal.Unlink('tmp/out.vrt')
 
-    assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
+    assert '<LayerSRS>EPSG:32630</LayerSRS>' in content
 
 ###############################################################################
 # Test -a_srs in default mode
@@ -323,7 +323,7 @@ def test_ogrmerge_11():
         gdal.VSIFCloseL(f)
     gdal.Unlink('tmp/out.vrt')
 
-    assert content.find('<LayerSRS>EPSG:32630</LayerSRS>') >= 0
+    assert '<LayerSRS>EPSG:32630</LayerSRS>' in content
 
 ###############################################################################
 # Test layer names with accents

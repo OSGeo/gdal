@@ -1857,7 +1857,7 @@ def test_ogr2ogr_52():
     content = f.read()
     f.close()
 
-    assert content.find('LINESTRING (0 0,') >= 0
+    assert 'LINESTRING (0 0,' in content
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_52_dst2.csv tmp/test_ogr2ogr_52_dst.csv -select id -nln test_ogr2ogr_52_dst2 -dsco GEOMETRY=AS_WKT -nlt CONVERT_TO_CURVE')
 
@@ -1865,7 +1865,7 @@ def test_ogr2ogr_52():
     content = f.read()
     f.close()
 
-    assert content.find('COMPOUNDCURVE ((0 0,') >= 0
+    assert 'COMPOUNDCURVE ((0 0,' in content
 
     os.unlink('tmp/test_ogr2ogr_52_src.csv')
     os.unlink('tmp/test_ogr2ogr_52_dst.csv')
@@ -1894,12 +1894,12 @@ def test_ogr2ogr_53():
     content = f.read()
     f.close()
 
-    assert (content.find('<SimpleField name="id" type="int"></SimpleField>') >= 0 and \
-       content.find('<SimpleData name="id">1</SimpleData>') >= 0 and \
-       content.find('<SimpleField name="i64" type="float"></SimpleField>') >= 0 and \
-       content.find('<SimpleData name="i64">123456789012</SimpleData>') >= 0 and \
-       content.find('<SimpleField name="b" type="string"></SimpleField>') >= 0 and \
-       content.find('<SimpleData name="b">1</SimpleData>') >= 0)
+    assert ('<SimpleField name="id" type="int"></SimpleField>' in content and \
+       '<SimpleData name="id">1</SimpleData>' in content and \
+       '<SimpleField name="i64" type="float"></SimpleField>' in content and \
+       '<SimpleData name="i64">123456789012</SimpleData>' in content and \
+       '<SimpleField name="b" type="string"></SimpleField>' in content and \
+       '<SimpleData name="b">1</SimpleData>' in content)
 
     os.unlink('tmp/test_ogr2ogr_53.kml')
 
@@ -1910,7 +1910,7 @@ def test_ogr2ogr_53():
     content = f.read()
     f.close()
 
-    assert content.find('"123456789012.0"') >= 0
+    assert '"123456789012.0"' in content
 
     os.unlink('tmp/test_ogr2ogr_53.bna')
 
@@ -1921,8 +1921,8 @@ def test_ogr2ogr_53():
     content = f.read()
     f.close()
 
-    assert (content.find('<SimpleField name="i64" type="string"></SimpleField>') >= 0 and \
-       content.find('<SimpleData name="i64">123456789012</SimpleData>') >= 0)
+    assert ('<SimpleField name="i64" type="string"></SimpleField>' in content and \
+       '<SimpleData name="i64">123456789012</SimpleData>' in content)
 
     os.unlink('tmp/test_ogr2ogr_53.kml')
 
@@ -1962,9 +1962,9 @@ def test_ogr2ogr_54():
     content = f.read()
     f.close()
 
-    assert (content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>') >= 0 and \
-       content.find('<xs:element name="fld1" nillable="true" minOccurs="1" maxOccurs="1">') >= 0 and \
-       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') >= 0)
+    assert ('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>' in content and \
+       '<xs:element name="fld1" nillable="true" minOccurs="1" maxOccurs="1">' in content and \
+       '<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">' in content)
 
     os.unlink('tmp/test_ogr2ogr_54.gml')
     os.unlink('tmp/test_ogr2ogr_54.xsd')
@@ -1976,9 +1976,9 @@ def test_ogr2ogr_54():
     content = f.read()
     f.close()
 
-    assert (content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') >= 0 and \
-       content.find('<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">') >= 0 and \
-       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') >= 0)
+    assert ('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>' in content and \
+       '<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">' in content and \
+       '<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">' in content)
 
     os.unlink('tmp/test_ogr2ogr_54.gml')
     os.unlink('tmp/test_ogr2ogr_54.xsd')
@@ -2023,7 +2023,7 @@ def test_ogr2ogr_55():
     content = f.read()
     f.close()
 
-    assert content.find('<ogr:fld2>2</ogr:fld2>') >= 0
+    assert '<ogr:fld2>2</ogr:fld2>' in content
 
     os.unlink('tmp/test_ogr2ogr_55.gml')
     os.unlink('tmp/test_ogr2ogr_55.xsd')
@@ -2035,7 +2035,7 @@ def test_ogr2ogr_55():
     content = f.read()
     f.close()
 
-    assert content.find('<ogr:fld2>') < 0
+    assert '<ogr:fld2>' not in content
 
     os.unlink('tmp/test_ogr2ogr_55.gml')
     os.unlink('tmp/test_ogr2ogr_55.xsd')
@@ -2067,8 +2067,8 @@ def test_ogr2ogr_56():
     content = f.read()
     f.close()
 
-    assert (content.find("""ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid"" """) < 0 and \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_56" ("wkb_geometry" , "myid" , "str", "wkt") VALUES ('010100000000000000000000000000000000000000', 10, 'aaa', 'POINT(0 0)');""") >= 0)
+    assert ("""ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid"" """ not in content and \
+       """INSERT INTO "public"."test_ogr2ogr_56" ("wkb_geometry" , "myid" , "str", "wkt") VALUES ('010100000000000000000000000000000000000000', 10, 'aaa', 'POINT(0 0)');""" in content)
 
     os.unlink('tmp/test_ogr2ogr_56.sql')
     os.unlink('tmp/test_ogr2ogr_56.csv')
@@ -2111,8 +2111,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    assert (content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") >= 0 and \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") >= 0)
+    assert ("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""" in content and \
+       """INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""" in content)
 
     os.unlink('tmp/test_ogr2ogr_57.sql')
 
@@ -2123,8 +2123,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    assert (content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") >= 0 and \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") >= 0)
+    assert ("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""" in content and \
+       """INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""" in content)
 
     os.unlink('tmp/test_ogr2ogr_57.sql')
 
@@ -2261,7 +2261,7 @@ def test_ogr2ogr_62():
     gdal.VSIFCloseL(fp)
     os.unlink('tmp/test_ogr2ogr_62.json')
 
-    assert data.find('bar') >= 0 and data.find('baz') >= 0
+    assert 'bar' in data and 'baz' in data
 
     # Test -noNativeData
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json -noNativeData""")
@@ -2272,7 +2272,7 @@ def test_ogr2ogr_62():
     os.unlink('tmp/test_ogr2ogr_62.json')
     os.unlink('tmp/test_ogr2ogr_62_in.json')
 
-    assert data.find('bar') < 0 and data.find('baz') < 0
+    assert 'bar' not in data and 'baz' not in data
 
 ###############################################################################
 # Test --formats
@@ -2289,8 +2289,8 @@ def test_ogr2ogr_63():
         pass
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' --formats')
-    assert ret.find('Supported Formats') >= 0, err
-    assert err.find('ERROR') < 0, ret
+    assert 'Supported Formats' in ret, err
+    assert 'ERROR' not in err, ret
 
 ###############################################################################
 # Test appending multiple layers, whose one already exists (#6345)
@@ -2344,7 +2344,7 @@ def test_ogr2ogr_65():
     gdal.Unlink('tmp/out.csv')
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' /vsimem/out.xxx ../ogr/data/poly.shp')
-    if err.find("Cannot guess") < 0:
+    if "Cannot guess" not in err:
         print(ret)
         pytest.fail('expected a warning about probably wrong extension')
 
@@ -2358,7 +2358,7 @@ def test_ogr2ogr_66():
         pytest.skip()
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' ../ogr/data/poly.shp ../ogr/data/poly.shp')
-    assert err.find("Source and destination datasets must be different in non-update mode") >= 0, \
+    assert "Source and destination datasets must be different in non-update mode" in err, \
         ret
 
 

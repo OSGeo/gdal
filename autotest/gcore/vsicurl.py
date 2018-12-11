@@ -390,7 +390,7 @@ def test_vsicurl_test_retry():
         error_msg = gdal.GetLastErrorMsg()
         gdal.VSIFCloseL(f)
         assert data == 'foo'
-        assert error_msg.find('429') >= 0
+        assert '429' in error_msg
 
     
 ###############################################################################

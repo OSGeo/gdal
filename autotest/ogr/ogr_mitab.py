@@ -556,11 +556,11 @@ def test_ogr_mitab_18():
         lyr = ds.GetLayer(0)
         sr_got = lyr.GetSpatialRef()
         wkt = sr_got.ExportToWkt()
-        if wkt.find('2154') < 0:
+        if '2154' not in wkt:
             print(filename)
             pytest.fail(sr_got)
         proj4 = sr_got.ExportToProj4()
-        assert proj4.find('+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs') == 0
+        assert proj4.startswith('+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
         ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_18.tab')

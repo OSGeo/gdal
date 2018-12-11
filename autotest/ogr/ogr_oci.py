@@ -746,7 +746,7 @@ def test_ogr_oci_18():
         assert feat.GetGeometryRef().ExportToWkt() == wkt
 
     dsname = os.environ['OCI_DSNAME']
-    if dsname.find('@') < 0:
+    if '@' not in dsname:
         dsname = dsname + '@:test_NONE'
     else:
         dsname = dsname + ':test_NONE'

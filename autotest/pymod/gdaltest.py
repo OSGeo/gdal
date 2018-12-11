@@ -1335,11 +1335,11 @@ def skip_on_travis():
 def is_travis_branch(name):
     if 'TRAVIS_BRANCH' in os.environ:
         val = os.environ['TRAVIS_BRANCH']
-        if val.find(name) >= 0:
+        if name in val:
             return True
     if 'BUILD_NAME' in os.environ:
         val = os.environ['BUILD_NAME']
-        if val.find(name) >= 0:
+        if name in val:
             return True
     return False
 
@@ -1555,7 +1555,7 @@ def get_opened_files():
 
 def is_file_open(filename):
     for got_filename in get_opened_files():
-        if got_filename.find(filename) >= 0:
+        if filename in got_filename:
             return True
     return False
 

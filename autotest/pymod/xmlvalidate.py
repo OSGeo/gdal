@@ -47,7 +47,7 @@ def ingest_file_and_strip_mime(filename):
             continue
         if line == '\n':
             continue
-        if line.find('Content-Type') >= 0:
+        if 'Content-Type' in line:
             continue
         data = data + line
     f.close()
@@ -83,7 +83,7 @@ def validate(xml_filename_or_content, xsd_filename=None,
              inspire_schemas_location=None):
 
     try:
-        if xml_filename_or_content.find('<') == 0:
+        if xml_filename_or_content.startswith('<'):
             doc = etree.XML(xml_filename_or_content)
         else:
             doc = etree.XML(ingest_file_and_strip_mime(xml_filename_or_content))
@@ -204,7 +204,7 @@ def validate(xml_filename_or_content, xsd_filename=None,
 def transform_abs_links_to_ref_links(path, level=0):
     for filename in os.listdir(path):
         filename = os.path.join(path, filename)
-        if os.path.isdir(filename) and filename.find('examples') < 0:
+        if os.path.isdir(filename) and 'examples' not in filename:
             transform_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
             f = open(filename, 'rt')
@@ -253,7 +253,7 @@ def transform_abs_links_to_ref_links(path, level=0):
 def transform_inspire_abs_links_to_ref_links(path, level=0):
     for filename in os.listdir(path):
         filename = os.path.join(path, filename)
-        if os.path.isdir(filename) and filename.find('examples') < 0:
+        if os.path.isdir(filename) and 'examples' not in filename:
             transform_inspire_abs_links_to_ref_links(filename, level + 1)
         elif filename.endswith('.xsd'):
             f = open(filename, 'rt')

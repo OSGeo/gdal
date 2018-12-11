@@ -1005,7 +1005,7 @@ def test_visoss_extra_1():
     elif OSS_RESOURCE is None:
         pytest.skip('Missing OSS_RESOURCE')
 
-    if OSS_RESOURCE.find('/') < 0:
+    if '/' not in OSS_RESOURCE:
         path = '/vsioss/' + OSS_RESOURCE
         statres = gdal.VSIStatL(path)
         assert statres is not None and stat.S_ISDIR(statres.mode), \

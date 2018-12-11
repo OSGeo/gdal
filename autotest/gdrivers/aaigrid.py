@@ -328,7 +328,7 @@ def test_aaigrid_14():
 
     gdal.GetDriverByName('AAIGRID').Delete('/vsimem/aaigrid_14.asc')
 
-    assert data.find('107.0 123') >= 0
+    assert '107.0 123' in data
 
 ###############################################################################
 # Test Float64 detection when nodata = DBL_MIN

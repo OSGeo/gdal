@@ -1687,7 +1687,7 @@ def test_netcdf_50():
     out_ds = gdal.OpenEx('tmp/netcdf_50.nc', gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
-    assert srs.find('PROJCS["OSGB 1936') >= 0
+    assert 'PROJCS["OSGB 1936' in srs
     out_f = out_lyr.GetNextFeature()
     out_f.SetFID(-1)
     out_json = out_f.ExportToJson()
@@ -1903,7 +1903,7 @@ def test_netcdf_53():
     out_ds = gdal.OpenEx('tmp/netcdf_53.nc', gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
-    assert srs.find('PROJCS["OSGB 1936') >= 0
+    assert 'PROJCS["OSGB 1936' in srs
     out_f = out_lyr.GetNextFeature()
     out_f.SetFID(-1)
     out_json = out_f.ExportToJson()
@@ -2221,13 +2221,13 @@ def test_netcdf_62_ncdump_check():
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_62.nc')
-        assert (ret.find('profile = 2') >= 0 and \
-           ret.find('record = UNLIMITED') >= 0 and \
-           ret.find('profile:cf_role = "profile_id"') >= 0 and \
-           ret.find('parentIndex:instance_dimension = "profile"') >= 0 and \
-           ret.find(':featureType = "profile"') >= 0 and \
-           ret.find('char station(profile') >= 0 and \
-           ret.find('char foo(record') >= 0)
+        assert ('profile = 2' in ret and \
+           'record = UNLIMITED' in ret and \
+           'profile:cf_role = "profile_id"' in ret and \
+           'parentIndex:instance_dimension = "profile"' in ret and \
+           ':featureType = "profile"' in ret and \
+           'char station(profile' in ret and \
+           'char foo(record' in ret)
     else:
         pytest.skip()
 
@@ -2292,12 +2292,12 @@ def test_netcdf_63_ncdump_check():
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_63.nc')
-        assert (ret.find('profile = UNLIMITED') >= 0 and \
-           ret.find('record = UNLIMITED') >= 0 and \
-           ret.find('profile:cf_role = "profile_id"') >= 0 and \
-           ret.find('parentIndex:instance_dimension = "profile"') >= 0 and \
-           ret.find(':featureType = "profile"') >= 0 and \
-           ret.find('char station(record') >= 0)
+        assert ('profile = UNLIMITED' in ret and \
+           'record = UNLIMITED' in ret and \
+           'profile:cf_role = "profile_id"' in ret and \
+           'parentIndex:instance_dimension = "profile"' in ret and \
+           ':featureType = "profile"' in ret and \
+           'char station(record' in ret)
     else:
         gdal.Unlink('/vsimem/netcdf_63.nc')
         pytest.skip()
@@ -2478,14 +2478,14 @@ def test_netcdf_66_ncdump_check():
         err = None
     if err is not None and 'netcdf library version' in err:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h tmp/netcdf_66.nc')
-        assert (ret.find('char my_station(obs, my_station_max_width)') >= 0 and \
-           ret.find('my_station:long_name = "my station attribute"') >= 0 and \
-           ret.find('lon:my_extra_lon_attribute = "foo"') >= 0 and \
-           ret.find('lat:long_name') < 0 and \
-           ret.find('id:my_extra_attribute = 5.23') >= 0 and \
-           ret.find('profile:cf_role = "profile_id"') >= 0 and \
-           ret.find('parentIndex:instance_dimension = "profile"') >= 0 and \
-           ret.find(':featureType = "profile"') >= 0)
+        assert ('char my_station(obs, my_station_max_width)' in ret and \
+           'my_station:long_name = "my station attribute"' in ret and \
+           'lon:my_extra_lon_attribute = "foo"' in ret and \
+           'lat:long_name' not in ret and \
+           'id:my_extra_attribute = 5.23' in ret and \
+           'profile:cf_role = "profile_id"' in ret and \
+           'parentIndex:instance_dimension = "profile"' in ret and \
+           ':featureType = "profile"' in ret)
     else:
         gdal.Unlink('/vsimem/netcdf_66.nc')
         pytest.skip()
@@ -2535,7 +2535,7 @@ def test_netcdf_68():
 
     ds = gdal.Open('data/srid.nc')
     wkt = ds.GetProjectionRef()
-    assert wkt.find('6933') >= 0
+    assert '6933' in wkt
 
 ###############################################################################
 # Test opening a dataset with a 1D variable with 0 record (#6645)

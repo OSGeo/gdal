@@ -337,7 +337,7 @@ def test_pam_11():
     gdal.ErrorReset()
     ds = None
     error_msg = gdal.GetLastErrorMsg()
-    assert error_msg.find('Unable to save auxiliary information') == 0, \
+    assert error_msg.startswith('Unable to save auxiliary information'), \
         'warning was expected at that point'
 
     # Check that we actually have no saved statistics
@@ -390,7 +390,7 @@ def test_pam_12():
 
     assert hist1 == hist2
     assert hist1[0] == 6000000000
-    assert aux_xml.find('<HistCounts>6000000000|') >= 0
+    assert '<HistCounts>6000000000|' in aux_xml
 
 ###############################################################################
 # Test various stuff with PAM disabled

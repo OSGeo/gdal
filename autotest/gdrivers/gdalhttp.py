@@ -239,7 +239,7 @@ def test_http_ssl_verifystatus():
             # For now this URL doesn't support OCSP stapling...
             gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
     last_err = gdal.GetLastErrorMsg()
-    if last_err.find('No OCSP response received') < 0 and last_err.find('libcurl too old') < 0:
+    if 'No OCSP response received' not in last_err and 'libcurl too old' not in last_err:
 
         # The test actually works on Travis Mac
         if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:

@@ -194,7 +194,7 @@ def test_sentinel2_l1c_2():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="10004" yOff="10000" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 
@@ -728,7 +728,7 @@ def test_sentinel2_l1c_tile_3():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 
@@ -812,7 +812,7 @@ def test_sentinel2_l1c_tile_4():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 
@@ -866,7 +866,7 @@ def test_sentinel2_l1c_tile_5():
       <SrcRect xOff="0" yOff="0" xSize="343" ySize="343" />
       <DstRect xOff="0" yOff="0" xSize="343" ySize="343" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
 ###############################################################################
 # Test opening invalid XML files
@@ -1169,7 +1169,7 @@ def test_sentinel2_l1b_3():
       <SrcRect xOff="0" yOff="0" xSize="1276" ySize="384" />
       <DstRect xOff="0" yOff="0" xSize="1276" ySize="384" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 
@@ -1643,7 +1643,7 @@ def test_sentinel2_l2a_2():
       <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
       <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 
@@ -1963,7 +1963,7 @@ def test_sentinel2_l2a_5():
       <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
       <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 
@@ -2187,7 +2187,7 @@ def test_sentinel2_l2a_7():
       <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
       <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
     </SimpleSource>"""
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 
@@ -2359,7 +2359,7 @@ def test_sentinel2_l1c_safe_compact_2():
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>
 """
-    assert vrt.find(placement_vrt) >= 0
+    assert placement_vrt in vrt
 
     assert ds.GetMetadata('xml:SENTINEL2') is not None
 

@@ -98,7 +98,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
 
     check_minmax = 'COMPRESS=JPEG' not in ut.options
     for x in ut.options:
-        if x.find('OPTIONS:LERC_PREC=') >= 0:
+        if 'OPTIONS:LERC_PREC=' in x:
             check_minmax = False
     return ut.testCreateCopy(check_minmax=check_minmax)
 

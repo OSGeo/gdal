@@ -1397,7 +1397,7 @@ VAL1   "VAL 2"   "VAL 3"
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('FIELD_1 "FIELD 2"') >= 0 and data.find('VAL1 "VAL 2"') >= 0
+    assert 'FIELD_1 "FIELD 2"' in data and 'VAL1 "VAL 2"' in data
 
     gdal.Unlink('/vsimem/ogr_csv_35.csv')
 
@@ -2044,13 +2044,13 @@ def test_ogr_csv_48():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('stringlist,intlist,int64list,reallist\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125') == 0
+    assert data.startswith('stringlist,intlist,int64list,reallist\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125')
 
     f = gdal.VSIFOpenL('/vsimem/ogr_csv_48_out.csvt', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList') == 0
+    assert data.startswith('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList')
 
     gdal.Unlink('/vsimem/ogr_csv_48.csv')
     gdal.Unlink('/vsimem/ogr_csv_48.csvt')
@@ -2101,7 +2101,7 @@ def test_ogr_csv_string_quoting_always():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"') == 0
+    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"')
 
     ds = gdal.OpenEx('/vsimem/ogr_csv_string_quoting_always.csv', gdal.OF_UPDATE | gdal.OF_VECTOR)
     gdal.VectorTranslate(ds, 'data/poly.shp',
@@ -2113,7 +2113,7 @@ def test_ogr_csv_string_quoting_always():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"\n247328.172,"179","35043423"') == 0
+    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"\n247328.172,"179","35043423"')
 
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_always.csv')
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_always.csvt')
@@ -2142,7 +2142,7 @@ def test_ogr_csv_string_quoting_if_ambiguous():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('"00123",x,"1.25"') >= 0
+    assert '"00123",x,"1.25"' in data
 
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_if_ambiguous.csv')
 
@@ -2170,7 +2170,7 @@ def test_ogr_csv_string_quoting_if_needed():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('00123,x,1.25') >= 0
+    assert '00123,x,1.25' in data
 
     gdal.Unlink('/vsimem/ogr_csv_string_quoting_if_needed.csv')
 

@@ -332,18 +332,18 @@ def test_gdalsrsinfo_17():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -e "LOCAL_CS[foo]"')
 
-    assert ret.find('EPSG:-1') >= 0
+    assert 'EPSG:-1' in ret
 
     # One match
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -e ../osr/data/lcc_esri.prj')
 
-    assert ret.find('EPSG:32119') >= 0
+    assert 'EPSG:32119' in ret
 
     # Two matches
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                """ -e "GEOGCS[\"myLKS94\",DATUM[\"Lithuania_1994_ETRS89\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" """)
-    assert ret.find('EPSG:4126') >= 0 and ret.find('EPSG:4669') >= 0
+    assert 'EPSG:4126' in ret and 'EPSG:4669' in ret
 
 ###############################################################################
 #

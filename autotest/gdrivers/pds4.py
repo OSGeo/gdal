@@ -103,7 +103,7 @@ def test_pds4_1():
 
 def hide_substitution_warnings_error_handler_cbk(typ, errno, msg):
     # pylint: disable=unused-argument
-    if msg.find('substituted') < 0 and msg.find('VAR_TITLE not defined') < 0:
+    if 'substituted' not in msg and 'VAR_TITLE not defined' not in msg:
         print(msg)
 
 
@@ -549,14 +549,14 @@ def test_pds4_12():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    assert data.find('<logical_identifier>logical_identifier</logical_identifier>') >= 0
-    assert data.find('<cart:west_bounding_coordinate unit="deg">1</cart:west_bounding_coordinate>') >= 0
-    assert data.find('<cart:east_bounding_coordinate unit="deg">3</cart:east_bounding_coordinate>') >= 0
-    assert data.find('<cart:north_bounding_coordinate unit="deg">4</cart:north_bounding_coordinate>') >= 0
-    assert data.find('<cart:south_bounding_coordinate unit="deg">2</cart:south_bounding_coordinate>') >= 0
-    assert data.find('<cart:latitude_type>planetographic</cart:latitude_type>') >= 0
-    assert data.find('<cart:longitude_direction>Positive West</cart:longitude_direction>') >= 0
-    assert data.find('<file_name>myimage.raw</file_name>') >= 0
+    assert '<logical_identifier>logical_identifier</logical_identifier>' in data
+    assert '<cart:west_bounding_coordinate unit="deg">1</cart:west_bounding_coordinate>' in data
+    assert '<cart:east_bounding_coordinate unit="deg">3</cart:east_bounding_coordinate>' in data
+    assert '<cart:north_bounding_coordinate unit="deg">4</cart:north_bounding_coordinate>' in data
+    assert '<cart:south_bounding_coordinate unit="deg">2</cart:south_bounding_coordinate>' in data
+    assert '<cart:latitude_type>planetographic</cart:latitude_type>' in data
+    assert '<cart:longitude_direction>Positive West</cart:longitude_direction>' in data
+    assert '<file_name>myimage.raw</file_name>' in data
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
@@ -927,7 +927,7 @@ def test_pds4_15():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    assert data.find('<cart:Cartography>') < 0
+    assert '<cart:Cartography>' not in data
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
@@ -999,9 +999,9 @@ def test_pds4_16():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    assert data.find('http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"') >= 0
-    assert data.find('xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"') >= 0
-    assert data.find('<cart:Cartography>') >= 0
+    assert 'http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"' in data
+    assert 'xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"' in data
+    assert '<cart:Cartography>' in data
 
     gdal.GetDriverByName('PDS4').Delete(filename)
     gdal.Unlink(template)
@@ -1024,9 +1024,9 @@ def test_pds4_17():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    assert (data.find('<Array_2D>') >= 0 and data.find('<axes>2</axes>') >= 0 and \
-       data.find('<axis_name>Band</axis_name>') < 0 and \
-       data.find('<sequence_number>3</sequence_number>') < 0)
+    assert ('<Array_2D>' in data and '<axes>2</axes>' in data and \
+       '<axis_name>Band</axis_name>' not in data and \
+       '<sequence_number>3</sequence_number>' not in data)
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
@@ -1046,7 +1046,7 @@ def test_pds4_17():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    assert data.find('<Array_3D_Spectrum>') >= 0 and data.find('<axes>3</axes>') >= 0
+    assert '<Array_3D_Spectrum>' in data and '<axes>3</axes>' in data
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
@@ -1070,9 +1070,9 @@ def test_pds4_18():
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
-    assert (data.find('<cart:semi_major_radius unit="m">1</cart:semi_major_radius>') >= 0 and \
-       data.find('<cart:semi_minor_radius unit="m">1</cart:semi_minor_radius>') >= 0 and \
-       data.find('<cart:polar_radius unit="m">2</cart:polar_radius>') >= 0)
+    assert ('<cart:semi_major_radius unit="m">1</cart:semi_major_radius>' in data and \
+       '<cart:semi_minor_radius unit="m">1</cart:semi_minor_radius>' in data and \
+       '<cart:polar_radius unit="m">2</cart:polar_radius>' in data)
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 

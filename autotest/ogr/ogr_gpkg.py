@@ -2324,7 +2324,7 @@ def test_ogr_gpkg_34():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find(layer_name) >= 0
+    assert layer_name in content
 
     ds = ogr.Open(dbname, update=1)
     new_layer_name = """weird2'layer"name"""
@@ -2341,7 +2341,7 @@ def test_ogr_gpkg_34():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find(layer_name) < 0
+    assert layer_name not in content
     layer_name = new_layer_name
 
     ds = ogr.Open(dbname, update=1)
@@ -2359,7 +2359,7 @@ def test_ogr_gpkg_34():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find(layer_name) < 0
+    assert layer_name not in content
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
@@ -2390,9 +2390,9 @@ def test_ogr_gpkg_34():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find(layer_name) < 0
+    assert layer_name not in content
 
-    assert content.find('another_layer_name') < 0
+    assert 'another_layer_name' not in content
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
@@ -2491,7 +2491,7 @@ def test_ogr_gpkg_35():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find('bar_i_will_disappear') < 0
+    assert 'bar_i_will_disappear' not in content
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
@@ -2602,7 +2602,7 @@ def test_ogr_gpkg_36():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find('foo') < 0
+    assert 'foo' not in content
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 

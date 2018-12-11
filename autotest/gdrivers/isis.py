@@ -122,8 +122,8 @@ def test_isis_4():
     assert ds.GetMetadataDomainList() == ['', 'json:ISIS3']
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
     # Couldn't be preserved, since points to dangling file
-    assert lbl.find('OriginalLabel') < 0
-    assert lbl.find('PositiveWest') < 0
+    assert 'OriginalLabel' not in lbl
+    assert 'PositiveWest' not in lbl
     assert ds.GetRasterBand(1).GetMaskFlags() == 0
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 12220
     ds = None
@@ -136,8 +136,8 @@ def test_isis_4():
                              delete_copy=0)
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('PositiveWest') >= 0
-    assert lbl.find('Planetographic') >= 0
+    assert 'PositiveWest' in lbl
+    assert 'Planetographic' in lbl
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -151,9 +151,9 @@ def test_isis_4():
                              delete_copy=0)
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('PositiveEast') >= 0
-    assert lbl.find('Planetocentric') >= 0
-    assert lbl.find('my_label') >= 0
+    assert 'PositiveEast' in lbl
+    assert 'Planetocentric' in lbl
+    assert 'my_label' in lbl
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -170,7 +170,7 @@ def test_isis_5():
     assert gdal.VSIStatL('/vsimem/isis_tmp.cub') is None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('MinimumLongitude') < 0
+    assert 'MinimumLongitude' not in lbl
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -189,7 +189,7 @@ def test_isis_6():
     f = gdal.VSIFOpenL('/vsimem/isis_tmp.lbl', 'rb')
     content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
     gdal.VSIFCloseL(f)
-    assert content.find('#my comment') >= 0
+    assert '#my comment' in content
     assert len(content) != 10000
     ds = gdal.Open('/vsimem/isis_tmp.lbl', gdal.GA_Update)
     ds.GetRasterBand(1).Fill(0)
@@ -212,7 +212,7 @@ def test_isis_7():
     assert gdal.VSIStatL('/vsimem/isis_tmp.tif') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('"Format":"BandSequential"') >= 0
+    assert '"Format":"BandSequential"' in lbl
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -226,7 +226,7 @@ def test_isis_7():
     assert gdal.VSIStatL('/vsimem/isis_tmp.tif') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('"Format":"GeoTIFF"') >= 0
+    assert '"Format":"GeoTIFF"' in lbl
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -244,7 +244,7 @@ def test_isis_8():
     assert gdal.VSIStatL('/vsimem/isis_tmp.tif') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('"Format":"GeoTIFF"') >= 0
+    assert '"Format":"GeoTIFF"' in lbl
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl', gdal.GA_Update)
     ds.GetRasterBand(1).Fill(0)
@@ -269,8 +269,8 @@ def test_isis_9():
     assert gdal.VSIStatL('/vsimem/foo.bin') is not None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert (lbl.find('"Format":"Tile"') >= 0 and lbl.find('"TileSamples":256') >= 0 and \
-       lbl.find('"TileLines":256') >= 0)
+    assert ('"Format":"Tile"' in lbl and '"TileSamples":256' in lbl and \
+       '"TileLines":256' in lbl)
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
     assert gdal.VSIStatL('/vsimem/foo.bin') is None
@@ -534,12 +534,12 @@ def test_isis_18():
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('"TargetName":"my_target"') >= 0
-    assert lbl.find('"LatitudeType":"Planetographic"') >= 0
-    assert lbl.find('"MinimumLatitude":2.5') >= 0
-    assert lbl.find('"MinimumLongitude":1.5') >= 0
-    assert lbl.find('"MaximumLatitude":4.5') >= 0
-    assert lbl.find('"MaximumLongitude":3.5') >= 0
+    assert '"TargetName":"my_target"' in lbl
+    assert '"LatitudeType":"Planetographic"' in lbl
+    assert '"MinimumLatitude":2.5' in lbl
+    assert '"MinimumLongitude":1.5' in lbl
+    assert '"MaximumLatitude":4.5' in lbl
+    assert '"MaximumLongitude":3.5' in lbl
     ds = None
 
     sr = osr.SpatialReference()
@@ -551,12 +551,12 @@ def test_isis_18():
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('"LongitudeDirection":"PositiveWest"') >= 0
-    assert lbl.find('"LongitudeDomain":180') >= 0
-    assert lbl.find('"MinimumLatitude":-60') >= 0
-    assert lbl.find('"MinimumLongitude":-110') >= 0
-    assert lbl.find('"MaximumLatitude":40') >= 0
-    assert lbl.find('"MaximumLongitude":-10') >= 0
+    assert '"LongitudeDirection":"PositiveWest"' in lbl
+    assert '"LongitudeDomain":180' in lbl
+    assert '"MinimumLatitude":-60' in lbl
+    assert '"MinimumLongitude":-110' in lbl
+    assert '"MaximumLatitude":40' in lbl
+    assert '"MaximumLongitude":-10' in lbl
     ds = None
 
     sr = osr.SpatialReference()
@@ -568,12 +568,12 @@ def test_isis_18():
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('"MinimumLatitude":-60') >= 0
-    assert lbl.find('"MinimumLongitude":90') >= 0
-    assert lbl.find('"MaximumLatitude":40') >= 0
-    assert lbl.find('"MaximumLongitude":350') >= 0
-    assert lbl.find('"UpperLeftCornerX":-21547') >= 0
-    assert lbl.find('"UpperLeftCornerY":86188') >= 0
+    assert '"MinimumLatitude":-60' in lbl
+    assert '"MinimumLongitude":90' in lbl
+    assert '"MaximumLatitude":40' in lbl
+    assert '"MaximumLongitude":350' in lbl
+    assert '"UpperLeftCornerX":-21547' in lbl
+    assert '"UpperLeftCornerY":86188' in lbl
     ds = None
 
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
@@ -589,7 +589,7 @@ def test_isis_19():
 
     ds = gdal.Open('data/isis3_detached.lbl')
     res = gdal.Info(ds, extraMDDomains=['json:ISIS3'])
-    assert res.find('IsisCube') >= 0
+    assert 'IsisCube' in res
 
 # Test gdal.Translate() subsetting and label preservation
 
@@ -601,7 +601,7 @@ def test_isis_20():
                        format='ISIS3', srcWin=[0, 0, 1, 1])
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('AMadeUpValue') >= 0
+    assert 'AMadeUpValue' in lbl
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -616,7 +616,7 @@ def test_isis_21():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     assert ds.GetRasterBand(1).Checksum() == 9978
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert lbl.find('AMadeUpValue') >= 0
+    assert 'AMadeUpValue' in lbl
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -678,23 +678,23 @@ def test_isis_22():
     content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
     gdal.VSIFCloseL(f)
 
-    assert (content.find('foo       = bar') >= 0 and \
-       content.find('  bar       = (123, 124.0, 2.5, xyz') >= 0 and \
-       content.find('               anotherveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-') >= 0 and \
-       content.find('               eeeeeeeeeeeeeeeeeeeeeeeerylooooongtext, 234, 456, 789, 234, 567,') >= 0 and \
-       content.find('               890, 123456789.0, 123456789.0, 123456789.0, 123456789.0,') >= 0 and \
-       content.find('               123456789.0)') >= 0 and \
-       content.find('baz       = 5 <M>') >= 0 and \
-       content.find('baw       = "with space"') >= 0 and \
-       content.find('very_long = aveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-') >= 0)
+    assert ('foo       = bar' in content and \
+       '  bar       = (123, 124.0, 2.5, xyz' in content and \
+       '               anotherveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-' in content and \
+       '               eeeeeeeeeeeeeeeeeeeeeeeerylooooongtext, 234, 456, 789, 234, 567,' in content and \
+       '               890, 123456789.0, 123456789.0, 123456789.0, 123456789.0,' in content and \
+       '               123456789.0)' in content and \
+       'baz       = 5 <M>' in content and \
+       'baw       = "with space"' in content and \
+       'very_long = aveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-' in content)
 
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    assert (lbl.find('"foo":"bar"') >= 0 and lbl.find('123') >= 0 and \
-       lbl.find('2.5') >= 0 and lbl.find('xyz') >= 0 and \
-       lbl.find('"value":5') >= 0 and lbl.find('"unit":"M"') >= 0 and \
-       lbl.find('"baw":"with space"') >= 0 and \
-       lbl.find('"very_long":"aveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylooooongtext"') >= 0)
+    assert ('"foo":"bar"' in lbl and '123' in lbl and \
+       '2.5' in lbl and 'xyz' in lbl and \
+       '"value":5' in lbl and '"unit":"M"' in lbl and \
+       '"baw":"with space"' in lbl and \
+       '"very_long":"aveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylooooongtext"' in lbl)
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -1144,8 +1144,7 @@ End""")
     content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
     gdal.VSIFCloseL(f)
 
-    assert (content.find(
-        """Object = Table
+    assert ("""Object = Table
   Name = first_table
 End_Object
 
@@ -1164,7 +1163,7 @@ End_Object
 Object = foo
   x = C
 End_Object
-""") >= 0)
+""" in content)
 
     gdal.Unlink('/vsimem/in.lbl')
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
@@ -1216,10 +1215,10 @@ def test_isis_27():
                     pytest.fail(dst_location)
                 history = content[offset:]
 
-            if history.find('Object = ') != 0 or \
-                    history.find('FROM = out.lbl') < 0 or \
-                    history.find('TO   = out2.lbl') < 0 or \
-                    history.find('TO = out.lbl') < 0:
+            if not history.startswith('Object = ') or \
+                    'FROM = out.lbl' not in history or \
+                    'TO   = out2.lbl' not in history or \
+                    'TO = out.lbl' not in history:
                 print(src_location)
                 print(dst_location)
                 pytest.fail(content)
@@ -1235,7 +1234,7 @@ def test_isis_27():
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
-    assert content.find('foo') >= 0
+    assert 'foo' in content
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
 
 # Test preservation of non-pixel sections

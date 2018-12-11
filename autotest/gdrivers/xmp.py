@@ -87,7 +87,7 @@ def test_xmp(drivername, filename, expect_xmp):
     # we set ECW to not resolve projection and datum strings to get 3.x behavior.
     gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
-    if filename.find('.jp2') >= 0:
+    if '.jp2' in filename:
         gdaltest.deregister_all_jpeg2000_drivers_but(drivername)
 
     try:
@@ -107,5 +107,5 @@ def test_xmp(drivername, filename, expect_xmp):
 
         ds = None
     finally:
-        if filename.find('.jp2') >= 0:
+        if '.jp2' in filename:
             gdaltest.reregister_all_jpeg2000_drivers()

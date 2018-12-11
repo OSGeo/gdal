@@ -3739,9 +3739,9 @@ def test_tiff_write_102():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_102.tif')
 
-    assert wkt1.find('COMPD_CS') == 0, 'expected COMPD_CS, but got something else'
+    assert wkt1.startswith('COMPD_CS'), 'expected COMPD_CS, but got something else'
 
-    assert wkt2.find('COMPD_CS') != 0, 'got COMPD_CS, but did not expected it'
+    assert not wkt2.startswith('COMPD_CS'), 'got COMPD_CS, but did not expected it'
 
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt1)
@@ -5489,9 +5489,9 @@ def test_tiff_write_141():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert wkt.find('PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere"') == 0
+    assert wkt.startswith('PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere"')
 
-    assert wkt.find('EXTENSION["PROJ4"') >= 0
+    assert 'EXTENSION["PROJ4"' in wkt
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_141.tif')
 

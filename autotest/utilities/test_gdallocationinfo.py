@@ -54,7 +54,7 @@ def test_gdallocationinfo_1():
   Location: (0P,0L)
   Band 1:
     Value: 107"""
-    assert ret.find(expected_ret) == 0
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -xml
@@ -71,7 +71,7 @@ def test_gdallocationinfo_2():
     <Value>107</Value>
   </BandReport>
 </Report>"""
-    assert ret.find(expected_ret) == 0
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -valonly
@@ -83,7 +83,7 @@ def test_gdallocationinfo_3():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -b 1 -valonly ../gcore/data/byte.tif 0 0')
     expected_ret = """107"""
-    assert ret.find(expected_ret) == 0
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -geoloc
@@ -99,7 +99,7 @@ def test_gdallocationinfo_4():
   Location: (0P,0L)
   Band 1:
     Value: 107"""
-    assert ret.find(expected_ret) == 0
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -lifonly
@@ -112,7 +112,7 @@ def test_gdallocationinfo_5():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -lifonly ../gcore/data/byte.vrt 0 0')
     expected_ret1 = """../gcore/data/byte.tif"""
     expected_ret2 = """../gcore/data\\byte.tif"""
-    assert ret.find(expected_ret1) >= 0 or ret.find(expected_ret2) >= 0
+    assert expected_ret1 in ret or expected_ret2 in ret
 
 ###############################################################################
 # Test -overview
@@ -132,7 +132,7 @@ def test_gdallocationinfo_6():
 
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdallocationinfo_6.tif')
     expected_ret = """Value: 130"""
-    assert ret.find(expected_ret) >= 0
+    assert expected_ret in ret
 
 
 

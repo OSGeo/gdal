@@ -2086,15 +2086,15 @@ def test_ogr_gmlas_writer_gml():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xml')
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
 
-    assert content.find('xmlns:gml="http://fake_gml32"') >= 0
+    assert 'xmlns:gml="http://fake_gml32"' in content
 
-    assert content.find('<ogr:geometryProperty><gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326" gml:id="hash_test_1.geom0"><gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>') >= 0
+    assert '<ogr:geometryProperty><gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326" gml:id="hash_test_1.geom0"><gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>' in content
 
-    assert content.find('<ogr:pointProperty><gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326" gml:id="hash_test_1.geom2"><gml:pos>50 3</gml:pos></gml:Point></ogr:pointProperty>') >= 0
+    assert '<ogr:pointProperty><gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326" gml:id="hash_test_1.geom2"><gml:pos>50 3</gml:pos></gml:Point></ogr:pointProperty>' in content
 
-    assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.0"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
+    assert '      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.0"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>' in content
 
-    assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.1"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
+    assert '      <ogr:pointPropertyRepeated><gml:Point gml:id="hash_test_1.geom13.1"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>' in content
 
 ###############################################################################
 # Test writing support with geometries and -a_srs
@@ -2126,7 +2126,7 @@ def test_ogr_gmlas_writer_gml_assign_srs():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xml')
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
 
-    assert content.find('http://www.opengis.net/def/crs/EPSG/0/32631') >= 0
+    assert 'http://www.opengis.net/def/crs/EPSG/0/32631' in content
 
     # No geometry, but to test that the proxied ExecuteSQL() works
 
@@ -2186,11 +2186,11 @@ def test_ogr_gmlas_writer_gml_original_xml():
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xml')
     gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
 
-    assert content.find('<ogr:geometryProperty> <gml:Point gml:id="poly.geom.Geometry" srsName="urn:ogc:def:crs:EPSG::4326"> <gml:pos>49 2</gml:pos> </gml:Point> </ogr:geometryProperty>') >= 0
+    assert '<ogr:geometryProperty> <gml:Point gml:id="poly.geom.Geometry" srsName="urn:ogc:def:crs:EPSG::4326"> <gml:pos>49 2</gml:pos> </gml:Point> </ogr:geometryProperty>' in content
 
-    assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.1"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
+    assert '      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.1"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>' in content
 
-    assert content.find('      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.2"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>') >= 0
+    assert '      <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.2"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>' in content
 
 ###############################################################################
 # Test writing support with XSD, INDENT_SIZE, COMMENT, OUTPUT_XSD_FILENAME, TIMESTAMP options
@@ -2228,16 +2228,16 @@ def test_ogr_gmlas_writer_options():
     gdal.Unlink('/vsimem/my_schema.xsd')
 
     # Test indentation size
-    assert content.find('\n        <ogr:test gml:id="poly.0">') >= 0
+    assert '\n        <ogr:test gml:id="poly.0">' in content
 
     # Test comment
-    assert content.find('\n<!-- - - -a comment- - - -->') >= 0
+    assert '\n<!-- - - -a comment- - - -->' in content
 
     # Test OUTPUT_XSD_FILENAME
-    assert content.find('/vsimem/my_schema.xsd') >= 0
+    assert '/vsimem/my_schema.xsd' in content
 
     # Test SRSNAME_FORMAT=OGC_URN
-    assert content.find('<ogr:geometryProperty><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="hash_test_1.geom0"><gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>') >= 0
+    assert '<ogr:geometryProperty><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="hash_test_1.geom0"><gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>' in content
 
     # Test TIMESTAMP option
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
@@ -2259,8 +2259,8 @@ def test_ogr_gmlas_writer_options():
 
     assert gdal.VSIStatL('/vsimem/my_schema.xsd') is None
 
-    assert (content.find('timeStamp="1970-01-01T12:34:56Z"') >= 0 and \
-       content.find('xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd ') >= 0)
+    assert ('timeStamp="1970-01-01T12:34:56Z"' in content and \
+       'xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd ' in content)
 
     # Test WFS20_SCHEMALOCATION option
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
@@ -2306,7 +2306,7 @@ def test_ogr_gmlas_writer_options():
 
     assert gdal.VSIStatL('/vsimem/my_schema.xsd') is None
 
-    assert content.find('xsi:schemaLocation="http://www.opengis.net/wfs/2.0 /vsimem/fake_wfs.xsd ') >= 0
+    assert 'xsi:schemaLocation="http://www.opengis.net/wfs/2.0 /vsimem/fake_wfs.xsd ' in content
 
 ###############################################################################
 # Test writing support error handle

@@ -1248,7 +1248,7 @@ def test_osr_esri_28():
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
     # Do not do exact test because of subtle difference of precision among compilers
-    assert got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    assert got_wkt.startswith("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
     GEOGCS["GCS_Segara (Jakarta)",
         DATUM["D_Gunung_Segara",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1258,12 +1258,12 @@ def test_osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",4.45405154""") == 0
+    PARAMETER["standard_parallel_1",4.45405154""")
 
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
     # Do not do exact test because of subtle difference of precision among compilers
-    assert got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    assert got_wkt.startswith("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
     GEOGCS["GCS_Segara (Jakarta)",
         DATUM["Gunung_Segara_Jakarta",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1273,7 +1273,7 @@ def test_osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",4.45405154""") == 0
+    PARAMETER["standard_parallel_1",4.45405154""")
 
 ###############################################################################
 # Test Web Mercator

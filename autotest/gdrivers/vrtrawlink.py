@@ -180,9 +180,9 @@ def test_vrtrawlink_5():
 
     assert node is not None and node[2][1] == "1", 'incorrect relativeToVRT value'
 
-    assert (xmlstring.find('<ImageOffset>100</ImageOffset>') >= 0 and \
-       xmlstring.find('<PixelOffset>3</PixelOffset>') >= 0 and \
-       xmlstring.find('<LineOffset>93</LineOffset>') >= 0)
+    assert ('<ImageOffset>100</ImageOffset>' in xmlstring and \
+       '<PixelOffset>3</PixelOffset>' in xmlstring and \
+       '<LineOffset>93</LineOffset>' in xmlstring)
 
 ###############################################################################
 # Add a new band with relativeToVRT=1, and re-open the dataset.
