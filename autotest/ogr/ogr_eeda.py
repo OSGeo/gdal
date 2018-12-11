@@ -30,38 +30,34 @@
 ###############################################################################
 
 import json
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal, ogr
 
-import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Find EEDA driver
 
 
-def eeda_1():
+def test_eeda_1():
 
     ogrtest.eeda_drv = ogr.GetDriverByName('EEDA')
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
-
-    return 'success'
 
 ###############################################################################
 # Nominal case
 
 
-def eeda_2():
+def test_eeda_2():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageSize=1', json.dumps({
         'assets': [
@@ -87,28 +83,15 @@ def eeda_2():
 
     lyr = ds.GetLayer(0)
 
-    if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
-    if lyr.TestCapability('foo') != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.TestCapability('foo') == 0
 
-    if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
-        gdaltest.post_reason('fail')
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 8 + 7 + 4
 
-    if lyr.GetExtent() != (-180.0, 180.0, -90.0, 90.0):
-        gdaltest.post_reason('fail')
-        print(lyr.GetExtent())
-        return 'fail'
+    assert lyr.GetExtent() == (-180.0, 180.0, -90.0, 90.0)
 
-    if lyr.GetFeatureCount() != -1:
-        gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == -1
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages', json.dumps({
         'assets': [
@@ -181,15 +164,13 @@ def eeda_2():
        f.GetField('double_field') != 1.23 or \
        f.GetField('other_properties') != '{ "another_prop": 3 }' or \
        f.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((2 49,2.1 49.0,2.1 49.1,2.0 49.1,2 49)))':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/second_feature':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageToken=myToken', json.dumps({
         'assets': [
@@ -201,22 +182,18 @@ def eeda_2():
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/third_feature':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
-    if f is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f is None
 
     lyr.ResetReading()
 
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/first_feature':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr.SetAttributeFilter('EEDA:raw_filter')
 
@@ -229,9 +206,7 @@ def eeda_2():
     }))
 
     f = lyr.GetNextFeature()
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/raw_filter':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/raw_filter'
 
     lyr.SetAttributeFilter(None)
     lyr.SetAttributeFilter("time >= '1980-01-01T00:00:00Z' AND " +
@@ -274,9 +249,7 @@ def eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/filtered_feature'
 
     lyr.SetSpatialFilter(None)
 
@@ -299,9 +272,7 @@ def eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/filtered_feature'
 
     # Test time equality with day granularity
     lyr.SetAttributeFilter("time = '1980-01-01'")
@@ -322,24 +293,20 @@ def eeda_2():
     f = lyr.GetNextFeature()
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
-    if f.GetField('name') != 'projects/earthengine-public/assets/collection/filtered_feature':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f.GetField('name') == 'projects/earthengine-public/assets/collection/filtered_feature'
 
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-    return 'success'
-
 ###############################################################################
 # Nominal case where collection is in eedaconf.json
 
 
-def eeda_3():
+def test_eeda_3():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('EEDA_BEARER', 'mybearer')
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
@@ -348,24 +315,19 @@ def eeda_3():
 
     lyr = ds.GetLayer(0)
 
-    if lyr.GetLayerDefn().GetFieldCount() != 8 + 7 + 4:
-        gdaltest.post_reason('fail')
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 8 + 7 + 4
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
-
-    return 'success'
 
 ###############################################################################
 # Test that name and id variants are handled correctly.
 
 
-def eeda_4():
+def test_eeda_4():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('EEDA_BEARER', 'mybearer')
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
@@ -379,9 +341,7 @@ def eeda_4():
             }
         ]
     }))
-    if not ogr.Open('EEDA:users/foo').GetLayer(0):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ogr.Open('EEDA:users/foo').GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
 
     # Project asset ID ("projects/**").
@@ -394,9 +354,7 @@ def eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:projects/foo')
-    if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 
@@ -410,9 +368,7 @@ def eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:projects/foo/bar/baz')
-    if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 
@@ -426,9 +382,7 @@ def eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:foo')
-    if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 
@@ -442,25 +396,21 @@ def eeda_4():
         ]
     }))
     ds = ogr.Open('EEDA:projects/foo/assets/bar')
-    if not ds.GetLayer(0):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetLayer(0)
     gdal.Unlink(ogrtest.eeda_drv_tmpfile)
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
     gdal.SetConfigOption('EEDA_URL', None)
 
-    return 'success'
-
 ###############################################################################
 #
 
 
-def eeda_cleanup():
+def test_eeda_cleanup():
 
     if ogrtest.eeda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
     gdal.SetConfigOption('EEDA_BEARER', None)
@@ -475,20 +425,5 @@ def eeda_cleanup():
     gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageToken=myToken')
     gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?filter=raw%5Ffilter')
 
-    return 'success'
 
 
-gdaltest_list = [
-    eeda_1,
-    eeda_2,
-    eeda_3,
-    eeda_4,
-    eeda_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_eeda')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

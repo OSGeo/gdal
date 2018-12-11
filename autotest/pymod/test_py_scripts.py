@@ -32,7 +32,6 @@
 import os
 import sys
 import gdaltest
-from osgeo import gdal
 
 ###############################################################################
 # Return the path in which the Python script is found
@@ -62,26 +61,11 @@ def get_py_script(script_name):
 
 
 ###############################################################################
-# Utility function of run_py_script_as_py_module()
-#
-has_main = False
-
-
-def find_main_in_module(names):
-    global has_main
-    has_main = 'main' in names
-
-
-###############################################################################
 # Runs a Python script
+# Alias of run_py_script_as_external_script()
 #
 def run_py_script(script_path, script_name, concatenated_argv):
-
-    run_as_external_script = gdal.GetConfigOption('RUN_AS_EXTERNAL_SCRIPT', 'NO')
-
-    if run_as_external_script == 'yes' or run_as_external_script == 'YES':
-        return run_py_script_as_external_script(script_path, script_name, concatenated_argv)
-    return run_py_script_as_py_module(script_path, script_name, concatenated_argv)
+    return run_py_script_as_external_script(script_path, script_name, concatenated_argv)
 
 
 ###############################################################################
@@ -99,75 +83,3 @@ def run_py_script_as_external_script(script_path, script_name, concatenated_argv
         script_file_path = script_file_path.replace('\\', '/')
 
     return gdaltest.runexternal(python_exe + ' ' + script_file_path + ' ' + concatenated_argv, display_live_on_parent_stdout=display_live_on_parent_stdout)
-
-###############################################################################
-# Runs a Python script as a py module
-#
-# This function is an interesting concentrate of dirty hacks to run python
-# scripts without forking a new process. This way we don't need to know the
-# name and path of the python interpreter.
-#
-
-
-def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
-
-    # Save original sys variables
-    saved_syspath = sys.path
-    saved_sysargv = sys.argv
-
-    sys.path.append(script_path)
-
-    # Replace argv by user provided one
-    # Add first a fake first arg that we set to be the script
-    # name but which could be any arbitrary name
-    sys.argv = [script_name + '.py']
-
-    import shlex
-    sys.argv.extend(shlex.split(concatenated_argv))
-
-    has_imported_module = False
-
-    ret = None
-
-    if os.path.exists('tmp'):
-        tmp_stdout = 'tmp/stdout.txt'
-    else:
-        tmp_stdout = 'stdout.txt'
-
-    try:
-        # Redirect stdout to file
-        fout = open(tmp_stdout, 'wt')
-        ori_stdout = sys.stdout
-        sys.stdout = fout
-
-        exec('import ' + script_name)
-        has_imported_module = True
-
-        # Detect if the script has a main() function
-        exec('find_main_in_module(dir(' + script_name + '))')
-
-        # If so, run it (otherwise the import has already run the script)
-        if has_main:
-            exec(script_name + '.main()')
-    finally:
-        # Restore original stdout
-        fout.close()
-        sys.stdout = ori_stdout
-
-    fout = open(tmp_stdout, 'rt')
-    ret = fout.read()
-    fout.close()
-
-    os.remove(tmp_stdout)
-
-    # Restore original sys variables
-    sys.path = saved_syspath
-    sys.argv = saved_sysargv
-
-    if has_imported_module:
-        # Unload the module so that it gets imported again next time
-        # (useful if wanting to run a script without main() function
-        # several time)
-        del sys.modules[script_name]
-
-    return ret

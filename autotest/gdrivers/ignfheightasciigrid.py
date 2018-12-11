@@ -36,7 +36,7 @@ from osgeo import gdal
 import gdaltest
 
 
-def ignfheightasciigrid_1():
+def test_ignfheightasciigrid_1():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar1.mnt', 1, 21)
@@ -44,7 +44,7 @@ def ignfheightasciigrid_1():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_2():
+def test_ignfheightasciigrid_2():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar2.mnt', 1, 21)
@@ -52,7 +52,7 @@ def ignfheightasciigrid_2():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_3():
+def test_ignfheightasciigrid_3():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar3.mnt', 1, 21)
@@ -60,7 +60,7 @@ def ignfheightasciigrid_3():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_4():
+def test_ignfheightasciigrid_4():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar4.mnt', 1, 21)
@@ -68,7 +68,7 @@ def ignfheightasciigrid_4():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_5():
+def test_ignfheightasciigrid_5():
 
     tst = gdaltest.GDALTest('IGNFHeightASCIIGrid',
                             'ignfheightasciigrid_ar1_nocoords.mnt', 1, 21)
@@ -76,7 +76,7 @@ def ignfheightasciigrid_5():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_6():
+def test_ignfheightasciigrid_6():
 
     tst = gdaltest.GDALTest(
         'IGNFHeightASCIIGrid', 'ignfheightasciigrid_ar1_nocoords_noprec.mnt', 1, 21)
@@ -84,7 +84,7 @@ def ignfheightasciigrid_6():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_7():
+def test_ignfheightasciigrid_7():
 
     tst = gdaltest.GDALTest(
         'IGNFHeightASCIIGrid', 'ignfheightasciigrid_ar1_noprec.mnt', 1, 21)
@@ -92,31 +92,24 @@ def ignfheightasciigrid_7():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def ignfheightasciigrid_description_multiword():
+def test_ignfheightasciigrid_description_multiword():
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
     gdal.FileFromMemBuffer(filename, ok_content)
     ds = gdal.OpenEx(filename)
     desc = ds.GetMetadataItem('DESCRIPTION')
-    if desc != 'MULTI WORD':
-        print(desc)
-        return 'fail'
-    return 'success'
+    assert desc == 'MULTI WORD'
 
 
-def ignfheightasciigrid_invalid():
+def test_ignfheightasciigrid_invalid():
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. DESC\r1 2 3 4'
     gdal.FileFromMemBuffer(filename, ok_content)
     ds = gdal.OpenEx(filename)
-    if not ds:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetRasterBand(1).GetUnitType() != 'm':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds
+    assert ds.GetRasterBand(1).GetUnitType() == 'm'
     gdal.Unlink(filename)
 
     contents = ['0 0 0 0 0 0 0 0 0 0 0 0\r',  # a lot of invalid values
@@ -150,15 +143,11 @@ def ignfheightasciigrid_invalid():
     for content in contents:
         gdal.FileFromMemBuffer(filename, content)
         with gdaltest.error_handler():
-            if gdal.OpenEx(filename, gdal.OF_RASTER):
-                gdaltest.post_reason('fail')
-                print(content)
-                return 'fail'
+            assert not gdal.OpenEx(filename, gdal.OF_RASTER), content
         gdal.Unlink(filename)
-    return 'success'
+    
 
-
-def ignfheightasciigrid_huge():
+def test_ignfheightasciigrid_huge():
 
     filename = '/vsimem/ignfheightasciigrid_huge'
     ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
@@ -171,27 +160,21 @@ def ignfheightasciigrid_huge():
 
     ds = gdal.OpenEx(filename, gdal.OF_RASTER)
     gdal.Unlink(filename)
-    if ds is not None:
-        return 'fail'
-    return 'success'
+    assert ds is None
 
 
-def ignfheightasciigrid_gra():
+def test_ignfheightasciigrid_gra():
 
     tst = gdaltest.GDALTest(
         'IGNFHeightASCIIGrid', 'ignfheightasciigrid.gra', 1, 21)
     gt = (-152.125, 0.25, 0.0, -16.375, 0.0, -0.25)
-    if tst.testOpen(check_gt=gt, check_prj='WGS84') != 'success':
-        return 'fail'
+    tst.testOpen(check_gt=gt, check_prj='WGS84')
 
     ds = gdal.OpenEx('data/ignfheightasciigrid.gra', gdal.OF_RASTER)
-    if ds.GetRasterBand(1).GetNoDataValue() != 9999:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    return 'success'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999
 
 
-def ignfheightasciigrid_gra_invalid():
+def test_ignfheightasciigrid_gra_invalid():
 
     contents = ['49 50\r\n2\r\n',  # missing values
                 '49 50\r\n2 3\r\n',  # missing line
@@ -203,35 +186,10 @@ def ignfheightasciigrid_gra_invalid():
     for content in contents:
         gdal.FileFromMemBuffer(filename, content)
         with gdaltest.error_handler():
-            if gdal.OpenEx(filename, gdal.OF_RASTER):
-                gdaltest.post_reason('fail')
-                print(content)
-                return 'fail'
+            assert not gdal.OpenEx(filename, gdal.OF_RASTER), content
         gdal.Unlink(filename)
-    return 'success'
+    
 
 
 
-gdaltest_list = [
-    ignfheightasciigrid_1,
-    ignfheightasciigrid_2,
-    ignfheightasciigrid_3,
-    ignfheightasciigrid_4,
-    ignfheightasciigrid_5,
-    ignfheightasciigrid_6,
-    ignfheightasciigrid_7,
-    ignfheightasciigrid_description_multiword,
-    ignfheightasciigrid_invalid,
-    ignfheightasciigrid_huge,
-    ignfheightasciigrid_gra,
-    ignfheightasciigrid_gra_invalid,
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('IGNFHeightASCIIGrid')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -110,8 +110,6 @@ def do(sqlite3name, gdalname):
         sys.exit(1)
 
 
-gdaltest_list = []
-
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         print('python ogr_as_sqlite_extension name_of_libsqlite3 name_of_libgdal')

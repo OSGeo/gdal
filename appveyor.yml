@@ -155,7 +155,8 @@ test_script:
       cd $env:APPVEYOR_BUILD_FOLDER\autotest\cpp
       exec { nmake /f makefile.vc check MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
       cd $env:APPVEYOR_BUILD_FOLDER\autotest
-      exec { python run_all.py }
+      exec { pip install -Ur requirements.txt }
+      exec { pytest -vv }
       cd $env:APPVEYOR_BUILD_FOLDER\gdal\swig\csharp
       exec { nmake /f makefile.vc test}
 

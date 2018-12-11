@@ -21,7 +21,8 @@ gdalinfo --version
 Run autotest suite:
 ```
 cd ../autotest
-python run_all.py
+pip install -r requirements.txt
+pytest
 ```
 
 Git workflows with GDAL

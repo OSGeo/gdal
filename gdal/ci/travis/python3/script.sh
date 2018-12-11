@@ -31,20 +31,25 @@ cd ogr/tmp/cache/
 wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
 unzip PGeoTest.zip
 cd ../../..
-# Run ogr_fgdb.py in isolation from the rest
 
-(cd ogr && python3 ogr_fgdb.py)
-(cd ogr && mkdir disabled && mv ogr_fgdb.* disabled)
+# install test dependencies
+curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python3
+sudo -H pip3 install -U -r ./requirements.txt
+
+PYTEST="python3 $(which pytest) -vv -p no:sugar --color=no"
+
+# Run ogr_fgdb.py in isolation from the rest
+$PYTEST ogr/ogr_fgdb.py
+PYTESTARGS="--ignore ogr/ogr_fgdb.py"
+
 # Run ogr_pgeo.py in isolation from the rest
 # This crashes on Trusty since travis-ci upgraded their Trusty workers
 #python ogr_pgeo.py
-(cd ogr && mv ogr_pgeo.* disabled)
+PYTESTARGS="$PYTESTARGS --ignore ogr/ogr_pgeo.py"
 
 # Fails on test_validate_jp2_2 (erros not in expected order)
-(cd gdrivers && mkdir disabled && mv test_validate_jp2.* disabled)
+PYTESTARGS="$PYTESTARGS --ignore gdrivers/test_validate_jp2.py"
 
 # Run all the Python autotests
 
-# For some reason, the tests crash at process exit
-GDAL_SKIP="JP2ECW ECW" python3 run_all.py 2>&1 | tee /tmp/log.txt || /bin/true
-tail /tmp/log.txt | grep "Failed:    0 (0 blew exceptions)"  >/dev/null
+GDAL_SKIP="JP2ECW ECW" $PYTEST $PYTESTARGS

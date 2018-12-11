@@ -29,13 +29,12 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 #
@@ -54,21 +53,21 @@ def get_connection_str():
 #
 
 
-def georaster_init():
+def test_georaster_init():
 
     gdaltest.oci_ds = None
 
     gdaltest.georasterDriver = gdal.GetDriverByName('GeoRaster')
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if os.environ.get('OCI_DSNAME') is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_ds = ogr.Open(os.environ.get('OCI_DSNAME'))
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     rs = gdaltest.oci_ds.ExecuteSQL('select owner from all_sdo_geor_sysdata')
@@ -81,25 +80,22 @@ def georaster_init():
         rs = None
 
     if err_msg != '':
-        gdaltest.post_reason('ALL_SDO_GEOR_SYSDATA inaccessible, '
+        gdaltest.oci_ds = None
+        pytest.skip('ALL_SDO_GEOR_SYSDATA inaccessible, '
                              'likely georaster unavailable.')
 
-        gdaltest.oci_ds = None
-        return 'skip'
-
-    return 'success'
-
+    
 ###############################################################################
 #
 
 
-def georaster_byte():
+def test_georaster_byte():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/byte.tif')
 
@@ -120,13 +116,13 @@ def georaster_byte():
 #
 
 
-def georaster_int16():
+def test_georaster_int16():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     get_connection_str()
 
@@ -149,13 +145,13 @@ def georaster_int16():
 #
 
 
-def georaster_int32():
+def test_georaster_int32():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     get_connection_str()
 
@@ -178,13 +174,13 @@ def georaster_int32():
 #
 
 
-def georaster_rgb_b1():
+def test_georaster_rgb_b1():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
@@ -206,13 +202,13 @@ def georaster_rgb_b1():
 #
 
 
-def georaster_rgb_b2():
+def test_georaster_rgb_b2():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
@@ -234,13 +230,13 @@ def georaster_rgb_b2():
 #
 
 
-def georaster_rgb_b3_bsq():
+def test_georaster_rgb_b3_bsq():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
@@ -262,13 +258,13 @@ def georaster_rgb_b3_bsq():
 #
 
 
-def georaster_rgb_b3_bip():
+def test_georaster_rgb_b3_bip():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
@@ -290,13 +286,13 @@ def georaster_rgb_b3_bip():
 #
 
 
-def georaster_rgb_b3_bil():
+def test_georaster_rgb_b3_bil():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
@@ -318,13 +314,13 @@ def georaster_rgb_b3_bil():
 #
 
 
-def georaster_byte_deflate():
+def test_georaster_byte_deflate():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/byte.tif')
 
@@ -346,13 +342,13 @@ def georaster_byte_deflate():
 #
 
 
-def georaster_rgb_deflate_b3():
+def test_georaster_rgb_deflate_b3():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
@@ -374,13 +370,13 @@ def georaster_rgb_deflate_b3():
 #
 
 
-def georaster_1bit():
+def test_georaster_1bit():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/byte.tif')
 
@@ -402,13 +398,13 @@ def georaster_1bit():
 #
 
 
-def georaster_2bit():
+def test_georaster_2bit():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/byte.tif')
 
@@ -430,13 +426,13 @@ def georaster_2bit():
 #
 
 
-def georaster_4bit():
+def test_georaster_4bit():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ds_src = gdal.Open('data/byte.tif')
 
@@ -458,13 +454,13 @@ def georaster_4bit():
 #
 
 
-def georaster_cleanup():
+def test_georaster_cleanup():
 
     if gdaltest.georasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_ds.ExecuteSQL('drop table GDAL_TEST')
     gdaltest.oci_ds.ExecuteSQL('drop table GDAL_TEST_RDT')
@@ -472,39 +468,8 @@ def georaster_cleanup():
     gdaltest.oci_ds.Destroy()
     gdaltest.oci_ds = None
 
-    return 'success'
-
 ###############################################################################
 #
 
 
-gdaltest_list = [
-    georaster_init,
-    georaster_byte,
-    georaster_int16,
-    georaster_int32,
-    georaster_rgb_b1,
-    georaster_rgb_b2,
-    georaster_rgb_b3_bsq,
-    georaster_rgb_b3_bip,
-    georaster_rgb_b3_bil,
-    georaster_byte_deflate,
-    georaster_rgb_deflate_b3,
-    georaster_1bit,
-    georaster_2bit,
-    georaster_4bit,
-    georaster_cleanup
-]
 
-if __name__ == '__main__':
-
-    if 'OCI_DSNAME' not in os.environ:
-        print('Enter ORACLE connection (e.g. OCI:scott/tiger@orcl): ')
-        oci_dsname = sys.stdin.readline().strip()
-        os.environ['OCI_DSNAME'] = oci_dsname
-
-    gdaltest.setup_run('GeoRaster')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())
