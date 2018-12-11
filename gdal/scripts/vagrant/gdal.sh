@@ -75,7 +75,8 @@ cd ../..
 # Install pytest.
 # First install pip 9, which is the last version which can upgrade the system's `six`
 # 10+ throws an error :/
-curl https://bootstrap.pypa.io/get-pip.py 'pip<10' | sudo -H python
+curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+sudo -H python /tmp/get-pip.py 'pip<10'
 
 sudo -H pip install -Ur /vagrant/autotest/requirements.txt
 
