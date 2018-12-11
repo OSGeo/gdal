@@ -82,7 +82,7 @@ def dump_crsdictionary(filename, out_crsdictionary):
     for domain in mdd_list:
         if domain.startswith('xml:'):
             mdd_item = ds.GetMetadata(domain)[0]
-            if mdd_item.find('<Dictionary') >= 0 or mdd_item.find('<gml:Dictionary') >= 0:
+            if '<Dictionary' in mdd_item or '<gml:Dictionary' in mdd_item:
                 if out_crsdictionary == '-':
                     print(mdd_item)
                 else:

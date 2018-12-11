@@ -40,28 +40,28 @@ full_author = 'Even Rouault <even dot rouault at mines-paris dot org>'
 
 for dirname, dirnames, filenames in os.walk('.'):
 
-    if dirname.find('.svn') >= 0:
+    if '.svn' in dirname:
         continue
-    if dirname.find('.git') >= 0:
+    if '.git' in dirname:
         continue
-    if dirname.find('libpng') >= 0:
+    if 'libpng' in dirname:
         continue
-    if dirname.find('libjpeg') >= 0:
+    if 'libjpeg' in dirname:
         continue
-    if dirname.find('libtiff') >= 0:
+    if 'libtiff' in dirname:
         continue
-    if dirname.find('giflib') >= 0:
+    if 'giflib' in dirname:
         continue
-    if dirname.find('libgeotiff') >= 0:
+    if 'libgeotiff' in dirname:
         continue
-    if dirname.find('libjson') >= 0:
+    if 'libjson' in dirname:
         continue
 
     # print path to all filenames.
     for filename in filenames:
-        if filename.find('.svn') >= 0:
+        if '.svn' in filename:
             continue
-        if filename.find('.h') < 0 and filename.find('.c') < 0 and filename.find('.py') < 0:
+        if '.h' not in filename and '.c' not in filename and '.py' not in filename:
             continue
         if filename == 'e00read.c' or filename == 'e00compr.h':
             continue
@@ -80,7 +80,7 @@ for dirname, dirnames, filenames in os.walk('.'):
         commits_to_ignore = []
         while i < nlines:
             line = lines[i][0:-1]
-            if line.find('Author:') == 0 and line.find(git_author) >= 0:
+            if line.startswith('Author:') and git_author in line:
                 i = i + 1
                 # line = lines[i][0:-1]
                 # year = int(line.split(' ')[7])
@@ -90,12 +90,12 @@ for dirname, dirnames, filenames in os.walk('.'):
                 ignore_commit = False
                 while i < nlines:
                     line = lines[i][0:-1]
-                    if line.find('commit') == 0:
+                    if line.startswith('commit'):
                         break
-                    if line.find('(by') >= 0 or line.find('contributed by') >= 0 or \
-                       line.find('patch') >= 0 or line.find('Patch') >= 0 or \
-                       line.find('Update copyright') >= 0 or line.find('From: ') >= 0 or \
-                       line.find('Add BLX Magellan Topo driver') >= 0:
+                    if '(by' in line or 'contributed by' in line or \
+                       'patch' in line or 'Patch' in line or \
+                       'Update copyright' in line or 'From: ' in line or \
+                       'Add BLX Magellan Topo driver' in line:
                         ignore_commit = True
                     i = i + 1
                 if ignore_commit:
@@ -118,9 +118,9 @@ for dirname, dirnames, filenames in os.walk('.'):
             line = lines[i][0:-1]
             ignore = False
             for commit in commits_to_ignore:
-                if line.find(commit) == 0:
+                if line.startswith(commit):
                     ignore = True
-            if not ignore and line.find('Copyright') < 0:
+            if not ignore and 'Copyright' not in line:
                 idx = line.find("(" + git_author)
                 if idx > 0:
                     count_matching_lines = count_matching_lines + 1
@@ -144,31 +144,31 @@ for dirname, dirnames, filenames in os.walk('.'):
         i = 0
         nlines = len(lines)
         already_added = False
-        if filename.find('.py') >= 0:
+        if '.py' in filename:
             prefix = '# '
         else:
             prefix = ' * '
         while i < nlines:
             line = lines[i]
-            if not already_added and line.find('Copyright') >= 0:
+            if not already_added and 'Copyright' in line:
                 already_added = True
-                if line.find('#  ') == 0:
+                if line.startswith('#  '):
                     prefix = '#  '
-                elif line.find('# * ') == 0:
+                elif line.startswith('# * '):
                     prefix = '# * '
-                elif line.find('// ') == 0:
+                elif line.startswith('// '):
                     prefix = '// '
-                while line.find(author_in_file) < 0:
+                while author_in_file not in line:
                     f2.write(line)
                     i = i + 1
                     line = lines[i]
-                    if (line.find('Copyright') < 0 and len(line.strip()) < 10) or line.find('Permission to use') > 0:
+                    if ('Copyright' not in line and len(line.strip()) < 10) or line.find('Permission to use') > 0:
                         break
                 if minyear < maxyear:
                     f2.write('%sCopyright (c) %d-%d, %s\n' % (prefix, minyear, maxyear, full_author))
                 else:
                     f2.write('%sCopyright (c) %d, %s\n' % (prefix, minyear, full_author))
-                if line.find(author_in_file) < 0:
+                if author_in_file not in line:
                     f2.write(line)
             else:
                 f2.write(line)

@@ -421,7 +421,7 @@ def process(argv, progress=None, progress_arg=None):
                 basename = None
                 if os.path.exists(src_dsname):
                     basename = os.path.basename(src_dsname)
-                    if basename.find('.') >= 0:
+                    if '.' in basename:
                         basename = '.'.join(basename.split(".")[0:-1])
 
                 if basename == src_lyr_name:
@@ -457,8 +457,8 @@ def process(argv, progress=None, progress_arg=None):
                 if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
-                   vrt_filename.find('/') < 0 and \
-                   vrt_filename.find('\\') < 0:
+                   '/' not in vrt_filename and \
+                   '\\' not in vrt_filename:
                     attrs = {'relativeToVRT': '1'}
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
@@ -507,7 +507,7 @@ def process(argv, progress=None, progress_arg=None):
                 basename = None
                 if os.path.exists(src_dsname):
                     basename = os.path.basename(src_dsname)
-                    if basename.find('.') >= 0:
+                    if '.' in basename:
                         basename = '.'.join(basename.split(".")[0:-1])
 
                 if basename == src_lyr_name:
@@ -522,9 +522,9 @@ def process(argv, progress=None, progress_arg=None):
 
                 if basename is not None:
                     layer_name = layer_name.replace('{DS_BASENAME}', basename)
-                elif layer_name.find('{DS_BASENAME}') >= 0:
+                elif '{DS_BASENAME}' in layer_name:
                     if skip_failures:
-                        if layer_name.find('{DS_INDEX}') < 0:
+                        if '{DS_INDEX}' not in layer_name:
                             layer_name = layer_name.replace(
                                 '{DS_BASENAME}', 'Dataset%d' % src_ds_idx)
                     else:
@@ -554,8 +554,8 @@ def process(argv, progress=None, progress_arg=None):
                 if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
-                   vrt_filename.find('/') < 0 and \
-                   vrt_filename.find('\\') < 0:
+                   '/' not in vrt_filename and \
+                   '\\' not in vrt_filename:
                     attrs = {'relativeToVRT': '1'}
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
