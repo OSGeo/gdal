@@ -397,7 +397,7 @@ if( quad_value != nNoDataVal )                                          \
  * <li>TEMP_FILE_DRIVER=gdal_driver_name. For example MEM.</li>
  * <li>NODATA=value (starting with GDAL 2.4).
  * Source pixels at that value will be ignored by the interpolator. Warning:
- * currently this will not be honored by smothing passes.</li>
+ * currently this will not be honored by smoothing passes.</li>
  * </ul>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
