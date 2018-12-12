@@ -212,6 +212,9 @@ def test_ogr_gft_ogr2ogr_non_spatial():
 
 
 def test_ogr_gft_ogr2ogr_spatial():
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+
     if ogrtest.gft_drv is None:
         pytest.skip()
 
