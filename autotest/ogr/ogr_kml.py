@@ -363,7 +363,7 @@ def test_ogr_kml_check_write_1():
         pytest.skip()
 
     content = open('tmp/kml.kml').read()
-    assert content.find('Schema') < 0, 'Did not expect Schema tags.'
+    assert 'Schema' not in content, 'Did not expect Schema tags.'
 
     ds = ogr.Open('tmp/kml.kml')
     lyr = ds.GetLayerByName('test_wgs84')

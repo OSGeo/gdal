@@ -434,7 +434,7 @@ def test_ogr_pgdump_6():
 
     gdal.Unlink('/vsimem/ogr_pgdump_6.sql')
 
-    assert (not (sql.find("""a\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""") < 0 or \
+    assert (not ("""a\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""" not in sql or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_string" VARCHAR DEFAULT 'a''b';""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_int" INTEGER DEFAULT 123;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_real" FLOAT8 DEFAULT 1.23;""") == -1 or \
@@ -442,7 +442,7 @@ def test_ogr_pgdump_6():
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_datetime2" timestamp with time zone DEFAULT '2015/06/30 12:34:56+00'::timestamp with time zone;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_date" date DEFAULT CURRENT_DATE;""") == -1 or \
        sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_time" time DEFAULT CURRENT_TIME;""") == -1 or \
-       sql.find("""b\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""") < 0))
+       """b\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56""" not in sql))
 
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
@@ -527,8 +527,8 @@ def test_ogr_pgdump_7():
 
     gdal.Unlink('/vsimem/ogr_pgdump_7.sql')
 
-    assert (not (sql.find("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""") < 0 or \
-       sql.find("""ALTER TABLE "public"."test" ADD COLUMN "myfid" """) >= 0 or \
+    assert (not ("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""" not in sql or \
+       """ALTER TABLE "public"."test" ADD COLUMN "myfid" """ in sql or \
        sql.find("""INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (10, 'first string', 'second string');""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("str2") VALUES ('second string');""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (12, 'first string', 'second string');""") == -1))
@@ -624,8 +624,8 @@ def test_ogr_pgdump_8():
 
     gdal.Unlink('/vsimem/ogr_pgdump_8.sql')
 
-    assert (not (sql.find("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""") < 0 or \
-       sql.find("""ALTER TABLE "public"."test" ADD COLUMN "myfid" """) >= 0 or \
+    assert (not ("""CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )""" not in sql or \
+       """ALTER TABLE "public"."test" ADD COLUMN "myfid" """ in sql or \
        sql.find("""10\tfirst string\tsecond string""") == -1 or \
        sql.find("""INSERT INTO "public"."test" ("str2") VALUES ('second string');""") == -1 or \
        sql.find("""12\tfirst string\tsecond string""") == -1))
@@ -686,10 +686,10 @@ def test_ogr_pgdump_9(pg_use_copy='YES'):
         eofield = '\t'
     else:
         eofield = "'"
-    assert (sql.find("""01234%s""" % eofield) >= 0 and \
-       sql.find("""ABCDE%s""" % eofield) >= 0 and \
-       sql.find("""%s%s""" % (val5, eofield)) >= 0 and \
-       sql.find("""%s%s""" % ('a' + val4, eofield)) >= 0)
+    assert ("""01234%s""" % eofield in sql and \
+       """ABCDE%s""" % eofield in sql and \
+       """%s%s""" % (val5, eofield) in sql and \
+       """%s%s""" % ('a' + val4, eofield) in sql)
 
 
 def test_ogr_pgdump_10():
@@ -716,8 +716,8 @@ def test_ogr_pgdump_11():
     gdal.Unlink('/vsimem/ogr_pgdump_11.sql')
 
     # clang -m32 generates F8FF..., instead of F87F... for all other systems
-    assert (sql.find('0101000000000000000000F87F000000000000F87F') >= 0 or \
-       sql.find('0101000000000000000000F8FF000000000000F8FF') >= 0)
+    assert ('0101000000000000000000F87F000000000000F87F' in sql or \
+       '0101000000000000000000F8FF000000000000F8FF' in sql)
 
 ###############################################################################
 # Test that GEOMETRY_NAME works even when the geometry column creation is
@@ -739,7 +739,7 @@ def test_ogr_pgdump_12():
 
     gdal.Unlink('/vsimem/ogr_pgdump_12.sql')
 
-    assert sql.find('another_name') >= 0
+    assert 'another_name' in sql
 
 ###############################################################################
 # Test ZM support
@@ -782,7 +782,7 @@ def test_ogr_pgdump_13():
         gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
 
         for expected_string in expected_strings:
-            assert sql.find(expected_string) >= 0, (geom_type, options, wkt, expected_string)
+            assert expected_string in sql, (geom_type, options, wkt, expected_string)
 
         if 'GEOM_TYPE=geography' in options:
             continue
@@ -803,7 +803,7 @@ def test_ogr_pgdump_13():
         gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
 
         for expected_string in expected_strings:
-            assert sql.find(expected_string) >= 0, (geom_type, options, wkt, expected_string)
+            assert expected_string in sql, (geom_type, options, wkt, expected_string)
 
     
 ###############################################################################
@@ -826,7 +826,7 @@ def test_ogr_pgdump_14():
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
 
-    assert sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'foo';""") >= 0 and sql.find('bar') < 0 and sql.find('baz') < 0
+    assert """COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'foo';""" in sql and 'bar' not in sql and 'baz' not in sql
 
     # Set with SetMetadataItem()
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options=['LINEFORMAT=LF'])
@@ -839,7 +839,7 @@ def test_ogr_pgdump_14():
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
-    assert sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'bar';""") >= 0
+    assert """COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'bar';""" in sql
 
     # Set with SetMetadata()
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_14.sql', options=['LINEFORMAT=LF'])
@@ -852,7 +852,7 @@ def test_ogr_pgdump_14():
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_pgdump_14.sql')
-    assert sql.find("""COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""") >= 0
+    assert """COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""" in sql
 
 ###############################################################################
 # NULL vs unset
@@ -877,8 +877,8 @@ def test_ogr_pgdump_15():
 
     gdal.Unlink('/vsimem/ogr_pgdump_15.sql')
 
-    assert (sql.find('INSERT INTO "public"."test" ("str") VALUES (NULL)') >= 0 or \
-       sql.find('INSERT INTO "public"."test" DEFAULT VALUES') >= 0)
+    assert ('INSERT INTO "public"."test" ("str") VALUES (NULL)' in sql or \
+       'INSERT INTO "public"."test" DEFAULT VALUES' in sql)
 
 ###############################################################################
 # Test sequence updating
@@ -904,7 +904,7 @@ def test_ogr_pgdump_16():
 
         gdal.Unlink('/vsimem/ogr_pgdump_16.sql')
 
-        assert sql.find("""SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";""") >= 0
+        assert """SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";""" in sql
 
     gdal.SetConfigOption('PG_USE_COPY', None)
 

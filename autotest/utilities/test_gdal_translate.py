@@ -737,7 +737,7 @@ def test_gdal_translate_33():
     os.unlink('tmp/test_gdal_translate_33.tif')
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
-    assert err.find('-outsize 0 0 invalid') >= 0
+    assert '-outsize 0 0 invalid' in err
 
 ###############################################################################
 # Test NBITS is preserved
@@ -764,16 +764,16 @@ def test_gdal_translate_35():
         pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path())
-    assert err.find('No source dataset specified') >= 0
+    assert 'No source dataset specified' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif')
-    assert err.find('No target dataset specified') >= 0
+    assert 'No target dataset specified' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' /non_existing_path/non_existing.tif /vsimem/out.tif')
-    assert err.find('does not exist in the file system') >= 0 or err.find('No such file or directory') >= 0
+    assert 'does not exist in the file system' in err or 'No such file or directory' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif /non_existing_path/non_existing.tif')
-    assert err.find('Attempt to create new tiff file') >= 0
+    assert 'Attempt to create new tiff file' in err
 
 ###############################################################################
 # Test RAT is copied from hfa to gtiff - continuous/athematic

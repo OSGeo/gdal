@@ -1462,9 +1462,9 @@ def test_gdalwarp_lib_override_default_output_nodata():
 
     creationoptionlist = drv.GetMetadataItem('DMD_CREATIONOPTIONLIST')
     formats = ['NC']
-    if creationoptionlist.find('<Value>NC2</Value>') >= 0:
+    if '<Value>NC2</Value>' in creationoptionlist:
         formats += ['NC2']
-    if creationoptionlist.find('<Value>NC4</Value>') >= 0:
+    if '<Value>NC4</Value>' in creationoptionlist:
         formats += ['NC4', 'NC4C']
 
     for frmt in formats:

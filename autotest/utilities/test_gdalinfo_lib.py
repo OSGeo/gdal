@@ -130,7 +130,7 @@ def test_gdalinfo_lib_nodatavalues():
 
     ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of VRT -b 1 -b 1 -b 1 -mo "NODATA_VALUES=0 1 2"')
     ret = gdal.Info(ds)
-    assert ret.find('PER_DATASET NODATA') >= 0, 'wrong value for mask flags.'
+    assert 'PER_DATASET NODATA' in ret, 'wrong value for mask flags.'
 
 
 

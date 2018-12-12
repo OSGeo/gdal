@@ -205,7 +205,7 @@ def test_grib_grib2_read_template_4_15():
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' data/grib/template_4_15.grb2 -checksum')
 
     # This is a JPEG2000 compressed file, so just check we can open it or that we get a message saying there's no JPEG2000 driver available
-    assert ret.find('Checksum=') >= 0 or err.find('Is the JPEG2000 driver available?') >= 0, \
+    assert 'Checksum=' in ret or 'Is the JPEG2000 driver available?' in err, \
         'Could not open file'
 
 ###############################################################################
@@ -765,7 +765,7 @@ def test_grib_grib2_write_projections():
     wkt = out_ds.GetProjectionRef()
     out_ds = None
     gdal.Unlink(tmpfilename)
-    assert wkt.find('SPHEROID["GRS80",6378137,298.257222101]') >= 0
+    assert 'SPHEROID["GRS80",6378137,298.257222101]' in wkt
 
     # Test writing Mercator_1SP with scale != 1 (will be read as Mercator_2SP)
     src_ds = gdal.Warp('', 'data/byte.tif', format='MEM', dstSRS="""PROJCS["unnamed",

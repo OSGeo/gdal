@@ -743,7 +743,7 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
                          'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount' % gdaltest.webserver_port)
 
     signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource')
-    assert signed_url.find('http://127.0.0.1:%d/myaccount/az_fake_bucket/resource' % gdaltest.webserver_port) >= 0
+    assert 'http://127.0.0.1:%d/myaccount/az_fake_bucket/resource' % gdaltest.webserver_port in signed_url
 
 
 ###############################################################################
@@ -773,7 +773,7 @@ def test_vsiaz_extra_1():
     if az_resource is None:
         pytest.skip('Missing AZ_RESOURCE')
 
-    if az_resource.find('/') < 0:
+    if '/' not in az_resource:
         path = '/vsiaz/' + az_resource
         statres = gdal.VSIStatL(path)
         assert statres is not None and stat.S_ISDIR(statres.mode), \

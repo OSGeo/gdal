@@ -75,7 +75,7 @@ def test_basic_test_strace_non_existing_file():
 
     interesting_lines = []
     for line in err.split('\n'):
-        if line.find('non_existing_ds') >= 0:
+        if 'non_existing_ds' in line:
             interesting_lines += [ line ]
     # Only 3 calls on the file are legit: open(), stat() and readlink()
     assert len(interesting_lines) <= 3, 'too many system calls accessing file'

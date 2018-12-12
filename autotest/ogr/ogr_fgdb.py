@@ -1177,7 +1177,7 @@ def test_ogr_fgdb_19():
 
     lst = gdal.ReadDir('tmp/test.gdb')
     for filename in lst:
-        assert filename.find('.tmp') < 0, lst
+        assert '.tmp' not in filename, lst
 
     lyr_tmp = ds.GetLayer(0)
     lyr_tmp = ds.GetLayer(0)
@@ -1339,7 +1339,7 @@ def test_ogr_fgdb_19():
 
         lst = gdal.ReadDir('tmp/test.gdb')
         for filename in lst:
-            assert filename.find('.tmp') < 0, lst
+            assert '.tmp' not in filename, lst
 
         # Test an error case where we simulate a failure in renaming
         # a file in original directory
@@ -1370,7 +1370,7 @@ def test_ogr_fgdb_19():
 
         lst = gdal.ReadDir('tmp/test.gdb')
         for filename in lst:
-            assert filename.find('.tmp') < 0, lst
+            assert '.tmp' not in filename, lst
 
         # Test an error case where we simulate a failure in moving
         # a file into original directory
@@ -1397,7 +1397,7 @@ def test_ogr_fgdb_19():
         # Remove left over .tmp files
         lst = gdal.ReadDir('tmp/test.gdb')
         for filename in lst:
-            if filename.find('.tmp') >= 0:
+            if '.tmp' in filename:
                 os.remove('tmp/test.gdb/' + filename)
 
         # Test not critical error in removing a temporary file
@@ -1430,7 +1430,7 @@ def test_ogr_fgdb_19():
             # Remove left over .tmp files
             lst = gdal.ReadDir('tmp/test.gdb')
             for filename in lst:
-                if filename.find('.tmp') >= 0:
+                if '.tmp' in filename:
                     os.remove('tmp/test.gdb/' + filename)
 
     else:

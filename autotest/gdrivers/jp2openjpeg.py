@@ -332,7 +332,7 @@ def test_jp2openjpeg_12():
 
     gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_12.jp2')
 
-    assert wkt.find('32631') >= 0
+    assert '32631' in wkt
 
     # Override geotransform
     shutil.copy('data/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
@@ -372,7 +372,7 @@ def test_jp2openjpeg_13():
     wkt = ds.GetGCPProjection()
     assert count == 4
     assert len(gcps) == 4
-    assert wkt.find('4326') >= 0
+    assert '4326' in wkt
     ds = None
 
     # Override GCP
@@ -393,7 +393,7 @@ def test_jp2openjpeg_13():
 
     assert count == 1
     assert len(gcps) == 1
-    assert wkt.find('32631') >= 0
+    assert '32631' in wkt
 
 ###############################################################################
 # Check that we get GCPs even there's no projection info
@@ -1945,8 +1945,8 @@ def test_jp2openjpeg_45():
     del out_ds
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    assert gmljp2.find('some_gml_id') >= 0
-    assert gmljp2.find('urn:ogc:def:crs:EPSG::26711') >= 0
+    assert 'some_gml_id' in gmljp2
+    assert 'urn:ogc:def:crs:EPSG::26711' in gmljp2
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
@@ -1958,7 +1958,7 @@ def test_jp2openjpeg_45():
         del out_ds
         ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
         gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-        assert gmljp2.find(predefined[1]) >= 0
+        assert predefined[1] in gmljp2
         ds = None
         gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
@@ -1970,7 +1970,7 @@ def test_jp2openjpeg_45():
     del out_ds
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    assert gmljp2.find('<gmlcov:rangeType></gmlcov:rangeType>') >= 0
+    assert '<gmlcov:rangeType></gmlcov:rangeType>' in gmljp2
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
@@ -1990,7 +1990,7 @@ def test_jp2openjpeg_45():
     del out_ds
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    assert gmljp2.find("custom_datarecord") >= 0, predefined[0]
+    assert "custom_datarecord" in gmljp2, predefined[0]
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
@@ -2365,7 +2365,7 @@ def test_jp2openjpeg_45():
 
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    assert gmljp2.find('my_GMLJP2RectifiedGridCoverage') >= 0
+    assert 'my_GMLJP2RectifiedGridCoverage' in gmljp2
     first_metadata_pos = gmljp2.find("First metadata")
     second_metadata_pos = gmljp2.find("Second metadata")
     third_metadata_pos = gmljp2.find("Third metadata")
@@ -2416,26 +2416,26 @@ def test_jp2openjpeg_45():
     # print(gmljp2)
 
     myshape_gml = ds.GetMetadata_List("xml:myshape.gml")[0]
-    assert myshape_gml.find("""<ogr1:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/1 gmljp2://xml/myshape.xsd" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:gml="http://www.opengis.net/gml/3.2">""") >= 0
-    assert myshape_gml.find("""http://www.opengis.net/def/crs/EPSG/0/4326""") >= 0
+    assert """<ogr1:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/1 gmljp2://xml/myshape.xsd" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:gml="http://www.opengis.net/gml/3.2">""" in myshape_gml
+    assert """http://www.opengis.net/def/crs/EPSG/0/4326""" in myshape_gml
 
     myshape_xsd = ds.GetMetadata_List("xml:myshape.xsd")[0]
-    assert myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/1" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") >= 0
+    assert """<xs:schema targetNamespace="http://ogr.maptools.org/1" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""" in myshape_xsd
 
     myshape2_gml = ds.GetMetadata_List("xml:myshape2.gml")[0]
-    assert myshape2_gml.find("""<ogr2:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr2="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") >= 0
+    assert """<ogr2:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr2="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""" in myshape2_gml
 
     feature2_gml = ds.GetMetadata_List("xml:feature2.gml")[0]
-    assert feature2_gml.find("""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""") >= 0
+    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""" in feature2_gml
 
     feature3_gml = ds.GetMetadata_List("xml:feature3.gml")[0]
-    assert feature3_gml.find("""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""") >= 0
+    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""" in feature3_gml
 
     myshape2_xsd = ds.GetMetadata_List("xml:a_schema.xsd")[0]
-    assert myshape2_xsd.find("""<xs:schema xmlns:ogr="http://ogr.maptools.org/" """) >= 0
+    assert """<xs:schema xmlns:ogr="http://ogr.maptools.org/" """ in myshape2_xsd
 
     duplicated_xsd = ds.GetMetadata_List("xml:duplicated.xsd")[0]
-    assert duplicated_xsd.find("""<xs:schema xmlns:ogr="http://ogr.maptools.org/" """) >= 0, \
+    assert """<xs:schema xmlns:ogr="http://ogr.maptools.org/" """ in duplicated_xsd, \
         myshape2_xsd
 
     ds = None
@@ -2569,10 +2569,10 @@ def test_jp2openjpeg_46():
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    if gmljp2.find("""<gmljp2:metadata>1 str trueX
+    if """<gmljp2:metadata>1 str trueX
         <B>my_value</B>
-yeah: """) < 0:
-        if gmljp2.find("""<gmljp2:metadata>1 str true""") >= 0:
+yeah: """ not in gmljp2:
+        if """<gmljp2:metadata>1 str true""" in gmljp2:
             pytest.skip()
         pytest.fail(gmljp2)
     ds = None
@@ -2607,7 +2607,7 @@ yeah: """) < 0:
 
         gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
-        assert gmljp2.find('<gmljp2:metadata>') < 0, invalid_template
+        assert '<gmljp2:metadata>' not in gmljp2, invalid_template
 
     # Nonexistent template.
     gdal.FileFromMemBuffer("/vsimem/source.xml", """<A/>""")
@@ -2914,7 +2914,7 @@ def test_jp2openjpeg_49():
             print('Expected ' + str(expected_gt))
             pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
@@ -2969,7 +2969,7 @@ def test_jp2openjpeg_49():
             print('Expected ' + str(expected_gt))
             pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))

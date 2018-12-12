@@ -739,7 +739,7 @@ def test_ogr_openfilegdb_7():
         ds.ReleaseResultSet(sql_lyr)
         assert optimized == expected_optimized, (sql, feat_count, first_fid)
 
-        if optimized and sql.find('big_layer') < 0:
+        if optimized and 'big_layer' not in sql:
             import test_cli_utilities
             if test_cli_utilities.get_test_ogrsf_path() is not None:
                 ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/testopenfilegdb.gdb.zip -sql "%s"' % sql)

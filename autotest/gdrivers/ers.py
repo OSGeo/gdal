@@ -251,7 +251,7 @@ def test_ers_10():
         ('GetMetadata() not consistent with '
                              'GetMetadataItem()')
 
-    assert wkt.find("""PROJCS["MGA55""") == 0, 'did not get expected projection'
+    assert wkt.startswith("""PROJCS["MGA55"""), 'did not get expected projection'
 
     ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options=['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
     ds = None

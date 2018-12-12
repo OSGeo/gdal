@@ -3109,7 +3109,7 @@ def test_gpkg_delete_raster_layer():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find('foo') < 0
+    assert 'foo' not in content
 
     gdal.Unlink(filename)
 
@@ -3135,7 +3135,7 @@ def test_gpkg_delete_gridded_coverage_raster_layer():
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    assert content.find('foo') < 0
+    assert 'foo' not in content
 
     gdal.Unlink(filename)
 
@@ -3164,10 +3164,10 @@ def test_gpkg_GeneralCmdLineProcessor():
     if test_cli_utilities.get_gdalinfo_path() is not None and test_cli_utilities.get_ogrinfo_path() is not None:
         ret_gdalinfo = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --format GPKG')
         ret_ogrinfo = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --format GPKG')
-        assert (ret_gdalinfo.find('<CreationOptionList>') >= 0 and \
-           ret_ogrinfo.find('<CreationOptionList>') >= 0 and \
-           ret_gdalinfo.find('scope=') < 0 and \
-           ret_ogrinfo.find('scope=') < 0)
+        assert ('<CreationOptionList>' in ret_gdalinfo and \
+           '<CreationOptionList>' in ret_ogrinfo and \
+           'scope=' not in ret_gdalinfo and \
+           'scope=' not in ret_ogrinfo)
 
     
 ###############################################################################

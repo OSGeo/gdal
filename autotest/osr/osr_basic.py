@@ -545,7 +545,7 @@ def test_osr_basic_18():
 
     # This is a dummy one, but who cares
     wkt = osr.GetUserInputAsWKT('http://www.opengis.net/def/crs-compound?1=http://www.opengis.net/def/crs/EPSG/0/4326&2=http://www.opengis.net/def/crs/EPSG/0/4326')
-    assert wkt.find('COMPD_CS') == 0, 'CRS URL parsing not as expected.'
+    assert wkt.startswith('COMPD_CS'), 'CRS URL parsing not as expected.'
 
 ###############################################################################
 # Test well known GCS names against their corresponding EPSG definitions (#6080)

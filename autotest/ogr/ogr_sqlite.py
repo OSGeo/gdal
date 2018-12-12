@@ -1790,7 +1790,7 @@ def test_ogr_spatialite_7(require_spatialite):
 
 
 def test_ogr_spatialite_8(require_spatialite):
-    if require_spatialite.find('2.3') == 0:
+    if require_spatialite.startswith('2.3'):
         pytest.skip()
 
     try:
@@ -2840,13 +2840,13 @@ def test_ogr_sqlite_44():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('stringlist,intlist,int64list,reallist,wkt\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125') == 0
+    assert data.startswith('stringlist,intlist,int64list,reallist,wkt\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125')
 
     f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csvt', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList') == 0
+    assert data.startswith('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList')
 
     gdal.Unlink('/vsimem/ogr_sqlite_44.csv')
     gdal.Unlink('/vsimem/ogr_sqlite_44.csvt')

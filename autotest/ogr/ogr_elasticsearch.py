@@ -1275,7 +1275,7 @@ def test_ogr_elasticsearch_6():
 
     f = lyr.GetNextFeature()
     ref_txt = f['geometry'].ExportToWkt()
-    if ref_txt.find('POLYGON ((') != 0:
+    if not ref_txt.startswith('POLYGON (('):
         f.DumpReadable()
         pytest.fail()
 

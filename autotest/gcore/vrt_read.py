@@ -354,7 +354,7 @@ def test_vrt_read_10():
 
     assert vrt_hist == mem_hist
 
-    assert content.find('<Histograms>') >= 0
+    assert '<Histograms>' in content
 
     # Single source optimization
     for i in range(2):
@@ -378,7 +378,7 @@ def test_vrt_read_10():
         content = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-        assert content.find('<Histograms>') >= 0
+        assert '<Histograms>' in content
 
     # Two sources general case
     for i in range(2):
@@ -405,7 +405,7 @@ def test_vrt_read_10():
         content = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
-        assert content.find('<Histograms>') >= 0
+        assert '<Histograms>' in content
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_10.tif')
     gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_10.vrt')
@@ -685,7 +685,7 @@ def test_vrt_read_20():
   </VRTRasterBand>
 </VRTDataset>""")
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -checksum tmp/byte2.vrt --config VRT_SHARED_SOURCE 0 --config GDAL_MAX_DATASET_POOL_SIZE 3')
-    assert ret.find('Checksum=4672') >= 0
+    assert 'Checksum=4672' in ret
 
     for f in ['tmp/byte.tif', 'tmp/byte1_1.vrt', 'tmp/byte1_2.vrt', 'tmp/byte1_3.vrt', 'tmp/byte2.vrt']:
         os.unlink(f)
@@ -1153,7 +1153,7 @@ def test_vrt_float32_with_nodata_slightly_below_float_min():
     gdal.Unlink('tmp/minfloat_nodata_slightly_out_of_float.vrt')
 
     # Check that the values were 'normalized' when regenerating the VRT
-    assert vrt_content.find('-3.402823466385289') < 0, \
+    assert '-3.402823466385289' not in vrt_content, \
         'did not get expected nodata in rewritten VRT'
 
     if nodata != -3.4028234663852886e+38:

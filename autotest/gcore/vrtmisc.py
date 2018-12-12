@@ -250,7 +250,7 @@ def test_vrtmisc_11():
 
     gdal.Unlink("tmp/vrtmisc_11.vrt")
 
-    assert data.find('<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>') >= 0
+    assert '<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>' in data
 
 ###############################################################################
 # Test set/delete nodata
@@ -313,8 +313,8 @@ def test_vrtmisc_14():
     gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
     gdal.Unlink("/vsimem/vrtmisc_14.vrt")
 
-    assert (content.find('<SrcRect xOff="0" yOff="0" xSize="123456789" ySize="1"') >= 0 and \
-       content.find('<DstRect xOff="0" yOff="0" xSize="123456789" ySize="1"') >= 0)
+    assert ('<SrcRect xOff="0" yOff="0" xSize="123456789" ySize="1"' in content and \
+       '<DstRect xOff="0" yOff="0" xSize="123456789" ySize="1"' in content)
 
     src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options=['SPARSE_OK=YES', 'TILED=YES'])
     gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
@@ -326,8 +326,8 @@ def test_vrtmisc_14():
     gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
     gdal.Unlink("/vsimem/vrtmisc_14.vrt")
 
-    assert (content.find('<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"') >= 0 and \
-       content.find('<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"') >= 0)
+    assert ('<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"' in content and \
+       '<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"' in content)
 
 ###############################################################################
 # Test CreateCopy() preserve SIGNEDBYTE
@@ -352,10 +352,10 @@ def test_vrtmisc_16():
     content = gdal.VSIFReadL(1, 100000, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
 
-    assert content.find('<SrcRect xOff="0" yOff="0" xSize="952" ySize="1189"') >= 0
-    assert content.find('<DstRect xOff="0" yOff="0" xSize="952" ySize="1189"') >= 0
-    assert content.find('<SrcRect xOff="0" yOff="0" xSize="494" ySize="893"') >= 0
-    assert content.find('<DstRect xOff="1680" yOff="5922" xSize="494" ySize="893"') >= 0
+    assert '<SrcRect xOff="0" yOff="0" xSize="952" ySize="1189"' in content
+    assert '<DstRect xOff="0" yOff="0" xSize="952" ySize="1189"' in content
+    assert '<SrcRect xOff="0" yOff="0" xSize="494" ySize="893"' in content
+    assert '<DstRect xOff="1680" yOff="5922" xSize="494" ySize="893"' in content
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtmisc_16.tif', gdal.Open('/vsimem/vrtmisc_16.vrt'))
     ds = gdal.Open('/vsimem/vrtmisc_16.tif')
@@ -405,7 +405,7 @@ def test_vrtmisc_17():
 
     gdal.Unlink('/vsimem/vrtmisc_17.vrt')
 
-    assert xml_vrt.find('xml:VRT') < 0
+    assert 'xml:VRT' not in xml_vrt
 
 ###############################################################################
 # Check GetMetadata('xml:VRT') behaviour on a in-memory VRT copied from a VRT
@@ -419,8 +419,8 @@ def test_vrtmisc_18():
     assert gdal.GetLastErrorMsg() == ''
     vrt_ds = None
 
-    assert (xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') >= 0 or \
-       xml_vrt.find('<SourceFilename relativeToVRT="1">data\\byte.tif</SourceFilename>') >= 0)
+    assert ('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>' in xml_vrt or \
+       '<SourceFilename relativeToVRT="1">data\\byte.tif</SourceFilename>' in xml_vrt)
 
 ###############################################################################
 # Check RAT support
@@ -439,7 +439,7 @@ def test_vrtmisc_rat():
     assert gdal.GetLastErrorMsg() == ''
     vrt_ds = None
 
-    assert xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') >= 0
+    assert '<GDALRasterAttributeTable tableType="thematic">' in xml_vrt
 
     vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format='VRT', srcWin=[0, 0, 1, 1])
 
@@ -447,7 +447,7 @@ def test_vrtmisc_rat():
     assert gdal.GetLastErrorMsg() == ''
     vrt_ds = None
 
-    assert xml_vrt.find('<GDALRasterAttributeTable tableType="thematic">') >= 0
+    assert '<GDALRasterAttributeTable tableType="thematic">' in xml_vrt
 
     ds = None
 

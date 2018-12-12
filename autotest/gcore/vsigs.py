@@ -90,7 +90,7 @@ def test_vsigs_1():
         gdal.VSIFCloseL(f)
         pytest.fail()
     last_err = gdal.GetLastErrorMsg()
-    assert last_err.find('Cannot read') >= 0
+    assert 'Cannot read' in last_err
 
     # Invalid content for header file
     with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', 'vsigs.py'):
@@ -1078,7 +1078,7 @@ def test_vsigs_extra_1():
     if gs_resource is None:
         pytest.skip('Missing GS_RESOURCE')
 
-    if gs_resource.find('/') < 0:
+    if '/' not in gs_resource:
         path = '/vsigs/' + gs_resource
         statres = gdal.VSIStatL(path)
         assert statres is not None and stat.S_ISDIR(statres.mode), \

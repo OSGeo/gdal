@@ -56,7 +56,7 @@ def test_gdalmove_1():
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) / abs(got_gt[i]) <= 1e-5, 'bad gt'
     wkt = ds.GetProjection()
-    assert wkt.find('32611') >= 0, 'bad geotransform'
+    assert '32611' in wkt, 'bad geotransform'
     ds = None
 
 ###############################################################################

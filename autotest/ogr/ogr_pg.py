@@ -3258,7 +3258,7 @@ def test_ogr_pg_71():
         if not gdaltest.pg_has_postgis_2 and wkt == 'CURVEPOLYGON EMPTY':
             continue
         # Parsing error of WKT by PostGIS 1.X
-        if not gdaltest.pg_has_postgis_2 and wkt.find('MULTICURVE') >= 0 and wkt.find('CIRCULARSTRING') >= 0:
+        if not gdaltest.pg_has_postgis_2 and 'MULTICURVE' in wkt and 'CIRCULARSTRING' in wkt:
             continue
 
         postgis_in_wkt = wkt
@@ -3280,7 +3280,7 @@ def test_ogr_pg_71():
         gdaltest.pg_ds.ReleaseResultSet(lyr)
 
         expected_wkt = wkt
-        if not gdaltest.pg_has_postgis_2 and wkt.find('EMPTY') >= 0:
+        if not gdaltest.pg_has_postgis_2 and 'EMPTY' in wkt:
             expected_wkt = 'GEOMETRYCOLLECTION EMPTY'
         assert out_wkt == expected_wkt
 
@@ -3299,7 +3299,7 @@ def test_ogr_pg_71():
         gdaltest.pg_ds.ReleaseResultSet(lyr)
 
         expected_wkt = wkt
-        if not gdaltest.pg_has_postgis_2 and wkt.find('EMPTY') >= 0:
+        if not gdaltest.pg_has_postgis_2 and 'EMPTY' in wkt:
             expected_wkt = 'GEOMETRYCOLLECTION EMPTY'
         assert out_wkt == expected_wkt
 
@@ -3318,7 +3318,7 @@ def test_ogr_pg_71():
         fid = f.GetFID()
 
         # AsEWKT() in PostGIS 1.X does not like CIRCULARSTRING EMPTY
-        if not gdaltest.pg_has_postgis_2 and wkt.find('CIRCULARSTRING') >= 0 and wkt.find('EMPTY') >= 0:
+        if not gdaltest.pg_has_postgis_2 and 'CIRCULARSTRING' in wkt and 'EMPTY' in wkt:
             continue
 
         lyr = gdaltest.pg_ds.ExecuteSQL("SELECT %s(wkb_geometry) FROM %s WHERE ogc_fid = %d" % (fct, active_lyr.GetName(), fid))

@@ -335,7 +335,7 @@ def test_ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('112233') >= 0 and data.find('445566') >= 0
+    assert '112233' in data and '445566' in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -351,7 +351,7 @@ def test_ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('R_G_B') < 0
+    assert 'R_G_B' not in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -368,7 +368,7 @@ def test_ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('OGR_STYLE') >= 0 and data.find('PEN(c:#445566)') >= 0
+    assert 'OGR_STYLE' in data and 'PEN(c:#445566)' in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -387,7 +387,7 @@ def test_ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.find('OGR_STYLE') >= 0 and data.find('PEN(c:#445566)') >= 0 and data.find('112233') >= 0
+    assert 'OGR_STYLE' in data and 'PEN(c:#445566)' in data and '112233' in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 

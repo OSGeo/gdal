@@ -603,7 +603,7 @@ def test_wms_14():
         'wrong size or bands'
 
     wkt = ds.GetProjectionRef()
-    assert wkt.find('PROJCS["Google Maps Global Mercator"') == 0, \
+    assert wkt.startswith('PROJCS["Google Maps Global Mercator"'), \
         ('Got wrong SRS: ' + wkt)
 
     gt = ds.GetGeoTransform()
@@ -642,7 +642,7 @@ def test_wms_15():
         'wrong size or bands'
 
     wkt = ds.GetProjectionRef()
-    assert wkt.find('PROJCS["WGS 84 / Pseudo-Mercator"') == 0, ('Got wrong SRS: ' + wkt)
+    assert wkt.startswith('PROJCS["WGS 84 / Pseudo-Mercator"'), ('Got wrong SRS: ' + wkt)
 
     gt = ds.GetGeoTransform()
     assert abs(gt[0] - -20037508.342787001) <= 0.00001 and abs(gt[3] - 20037508.342787001) <= 0.00001 and abs(gt[1] - 0.037322767717361482) <= 0.00001 and abs(gt[2] - 0) <= 0.00001 and abs(gt[5] - -0.037322767717361482) <= 0.00001 and abs(gt[4] - 0) <= 0.00001, \
@@ -702,15 +702,15 @@ def test_wms_16():
     val = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
 
     # Some bug in GeoServer ?
-    if val is not None and val.find('java.lang.NoSuchMethodError: org.geoserver.wms.WMS.pixelToWorld') >= 0:
+    if val is not None and 'java.lang.NoSuchMethodError: org.geoserver.wms.WMS.pixelToWorld' in val:
         pytest.skip(val)
 
-    if val is not None and (val.find('Gateway Time-out') >= 0 or
-                            val.find('HTTP error code : 5') >= 0):
+    if val is not None and ('Gateway Time-out' in val or
+                            'HTTP error code : 5' in val):
         pytest.skip()
 
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
-        if val.find('java.lang.NullPointerException') >= 0 or val.find('504 Gateway Time-out') >= 0 or val.find('java.lang.OutOfMemoryError') >= 0:
+        if 'java.lang.NullPointerException' in val or '504 Gateway Time-out' in val or 'java.lang.OutOfMemoryError' in val:
             pytest.skip(val)
 
         print(val)
@@ -727,7 +727,7 @@ def test_wms_16():
     # Ask an overview band
     val2 = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
-        if val2.find('java.lang.NullPointerException') >= 0 or val2.find('504 Gateway Time-out') >= 0 or val2.find('java.lang.OutOfMemoryError') >= 0:
+        if 'java.lang.NullPointerException' in val2 or '504 Gateway Time-out' in val2 or 'java.lang.OutOfMemoryError' in val2:
             pytest.skip(val2)
 
         print(val2)

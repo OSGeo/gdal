@@ -180,7 +180,7 @@ def test_ehdr_9():
     assert ds.GetRasterBand(1).GetMinimum() == -191, 'wrong minimum value'
 
     wkt = ds.GetProjectionRef()
-    assert wkt.find('GEOGCS["WGS 84') == 0, 'wrong projection'
+    assert wkt.startswith('GEOGCS["WGS 84'), 'wrong projection'
 
     ds = None
 

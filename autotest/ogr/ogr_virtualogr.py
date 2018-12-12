@@ -205,7 +205,7 @@ def test_ogr_virtualogr_3():
 
     ret = gdaltest.runexternal(python_exe + ' ogr_as_sqlite_extension.py "%s" "%s"' % (libsqlite_name, libgdal_name), check_memleak=False)
 
-    if ret.find('skip') == 0:
+    if ret.startswith('skip'):
         pytest.skip()
     assert gdal.VersionInfo('RELEASE_NAME') in ret
 

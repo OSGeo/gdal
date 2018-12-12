@@ -478,7 +478,7 @@ def test_osr_proj4_12():
     srs.ImportFromProj4("+init=epsg:4326")
     wkt = srs.ExportToPrettyWkt()
 
-    if wkt.find("""GEOGCS["WGS 84""") != 0:
+    if not wkt.startswith("""GEOGCS["WGS 84"""):
         print('Got:%s' % wkt)
         print('Expected:%s' % expect_wkt)
         pytest.fail('Did not get expected result.')
@@ -736,7 +736,7 @@ def test_osr_proj4_21():
     got = srs.ExportToProj4()
     gdal.SetConfigOption('OVERRIDE_PROJ_DATUM_WITH_TOWGS84', None)
 
-    assert got.find('+proj=longlat +datum=nzgd49') == 0
+    assert got.startswith('+proj=longlat +datum=nzgd49')
 
 ###############################################################################
 # Test importing ellipsoid defined with +R
@@ -748,7 +748,7 @@ def test_osr_proj4_22():
     srs.ImportFromProj4("+proj=longlat +R=1")
     got = srs.ExportToProj4()
 
-    assert got.find('+proj=longlat +a=1 +b=1') == 0
+    assert got.startswith('+proj=longlat +a=1 +b=1')
 
 ###############################################################################
 # Test importing ellipsoid defined with +a and +f
@@ -761,13 +761,13 @@ def test_osr_proj4_23():
     srs.ImportFromProj4("+proj=longlat +a=1 +f=0")
     got = srs.ExportToProj4()
 
-    assert got.find('+proj=longlat +a=1 +b=1') == 0
+    assert got.startswith('+proj=longlat +a=1 +b=1')
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=longlat +a=2 +f=0.5")
     got = srs.ExportToProj4()
 
-    assert got.find('+proj=longlat +a=2 +b=1') == 0
+    assert got.startswith('+proj=longlat +a=2 +b=1')
 
 ###############################################################################
 # Test importing linear units defined with +to_meter
@@ -779,28 +779,28 @@ def test_osr_proj4_24():
     srs.ImportFromProj4("+proj=merc +to_meter=1.0")
     got = srs.ExportToProj4()
 
-    assert got.find('+units=m') >= 0
+    assert '+units=m' in got
 
     # Intl foot
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +to_meter=0.3048")
     got = srs.ExportToProj4()
 
-    assert got.find('+units=ft') >= 0
+    assert '+units=ft' in got
 
     # US foot
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +to_meter=0.3048006096012192")
     got = srs.ExportToProj4()
 
-    assert got.find('+units=us-ft') >= 0
+    assert '+units=us-ft' in got
 
     # unknown
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +to_meter=0.4")
     got = srs.ExportToProj4()
 
-    assert got.find('+to_meter=0.4') >= 0
+    assert '+to_meter=0.4' in got
 
 ###############################################################################
 # Test importing linear units defined with +vto_meter
@@ -815,28 +815,28 @@ def test_osr_proj4_25():
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vto_meter=1.0")
     got = srs.ExportToProj4()
 
-    assert got.find('+vunits=m') >= 0
+    assert '+vunits=m' in got
 
     # Intl foot
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vto_meter=0.3048")
     got = srs.ExportToProj4()
 
-    assert got.find('+vunits=ft') >= 0
+    assert '+vunits=ft' in got
 
     # US foot
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vto_meter=0.3048006096012192")
     got = srs.ExportToProj4()
 
-    assert got.find('+vunits=us-ft') >= 0
+    assert '+vunits=us-ft' in got
 
     # Unknown
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vto_meter=0.4")
     got = srs.ExportToProj4()
 
-    assert got.find('+vto_meter=0.4') >= 0
+    assert '+vto_meter=0.4' in got
 
 ###############################################################################
 # Test importing linear units defined with +vunits
@@ -851,21 +851,21 @@ def test_osr_proj4_26():
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vunits=m")
     got = srs.ExportToProj4()
 
-    assert got.find('+vunits=m') >= 0
+    assert '+vunits=m' in got
 
     # Intl foot
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vunits=ft")
     got = srs.ExportToProj4()
 
-    assert got.find('+vunits=ft') >= 0
+    assert '+vunits=ft' in got
 
     # US yard
     srs = osr.SpatialReference()
     srs.ImportFromProj4("+proj=merc +geoidgrids=foo +vunits=us-yd")
     got = srs.ExportToProj4()
 
-    assert got.find('+vunits=us-yd') >= 0
+    assert '+vunits=us-yd' in got
 
 ###############################################################################
 # Test geostationary +sweep (#6030)
@@ -880,7 +880,7 @@ def test_osr_proj4_27():
     srs.ImportFromProj4("+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m")
     got = srs.ExportToProj4()
 
-    assert got.find('+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m') >= 0
+    assert '+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m' in got
 
 ###############################################################################
 # Test importing +init=epsg: with an override
@@ -892,7 +892,7 @@ def test_osr_proj4_28():
     srs.ImportFromProj4("+init=epsg:32631 +units=cm")
     got = srs.ExportToWkt()
 
-    assert got.find('32631') < 0
+    assert '32631' not in got
 
 
 def test_osr_proj4_28_missing_proj_epsg_dict():
@@ -902,7 +902,7 @@ def test_osr_proj4_28_missing_proj_epsg_dict():
         python_exe = python_exe.replace('\\', '/')
 
     ret = gdaltest.runexternal(python_exe + ' osr_proj4.py osr_proj4_28')
-    assert ret.find('fail') < 0
+    assert 'fail' not in ret
 
 
 def test_osr_proj4_error_cases_export_mercator():

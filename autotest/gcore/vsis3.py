@@ -2304,7 +2304,7 @@ def test_vsis3_extra_1():
     if s3_resource is None:
         pytest.skip('Missing S3_RESOURCE')
 
-    if s3_resource.find('/') < 0:
+    if '/' not in s3_resource:
         path = '/vsis3/' + s3_resource
         statres = gdal.VSIStatL(path)
         assert statres is not None and stat.S_ISDIR(statres.mode), \

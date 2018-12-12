@@ -179,8 +179,8 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert (wkt.find('UNIT["arc-second",4.848136811095361e-06]') >= 0 or \
-       wkt.find('UNIT["arc-second",4.848136811095361e-006]') >= 0)
+    assert ('UNIT["arc-second",4.848136811095361e-06]' in wkt or \
+       'UNIT["arc-second",4.848136811095361e-006]' in wkt)
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -192,7 +192,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert wkt.find('UNIT["arc-minute",0.0002908882086657216]') >= 0
+    assert 'UNIT["arc-minute",0.0002908882086657216]' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -204,7 +204,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert wkt.find('UNIT["grad",0.01570796326794897]') >= 0
+    assert 'UNIT["grad",0.01570796326794897]' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -216,7 +216,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert wkt.find('UNIT["gon",0.01570796326794897]') >= 0
+    assert 'UNIT["gon",0.01570796326794897]' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -228,7 +228,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert wkt.find('UNIT["radian",1]') >= 0
+    assert 'UNIT["radian",1]' in wkt
     ds = None
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
@@ -240,7 +240,7 @@ def test_tiff_srs_angular_units():
     ds = None
     ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
     wkt = ds.GetProjectionRef()
-    assert wkt.find('UNIT["custom",1.23]') >= 0
+    assert 'UNIT["custom",1.23]' in wkt
     ds = None
 
     gdal.Unlink('/vsimem/tiff_srs_angular_units.tif')
@@ -277,13 +277,13 @@ def test_tiff_srs_epsg_2853_with_us_feet():
     ds = gdal.Open('data/epsg_2853_with_us_feet.tif')
     gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
     wkt = ds.GetProjectionRef()
-    assert wkt.find('PARAMETER["false_easting",11482916.66') >= 0 and wkt.find('UNIT["us_survey_feet",0.3048006') >= 0 and wkt.find('2853') < 0
+    assert 'PARAMETER["false_easting",11482916.66' in wkt and 'UNIT["us_survey_feet",0.3048006' in wkt and '2853' not in wkt
 
     gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', 'NO')
     ds = gdal.Open('data/epsg_2853_with_us_feet.tif')
     gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
     wkt = ds.GetProjectionRef()
-    assert wkt.find('PARAMETER["false_easting",11482916.66') >= 0 and wkt.find('UNIT["us_survey_feet",0.3048006') >= 0 and wkt.find('2853') < 0
+    assert 'PARAMETER["false_easting",11482916.66' in wkt and 'UNIT["us_survey_feet",0.3048006' in wkt and '2853' not in wkt
 
 ###############################################################################
 # Test reading a SRS with a PCSCitationGeoKey = "LUnits = ..."
@@ -324,7 +324,7 @@ def test_tiff_srs_projection_3856():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert wkt.find('EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs') >= 0
+    assert 'EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' in wkt
 
 ###############################################################################
 # Test reading a geotiff with a LOCAL_CS and a Imagine citation
@@ -349,7 +349,7 @@ def test_tiff_srs_towgs84_override():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert wkt.find('TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]') >= 0
+    assert 'TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]' in wkt
 
 ###############################################################################
 # Test reading PCSCitationGeoKey (#7199)
@@ -361,7 +361,7 @@ def test_tiff_srs_pcscitation():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert wkt.find('PROJCS["mycitation",') == 0
+    assert wkt.startswith('PROJCS["mycitation",')
 
 
 def _test_tiff_srs(sr, expect_fail):

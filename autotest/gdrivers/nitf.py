@@ -1504,7 +1504,7 @@ def test_nitf_53():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt.find("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84""") == 0, \
+    assert wkt.startswith("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84"""), \
         'did not get expected SRS'
 
     assert gt == (205000.0, 10000.0, 0.0, 5445000.0, 0.0, -10000.0), \
@@ -1672,7 +1672,7 @@ def test_nitf_59():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt.find("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84""") == 0, \
+    assert wkt.startswith("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84"""), \
         'did not get expected SRS'
 
     assert gt == (149999.5, 1.0, 0.0, 4500000.5, 0.0, -1.0), \

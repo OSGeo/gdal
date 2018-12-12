@@ -1999,7 +1999,7 @@ def test_tiff_read_strace_check():
 
     lines_with_dotdot_gcore = []
     for line in err.split('\n'):
-        if line.find('../gcore') >= 0:
+        if '../gcore' in line:
             lines_with_dotdot_gcore += [line]
 
     assert len(lines_with_dotdot_gcore) == 1
@@ -2233,7 +2233,7 @@ def test_tiff_read_nogeoref():
                 print('Expected ' + str(expected_gt))
                 pytest.fail('Iteration %d, did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
                 print('Got ' + srs_wkt)
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
@@ -2291,7 +2291,7 @@ def test_tiff_read_inconsistent_georef():
                 print('Expected ' + str(expected_gt))
                 pytest.fail('Iteration %d, did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
                 print('Got ' + srs_wkt)
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
@@ -2339,7 +2339,7 @@ def test_tiff_read_gcp_internal_and_auxxml():
                 print('Expected ' + str(expected_gcp_count))
                 pytest.fail('Iteration %d, did not get expected gcp count for %s,copy_pam=%s' % (iteration, config_option_value, str(copy_pam)))
 
-            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
                 print('Got ' + srs_wkt)
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s' % (iteration, config_option_value, str(copy_pam)))
@@ -2355,7 +2355,7 @@ class myHandlerClass(object):
 
     def handler(self, eErrClass, err_no, msg):
         # pylint: disable=unused-argument
-        if msg.find('File open of') >= 0:
+        if 'File open of' in msg:
             self.msg = msg
 
 

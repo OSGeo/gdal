@@ -191,7 +191,7 @@ def test_ogrinfo_py_22():
     f.close()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', 'tmp/test_ogrinfo_22.csv')
-    assert ret.find('1: test_ogrinfo_22 (Unknown (any), Unknown (any))') >= 0
+    assert '1: test_ogrinfo_22 (Unknown (any), Unknown (any))' in ret
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_22.csv')
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_22.csv'

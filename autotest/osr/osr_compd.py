@@ -337,7 +337,7 @@ def test_osr_compd_8():
     assert srs.Validate() == 0, 'Does not validate'
 
     wkt = srs.ExportToWkt()
-    assert wkt.find('COMPD_CS') == 0, 'COMPD_CS not recognised as compound.'
+    assert wkt.startswith('COMPD_CS'), 'COMPD_CS not recognised as compound.'
 
 
 

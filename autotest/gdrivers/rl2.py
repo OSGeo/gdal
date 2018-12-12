@@ -73,7 +73,7 @@ def test_rl2_2():
         assert abs(gt[i] - expected_gt[i]) <= 1e-15
 
     wkt = ds.GetProjectionRef()
-    assert wkt.find('26711') >= 0
+    assert '26711' in wkt
 
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
 

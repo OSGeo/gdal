@@ -702,7 +702,7 @@ def test_ogr_wfs_xmldescriptionfile():
     getcapabilitieslayer = ds.GetLayerByName('WFSGetCapabilities')
     getcapabilitieslayer_feat = getcapabilitieslayer.GetNextFeature()
     getcapabilitieslayer_content = getcapabilitieslayer_feat.GetFieldAsString(0)
-    assert getcapabilitieslayer_content.find('<WFS_Capabilities') == 0, \
+    assert getcapabilitieslayer_content.startswith('<WFS_Capabilities'), \
         'did not get expected result'
 
     ds = None

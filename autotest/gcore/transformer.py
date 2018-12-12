@@ -591,14 +591,14 @@ def test_transformer_14():
     if f is not None:
         content = gdal.VSIFReadL(1, 1000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
-    assert content.find('Integer,Real,Real,Real,String,Real,Real') == 0
+    assert content.startswith('Integer,Real,Real,Real,String,Real,Real')
 
     f = gdal.VSIFOpenL('/vsimem/transformer_14.csv', 'rb')
     if f is not None:
         content = gdal.VSIFReadL(1, 1000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
-    assert content.find("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
-0,""") == 0
+    assert content.startswith("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
+0,""")
 
     gdal.Unlink('/vsimem/transformer_14.csvt')
     gdal.Unlink('/vsimem/transformer_14.csv')
@@ -691,10 +691,10 @@ def test_transformer_16():
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
-    assert (content.find('<MaxErrorForward>6.05</MaxErrorForward>') >= 0 and \
-       content.find('<MaxErrorReverse>0.1</MaxErrorReverse>') >= 0 and \
-       content.find('<MaxErrorForward>0.0001</MaxErrorForward>') >= 0 and \
-       content.find('<MaxErrorReverse>6.1</MaxErrorReverse>') >= 0)
+    assert ('<MaxErrorForward>6.05</MaxErrorForward>' in content and \
+       '<MaxErrorReverse>0.1</MaxErrorReverse>' in content and \
+       '<MaxErrorForward>0.0001</MaxErrorForward>' in content and \
+       '<MaxErrorReverse>6.1</MaxErrorReverse>' in content)
     ds = gdal.Translate('', '/vsimem/transformer_16.vrt', format='MEM')
     assert ds.GetRasterBand(1).Checksum() == 4727
     ds = None

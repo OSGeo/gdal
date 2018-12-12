@@ -606,7 +606,7 @@ def test_vsiswift_extra_1():
     if swift_resource is None:
         pytest.skip('Missing SWIFT_RESOURCE')
 
-    if swift_resource.find('/') < 0:
+    if '/' not in swift_resource:
         path = '/vsiswift/' + swift_resource
         statres = gdal.VSIStatL(path)
         assert statres is not None and stat.S_ISDIR(statres.mode), \

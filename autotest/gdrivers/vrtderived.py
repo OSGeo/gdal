@@ -234,9 +234,9 @@ def test_vrtderived_7():
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
     # Either we cannot find a Python library, either it works
-    if ret.find('Checksum=0') >= 0:
+    if 'Checksum=0' in ret:
         print('Did not manage to find a Python library')
-    elif ret.find('Checksum=50577') < 0:
+    elif 'Checksum=50577' not in ret:
         print(err)
         pytest.fail(ret)
 
@@ -244,9 +244,9 @@ def test_vrtderived_7():
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
 # Either we cannot find a Python library, either it works
-    if ret.find('Checksum=0') >= 0:
+    if 'Checksum=0' in ret:
         print('Did not manage to find a Python library')
-    elif ret.find('Checksum=50577') < 0:
+    elif 'Checksum=50577' not in ret:
         print(err)
         pytest.fail(ret)
 
@@ -254,9 +254,9 @@ def test_vrtderived_7():
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
 # Either we cannot find a Python library, either it works
-    if ret.find('Checksum=0') >= 0:
+    if 'Checksum=0' in ret:
         print('Did not manage to find a Python library')
-    elif ret.find('Checksum=50577') < 0:
+    elif 'Checksum=50577' not in ret:
         print(err)
         pytest.fail(ret)
 
@@ -264,7 +264,7 @@ def test_vrtderived_7():
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO foo')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
-    assert ret.find('Checksum=0') >= 0, err
+    assert 'Checksum=0' in ret, err
 
     # Valid shared object name, but without Python symbols
     libgdal_so = gdaltest.find_lib('gdal')
@@ -272,7 +272,7 @@ def test_vrtderived_7():
         ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO "%s"' % libgdal_so)
         if gdal.GetConfigOption('CPL_DEBUG') is not None:
             print(err)
-        assert ret.find('Checksum=0') >= 0, err
+        assert 'Checksum=0' in ret, err
 
     
 ###############################################################################
