@@ -1200,7 +1200,7 @@ def test_vrt_invalid_srcrect():
     assert gdal.Open(vrt_text) is None
 
 
-def test_vrt_invalid_srcrect():
+def test_vrt_invalid_dstrect():
 
     vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">
     <VRTRasterBand dataType="Byte" band="1">
