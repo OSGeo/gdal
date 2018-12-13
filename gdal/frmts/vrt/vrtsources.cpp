@@ -751,10 +751,21 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     CPLXMLNode * const psSrcRect = CPLGetXMLNode(psSrc,"SrcRect");
     if( psSrcRect )
     {
-        SetSrcWindow( CPLAtof(CPLGetXMLValue(psSrcRect,"xOff","-1")),
-                      CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1")),
-                      CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1")),
-                      CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1")) );
+        double xOff = CPLAtof(CPLGetXMLValue(psSrcRect,"xOff","-1"));
+        double yOff = CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1"));
+        double xSize = CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1"));
+        double ySize = CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1"));
+        if( !CPLIsFinite(xOff) || !CPLIsFinite(yOff) ||
+            !CPLIsFinite(xSize) || !CPLIsFinite(ySize) ||
+            xOff < INT_MIN || xOff > INT_MAX ||
+            yOff < INT_MIN || yOff > INT_MAX ||
+            !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
+            !(ySize > 0 || ySize == -1) || ySize > INT_MAX )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong values in SrcRect");
+            return CE_Failure;
+        }
+        SetSrcWindow( xOff, yOff, xSize, ySize );
     }
     else
     {
@@ -767,10 +778,21 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     CPLXMLNode * const psDstRect = CPLGetXMLNode(psSrc,"DstRect");
     if( psDstRect )
     {
-        SetDstWindow( CPLAtof(CPLGetXMLValue(psDstRect,"xOff","-1")),
-                      CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1")),
-                      CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1")),
-                      CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1")) );
+        double xOff = CPLAtof(CPLGetXMLValue(psDstRect,"xOff","-1"));
+        double yOff = CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1"));
+        double xSize = CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1"));
+        double ySize = CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1"));
+        if( !CPLIsFinite(xOff) || !CPLIsFinite(yOff) ||
+            !CPLIsFinite(xSize) || !CPLIsFinite(ySize) ||
+            xOff < INT_MIN || xOff > INT_MAX ||
+            yOff < INT_MIN || yOff > INT_MAX ||
+            !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
+            !(ySize > 0 || ySize == -1) || ySize > INT_MAX )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong values in DstRect");
+            return CE_Failure;
+        }
+        SetDstWindow( xOff, yOff, xSize, ySize );
     }
     else
     {

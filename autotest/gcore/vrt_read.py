@@ -1182,3 +1182,35 @@ def test_vrt_dstsize_larger_than_source():
     ds = gdal.Open('data/dstsize_larger_than_source.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 33273
+
+
+def test_vrt_invalid_srcrect():
+
+    vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename relative="1">data/byte.tif</SourceFilename>
+        <SourceBand>1</SourceBand>
+        <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+        <SrcRect xOff="0" yOff="0" xSize="-10" ySize="20" />
+        <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>"""
+    assert gdal.Open(vrt_text) is None
+
+
+def test_vrt_invalid_srcrect():
+
+    vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename relative="1">data/byte.tif</SourceFilename>
+        <SourceBand>1</SourceBand>
+        <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+        <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        <DstRect xOff="0" yOff="0" xSize="20" ySize="1e400" />
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>"""
+    assert gdal.Open(vrt_text) is None
