@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # Purpose:  Tests for Racurs PHOTOMOD tiled format reader (http://www.racurs.ru)
 # Author:   Andrew Sudorgin (drons [a] list dot ru)
