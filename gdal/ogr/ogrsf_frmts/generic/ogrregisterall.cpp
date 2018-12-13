@@ -313,4 +313,8 @@ void OGRRegisterAllInternal()
     RegisterOGRAVCE00();
 #endif
 
+#ifdef NGW_ENABLED
+    RegisterOGRNGW();
+#endif // NGW_ENABLED
+
 } /* OGRRegisterAll */
