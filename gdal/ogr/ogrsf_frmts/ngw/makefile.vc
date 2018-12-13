@@ -1,0 +1,13 @@
+
+OBJ	=	ogrngwdriver.obj gdalngwdataset.obj ogrngwlayer.obj ngw_api.obj
+
+EXTRAFLAGS =	-I.. -I..\..
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb

@@ -344,11 +344,7 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, char ** /*papszOpti
                                               pfnProgress, pProgressArg,
                                               pWriteFunc, &ctx );
 
-    bool bResult = true;
-    if( psResult->nStatus != 0 /*CURLE_OK*/ )
-    {
-        bResult = false;
-    }
+    bool bResult = psResult->nStatus == 0 /*CURLE_OK*/ && psResult->pszErrBuf == nullptr;
 
     CPLHTTPDestroyResult( psResult );
 
