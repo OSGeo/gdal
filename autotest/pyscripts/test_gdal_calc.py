@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id: test_gdal_calc.py 25549 2013-01-26 11:17:10Z rouault $

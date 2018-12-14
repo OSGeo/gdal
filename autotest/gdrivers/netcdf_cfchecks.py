@@ -2615,3 +2615,11 @@ def getargs(arglist):
 # Main Program
 # --------------------------
 
+if __name__ == '__main__':
+
+    (badc, coards, uploader, useFileName, standardName, areaTypes, udunitsDat, version, files) = getargs(sys.argv)
+
+    inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
+    for f in files:
+        rc = inst.checker(f)
+        sys.exit(rc)
