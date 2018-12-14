@@ -1392,7 +1392,7 @@ dy           1
 
 
 ###############################################################################
-# Test reading a VRT where the NODATA & NoDataValue are slighly below the
+# Test reading a VRT where the NODATA & NoDataValue are slightly below the
 # minimum float value (https://github.com/OSGeo/gdal/issues/1071)
 
 def vrt_float32_with_nodata_slightly_below_float_min():

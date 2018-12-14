@@ -1,3 +1,125 @@
+= GDAL/OGR 2.3.3 Release Notes =
+
+The 2.3.3 release is a bug fix release.
+
+== Build ==
+
+Unix:
+ * fix potential link errors when using internal libgif and internal libpng but headers of those libraries are available in the system in different versions than our internal ones (#938)
+
+All:
+ * Add support for Poppler 0.69 (#1004) and 0.71 (#1121)
+
+== Port ==
+
+ * /vsiaz/: support BlobEndpoint element in AZURE_STORAGE_CONNECTION_STRING such as found in Azurite (#957)
+ * /vsis3/: detect Amazon EC2 instances that use the newer hypervisor (#958)
+ * /vsis3/: honour CPL_VSIL_CURL_ALLOWED_EXTENSIONS configuration option (#995)
+ * /vsicurl/: fix parsing of HTML file listing that got broken in GDAL 2.3.0
+
+== GDAL utilities ==
+
+ * gdalwarp: fix crash when warping on an existing dataset with less bands as needed
+ * gdal2tiles: rename 'tilesize' and 'tileSize' variables to 'tile_size' to have uniform spelling, and fix exception (#1127)
+ * gdal_grid: fix -clipsrc from a vector datasource (broken at least since GDAL 2.1)
+
+== GDAL algorithms ==
+
+ * gdal_grid linear: fix detection of degenerate triangles (#973)
+
+== GDAL drivers ==
+
+FITS driver:
+ * allow reading/writing beyond 2 billion pixel limit
+
+GeoRaster driver:
+ * Fix the issue by freeing the temporary lobs created by readCLob() and writeCLOB().
+ 
+GPKG driver:
+ * properly delete gridded coverage raster layers
+
+GRIB driver:
+ * interpret missing data values correctly for complex packing when original data is integer (#1063)
+ * fix writing of nodata value for complex value when original data is integer (#1063)
+ * add UNIT[] node to SRS on reading, so that is valid
+
+GTiff driver:
+ * update COMPRESSION_ZSTD to the new value of 50000. Still recognize files created with 34926, but only in the branch, and emit warning
+ * internal libtiff: tif_lzma.c: report error in LZMAPreEncode() which can require a lot of memory; and skip gracefully in tests in that case (#1026)
+
+IRIS driver:
+ * add UNIT[] node to SRS on reading, so that is valid
+
+NetCDF driver:
+ * fix west > east if west should be < east (#1114)
+
+PDS4 driver:
+ * add UNIT[] node to SRS on reading, so that is valid
+
+RasterLite2 driver:
+ * fail on Create() that is not supported
+
+RDA driver:
+ * enable support for DG RDA Image Reference string
+
+VRT driver:
+ * deal with serialized nodata value that is slightly outside Float32 validity range (#1071)
+
+WMTS driver:
+ * fix issue with inappropriate zoom level being selected causing integer overflow in raster dimension computation
+ * fix potential off-by-one pixel when compositing the underlying WMS/TMS source into the final raster
+
+== OGR core ==
+
+ * SQLite dialect: fix when ROWID is used in WHERE clause and the source layer has a real FID column name
+ * GML geometry parser: recognize MultiGeometry.geometryMembers syntax (refs https://issues.qgis.org/issues/19571)
+
+== OGRSpatialReference ==
+
+ * FindMatches(): if the input SRS has a EPSG code, check that its definition and the EPSG one actually matches (#990)
+
+== OGR utilities ==
+
+ * ogr_merge.py: fix issue with non-ASCII characters (#1067)
+
+== OGR drivers ==
+
+DXF driver:
+ * fix memory leak in case of attempt to write GeometryCollection of unsupported type. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11516.
+
+GeoJSON driver:
+ * RFC7946 writer: clip and offset geometries outside [-180,180] (#1068)
+
+KML/LIBKML drivers:
+ * robustify for out-of-memory conditions (https://issues.qgis.org/issues/19989)
+
+LIBKML driver:
+ * make edition of existing file work (https://issues.qgis.org/issues/18631)
+ * implement OGRLIBKMLLayer::SyncToDisk() to fix https://issues.qgis.org/issues/18631)
+ * workaround weird issue with OSGeo4W and newline characters in <coordinate> element (https://issues.qgis.org/issues/19215)
+
+MSSQLSpatial driver:
+ * Fix geometry parser with M values (#1051)
+
+MVT driver:
+ * disable check on 'extent' field in identifiation method, which rejected tiles with extent > 16384
+
+OpenFileGDB driver:
+ * fix potential crash on corrupted datasets. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11313.
+
+Shape driver:
+ * avoid being dependent on correctness of file size field in .shp. Fixes https://lists.osgeo.org/pipermail/gdal-dev/2018-October/049218.html
+
+SQLite driver:
+ * do not run spatial index creation in rollback code
+
+XLSX / ODS drivers:
+ * avoid harmless warning in some cases when guessing column data types
+
+== Python bindings ==
+
+ * avoid crash in ReadRaster() under low memory condition (#1026)
+
 = GDAL/OGR 2.3.2 Release Notes =
 
 The 2.3.2 release is a bug fix release.
