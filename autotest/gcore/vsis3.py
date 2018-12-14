@@ -2257,11 +2257,15 @@ def test_vsis3_read_credentials_ec2_expiration():
     assert data == 'foo'
 
     # Set a fake URL to demonstrate we try to re-fetch credentials
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
+                         'http://localhost:%d/invalid/' % gdaltest.webserver_port)
 
-    with gdaltest.error_handler():
-        f = open_for_read('/vsis3/s3_fake_bucket/bar')
-    assert f is None
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/invalid/myprofile', 404)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            f = open_for_read('/vsis3/s3_fake_bucket/bar')
+        assert f is None
 
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
