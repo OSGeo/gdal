@@ -7,7 +7,7 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '2.3.0'
+gdal_version = '2.4.0'
 
 import sys
 import os
