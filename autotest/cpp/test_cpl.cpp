@@ -2562,16 +2562,16 @@ namespace tut
             static AutoCloseTest* Create() {
                 return new AutoCloseTest;
             }
-            static void Destory(AutoCloseTest* p) {
+            static void Destroy(AutoCloseTest* p) {
                 delete p;
             }
         };
         {
             AutoCloseTest* p1 = AutoCloseTest::Create();
-            CPL_AUTO_CLOSE_WARP(p1,AutoCloseTest::Destory);
+            CPL_AUTO_CLOSE_WARP(p1,AutoCloseTest::Destroy);
 
             AutoCloseTest* p2 = AutoCloseTest::Create();
-            CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destory);
+            CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destroy);
 
         }
         ensure_equals(counter,400);

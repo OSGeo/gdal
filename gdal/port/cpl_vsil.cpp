@@ -319,7 +319,7 @@ char **CPLReadDir( const char *pszPath )
  *
  * This function is close to the POSIX opendir() function.
  *
- * For /vsis3/, /vsigs/, /vsioss/ and /vsiaz/, this funtion has an efficient
+ * For /vsis3/, /vsigs/, /vsioss/ and /vsiaz/, this function has an efficient
  * implementation, minimizing the number of network requests, when invoked with
  * nRecurseDepth <= 0.
  *
