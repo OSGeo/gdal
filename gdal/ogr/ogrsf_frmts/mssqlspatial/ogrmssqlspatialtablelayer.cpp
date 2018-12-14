@@ -30,9 +30,6 @@
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
 #include "ogr_p.h"
-#ifdef SQLNCLI_VERSION
-#include <sqlncli.h>
-#endif
 
 CPL_CVSID("$Id$")
 

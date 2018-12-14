@@ -16,7 +16,7 @@ GDAL_ROOT	= ..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS	= -I.. -I..\.. $(SQLNCLI_INCLUDE)
+EXTRAFLAGS	= -I.. -I..\.. $(SQLNCLI_INCLUDE) $(MSODBCSQL_INCLUDE)
 
 default: $(OBJ)
 
@@ -27,7 +27,7 @@ default: $(OBJ)
 plugin: $(PLUGIN_DLL)
 
 $(PLUGIN_DLL):	$(PLUGINOBJ)
-	link /dll /out:$(PLUGIN_DLL) $(PLUGINOBJ) $(GDALLIB) $(ODBCLIB) $(SQLNCLI_LIB) $(LDEBUG)
+	link /dll /out:$(PLUGIN_DLL) $(PLUGINOBJ) $(GDALLIB) $(ODBCLIB) $(SQLNCLI_LIB) $(MSODBCSQL_LIB) $(LDEBUG)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 clean:

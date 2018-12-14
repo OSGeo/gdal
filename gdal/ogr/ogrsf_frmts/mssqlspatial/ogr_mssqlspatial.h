@@ -34,6 +34,13 @@
 #include "cpl_odbc.h"
 #include "cpl_error.h"
 
+#ifdef SQLNCLI_VERSION
+#include <sqlncli.h>
+#endif
+#ifdef MSODBCSQL_VERSION
+#include <msodbcsql.h>
+#endif
+
 class OGRMSSQLSpatialDataSource;
 
 /* layer status */

@@ -29,9 +29,6 @@
 
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
-#ifdef SQLNCLI_VERSION
-#include <sqlncli.h>
-#endif
 
 // SQL_CA_SS_UDT_TYPE_NAME not defined in unixODBC headers
 #ifndef SQL_CA_SS_BASE

@@ -755,6 +755,10 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         pszDriver = CPLStrdup("{SQL Server Native Client 11.0}");
 #elif SQLNCLI_VERSION == 10
         pszDriver = CPLStrdup("{SQL Server Native Client 10.0}");
+#elif MSODBCSQL_VERSION == 13
+        pszDriver = CPLStrdup("{ODBC Driver 13 for SQL Server}");
+#elif MSODBCSQL_VERSION == 17
+        pszDriver = CPLStrdup("{ODBC Driver 17 for SQL Server}");
 #else
         pszDriver = CPLStrdup("{SQL Server}");
 #endif
