@@ -36,6 +36,13 @@ from osgeo import ogr
 import gdaltest
 import pytest
 
+
+pytestmark = [
+    pytest.mark.skipif('OCI_DSNAME' not in os.environ, reason='no OCI_DSNAME in environment'),
+    pytest.mark.require_driver('GeoRaster'),
+]
+
+
 ###############################################################################
 #
 
@@ -58,13 +65,8 @@ def test_georaster_init():
     gdaltest.oci_ds = None
 
     gdaltest.georasterDriver = gdal.GetDriverByName('GeoRaster')
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
 
-    if os.environ.get('OCI_DSNAME') is None:
-        pytest.skip()
-
-    gdaltest.oci_ds = ogr.Open(os.environ.get('OCI_DSNAME'))
+    gdaltest.oci_ds = ogr.Open(os.environ['OCI_DSNAME'])
 
     if gdaltest.oci_ds is None:
         pytest.skip()
@@ -90,10 +92,6 @@ def test_georaster_init():
 
 
 def test_georaster_byte():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -117,10 +115,6 @@ def test_georaster_byte():
 
 
 def test_georaster_int16():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -146,10 +140,6 @@ def test_georaster_int16():
 
 
 def test_georaster_int32():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -175,10 +165,6 @@ def test_georaster_int32():
 
 
 def test_georaster_rgb_b1():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -203,10 +189,6 @@ def test_georaster_rgb_b1():
 
 
 def test_georaster_rgb_b2():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -231,10 +213,6 @@ def test_georaster_rgb_b2():
 
 
 def test_georaster_rgb_b3_bsq():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -259,10 +237,6 @@ def test_georaster_rgb_b3_bsq():
 
 
 def test_georaster_rgb_b3_bip():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -287,10 +261,6 @@ def test_georaster_rgb_b3_bip():
 
 
 def test_georaster_rgb_b3_bil():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -315,10 +285,6 @@ def test_georaster_rgb_b3_bil():
 
 
 def test_georaster_byte_deflate():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -343,10 +309,6 @@ def test_georaster_byte_deflate():
 
 
 def test_georaster_rgb_deflate_b3():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -371,10 +333,6 @@ def test_georaster_rgb_deflate_b3():
 
 
 def test_georaster_1bit():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -399,10 +357,6 @@ def test_georaster_1bit():
 
 
 def test_georaster_2bit():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -427,10 +381,6 @@ def test_georaster_2bit():
 
 
 def test_georaster_4bit():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -455,10 +405,6 @@ def test_georaster_4bit():
 
 
 def test_georaster_cleanup():
-
-    if gdaltest.georasterDriver is None:
-        pytest.skip()
-
     if gdaltest.oci_ds is None:
         pytest.skip()
 
@@ -470,6 +416,3 @@ def test_georaster_cleanup():
 
 ###############################################################################
 #
-
-
-

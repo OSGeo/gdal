@@ -36,6 +36,12 @@ from osgeo import osr
 from osgeo import gdal
 import pytest
 
+
+pytestmark = [
+    pytest.mark.skipif('OCI_DSNAME' not in os.environ, reason='no OCI_DSNAME in environment'),
+    pytest.mark.require_driver('OCI'),
+]
+
 ###############################################################################
 # Open ORACLE.
 
@@ -43,14 +49,6 @@ import pytest
 def test_ogr_oci_1():
 
     gdaltest.oci_ds = None
-
-    try:
-        ogr.GetDriverByName('OCI')
-    except:
-        pytest.skip()
-
-    if 'OCI_DSNAME' not in os.environ:
-        pytest.skip()
 
     gdaltest.oci_ds = ogr.Open(os.environ['OCI_DSNAME'])
 
