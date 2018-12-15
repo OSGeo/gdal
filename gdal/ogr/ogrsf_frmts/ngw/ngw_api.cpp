@@ -45,7 +45,7 @@ std::string GetResource(const std::string &osUrl, const std::string &osResourceI
 
 std::string GetChildren(const std::string &osUrl, const std::string &osResourceId)
 {
-    return osUrl + "/resource/" + osResourceId + "/child/";
+    return osUrl + "/api/resource/?parent=" + osResourceId;
 }
 
 std::string GetFeature(const std::string &osUrl, const std::string &osResourceId)

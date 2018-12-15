@@ -89,6 +89,8 @@ static GDALDataset *OGRNGWDriverCreate( const char *pszName,
         stUri.osNewResourceName.c_str());
     std::string osKey = CSLFetchNameValueDef( papszOptions, "KEY", "");
     std::string osDesc = CSLFetchNameValueDef( papszOptions, "DESCRIPTION", "");
+    std::string osUserPwd = CSLFetchNameValueDef( papszOptions, "USERPWD",
+        CPLGetConfigOption("NGW_USERPWD", ""));
 
     CPLJSONObject oPayload;
     CPLJSONObject oResource( "resource", oPayload );
@@ -114,6 +116,13 @@ static GDALDataset *OGRNGWDriverCreate( const char *pszName,
     papszHTTPOptions = CSLAddString( papszHTTPOptions, osPayload.c_str() );
     papszHTTPOptions = CSLAddString( papszHTTPOptions,
         "HEADERS=Content-Type: application/json\r\nAccept: */*" );
+    if( !osUserPwd.empty() )
+    {
+        papszHTTPOptions = CSLAddString(papszHTTPOptions, "HTTPAUTH=BASIC");
+        std::string osUserPwdOption("USERPWD=");
+        osUserPwdOption += osUserPwd;
+        papszHTTPOptions = CSLAddString(papszHTTPOptions, osUserPwdOption.c_str());
+    }
 
     CPLJSONDocument oRequest;
     bool bResult = oRequest.LoadUrl( NGWAPI::GetResource(stUri.osAddress, ""),
