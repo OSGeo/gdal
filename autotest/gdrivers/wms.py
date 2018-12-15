@@ -667,6 +667,10 @@ def test_wms_16():
     if gdaltest.wms_drv is None:
         pytest.skip()
 
+    if not gdaltest.run_slow_tests():
+        # server often returns a 504 after ages; this test can take minutes
+        pytest.skip()
+
     name = "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?tiled=TRUE"
     ds = gdal.Open(name)
     if ds is None:
