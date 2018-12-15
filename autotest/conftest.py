@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-import gdal
+from osgeo import gdal
 
 # Put the pymod dir on the path, so modules can `import gdaltest`
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
