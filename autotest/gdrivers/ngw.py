@@ -51,12 +51,19 @@ def test_ngw_1():
     if gdaltest.ngw_drv is None:
         pytest.skip()
 
-    # TODO: Change to 'http://dev.nextgis.com/sandbox' after adding raster create copy support.
-    gdaltest.ngw_test_server = 'https://demo.nextgis.com'
+    # Check support CreateCopy
+    if gdaltest.ngw_drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is None:
+        gdaltest.ngw_drv = None
+        pytest.skip()
+
+    gdaltest.ngw_test_server = 'https://dev.nextgis.com/sandbox'
 
     if check_availability(gdaltest.ngw_test_server) == False:
         gdaltest.ngw_drv = None
         pytest.skip()
+
+###############################################################################
+# TODO: Create the NGW raster layer
 
 ###############################################################################
 # Open the NGW dataset
