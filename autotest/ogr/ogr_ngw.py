@@ -356,9 +356,45 @@ def test_ogr_ngw_8():
     assert counter >= 3, 'Expected 3 or greater feature count, got {}.'.format(counter)
 
 ###############################################################################
-# Check ExecuteSQL.
+# Check native data.
 
 def test_ogr_ngw_9():
+    if gdaltest.ngw_drv is None:
+        pytest.skip()
+
+    if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_drv = None
+        pytest.skip()
+
+    ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
+    gdaltest.ngw_ds = None
+
+    url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
+    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE, open_options=['NATIVE_DATA=YES'])
+    lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+
+    feature_id = feat.GetFID()
+    native_data = feat.GetNativeData()
+    assert native_data is not None, 'Feature #{} native data should not be empty'.format(feature_id)
+    # {"description":null,"attachment":null}
+    assert feat.GetNativeMediaType() == 'application/json', 'Unsupported native media type'
+
+    # Set description
+    feat.SetNativeData('{"description":"Test feature description"}')
+    ret = lyr.SetFeature(feat)
+    assert ret == 0, 'Failed to update feature #{}.'.format(feature_id)
+
+    feat = lyr.GetFeature(feature_id)
+    native_data = feat.GetNativeData()
+    assert native_data is not None and native_data.find('Test feature description') != -1, 'Expected feature description text, got {}'.format(native_data)
+
+
+###############################################################################
+# Check ExecuteSQL.
+
+def test_ogr_ngw_10():
     if gdaltest.ngw_drv is None:
         pytest.skip()
 

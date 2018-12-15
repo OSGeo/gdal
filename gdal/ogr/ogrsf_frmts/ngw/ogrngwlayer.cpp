@@ -62,7 +62,8 @@ static bool CheckRequestResult(bool bResult, const CPLJSONObject &oRoot,
  * JSONToFeature()
  */
 static OGRFeature *JSONToFeature( const CPLJSONObject &featureJson,
-    OGRFeatureDefn *poFeatureDefn, bool bCheckIgnoredFields = false )
+    OGRFeatureDefn *poFeatureDefn, bool bCheckIgnoredFields = false,
+    bool bStoreExtensionData = false )
 {
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( featureJson.GetLong("id") );
@@ -131,7 +132,16 @@ static OGRFeature *JSONToFeature( const CPLJSONObject &featureJson,
         poFeature->SetGeomFieldDirectly( 0, poGeometry );
     }
 
-    // FIXME: Do we need extension/description and extension/attachment storing in feature?
+    // Get extensions key and store it in native data.
+    if( bStoreExtensionData )
+    {
+        CPLJSONObject oExtensions = featureJson.GetObj("extensions");
+        if( oExtensions.IsValid() )
+        {
+            poFeature->SetNativeData(oExtensions.Format(CPLJSONObject::Plain).c_str());
+            poFeature->SetNativeMediaType("application/json");
+        }
+    }
 
     return poFeature;
 }
@@ -141,16 +151,16 @@ static OGRFeature *JSONToFeature( const CPLJSONObject &featureJson,
  */
 static CPLJSONObject FeatureToJson(OGRFeature *poFeature)
 {
-    CPLJSONObject oFeaturesJson;
+    CPLJSONObject oFeatureJson;
     if( poFeature == nullptr )
     {
         // Should not happen.
-        return oFeaturesJson;
+        return oFeatureJson;
     }
 
     if( poFeature->GetFID() >= 0 )
     {
-        oFeaturesJson.Add("id", poFeature->GetFID());
+        oFeatureJson.Add("id", poFeature->GetFID());
     }
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
@@ -159,13 +169,13 @@ static CPLJSONObject FeatureToJson(OGRFeature *poFeature)
         char *pszWkt = nullptr;
         if( poGeom->exportToWkt( &pszWkt ) == OGRERR_NONE )
         {
-            oFeaturesJson.Add("geom", std::string(pszWkt));
+            oFeatureJson.Add("geom", std::string(pszWkt));
             CPLFree(pszWkt);
         }
     }
 
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
-    CPLJSONObject oFieldsJson("fields", oFeaturesJson);
+    CPLJSONObject oFieldsJson("fields", oFeatureJson);
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); ++iField )
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
@@ -233,7 +243,16 @@ static CPLJSONObject FeatureToJson(OGRFeature *poFeature)
         }
     }
 
-    return oFeaturesJson;
+    if( poFeature->GetNativeData() )
+    {
+        CPLJSONDocument oExtensions;
+        if( oExtensions.LoadMemory(poFeature->GetNativeData()) )
+        {
+            oFeatureJson.Add("extensions", oExtensions.GetRoot());
+        }
+    }
+
+    return oFeatureJson;
 }
 
 /*
@@ -461,7 +480,7 @@ OGRFeature *OGRNGWLayer::GetNextFeature()
         for( int i = 0; i < aoJSONFeatures.Size(); ++i)
         {
             OGRFeature *poFeature = JSONToFeature( aoJSONFeatures[i],
-                poFeatureDefn, false );
+                poFeatureDefn, false, poDS->IsExtInNativeData() );
             moFeatures[poFeature->GetFID()] = poFeature;
         }
 
@@ -530,7 +549,7 @@ OGRFeature *OGRNGWLayer::GetFeature( GIntBig nFID )
     }
 
     // Don't store feature in cache. This can broke sequence read.
-    return JSONToFeature( oRoot, poFeatureDefn, true );
+    return JSONToFeature( oRoot, poFeatureDefn, true, poDS->IsExtInNativeData() );
 }
 
 /*
@@ -635,8 +654,6 @@ void OGRNGWLayer::FillFields( const CPLJSONArray &oFields )
         OGRLayer::SetMetadataItem(osFieldGridVisibleName.c_str(),
             osFieldGridVisible.c_str(), "");
     }
-
-    // FIXME: Do we need extension/description and extension/attachment fields?
 }
 
 /*

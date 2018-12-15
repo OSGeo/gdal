@@ -186,6 +186,7 @@ class OGRNGWDataset final : public GDALDataset
     std::string osUrl;
     std::string osResourceId;
     std::string osName;
+    bool bExtInNativeData;
     bool bMetadataDerty;
 
     // vector
@@ -247,6 +248,7 @@ private:
     bool IsBatchMode() const { return nBatchSize >= 0; }
     int GetPageSize() const { return bHasFeaturePaging ? nPageSize : -1; }
     int GetBatchSize() const { return nBatchSize; }
+    bool IsExtInNativeData() const { return bExtInNativeData; }
     void FetchPermissions();
     void FillCapabilities( char **papszOptions );
 private:

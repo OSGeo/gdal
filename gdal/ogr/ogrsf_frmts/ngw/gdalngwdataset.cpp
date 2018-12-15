@@ -58,6 +58,7 @@ OGRNGWDataset::OGRNGWDataset() :
     nPageSize(-1),
     bFetchedPermissions(false),
     bHasFeaturePaging(false),
+    bExtInNativeData(false),
     bMetadataDerty(false),
     papoLayers(nullptr),
     nLayers(0),
@@ -193,6 +194,9 @@ bool OGRNGWDataset::Open( const std::string &osUrlIn,
 
     nCacheMaxSize = atoi( CSLFetchNameValueDef(papszOpenOptionsIn, "CACHE_MAX_SIZE",
         CPLGetConfigOption("NGW_CACHE_MAX_SIZE", "67108864") ) );
+
+    bExtInNativeData = CPLFetchBool( papszOpenOptionsIn, "NATIVE_DATA",
+        CPLGetConfigOption("NGW_NATIVE_DATA", "NO") );
 
     return Init( nOpenFlagsIn );
 }

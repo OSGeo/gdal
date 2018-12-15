@@ -264,6 +264,7 @@ void RegisterOGRNGW()
         "   <Option name='USERPWD' scope='raster,vector' type='string' description='Username and password, separated by colon'/>"
         "   <Option name='PAGE_SIZE' scope='vector' type='integer' description='Limit feature count while fetching from server. Default value is -1 - no limit' default='-1'/>"
         "   <Option name='BATCH_SIZE' scope='vector' type='integer' description='Size of feature insert and update operations cache before send to server. If batch size is -1 batch mode is disabled' default='-1'/>"
+        "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key' default='NO'/>"
         "   <Option name='CACHE_EXPIRES' scope='raster' type='integer' description='Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web' default='604800'/>"
         "   <Option name='CACHE_MAX_SIZE' scope='raster' type='integer' description='The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted' default='67108864'/>"
         "</OpenOptionList>"
@@ -273,9 +274,12 @@ void RegisterOGRNGW()
         "<CreationOptionList>"
         "   <Option name='KEY' scope='raster,vector' type='string' description='Key value. Must be unique in whole NextGIS Web instance'/>"
         "   <Option name='DESCRIPTION' scope='raster,vector' type='string' description='Resource description'/>"
-        "   <Option name='USERPWD' type='string' description='Username and password, separated by colon'/>"
-        "   <Option name='PAGE_SIZE' type='integer' description='Limit feature count while fetching from server. Default value is -1 - no limit' default='-1'/>"
-        "   <Option name='BATCH_SIZE' type='integer' description='Size of feature insert and update operations cache before send to server. If batch size is -1 batch mode is disabled' default='-1'/>"
+        "   <Option name='USERPWD' scope='raster,vector' type='string' description='Username and password, separated by colon'/>"
+        "   <Option name='PAGE_SIZE' scope='vector' type='integer' description='Limit feature count while fetching from server. Default value is -1 - no limit' default='-1'/>"
+        "   <Option name='BATCH_SIZE' scope='vector' type='integer' description='Size of feature insert and update operations cache before send to server. If batch size is -1 batch mode is disabled' default='-1'/>"
+        "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key' default='NO'/>"
+        "   <Option name='CACHE_EXPIRES' scope='raster' type='integer' description='Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web' default='604800'/>"
+        "   <Option name='CACHE_MAX_SIZE' scope='raster' type='integer' description='The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted' default='67108864'/>"
         "</CreationOptionList>"
     );
 

@@ -72,6 +72,8 @@ The following configuration options are available:
     <li><b>NGW_PAGE_SIZE</b>: If supported by server, fetch features from
         remote server will use paging. The -1 value disables paging even it
         supported by server.
+    <li><b>NGW_NATIVE_DATA</b>: Whether to store the json <i>extensions</i> key
+        in feature native data.
 </ul>
 
 <h2>Authentication</h2>
@@ -79,6 +81,20 @@ The following configuration options are available:
 Any operations (read, write, get metadata, change properties, etc.) may require
 an authenticated access. Authenticated access is obtained by specifying user name
 and password in open, create or configuration options.
+
+<h2>Feature</h2>
+
+If the NATIVE_DATA open option is set to YES, the <i>extensions</i> json object
+will be stored as a serialized json object in the NativeData property of the
+OGRFeature object (and "application/json" in the NativeMediaType property).
+On write, if a OGRFeature to be written has its NativeMediaType property set to
+"application/json" and its NativeData property set to a string that is a
+serialized json object, then members of this object will be set to <i>extensions</i>
+json object of feature.
+<p>
+Extensions json object structure see in
+<a href="http://docs.nextgis.comu/docs_ngweb_dev/doc/developer/resource.html#feature">
+NextGIS Web API documentation</a>
 
 <h2>Geometry</h2>
 
@@ -131,7 +147,11 @@ The following open options are available:
     <li>USERPWD - Username and password, separated by colon.
     <li>PAGE_SIZE=-1 - Limit feature count while fetching from server. Default
         value is -1 - no limit.
-    <li>BATCH_SIZE=-1 - Size of feature insert and update operations cache before send to server. If batch size is -1 batch mode is disabled. Default value is -1.
+    <li>BATCH_SIZE=-1 - Size of feature insert and update operations cache before
+        send to server. If batch size is -1 batch mode is disabled. Default value
+        is -1.
+    <li>NATIVE_DATA=NO - Whether to store the json <i>extensions</i> key in
+        feature native data. Default value is NO.
 </ul>
 
 <h2>Dataset creation options</h2>
@@ -144,7 +164,11 @@ The following dataset/datasource creation options are available:
     <li>USERPWD - Username and password, separated by colon.
     <li>PAGE_SIZE=-1 - Limit feature count while fetching from server. Default
         value is -1 - no limit.
-    <li>BATCH_SIZE=-1 - Size of feature insert and update operations cache before send to server. If batch size is -1 batch mode is disable. Default value is -1.
+    <li>BATCH_SIZE=-1 - Size of feature insert and update operations cache before
+        send to server. If batch size is -1 batch mode is disable. Default value
+        is -1.
+    <li>NATIVE_DATA=NO - Whether to store the json <i>extensions</i> key in
+        feature native data. Default value is NO.
 </ul>
 
 <h2>Layer creation options</h2>
