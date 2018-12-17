@@ -286,7 +286,72 @@ def test_osr_ct_8():
                 print('Expected: %s' % str(expected_result))
                 pytest.fail('Failed to transform from Pseudo Mercator to LL')
 
-    
+
+###############################################################################
+# Test coordinate transformation where only one CRS has a towgs84 clause (#1156)
+
+
+def test_osr_ct_towgs84_only_one_side():
+
+    if gdaltest.have_proj4 == 0:
+        pytest.skip()
+
+    srs_towgs84 = osr.SpatialReference()
+    srs_towgs84.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=100,200,300")
+
+    srs_just_ellps = osr.SpatialReference()
+    srs_just_ellps.SetFromUserInput('+proj=longlat +ellps=GRS80')
+
+    ct = osr.CoordinateTransformation(srs_towgs84, srs_just_ellps)
+    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    assert x == 0
+    assert y == 0
+    assert z == 0
+
+    ct = osr.CoordinateTransformation(srs_just_ellps, srs_towgs84)
+    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    assert x == 0
+    assert y == 0
+    assert z == 0
+
+
+###############################################################################
+# Test coordinate transformation where both side have towgs84/datum clause (#1156)
+
+
+def test_osr_ct_towgs84_both_side():
+
+    if gdaltest.have_proj4 == 0:
+        pytest.skip()
+
+    srs_towgs84 = osr.SpatialReference()
+    srs_towgs84.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=100,200,300")
+
+    srs_other_towgs84 = osr.SpatialReference()
+    srs_other_towgs84.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
+
+    ct = osr.CoordinateTransformation(srs_towgs84, srs_other_towgs84)
+    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    assert x != 0
+    assert y != 0
+    assert z != 0
+
+    srs_datum_wgs84 = osr.SpatialReference()
+    srs_datum_wgs84.SetFromUserInput("+proj=longlat +datum=WGS84")
+
+    ct = osr.CoordinateTransformation(srs_towgs84, srs_datum_wgs84)
+    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    assert x != 0
+    assert y != 0
+    assert z != 0
+
+    ct = osr.CoordinateTransformation(srs_datum_wgs84, srs_towgs84)
+    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    assert x != 0
+    assert y != 0
+    assert z != 0
+
+
 ###############################################################################
 # Cleanup
 
