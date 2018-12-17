@@ -862,11 +862,11 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         const bool bSrcHasToWGS84Transform =
             strstr(pszSrcProj4Defn, "+towgs84") != nullptr ||
             strstr(pszSrcProj4Defn, "+nadgrids") != nullptr;
-        const bool bSrcHasDatum = strstr(pszSrcProj4Defn, "+datum");
+        const bool bSrcHasDatum = strstr(pszSrcProj4Defn, "+datum") != nullptr;
         const bool bDstHasToWGS84Transform =
             strstr(pszDstProj4Defn, "+towgs84") != nullptr ||
             strstr(pszDstProj4Defn, "+nadgrids") != nullptr;
-        const bool bDstHasDatum = strstr(pszDstProj4Defn, "+datum");
+        const bool bDstHasDatum = strstr(pszDstProj4Defn, "+datum") != nullptr;
 
         const auto removeToken = [](const CPLString& osStr, const char* token) {
             CPLString osRet(osStr);
