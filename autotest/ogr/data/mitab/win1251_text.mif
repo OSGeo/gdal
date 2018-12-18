@@ -1,0 +1,12 @@
+Version 650
+Charset "WindowsCyrillic"
+DELIMITER ";"
+Columns 0
+DATA
+TEXT "Поле"
+10 20 94 23
+	FONT ("DejaVu Serif",0,14,16711680)
+	Justify Center
+
+
+
