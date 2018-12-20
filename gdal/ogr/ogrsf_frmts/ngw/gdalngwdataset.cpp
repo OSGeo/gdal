@@ -240,6 +240,9 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
     bool bResult = oResourceDetailsReq.LoadUrl( NGWAPI::GetResource( osUrl,
         osResourceId ), papszHTTPOptions );
 
+    CPLDebug("NGW", "Get resource %s details %s", osResourceId.c_str(),
+        bResult ? "success" : "failed");
+
     if( bResult )
     {
         CPLJSONObject oRoot = oResourceDetailsReq.GetRoot();
@@ -266,11 +269,10 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
                 // Add vector layer.
                 AddLayer( oRoot, papszHTTPOptions, nOpenFlagsIn );
             }
-            else if( ( osResourceType == "mapserver_style" ||
+            else if( osResourceType == "mapserver_style" ||
                 osResourceType == "qgis_vector_style" ||
                 osResourceType == "raster_style" ||
-                osResourceType == "wmsclient_layer") &&
-                nOpenFlagsIn & GDAL_OF_RASTER )
+                osResourceType == "wmsclient_layer" )
             {
                 // GetExtent from parent.
                 OGREnvelope stExtent;
@@ -392,8 +394,7 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
                     bResult = false;
                 }
             }
-            else if( osResourceType == "raster_layer" &&
-                nOpenFlagsIn & GDAL_OF_RASTER )
+            else if( osResourceType == "raster_layer" ) //FIXME: Do we need this check? && nOpenFlagsIn & GDAL_OF_RASTER )
             {
                 AddRaster( oRoot, papszHTTPOptions );
             }
@@ -432,7 +433,7 @@ bool OGRNGWDataset::FillResources( char **papszOptions, int nOpenFlagsIn )
                 AddLayer( oChild, papszOptions, nOpenFlagsIn );
             }
             else if( (osResourceType == "raster_layer" ||
-                osResourceType == "wmsclient_layer") & nOpenFlagsIn & GDAL_OF_RASTER )
+                osResourceType == "wmsclient_layer") && nOpenFlagsIn & GDAL_OF_RASTER )
             {
                 AddRaster( oChild, papszOptions );
             }
@@ -526,6 +527,9 @@ void OGRNGWDataset::AddRaster( const CPLJSONObject &oRasterJsonObj,
         {
             osOutResourceName = "raster_" + osOutResourceId;
         }
+
+        CPLDebug("NGW", "Add raster %s: %s", osOutResourceId.c_str(),
+            osOutResourceName.c_str());
 
         GDALDataset::SetMetadataItem( CPLSPrintf("SUBDATASET_%d_NAME", nRasters),
             CPLSPrintf("NGW:%s/resource/%s", osUrl.c_str(),
