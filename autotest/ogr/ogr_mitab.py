@@ -2310,6 +2310,9 @@ def test_ogr_mitab_local_encoding_label():
         lyr = ds.GetLayer(0)
         assert lyr is not None, ('Can\'t get layer 0 from ' + dsName)
 
+        if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+            pytest.skip('skipping test: recode is not possible')
+
         feat = lyr.GetNextFeature()
         assert lyr is not None, ('Can\'t find text feature in' + dsName)
 
