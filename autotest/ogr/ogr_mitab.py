@@ -2291,6 +2291,33 @@ def test_ogr_mitab_tab_write_field_name_with_dot():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
 
+
+###############################################################################
+# Test read text labels with local encoding from mif/mid file
+
+
+def test_ogr_mitab_local_encoding_label():
+
+    dsNames = ['data/mitab/win1251_text.mif',
+               'data/mitab/tab-win1251_text.tab']
+    expectedStyles = ['LABEL(t:"Поле",a:0.000000,s:2.070000g,c:#ff0000,p:2,f:"DejaVu Serif")',
+                      'LABEL(t:"Поле",a:0.000000,s:0.015375g,c:#000000,p:1,f:"Times New Roman")']
+    for (dsName, expectedStyle) in zip(dsNames, expectedStyles):
+
+        ds = ogr.Open(dsName)
+        assert ds is not None, ('Can\'t open dataset: ' + dsName)
+
+        lyr = ds.GetLayer(0)
+        assert lyr is not None, ('Can\'t get layer 0 from ' + dsName)
+
+        if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+            pytest.skip('skipping test: recode is not possible')
+
+        feat = lyr.GetNextFeature()
+        assert lyr is not None, ('Can\'t find text feature in' + dsName)
+
+        assert feat.GetStyleString() == expectedStyle, (feat.GetStyleString(), expectedStyle)
+
 ###############################################################################
 #
 

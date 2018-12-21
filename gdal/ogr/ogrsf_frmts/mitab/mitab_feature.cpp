@@ -5478,6 +5478,14 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     pszTmpString[nStringLen] = '\0';
 
+    if(!poMapFile->GetEncoding().empty())
+    {
+        char *pszUtf8String =
+            CPLRecode(pszTmpString, poMapFile->GetEncoding(), CPL_ENC_UTF8);
+        CPLFree(pszTmpString);
+        pszTmpString = pszUtf8String;
+    }
+
     CPLFree(m_pszString);
     m_pszString = pszTmpString; // This string was Escaped before 20050714
 
@@ -5614,20 +5622,22 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     GInt32 nCoordBlockPtr = poCoordBlock->GetCurAddress();
 
     // This string was escaped before 20050714
-    char *pszTmpString = m_pszString;
+    CPLString oTmpString(m_pszString);
+    if(!poMapFile->GetEncoding().empty())
+    {
+        oTmpString.Recode(CPL_ENC_UTF8, poMapFile->GetEncoding());
+    }
 
-    int nStringLen = static_cast<int>(strlen(pszTmpString));
+    int nStringLen = static_cast<int>(oTmpString.length());
 
     if (nStringLen > 0)
     {
-        poCoordBlock->WriteBytes(nStringLen, reinterpret_cast<GByte *>(pszTmpString));
+        poCoordBlock->WriteBytes(nStringLen, reinterpret_cast<const GByte *>(oTmpString.c_str()));
     }
     else
     {
         nCoordBlockPtr = 0;
     }
-
-    pszTmpString = nullptr;
 
     /*-----------------------------------------------------------------
      * Copy object information

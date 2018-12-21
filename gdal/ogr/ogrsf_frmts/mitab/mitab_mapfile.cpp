@@ -57,7 +57,7 @@ CPL_CVSID("$Id$")
  *
  * Constructor.
  **********************************************************************/
-TABMAPFile::TABMAPFile() :
+TABMAPFile::TABMAPFile(const char* pszEncoding) :
     m_nMinTABVersion(300),
     m_pszFname(nullptr),
     m_fp(nullptr),
@@ -82,7 +82,8 @@ TABMAPFile::TABMAPFile() :
     m_bUpdated(FALSE),
     m_bLastOpWasRead(FALSE),
     m_bLastOpWasWrite(FALSE),
-    m_poSpIndexLeaf(nullptr)
+    m_poSpIndexLeaf(nullptr),
+    m_osEncoding(pszEncoding)
 {
     m_sMinFilter.x = 0;
     m_sMinFilter.y = 0;
@@ -3046,6 +3047,16 @@ int   TABMAPFile::GetMinTABFileVersion()
         nToolVersion = m_poToolDefTable->GetMinVersionNumber();
 
     return std::max(nToolVersion, m_nMinTABVersion);
+}
+
+const CPLString& TABMAPFile::GetEncoding() const
+{
+    return m_osEncoding;
+}
+
+void TABMAPFile::SetEncoding( const CPLString& osEncoding )
+{
+    m_osEncoding = osEncoding;
 }
 
 /**********************************************************************
