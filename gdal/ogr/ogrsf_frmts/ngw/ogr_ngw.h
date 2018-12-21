@@ -44,7 +44,7 @@ namespace NGWAPI {
     std::string GetFeaturePage(const std::string &osUrl, const std::string &osResourceId,
         GIntBig nStart, int nCount);
     std::string GetRoute(const std::string &osUrl);
-
+    std::string GetUpload(const std::string &osUrl);
 
     struct Uri {
         std::string osPrefix;
@@ -101,6 +101,8 @@ namespace NGWAPI {
         const std::string &osFeaturesJson, char **papszHTTPOptions);
     bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
         char **papszHTTPOptions, int nEPSG, OGREnvelope &stExtent);
+    CPLJSONObject UploadFile(const std::string &osUrl, const std::string &osFilePath,
+        char **papszHTTPOptions, GDALProgressFunc pfnProgress, void *pProgressData);
 } // namespace NGWAPI
 
 class OGRNGWDataset;
