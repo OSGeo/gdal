@@ -330,7 +330,7 @@ typedef struct VSIDIREntry
     /** NULL-terminated list of extra properties. */
     char**       papszExtra;
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 /*! @cond Doxygen_Suppress */
     VSIDIREntry();
     ~VSIDIREntry();
