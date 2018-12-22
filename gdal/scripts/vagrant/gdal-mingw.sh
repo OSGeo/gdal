@@ -15,9 +15,9 @@ fi
 export NUMTHREADS
 
 rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-mingw-w64
-rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-mingw-w64/autotest
+rsync -a --exclude='__pycache__' /vagrant/autotest/ /home/vagrant/gnumake-build-mingw-w64/autotest
 echo rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-mingw-w64/ > /home/vagrant/gnumake-build-mingw-w64/resync.sh
-echo rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-mingw-w64/autotest >> /home/vagrant/gnumake-build-mingw-w64/resync.sh
+echo rsync -a --exclude='__pycache__' /vagrant/autotest/ /home/vagrant/gnumake-build-mingw-w64/autotest >> /home/vagrant/gnumake-build-mingw-w64/resync.sh
 
 chmod +x /home/vagrant/gnumake-build-mingw-w64/resync.sh
 
