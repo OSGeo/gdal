@@ -65,7 +65,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   ppaRepos = [
     "ppa:openjdk-r/ppa",
     "ppa:ubuntugis/ubuntugis-unstable",
-    "ppa:miurahr/gdal-depends"
+    "ppa:miurahr/gdal-dev-additions"
   ]
 
   packageList = [
@@ -151,7 +151,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "mingw-w64-tools",
     "gdb-mingw-w64-target",
     "libgeos-mingw-w64-dev",
-    #"libproj-mingw-w64-dev",
+    "libproj-mingw-w64-dev",
     "cmake3-curses-gui",
     "gdb",
     "gdbserver",
@@ -192,7 +192,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 		  pkg_cmd << "apt-get update -qq; "
 	  end
 
-	  # install packages we need we need
+	  # install packages we need
 	  pkg_cmd << "apt-get --no-install-recommends install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [

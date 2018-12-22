@@ -13,9 +13,9 @@ fi
 export NUMTHREADS
 
 rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8
-rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest
+rsync -a --exclude='__pycache__' /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest
 echo rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8/ > /home/vagrant/gnumake-build-gcc4.8/resync.sh
-echo rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest >> /home/vagrant/gnumake-build-gcc4.8/resync.sh
+echo rsync -a --exclude='__pycache__'  /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest >> /home/vagrant/gnumake-build-gcc4.8/resync.sh
 
 chmod +x /home/vagrant/gnumake-build-gcc4.8/resync.sh
 cd /home/vagrant/gnumake-build-gcc4.8
