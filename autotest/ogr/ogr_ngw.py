@@ -38,11 +38,28 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import time
+import json
 import pytest
 
 def check_availability(url):
     version_url = url + '/api/component/pyramid/pkg_version'
-    return gdaltest.gdalurlopen(version_url) is not None
+
+    if gdaltest.gdalurlopen(version_url) is None:
+        return False
+
+    # Check quota
+    quota_url = url + '/api/resource/quota'
+    quota_conn = gdaltest.gdalurlopen(quota_url)
+    try:
+        quota_json = json.loads(quota_conn.read())
+        quota_conn.close()
+        if quota_json is None:
+            return False
+        limit = quota_json['limit']
+        count = quota_json['count']
+        return limit - count > 10
+    except:
+        return False
 
 ###############################################################################
 # Check driver existence.
@@ -85,6 +102,8 @@ def test_ogr_ngw_2():
 
     assert int(gdaltest.ngw_ds.GetMetadataItem('id', '')) > 0, \
         'Did not get expected datasource identifier.'
+
+    gdaltest.group_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
 
 ###############################################################################
 # Check rename datasource.
@@ -454,12 +473,13 @@ def test_ogr_ngw_cleanup():
     if gdaltest.ngw_drv is None:
         pytest.skip()
 
-    if gdaltest.ngw_ds is not None:
-        ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
-        delete_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
+    if gdaltest.group_id is not None:
+        delete_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id
 
         gdaltest.ngw_layer = None
         gdaltest.ngw_ds = None
 
         assert gdaltest.ngw_drv.Delete(delete_url) == gdal.CE_None, \
             'Failed to delete datasource ' + delete_url + '.'
+
+    gdaltest.ngw_ds = None
