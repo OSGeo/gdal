@@ -356,6 +356,23 @@ AC_CHECK_FUNCS(statvfs)
 AC_CHECK_FUNCS(statvfs64)
 AC_CHECK_FUNCS(getrlimit)
 
+AC_MSG_CHECKING([for RLIMIT_AS])
+AC_TRY_COMPILE(
+  [
+#include <sys/time.h>
+#include <sys/resource.h>
+  ], [
+    return RLIMIT_AS;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_RLIMIT_AS, 1,
+          [Define to 1 if you have the `RLIMIT_AS' constant.])
+  ], [
+    AC_MSG_RESULT([no])
+])
+
+
 dnl Make sure at least these are checked under C++.  Prototypes missing on
 dnl some platforms.
 

@@ -31,6 +31,9 @@
 /* Define to 1 if you have the `getrlimit' function. */
 #undef HAVE_GETRLIMIT
 
+/* Define to 1 if you have the `RLIMIT_AS' constant. */
+#undef HAVE_RLIMIT_AS
+
 /* Define to 1 if you have the <csf.h> header file. */
 #undef HAVE_CSF_H
 
