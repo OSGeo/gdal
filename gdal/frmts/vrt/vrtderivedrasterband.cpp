@@ -447,6 +447,7 @@ static bool LoadPythonAPI()
                                                 "libpython3.4m." SO_EXT,
                                                 "libpython3.5m." SO_EXT,
                                                 "libpython3.6m." SO_EXT,
+                                                "libpython3.7m." SO_EXT,
                                                 "libpython3.3." SO_EXT,
                                                 "libpython3.2." SO_EXT };
         for( size_t i = 0; libHandle == nullptr &&
@@ -645,6 +646,7 @@ static bool LoadPythonAPI()
                                             "python34.dll",
                                             "python35.dll",
                                             "python36.dll",
+                                            "python37.dll",
                                             "python33.dll",
                                             "python32.dll" };
         UINT        uOldErrorMode;
