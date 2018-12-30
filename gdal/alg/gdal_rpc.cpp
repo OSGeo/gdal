@@ -922,7 +922,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         int nSuccess = 0;
         // Try with DEM first.
         if( GDALRPCTransform( psTransform, !(psTransform->bReversed), 1,
-                          &dfX, &dfY, &dfZ, &nSuccess) )
+                          &dfX, &dfY, &dfZ, &nSuccess) && nSuccess )
         {
             dfRefPixel = dfX;
             dfRefLine = dfY;
@@ -948,7 +948,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         int nSuccess = 0;
         // Try with DEM first.
         if( GDALRPCTransform( psTransform, !(psTransform->bReversed), 1,
-                               &dfX, &dfY, &dfZ, &nSuccess) )
+                               &dfX, &dfY, &dfZ, &nSuccess) && nSuccess )
         {
             dfRefPixel = dfX;
             dfRefLine = dfY;
