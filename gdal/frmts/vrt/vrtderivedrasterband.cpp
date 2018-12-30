@@ -1435,8 +1435,17 @@ bool VRTDerivedRasterBand::InitializePython()
         PyObject* poUserModule = PyImport_ImportModule(osPythonModule);
         if (poUserModule == nullptr || PyErr_Occurred())
         {
+            CPLString osException = GetPyExceptionString();
+            if( !osException.empty() && osException.back() == '\n' )
+            {
+                osException.resize( osException.size() - 1 );
+            }
+            if( osException.find("ModuleNotFoundError") == 0 )
+            {
+                osException += ". You may need to define PYTHONPATH";
+            }
             CPLError(CE_Failure, CPLE_AppDefined,
-                 "%s", GetPyExceptionString().c_str());
+                 "%s", osException.c_str());
             Py_DecRef(poModule);
             return false;
         }
