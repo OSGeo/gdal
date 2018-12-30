@@ -36,11 +36,27 @@ from osgeo import gdal
 sys.path.append('../pymod')
 
 import gdaltest
+import json
 import pytest
 
 def check_availability(url):
     version_url = url + '/api/component/pyramid/pkg_version'
-    return gdaltest.gdalurlopen(version_url) is not None
+    if gdaltest.gdalurlopen(version_url) is None:
+        return False
+
+    # Check quota
+    quota_url = url + '/api/resource/quota'
+    quota_conn = gdaltest.gdalurlopen(quota_url)
+    try:
+        quota_json = json.loads(quota_conn.read())
+        quota_conn.close()
+        if quota_json is None:
+            return False
+        limit = quota_json['limit']
+        count = quota_json['count']
+        return limit - count > 10
+    except:
+        return False
 
 ###############################################################################
 # Verify we have the driver.
@@ -56,7 +72,7 @@ def test_ngw_1():
         gdaltest.ngw_drv = None
         pytest.skip()
 
-    gdaltest.ngw_test_server = 'https://dev.nextgis.com/sandbox'
+    gdaltest.ngw_test_server = 'http://dev.nextgis.com/sandbox'
 
     if check_availability(gdaltest.ngw_test_server) == False:
         gdaltest.ngw_drv = None
