@@ -95,18 +95,32 @@ bool CPLHaveRuntimeSSE()
 /*                         CPLHaveRuntimeSSSE3()                        */
 /************************************************************************/
 
+static inline bool CPLDetectSSE3()
+{
+    int cpuinfo[4] = { 0, 0, 0, 0 };
+    CPL_CPUID(1, cpuinfo);
+    return (cpuinfo[REG_ECX] & (1 << CPUID_SSSE3_ECX_BIT)) != 0;
+}
+
+#if defined(__GNUC__) && !defined(DEBUG)
+bool bCPLHasSSE3 = false;
+static void CPLHaveRuntimeSSSE3Initialize() __attribute__ ((constructor));
+static void CPLHaveRuntimeSSSE3Initialize()
+{
+    bCPLHasSSE3 = CPLDetectSSE3();
+}
+#else
 bool CPLHaveRuntimeSSSE3()
 {
 #ifdef DEBUG
     if( !CPLTestBool(CPLGetConfigOption("GDAL_USE_SSSE3", "YES")) )
         return false;
 #endif
-    int cpuinfo[4] = { 0, 0, 0, 0 };
-    CPL_CPUID(1, cpuinfo);
-    return (cpuinfo[REG_ECX] & (1 << CPUID_SSSE3_ECX_BIT)) != 0;
+    return CPLDetectSSE3();
 }
-
 #endif
+
+#endif // defined(HAVE_SSSE3_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSSE3)
 
 #if defined(HAVE_AVX_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX)
 
@@ -114,9 +128,9 @@ bool CPLHaveRuntimeSSSE3()
 /*                          CPLHaveRuntimeAVX()                         */
 /************************************************************************/
 
-#if defined(__GNUC__) && (defined(__i386__) ||defined(__x86_64))
+#if defined(__GNUC__)
 
-bool CPLHaveRuntimeAVX()
+static bool CPLDetectRuntimeAVX()
 {
     int cpuinfo[4] = { 0, 0, 0, 0 };
     CPL_CPUID(1, cpuinfo);
@@ -144,6 +158,13 @@ bool CPLHaveRuntimeAVX()
     }
 
     return true;
+}
+
+bool bCPLHasAVX = false;
+static void CPLHaveRuntimeAVXInitialize() __attribute__ ((constructor));
+static void CPLHaveRuntimeAVXInitialize()
+{
+    bCPLHasAVX = CPLDetectRuntimeAVX();
 }
 
 #elif defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 160040219) && (defined(_M_IX86) || defined(_M_X64))
