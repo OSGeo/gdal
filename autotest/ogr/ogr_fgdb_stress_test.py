@@ -44,7 +44,7 @@ import pytest
 # Test if driver is available
 
 
-@pytest.mark.skip()
+@pytest.mark.require_run_on_demand
 def test_ogr_fgdb_stress_init():
 
     ogrtest.fgdb_drv = None
@@ -73,7 +73,7 @@ def test_ogr_fgdb_stress_init():
 # Generate databases from random operations
 
 
-@pytest.mark.skip()
+@pytest.mark.require_run_on_demand
 def test_ogr_fgdb_stress_1():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
@@ -164,7 +164,7 @@ def test_ogr_fgdb_stress_1():
 # Compare databases
 
 
-@pytest.mark.skip()
+@pytest.mark.require_run_on_demand
 def test_ogr_fgdb_stress_2():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
@@ -200,7 +200,7 @@ def test_ogr_fgdb_stress_2():
 ###############################################################################
 # Cleanup
 
-@pytest.mark.skip()
+@pytest.mark.require_run_on_demand
 def test_ogr_fgdb_stress_cleanup():
     if ogrtest.fgdb_drv is None:
         pytest.skip()

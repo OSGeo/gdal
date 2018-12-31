@@ -2694,7 +2694,7 @@ def test_ogr_gmlas_geometry_as_substitutiongroup():
 ###############################################################################
 
 
-@pytest.mark.skip()
+@pytest.mark.require_run_on_demand
 def test_ogr_gmlas_extra_piezometre():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -2707,7 +2707,7 @@ def test_ogr_gmlas_extra_piezometre():
 ###############################################################################
 
 
-@pytest.mark.skip()
+@pytest.mark.require_run_on_demand
 def test_ogr_gmlas_extra_eureg():
 
     if ogr.GetDriverByName('GMLAS') is None:
