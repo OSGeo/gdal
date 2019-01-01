@@ -1255,6 +1255,12 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                         nRetValue = 0;
                         continue;
                     }
+                    else if( (nChildNodePtr % 512) != 0 )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Invalid child node pointer");
+                        return -1;
+                    }
                     else if (m_poCurChildNode == nullptr)
                     {
                         /* Child node has never been initialized...do it now!*/
