@@ -611,14 +611,14 @@ namespace Selafin {
             return nullptr;
         }
         // Read two arrays of nPoints floats with the coordinates of each point
-        if( poHeader->paadfCoords[0] == nullptr )
-        {
-            delete poHeader;
-            return nullptr;
-        }
         for (size_t i=0;i<2;++i) {
             read_floatarray(fp,poHeader->paadfCoords+i,poHeader->nFileSize);
             if (nLength<poHeader->nPoints) {
+                delete poHeader;
+                return nullptr;
+            }
+            if( poHeader->nPoints != 0 && poHeader->paadfCoords[i] == nullptr )
+            {
                 delete poHeader;
                 return nullptr;
             }
