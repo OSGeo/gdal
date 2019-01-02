@@ -329,7 +329,8 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
                              char** papszWarpOptions,
                              int nSrcCount, GDALDatasetH *pahSrcDS,
                              double& dfMinX, double& dfMinY,
-                             double& dfMaxX, double &dfMaxY )
+                             double& dfMaxX, double &dfMaxY,
+                             const GDALWarpAppOptions* psOptions )
 {
     // We could possibly directly reproject from cutline SRS to target SRS,
     // but when applying the cutline, it is reprojected to source raster image
@@ -462,7 +463,8 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
     dfMinY = sEnvelope.MinY;
     dfMaxX = sEnvelope.MaxX;
     dfMaxY = sEnvelope.MaxY;
-    if( hCTSrcToDst == nullptr && nSrcCount > 0 && pahSrcDS[0] != nullptr)
+    if( hCTSrcToDst == nullptr && nSrcCount > 0 && pahSrcDS[0] != nullptr &&
+        psOptions->dfXRes == 0.0 && psOptions->dfYRes == 0.0 )
     {
         // No raster reprojection: stick on exact pixel boundaries of the source
         // to preserve resolution and avoid resampling
@@ -955,7 +957,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                 psOptions->papszWarpOptions,
                                 nSrcCount, pahSrcDS,
                                 psOptions->dfMinX, psOptions->dfMinY,
-                                psOptions->dfMaxX, psOptions->dfMaxY );
+                                psOptions->dfMaxX, psOptions->dfMaxY,
+                                psOptions );
         if(eError == CE_Failure)
         {
             GDALWarpAppOptionsFree(psOptions);
