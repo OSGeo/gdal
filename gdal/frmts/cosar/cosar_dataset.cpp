@@ -103,9 +103,9 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     nRSLV = CPL_SWAP32(nRSLV);
 #endif
 
-    if (nRSLV < nRSFV || nRSFV == 0
+    if (nRSLV < nRSFV || nRSFV == 0 || nRSLV == 0
         || nRSFV - 1 >= ((unsigned long) nBlockXSize)
-        || nRSLV - nRSFV > ((unsigned long) nBlockXSize)
+        || nRSLV - 1 >= ((unsigned long) nBlockXSize)
         || nRSFV >= this->nRTNB || nRSLV > this->nRTNB)
     {
         /* throw an error */
