@@ -260,8 +260,8 @@ GDALEEDALayer::GDALEEDALayer(GDALEEDADataset* poDS,
             return;
         }
 
-        const int nFields = json_object_array_length(poFields);
-        for( int i=0; i<nFields; i++ )
+        const auto nFields = json_object_array_length(poFields);
+        for( auto i=decltype(nFields){0}; i<nFields; i++ )
         {
             json_object* poField = json_object_array_get_idx(poFields, i);
             if( poField && json_object_get_type(poField) == json_type_object )
@@ -381,7 +381,7 @@ OGRFeature* GDALEEDALayer::GetNextRawFeature()
 {
     CPLString osNextPageToken;
     if( m_poCurPageAssets != nullptr &&
-        m_nIndexInPage >= json_object_array_length(m_poCurPageAssets) )
+        m_nIndexInPage >= static_cast<int>(json_object_array_length(m_poCurPageAssets)) )
     {
         json_object* poToken =
             CPL_json_object_object_get(m_poCurPageObj, "nextPageToken");

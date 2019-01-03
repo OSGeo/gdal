@@ -710,13 +710,13 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
     {
         if( bArrayAsString )
             return OFTString;
-        const int nSize = json_object_array_length(poObject);
+        const auto nSize = json_object_array_length(poObject);
         if( nSize == 0 )
             // We don't know, so let's assume it is a string list.
             return OFTStringList;
         OGRFieldType eType = OFTIntegerList;
         bool bOnlyBoolean = true;
-        for( int i = 0; i < nSize; i++ )
+        for( auto i = decltype(nSize){0}; i < nSize; i++ )
         {
             json_object* poRow = json_object_array_get_idx(poObject, i);
             if( poRow != nullptr )

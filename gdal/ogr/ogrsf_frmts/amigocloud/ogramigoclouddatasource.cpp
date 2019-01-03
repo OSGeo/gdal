@@ -166,8 +166,8 @@ bool OGRAmigoCloudDataSource::ListDatasets()
                 CPLprintf("List of available datasets for project id: %s\n", GetProjectId());
                 CPLprintf("| id \t | name\n");
                 CPLprintf("|--------|-------------------\n");
-                const int nSize = json_object_array_length(poResults);
-                for(int i = 0; i < nSize; ++i) {
+                const auto nSize = json_object_array_length(poResults);
+                for(auto i = decltype(nSize){0}; i < nSize; ++i) {
                     json_object *ds = json_object_array_get_idx(poResults, i);
                     if(ds!=nullptr) {
                         const char *name = nullptr;

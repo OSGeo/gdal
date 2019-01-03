@@ -1713,6 +1713,9 @@ static const struct sqlite3_module sOGR2SQLITEModule =
     nullptr,  // xSavepoint
     nullptr,  // xRelease
     nullptr,  // xRollbackTo
+#if SQLITE_VERSION_NUMBER >= 3025003L /* should be the first version with the below symbols */
+    nullptr,  // xShadowName
+#endif
 #endif
 };
 

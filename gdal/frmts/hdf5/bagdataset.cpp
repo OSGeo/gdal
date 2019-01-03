@@ -74,7 +74,7 @@ constexpr float fDEFAULT_NODATA = 1000000.0f;
 /************************************************************************/
 
 #ifdef DEBUG
-static int h5check(int ret, const char* filename, int line)
+template<class T> static T h5check(T ret, const char* filename, int line)
 {
     if( ret < 0 )
     {

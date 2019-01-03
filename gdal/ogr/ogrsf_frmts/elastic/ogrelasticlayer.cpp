@@ -561,14 +561,14 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
                 json_object_put(poResponse);
                 break;
             }
-            int nHits = json_object_array_length(poHits);
+            const auto nHits = json_object_array_length(poHits);
             if( nHits == 0 )
             {
                 m_osScrollID = "";
                 json_object_put(poResponse);
                 break;
             }
-            for(int i=0;i<nHits;i++)
+            for(auto i=decltype(nHits){0};i<nHits;i++)
             {
                 json_object* poHit = json_object_array_get_idx(poHits, i);
                 if( poHit == nullptr || json_object_get_type(poHit) != json_type_object )
@@ -1081,7 +1081,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         json_object_put(poResponse);
         return nullptr;
     }
-    int nHits = json_object_array_length(poHits);
+    const auto nHits = json_object_array_length(poHits);
     if( nHits == 0 )
     {
         m_osScrollID = "";
@@ -1089,7 +1089,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         json_object_put(poResponse);
         return nullptr;
     }
-    for(int i=0;i<nHits;i++)
+    for(auto i=decltype(nHits){0};i<nHits;i++)
     {
         json_object* poHit = json_object_array_get_idx(poHits, i);
         if( poHit == nullptr || json_object_get_type(poHit) != json_type_object )
@@ -1234,47 +1234,53 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                     if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTIntegerList )
                     {
                         std::vector<int> anValues;
-                        int nLength = json_object_array_length(it.val);
-                        for(int i=0;i<nLength;i++)
+                        const auto nLength = json_object_array_length(it.val);
+                        for(auto i=decltype(nLength){0};i<nLength;i++)
                         {
                             anValues.push_back( json_object_get_int( json_object_array_get_idx( it.val, i ) ) );
                         }
                         if( nLength )
-                            poFeature->SetField( oIter->second, nLength, &anValues[0] );
+                            poFeature->SetField( oIter->second,
+                                                 static_cast<int>(nLength),
+                                                 &anValues[0] );
                     }
                     else if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTInteger64List )
                     {
                         std::vector<GIntBig> anValues;
-                        int nLength = json_object_array_length(it.val);
-                        for(int i=0;i<nLength;i++)
+                        const auto nLength = json_object_array_length(it.val);
+                        for(auto i=decltype(nLength){0};i<nLength;i++)
                         {
                             anValues.push_back( json_object_get_int64( json_object_array_get_idx( it.val, i ) ) );
                         }
                         if( nLength )
-                            poFeature->SetField( oIter->second, nLength, &anValues[0] );
+                            poFeature->SetField( oIter->second,
+                                                 static_cast<int>(nLength),
+                                                 &anValues[0] );
                     }
                     else if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTRealList )
                     {
                         std::vector<double> adfValues;
-                        int nLength = json_object_array_length(it.val);
-                        for(int i=0;i<nLength;i++)
+                        const auto nLength = json_object_array_length(it.val);
+                        for(auto i=decltype(nLength){0};i<nLength;i++)
                         {
                             adfValues.push_back( json_object_get_double( json_object_array_get_idx( it.val, i ) ) );
                         }
                         if( nLength )
-                            poFeature->SetField( oIter->second, nLength, &adfValues[0] );
+                            poFeature->SetField( oIter->second,
+                                                 static_cast<int>(nLength),
+                                                 &adfValues[0] );
                     }
                     else if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTStringList )
                     {
                         std::vector<char*> apszValues;
-                        int nLength = json_object_array_length(it.val);
-                        for(int i=0;i<nLength;i++)
+                        const auto nLength = json_object_array_length(it.val);
+                        for(auto i=decltype(nLength){0};i<nLength;i++)
                         {
                             apszValues.push_back( CPLStrdup(json_object_get_string( json_object_array_get_idx( it.val, i ) )) );
                         }
                         apszValues.push_back( nullptr);
                         poFeature->SetField( oIter->second, &apszValues[0] );
-                        for(int i=0;i<nLength;i++)
+                        for(auto i=decltype(nLength){0};i<nLength;i++)
                         {
                             CPLFree(apszValues[i]);
                         }
