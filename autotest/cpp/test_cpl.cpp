@@ -40,6 +40,7 @@
 #include "cpl_mem_cache.h"
 #include "cpl_http.h"
 #include "cpl_auto_close.h"
+#include "cpl_minixml.h"
 
 #include <fstream>
 #include <string>
@@ -2575,6 +2576,21 @@ namespace tut
 
         }
         ensure_equals(counter,400);
+    }
+
+    // Test cpl_minixml
+    template<>
+    template<>
+    void object::test<37>()
+    {
+        CPLXMLNode* psRoot = CPLCreateXMLNode(nullptr, CXT_Element, "Root");
+        CPLXMLNode* psElt = CPLCreateXMLElementAndValue(psRoot, "Elt", "value");
+        CPLAddXMLAttributeAndValue(psElt, "attr1", "val1");
+        CPLAddXMLAttributeAndValue(psElt, "attr2", "val2");
+        char* str = CPLSerializeXMLTree(psRoot);
+        CPLDestroyXMLNode(psRoot);
+        ensure_equals( std::string(str), std::string("<Root>\n  <Elt attr1=\"val1\" attr2=\"val2\">value</Elt>\n</Root>\n") );
+        CPLFree(str);
     }
 
 } // namespace tut
