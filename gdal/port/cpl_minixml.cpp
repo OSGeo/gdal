@@ -1331,7 +1331,7 @@ static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent,
     }
 
     psNode->eType = eType;
-    psNode->pszValue = VSIStrdup( pszText );
+    psNode->pszValue = VSIStrdup( pszText ? pszText : "" );
     if( psNode->pszValue == nullptr )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
