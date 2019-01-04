@@ -110,4 +110,7 @@ private:
 GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType );
 kealib::KEADataType GDAL_to_KEA_Type( GDALDataType egdalType );
 
+// For unloading the VFL
+void KEADatasetDriverUnload(GDALDriver*);
+
 #endif //KEADATASET_H

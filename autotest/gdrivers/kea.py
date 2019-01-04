@@ -50,7 +50,7 @@ def test_kea_1():
         pytest.skip()
 
     tst = gdaltest.GDALTest('KEA', 'byte.tif', 1, 4672, options=['IMAGEBLOCKSIZE=15', 'THEMATIC=YES'])
-    return tst.testCreateCopy(check_srs=True, check_gt=1)
+    return tst.testCreateCopy(check_srs=True, check_gt=1, new_filename='tmp/byte.kea')
 
 ###############################################################################
 # Test CreateCopy() for various data types
@@ -607,4 +607,29 @@ def test_kea_14():
     gdaltest.kea_driver.Delete('tmp/out2.kea')
 
 
+###############################################################################
+# Test /vsi functionality
 
+
+def test_kea_15():
+    if gdaltest.kea_driver is None:
+        pytest.skip()
+
+    # create an temp image
+    ds = gdaltest.kea_driver.Create('tmp/vsitest.kea', 1, 1)
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    # load it into /vsimem and try and open it
+    gdal.FileFromMemBuffer('/vsimem/foo.kea', open('tmp/vsitest.kea', 'rb').read())
+    ds = gdal.Open('/vsimem/foo.kea')
+    assert ds.GetDriver().ShortName == "KEA"
+    ds = None
+
+    gdal.Unlink('/vsimem/foo.kea')
+    gdaltest.kea_driver.Delete('tmp/vsitest.kea')
+
+def test_kea_destroy():
+    # there is always a 'tmp/out.kea.aux.xml' left behind by
+    # a few of the tests
+    gdal.Unlink('tmp/out.kea.aux.xml')
