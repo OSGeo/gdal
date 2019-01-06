@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018, NextGIS
+ *  Copyright (c) 2018-2019, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -59,10 +59,58 @@ std::string GetTMS(const std::string &osUrl, const std::string &osResourceId)
         osResourceId;
 }
 
-std::string GetFeaturePage(CPL_UNUSED const std::string &osUrl, CPL_UNUSED const std::string &osResourceId,
-    CPL_UNUSED GIntBig nStart, CPL_UNUSED int nCount)
+std::string GetFeaturePage(const std::string &osUrl, const std::string &osResourceId,
+    GIntBig nStart, int nCount, const std::string &osFields,
+    const std::string &osWhere, const std::string &osSpatialWhere)
 {
-    return ""; // TODO: Add paging support.
+    std::string osFeatureUrl = GetFeature(osUrl, osResourceId);
+    bool bParamAdd = false;
+    if(nCount > 0)
+    {
+        osFeatureUrl += "?offset=" + std::to_string(nStart) + "&limit=" +
+            std::to_string(nCount);
+        bParamAdd = true;
+    }
+
+    if(!osFields.empty())
+    {
+        if(bParamAdd)
+        {
+            osFeatureUrl += "&fields=" + osFields;
+        }
+        else
+        {
+            osFeatureUrl += "?fields=" + osFields;
+            bParamAdd = true;
+        }
+    }
+
+    if(!osWhere.empty())
+    {
+        if(bParamAdd)
+        {
+            osFeatureUrl += "&" + osWhere;
+        }
+        else
+        {
+            osFeatureUrl += "?" + osWhere;
+            bParamAdd = true;
+        }
+    }
+
+    if(!osSpatialWhere.empty())
+    {
+        if(bParamAdd)
+        {
+            osFeatureUrl += "&intersects=" + osSpatialWhere;
+        }
+        else
+        {
+            osFeatureUrl += "?intersects=" + osSpatialWhere;
+        }
+    }
+
+    return osFeatureUrl;
 }
 
 std::string GetRoute(const std::string &osUrl)
@@ -73,6 +121,38 @@ std::string GetRoute(const std::string &osUrl)
 std::string GetUpload(const std::string &osUrl)
 {
     return osUrl + "/api/component/file_upload/upload";
+}
+
+std::string GetVersion(const std::string &osUrl)
+{
+    return osUrl + "/api/component/pyramid/pkg_version";
+}
+
+bool CheckVersion(const std::string &osVersion, int nMajor, int nMinor, int nPatch)
+{
+    int nCurrentMajor(0);
+    int nCurrentMinor(0);
+    int nCurrentPatch(0);
+
+    CPLStringList aosList(CSLTokenizeString2(osVersion.c_str(), ".", 0));
+    if(aosList.size() > 2)
+    {
+        nCurrentMajor = atoi(aosList[0]);
+        nCurrentMinor = atoi(aosList[1]);
+        nCurrentPatch = atoi(aosList[2]);
+    }
+    else if(aosList.size() > 1)
+    {
+        nCurrentMajor = atoi(aosList[0]);
+        nCurrentMinor = atoi(aosList[1]);
+    }
+    else if(aosList.size() > 0)
+    {
+        nCurrentMajor = atoi(aosList[0]);
+    }
+
+    return nCurrentMajor >= nMajor && nCurrentMinor >= nMinor &&
+        nCurrentPatch >= nPatch;
 }
 
 Uri ParseUri(const std::string &osUrl)
@@ -123,9 +203,12 @@ static void ReportError(const GByte *pabyData, int nDataLen)
             if( !osErrorMessage.empty() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMessage.c_str());
+                return;
             }
         }
     }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected error occurred.");
 }
 
 std::string CreateResource(const std::string &osUrl, const std::string &osPayload,
@@ -228,7 +311,7 @@ bool RenameResource(const std::string &osUrl, const std::string &osResourceId,
 {
     CPLJSONObject oPayload;
     CPLJSONObject oResource("resource", oPayload);
-    oPayload.Add("display_name", osNewName);
+    oResource.Add("display_name", osNewName);
     std::string osPayload = oPayload.Format(CPLJSONObject::Plain);
 
     return UpdateResource( osUrl, osResourceId, osPayload, papszHTTPOptions);

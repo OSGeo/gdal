@@ -8,7 +8,7 @@
 ################################################################################
 #  The MIT License (MIT)
 #
-#  Copyright (c) 2018, NextGIS <info@nextgis.com>
+#  Copyright (c) 2018-2019, NextGIS <info@nextgis.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to deal
@@ -375,9 +375,39 @@ def test_ogr_ngw_8():
     assert counter >= 3, 'Expected 3 or greater feature count, got {}.'.format(counter)
 
 ###############################################################################
-# Check native data.
+# Check paging while GetNextFeature.
 
 def test_ogr_ngw_9():
+    if gdaltest.ngw_drv is None:
+        pytest.skip()
+
+    if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_drv = None
+        pytest.skip()
+
+    ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
+    gdaltest.ngw_ds = None
+
+    url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
+    gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE, open_options=['PAGE_SIZE=2'])
+
+    lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
+
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    counter = 0
+    while feat is not None:
+        counter += 1
+        assert feat.GetFID() >= 0, 'Expected FID greater or equal 0, got {}.'.format(feat.GetFID())
+
+        feat = lyr.GetNextFeature()
+
+    assert counter >= 3, 'Expected 3 or greater feature count, got {}.'.format(counter)
+
+###############################################################################
+# Check native data.
+
+def test_ogr_ngw_10():
     if gdaltest.ngw_drv is None:
         pytest.skip()
 
@@ -409,11 +439,90 @@ def test_ogr_ngw_9():
     native_data = feat.GetNativeData()
     assert native_data is not None and native_data.find('Test feature description') != -1, 'Expected feature description text, got {}'.format(native_data)
 
+###############################################################################
+# Check ignored fields works ok
+
+def test_ogr_ngw_11():
+    if gdaltest.ngw_drv is None or gdaltest.ngw_ds is None:
+        pytest.skip()
+
+    if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_drv = None
+        pytest.skip()
+
+    lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
+    lyr.SetIgnoredFields(['STRFIELD'])
+
+    feat = lyr.GetNextFeature()
+
+    assert not feat.IsFieldSet('STRFIELD'), 'got STRFIELD despite request to ignore it.'
+
+    assert feat.GetFieldAsInteger('DECFIELD') == 123, 'missing or wrong DECFIELD'
+
+    fd = lyr.GetLayerDefn()
+    fld = fd.GetFieldDefn(0)  # STRFIELD
+    assert fld.IsIgnored(), 'STRFIELD unexpectedly not marked as ignored.'
+
+    fld = fd.GetFieldDefn(1)  # DECFIELD
+    assert not fld.IsIgnored(), 'DECFIELD unexpectedly marked as ignored.'
+
+    assert not fd.IsGeometryIgnored(), 'geometry unexpectedly ignored.'
+
+    assert not fd.IsStyleIgnored(), 'style unexpectedly ignored.'
+
+    feat = None
+    lyr = None
+
+###############################################################################
+# Check attribute filter.
+
+def test_ogr_ngw_12():
+    if gdaltest.ngw_drv is None:
+        pytest.skip()
+
+    if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_drv = None
+        pytest.skip()
+
+    lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
+    lyr.SetAttributeFilter("STRFIELD = 'русский'")
+    fc = lyr.GetFeatureCount()
+    assert fc == 1, 'Expected feature count is 1, got {}.'.format(fc)
+
+    lyr.SetAttributeFilter("STRFIELD = 'fo_o' AND DECFIELD = 321")
+    fc = lyr.GetFeatureCount()
+    assert fc == 0, 'Expected feature count is 0, got {}.'.format(fc)
+
+    lyr.SetAttributeFilter('NGW:fld_STRFIELD=fo_o&fld_DECFIELD=123')
+    fc = lyr.GetFeatureCount()
+    assert fc == 2, 'Expected feature count is 2, got {}.'.format(fc)
+
+
+###############################################################################
+# Check spatial filter.
+
+def test_ogr_ngw_13():
+    if gdaltest.ngw_drv is None:
+        pytest.skip()
+
+    if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_drv = None
+        pytest.skip()
+
+    lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
+
+    # Reset any attribute filters
+    lyr.SetAttributeFilter(None)
+
+    # Check intersecting POINT(3 4)
+    lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt('POLYGON ((2.5 3.5,2.5 6,6 6,6 3.5,2.5 3.5))'))
+    fc = lyr.GetFeatureCount()
+    assert fc == 1, 'Expected feature count is 1, got {}.'.format(fc)
 
 ###############################################################################
 # Check ExecuteSQL.
 
-def test_ogr_ngw_10():
+def test_ogr_ngw_14():
     if gdaltest.ngw_drv is None:
         pytest.skip()
 
@@ -431,11 +540,35 @@ def test_ogr_ngw_10():
     fill_fields(f)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 0,0 0))'))
     ret = lyr.CreateFeature(f)
-    assert ret == 0, 'Failed to create feature in test_ln_layer.'
+    assert ret == 0, 'Failed to create feature in test_pl_layer.'
     assert lyr.GetFeatureCount() == 1, 'Expected feature count is 1, got {}.'.format(lyr.GetFeatureCount())
 
-    gdaltest.ngw_ds.ExecuteSQL('DELETE FROM test_pl_layer;')
+    gdaltest.ngw_ds.ExecuteSQL('DELETE FROM test_pl_layer')
     assert lyr.GetFeatureCount() == 0, 'Expected feature count is 0, got {}.'.format(lyr.GetFeatureCount())
+    
+    gdaltest.ngw_ds.ExecuteSQL('ALTER TABLE test_pl_layer RENAME TO test_pl_layer777')
+    lyr = gdaltest.ngw_ds.GetLayerByName('test_pl_layer777')
+    assert lyr is not None, 'Get layer test_pl_layer777 failed.'
+
+    # Create 2 new features
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    fill_fields(f)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 0,0 0))'))
+    ret = lyr.CreateFeature(f)
+    assert ret == 0, 'Failed to create feature in test_pl_layer777.'
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    fill_fields2(f)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((1 1,1 2,2 1,1 1))'))
+    ret = lyr.CreateFeature(f)
+    assert ret == 0, 'Failed to create feature in test_pl_layer777.'
+
+    lyr = gdaltest.ngw_ds.ExecuteSQL("SELECT STRFIELD,DECFIELD FROM test_pl_layer777 WHERE STRFIELD = 'fo_o'")
+    assert lyr is not None, 'ExecuteSQL: SELECT STRFIELD,DECFIELD FROM test_pl_layer777 WHERE STRFIELD = "fo_o"; failed.'
+    assert lyr.GetFeatureCount() == 2, 'Expected feature count is 2, got {}.'.format(lyr.GetFeatureCount())
+
+    gdaltest.ngw_ds.ReleaseResultSet(lyr)
 
 ###############################################################################
 #  Run test_ogrsf
@@ -454,15 +587,22 @@ def test_ogr_ngw_test_ogrsf():
     if gdaltest.ngw_ds is None:
         pytest.skip()
 
-    ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
-    url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
+    url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + url)
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + url + ' -oo PAGE_SIZE=100')
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + url + ' -oo BATCH_SIZE=5')
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + url + ' -oo BATCH_SIZE=5 -oo PAGE_SIZE=100')
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################

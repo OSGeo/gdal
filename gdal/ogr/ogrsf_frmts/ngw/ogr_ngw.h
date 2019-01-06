@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018, NextGIS
+ *  Copyright (c) 2018-2019, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@
 
 // gdal headers
 #include "ogrsf_frmts.h"
+#include "swq.h"
 
 #include <map>
 #include <set>
@@ -42,9 +43,13 @@ namespace NGWAPI {
     std::string GetFeature(const std::string &osUrl, const std::string &osResourceId);
     std::string GetTMS(const std::string &osUrl, const std::string &osResourceId);
     std::string GetFeaturePage(const std::string &osUrl, const std::string &osResourceId,
-        GIntBig nStart, int nCount);
+        GIntBig nStart, int nCount = 0, const std::string &osFields = "",
+        const std::string &osWhere = "", const std::string &osSpatialWhere = "");
     std::string GetRoute(const std::string &osUrl);
     std::string GetUpload(const std::string &osUrl);
+    std::string GetVersion(const std::string &osUrl);
+    bool CheckVersion(const std::string &osVersion, int nMajor, int nMinor = 0,
+        int nPatch = 0);
 
     struct Uri {
         std::string osPrefix;
@@ -121,6 +126,14 @@ class OGRNGWLayer : public OGRLayer
     GIntBig nPageStart;
     bool bNeedSyncData, bNeedSyncStructure;
     std::set<GIntBig> soChangedIds;
+    std::string osFields;
+    std::string osWhere;
+    std::string osSpatialFilter;
+    bool bClientSideAttributeFilter;
+
+    explicit OGRNGWLayer( const std::string &osResourceIdIn, OGRNGWDataset *poDSIn,
+        const NGWAPI::Permissions &stPermissionsIn, OGRFeatureDefn *poFeatureDefnIn,
+        GIntBig nFeatureCountIn, const OGREnvelope &stExtentIn );
 
 public:
     explicit OGRNGWLayer( OGRNGWDataset *poDSIn, const CPLJSONObject &oResourceJsonObject );
@@ -130,6 +143,7 @@ public:
     virtual ~OGRNGWLayer();
 
     bool Delete();
+    bool Rename( const std::string &osNewName );
     std::string GetResourceId() const;
 
     /* OGRLayer */
@@ -161,6 +175,17 @@ public:
     virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
         const char *pszDomain = "" ) override;
 
+    virtual OGRErr SetIgnoredFields( const char **papszFields ) override;
+    virtual OGRErr SetAttributeFilter( const char *pszQuery ) override;
+    virtual void SetSpatialFilter( OGRGeometry *poGeom ) override;
+    virtual void SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+
+    OGRErr SetSelectedFields(const std::set<std::string> &aosFields);
+    OGRNGWLayer *Clone() const;
+
+public:
+    static std::string TranslateSQLToFilter( swq_expr_node *poNode );
+
 protected:
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
@@ -169,10 +194,13 @@ private:
     void FillMetadata( const CPLJSONObject &oRootObject );
     void FillFields( const CPLJSONArray &oFields );
     void FetchPermissions();
-    void FreeFeaturesCache();
+    void FreeFeaturesCache( bool bForce = false );
     std::string CreateNGWResourceJson();
     std::string FeaturesToJson();
     OGRErr SyncFeatures();
+    GIntBig GetMaxFeatureCount( bool bForce );
+    bool FillFeatures(const std::string &osUrl);
+    size_t GetNewFeaturesCount() const;
 };
 
 class OGRNGWDataset final : public GDALDataset
@@ -248,6 +276,7 @@ private:
     bool FlushMetadata( char **papszMetadata );
     bool IsUpdateMode() const { return bReadWrite; }
     bool IsBatchMode() const { return nBatchSize >= 0; }
+    bool HasFeaturePaging() const { return bHasFeaturePaging; }
     int GetPageSize() const { return bHasFeaturePaging ? nPageSize : -1; }
     int GetBatchSize() const { return nBatchSize; }
     bool IsExtInNativeData() const { return bExtInNativeData; }

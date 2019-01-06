@@ -66,8 +66,8 @@ The following configuration options are available:
 <ul>
     <li><b>NGW_USERPWD</b>: User name and password separated with colon. Optional
         and can be set using open options.
-    <li><b>NGW_BATCH_MODE</b>: If set to YES - all edits (insert, update) will
-        cache and execute if cache limit exceeded or sync to disk execute. Delete
+    <li><b>NGW_BATCH_SIZE</b>: Size of feature insert and update operations cache
+        before send to server. If batch size is -1 batch mode is disabled. Delete
         operation will execute immediately.
     <li><b>NGW_PAGE_SIZE</b>: If supported by server, fetch features from
         remote server will use paging. The -1 value disables paging even it
@@ -126,9 +126,9 @@ NextWeb supports only following field types:
 
 <h2>Paging</h2>
 
-Features are retrieved from the server by chunks if server support this feature.
-This number can be altered with the NGW_PAGE_SIZE configuration option or
-PAGE_SIZE open option.
+Features can retrieved from NextGIS Web by chunks if supported by server (available
+since NextGIS Web 3.1). This chunk size can be altered with the NGW_PAGE_SIZE
+configuration option or PAGE_SIZE open option.
 
 <h2>Write support</h2>
 
@@ -210,21 +210,51 @@ map to layer metadata the following way:
     <li>grid visibility -> FIELD_{field number}_GRID_VISIBILITY (for example FIELD_0_GRID_VISIBILITY)
 </ul>
 
+<h2>Filters</h2>
+
+Vector and PostGIS layers support SetIgnoredFields method. Any cached
+features will be freed then this method executed.
+<p>
+Vector and PostGIS layers support SetAttributeFilter and SetSpatialFilter methods.
+The SetAttributeFilter method accepts only field equal value condition and AND
+operator without brackets. For example,
+<pre>FIELD_1 = 'Value 1'</pre>
+<pre>FIELD_1 = 'Value 1' AND FIELD_2 = 'Value 2'</pre>
+
+In other cases attribute filter will be evaluated on client side.
+<p>
+You can set attribute filter using NextGIS Web native format. For example,
+<pre>NGW:fld_FIELD_1=Value 1&amp;fld_FIELD_2=Value 2</pre>
+Don't forget to add 'NGW:' perefix to where clause and 'fld_' prefix to field name.
+<p>
+Dataset supports ExecuteSQL method. Only the following queries are supported:
+
+<ul>
+    <li>DELLAYER: layer_name; - delete layer with layer_name.
+    <li>DELETE FROM layer_name; - delete any features from layer with layer_name.
+    <li>DROP TABLE layer_name; - delete layer with layer_name.
+    <li>ALTER TABLE src_layer RENAME TO dst_layer; - rename layer.
+    <li>SELECT field_1,field_2 FROM src_layer WHERE field_1 = 'Value 1' AND field_2 = 'Value 2';
+</ul>
+
+In SELECT statement field list or asterisk can be provided. The WHERE clause has
+same limitations as SetAttributeFilter method input.
+
 <h2>Examples</h2>
 
-Read datasource contensts:
+Read datasource contensts (1730 is resource group identifier):
 <pre>
     ogrinfo -ro NGW:https://demo.nextgis.com/resource/1730
 </pre>
 <p>
 
-Read layer details:
+Read layer details (1730 is resource group identifier):
 <pre>
     ogrinfo -ro -so NGW:https://demo.nextgis.com/resource/1730 Parks
 </pre>
 <p>
 
-Creating and populating a vector layer from a shapefile:
+Creating and populating a vector layer from a shapefile (1730 is resource group identifier):
 <pre>
     ogr2ogr -f NGW "NGW:https://demo.nextgis.com/resource/1730" myshapefile.shp
 </pre>
