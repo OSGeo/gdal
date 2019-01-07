@@ -36,9 +36,6 @@ wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
 unzip PGeoTest.zip
 cd ../../..
 
-# install test dependencies
-sudo -H pip install -U -r ./requirements.txt
-
 export PYTHONPATH=/usr/lib/python2.7/dist-packages
 
 # Run ogr_fgdb.py in isolation from the rest

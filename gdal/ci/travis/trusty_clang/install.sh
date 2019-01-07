@@ -41,7 +41,7 @@ make USER_DEFS="-Wextra -Werror" -j3
   export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
   export PATH=$JAVA_HOME/jre/bin:$PATH
   java -version
-  make
+  (make 2>/tmp/log.txt || cat /tmp/log.txt)
   mv java.opt.bak java.opt
 )
 
@@ -51,7 +51,7 @@ make
 cd ../..
 cd swig/csharp
 make generate
-make
+make 2>/tmp/log.txt || cat /tmp/log.txt
 cd ../..
 sudo rm -f /usr/lib/libgdal.so*
 sudo rm -f /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h 
