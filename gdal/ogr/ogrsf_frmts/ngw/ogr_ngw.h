@@ -200,7 +200,7 @@ private:
     OGRErr SyncFeatures();
     GIntBig GetMaxFeatureCount( bool bForce );
     bool FillFeatures(const std::string &osUrl);
-    size_t GetNewFeaturesCount() const;
+    GIntBig GetNewFeaturesCount() const;
 };
 
 class OGRNGWDataset final : public GDALDataset

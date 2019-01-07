@@ -136,8 +136,8 @@ Datasource and layers creation and deletion is possible.
 Write support is only enabled when the datasource is opened in update mode and
 user has permissions.
 
-Vector and PostGIS layers insert and update operations may be cached if BATCH_MODE
-is enable. Delete operation executes immediately.
+Vector and PostGIS layers insert and update operations may be cached if BATCH_SIZE
+is greater 0. Delete operation executes immediately.
 
 <h2>Open options</h2>
 

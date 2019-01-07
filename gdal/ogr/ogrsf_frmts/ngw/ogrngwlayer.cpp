@@ -331,9 +331,10 @@ std::string OGRNGWLayer::TranslateSQLToFilter( swq_expr_node *poNode )
             {
                 return "";
             }
-            std::string osFieldName = "fld_" +
-                std::string(CPLEscapeString(poNode->papoSubExpr[0]->string_value,
-                    -1, CPLES_URL));
+            char *pszNameEncoded = CPLEscapeString(
+                poNode->papoSubExpr[0]->string_value, -1, CPLES_URL);
+            std::string osFieldName = "fld_" + std::string(pszNameEncoded);
+            CPLFree(pszNameEncoded);
 
             std::string osVal;
             switch(poNode->papoSubExpr[1]->field_type)
@@ -348,8 +349,10 @@ std::string OGRNGWLayer::TranslateSQLToFilter( swq_expr_node *poNode )
             case SWQ_STRING:
                 if(poNode->papoSubExpr[1]->string_value)
                 {
-                    osVal = CPLEscapeString(poNode->papoSubExpr[1]->string_value,
-                        -1, CPLES_URL);
+                    char *pszValueEncoded = CPLEscapeString(
+                        poNode->papoSubExpr[1]->string_value, -1, CPLES_URL);
+                    osVal = pszValueEncoded;
+                    CPLFree(pszValueEncoded);
                 }
                 break;
             case SWQ_DATE:
@@ -357,8 +360,10 @@ std::string OGRNGWLayer::TranslateSQLToFilter( swq_expr_node *poNode )
             case SWQ_TIMESTAMP:
                 if(poNode->papoSubExpr[1]->string_value)
                 {
-                    osVal = CPLEscapeString(poNode->papoSubExpr[1]->string_value,
-                        -1, CPLES_URL);
+                    char *pszValueEncoded = CPLEscapeString(
+                        poNode->papoSubExpr[1]->string_value, -1, CPLES_URL);
+                    osVal = pszValueEncoded;
+                    CPLFree(pszValueEncoded);
                 }
                 break;
             default:
@@ -1432,8 +1437,10 @@ OGRErr OGRNGWLayer::SetIgnoredFields( const char **papszFields )
 
         if( !osFields.empty() )
         {
-            osFields = CPLEscapeString(osFields.c_str(), osFields.size(),
-                CPLES_URL);
+            char *pszValuesEncoded = CPLEscapeString(osFields.c_str(),
+                static_cast<int>(osFields.size()), CPLES_URL);
+            osFields = pszValuesEncoded;
+            CPLFree(pszValuesEncoded);
         }
     }
 
@@ -1481,8 +1488,10 @@ void OGRNGWLayer::SetSpatialFilter( OGRGeometry *poGeom )
 
             osSpatialFilter = OGRGeometryToWKT( m_poFilterGeom );
             CPLDebug("NGW", "Spatial filter: %s", osSpatialFilter.c_str());
-            osSpatialFilter = CPLEscapeString(osSpatialFilter.c_str(),
-                osSpatialFilter.size(), CPLES_URL);
+            char *pszSpatFilterEncoded = CPLEscapeString(osSpatialFilter.c_str(),
+                static_cast<int>(osSpatialFilter.size()), CPLES_URL);
+            osSpatialFilter = pszSpatFilterEncoded;
+            CPLFree(pszSpatFilterEncoded);
         }
     }
 
@@ -1572,14 +1581,14 @@ OGRNGWLayer *OGRNGWLayer::Clone() const
         poFeatureDefn->Clone(), nFeatureCount, stExtent );
 }
 
-size_t OGRNGWLayer::GetNewFeaturesCount() const
+GIntBig OGRNGWLayer::GetNewFeaturesCount() const
 {
-    if(soChangedIds.empty())
+    if( soChangedIds.empty() )
     {
         return 0;
     }
 
-    if(*soChangedIds.begin() >= 0)
+    if( *soChangedIds.begin() >= 0 )
     {
         return 0;
     }
