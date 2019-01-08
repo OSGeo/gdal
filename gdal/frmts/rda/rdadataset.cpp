@@ -717,8 +717,8 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
         if(poParams != nullptr &&
            json_object_get_type(poParams) == json_type_array ) {
-            const int nSize = json_object_array_length(poParams);
-            for (int i = 0; i < nSize; ++i) {
+            const auto nSize = json_object_array_length(poParams);
+            for (auto i = decltype(nSize){0}; i < nSize; ++i) {
                 json_object *ds = json_object_array_get_idx(poParams, i);
                 if (ds != nullptr) {
                     json_object_iter it;

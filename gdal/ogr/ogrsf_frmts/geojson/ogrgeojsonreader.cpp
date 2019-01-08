@@ -1446,8 +1446,8 @@ bool OGRGeoJSONReader::GenerateLayerDefn( OGRGeoJSONLayer* poLayer,
         if( nullptr != poObjFeatures
             && json_type_array == json_object_get_type( poObjFeatures ) )
         {
-            const int nFeatures = json_object_array_length( poObjFeatures );
-            for( int i = 0; i < nFeatures; ++i )
+            const auto nFeatures = json_object_array_length( poObjFeatures );
+            for( auto i = decltype(nFeatures){0}; i < nFeatures; ++i )
             {
                 json_object* poObjFeature =
                     json_object_array_get_idx( poObjFeatures, i );
@@ -2206,14 +2206,14 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
         const enum json_type eJSonType(json_object_get_type(poVal));
         if( eJSonType == json_type_array )
         {
-            const int nLength = json_object_array_length(poVal);
+            const auto nLength = json_object_array_length(poVal);
             int* panVal = static_cast<int *>(CPLMalloc(sizeof(int) * nLength));
-            for( int i = 0; i < nLength; i++ )
+            for( auto i = decltype(nLength){0}; i < nLength; i++ )
             {
                 json_object* poRow = json_object_array_get_idx(poVal, i);
                 panVal[i] = json_object_get_int(poRow);
             }
-            poFeature->SetField( nField, nLength, panVal );
+            poFeature->SetField( nField, static_cast<int>(nLength), panVal );
             CPLFree(panVal);
         }
         else if ( eJSonType == json_type_boolean ||
@@ -2227,15 +2227,15 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
         const enum json_type eJSonType(json_object_get_type(poVal));
         if( eJSonType == json_type_array )
         {
-            const int nLength = json_object_array_length(poVal);
+            const auto nLength = json_object_array_length(poVal);
             GIntBig* panVal =
                 static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig) * nLength));
-            for( int i = 0; i < nLength; i++ )
+            for( auto i = decltype(nLength){0}; i < nLength; i++ )
             {
                 json_object* poRow = json_object_array_get_idx(poVal, i);
                 panVal[i] = static_cast<GIntBig>(json_object_get_int64(poRow));
             }
-            poFeature->SetField( nField, nLength, panVal );
+            poFeature->SetField( nField, static_cast<int>(nLength), panVal );
             CPLFree(panVal);
         }
         else if ( eJSonType == json_type_boolean ||
@@ -2250,15 +2250,15 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
         const enum json_type eJSonType(json_object_get_type(poVal));
         if( eJSonType == json_type_array )
         {
-            const int nLength = json_object_array_length(poVal);
+            const auto nLength = json_object_array_length(poVal);
             double* padfVal =
                 static_cast<double *>(CPLMalloc(sizeof(double) * nLength));
-            for( int i = 0; i < nLength;i++ )
+            for( auto i = decltype(nLength){0}; i < nLength;i++ )
             {
                 json_object* poRow = json_object_array_get_idx(poVal, i);
                 padfVal[i] = json_object_get_double(poRow);
             }
-            poFeature->SetField( nField, nLength, padfVal );
+            poFeature->SetField( nField, static_cast<int>(nLength), padfVal );
             CPLFree(padfVal);
         }
         else if ( eJSonType == json_type_boolean ||
@@ -2272,9 +2272,9 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
         const enum json_type eJSonType(json_object_get_type(poVal));
         if( eJSonType == json_type_array )
         {
-            const int nLength = json_object_array_length(poVal);
+            const auto nLength = json_object_array_length(poVal);
             char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
-            int i = 0;
+            auto i = decltype(nLength){0};
             for( ; i < nLength; i++ )
             {
                 json_object* poRow = json_object_array_get_idx(poVal, i);
@@ -2481,8 +2481,8 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer,
 
     if( json_type_array == json_object_get_type( poObjFeatures ) )
     {
-        const int nFeatures = json_object_array_length( poObjFeatures );
-        for( int i = 0; i < nFeatures; ++i )
+        const auto nFeatures = json_object_array_length( poObjFeatures );
+        for( auto i = decltype(nFeatures){0}; i < nFeatures; ++i )
         {
             json_object* poObjFeature
                 = json_object_array_get_idx( poObjFeatures, i );
@@ -2727,7 +2727,7 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
 
     if( json_type_array == json_object_get_type( poObj ) )
     {
-        const int nSize = json_object_array_length( poObj );
+        const auto nSize = json_object_array_length( poObj );
 
         if( nSize < GeoJSONObject::eMinCoordinateDimension )
         {
@@ -2808,11 +2808,11 @@ OGRMultiPoint* OGRGeoJSONReadMultiPoint( json_object* poObj )
     OGRMultiPoint* poMultiPoint = nullptr;
     if( json_type_array == json_object_get_type( poObjPoints ) )
     {
-        const int nPoints = json_object_array_length( poObjPoints );
+        const auto nPoints = json_object_array_length( poObjPoints );
 
         poMultiPoint = new OGRMultiPoint();
 
-        for( int i = 0; i < nPoints; ++i)
+        for( auto i = decltype(nPoints){0}; i < nPoints; ++i)
         {
             json_object* poObjCoords =
                 json_object_array_get_idx( poObjPoints, i );
@@ -2863,12 +2863,12 @@ OGRLineString* OGRGeoJSONReadLineString( json_object* poObj , bool bRaw )
 
     if( json_type_array == json_object_get_type( poObjPoints ) )
     {
-        const int nPoints = json_object_array_length( poObjPoints );
+        const auto nPoints = json_object_array_length( poObjPoints );
 
         poLine = new OGRLineString();
-        poLine->setNumPoints( nPoints );
+        poLine->setNumPoints( static_cast<int>(nPoints) );
 
-        for( int i = 0; i < nPoints; ++i)
+        for( auto i = decltype(nPoints){0}; i < nPoints; ++i)
         {
             json_object* poObjCoords =
                 json_object_array_get_idx(poObjPoints, i);
@@ -2890,11 +2890,11 @@ OGRLineString* OGRGeoJSONReadLineString( json_object* poObj , bool bRaw )
             }
             if( pt.getCoordinateDimension() == 2 )
             {
-                poLine->setPoint( i, pt.getX(), pt.getY());
+                poLine->setPoint( static_cast<int>(i), pt.getX(), pt.getY());
             }
             else
             {
-                poLine->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
+                poLine->setPoint( static_cast<int>(i), pt.getX(), pt.getY(), pt.getZ() );
             }
         }
     }
@@ -2923,11 +2923,11 @@ OGRMultiLineString* OGRGeoJSONReadMultiLineString( json_object* poObj )
 
     if( json_type_array == json_object_get_type( poObjLines ) )
     {
-        const int nLines = json_object_array_length( poObjLines );
+        const auto nLines = json_object_array_length( poObjLines );
 
         poMultiLine = new OGRMultiLineString();
 
-        for( int i = 0; i < nLines; ++i)
+        for( auto i = decltype(nLines){0}; i < nLines; ++i)
         {
             json_object* poObjLine = json_object_array_get_idx( poObjLines, i );
 
@@ -2959,12 +2959,12 @@ OGRLinearRing* OGRGeoJSONReadLinearRing( json_object* poObj )
 
     if( json_type_array == json_object_get_type( poObj ) )
     {
-        const int nPoints = json_object_array_length( poObj );
+        const auto nPoints = json_object_array_length( poObj );
 
         poRing= new OGRLinearRing();
-        poRing->setNumPoints( nPoints );
+        poRing->setNumPoints( static_cast<int>(nPoints) );
 
-        for( int i = 0; i < nPoints; ++i)
+        for( auto i = decltype(nPoints){0}; i < nPoints; ++i)
         {
             json_object* poObjCoords = json_object_array_get_idx( poObj, i );
             if( poObjCoords == nullptr )
@@ -2985,9 +2985,9 @@ OGRLinearRing* OGRGeoJSONReadLinearRing( json_object* poObj )
             }
 
             if( 2 == pt.getCoordinateDimension() )
-                poRing->setPoint( i, pt.getX(), pt.getY());
+                poRing->setPoint( static_cast<int>(i), pt.getX(), pt.getY());
             else
-                poRing->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
+                poRing->setPoint( static_cast<int>(i), pt.getX(), pt.getY(), pt.getZ() );
         }
     }
 
@@ -3024,7 +3024,7 @@ OGRPolygon* OGRGeoJSONReadPolygon( json_object* poObj , bool bRaw )
 
     if( json_type_array == json_object_get_type( poObjRings ) )
     {
-        const int nRings = json_object_array_length( poObjRings );
+        const auto nRings = json_object_array_length( poObjRings );
         if( nRings > 0 )
         {
             json_object* poObjPoints = json_object_array_get_idx(poObjRings, 0);
@@ -3043,7 +3043,7 @@ OGRPolygon* OGRGeoJSONReadPolygon( json_object* poObj , bool bRaw )
                 }
             }
 
-            for( int i = 1; i < nRings && nullptr != poPolygon; ++i )
+            for( auto i = decltype(nRings){1}; i < nRings && nullptr != poPolygon; ++i )
             {
                 poObjPoints = json_object_array_get_idx( poObjRings, i );
                 if( poObjPoints == nullptr )
@@ -3088,11 +3088,11 @@ OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj )
 
     if( json_type_array == json_object_get_type( poObjPolys ) )
     {
-        const int nPolys = json_object_array_length( poObjPolys );
+        const auto nPolys = json_object_array_length( poObjPolys );
 
         poMultiPoly = new OGRMultiPolygon();
 
-        for( int i = 0; i < nPolys; ++i)
+        for( auto i = decltype(nPolys){0}; i < nPolys; ++i)
         {
             json_object* poObjPoly = json_object_array_get_idx( poObjPolys, i );
             if( poObjPoly == nullptr )
@@ -3138,8 +3138,8 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj,
         poCollection = new OGRGeometryCollection();
         poCollection->assignSpatialReference(poSRS);
 
-        const int nGeoms = json_object_array_length( poObjGeoms );
-        for( int i = 0; i < nGeoms; ++i )
+        const auto nGeoms = json_object_array_length( poObjGeoms );
+        for( auto i = decltype(nGeoms){0}; i < nGeoms; ++i )
         {
             json_object* poObjGeom = json_object_array_get_idx( poObjGeoms, i );
             if( poObjGeom == nullptr )

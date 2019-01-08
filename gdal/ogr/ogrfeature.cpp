@@ -3941,39 +3941,39 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
             OGRJSonParse(pszValue, &poJSonObj, false) )
         {
-            const int nLength = json_object_array_length(poJSonObj);
+            const auto nLength = json_object_array_length(poJSonObj);
             if( eType == OFTIntegerList && nLength > 0 )
             {
                 std::vector<int> anValues;
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);
                     anValues.push_back( json_object_get_int( poItem ) );
                 }
-                SetField( iField, nLength, &(anValues[0]) );
+                SetField( iField, static_cast<int>(nLength), &(anValues[0]) );
             }
             else if( eType == OFTInteger64List && nLength > 0 )
             {
                 std::vector<GIntBig> anValues;
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);
                     anValues.push_back( json_object_get_int64( poItem ) );
                 }
-                SetField( iField, nLength, &(anValues[0]) );
+                SetField( iField, static_cast<int>(nLength), &(anValues[0]) );
             }
             else if( eType == OFTRealList && nLength > 0 )
             {
                 std::vector<double> adfValues;
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);
                     adfValues.push_back( json_object_get_double( poItem ) );
                 }
-                SetField( iField, nLength, &(adfValues[0]) );
+                SetField( iField, static_cast<int>(nLength), &(adfValues[0]) );
             }
 
             json_object_put(poJSonObj);
@@ -4078,8 +4078,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                      OGRJSonParse(pszValue, &poJSonObj, false) )
             {
                 CPLStringList aoList;
-                const int nLength = json_object_array_length(poJSonObj);
-                for( int i = 0; i < nLength; i++ )
+                const auto nLength = json_object_array_length(poJSonObj);
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);

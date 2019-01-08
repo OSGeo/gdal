@@ -285,8 +285,8 @@ bool OGRCouchDBTableLayer::RunSpatialFilterQueryIfNecessary()
         return false;
     }
 
-    int nRows = json_object_array_length(poRows);
-    for(int i=0;i<nRows;i++)
+    const auto nRows = json_object_array_length(poRows);
+    for(auto i=decltype(nRows){0};i<nRows;i++)
     {
         json_object* poRow = json_object_array_get_idx(poRows, i);
         if ( poRow == nullptr ||
@@ -933,7 +933,7 @@ GIntBig OGRCouchDBTableLayer::GetFeatureCount(int bForce)
                 (poRows = CPL_json_object_object_get(poAnswerObj, "rows")) != nullptr &&
                 json_object_is_type(poRows, json_type_array))
             {
-                int nLength = json_object_array_length(poRows);
+                const auto nLength = json_object_array_length(poRows);
                 if (nLength == 0)
                 {
                     json_object_put(poAnswerObj);
@@ -1029,8 +1029,8 @@ int OGRCouchDBTableLayer::GetTotalFeatureCount()
 
     bHasOGRSpatial = FALSE;
 
-    int nSpecialRows = json_object_array_length(poRows);
-    for(int i=0;i<nSpecialRows;i++)
+    const auto nSpecialRows = json_object_array_length(poRows);
+    for(auto i=decltype(nSpecialRows){0};i<nSpecialRows;i++)
     {
         json_object* poRow = json_object_array_get_idx(poRows, i);
         if ( poRow != nullptr &&
@@ -1050,7 +1050,7 @@ int OGRCouchDBTableLayer::GetTotalFeatureCount()
         bServerSideSpatialFilteringWorks = false;
     }
 
-    if (nTotalRows >= nSpecialRows)
+    if (nTotalRows >= static_cast<int>(nSpecialRows))
         nTotalRows -= nSpecialRows;
 
     json_object_put(poAnswerObj);
@@ -1226,7 +1226,7 @@ int OGRCouchDBTableLayer::GetMaximumId()
         return -1;
     }
 
-    int nRows = json_object_array_length(poRows);
+    const auto nRows = json_object_array_length(poRows);
     if (nRows != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GetMaximumId() failed");
@@ -1640,8 +1640,8 @@ OGRErr OGRCouchDBTableLayer::CommitTransaction()
         return OGRERR_FAILURE;
     }
 
-    int nRows = json_object_array_length(poAnswerObj);
-    for(int i=0;i<nRows;i++)
+    const auto nRows = json_object_array_length(poAnswerObj);
+    for(auto i=decltype(nRows){0};i<nRows;i++)
     {
         json_object* poRow = json_object_array_get_idx(poAnswerObj, i);
         if ( poRow != nullptr &&
@@ -1917,8 +1917,8 @@ void OGRCouchDBTableLayer::LoadMetadata()
         OGRFieldDefn oFieldRev("_rev", OFTString);
         poFeatureDefn->AddFieldDefn(&oFieldRev);
 
-        int nFields = json_object_array_length(poFields);
-        for(int i=0;i<nFields;i++)
+        const auto nFields = json_object_array_length(poFields);
+        for(auto i=decltype(nFields){0};i<nFields;i++)
         {
             json_object* poField = json_object_array_get_idx(poFields, i);
             if (poField && json_object_is_type(poField, json_type_object))

@@ -1165,7 +1165,7 @@ CPLJSONArray::CPLJSONArray(const CPLJSONObject &other) : CPLJSONObject(other)
 int CPLJSONArray::Size() const
 {
     if( m_poJsonObject )
-        return json_object_array_length( TO_JSONOBJ(m_poJsonObject) );
+        return static_cast<int>(json_object_array_length( TO_JSONOBJ(m_poJsonObject) ));
     return 0;
 }
 

@@ -143,8 +143,8 @@ static bool OGRGeoJSONIsCompatiblePosition( json_object* poJSonCoordinates,
 static void OGRGeoJSONPatchPosition( json_object* poJSonCoordinates,
                                      json_object* poNativeCoordinates )
 {
-    const int nLength = json_object_array_length(poNativeCoordinates);
-    for( int i = 3; i < nLength; i++ )
+    const auto nLength = json_object_array_length(poNativeCoordinates);
+    for( auto i = decltype(nLength){3}; i < nLength; i++ )
     {
         json_object_array_add(poJSonCoordinates,
             json_object_get(
@@ -166,7 +166,7 @@ static bool OGRGeoJSONIsPatchableArray( json_object* poJSonArray,
     if( json_object_get_type(poJSonArray) == json_type_array &&
         json_object_get_type(poNativeArray) == json_type_array )
     {
-        auto nLength = json_object_array_length(poJSonArray);
+        const auto nLength = json_object_array_length(poJSonArray);
         if( nLength == json_object_array_length(poNativeArray) )
         {
             if( nLength > 0 )
@@ -217,10 +217,10 @@ static bool OGRGeoJSONComputePatchableOrCompatibleArrayInternal(
     if( json_object_get_type(poJSonArray) == json_type_array &&
         json_object_get_type(poNativeArray) == json_type_array )
     {
-        auto nLength = json_object_array_length(poJSonArray);
+        const auto nLength = json_object_array_length(poJSonArray);
         if (nLength == json_object_array_length(poNativeArray) )
         {
-            for( decltype(nLength) i=0; i < nLength; i++ )
+            for( auto i = decltype(nLength){0}; i < nLength; i++ )
             {
                 json_object* poJSonChild =
                     json_object_array_get_idx(poJSonArray, i);
@@ -276,8 +276,8 @@ static void OGRGeoJSONPatchArray( json_object* poJSonArray,
         OGRGeoJSONPatchPosition(poJSonArray, poNativeArray);
         return;
     }
-    const int nLength = json_object_array_length(poJSonArray);
-    for( int i = 0; i<nLength; i++ )
+    const auto nLength = json_object_array_length(poJSonArray);
+    for( auto i = decltype(nLength){0}; i<nLength; i++ )
     {
         json_object* poJSonChild = json_object_array_get_idx(poJSonArray, i);
         json_object* poNativeChild =
@@ -348,10 +348,10 @@ static bool OGRGeoJSONIsPatchableGeometry( json_object* poJSonGeometry,
             if( json_object_get_type(poJSonGeometries) == json_type_array &&
                 json_object_get_type(poNativeGeometries) == json_type_array )
             {
-                auto nLength = json_object_array_length(poJSonGeometries);
+                const auto nLength = json_object_array_length(poJSonGeometries);
                 if( nLength == json_object_array_length(poNativeGeometries) )
                 {
-                    for( decltype(nLength) i=0; i < nLength; i++ )
+                    for( auto i = decltype(nLength){0}; i < nLength; i++ )
                     {
                         json_object* poJSonChild =
                             json_object_array_get_idx(poJSonGeometries, i);
@@ -423,8 +423,8 @@ static void OGRGeoJSONPatchGeometry( json_object* poJSonGeometry,
             json_object* poJSonGeometries =
                 CPL_json_object_object_get(poJSonGeometry, "geometries");
             json_object* poNativeGeometries = it.val;
-            int nLength = json_object_array_length(poJSonGeometries);
-            for( int i=0; i < nLength; i++ )
+            const auto nLength = json_object_array_length(poJSonGeometries);
+            for( auto i=decltype(nLength){0}; i < nLength; i++ )
             {
                 json_object* poJSonChild =
                     json_object_array_get_idx(poJSonGeometries, i);

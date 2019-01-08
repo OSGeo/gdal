@@ -36,10 +36,10 @@
 std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
                                 std::map<CPLString, CPLString>& oMapCodeToWKT)
 {
-    const int nBandCount = json_object_array_length( poBands );
+    const auto nBandCount = json_object_array_length( poBands );
     std::vector<EEDAIBandDesc> aoBandDesc;
 
-    for(int i = 0; i < nBandCount; i++)
+    for(auto i = decltype(nBandCount){0}; i < nBandCount; i++)
     {
         json_object* poBand = json_object_array_get_idx(poBands, i);
         if( poBand == nullptr || json_object_get_type(poBand) != json_type_object )

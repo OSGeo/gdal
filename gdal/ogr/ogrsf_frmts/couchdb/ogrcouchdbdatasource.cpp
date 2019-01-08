@@ -286,8 +286,8 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
     }
 
-    int nTables = json_object_array_length(poAnswerObj);
-    for(int i=0;i<nTables;i++)
+    const auto nTables = json_object_array_length(poAnswerObj);
+    for(auto i=decltype(nTables){0};i<nTables;i++)
     {
         json_object* poAnswerObjDBName = json_object_array_get_idx(poAnswerObj, i);
         if ( json_object_is_type(poAnswerObjDBName, json_type_string) )
@@ -893,7 +893,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
         return nullptr;
     }
 
-    int nLength = json_object_array_length(poRows);
+    const auto nLength = json_object_array_length(poRows);
     if (nLength != 1)
     {
         json_object_put(poAnswerObj);
