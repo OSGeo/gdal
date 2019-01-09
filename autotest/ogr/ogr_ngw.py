@@ -157,6 +157,9 @@ def test_ogr_ngw_4():
     assert md_item == 'metadata test', \
         'Did not get expected datasource metadata item. test_string is equal {}, but should {}.'.format(md_item, 'metadata test')
 
+    resource_type = gdaltest.ngw_ds.GetMetadataItem('resource_type', '')
+    assert resource_type is not None, 'Did not get expected datasource metadata item. Resourse type should be present.'
+
 def create_fields(lyr):
     fld_defn = ogr.FieldDefn('STRFIELD', ogr.OFTString)
     lyr.CreateField(fld_defn)
@@ -263,15 +266,18 @@ def test_ogr_ngw_5():
 
         md_item = lyr.GetMetadataItem('test_int.d', 'NGW')
         assert md_item == '777', \
-            'Did not get expected datasource metadata item. test_int.d is equal {}, but should {}.'.format(md_item, '777')
+            'Did not get expected layer metadata item. test_int.d is equal {}, but should {}.'.format(md_item, '777')
 
         md_item = lyr.GetMetadataItem('test_float.f', 'NGW')
         assert abs(float(md_item) - 777.555) < 0.00001, \
-            'Did not get expected datasource metadata item. test_float.f is equal {}, but should {}.'.format(md_item, '777.555')
+            'Did not get expected layer metadata item. test_float.f is equal {}, but should {}.'.format(md_item, '777.555')
 
         md_item = lyr.GetMetadataItem('test_string', 'NGW')
         assert md_item == 'metadata test', \
-            'Did not get expected datasource metadata item. test_string is equal {}, but should {}.'.format(md_item, 'metadata test')
+            'Did not get expected layer metadata item. test_string is equal {}, but should {}.'.format(md_item, 'metadata test')
+
+        resource_type = lyr.GetMetadataItem('resource_type', '')
+        assert resource_type is not None, 'Did not get expected layer metadata item. Resourse type should be present.'
 
 ###############################################################################
 # Check open single vector layer.
@@ -545,7 +551,7 @@ def test_ogr_ngw_14():
 
     gdaltest.ngw_ds.ExecuteSQL('DELETE FROM test_pl_layer')
     assert lyr.GetFeatureCount() == 0, 'Expected feature count is 0, got {}.'.format(lyr.GetFeatureCount())
-    
+
     gdaltest.ngw_ds.ExecuteSQL('ALTER TABLE test_pl_layer RENAME TO test_pl_layer777')
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pl_layer777')
     assert lyr is not None, 'Get layer test_pl_layer777 failed.'

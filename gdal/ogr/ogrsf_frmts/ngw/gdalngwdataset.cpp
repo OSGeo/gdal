@@ -692,6 +692,16 @@ void OGRNGWDataset::FillMetadata( const CPLJSONObject &oRootObject )
     {
         GDALDataset::SetMetadataItem( "description", osDescription.c_str() );
     }
+    std::string osResourceType = oRootObject.GetString("resource/cls");
+    if( !osResourceType.empty() )
+    {
+        GDALDataset::SetMetadataItem( "resource_type", osResourceType.c_str() );
+    }
+    std::string osResourceParentId = oRootObject.GetString("resource/parent/id");
+    if( !osResourceParentId.empty() )
+    {
+        GDALDataset::SetMetadataItem( "parent_id", osResourceParentId.c_str() );
+    }
     GDALDataset::SetMetadataItem( "id", osResourceId.c_str() );
 
     std::vector<CPLJSONObject> items =

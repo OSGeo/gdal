@@ -862,6 +862,16 @@ void OGRNGWLayer::FillMetadata( const CPLJSONObject &oRootObject )
     {
         OGRLayer::SetMetadataItem( "keyname", osKeyName.c_str() );
     }
+    std::string osResourceType = oRootObject.GetString("resource/cls");
+    if( !osResourceType.empty() )
+    {
+        OGRLayer::SetMetadataItem( "resource_type", osResourceType.c_str() );
+    }
+    std::string osResourceParentId = oRootObject.GetString("resource/parent/id");
+    if( !osResourceParentId.empty() )
+    {
+        OGRLayer::SetMetadataItem( "parent_id", osResourceParentId.c_str() );
+    }
     OGRLayer::SetMetadataItem( "id", osResourceId.c_str() );
 
     std::vector<CPLJSONObject> items =
