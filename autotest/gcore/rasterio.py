@@ -930,3 +930,23 @@ nodata_value 0
     assert data_ar == expected_ar
 
     gdal.Unlink('/vsimem/in.asc')
+
+
+
+def test_rasterio_dataset_readarray_cint16():
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except (ImportError, AttributeError):
+        pytest.skip()
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2, gdal.GDT_CInt16)
+    mem_ds.GetRasterBand(1).WriteArray(numpy.array([[1 + 2j]]))
+    mem_ds.GetRasterBand(2).WriteArray(numpy.array([[3 + 4j]]))
+    got = mem_ds.GetRasterBand(1).ReadAsArray()
+    assert got == numpy.array([[1 + 2j]])
+    got = mem_ds.ReadAsArray()
+    assert got[0] == numpy.array([[1 + 2j]])
+    assert got[1] == numpy.array([[3 + 4j]])
