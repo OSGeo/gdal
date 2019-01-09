@@ -950,3 +950,4 @@ def test_rasterio_dataset_readarray_cint16():
     got = mem_ds.ReadAsArray()
     assert got[0] == numpy.array([[1 + 2j]])
     assert got[1] == numpy.array([[3 + 4j]])
+
