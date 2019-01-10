@@ -261,8 +261,8 @@ non-standard (regarding to the intrinsics TIFF capabilities) band color
 interpretation, such as BGR ordering, will be handled in creation and reading,
 by storing them in the GDAL internal metadata TIFF tag.</p>
 
-<p>Note that the GeoTIFF format does not support parametric description of datums,
-so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.</p>
+<p>The TIFF format only supports R,G,B components for palettes / color tables.
+Thus on writing the alpha information will be silently discarded.</p>
 
 <p>You may want to read hints to <a href="https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF">
 generate and read cloud optimized GeoTIFF files</a></p>
