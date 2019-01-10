@@ -374,7 +374,8 @@ now).
 entire file. It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Starting with GDAL 2.3, creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 
@@ -469,7 +470,8 @@ without prior download of the
 entire file. It requires GDAL to be built against libcurl.
 
 Starting with GDAL 2.3, it also allows sequential writing of files (no seeks
-or read operations are then allowed). Deletion of files with VSIUnlink(),
+or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink(),
 creation of directories with VSIMkdir() and deletion of (empty) directories with
 VSIRmdir() are also possible.
 
@@ -562,7 +564,8 @@ without prior download of the entire file.
 It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks
-or read operations are then allowed). A block blob will be created if the
+or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). A block blob will be created if the
 file size is below 4 MB. Beyond, an append blob will be created (with a
 maximum file size of 195 GB).
 
@@ -621,7 +624,8 @@ Authentication options, and read-only features, are identical to
 It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 
@@ -676,7 +680,8 @@ Authentication options, and read-only features, are identical to
 It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 
@@ -758,7 +763,8 @@ Examples:
 </pre>
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 
