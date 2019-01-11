@@ -4739,7 +4739,7 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
  * @param pabyData the raw data being applied.
  */
 
-void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
+void OGRFeature::SetField( int iField, int nBytes, const void *pabyData )
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
@@ -4755,7 +4755,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
         uField.Binary.nCount = nBytes;
         uField.Set.nMarker2 = 0;
         uField.Set.nMarker3 = 0;
-        uField.Binary.paData = pabyData;
+        uField.Binary.paData = const_cast<GByte*>(static_cast<const GByte*>(pabyData));
 
         SetField( iField, &uField );
     }
@@ -4794,7 +4794,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
  */
 
 void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
-                           int nBytes, GByte *pabyData )
+                           int nBytes, const void *pabyData )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldBinary" );

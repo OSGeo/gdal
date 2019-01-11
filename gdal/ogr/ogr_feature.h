@@ -675,7 +675,7 @@ class CPL_DLL OGRFeature
     void                SetField( int i, int nCount, const double * padfValues );
     void                SetField( int i, const char * const * papszValues );
     void                SetField( int i, OGRField * puValue );
-    void                SetField( int i, int nCount, GByte * pabyBinary );
+    void                SetField( int i, int nCount, const void * pabyBinary );
     void                SetField( int i, int nYear, int nMonth, int nDay,
                                   int nHour=0, int nMinute=0, float fSecond=0.f,
                                   int nTZFlag = 0 );
