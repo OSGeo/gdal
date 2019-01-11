@@ -24,7 +24,9 @@ pixel values using gdal pixel functions.</p>
     <li>INTENSITY: Intensity (squared amplitude) of pixels from input bands</li>
     <li>LOGAMPLITUDE: Log10 of amplitude of pixels from input bands</li>
   </ul>
-  </p>
+</p>
+
+<p>Note: for non-complex data types, only LOGAMPLITUDE will be listed.</p>
 
 <p> A typical use is to directly access amplitude, phase or log-amplitude of any complex dataset.</p>
 
@@ -200,20 +202,20 @@ Metadata:
   CEOS_SOFTWARE_ID=ERS2-SLC-6.1
   CEOS_TRUE_HEADING=345.5885834
 Metadata (DERIVED_SUBDATASETS):
-  DERIVED_SUBDATASET_0_NAME=DERIVED_SUBDATASET:AMPLITUDE:cint_sar.tif
-  DERIVED_SUBDATASET_0_DESC=Amplitude of input bands from cint_sar.tif
-  DERIVED_SUBDATASET_1_NAME=DERIVED_SUBDATASET:PHASE:cint_sar.tif
-  DERIVED_SUBDATASET_1_DESC=Phase of input bands from cint_sar.tif
-  DERIVED_SUBDATASET_2_NAME=DERIVED_SUBDATASET:REAL:cint_sar.tif
-  DERIVED_SUBDATASET_2_DESC=Real part of input bands from cint_sar.tif
-  DERIVED_SUBDATASET_3_NAME=DERIVED_SUBDATASET:IMAG:cint_sar.tif
-  DERIVED_SUBDATASET_3_DESC=Imaginary part of input bands from cint_sar.tif
-  DERIVED_SUBDATASET_4_NAME=DERIVED_SUBDATASET:CONJ:cint_sar.tif
-  DERIVED_SUBDATASET_4_DESC=Conjugate of input bands from cint_sar.tif
-  DERIVED_SUBDATASET_5_NAME=DERIVED_SUBDATASET:INTENSITY:cint_sar.tif
-  DERIVED_SUBDATASET_5_DESC=Intensity (squared amplitude) of input bands from cint_sar.tif
-  DERIVED_SUBDATASET_6_NAME=DERIVED_SUBDATASET:LOGAMPLITUDE:cint_sar.tif
-  DERIVED_SUBDATASET_6_DESC=log10 of amplitude of input bands from cint_sar.tif
+  DERIVED_SUBDATASET_1_NAME=DERIVED_SUBDATASET:AMPLITUDE:cint_sar.tif
+  DERIVED_SUBDATASET_1_DESC=Amplitude of input bands from cint_sar.tif
+  DERIVED_SUBDATASET_2_NAME=DERIVED_SUBDATASET:PHASE:cint_sar.tif
+  DERIVED_SUBDATASET_2_DESC=Phase of input bands from cint_sar.tif
+  DERIVED_SUBDATASET_3_NAME=DERIVED_SUBDATASET:REAL:cint_sar.tif
+  DERIVED_SUBDATASET_3_DESC=Real part of input bands from cint_sar.tif
+  DERIVED_SUBDATASET_4_NAME=DERIVED_SUBDATASET:IMAG:cint_sar.tif
+  DERIVED_SUBDATASET_4_DESC=Imaginary part of input bands from cint_sar.tif
+  DERIVED_SUBDATASET_5_NAME=DERIVED_SUBDATASET:CONJ:cint_sar.tif
+  DERIVED_SUBDATASET_5_DESC=Conjugate of input bands from cint_sar.tif
+  DERIVED_SUBDATASET_6_NAME=DERIVED_SUBDATASET:INTENSITY:cint_sar.tif
+  DERIVED_SUBDATASET_6_DESC=Intensity (squared amplitude) of input bands from cint_sar.tif
+  DERIVED_SUBDATASET_7_NAME=DERIVED_SUBDATASET:LOGAMPLITUDE:cint_sar.tif
+  DERIVED_SUBDATASET_7_DESC=log10 of amplitude of input bands from cint_sar.tif
 Image Structure Metadata:
   INTERLEAVE=BAND
 Corner Coordinates:
