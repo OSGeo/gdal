@@ -183,6 +183,12 @@ if dst_filename is not None:
     if ndv is not None:
         dstband.SetNoDataValue(ndv)
 
+    color_interp = srcband.GetColorInterpretation()
+    dstband.SetColorInterpretation(color_interp)
+    if color_interp == gdal.GCI_PaletteIndex:
+        color_table = srcband.GetColorTable()
+        dstband.SetColorTable(color_table)
+
 else:
     dstband = srcband
 
