@@ -36,6 +36,7 @@ clean_main_build_output.bat
 /x64
 /.vs
 /.vscode
+/nbproject
 frmts/jpipkak/kdu_cache.cpp
 frmts/jpipkak/kdu_cache_wrapper.h
 frmts/msg/PublicDecompWT/
