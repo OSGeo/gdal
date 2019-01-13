@@ -3559,7 +3559,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // so as to be able to set the not null constraint (if the driver supports it)
         // Same if the source geometry column has a non empty name that is not
         // overridden
-        else if( anRequestedGeomFields.empty() &&
+        else if( eGType != wkbNone &&
+                 anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  ((!poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
@@ -3582,7 +3583,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // If the source feature first geometry column is not nullable
         // and that GEOMETRY_NULLABLE creation option is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
-        if( anRequestedGeomFields.empty() &&
+        if( eGType != wkbNone &&
+            anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount >= 1 &&
             !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
             m_poDstDS->GetDriver()->GetMetadataItem(
@@ -3597,7 +3599,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         }
 
         // Use source geometry field name as much as possible
-        if( m_poDstDS->GetDriver()->GetMetadataItem(
+        if( eGType != wkbNone &&
+            m_poDstDS->GetDriver()->GetMetadataItem(
                 GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
             strstr(m_poDstDS->GetDriver()->GetMetadataItem(
                 GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NAME") != nullptr &&
