@@ -2251,6 +2251,35 @@ AC_SUBST(MONGODB_ENABLED, $MONGODB_ENABLED)
 AC_SUBST(MONGODB_LIB, $MONGODB_LIB)
 AC_SUBST(MONGODB_INC, $MONGODB_INC)
 
+
+dnl ---------------------------------------------------------------------------
+dnl MongoCXXv3 driver
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(mongocxxv3,[  --with-mongocxxv3[=ARG]        Include MongoCXXv3 support (ARG=yes or no)],,)
+
+MONGOCXXV3_ENABLED=no
+
+if test "$with_mongocxxv3" = "no" ; then
+
+  echo "MONGODBv3 support disabled."
+
+elif test "$with_mongocxxv3" = "yes" -o "$with_mongocxxv3" = "" ; then
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([MONGOCXXV3], [libmongocxx >= 3.4.0], [MONGOCXXV3_ENABLED=yes], [MONGOCXXV3_ENABLED=no])
+
+  if test "$MONGOCXXV3_ENABLED" = "no" -a "$with_mongocxxv3" = "yes" ; then
+    AC_MSG_ERROR([mongocxxv3 requested but no found])
+  fi
+
+fi
+
+AC_SUBST(MONGOCXXV3_ENABLED, $MONGOCXXV3_ENABLED)
+AC_SUBST(MONGOCXXV3_LIBS, $MONGOCXXV3_LIBS)
+AC_SUBST(MONGOCXXV3_CFLAGS, $MONGOCXXV3_CFLAGS)
+
+
 dnl ---------------------------------------------------------------------------
 dnl Select an HDF4 Library to use, or disable driver.
 dnl
@@ -5941,6 +5970,7 @@ LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
+LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 

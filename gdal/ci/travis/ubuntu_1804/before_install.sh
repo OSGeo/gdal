@@ -42,7 +42,7 @@ sudo chroot "$chroot" apt-get install -y software-properties-common
 sudo chroot "$chroot" apt-get update
 # Disable postgresql since it draws ssl-cert that doesn't install cleanly
 # postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev
-sudo chroot "$chroot" apt-get install -y --allow-unauthenticated python-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev ccache bash zip curl libpq-dev postgresql-client postgis
+sudo chroot "$chroot" apt-get install -y --allow-unauthenticated python-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev ccache bash zip curl libpq-dev postgresql-client postgis cmake libssl-dev libboost-dev
 # libpodofo-dev : FIXME incompatibilities at runtime with that version
 sudo chroot "$chroot" apt-get install -y doxygen texlive-latex-base make python-dev g++
 #sudo chroot "$chroot" apt-get install -y --allow-unauthenticated libsfcgal-dev
@@ -62,7 +62,13 @@ chroot "$chroot" sh -c "echo 'CREATE DATABASE test' | mysql -uroot -ppasswd --po
 PGPASSWORD=docker psql -h localhost -U docker -p 25432 -d gis -c "CREATE DATABASE autotest"
 PGPASSWORD=docker psql -h localhost -U docker -p 25432 -d autotest -c "CREATE EXTENSION postgis"
 
+# Mongo
+docker run --name mongo -p 27018:27017 -d mongo:latest
+
 wget https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz
 tar xzf FileGDB_API_1_5_64gcc51.tar.gz
 sudo cp FileGDB_API-64gcc51/lib/* "$chroot/usr/lib"
 sudo chroot "$chroot" ldconfig
+
+wget https://github.com/mongodb/mongo-c-driver/releases/download/1.13.0/mongo-c-driver-1.13.0.tar.gz
+wget https://github.com/mongodb/mongo-cxx-driver/archive/r3.4.0.tar.gz

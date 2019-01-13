@@ -1,24 +1,20 @@
 <html>
 <head>
-<title>MongoDB</title>
+<title>MongoDBv3</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>MongoDB</h1>
+<h1>MongoDBv3</h1>
 
-(GDAL/OGR &gt;= 2.1.0)<p>
+(GDAL/OGR &gt;= 2.5.0)<p>
 
 This driver can connect to the a MongoDB service.<p>
 The driver supports read, creation, update and delete operations of documents/features
 and collections/layers. The MongoDB database must exist before operating on it
 with OGR.<p>
 
-<p>This driver uses the legacy MongoDB C++ driver client library. To connect
-to MongoDB 3.0 or later servers, starting with GDAL 2.5.0, use the new
-<a href="drv_mongodbv3.html">MongoDBv3</a>
-driver which uses the MongoDB C++ v3.4.0 client library. This driver will be
-eventually in favor of MongoDBv3</p>
+<p>This driver requires the MongoDB C++ v3.4.0 client library.</p>
 
 <h2>MongoDB vs OGR concepts</h2>
 
@@ -28,41 +24,28 @@ A MongoDB collection within a database is considered as a OGR layer. A MongoDB d
 
 There are two main possible syntaxes:
 <ul>
-<li>One using <a href="http://docs.mongodb.org/v2.6/reference/connection-string/">MongoDB URI</a>,
-such as mongodb://[usr:pwd@]host1[:port1]...[,hostN[:portN]]][/[db][?options]]</a>
-<li>One using just MongoDB: as the name and open options to specify host, port, user, password, database, etc...</li>
+<li>One using <a href="https://docs.mongodb.com/manual/reference/connection-string/index.html">MongoDB URI</a> prefixed with <i>MONGODBV3:</i>,
+such as MONGODBV3:mongodb://[usr:pwd@]host1[:port1]...[,hostN[:portN]]][/[db][?options]]</a>
+<li>One using just MongoDBv3: as the name and open options to specify host, port, user, password, database, etc...</li>
 </ul>
+
+<p>Note: the MONGODBV3: prefix before a URI starting with <i>mongodb://</i> is required
+to make it recognize by this driver, instead of the legacy <a href="drv_mongodb.html">MongoDB</a> driver.
+If the URI is starting with <i>mongodb+srv://</i>, then it is not needed.</p>
 
 The open options available are :
 <ul>
-<li><b>URI</b>=uri: <a href="http://docs.mongodb.org/v2.6/reference/connection-string/">Connection URI</a></li>
+<li><b>URI</b>=uri: <a href="https://docs.mongodb.com/manual/reference/connection-string/index.html">Connection URI</a></li>
 <li><b>HOST</b>=hostname: Server hostname. Default to localhost.</li>
 <li><b>PORT</b>=port. Server port. Default to 27017.</li>
 <li><b>DBNAME</b>=dbname. Database name. Should be specified when connecting to hosts with user authentication enabled.</li>
-<li><b>AUTH_DBNAME</b>=dbname. Authentication database name, in case it is different from the database to work onto.</li>
 <li><b>USER</b>=name. User name.</li>
 <li><b>PASSWORD</b>=password. User password.</li>
-<li><b>AUTH_JSON</b>=json_string. Authentication elements as JSon object. This is for advanced authentication.
-The JSon fields to put in the dictionary are :
-<ul>
-<li>"mechanism": The string name of the sasl mechanism to use (MONGODB-CR, SCRAM-SHA-1 or DEFAULT).  Mandatory.</li>
-<li>"user": The string name of the user to authenticate. Mandatory.</li>
-<li>"db": The database target of the auth command, which identifies the location
-of the credential information for the user.  May be "$external" if
-credential information is stored outside of the mongo cluster.  Mandatory.</li>
-<li>"pwd": The password data.</li>
-<li>"digestPassword": Boolean, set to true if the "pwd" is undigested (default)</li>
-<li>"pwd": The password data.</li>
-<li>"serviceHostname": The GSSAPI hostname to use.  Defaults to the name of the remote host.</li>
-</ul>
-</li>
 <li><b>SSL_PEM_KEY_FILE</b>=filename. SSL PEM certificate/key filename.</li>
 <li><b>SSL_PEM_KEY_PASSWORD</b>=password. SSL PEM key password.</li>
 <li><b>SSL_CA_FILE</b>=filename. SSL Certification Authority filename.</li>
 <li><b>SSL_CRL_FILE</b>=filename. SSL Certification Revocation List filename.</li>
 <li><b>SSL_ALLOW_INVALID_CERTIFICATES</b>=YES/NO. Whether to allow connections to servers with invalid certificates. Defaults to NO.</li>
-<li><b>SSL_ALLOW_INVALID_HOSTNAMES</b>=YES/NO. Whether to allow connections to servers with non-matching hostnames. Defaults to NO.</li>
-<li><b>FIPS_MODE</b>=YES/NO. Whether to activate FIPS 140-2 mode at startup. Defaults to NO.</li>
 <li><b>BATCH_SIZE</b>=number. Number of features to retrieve per batch. For most queries, the first batch returns 101 documents or just enough documents to exceed 1 megabyte. Subsequent batch size is 4 megabytes.</li>
 <li><b>FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN</b>=number. Number of features to retrieve to establish feature definition. -1 = unlimited. Defaults to 100.</li>
 <li><b>JSON_FIELD</b>=YES/NO. Whether to include a field called "_json" with the full document as JSON. Defaults to NO.</li>
@@ -72,9 +55,6 @@ credential information is stored outside of the mongo cluster.  Mandatory.</li>
 <li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to YES.</li>
 </ul>
 
-Note: the SSL_* and FIPS_MODE options must be set to the same values when opening
-multiple types MongoDB databases. This is a limitation of the Mongo C++ driver.<p>
-
 <h2>Filtering</h2>
 
 The driver will forward any spatial filter set with SetSpatialFilter() to the server when
@@ -83,7 +63,7 @@ a "2d" or "2dsphere" spatial index is available on the geometry field.<p>
 However, in the current state, SQL attribute filters set with SetAttributeFilter()
 are evaluated only on client-side. To enable server-side filtering, the string
 passed to SetAttributeFilter() must be a JSon object in the
-<a href="http://docs.mongodb.org/v2.6/reference/method/db.collection.find/">MongoDB filter syntax</a>.<p>
+<a href="https://docs.mongodb.com/manual/reference/method/db.collection.find/index.html">MongoDB filter syntax</a>.<p>
 
 <h2>Paging</h2>
 
@@ -125,7 +105,7 @@ stable at all.<p>
 <h2>ExecuteSQL() interface</h2>
 
 If specifying "MongoDB" as the dialect of ExecuteSQL(), a JSon string with a
-serialized <a href="http://docs.mongodb.org/v2.6/reference/command/">MongoDB command</a>
+serialized <a href="https://docs.mongodb.com/manual/reference/command/index.html">MongoDB command</a>
 can be passed. The result will be returned as a
 JSon string in a single OGR feature.<p>
 
@@ -158,61 +138,47 @@ The following layer creation options are supported:
 <li>
 Listing the tables of a MongoDB database:
 <pre>
-ogrinfo -ro mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest
+ogrinfo -ro mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test
 </pre>
 <p>
 
 <li>
 Filtering on a MongoDB field:
 <pre>
-ogrinfo -ro mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest -where '{ "field": 5 }'
+ogrinfo -ro mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test -where '{ "field": 5 }'
 </pre>
 <p>
 
 <li>
 Creating and populating a collection from a shapefile:
 <pre>
-ogr2ogr -update mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest shapefile.shp
+ogr2ogr -update mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test shapefile.shp
 </pre>
 <p>
 
 <h2>Build instructions</h2>
 
 GDAL/OGR must be built against the <a href="https://github.com/mongodb/mongo-cxx-driver">MongoDB C++ driver client library</a>,
-in its "legacy" version (tested with 1.0.2), in order to the MongoDB driver to be compiled.<p>
+v3.4.0, in order to the MongoDBv3 driver to be compiled.<p>
 
-You must first follow <a href="https://github.com/mongodb/mongo-cxx-driver/wiki/Download-and-Compile-the-Legacy-Driver">MongoDB C++ driver client build instructions</a>,
-which require to have Boost libraries available.
+You must first follow <a href="http://mongocxx.org/mongocxx-v3/installation/">MongoDB C++ driver client build instructions</a>.
 <p>
 Then:
 <ul>
 <li>
-On Linux/Unix, run ./configure --with-mongocxx=/path/to/installation/root (if the
-driver is already installed in /usr, this is not needed).
-If the Boost libraries are not found in the system paths, the path to the directory
-when the libraries are found can be specified --with-boost-lib-path=/path/to/boost/libs .
+On Linux/Unix, run ./configure --with-mongocxxv3 (potentially by overriding
+PKG_CONFIG_PATH to point to the {INSTALLATION_PREFIX_OF_MONGOCXX}/lib/pkgconfig
 <p>
 </li>
 <li>
 On Windows, uncomment and adapt the following in nmake.opt (or add in nmake.local):
 <pre>
-# Uncomment for MongoDB support
-# This configuration is valid for a libmongoclient built as a DLL with:
-# scons.bat --32 --dynamic-windows --sharedclient --prefix=c:\users\even\dev\mongo-client-install
-#           --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
-
-# Uncomment if plugin is preferred
-#MONGODB_PLUGIN = YES
-
-MONGODB_INC = c:/users/even/dev/mongo-client-install/include
-# Boost library names must be edited to reflect the actual MSVC and Boost versions
-BOOST_INC = c:/users/even/dev/boost_1_55_0_32bit
-BOOST_LIB_PATH= c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0
-MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/mongoclient.lib \
-               $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib \
-               $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib \
-               $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib \
-               $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib
+# Uncomment for MongoDBv3 support
+# Uncomment following line if plugin is preferred
+#MONGODBV3_PLUGIN = YES
+BOOST_INC=E:/boost_1_69_0
+MONGOCXXV3_CFLAGS = -IE:/dev/install-mongocxx-3.4.0/include/mongocxx/v_noabi -IE:/dev/install-mongocxx-3.4.0/include/bsoncxx/v_noabi
+MONGOCXXV3_LIBS = E:/dev/install-mongocxx-3.4.0/lib/mongocxx.lib E:/dev/install-mongocxx-3.4.0/lib/bsoncxx.lib
 </pre>
 </li>
 </ul>
@@ -221,7 +187,7 @@ MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/mongoclient.lib \
 
 <ul>
 <li> <a href="https://github.com/mongodb/mongo-cxx-driver">MongoDB C++ Driver</a><p>
-<li> <a href="http://docs.mongodb.org/v2.6/reference/">MongoDB 2.6 Manual</a><p>
+<li> <a href="https://docs.mongodb.com/manual/">MongoDB Manual</a><p>
 </ul>
 
 </body>
