@@ -2203,6 +2203,14 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
 
     // At this point, the data is in the datafile
 
+    // Do nothing if the tile is empty and the file record is also empty
+    if (0 == size && nullptr == buff) {
+        VSIFSeekL(l_ifp, infooffset, SEEK_SET);
+        VSIFReadL(&tinfo, 1, sizeof(ILIdx), l_ifp);
+        if (0 == tinfo.offset && 0 == tinfo.size)
+            return ret;
+    }
+
     // Special case
     // Any non-zero will do, use 1 to only consume one bit
     if (nullptr != buff && 0 == size)
