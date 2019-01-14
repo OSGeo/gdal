@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,35 +30,33 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read a truncated and modified version of http://download.osgeo.org/gdal/data/pds/mc02.img
 
 
-def pds_1():
+def test_pds_1():
 
     tst = gdaltest.GDALTest('PDS', 'mc02_truncated.img', 1, 47151)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL "MARS"",GEOGCS["GCS_"MARS"",DATUM["D_"MARS"",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0]]"""
     expected_gt = (-10668384.903788566589355, 926.115274429321289, 0, 3852176.483988761901855, 0, -926.115274429321289)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj=expected_prj,
+    tst.testOpen(check_prj=expected_prj,
                        check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    return ret
 
 
 ###############################################################################
 # Read a truncated and modified version of ftp://pdsimage2.wr.usgs.gov/cdroms/magellan/mg_1103/fl78n018/fl73n003.img
 
-def pds_2():
+def test_pds_2():
 
     tst = gdaltest.GDALTest('PDS', 'fl73n003_truncated.img', 1, 34962)
     expected_prj = """PROJCS["SINUSOIDAL VENUS",
@@ -74,34 +72,26 @@ def pds_2():
     expected_gt = (587861.55900404998, 75.000002980232239, 0.0, -7815243.4746123618, 0.0, -75.000002980232239)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj=expected_prj,
+    tst.testOpen(check_prj=expected_prj,
                        check_gt=expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    if ret != 'success':
-        return 'fail'
 
     ds = gdal.Open('data/fl73n003_truncated.img')
-    if ds.GetRasterBand(1).GetNoDataValue() != 7:
-        return 'fail'
-    if ds.GetRasterBand(1).GetScale() != 0.2:
-        return 'fail'
-    if ds.GetRasterBand(1).GetOffset() != -20.2:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 7
+    assert ds.GetRasterBand(1).GetScale() == 0.2
+    assert ds.GetRasterBand(1).GetOffset() == -20.2
 
     # Per #3939 we would also like to test a dataset with MISSING_CONSTANT.
     ds = gdal.Open('data/fl73n003_alt_truncated.img')
-    if ds.GetRasterBand(1).GetNoDataValue() != 7:
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 7
 
 ###############################################################################
 # Read a truncated and modified version of ftp://pdsimage2.wr.usgs.gov/cdroms/messenger/MSGRMDS_1001/DATA/2004_232/EN0001426030M.IMG
 # 16bits image
 
 
-def pds_3():
+def test_pds_3():
 
     # Shut down warning about missing projection
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -109,37 +99,32 @@ def pds_3():
     tst = gdaltest.GDALTest('PDS', 'EN0001426030M_truncated.IMG', 1, 1367)
 
     gt_expected = (0, 1, 0, 0, 0, 1)
-    if tst.testOpen(check_gt=gt_expected) != 'success':
-        return 'fail'
+    tst.testOpen(check_gt=gt_expected)
 
     ds = gdal.Open('data/EN0001426030M_truncated.IMG')
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
 
     gdal.PopErrorHandler()
-
-    return 'success'
 
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3177.
 
 
-def pds_4():
+def test_pds_4():
 
     tst = gdaltest.GDALTest('PDS', 'pds_3177.lbl', 1, 3418)
     gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_gt=gt_expected)
+    tst.testOpen(check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    return ret
 
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3355.
 
 
-def pds_5():
+def test_pds_5():
 
     tst = gdaltest.GDALTest('PDS', 'pds_3355.lbl', 1, 2748)
     return tst.testOpen()
@@ -149,7 +134,7 @@ def pds_5():
 # driver mostly intended to support jpeg2000 files with PDS labels.
 
 
-def pds_6():
+def test_pds_6():
 
     if os.path.exists('data/byte.tif.aux.xml'):
         os.unlink('data/byte.tif.aux.xml')
@@ -160,34 +145,27 @@ def pds_6():
 
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_gt=gt_expected)
+    tst.testOpen(check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    if ret != 'success':
-        return 'fail'
 
     ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
 
-    if len(ds.GetFileList()) != 2:
-        gdaltest.post_reason('failed to get expected file list.')
-        print(ds.GetFileList())
-        return 'fail'
+    assert len(ds.GetFileList()) == 2, 'failed to get expected file list.'
 
     expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",180],PARAMETER["standard_parallel_1",15],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
     wkt = ds.GetProjection()
     if expected_wkt != wkt:
         print('Got: ', wkt)
         print('Exp: ', expected_wkt)
-        gdaltest.post_reason('did not get expected coordinate system.')
-        return 'fail'
+        pytest.fail('did not get expected coordinate system.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read an uncompressed image via the PDS label. (#3943)
 
 
-def pds_7():
+def test_pds_7():
 
     tst = gdaltest.GDALTest('PDS', 'LDEM_4.LBL', 1, 50938,
                             0, 0, 1440, 2)
@@ -207,21 +185,17 @@ def pds_7():
 
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen(check_prj=prj_expected,
+    tst.testOpen(check_prj=prj_expected,
                        check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
-    if ret != 'success':
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Test applying adjustment offsets via configuration variables for the
 # geotransform (#3940)
 
 
-def pds_8():
+def test_pds_8():
 
     # values for MAGELLAN FMAP data.
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '1.5')
@@ -248,33 +222,25 @@ def pds_8():
 # an hexadecimal floating point value (#3939)
 
 
-def pds_9():
+def test_pds_9():
 
     # Derived from http://pdsimage.wr.usgs.gov/data/co-v_e_j_s-radar-3-sbdr-v1.0/CORADR_0035/DATA/BIDR/BIEQI49N071_D035_T00AS01_V02.LBL
     tst = gdaltest.GDALTest('PDS', 'PDS_WITH_ZIP_IMG.LBL', 1, 0)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('data/PDS_WITH_ZIP_IMG.LBL')
     got_nd = ds.GetRasterBand(1).GetNoDataValue()
     expected_nd = -3.40282265508890445e+38
-    if abs((got_nd - expected_nd) / expected_nd) > 1e-5:
-        gdaltest.post_reason('fail')
-        print(got_nd)
-        return 'fail'
+    assert abs((got_nd - expected_nd) / expected_nd) <= 1e-5
 
-    if not ds.GetProjectionRef():
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetProjectionRef()
 
 ###############################################################################
 # Test PDS label with nested arrays (#6970)
 
 
-def pds_10():
+def test_pds_10():
 
     gdal.FileFromMemBuffer('/vsimem/pds_10',
                            """PDS_VERSION_ID                       = "PDS3"
@@ -299,15 +265,10 @@ END
 
     ds = gdal.Open('/vsimem/pds_10')
 
-    if ds.GetMetadataItem('NOTE') != '((1,2,3))':
-        gdaltest.post_reason('fail')
-        print(ds.GetMetadataItem('NOTE'))
-        return 'fail'
+    assert ds.GetMetadataItem('NOTE') == '((1,2,3))'
 
-    if ds.GetMetadataItem('PRODUCT_ID') != '({1,2},{3,4})':
-        gdaltest.post_reason('fail')
-        print(ds.GetMetadataItem('NOTE'))
-        return 'fail'
+    assert ds.GetMetadataItem('PRODUCT_ID') == '({1,2},{3,4})', \
+        ds.GetMetadataItem('NOTE')
 
     gdal.FileFromMemBuffer('/vsimem/pds_10',
                            """PDS_VERSION_ID                       = "PDS3"
@@ -331,25 +292,27 @@ END
 
     gdal.Unlink('/vsimem/pds_10')
 
-    return 'success'
+###############################################################################
+# Read a hacked example of reading an image where the line offset is not
+# a multiple of the record size
+# https://github.com/OSGeo/gdal/issues/955
 
 
-gdaltest_list = [
-    pds_1,
-    pds_2,
-    pds_3,
-    pds_4,
-    pds_5,
-    pds_6,
-    pds_7,
-    pds_8,
-    pds_9,
-    pds_10]
+def test_pds_line_offset_not_multiple_of_record():
 
-if __name__ == '__main__':
+    tst = gdaltest.GDALTest('PDS', 'pds/map_000_038_truncated.lbl', 1, 14019)
+    return tst.testOpen()
 
-    gdaltest.setup_run('pds')
 
-    gdaltest.run_tests(gdaltest_list)
+###############################################################################
+# Read http://pds-geosciences.wustl.edu/mro/mro-m-crism-3-rdr-targeted-v1/mrocr_2104/trdr/2010/2010_095/hsp00017ba0/hsp00017ba0_01_ra218s_trr3.lbl
+# Test ability of using OBJECT = FILE section to support CRISM
+# as well as BAND_STORAGE_TYPE = LINE_INTERLEAVED
 
-    gdaltest.summarize()
+def test_pds_band_storage_type_line_interleaved():
+
+    tst = gdaltest.GDALTest('PDS', 'pds/hsp00017ba0_01_ra218s_trr3_truncated.lbl', 1, 364)
+    return tst.testOpen()
+
+
+

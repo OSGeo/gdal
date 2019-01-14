@@ -73,7 +73,8 @@
 
 constexpr int LIMIT_IDS_PER_REQUEST = 200;
 
-constexpr int MAX_NODES_PER_WAY = 2000;
+// 2000 is normally the maximum allowed: https://wiki.openstreetmap.org/wiki/Elements
+constexpr int MAX_NODES_PER_WAY = 10000;
 
 constexpr int IDX_LYR_POINTS = 0;
 constexpr int IDX_LYR_LINES = 1;
@@ -87,7 +88,7 @@ static int DBL_TO_INT( double x )
 }
 static double INT_TO_DBL( int x ) { return x / 1.0e7; }
 
-constexpr int MAX_COUNT_FOR_TAGS_IN_WAY = 255;  // Must fit on 1 byte.
+constexpr unsigned int MAX_COUNT_FOR_TAGS_IN_WAY = 255;  // Must fit on 1 byte.
 constexpr int MAX_SIZE_FOR_TAGS_IN_WAY = 1024;
 
 // 5 bytes for encoding a int : really the worst case scenario!
@@ -1456,8 +1457,8 @@ int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags,
     pabyPtr++;
     pabyPtr++; // skip tagCount
 
-    int nTagCount = 0;
-    CPLAssert(nTags < static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
+    unsigned int nTagCount = 0;
+    CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
     for( unsigned int iTag = 0; iTag < nTags; iTag++ )
     {
         if( static_cast<int>(pabyPtr - pabyCompressedWay) + 2 >=
@@ -1633,7 +1634,14 @@ void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
 
     sqlite3_bind_int64( hInsertWayStmt, 1, nWayID );
 
-    int nBufferSize = CompressWay (bIsArea, nTags, pasTags, nPairs, pasLonLatPairs, psInfo, pabyWayBuffer);
+    const unsigned nTagsClamped = std::min(nTags, MAX_COUNT_FOR_TAGS_IN_WAY);
+    if( nTagsClamped < nTags )
+    {
+        CPLDebug("OSM", "Too many tags for way " CPL_FRMT_GIB ": %u. "
+                 "Clamping to %u",
+                 nWayID, nTags, nTagsClamped);
+    }
+    int nBufferSize = CompressWay (bIsArea, nTagsClamped, pasTags, nPairs, pasLonLatPairs, psInfo, pabyWayBuffer);
     CPLAssert(nBufferSize <= WAY_BUFFER_SIZE);
     sqlite3_bind_blob( hInsertWayStmt, 2, pabyWayBuffer,
                        nBufferSize, SQLITE_STATIC );
@@ -2024,7 +2032,7 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
 
     if( bIsArea && papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
     {
-        int nTagCount = 0;
+        unsigned int nTagCount = 0;
 
         if( bNeedsToSaveWayInfo )
         {
@@ -2612,8 +2620,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         if( !bInterestingTagFound )
         {
             poGeom = BuildMultiPolygon(psRelation, &nExtraTags, pasExtraTags);
-            CPLAssert(nExtraTags <=
-                      static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
+            CPLAssert(nExtraTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
             pasExtraTags[nExtraTags].pszK = "type";
             pasExtraTags[nExtraTags].pszV = pszTypeV;
             nExtraTags ++;
@@ -2711,8 +2718,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             const int nPoints = UncompressWay(
                 nBlobSize, reinterpret_cast<GByte *>(const_cast<void *>(blob)),
                 nullptr, pasCoords, &nTags, pasTags, &sInfo );
-            CPLAssert(
-                nTags <= static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
+            CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
 
             OGRMultiPolygon* poMulti = new OGRMultiPolygon();
             OGRPolygon* poPoly = new OGRPolygon();

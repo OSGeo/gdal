@@ -209,7 +209,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  * @param padfPrjParams Array of 15 coordinate system parameters. These
  * parameters differs for different projections.
  *
- *        <h4>Projection Transformation Package Projection Parameters</h4>
+ * <h4>Projection Transformation Package Projection Parameters</h4>
  * <pre>
  * ----------------------------------------------------------------------------
  *                         |                    Array Element
@@ -387,7 +387,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  * If a datum code is zero or greater, the semimajor and semiminor axis are
  * defined by the datum code as found in the following table:
  *
- *      <h4>Supported Datums</h4>
+ * <h4>Supported Datums</h4>
  * <pre>
  *       0: Clarke 1866 (default)
  *       1: Clarke 1880
@@ -401,7 +401,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  *       9: Airy
  *      10: Modified Everest
  *      11: Modified Airy
- *      12: Walbeck
+ *      12: WGS 84
  *      13: Southeast Asia
  *      14: Australian National
  *      15: Krassovsky

@@ -6,8 +6,7 @@ PLUGIN_DL =	gdal_PDF.so
 
 ifeq ($(MACOSX_FRAMEWORK),yes)
 PLUGIN_DL = gdal_PDF.dylib
-LDFLAGS += -Wl,-undefined -Wl,dynamic_lookup -stdlib=libstdc++
-CPPFLAGS += -stdlib=libstdc++
+LDFLAGS += -Wl,-undefined -Wl,dynamic_lookup
 LD_SHARED = $(LD) -bundle
 endif
 
@@ -33,6 +32,10 @@ endif
 
 ifeq ($(POPPLER_0_58_OR_LATER),yes)
 CPPFLAGS +=  -DPOPPLER_0_58_OR_LATER
+endif
+
+ifeq ($(POPPLER_0_69_OR_LATER),yes)
+CPPFLAGS +=  -DPOPPLER_0_69_OR_LATER
 endif
 
 ifeq ($(HAVE_PODOFO),yes)

@@ -31,6 +31,8 @@
 #ifndef HDF5DATASET_H_INCLUDED_
 #define HDF5DATASET_H_INCLUDED_
 
+#include "hdf5_api.h"
+
 #include "cpl_list.h"
 #include "gdal_pam.h"
 
@@ -54,6 +56,9 @@ typedef struct HDF5GroupObjects
 } HDF5GroupObjects;
 
 herr_t HDF5CreateGroupObjs(hid_t, const char *, void *);
+
+hid_t HDF5GetFileDriver();
+void HDF5UnloadFileDriver();
 
 /************************************************************************/
 /* ==================================================================== */

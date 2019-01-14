@@ -628,7 +628,11 @@ typedef enum
                                                         OFSTInt16 = 2,
     /** Single precision (32 bit) floating point. Only valid for OFTReal and OFTRealList. */
                                                         OFSTFloat32 = 3,
-                                                        OFSTMaxSubType = 3
+    /** JSON content. Only valid for OFTString.
+     * @since GDAL 2.4
+     */
+                                                        OFSTJSON = 4,
+                                                        OFSTMaxSubType = 4
 } OGRFieldSubType;
 
 /**
@@ -869,7 +873,7 @@ typedef enum ogr_style_tool_param_symbol_id
     OGRSTSymbolPerp     = 7, /**< Perpendicular */
     OGRSTSymbolOffset   = 8, /**< Offset */
     OGRSTSymbolPriority = 9, /**< Priority */
-    OGRSTSymbolFontName = 10, /**< OBSOLETE; do not use */
+    OGRSTSymbolFontName = 10, /**< Font name */
     OGRSTSymbolOColor   = 11, /**< Outline color */
 #ifndef DOXYGEN_SKIP
     OGRSTSymbolLast     = 12

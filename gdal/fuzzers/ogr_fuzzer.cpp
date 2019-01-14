@@ -72,6 +72,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
     // To avoid timeouts. See https://github.com/OSGeo/gdal/issues/502
     CPLSetConfigOption("DXF_MAX_BSPLINE_CONTROL_POINTS", "100");
+    CPLSetConfigOption("NAS_INDICATOR","NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite");
     return 0;
 }
 

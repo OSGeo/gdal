@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -25,48 +25,52 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
-
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 
 init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, None),
-    ('uint16.tif', 1, 4672, None),
-    ('int32.tif', 1, 4672, None),
-    ('uint32.tif', 1, 4672, None),
-    ('float32.tif', 1, 4672, None),
-    ('float64.tif', 1, 4672, None),
-    ('cint16.tif', 1, 5028, None),
-    ('cint32.tif', 1, 5028, None),
-    ('cfloat32.tif', 1, 5028, None),
-    ('cfloat64.tif', 1, 5028, None)]
+    ('byte.tif', 4672),
+    ('int16.tif', 4672),
+    ('uint16.tif', 4672),
+    ('int32.tif', 4672),
+    ('uint32.tif', 4672),
+    ('float32.tif', 4672),
+    ('float64.tif', 4672),
+    ('cint16.tif', 5028),
+    ('cint32.tif', 5028),
+    ('cfloat32.tif', 5028),
+    ('cfloat64.tif', 5028)]
 
-gdaltest_list = []
 
 # Some tests we don't need to do for each type.
-item = init_list[0]
-ut = gdaltest.GDALTest('GTiff', item[0], item[1], item[2])
-gdaltest_list.append((ut.testSetGeoTransform, item[0]))
-gdaltest_list.append((ut.testSetProjection, item[0]))
-gdaltest_list.append((ut.testSetMetadata, item[0]))
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testSetGeoTransform',
+        'testSetProjection',
+        'testSetMetadata',
+    ]
+)
+@pytest.mark.require_driver('GTiff')
+def test_gtiff_set(testfunction):
+    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672)
+    getattr(ut, testfunction)()
+
 
 # Others we do for each pixel type.
-for item in init_list:
-    ut = gdaltest.GDALTest('GTiff', item[0], item[1], item[2])
-    if ut is None:
-        print('GTiff tests skipped')
-    gdaltest_list.append((ut.testCreateCopy, item[0]))
-    gdaltest_list.append((ut.testCreate, item[0]))
-    gdaltest_list.append((ut.testSetNoDataValue, item[0]))
-
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gtiff_write')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testCreateCopy',
+        'testCreate',
+        'testSetNoDataValue',
+    ]
+)
+@pytest.mark.require_driver('GTiff')
+def test_gtiff_create(filename, checksum, testfunction):
+    ut = gdaltest.GDALTest('GTiff', filename, 1, checksum)
+    getattr(ut, testfunction)()

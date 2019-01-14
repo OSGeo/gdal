@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,14 +29,13 @@
 ###############################################################################
 
 import os
-import sys
 import struct
 from copy import copy
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 # given fmt and nodata, encodes a value as bytes
 
@@ -57,10 +56,10 @@ def encode(fmt, nodata, values):
 #
 
 
-def arg_init():
+def test_arg_init():
     gdaltest.argDriver = gdal.GetDriverByName('ARG')
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.argJsontpl = """{
     "layer": "%(fmt)s",
@@ -120,14 +119,13 @@ def arg_init():
         gdaltest.argDriver = None
 
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
+    
 
-
-def arg_unsupported():
+def test_arg_unsupported():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # int8 is unsupported
     for d in gdaltest.argTests:
@@ -135,19 +133,16 @@ def arg_unsupported():
             if name == 'int64' or name == 'uint64':
                 with gdaltest.error_handler('CPLQuietErrorHandler'):
                     ds = gdal.Open('data/arg-' + name + '.arg')
-                if ds is not None:
-                    return 'fail'
+                assert ds is None
             else:
                 ds = gdal.Open('data/arg-' + name + '.arg')
-                if ds is None:
-                    return 'fail'
+                assert ds is not None
 
-    return 'success'
+    
 
-
-def arg_getrastercount():
+def test_arg_getrastercount():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:
@@ -156,15 +151,13 @@ def arg_getrastercount():
             if ds is None:
                 continue
 
-            if ds.RasterCount != 1:
-                return 'fail'
+            assert ds.RasterCount == 1
 
-    return 'success'
+    
 
-
-def arg_getgeotransform():
+def test_arg_getgeotransform():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:
@@ -175,24 +168,21 @@ def arg_getgeotransform():
 
             gt = ds.GetGeoTransform()
 
-            if gt[0] != 0 or \
-                    gt[1] != 1 or \
-                    gt[2] != 0 or \
-                    gt[3] != 2 or \
-                    gt[4] != 0 or \
-                    gt[5] != -1:
-                return 'fail'
+            assert (gt[0] == 0 and \
+                    gt[1] == 1 and \
+                    gt[2] == 0 and \
+                    gt[3] == 2 and \
+                    gt[4] == 0 and \
+                    gt[5] == -1)
 
-    return 'success'
+    
 
-
-def arg_blocksize():
+def test_arg_blocksize():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     tifDriver = gdal.GetDriverByName('GTiff')
-    if tifDriver is None:
-        return 'fail'
+    assert tifDriver is not None
 
     ds = gdal.Open('data/utm.tif')
     xsize = ds.RasterXSize
@@ -213,20 +203,17 @@ def arg_blocksize():
     os.remove('data/utm-uneven-blocks.tif')
     gdal.GetDriverByName('ARG').Delete('data/utm.arg')
 
-    if stat.st_size != (xsize * ysize):
-        return 'fail'
-
-    return 'success'
+    assert stat.st_size == (xsize * ysize)
 
 
-def arg_layername():
+def test_arg_layername():
     """
     The layer name of the ARG in the .json file need not be the name of
     the .arg file. The original driver enforced this constraint, but that
     behavior was wrong. See ticket #4609
     """
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/arg-int16.arg')
 
@@ -236,8 +223,7 @@ def arg_layername():
     ds.SetMetadataItem('LAYER', lyr)
 
     # did the layer name stick?
-    if ds.GetMetadata()['LAYER'] != lyr:
-        return 'fail'
+    assert ds.GetMetadata()['LAYER'] == lyr
 
     # copy the dataset to a new ARG
     ds2 = gdaltest.argDriver.CreateCopy('data/arg-int16-2.arg', ds, False)
@@ -254,31 +240,25 @@ def arg_layername():
     gdal.GetDriverByName('ARG').Delete('data/arg-int16-2.arg')
 
     # does the new dataset's layer match the layer set before copying
-    if lyr2 != lyr:
-        return 'fail'
+    assert lyr2 == lyr
 
     os.unlink('data/arg-int16.arg.aux.xml')
 
-    return 'success'
 
-
-def arg_nodata():
+def test_arg_nodata():
     """
     Check that the NoData value for int8 images is 128, as per the
     ARG spec. See ticket #4610
     """
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/arg-int8.arg')
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 128:
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 128
 
 
-def arg_byteorder():
+def test_arg_byteorder():
     """
     Check that a roundtrip from ARG -> GTiff -> ARG has the same
     binary values. See ticket #4779
@@ -287,11 +267,10 @@ def arg_byteorder():
     when the binary data is the same. Compare them byte-by-byte.
     """
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     tifDriver = gdal.GetDriverByName('GTiff')
-    if tifDriver is None:
-        return 'fail'
+    assert tifDriver is not None
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:
@@ -303,12 +282,10 @@ def arg_byteorder():
                 continue
 
             dest = tifDriver.CreateCopy(basename + '.tif', orig, False)
-            if dest is None:
-                return 'fail'
+            assert dest is not None
 
             mirror = gdaltest.argDriver.CreateCopy(basename + '2.arg', dest, False)
-            if mirror is None:
-                return 'fail'
+            assert mirror is not None
 
             orig = None
             dest = None
@@ -326,39 +303,19 @@ def arg_byteorder():
             gdal.GetDriverByName('GTiff').Delete(basename + '.tif')
             gdal.GetDriverByName('ARG').Delete(basename + '2.arg')
 
-            if data1 != data2:
-                return 'fail'
+            assert data1 == data2
 
-    return 'success'
+    
 
-
-def arg_destroy():
+def test_arg_destroy():
     if gdaltest.argDriver is None:
-        return 'skip'
+        pytest.skip()
 
     for d in gdaltest.argTests:
         for (name, _, _) in d['formats']:
             os.remove('data/arg-' + name + '.arg')
             os.remove('data/arg-' + name + '.json')
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    arg_init,
-    arg_unsupported,
-    arg_getrastercount,
-    arg_getgeotransform,
-    arg_blocksize,
-    arg_layername,
-    arg_nodata,
-    arg_byteorder,
-    arg_destroy]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ARG')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

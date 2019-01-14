@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,10 +31,10 @@
 
 import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -42,20 +42,13 @@ import test_cli_utilities
 
 def test_gdalsrsinfo_1():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalsrsinfo_path() + ' ../gcore/data/byte.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
-    if ret.find('PROJ.4 :') == -1:
-        return 'fail'
-    if ret.find('OGC WKT :') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('PROJ.4 :') != -1
+    assert ret.find('OGC WKT :') != -1
 
 ###############################################################################
 # Test -o proj4 option
@@ -63,16 +56,12 @@ def test_gdalsrsinfo_1():
 
 def test_gdalsrsinfo_2():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../gcore/data/byte.tif')
 
-    if ret.strip() != "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs":
-        print(ret.strip())
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs"
 
 ###############################################################################
 # Test -o wkt option
@@ -80,7 +69,7 @@ def test_gdalsrsinfo_2():
 
 def test_gdalsrsinfo_3():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt ../gcore/data/byte.tif')
@@ -88,11 +77,7 @@ def test_gdalsrsinfo_3():
     first_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]'
     second_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]'
     third_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]'
-    if ret.strip() != first_val and ret.strip() != second_val and ret.strip() != third_val:
-        print(ret.strip())
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == first_val or ret.strip() == second_val or ret.strip() == third_val
 
 ###############################################################################
 # Test -o wkt_esri option
@@ -100,15 +85,12 @@ def test_gdalsrsinfo_3():
 
 def test_gdalsrsinfo_4():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_esri ../gcore/data/byte.tif')
 
-    if ret.strip() != 'PROJCS["NAD_1927_UTM_Zone_11N",GEOGCS["GCS_North_American_1927",DATUM["D_North_American_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]':
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == 'PROJCS["NAD_1927_UTM_Zone_11N",GEOGCS["GCS_North_American_1927",DATUM["D_North_American_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
 ###############################################################################
 # Test -o wkt_old option
@@ -116,18 +98,14 @@ def test_gdalsrsinfo_4():
 
 def test_gdalsrsinfo_5():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_noct ../gcore/data/byte.tif')
 
     first_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1]]'
     second_val = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1]]'
-    if ret.strip() != first_val and ret.strip() != second_val:
-        print(ret.strip())
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == first_val or ret.strip() == second_val
 
 ###############################################################################
 # Test -o wkt_simple option
@@ -135,7 +113,7 @@ def test_gdalsrsinfo_5():
 
 def test_gdalsrsinfo_6():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt_simple ../gcore/data/byte.tif')
@@ -168,11 +146,7 @@ def test_gdalsrsinfo_6():
     PARAMETER["false_northing",0],
     UNIT["metre",1]]"""
 
-    if ret.strip() != first_val and ret.strip() != second_val:
-        print(ret.strip())
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == first_val or ret.strip() == second_val
 
 ###############################################################################
 # Test -o mapinfo option
@@ -180,15 +154,12 @@ def test_gdalsrsinfo_6():
 
 def test_gdalsrsinfo_7():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o mapinfo ../gcore/data/byte.tif')
 
-    if ret.strip() != """'Earth Projection 8, 62, "m", -117, 0, 0.9996, 500000, 0'""":
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == """'Earth Projection 8, 62, "m", -117, 0, 0.9996, 500000, 0'"""
 
 
 ###############################################################################
@@ -196,13 +167,13 @@ def test_gdalsrsinfo_7():
 
 def test_gdalsrsinfo_8():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt -p EPSG:4326')
     ret = ret.replace('\r\n', '\n')
 
-    if ret.strip() != """GEOGCS["WGS 84",
+    assert ret.strip() == """GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
@@ -211,10 +182,7 @@ def test_gdalsrsinfo_8():
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
-    AUTHORITY["EPSG","4326"]]""":
-        return 'fail'
-
-    return 'success'
+    AUTHORITY["EPSG","4326"]]"""
 
 
 ###############################################################################
@@ -222,15 +190,12 @@ def test_gdalsrsinfo_8():
 
 def test_gdalsrsinfo_9():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdalsrsinfo_path() + ' nonexistent_file')
 
-    if err.strip() != "ERROR 1: ERROR - failed to load SRS definition from nonexistent_file":
-        return 'fail'
-
-    return 'success'
+    assert err.strip() == "ERROR 1: ERROR - failed to load SRS definition from nonexistent_file"
 
 
 ###############################################################################
@@ -238,7 +203,7 @@ def test_gdalsrsinfo_9():
 
 def test_gdalsrsinfo_10():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
     if sys.platform == 'win32':
@@ -250,11 +215,7 @@ def test_gdalsrsinfo_10():
         ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                    " -V -o proj4 '" + wkt + "'")
 
-    if ret.find('Validate Succeeds') == -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Validate Succeeds') != -1
 
 ###############################################################################
 # Test -V option - invalid
@@ -262,7 +223,7 @@ def test_gdalsrsinfo_10():
 
 def test_gdalsrsinfo_11():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],BADAUTHORITY["EPSG","4326"]]'
     if sys.platform == 'win32':
@@ -274,10 +235,7 @@ def test_gdalsrsinfo_11():
         ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                    " -V -o proj4 '" + wkt + "'")
 
-    if ret.find('Validate Fails') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Validate Fails') != -1
 
 ###############################################################################
 # Test EPSG:epsg format
@@ -285,15 +243,12 @@ def test_gdalsrsinfo_11():
 
 def test_gdalsrsinfo_12():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt EPSG:4326')
 
-    if ret.strip() != """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]""":
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
 
 
 ###############################################################################
@@ -301,15 +256,12 @@ def test_gdalsrsinfo_12():
 
 def test_gdalsrsinfo_13():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o wkt "+proj=longlat +datum=WGS84 +no_defs"')
 
-    if ret.strip() != """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]""":
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""
 
 ###############################################################################
 # Test VSILFILE format
@@ -317,15 +269,12 @@ def test_gdalsrsinfo_13():
 
 def test_gdalsrsinfo_14():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 /vsizip/../gcore/data/byte.tif.zip')
 
-    if ret.strip() != "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs":
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs"
 
 ###############################################################################
 # Test .shp format
@@ -333,15 +282,12 @@ def test_gdalsrsinfo_14():
 
 def test_gdalsrsinfo_14bis():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../ogr/data/Stacks.shp')
 
-    if ret.strip() != "+proj=lcc +lat_1=30.28333333333333 +lat_2=28.38333333333333 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000 +y_0=3999999.9998984 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs":
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == "+proj=lcc +lat_1=30.28333333333333 +lat_2=28.38333333333333 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000 +y_0=3999999.9998984 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs"
 
 ###############################################################################
 # Test .prj format
@@ -349,15 +295,12 @@ def test_gdalsrsinfo_14bis():
 
 def test_gdalsrsinfo_15():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -o proj4 ../osr/data/lcc_esri.prj')
 
-    if ret.strip() != "+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs":
-        return 'fail'
-
-    return 'success'
+    assert ret.strip() == "+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs"
 
 ###############################################################################
 # Test DRIVER:file syntax (bug #4493) -  similar test should be done with OGR
@@ -365,7 +308,7 @@ def test_gdalsrsinfo_15():
 
 def test_gdalsrsinfo_16():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     cmd = test_cli_utilities.get_gdalsrsinfo_path() +\
         ' GTIFF_RAW:../gcore/data/byte.tif'
@@ -373,13 +316,9 @@ def test_gdalsrsinfo_16():
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
-        gdaltest.post_reason('gdalsrsinfo execution failed')
-        return 'fail'
+        pytest.fail('gdalsrsinfo execution failed')
 
-    if err != '':
-        return 'fail'
-
-    return 'success'
+    assert err == ''
 
 ###############################################################################
 # Test -e
@@ -387,67 +326,28 @@ def test_gdalsrsinfo_16():
 
 def test_gdalsrsinfo_17():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Zero match
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -e "LOCAL_CS[foo]"')
 
-    if ret.find('EPSG:-1') < 0:
-        gdaltest.post_reason('fail')
-        print(ret)
-        return 'fail'
+    assert 'EPSG:-1' in ret
 
     # One match
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                ' -e ../osr/data/lcc_esri.prj')
 
-    if ret.find('EPSG:32119') < 0:
-        gdaltest.post_reason('fail')
-        print(ret)
-        return 'fail'
+    assert 'EPSG:32119' in ret
 
     # Two matches
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
                                """ -e "GEOGCS[\"myLKS94\",DATUM[\"Lithuania_1994_ETRS89\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" """)
-    if ret.find('EPSG:4126') < 0 or ret.find('EPSG:4669') < 0:
-        gdaltest.post_reason('fail')
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert 'EPSG:4126' in ret and 'EPSG:4669' in ret
 
 ###############################################################################
 #
 
 
-gdaltest_list = [
-    test_gdalsrsinfo_1,
-    test_gdalsrsinfo_2,
-    test_gdalsrsinfo_3,
-    test_gdalsrsinfo_4,
-    test_gdalsrsinfo_5,
-    test_gdalsrsinfo_6,
-    test_gdalsrsinfo_7,
-    test_gdalsrsinfo_8,
-    test_gdalsrsinfo_9,
-    test_gdalsrsinfo_10,
-    test_gdalsrsinfo_11,
-    test_gdalsrsinfo_12,
-    test_gdalsrsinfo_13,
-    test_gdalsrsinfo_14,
-    test_gdalsrsinfo_14bis,
-    test_gdalsrsinfo_15,
-    test_gdalsrsinfo_16,
-    test_gdalsrsinfo_17,
-    None
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdalsrsinfo')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

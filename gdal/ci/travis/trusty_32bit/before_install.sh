@@ -8,8 +8,9 @@ sudo apt-get update
 sudo apt-get install -y debootstrap libcap2-bin
 export LC_ALL=en_US.utf8
 sudo i386 debootstrap --arch=i386 trusty "$chroot"
-sudo mount --rbind /dev/pts "$chroot/dev/pts"
-sudo mount --rbind /dev/shm "$chroot/dev/shm"
+sudo mount --rbind /dev "$chroot/dev"
+sudo mkdir -p "$chroot/run/shm"
+sudo mount --rbind /run/shm "$chroot/run/shm"
 sudo mount --rbind /proc "$chroot/proc"
 sudo mount --rbind /home "$chroot/home"
 sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu trusty universe" >> buildroot.i386/etc/apt/sources.list'
@@ -30,3 +31,4 @@ sudo i386 chroot "$chroot" apt-get install -y --force-yes python-numpy libpng12-
 sudo i386 chroot "$chroot" apt-get install -y make
 sudo i386 chroot "$chroot" apt-get install -y python-dev
 sudo i386 chroot "$chroot" apt-get install -y g++
+sudo i386 chroot "$chroot" apt-get install -y --force-yes curl

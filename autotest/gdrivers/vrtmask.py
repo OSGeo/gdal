@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,18 +30,17 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test with a global dataset mask band
 
 
-def vrtmask_1():
+def test_vrtmask_1():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -68,26 +67,19 @@ def vrtmask_1():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ds.GetRasterBand(1).GetMaskFlags())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+        'did not get expected mask flags'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4672, 'did not get expected mask band checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
 # Test with a per band mask band
 
-def vrtmask_2():
+def test_vrtmask_2():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
@@ -114,31 +106,23 @@ def vrtmask_2():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    if ds.GetRasterBand(1).GetMaskFlags() != 0:
-        gdaltest.post_reason('did not get expected mask flags')
-        print(ds.GetRasterBand(1).GetMaskFlags())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMaskFlags() == 0, 'did not get expected mask flags'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 4873:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4873, 'did not get expected mask band checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Translate a RGB dataset with a mask into a VRT
 
 
-def vrtmask_3():
+def test_vrtmask_3():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
     ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/vrtmask_3.vrt', src_ds)
@@ -156,27 +140,21 @@ def vrtmask_3():
 
     os.remove('tmp/vrtmask_3.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
-
-    return 'success'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
 ###############################################################################
 # Same with gdalbuildvrt
 
 
-def vrtmask_4():
+def test_vrtmask_4():
     import test_cli_utilities
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/vrtmask_4.vrt ../gcore/data/ycbcr_with_mask.tif')
 
@@ -190,24 +168,18 @@ def vrtmask_4():
 
     os.remove('tmp/vrtmask_4.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
-
-    return 'success'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
 ###############################################################################
 # Same with gdal_translate
 
 
-def vrtmask_5():
+def test_vrtmask_5():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/vrtmask_5.vrt', '../gcore/data/ycbcr_with_mask.tif', options='-of VRT -outsize 100% 100%')
 
@@ -221,24 +193,18 @@ def vrtmask_5():
 
     os.remove('tmp/vrtmask_5.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
-
-    return 'success'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
 ###############################################################################
 # Same with gdal_translate with explicit -b and -mask arguments
 
 
-def vrtmask_6():
+def test_vrtmask_6():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/vrtmask_6.vrt', '../gcore/data/ycbcr_with_mask.tif',
                    options='-of VRT -b 1 -b 2 -b 3 -mask mask,1')
@@ -253,24 +219,18 @@ def vrtmask_6():
 
     os.remove('tmp/vrtmask_6.vrt')
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
-
-    return 'success'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
 ###############################################################################
 # gdal_translate with RGBmask -> RGBA and then RGBA->RGBmask
 
 
-def vrtmask_7():
+def test_vrtmask_7():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
     try:
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
     except OSError:
@@ -296,38 +256,25 @@ def vrtmask_7():
     ds = None
 
     os.remove('tmp/vrtmask_7_rgba.tif')
-    try:
+    with pytest.raises(OSError, message='did not expect tmp/vrtmask_7_rgba.tif.msk'):
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
-        gdaltest.post_reason('did not expect tmp/vrtmask_7_rgba.tif.msk')
-        return 'fail'
-    except OSError:
-        pass
+    
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
 
-    if alpha_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected alpha band checksum')
-        print(alpha_cs)
-        print(expected_msk_cs)
-        return 'fail'
+    assert alpha_cs == expected_msk_cs, 'did not get expected alpha band checksum'
 
-    if msk_cs != expected_msk_cs:
-        gdaltest.post_reason('did not get expected mask band checksum')
-        print(msk_cs)
-        print(expected_msk_cs)
-        return 'fail'
-
-    return 'success'
+    assert msk_cs == expected_msk_cs, 'did not get expected mask band checksum'
 
 ###############################################################################
 # gdal_translate with RGBmask -> RGB
 
 
-def vrtmask_8():
+def test_vrtmask_8():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/vrtmask_8.vrt', '../gcore/data/ycbcr_with_mask.tif',
                    options='-of VRT -mask none')
@@ -338,20 +285,16 @@ def vrtmask_8():
 
     os.remove('tmp/vrtmask_8.vrt')
 
-    if flags != gdal.GMF_ALL_VALID:
-        print(flags)
-        return 'fail'
-
-    return 'success'
+    assert flags == gdal.GMF_ALL_VALID
 
 ###############################################################################
 # gdal_translate with RGBA -> RGB
 
 
-def vrtmask_9():
+def test_vrtmask_9():
     import test_cli_utilities
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('GTiff').Create('tmp/vrtmask_9_src.tif', 10, 10, 4)
     del src_ds
@@ -364,22 +307,15 @@ def vrtmask_9():
 
     os.remove('tmp/vrtmask_9_src.tif')
     os.remove('tmp/vrtmask_9_dst.tif')
-    if err != '':
-        gdaltest.post_reason('unexpected output on standard err')
-        print(err)
-        return 'fail'
+    assert err == '', 'unexpected output on standard err'
 
-    if flags != gdal.GMF_ALL_VALID:
-        print(flags)
-        return 'fail'
-
-    return 'success'
+    assert flags == gdal.GMF_ALL_VALID
 
 ###############################################################################
 # Test fix for #5120 (VRTSourcedRasterBand::AddMaskBandSource() ignores specified window)
 
 
-def vrtmask_10():
+def test_vrtmask_10():
 
     gdal.Translate('tmp/vrtmask_10_ref.tif', '../gcore/data/stefan_full_rgba.tif', options='-srcwin 40 40 100 100')
     gdal.Translate('tmp/vrtmask_10.vrt', '../gcore/data/stefan_full_rgba.tif', options='-of VRT -b 1 -b 2 -b 3 -mask 4 -srcwin 30 30 120 120')
@@ -398,77 +334,43 @@ def vrtmask_10():
     os.remove('tmp/vrtmask_10_2.vrt')
     os.remove('tmp/vrtmask_10_3.tif')
 
-    if cs_ref != cs_got:
-        return 'fail'
-
-    return 'success'
+    assert cs_ref == cs_got
 
 ###############################################################################
 
 
-def vrtmask_11():
+def test_vrtmask_11():
 
     # Cannot create mask band at raster band level when a dataset mask band already exists
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).CreateMaskBand(0)
-    if ret == 0:
-        gdaltest.post_reason('expected an error, but got success')
-        return 'fail'
+    assert ret != 0, 'expected an error, but got success'
 
     # This VRT dataset has already a mask band
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     with gdaltest.error_handler():
         ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    if ret == 0:
-        gdaltest.post_reason('expected an error, but got success')
-        return 'fail'
+    assert ret != 0, 'expected an error, but got success'
 
     # This VRT band has already a mask band
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ds.GetRasterBand(1).CreateMaskBand(0)
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).CreateMaskBand(0)
-    if ret == 0:
-        gdaltest.post_reason('expected an error, but got success')
-        return 'fail'
+    assert ret != 0, 'expected an error, but got success'
 
     ds = gdal.Translate('', 'data/byte.tif', format='VRT')
     ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ret == 0
 
 ###############################################################################
 # Cleanup.
 
 
-def vrtmask_cleanup():
-    return 'success'
+def test_vrtmask_cleanup():
+    pass
 
 
-gdaltest_list = [
-    vrtmask_1,
-    vrtmask_2,
-    vrtmask_3,
-    vrtmask_4,
-    vrtmask_5,
-    vrtmask_6,
-    vrtmask_7,
-    vrtmask_8,
-    vrtmask_9,
-    vrtmask_10,
-    vrtmask_11,
-    vrtmask_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vrtmask')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

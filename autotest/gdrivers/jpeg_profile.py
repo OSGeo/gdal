@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,24 +31,17 @@
 # http://sourceforge.net/projects/openicc/files/OpenICC-Profiles/
 
 import os
-import sys
 import base64
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import gdal
-
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
+import pytest
 
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 
-def jpeg_copy_icc():
+def test_jpeg_copy_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -68,9 +61,7 @@ def jpeg_copy_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.jpg')
@@ -78,20 +69,16 @@ def jpeg_copy_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
 
 
-def jpeg_copy_options_icc():
+def test_jpeg_copy_options_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -111,9 +98,7 @@ def jpeg_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.jpg')
@@ -121,20 +106,16 @@ def jpeg_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading of 64K+ ICC profile in CreateCopy()
 
 
-def jpeg_copy_icc_64K():
+def test_jpeg_copy_icc_64K():
 
     # In JPEG, APP2 chunks can only be 64K, so they would be split up.
     # It will still work, but need to test that the segmented ICC profile
@@ -161,69 +142,40 @@ def jpeg_copy_icc_64K():
     comment = ds2.GetMetadataItem('COMMENT')
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.jpg.aux.xml')
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    if comment != 'foo':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert comment == 'foo'
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.jpg')
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.jpg.aux.xml')
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with GetMetadataItem()
     ds2 = gdal.Open('tmp/icc_test.jpg')
     source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.jpg.aux.xml')
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    if source_icc_profile != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert source_icc_profile == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
 
-    return 'success'
-
 ###############################################################################################
 
 
-gdaltest_list.append((jpeg_copy_icc))
-gdaltest_list.append((jpeg_copy_options_icc))
-gdaltest_list.append((jpeg_copy_icc_64K))
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jpeg_profile')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

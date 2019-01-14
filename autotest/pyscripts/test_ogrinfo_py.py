@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,14 +28,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Simple test
@@ -44,13 +42,10 @@ import test_py_scripts
 def test_ogrinfo_py_1():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp')
-    if ret.find('ESRI Shapefile') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('ESRI Shapefile') != -1
 
 ###############################################################################
 # Test -ro option
@@ -59,13 +54,10 @@ def test_ogrinfo_py_1():
 def test_ogrinfo_py_2():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-ro ../ogr/data/poly.shp')
-    if ret.find('ESRI Shapefile') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('ESRI Shapefile') != -1
 
 ###############################################################################
 # Test -al option
@@ -74,13 +66,10 @@ def test_ogrinfo_py_2():
 def test_ogrinfo_py_3():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al ../ogr/data/poly.shp')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 10') != -1
 
 ###############################################################################
 # Test layer name
@@ -89,13 +78,10 @@ def test_ogrinfo_py_3():
 def test_ogrinfo_py_4():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 10') != -1
 
 ###############################################################################
 # Test -sql option
@@ -104,13 +90,10 @@ def test_ogrinfo_py_4():
 def test_ogrinfo_py_5():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp -sql "select * from poly"')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 10') != -1
 
 ###############################################################################
 # Test -geom=NO option
@@ -119,15 +102,11 @@ def test_ogrinfo_py_5():
 def test_ogrinfo_py_6():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -geom=no')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-    if ret.find('POLYGON') != -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 10') != -1
+    assert ret.find('POLYGON') == -1
 
 ###############################################################################
 # Test -geom=SUMMARY option
@@ -136,17 +115,12 @@ def test_ogrinfo_py_6():
 def test_ogrinfo_py_7():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -geom=summary')
-    if ret.find('Feature Count: 10') == -1:
-        return 'fail'
-    if ret.find('POLYGON (') != -1:
-        return 'fail'
-    if ret.find('POLYGON :') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 10') != -1
+    assert ret.find('POLYGON (') == -1
+    assert ret.find('POLYGON :') != -1
 
 ###############################################################################
 # Test -spat option
@@ -155,17 +129,15 @@ def test_ogrinfo_py_7():
 def test_ogrinfo_py_8():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -spat 479609 4764629 479764 4764817')
     if ogrtest.have_geos():
-        if ret.find('Feature Count: 4') == -1:
-            return 'fail'
-        return 'success'
+        assert ret.find('Feature Count: 4') != -1
+        return
     else:
-        if ret.find('Feature Count: 5') == -1:
-            return 'fail'
-        return 'success'
+        assert ret.find('Feature Count: 5') != -1
+        return
 
 ###############################################################################
 # Test -where option
@@ -174,13 +146,10 @@ def test_ogrinfo_py_8():
 def test_ogrinfo_py_9():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -where "EAS_ID=171"')
-    if ret.find('Feature Count: 1') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 1') != -1
 
 ###############################################################################
 # Test -fid option
@@ -189,13 +158,10 @@ def test_ogrinfo_py_9():
 def test_ogrinfo_py_10():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -fid 9')
-    if ret.find('OGRFeature(poly):9') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('OGRFeature(poly):9') != -1
 
 ###############################################################################
 # Test -fields=no option
@@ -204,15 +170,11 @@ def test_ogrinfo_py_10():
 def test_ogrinfo_py_11():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '../ogr/data/poly.shp poly -fields=no')
-    if ret.find('AREA (Real') != -1:
-        return 'fail'
-    if ret.find('POLYGON (') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('AREA (Real') == -1
+    assert ret.find('POLYGON (') != -1
 
 ###############################################################################
 # Test RFC 41 support
@@ -221,7 +183,7 @@ def test_ogrinfo_py_11():
 def test_ogrinfo_py_22():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_ogrinfo_22.csv', 'wt')
     f.write('_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n')
@@ -229,9 +191,7 @@ def test_ogrinfo_py_22():
     f.close()
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', 'tmp/test_ogrinfo_22.csv')
-    if ret.find('1: test_ogrinfo_22 (Unknown (any), Unknown (any))') < 0:
-        print(ret)
-        return 'fail'
+    assert '1: test_ogrinfo_22 (Unknown (any), Unknown (any))' in ret
 
     ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_22.csv')
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_22.csv'
@@ -290,13 +250,9 @@ OGRFeature(test_ogrinfo_22):1
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
     for i, exp_line in enumerate(expected_lines):
-        if exp_line != lines[i]:
-            print(ret)
-            return 'fail'
+        assert exp_line == lines[i], ret
 
     os.unlink('tmp/test_ogrinfo_22.csv')
-
-    return 'success'
 
 ###############################################################################
 # Test -geomfield (RFC 41) support
@@ -305,7 +261,7 @@ OGRFeature(test_ogrinfo_22):1
 def test_ogrinfo_py_23():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_ogrinfo_23.csv', 'wt')
     f.write('_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n')
@@ -370,36 +326,10 @@ OGRFeature(test_ogrinfo_23):2
     expected_lines = expected_ret.splitlines()
     lines = ret.splitlines()
     for i, exp_line in enumerate(expected_lines):
-        if exp_line != lines[i]:
-            print(ret)
-            return 'fail'
+        assert exp_line == lines[i], ret
 
     os.unlink('tmp/test_ogrinfo_23.csv')
 
-    return 'success'
 
 
-gdaltest_list = [
-    test_ogrinfo_py_1,
-    test_ogrinfo_py_2,
-    test_ogrinfo_py_3,
-    test_ogrinfo_py_4,
-    test_ogrinfo_py_5,
-    test_ogrinfo_py_6,
-    test_ogrinfo_py_7,
-    test_ogrinfo_py_8,
-    test_ogrinfo_py_9,
-    test_ogrinfo_py_10,
-    test_ogrinfo_py_11,
-    test_ogrinfo_py_22,
-    test_ogrinfo_py_23,
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogrinfo_py')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

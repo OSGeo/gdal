@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -32,73 +32,106 @@ import os
 import shutil
 import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Basic test of .idf file
 
 
-def ogr_idf_1():
+def test_ogr_idf_1():
 
     ds = ogr.Open('data/test.idf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49,2.5 49.5,2.7 49.7,3 50)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(2)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2.5 49.5)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayer(3)
     f = lyr.GetNextFeature()
     if f['FOO'] != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
+    
+###############################################################################
+#
 
+
+def test_ogr_idf_1_with_temp_sqlite_db():
+    if ogr.GetDriverByName('SQLite') is None:
+        pytest.skip()
+    with gdaltest.config_option('OGR_IDF_TEMP_DB_THRESHOLD', '0'):
+        return test_ogr_idf_1()
+
+###############################################################################
+# Basic test of .idf file
+
+
+def test_ogr_idf_3d():
+
+    ds = ogr.Open('data/test_3d.idf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49 10)':
+        f.DumpReadable()
+        pytest.fail()
+
+    lyr = ds.GetLayer(1)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49 10,2.5 49.5 10,2.7 49.7 20,3 50 20)':
+        f.DumpReadable()
+        pytest.fail()
+
+    lyr = ds.GetLayer(2)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2.5 49.5 10)':
+        f.DumpReadable()
+        pytest.fail()
+
+    lyr = ds.GetLayer(3)
+    f = lyr.GetNextFeature()
+    if f['FOO'] != 1:
+        f.DumpReadable()
+        pytest.fail()
+
+    
 ###############################################################################
 # Run test_ogrsf on .idf
 
 
-def ogr_idf_2():
+def test_ogr_idf_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.idf')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Create a VDV file
 
 
-def ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
+def test_ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
 
     dsco = [] if dsco is None else dsco
     lco = [] if lco is None else lco
@@ -148,13 +181,11 @@ def ogr_vdv_1(filename='tmp/test.x10', dsco=None, lco=None):
     ds.CreateLayer('empty2', options=lco)
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Read it
 
 
-def ogr_vdv_2(src_filename='tmp/test.x10'):
+def test_ogr_vdv_2(src_filename='tmp/test.x10'):
 
     out_filename = '/vsimem/vdv/ogr_vdv_2.x10'
     gdal.Unlink(out_filename)
@@ -213,70 +244,57 @@ eof; 4
     got = gdal.VSIFReadL(1, 10000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    if got != expected:
-        gdaltest.post_reason('fail')
-        print(got)
-        return 'fail'
+    assert got == expected
 
     gdal.Unlink(out_filename)
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf on it
 
 
-def ogr_vdv_3():
+def test_ogr_vdv_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.x10')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Create a VDV directory
 
 
-def ogr_vdv_4():
-    return ogr_vdv_1(filename='tmp/test_x10', dsco=['SINGLE_FILE=NO'], lco=['EXTENSION=txt'])
+def test_ogr_vdv_4():
+    return test_ogr_vdv_1(filename='tmp/test_x10', dsco=['SINGLE_FILE=NO'], lco=['EXTENSION=txt'])
 
 ###############################################################################
 # Read it
 
 
-def ogr_vdv_5():
-    return ogr_vdv_2(src_filename='tmp/test_x10')
+def test_ogr_vdv_5():
+    return test_ogr_vdv_2(src_filename='tmp/test_x10')
 
 ###############################################################################
 # Run test_ogrsf on it
 
 
-def ogr_vdv_6():
+def test_ogr_vdv_6():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test_x10')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Run VDV452
 
 
-def ogr_vdv_7():
+def test_ogr_vdv_7():
 
     tests = [('VDV-452', 'STOP', 'POINT_LONGITUDE', 'POINT_LATITUDE'),
              ('VDV-452-ENGLISH', 'STOP', 'POINT_LONGITUDE', 'POINT_LATITUDE'),
@@ -302,9 +320,8 @@ def ogr_vdv_7():
         if f[longname] != -1234556789 or \
            f[latname] != -234556789 or \
            ogrtest.check_feature_geometry(f, 'POINT (-123.765774722222 -23.7657747222222)') != 0:
-            gdaltest.post_reason('fail')
             f.DumpReadable()
-            return 'fail'
+            pytest.fail()
         ds = None
 
         gdal.Unlink('/vsimem/vdv/ogr_vdv_7.x10')
@@ -318,15 +335,11 @@ def ogr_vdv_7():
         gdal.PushErrorHandler()
         lyr = ds.CreateLayer('UNKNOWN', options=['PROFILE=' + profile, 'PROFILE_STRICT=' + str(strict)])
         gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert gdal.GetLastErrorMsg() != ''
         if strict and lyr is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+            pytest.fail()
         elif not strict and lyr is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+            pytest.fail()
 
         if profile == 'VDV-452-GERMAN':
             lyr_name = 'REC_ORT'
@@ -337,41 +350,32 @@ def ogr_vdv_7():
         gdal.PushErrorHandler()
         ret = lyr.CreateField(ogr.FieldDefn('UNKNOWN'))
         gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg() == '':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert gdal.GetLastErrorMsg() != ''
         if strict and ret == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+            pytest.fail()
         elif not strict and ret != 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+            pytest.fail()
 
         ds = None
 
         gdal.Unlink('/vsimem/vdv/ogr_vdv_7.x10')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test a few error cases
 
 
-def ogr_vdv_8():
+def test_ogr_vdv_8():
 
     gdal.PushErrorHandler()
     ds = ogr.GetDriverByName('VDV').CreateDataSource('/does/not_exist')
     gdal.PopErrorHandler()
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.PushErrorHandler()
     ds = ogr.GetDriverByName('VDV').CreateDataSource('/does/not_exist', options=['SINGLE_FILE=FALSE'])
     gdal.PopErrorHandler()
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Add layer in non writable directory
     if sys.platform.startswith('linux'):
@@ -394,9 +398,7 @@ def ogr_vdv_8():
             os.chmod('tmp/ogr_vdv_8', 493)
             ds = None
             shutil.rmtree('tmp/ogr_vdv_8')
-            if lyr is not None:
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert lyr is None
 
     out_filename = '/vsimem/vdv/ogr_vdv_8.x10'
     ds = ogr.GetDriverByName('VDV').CreateDataSource(out_filename)
@@ -405,21 +407,13 @@ def ogr_vdv_8():
     gdal.PushErrorHandler()
     ds2 = ogr.GetDriverByName('VDV').CreateDataSource(out_filename)
     gdal.PopErrorHandler()
-    if ds2 is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds2 is None
 
-    if ds.TestCapability(ogr.ODsCCreateLayer) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.TestCapability(ogr.ODsCCreateLayer) == 1
 
     lyr1 = ds.CreateLayer("lyr1")
-    if lyr1.TestCapability(ogr.OLCSequentialWrite) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr1.TestCapability(ogr.OLCCreateField) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr1.TestCapability(ogr.OLCSequentialWrite) == 1
+    assert lyr1.TestCapability(ogr.OLCCreateField) == 1
 
     lyr1.ResetReading()
 
@@ -430,36 +424,26 @@ def ogr_vdv_8():
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
 
     # Layer structure is now frozen
-    if lyr1.TestCapability(ogr.OLCCreateField) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr1.TestCapability(ogr.OLCCreateField) == 0
 
     gdal.PushErrorHandler()
     ret = lyr1.CreateField(ogr.FieldDefn('not_allowed'))
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
 
     lyr2 = ds.CreateLayer("lyr2")
     lyr2.CreateFeature(ogr.Feature(lyr2.GetLayerDefn()))
 
     # Test interleaved writing
 
-    if lyr1.TestCapability(ogr.OLCSequentialWrite) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr1.TestCapability(ogr.OLCSequentialWrite) == 0
 
     gdal.PushErrorHandler()
     ret = lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
 
-    if lyr1.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr1.GetFeatureCount() == 1
 
     ds = None
 
@@ -490,25 +474,18 @@ eof; 2
     got = gdal.VSIFReadL(1, 10000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    if got != expected:
-        gdaltest.post_reason('fail')
-        print(got)
-        return 'fail'
+    assert got == expected
 
     # Test we are robust against missing end;
     ds = ogr.Open(out_filename)
     for i in range(2):
         lyr = ds.GetLayer(i)
-        if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert lyr.GetFeatureCount() == 1
         lyr.ResetReading()
         fc = 0
         for f in lyr:
             fc += 1
-        if fc != 1:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert fc == 1
         lyr = None
     ds = None
 
@@ -527,20 +504,15 @@ eof; 2
     got = gdal.VSIFReadL(1, 10000, f).decode('latin1')
     gdal.VSIFCloseL(f)
 
-    if got != expected:
-        gdaltest.post_reason('fail')
-        print(got)
-        return 'fail'
+    assert got == expected
 
     gdal.Unlink(out_filename)
-
-    return 'success'
 
 ###############################################################################
 # Cleanup
 
 
-def ogr_vdv_cleanup():
+def test_ogr_vdv_cleanup():
 
     gdal.Unlink('tmp/test.x10')
     gdal.Unlink('/vsimem/vdv/ogr_vdv_2.x10')
@@ -552,27 +524,6 @@ def ogr_vdv_cleanup():
             gdal.Unlink('tmp/test_x10/' + f)
     gdal.Rmdir('tmp/test_x10')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_idf_1,
-    ogr_idf_2,
-    ogr_vdv_1,
-    ogr_vdv_2,
-    ogr_vdv_3,
-    ogr_vdv_4,
-    ogr_vdv_5,
-    ogr_vdv_6,
-    ogr_vdv_7,
-    ogr_vdv_8,
-    ogr_vdv_cleanup]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_vdv')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

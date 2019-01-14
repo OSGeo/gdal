@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,10 +31,8 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +40,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def dted_1():
+def test_dted_1():
 
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 49187)
     return tst.testOpen()
@@ -51,7 +49,7 @@ def dted_1():
 # Verify some auxiliary data.
 
 
-def dted_2():
+def test_dted_2():
 
     ds = gdal.Open('data/n43.dt0')
 
@@ -59,33 +57,23 @@ def dted_2():
 
     max_error = 0.000001
 
-    if abs(gt[0] - (-80.004166666666663)) > max_error or abs(gt[1] - 0.0083333333333333332) > max_error \
-            or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
-            or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
-        gdaltest.post_reason('DTED geotransform wrong.')
-        return 'fail'
+    assert abs(gt[0] - (-80.004166666666663)) <= max_error and abs(gt[1] - 0.0083333333333333332) <= max_error and abs(gt[2] - 0) <= max_error and abs(gt[3] - 44.00416666666667) <= max_error and abs(gt[4] - 0) <= max_error and abs(gt[5] - (-0.0083333333333333332)) <= max_error, \
+        'DTED geotransform wrong.'
 
     prj = ds.GetProjection()
-    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != -32767:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == -32767, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('Data type is not Int16!')
-        return 'fail'
-
-    return 'success'
+    assert band1.DataType == gdal.GDT_Int16, 'Data type is not Int16!'
 
 ###############################################################################
 # Create simple copy and check.
 
 
-def dted_3():
+def test_dted_3():
 
     tst = gdaltest.GDALTest('DTED', 'n43.dt0', 1, 49187)
 
@@ -97,7 +85,7 @@ def dted_3():
 # Read subwindow.  Tests the tail recursion problem.
 
 
-def dted_4():
+def test_dted_4():
 
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 305,
                             5, 5, 5, 5)
@@ -107,7 +95,7 @@ def dted_4():
 # Test a DTED Level 1 (made from a DTED Level 0)
 
 
-def dted_5():
+def test_dted_5():
 
     driver = gdal.GetDriverByName("GTiff")
     ds = driver.Create('tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16)
@@ -120,18 +108,15 @@ def dted_5():
     ds = gdal.Open('tmp/n43.dt1.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        if abs(geotransform[i] - ref_geotransform[i]) > 1e-10:
-            return 'fail'
+        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test a DTED Level 2 (made from a DTED Level 0)
 
 
-def dted_6():
+def test_dted_6():
 
     driver = gdal.GetDriverByName("GTiff")
     ds = driver.Create('tmp/n43.dt2.tif', 3601, 3601, 1, gdal.GDT_Int16)
@@ -144,18 +129,15 @@ def dted_6():
     ds = gdal.Open('tmp/n43.dt2.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        if abs(geotransform[i] - ref_geotransform[i]) > 1e-10:
-            return 'fail'
+        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test a WGS72 georeferenced DTED
 
 
-def dted_7():
+def test_dted_7():
     ds = gdal.Open('data/n43_wgs72.dt0')
 
     # a warning is issued
@@ -163,21 +145,16 @@ def dted_7():
     prj = ds.GetProjection()
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg() is None:
-        gdaltest.post_reason('An expected warning was not emitted')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() is not None, 'An expected warning was not emitted'
 
-    if prj != 'GEOGCS["WGS 72",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4322"]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
-
-    return 'success'
+    assert prj == 'GEOGCS["WGS 72",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4322"]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
 ###############################################################################
 # Test a file whose checksum is corrupted
 
 
-def dted_8():
+def test_dted_8():
     # this will enable DTED_VERIFY_CHECKSUM
     gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'YES')
 
@@ -191,23 +168,17 @@ def dted_8():
 
     gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'NO')
 
-    if gdal.GetLastErrorMsg() is None:
-        gdaltest.post_reason('An expected warning was not emitted')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() is not None, 'An expected warning was not emitted'
 
     # 49187 is the checksum of data is the DTED is read without checking its checksum
     # so we should not get this value
-    if chksum == 49187:
-        gdaltest.post_reason('DTED_VERIFY_CHECKSUM=YES has had no effect!')
-        return 'fail'
-
-    return 'success'
+    assert chksum != 49187, 'DTED_VERIFY_CHECKSUM=YES has had no effect!'
 
 ###############################################################################
 # Test a DTED Level 1 above latitude 50 (made from a DTED Level 0)
 
 
-def dted_9():
+def test_dted_9():
 
     ds = gdal.Open('data/n43.dt0')
 
@@ -236,17 +207,13 @@ def dted_9():
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
 
-    if chksum != 36542:
-        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
-        return 'fail'
-
-    return 'success'
+    assert chksum == 36542, ('Wrong checksum. Checksum found %d' % chksum)
 
 ###############################################################################
 # Test creating an in memory copy.
 
 
-def dted_10():
+def test_dted_10():
 
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 49187)
     return tst.testCreateCopy(vsimem=1)
@@ -258,7 +225,7 @@ def dted_10():
 # inverted.  This was fixed in MIL-D-89020 Amendment 1, but some products may
 # be affected.
 
-def dted_11():
+def test_dted_11():
 
     ds = gdal.Open('data/n43_coord_inverted.dt0')
 
@@ -266,46 +233,33 @@ def dted_11():
 
     max_error = 0.000001
 
-    if abs(gt[0] - (-80.004166666666663)) > max_error or abs(gt[1] - 0.0083333333333333332) > max_error \
-            or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
-            or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
-        gdaltest.post_reason('DTED geotransform wrong.')
-        return 'fail'
+    assert abs(gt[0] - (-80.004166666666663)) <= max_error and abs(gt[1] - 0.0083333333333333332) <= max_error and abs(gt[2] - 0) <= max_error and abs(gt[3] - 44.00416666666667) <= max_error and abs(gt[4] - 0) <= max_error and abs(gt[5] - (-0.0083333333333333332)) <= max_error, \
+        'DTED geotransform wrong.'
 
     prj = ds.GetProjection()
-    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != -32767:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == -32767, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('Data type is not Int16!')
-        return 'fail'
-
-    return 'success'
+    assert band1.DataType == gdal.GDT_Int16, 'Data type is not Int16!'
 
 ###############################################################################
 # Test a DTED file that begins with a HDR record, and not directly the UHL record (#2951)
 
 
-def dted_12():
+def test_dted_12():
 
     ds = gdal.Open('data/w118n033_trunc.dt1')
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # Test a DTED file that has only a few (sequential) columns. Derived from
 # a real-world DTED file
 
 
-def dted_13():
+def test_dted_13():
 
     tst = gdaltest.GDALTest('dted', 'n43_partial_cols.dt0', 1, 56006)
     return tst.testOpen()
@@ -315,7 +269,7 @@ def dted_13():
 # case for now.
 
 
-def dted_14():
+def test_dted_14():
 
     tst = gdaltest.GDALTest('dted', 'n43_sparse_cols.dt0', 1, 56369)
     return tst.testOpen()
@@ -324,7 +278,7 @@ def dted_14():
 # Perform simple read test with GDAL_DTED_SINGLE_BLOCK = YES
 
 
-def dted_15():
+def test_dted_15():
 
     gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', 'YES')
     tst = gdaltest.GDALTest('dted', 'n43.dt0', 1, 49187)
@@ -336,7 +290,7 @@ def dted_15():
 # Cleanup.
 
 
-def dted_cleanup():
+def test_dted_cleanup():
     try:
         os.remove('tmp/n43.dt1.tif')
         os.remove('tmp/n43.dt1.aux.xml')
@@ -349,33 +303,7 @@ def dted_cleanup():
         os.remove('tmp/n43.dt2')
     except OSError:
         pass
-    return 'success'
+    
 
 
-gdaltest_list = [
-    dted_1,
-    dted_2,
-    dted_3,
-    dted_4,
-    dted_5,
-    dted_6,
-    dted_7,
-    dted_8,
-    dted_9,
-    dted_10,
-    dted_11,
-    dted_12,
-    dted_13,
-    dted_14,
-    dted_15,
-    dted_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('dted')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

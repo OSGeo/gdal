@@ -306,6 +306,8 @@ typedef struct
     double adfGeoTransform[6];
 
     int    nElevField;
+    int    nElevFieldMin;
+    int    nElevFieldMax;
     int    nIDField;
     int    nNextID;
 } OGRContourWriterInfo;
@@ -316,11 +318,16 @@ OGRContourWriter( double, int, double *, double *, void *pInfo );
 
 CPLErr CPL_DLL
 GDALContourGenerate( GDALRasterBandH hBand,
-                            double dfContourInterval, double dfContourBase,
-                            int nFixedLevelCount, double *padfFixedLevels,
-                            int bUseNoData, double dfNoDataValue,
-                            void *hLayer, int iIDField, int iElevField,
-                            GDALProgressFunc pfnProgress, void *pProgressArg );
+                     double dfContourInterval, double dfContourBase,
+                     int nFixedLevelCount, double *padfFixedLevels,
+                     int bUseNoData, double dfNoDataValue,
+                     void *hLayer, int iIDField, int iElevField,
+                     GDALProgressFunc pfnProgress, void *pProgressArg );
+
+CPLErr CPL_DLL
+GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
+                       CSLConstList options,
+                       GDALProgressFunc pfnProgress, void *pProgressArg );
 
 /************************************************************************/
 /*      Rasterizer API - geometries burned into GDAL raster.            */

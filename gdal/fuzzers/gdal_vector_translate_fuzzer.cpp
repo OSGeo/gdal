@@ -92,41 +92,51 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         VSIFCloseL(fp);
     }
 
-    if( papszArgv != nullptr )
+    char** papszDrivers = CSLAddString(nullptr, "CSV");
+    GDALDatasetH hSrcDS = GDALOpenEx( "/vsitar//vsimem/test.tar/in",
+                        GDAL_OF_VECTOR, papszDrivers, nullptr, nullptr );
+    CSLDestroy(papszDrivers);
+
+    if( papszArgv != nullptr && hSrcDS != nullptr )
     {
+        OGRLayerH hLayer = GDALDatasetGetLayer(hSrcDS, 0);
+        if( hLayer )
+        {
+            int nFieldCount = OGR_FD_GetFieldCount(
+                OGR_L_GetLayerDefn(hLayer));
+            if( nFieldCount > 100 )
+            {
+                papszArgv = CSLAddString(papszArgv, "-limit");
+                papszArgv = CSLAddString(papszArgv, "100");
+            }
+        }
+
         GDALVectorTranslateOptions* psOptions =
             GDALVectorTranslateOptionsNew(papszArgv, nullptr);
         if( psOptions )
         {
-            char** papszDrivers = CSLAddString(nullptr, "CSV");
-            GDALDatasetH hSrcDS = GDALOpenEx( "/vsitar//vsimem/test.tar/in",
-                                GDAL_OF_VECTOR, papszDrivers, nullptr, nullptr );
-            CSLDestroy(papszDrivers);
-            if( hSrcDS != nullptr )
+            CPLString osFullOutFilename("/vsimem/" + osOutFilename);
+            GDALDatasetH hOutDS = GDALVectorTranslate(
+                osFullOutFilename.c_str(),
+                nullptr, 1, &hSrcDS, psOptions, nullptr);
+            if( hOutDS )
             {
-                CPLString osFullOutFilename("/vsimem/" + osOutFilename);
-                GDALDatasetH hOutDS = GDALVectorTranslate(
-                    osFullOutFilename.c_str(),
-                    nullptr, 1, &hSrcDS, psOptions, nullptr);
-                GDALClose(hSrcDS);
-                if( hOutDS )
-                {
-                    GDALDriverH hOutDrv = GDALGetDatasetDriver(hOutDS);
-                    GDALClose(hOutDS);
+                GDALDriverH hOutDrv = GDALGetDatasetDriver(hOutDS);
+                GDALClose(hOutDS);
 
-                    // Try re-opening generated file
-                    GDALClose(
-                        GDALOpenEx(osFullOutFilename, GDAL_OF_VECTOR,
-                               nullptr, nullptr, nullptr));
+                // Try re-opening generated file
+                GDALClose(
+                    GDALOpenEx(osFullOutFilename, GDAL_OF_VECTOR,
+                            nullptr, nullptr, nullptr));
 
-                    if( hOutDrv )
-                        GDALDeleteDataset(hOutDrv, osFullOutFilename);
-                }
+                if( hOutDrv )
+                    GDALDeleteDataset(hOutDrv, osFullOutFilename);
             }
             GDALVectorTranslateOptionsFree(psOptions);
         }
     }
     CSLDestroy(papszArgv);
+    GDALClose(hSrcDS);
 
     VSIRmdirRecursive("/vsimem/");
 

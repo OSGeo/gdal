@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,52 +28,22 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import pytest
+
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
-import gdaltest
+@pytest.mark.parametrize('filename', [
+    'byte', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64'
+])
+def test_fit(filename):
+    fitDriver = gdal.GetDriverByName('FIT')
 
-###############################################################################
-#
+    ds = gdal.Open('../gcore/data/' + filename + '.tif')
+    fitDriver.CreateCopy('tmp/' + filename + '.fit', ds, options=['PAGESIZE=2,2'])
 
+    ds2 = gdal.Open('tmp/' + filename + '.fit')
+    assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
-class TestFIT(object):
-    def __init__(self, fileName):
-        self.fileName = fileName
-        self.fitDriver = gdal.GetDriverByName('FIT')
-
-    def test(self):
-
-        ds = gdal.Open('../gcore/data/' + self.fileName + '.tif')
-        self.fitDriver.CreateCopy('tmp/' + self.fileName + '.fit', ds, options=['PAGESIZE=2,2'])
-
-        ds2 = gdal.Open('tmp/' + self.fileName + '.fit')
-        if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
-            return 'fail'
-
-        if ds2.GetRasterBand(1).DataType != ds.GetRasterBand(1).DataType:
-            return 'fail'
-
-        ds2 = None
-        self.fitDriver.Delete('tmp/' + self.fileName + '.fit')
-        return 'success'
-
-
-gdaltest_list = []
-
-fit_list = ['byte', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64']
-
-for item in fit_list:
-    ut = TestFIT(item)
-    gdaltest_list.append((ut.test, item))
-
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('fit')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()
+    assert ds2.GetRasterBand(1).DataType == ds.GetRasterBand(1).DataType
+    ds2 = None

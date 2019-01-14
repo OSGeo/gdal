@@ -19,7 +19,8 @@ OBJ = \
 	ogresrijsondriver.o \
 	ogresrijsonreader.o \
 	ogrtopojsondriver.o \
-	ogrtopojsonreader.o
+	ogrtopojsonreader.o \
+	ogrgeojsonseqdriver.o
 
 CPPFLAGS	:= $(JSON_INCLUDE) -I. -I.. -I../..  $(CPPFLAGS)
 

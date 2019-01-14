@@ -14,15 +14,27 @@ indent_style = space
 indent_size = 4
 trim_trailing_whitespace = true
 
-[*.{sln,*proj,*proj.filters,rc,rc2}]
+[{*.h.vc*}]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{bat,sln,*proj,*proj.filters,rc,rc2}]
 charset = unset
 end_of_line = crlf
 insert_final_newline = unset
 indent_style = unset
 indent_size = unset
 
+[{makefile.vc,nmake.opt}]
+end_of_line = crlf
+indent_style = tab
+
 [{configure,configure.*,config.*,*.{sh,yml}}]
 indent_size = 2
 
-[{GNUmakefile,*.{in,opt,vc}}]
+[{GNUmakefile,*.in}]
 indent_style = tab

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,15 +30,14 @@
 ###############################################################################
 
 import os
-import sys
 import imp  # for netcdf_cf_setup()
-from netcdf import netcdf_setup, netcdf_test_copy
+from gdrivers.netcdf import netcdf_setup, netcdf_test_copy  # noqa
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Netcdf CF compliance Functions
@@ -57,12 +56,11 @@ def netcdf_cf_setup():
 
     # if netcdf is not supported, skip detection
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # skip if on windows
     if os.name != 'posix':
-        print('NOTICE: will skip CF checks because OS is not posix!')
-        return 'skip'
+        pytest.skip('NOTICE: will skip CF checks because OS is not posix!')
 
     # try local method
     cdms2_installed = False
@@ -99,17 +97,17 @@ def netcdf_cf_setup():
             gdaltest.netcdf_cf_method = 'local'
             gdaltest.netcdf_cf_files = files
             print('NOTICE: netcdf CF compliance checks: using local checker script')
-            return 'success'
+            return
 
     # skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
-    if 'GDAL_DOWNLOAD_TEST_DATA' not in os.environ:
+    if not gdaltest.download_test_data():
         print('NOTICE: skipping netcdf CF compliance checks')
-        print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA')
-        return 'success'
+        print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA=YES')
+        return
 
     if not gdaltest.run_slow_tests():
         print('NOTICE: skipping netcdf CF compliance checks')
-        return 'success'
+        return
 
     # http method with curl, should use python module but easier for now
     success = False
@@ -128,13 +126,12 @@ def netcdf_cf_setup():
         gdaltest.netcdf_cf_method = 'http'
         print('NOTICE: netcdf CF compliance checks: using remote HTTP '
               'checker script, consider installing cdms2 locally')
-        return 'success'
+        return
 
     if gdaltest.netcdf_cf_method is None:
         print('NOTICE: skipping netcdf CF compliance checks')
 
-    return 'success'
-
+    
 ###############################################################################
 # build a command used to check ifile
 
@@ -166,29 +163,25 @@ def netcdf_cf_check_file(ifile, version='auto', silent=True):
     gdaltest.netcdf_cf_check_error = ''
 
     if not os.path.exists(ifile):
-        return 'skip'
+        pytest.skip()
 
     output_all = ''
 
     command = netcdf_cf_get_command(ifile, version='auto')
     if command is None or command == '':
-        gdaltest.post_reason('no suitable method found, skipping')
-        return 'skip'
+        pytest.skip('no suitable method found, skipping')
 
     try:
         if gdaltest.netcdf_cf_method == 'http':
             print('calling ' + command)
         (ret, err) = gdaltest.runexternal_out_and_err(command)
     except OSError:
-        gdaltest.post_reason('ERROR with command - ' + command)
-        return 'fail'
+        pytest.fail('ERROR with command - ' + command)
 
     # There should be a ERRORS detected summary
     if 'ERRORS detected' not in ret:
-        gdaltest.post_reason('ERROR with command - ' + command)
-        print(ret)
         print(err)
-        return 'fail'
+        pytest.fail('ERROR with command - ' + command)
 
     output_all = ret
     output_err = ''
@@ -374,14 +367,12 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         (_, err) = gdaltest.runexternal_out_and_err('ncdump -h')
     except OSError:
         # nothing is supported as ncdump not found
-        print('NOTICE: netcdf version not found')
-        return 'skip'
+        pytest.skip('NOTICE: netcdf version not found')
 
     i = err.find('netcdf library version ')
     # version not found
     if i == -1:
-        print('NOTICE: netcdf version not found')
-        return 'skip'
+        pytest.skip('NOTICE: netcdf version not found')
 
     if not os.path.exists(outPath):
         os.makedirs(outPath)
@@ -557,14 +548,12 @@ def netcdf_cfproj_test_cf(proj, projNc):
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
-def netcdf_cf_1():
-
+def test_netcdf_cf_1(netcdf_setup):  # noqa
     # setup netcdf and netcdf_cf environment
-    netcdf_setup()
     netcdf_cf_setup()
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
     # result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
@@ -579,16 +568,16 @@ def netcdf_cf_1():
         result_cf = netcdf_cf_check_file('tmp/netcdf_18.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
-def netcdf_cf_2():
+def test_netcdf_cf_2():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     result = netcdf_test_copy('data/trmm.nc', 1, 14, 'tmp/netcdf_cf_2.nc')
 
@@ -597,17 +586,17 @@ def netcdf_cf_2():
         result_cf = netcdf_cf_check_file('tmp/netcdf_cf_2.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
 # note: this test fails in trunk (before r23246)
-def netcdf_cf_3():
+def test_netcdf_cf_3():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     result = 'success'
     result_cf = 'success'
@@ -624,17 +613,17 @@ def netcdf_cf_3():
         result_cf = netcdf_cf_check_file('tmp/netcdf_cf_3.nc', 'auto', False)
 
     if result != 'fail' and result_cf != 'fail':
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # test support for various CF projections
 
 
-def netcdf_cf_4():
+def test_netcdf_cf_4():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif',
                                     netcdf_cfproj_int_fmt_maps,
@@ -648,10 +637,10 @@ def netcdf_cf_4():
 # test support for PS variants (bug #2893)
 
 
-def netcdf_cf_5():
+def test_netcdf_cf_5():
 
     if gdaltest.netcdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ifiles = ['NETCDF:data/orog_CRCM1.nc:orog', 'NETCDF:data/orog_CRCM2.nc:orog']
     for ifile in ifiles:
@@ -661,31 +650,46 @@ def netcdf_cf_5():
         sr.ImportFromWkt(prj)
         lat_origin = sr.GetProjParm('latitude_of_origin')
 
-        if lat_origin != 60:
-            gdaltest.post_reason('Latitude of origin in %s does not match expected: %f'
+        assert lat_origin == 60, ('Latitude of origin in %s does not match expected: %f'
                                  % (ifile, lat_origin))
-            return 'fail'
 
-    return 'success'
+    
+###############################################################################
+# test CF support for dims and variables in different groups 
+
+def test_netcdf_cf_6():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ifiles = ('data/cf_dimsindiff_4326.nc',
+              'NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp',
+              'NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle')
+    for ifile in ifiles:
+        ds = gdal.Open(ifile)
+        prj = ds.GetProjection()
+        sr = osr.SpatialReference()
+        sr.ImportFromWkt(prj)
+        proj_out = sr.ExportToProj4()
+
+        assert proj_out == '+proj=longlat +ellps=WGS84 +no_defs '
+
 
 ###############################################################################
+# test check sums
+def test_netcdf_cf_7(netcdf_setup):  # noqa
+    # setup netcdf and netcdf_cf environment
+    netcdf_cf_setup()
 
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
 
-gdaltest_list = [
-    netcdf_cf_1,
-    netcdf_cf_2,
-    netcdf_cf_3,
-    netcdf_cf_4,
-    netcdf_cf_5,
-    None]
+    checks = (('data/cf_dimsindiff_4326.nc', 1, 2041),
+              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp', 1, 2041),
+              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 1, 476),
+              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 4, 476))
 
-if __name__ == '__main__':
+    for infile, band, checksum in checks:
+        ds = gdal.Open(infile, gdal.GA_ReadOnly)
+        assert ds.GetRasterBand(band).Checksum() == checksum
 
-    gdaltest.setup_run('netcdf_cf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    # make sure we cleanup
-    gdaltest.clean_tmp()
-
-    gdaltest.summarize()

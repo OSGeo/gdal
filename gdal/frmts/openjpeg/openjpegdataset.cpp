@@ -41,6 +41,7 @@
 #pragma clang diagnostic pop
 #endif
 
+#include <cassert>
 #include <vector>
 
 #include "cpl_atomic_ops.h"
@@ -197,37 +198,37 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
 {
     friend class JP2OpenJPEGRasterBand;
 
-    VSILFILE   *fp; /* Large FILE API */
-    vsi_l_offset nCodeStreamStart;
-    vsi_l_offset nCodeStreamLength;
+    VSILFILE   *fp = nullptr; /* Large FILE API */
+    vsi_l_offset nCodeStreamStart = 0;
+    vsi_l_offset nCodeStreamLength = 0;
 
-    OPJ_COLOR_SPACE eColorSpace;
-    int         nRedIndex;
-    int         nGreenIndex;
-    int         nBlueIndex;
-    int         nAlphaIndex;
+    OPJ_COLOR_SPACE eColorSpace = OPJ_CLRSPC_UNKNOWN;
+    int         nRedIndex = 0;
+    int         nGreenIndex = 1;
+    int         nBlueIndex = 2;
+    int         nAlphaIndex = -1;
 
-    int         bIs420;
+    int         bIs420 = FALSE;
 
-    int         iLevel;
-    int         nOverviewCount;
-    JP2OpenJPEGDataset** papoOverviewDS;
-    bool        bUseSetDecodeArea;
-    bool        bSingleTiled;
+    int         iLevel = 0;
+    int         nOverviewCount = 0;
+    JP2OpenJPEGDataset** papoOverviewDS = nullptr;
+    bool        bUseSetDecodeArea = false;
+    bool        bSingleTiled = false;
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
-    opj_codec_t**    m_ppCodec;
-    opj_stream_t **  m_ppStream;
-    opj_image_t **   m_ppsImage;
-    JP2OpenJPEGFile* m_psJP2OpenJPEGFile;
-    int*             m_pnLastLevel;
+    opj_codec_t**    m_ppCodec = nullptr;
+    opj_stream_t **  m_ppStream = nullptr;
+    opj_image_t **   m_ppsImage = nullptr;
+    JP2OpenJPEGFile* m_psJP2OpenJPEGFile = nullptr;
+    int*             m_pnLastLevel = nullptr;
 #endif
 
-    int         nThreads;
-    int         m_nBlocksToLoad;
+    int         nThreads = -1;
+    int         m_nBlocksToLoad = 0;
     int         GetNumThreads();
-    int         bEnoughMemoryToLoadOtherBands;
-    int         bRewrite;
-    int         bHasGeoreferencingAtOpening;
+    int         bEnoughMemoryToLoadOtherBands = TRUE;
+    int         bRewrite = FALSE;
+    int         bHasGeoreferencingAtOpening = FALSE;
 
   protected:
     virtual int         CloseDependentDatasets() override;
@@ -1192,33 +1193,6 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
 
 JP2OpenJPEGDataset::JP2OpenJPEGDataset()
 {
-    fp = nullptr;
-    nCodeStreamStart = 0;
-    nCodeStreamLength = 0;
-    nBands = 0;
-    eColorSpace = OPJ_CLRSPC_UNKNOWN;
-    nRedIndex = 0;
-    nGreenIndex = 1;
-    nBlueIndex = 2;
-    nAlphaIndex = -1;
-    bIs420 = FALSE;
-    iLevel = 0;
-    nOverviewCount = 0;
-    papoOverviewDS = nullptr;
-    bUseSetDecodeArea = false;
-    bSingleTiled = false;
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
-    m_ppCodec = nullptr;
-    m_ppStream = nullptr;
-    m_ppsImage = nullptr;
-    m_psJP2OpenJPEGFile = nullptr;
-    m_pnLastLevel = nullptr;
-#endif
-    nThreads = -1;
-    m_nBlocksToLoad = 0;
-    bEnoughMemoryToLoadOtherBands = TRUE;
-    bRewrite = FALSE;
-    bHasGeoreferencingAtOpening = FALSE;
 }
 
 /************************************************************************/
@@ -2571,6 +2545,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     if( adfRates.empty() )
     {
         adfRates.push_back(100. / dfDefaultQuality);
+        assert(!adfRates.empty());
     }
 
     if( poCT != nullptr && (bIsIrreversible || adfRates.back() != 100.0 / 100.0) )

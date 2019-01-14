@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,11 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import ogr
 from osgeo import gdal
 
@@ -42,113 +39,69 @@ from osgeo import gdal
 #
 
 
-def ogr_style_styletable():
+def test_ogr_style_styletable():
 
     style_table = ogr.StyleTable()
     style_table.AddStyle("style1_normal", 'SYMBOL(id:"http://style1_normal",c:#67452301)')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = style_table.SaveStyleTable('/nonexistingdir/nonexistingfile')
     gdal.PopErrorHandler()
-    if ret != 0:
-        gdaltest.post_reason('failure')
-        print(ret)
-        return 'fail'
-    if style_table.SaveStyleTable("/vsimem/out.txt") != 1:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ret == 0
+    assert style_table.SaveStyleTable("/vsimem/out.txt") == 1
     style_table = None
 
     style_table = ogr.StyleTable()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = style_table.LoadStyleTable('/nonexistent')
     gdal.PopErrorHandler()
-    if ret != 0:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if style_table.LoadStyleTable('/vsimem/out.txt') != 1:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ret == 0
+    assert style_table.LoadStyleTable('/vsimem/out.txt') == 1
 
     gdal.Unlink('/vsimem/out.txt')
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = style_table.Find("non_existing_style")
     gdal.PopErrorHandler()
-    if ret is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ret is None
 
-    if style_table.Find("style1_normal") != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert style_table.Find("style1_normal") == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
 
     style = style_table.GetNextStyle()
-    if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert style == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
     style_name = style_table.GetLastStyleName()
-    if style_name != 'style1_normal':
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert style_name == 'style1_normal'
 
     style = style_table.GetNextStyle()
-    if style is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert style is None
 
     style_table.ResetStyleStringReading()
     style = style_table.GetNextStyle()
-    if style is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert style is not None
 
     # GetStyleTable()/SetStyleTable() on data source
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
-    if ds.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds.GetStyleTable() is None
     ds.SetStyleTable(None)
-    if ds.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds.GetStyleTable() is None
     ds.SetStyleTable(style_table)
     style_table2 = ds.GetStyleTable()
     style = style_table2.GetNextStyle()
-    if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert style == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
 
     # GetStyleTable()/SetStyleTable() on layer
     lyr = ds.CreateLayer('foo')
-    if lyr.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetStyleTable() is None
     lyr.SetStyleTable(None)
-    if lyr.GetStyleTable() is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetStyleTable() is None
     lyr.SetStyleTable(style_table)
     style_table2 = lyr.GetStyleTable()
     style = style_table2.GetNextStyle()
-    if style != 'SYMBOL(id:"http://style1_normal",c:#67452301)':
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert style == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Build tests runner
 
 
-gdaltest_list = [
-    ogr_style_styletable]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_style')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

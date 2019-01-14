@@ -11,11 +11,11 @@ MrSID is a wavelet-based image compression technology which can utilize both
 lossy and lossless encoding. This technology was acquired in its original
 form from Los Alamos National Laboratories (LANL), where it was developed
 under the aegis of the U.S. government for storing fingerprints for the FBI.
-Now it is developed and distributed by the LizardTech, Inc.<p>
+Now it is developed and distributed by Extensis.<p>
 
-This driver supports reading of MrSID image files using LizardTech's decoding
+This driver supports reading of MrSID image files using Extensis' decoding
 software development kit (DSDK). <b>This DSDK is not free software, you should
-contact LizardTech to obtain it (see link at end of this page).</b> If you are
+contact Extensis to obtain it (see link at end of this page).</b> If you are
 using GCC, please, ensure that you have the same compiler as was used
 for DSDK compilation. It is C++ library, so you may get incompatibilities
 in C++ name mangling between different GCC versions (2.95.x and 3.x).<p>
@@ -35,8 +35,8 @@ in tag names. These characters replaced in GDAL with `_' during translation.
 So if you are using other software to work with MrSID be ready that names
 of metadata keys will be shown differently in GDAL.<p>
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files, and will be
-stored as XML raw content in the xml:XMP metadata domain.<p>
+Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files,
+and will be stored as XML raw content in the xml:XMP metadata domain.<p>
 
 <h2>Georeference</h2>
 
@@ -53,7 +53,7 @@ georeference information from them.<p>
 <ul>
 <li> Implemented as <tt>gdal/frmts/mrsid/mrsiddataset.cpp</tt>.<p>
 
-<li> <a href="http://www.lizardtech.com">LizardTech's web site<a><p>
+<li> <a href="http://www.extensis.com/support/developers">Extensis web site<a><p>
 
 </ul>
 

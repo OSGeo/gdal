@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 #
@@ -31,13 +31,13 @@
 
 import os
 import sys
+import pytest
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
     if os.path.dirname(sys.argv[0]) != '':
         os.chdir(os.path.dirname(sys.argv[0]))
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -46,13 +46,13 @@ import gdaltest
 # Test if DB2 and tile drivers are available
 
 
-def gpkg_init():
+def test_gpkg_init():
 
     gdaltest.db2_drv = None
 
     gdaltest.db2_drv = gdal.GetDriverByName('DB2ODBC')
     if gdaltest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.png_dr = gdal.GetDriverByName('PNG')
     gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
@@ -66,13 +66,10 @@ def gpkg_init():
     if 'DB2_TEST_SERVER' in os.environ:
         gdaltest.db2_test_server = "DB2ODBC:" + os.environ['DB2_TEST_SERVER']
     else:
-        gdaltest.post_reason('Environment variable DB2_TEST_SERVER not found')
         gdaltest.db2_drv = None
-        return 'skip'
+        pytest.skip('Environment variable DB2_TEST_SERVER not found')
 
     print("\ntest server: " + gdaltest.db2_test_server + "\n")
-
-    return 'success'
 
 ###############################################################################
 #
@@ -142,8 +139,8 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 
     if expected_format is None:
         if mime_type is None:
-            return 'success'
-        return 'fail'
+            return
+        pytest.fail()
 
     if expected_format == 'PNG':
         expected_mime_type = 'image/png'
@@ -152,30 +149,20 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
     elif expected_format == 'WEBP':
         expected_mime_type = 'image/x-webp'
 
-    if mime_type != expected_mime_type:
-        gdaltest.post_reason('fail')
-        print(mime_type)
-        return 'fail'
-    if band_count != expected_band_count:
-        gdaltest.post_reason('fail')
-        print(band_count)
-        return 'fail'
-    if expected_ct != has_ct:
-        gdaltest.post_reason('fail')
-        print(has_ct)
-        return 'fail'
-    return 'success'
+    assert mime_type == expected_mime_type
+    assert band_count == expected_band_count
+    assert expected_ct == has_ct
 
 ###############################################################################
 # Single band, PNG
 
 
-def gpkg_1():
+def test_gpkg_1():
 
     if gdaltest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.png_dr is None:
-        return 'skip'
+        pytest.skip()
 
     # With padding
     ds = gdal.Open('data/byte.tif')
@@ -190,49 +177,23 @@ def gpkg_1():
     out_ds = gdal.OpenEx(gdaltest.db2_test_server, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['TABLE=byte'])
 
     bnd = out_ds.GetRasterBand(1)
-    if bnd.Checksum() != 4672:
-        gdaltest.post_reason('Didnt get expected checksum on reopened file')
-        return 'fail'
+    assert bnd.Checksum() == 4672, 'Didnt get expected checksum on reopened file'
 
-    if bnd.ComputeRasterMinMax() != (74.0, 255.0):
-        gdaltest.post_reason('ComputeRasterMinMax() returned wrong value')
-        return 'fail'
+    assert bnd.ComputeRasterMinMax() == (74.0, 255.0), \
+        'ComputeRasterMinMax() returned wrong value'
 
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
-        if abs(expected_gt[i] - got_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert abs(expected_gt[i] - got_gt[i]) <= 1e-8
     got_wkt = out_ds.GetProjectionRef()
     print("\n** expected_wkt " + expected_wkt + " **\n")
     print("\n** got_wkt " + got_wkt + " **\n")
 #   string comparison doesn't work with DB2 due to differences in
 #   the WKT (similar but different)
 #   just check if it contains '11N' for NAD27 UTM zone 11N
-    if got_wkt.find('11N') == -1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert got_wkt.find('11N') != -1
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
-    if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
-
-    return 'success'
+    assert got_cs == expected_cs
 
 ###############################################################################
-
-
-gdaltest_list = [
-    gpkg_init,
-    gpkg_1
-]
-# gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gpkg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

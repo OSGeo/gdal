@@ -659,6 +659,11 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
     if (found == CPLString::npos)
         return CE_Failure;
     osRPCFilename.replace (found, osRPCFilename.size() - found, "_RPC.TXT");
+    if( papszMD == nullptr )
+    {
+        VSIUnlink(osRPCFilename);
+        return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */
@@ -743,6 +748,11 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 
 {
     CPLString osRPBFilename = CPLResetExtension( pszFilename, "RPB" );
+    if( papszMD == nullptr )
+    {
+        VSIUnlink(osRPBFilename);
+        return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */

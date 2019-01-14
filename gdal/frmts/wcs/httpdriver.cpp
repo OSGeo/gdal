@@ -147,6 +147,15 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
                     poOpenInfo->papszOpenOptions, nullptr);
     CPLPopErrorHandler();
 
+    // The JP2OpenJPEG driver may need to reopen the file, hence this special
+    // behaviour
+    if( poDS != nullptr && poDS->GetDriver() != nullptr &&
+        EQUAL(poDS->GetDriver()->GetDescription(), "JP2OpenJPEG") )
+    {
+        poDS->MarkSuppressOnClose();
+        return poDS;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If opening it in memory didn't work, perhaps we need to         */
 /*      write to a temp file on disk?                                   */

@@ -3941,39 +3941,39 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
             OGRJSonParse(pszValue, &poJSonObj, false) )
         {
-            const int nLength = json_object_array_length(poJSonObj);
+            const auto nLength = json_object_array_length(poJSonObj);
             if( eType == OFTIntegerList && nLength > 0 )
             {
                 std::vector<int> anValues;
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);
                     anValues.push_back( json_object_get_int( poItem ) );
                 }
-                SetField( iField, nLength, &(anValues[0]) );
+                SetField( iField, static_cast<int>(nLength), &(anValues[0]) );
             }
             else if( eType == OFTInteger64List && nLength > 0 )
             {
                 std::vector<GIntBig> anValues;
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);
                     anValues.push_back( json_object_get_int64( poItem ) );
                 }
-                SetField( iField, nLength, &(anValues[0]) );
+                SetField( iField, static_cast<int>(nLength), &(anValues[0]) );
             }
             else if( eType == OFTRealList && nLength > 0 )
             {
                 std::vector<double> adfValues;
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);
                     adfValues.push_back( json_object_get_double( poItem ) );
                 }
-                SetField( iField, nLength, &(adfValues[0]) );
+                SetField( iField, static_cast<int>(nLength), &(adfValues[0]) );
             }
 
             json_object_put(poJSonObj);
@@ -4078,8 +4078,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                      OGRJSonParse(pszValue, &poJSonObj, false) )
             {
                 CPLStringList aoList;
-                const int nLength = json_object_array_length(poJSonObj);
-                for( int i = 0; i < nLength; i++ )
+                const auto nLength = json_object_array_length(poJSonObj);
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poItem =
                         json_object_array_get_idx(poJSonObj, i);
@@ -4615,7 +4615,8 @@ void OGRFeature::SetField( int iField, const char * const * papszValues )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTStringList )
     {
-        if( papszValues != pauFields[iField].StringList.paList )
+        if( !IsFieldSetAndNotNull(iField) ||
+            papszValues != pauFields[iField].StringList.paList )
         {
             OGRField uField;
 
@@ -4738,7 +4739,7 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
  * @param pabyData the raw data being applied.
  */
 
-void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
+void OGRFeature::SetField( int iField, int nBytes, const void *pabyData )
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
@@ -4754,7 +4755,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
         uField.Binary.nCount = nBytes;
         uField.Set.nMarker2 = 0;
         uField.Set.nMarker3 = 0;
-        uField.Binary.paData = pabyData;
+        uField.Binary.paData = const_cast<GByte*>(static_cast<const GByte*>(pabyData));
 
         SetField( iField, &uField );
     }
@@ -4793,7 +4794,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
  */
 
 void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
-                           int nBytes, GByte *pabyData )
+                           int nBytes, const void *pabyData )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldBinary" );

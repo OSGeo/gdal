@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
@@ -27,9 +27,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -37,7 +35,7 @@ import gdaltest
 ###############################################################################
 
 
-def terragen_1():
+def test_terragen_1():
 
     tst = gdaltest.GDALTest('terragen', 'float32.ter', 1, 1128)
 
@@ -47,29 +45,16 @@ def terragen_1():
 # Write
 
 
-def terragen_2():
+def test_terragen_2():
 
     gdal.Translate('/vsimem/out.ter', 'data/float32.tif', options='-of TERRAGEN -co MINUSERPIXELVALUE=74 -co MAXUSERPIXELVALUE=255')
     gdal.Translate('/vsimem/out.tif', '/vsimem/out.ter', options='-unscale')
     ds = gdal.Open('/vsimem/out.tif')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
     gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.ter')
     gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.tif')
-    return 'success'
 
 
-gdaltest_list = [
-    terragen_1,
-    terragen_2
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('TERRAGEN')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

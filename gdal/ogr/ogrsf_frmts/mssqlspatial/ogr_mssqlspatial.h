@@ -34,6 +34,13 @@
 #include "cpl_odbc.h"
 #include "cpl_error.h"
 
+#ifdef SQLNCLI_VERSION
+#include <sqlncli.h>
+#endif
+#ifdef MSODBCSQL_VERSION
+#include <msodbcsql.h>
+#endif
+
 class OGRMSSQLSpatialDataSource;
 
 /* layer status */
@@ -202,30 +209,30 @@ public:
 class OGRMSSQLSpatialLayer : public OGRLayer
 {
     protected:
-    OGRFeatureDefn     *poFeatureDefn;
-    int                 nRawColumns;
+    OGRFeatureDefn     *poFeatureDefn = nullptr;
+    int                 nRawColumns = 0;
 
-    CPLODBCStatement   *poStmt;
+    CPLODBCStatement   *poStmt = nullptr;
 
     // Layer spatial reference system, and srid.
-    OGRSpatialReference *poSRS;
-    int                 nSRSId;
+    OGRSpatialReference *poSRS = nullptr;
+    int                 nSRSId = 0;
 
-    GIntBig             iNextShapeId;
+    GIntBig             iNextShapeId = 0;
 
-    OGRMSSQLSpatialDataSource    *poDS;
+    OGRMSSQLSpatialDataSource    *poDS = nullptr;
 
-    int                nGeomColumnType;
-    char               *pszGeomColumn;
-    int                nGeomColumnIndex;
-    char               *pszFIDColumn;
-    int                nFIDColumnIndex;
+    int                nGeomColumnType = -1;
+    char               *pszGeomColumn = nullptr;
+    int                nGeomColumnIndex = -1;
+    char               *pszFIDColumn = nullptr;
+    int                nFIDColumnIndex = -1;
 
-    int                bIsIdentityFid;
+    int                bIsIdentityFid = FALSE;
 
-    int                nLayerStatus;
+    int                nLayerStatus = MSSQLLAYERSTATUS_ORIGINAL;
 
-    int                *panFieldOrdinals;
+    int                *panFieldOrdinals = nullptr;
 
     CPLErr              BuildFeatureDefn( const char *pszLayerName,
                                           CPLODBCStatement *poStmt );
@@ -294,23 +301,29 @@ typedef union {
 
 class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 {
-    int                 bUpdateAccess;
-    int                 bLaunderColumnNames;
-    int                 bPreservePrecision;
-    int                 bNeedSpatialIndex;
-    int                 bUseCopy;
-    int                 nBCPSize;
+    bool                bUpdateAccess = true;
+    int                 bLaunderColumnNames = FALSE;
+    int                 bPreservePrecision = FALSE;
+    int                 bNeedSpatialIndex = FALSE;
+    int                 bUseCopy = FALSE;
+    int                 nBCPSize = 1000;
 
-    int                 nUploadGeometryFormat;
+#ifdef SQL_SS_UDT
+    int                 nUploadGeometryFormat = MSSQLGEOMETRY_NATIVE;
+#else
+    int                 nUploadGeometryFormat = MSSQLGEOMETRY_WKB;
+#endif
 
-    char                *pszQuery;
+    char                *pszQuery = nullptr;
 
-    SQLHANDLE           hEnvBCP;
-    SQLHANDLE           hDBCBCP;
-    int                 nBCPCount;
-    BCPData             **papstBindBuffer;
+    SQLHANDLE           hEnvBCP = nullptr;
+#ifdef MSSQL_BCP_SUPPORTED
+    SQLHANDLE           hDBCBCP = nullptr;
+    int                 nBCPCount = 0;
+    BCPData             **papstBindBuffer = nullptr;
 
-    int                 bIdentityInsert;
+    int                 bIdentityInsert = FALSE;
+#endif
 
     void                ClearStatement();
     CPLODBCStatement* BuildStatement(const char* pszColumns);
@@ -319,11 +332,11 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 
     virtual CPLODBCStatement *  GetStatement() override;
 
-    char               *pszTableName;
-    char               *pszLayerName;
-    char               *pszSchemaName;
+    char               *pszTableName = nullptr;
+    char               *pszLayerName = nullptr;
+    char               *pszSchemaName = nullptr;
 
-    OGRwkbGeometryType eGeomType;
+    OGRwkbGeometryType eGeomType = wkbNone;
 
   public:
     explicit            OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );
@@ -378,6 +391,7 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     int                 FetchSRSId();
 
     void                SetUseCopy(int bcpSize) { bUseCopy = TRUE; nBCPSize = bcpSize; }
+    void                SetUpdate(bool bFlag) { bUpdateAccess = bFlag; }
 
     // cppcheck-suppress functionStatic
     OGRErr              StartCopy();
@@ -436,12 +450,13 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
 
     char               *pszCatalog;
 
-    int                 bDSUpdate;
+    bool                bDSUpdate;
     CPLODBCSession      oSession;
 
     int                 nGeometryFormat;
 
     int                 bUseGeometryColumns;
+    bool                bAlwaysOutputFid;
 
     int                 bListAllTables;
 
@@ -467,11 +482,11 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
     static int                 ParseValue(char** pszValue, char* pszSource, const char* pszKey,
                                   int nStart, int nNext, int nTerm, int bRemove);
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char *, bool bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszSchemaName, const char *pszTableName,
                                    const char *pszGeomCol,int nCoordDimension,
                                    int nSRID, const char *pszSRText,
-                                   OGRwkbGeometryType eType, int bUpdate );
+                                   OGRwkbGeometryType eType, bool bUpdate );
 
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override;
@@ -480,6 +495,7 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
 
     int                 GetGeometryFormat() { return nGeometryFormat; }
     int                 UseGeometryColumns() { return bUseGeometryColumns; }
+    bool                AlwaysOutputFid() { return bAlwaysOutputFid; }
 
     virtual OGRErr       DeleteLayer( int iLayer ) override;
     virtual OGRLayer    *ICreateLayer( const char *,

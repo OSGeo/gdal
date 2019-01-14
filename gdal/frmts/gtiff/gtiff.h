@@ -97,7 +97,7 @@ uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
 #endif
 
 #if !defined(COMPRESSION_ZSTD)
-#define     COMPRESSION_ZSTD        34926   /* ZSTD */
+#define     COMPRESSION_ZSTD        50000   /* ZSTD */
 #endif
 
 #if !defined(TIFFTAG_ZSTD_LEVEL)
@@ -106,6 +106,18 @@ uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
  
 #if !defined(COMPRESSION_LERC)
 #define     COMPRESSION_LERC        34887   /* LERC */
+#endif
+
+#if !defined(COMPRESSION_WEBP)
+#define     COMPRESSION_WEBP        50001   /* WebP */
+#endif
+
+#if !defined(TIFFTAG_WEBP_LEVEL)
+#define     TIFFTAG_WEBP_LEVEL        65568   /* WebP compression level */
+#endif
+
+#if !defined(TIFFTAG_WEBP_LOSSLESS)
+#define     TIFFTAG_WEBP_LOSSLESS     65569 /* WebP lossless/lossy */
 #endif
 
 #endif // GTIFF_H_INCLUDED

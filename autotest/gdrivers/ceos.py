@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,20 +37,11 @@ import gdaltest
 # contains 3 complete scanlines.  Bizarre little endian CEOS variant. (#1862)
 
 
-def ceos_1():
+def test_ceos_1():
 
     tst = gdaltest.GDALTest('CEOS', 'IMAGERY-75K.L-3', 4, 9956,
                             xoff=0, yoff=0, xsize=5932, ysize=3)
     return tst.testOpen()
 
 
-gdaltest_list = [
-    ceos_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ceos')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

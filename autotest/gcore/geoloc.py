@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,9 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,19 +37,10 @@ import gdaltest
 # Verify warped result.
 
 
-def geoloc_1():
+def test_geoloc_1():
 
     tst = gdaltest.GDALTest('VRT', 'warpsst.vrt', 1, 61818)
     return tst.testOpen(check_filelist=False)
 
 
-gdaltest_list = [
-    geoloc_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('geoloc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

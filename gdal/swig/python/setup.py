@@ -7,7 +7,7 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '2.3.0'
+gdal_version = '2.4.0'
 
 import sys
 import os
@@ -91,9 +91,10 @@ try:
     else:
         #  print ('numpy include', get_numpy_include())
         if get_numpy_include() == '.':
-            print("numpy headers were not found!  Array support will not be enabled")
+            print("WARNING: numpy headers were not found!  Array support will not be enabled")
             HAVE_NUMPY = False
 except ImportError:
+    print('WARNING: numpy not available!  Array support will not be enabled')
     pass
 
 fixer_names = [

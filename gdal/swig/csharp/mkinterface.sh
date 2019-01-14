@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BINDING='csharp'
-SWIG='swig'
+SWIG='swig -DSWIG2_CSHARP'
 SWIGARGS='-Wall -I../include -I../include/csharp -I../..'
 
 $SWIG -$BINDING -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o const/gdalconst_wrap.c ../include/gdalconst.i

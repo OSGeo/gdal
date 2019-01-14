@@ -156,7 +156,7 @@ bool BitStuffer2::EncodeLut(Byte** ppByte, const vector<pair<unsigned int, unsig
 
 // if you change Encode(...) / Decode(...), don't forget to update ComputeNumBytesNeeded(...)
 
-bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<unsigned int>& dataVec, int lerc2Version) const
+bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<unsigned int>& dataVec, size_t maxElementCount, int lerc2Version) const
 {
   if (!ppByte || nBytesRemaining < 1)
     return false;
@@ -174,6 +174,8 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<un
 
   unsigned int numElements = 0;
   if (!DecodeUInt(ppByte, nBytesRemaining, numElements, nb))
+    return false;
+  if (numElements > maxElementCount)
     return false;
 
   if (!doLut)
@@ -194,7 +196,7 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<un
   }
   else
   {
-    if (numBits == 0)
+    if (numBits == 0)  // fail gracefully in case of corrupted blob for old version <= 2 which had no checksum
       return false;
     if (nBytesRemaining < 1)
       return false;
@@ -223,27 +225,38 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<un
     if (nBitsLut == 0)
       return false;
 
-    // unstuff indexes
     if (lerc2Version >= 3)
     {
+      // unstuff indexes
       if (!BitUnStuff(ppByte, nBytesRemaining, dataVec, numElements, nBitsLut))
         return false;
+
+      // replace indexes by values
+      m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
+      for (unsigned int i = 0; i < numElements; i++)
+      {
+#ifdef GDAL_COMPILATION
+        if (dataVec[i] >= m_tmpLutVec.size())
+          return false;
+#endif
+        dataVec[i] = m_tmpLutVec[dataVec[i]];
+      }
     }
     else
     {
+      // unstuff indexes
       if (!BitUnStuff_Before_Lerc2v3(ppByte, nBytesRemaining, dataVec, numElements, nBitsLut))
         return false;
-    }
 
-    // replace indexes by values
-    m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
-    for (unsigned int i = 0; i < numElements; i++)
-    {
-      if( dataVec[i] >= m_tmpLutVec.size() )
+      // replace indexes by values
+      m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
+      for (unsigned int i = 0; i < numElements; i++)
       {
-        return false;
+        if (dataVec[i] >= m_tmpLutVec.size())
+          return false;
+
+        dataVec[i] = m_tmpLutVec[dataVec[i]];
       }
-      dataVec[i] = m_tmpLutVec[dataVec[i]];
     }
   }
 
@@ -345,7 +358,14 @@ void BitStuffer2::BitStuff_Before_Lerc2v3(Byte** ppByte, const vector<unsigned i
 bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, 
     vector<unsigned int>& dataVec, unsigned int numElements, int numBits)
 {
-  dataVec.resize(numElements, 0);    // init with 0
+  try
+  {
+    dataVec.resize(numElements, 0);    // init with 0
+  }
+  catch( const std::bad_alloc& )
+  {
+    return false;
+  }
 
   unsigned int numUInts = (numElements * numBits + 31) / 32;
   unsigned int numBytes = numUInts * sizeof(unsigned int);
@@ -464,15 +484,30 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
 bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vector<unsigned int>& dataVec,
   unsigned int numElements, int numBits) const
 {
-  if( numElements == 0 )
+  if (numElements == 0)
     return false;
 
-  dataVec.resize(numElements);
+  try
+  {
+    dataVec.resize(numElements);
+  }
+  catch( const std::bad_alloc& )
+  {
+    return false;
+  }
 
   unsigned int numUInts = (numElements * numBits + 31) / 32;
   unsigned int numBytes = numUInts * sizeof(unsigned int);
 
-  m_tmpBitStuffVec.resize(numUInts);
+  try
+  {
+    m_tmpBitStuffVec.resize(numUInts);
+  }
+  catch( const std::bad_alloc& )
+  {
+    return false;
+  }
+
   m_tmpBitStuffVec[numUInts - 1] = 0;    // set last uint to 0
 
   // copy the bytes from the incoming byte stream

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,13 +31,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Test create
@@ -46,22 +45,17 @@ import test_cli_utilities
 
 def test_gnmmanage_1():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" tmp')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     try:
         os.stat('tmp/test_gnm')
     except OSError:
-        gdaltest.post_reason('Expected create tmp/test_gnm')
-        return 'fail'
+        pytest.fail('Expected create tmp/test_gnm')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test import
 # gnmmanage import /home/bishop/tmp/data/pipes.shp /home/bishop/tmp/test_gnm --config CPL_DEBUG ON
@@ -70,21 +64,13 @@ def test_gnmmanage_1():
 
 def test_gnmmanage_2():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/pipes.shp tmp/test_gnm')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' import ../gnm/data/wells.shp tmp/test_gnm')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
-
-    return 'success'
+    assert (err is None or err == ''), 'got error/warning'
 
 ###############################################################################
 # Test info
@@ -93,21 +79,13 @@ def test_gnmmanage_2():
 
 def test_gnmmanage_3():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' info tmp/test_gnm')
 
-    if ret.find('Network version: 1.0.') == -1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ret.find('Network name: test_gnm.') == -1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ret.find('Network description') == -1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Network version: 1.0.') != -1
+    assert ret.find('Network name: test_gnm.') != -1
+    assert ret.find('Network description') != -1
 
 ###############################################################################
 # Test autoconect
@@ -116,13 +94,10 @@ def test_gnmmanage_3():
 
 def test_gnmmanage_4():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmmanage_path() + ' autoconnect 0.000001 tmp/test_gnm')
-    if ret.find('success') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('success') != -1
 
 ###############################################################################
 # Test dijkstra
@@ -131,15 +106,12 @@ def test_gnmmanage_4():
 
 def test_gnmanalyse_1():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gnmanalyse_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' dijkstra 61 50 tmp/test_gnm')
-    if ret.find('Feature Count: 19') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 19') != -1
 
 ###############################################################################
 # Test kpaths
@@ -148,15 +120,12 @@ def test_gnmanalyse_1():
 
 def test_gnmanalyse_2():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gnmanalyse_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gnmanalyse_path() + ' kpaths 61 50 3 tmp/test_gnm')
-    if ret.find('Feature Count: 61') == -1:
-        return 'fail'
-
-    return 'success'
+    assert ret.find('Feature Count: 61') != -1
 
 ###############################################################################
 # Test cleanup
@@ -164,39 +133,16 @@ def test_gnmanalyse_2():
 
 def test_gnm_cleanup():
     if test_cli_utilities.get_gnmmanage_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gnmmanage_path() + ' delete tmp/test_gnm')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
-    try:
+    with pytest.raises(OSError, message='Expected delete tmp/test_gnm'):
         os.stat('tmp/test_gnm')
-        gdaltest.post_reason('Expected delete tmp/test_gnm')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_gnmmanage_1,
-    test_gnmmanage_2,
-    test_gnmmanage_3,
-    test_gnmmanage_4,
-    test_gnmanalyse_1,
-    test_gnmanalyse_2,
-    test_gnm_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gnmutils')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

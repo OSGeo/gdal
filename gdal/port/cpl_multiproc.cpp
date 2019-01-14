@@ -54,6 +54,7 @@
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 
 CPL_CVSID("$Id$")
@@ -82,6 +83,7 @@ struct _CPLLock
     } u;
 
 #ifdef DEBUG_CONTENTION
+    bool     bDebugPerfAsked;
     bool     bDebugPerf;
     volatile int nCurrentHolders;
     GUIntBig nStartTime;
@@ -1342,11 +1344,54 @@ void CPLCleanupTLS()
 
 int CPLGetNumCPUs()
 {
+    int nCPUs;
 #ifdef _SC_NPROCESSORS_ONLN
-    return static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
+    nCPUs = static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
 #else
-    return 1;
+    nCPUs = 1;
 #endif
+
+    // In a Docker/LXC containers the number of CPUs might be limited
+    FILE* f = fopen("/sys/fs/cgroup/cpuset/cpuset.cpus", "rb");
+    if(f)
+    {
+        constexpr size_t nMaxCPUs = 8*64; // 8 Sockets * 64 threads = 512
+        constexpr size_t nBuffSize(nMaxCPUs*4); // 3 digits + delimiter per CPU
+        char*            pszBuffer =
+                            reinterpret_cast<char*>(CPLMalloc(nBuffSize));
+        const size_t     nRead = fread(pszBuffer, 1, nBuffSize - 1, f);
+        pszBuffer[nRead] = 0;
+        fclose(f);
+        char **papszCPUsList =
+            CSLTokenizeStringComplex(pszBuffer, ",", FALSE, FALSE);
+
+        CPLFree(pszBuffer);
+
+        int nCpusetCpus = 0;
+        for(int i = 0; papszCPUsList[i] != nullptr; ++i)
+        {
+            if(strchr(papszCPUsList[i], '-'))
+            {
+                char **papszCPUsRange =
+                  CSLTokenizeStringComplex(papszCPUsList[i], "-", FALSE, FALSE);
+                if(CSLCount(papszCPUsRange) == 2)
+                {
+                    int iBegin(atoi(papszCPUsRange[0]));
+                    int iEnd(atoi(papszCPUsRange[1]));
+                    nCpusetCpus += (iEnd - iBegin + 1);
+                }
+                CSLDestroy(papszCPUsRange);
+            }
+            else
+            {
+                ++nCpusetCpus;
+            }
+        }
+        CSLDestroy(papszCPUsList);
+        nCPUs = std::min(nCPUs, std::max(1, nCpusetCpus));
+    }
+
+    return nCPUs;
 }
 
 /************************************************************************/
@@ -2352,6 +2397,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->u.hMutex = hMutex;
 #ifdef DEBUG_CONTENTION
             psLock->bDebugPerf = false;
+            psLock->bDebugPerfAsked = false;
             psLock->nCurrentHolders = 0;
             psLock->nStartTime = 0;
 #endif
@@ -2373,6 +2419,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->u.hSpinLock = hSpinLock;
 #ifdef DEBUG_CONTENTION
             psLock->bDebugPerf = false;
+            psLock->bDebugPerfAsked = false;
             psLock->nCurrentHolders = 0;
             psLock->nStartTime = 0;
 #endif
@@ -2392,7 +2439,7 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 {
 #ifdef DEBUG_CONTENTION
     GUIntBig nStartTime = 0;
-    if( (*ppsLock) && (*ppsLock)->bDebugPerf )
+    if( (*ppsLock) && (*ppsLock)->bDebugPerfAsked )
         nStartTime = CPLrdtsc();
 #endif
     int ret = 0;
@@ -2415,12 +2462,11 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
             return FALSE;
     }
 #ifdef DEBUG_CONTENTION
-    if( ret && CPLAtomicInc(&((*ppsLock)->nCurrentHolders)) == 1 )
+    if( ret && (*ppsLock)->bDebugPerfAsked &&
+        CPLAtomicInc(&((*ppsLock)->nCurrentHolders)) == 1 )
     {
-        if( (*ppsLock)->bDebugPerf )
-        {
-            (*ppsLock)->nStartTime = nStartTime;
-        }
+        (*ppsLock)->bDebugPerf = true;
+        (*ppsLock)->nStartTime = nStartTime;
     }
 #endif
     return ret;
@@ -2434,7 +2480,7 @@ int CPLAcquireLock( CPLLock* psLock )
 {
 #ifdef DEBUG_CONTENTION
     GUIntBig nStartTime = 0;
-    if( psLock->bDebugPerf )
+    if( psLock->bDebugPerfAsked )
         nStartTime = CPLrdtsc();
 #endif
     int ret;
@@ -2443,12 +2489,11 @@ int CPLAcquireLock( CPLLock* psLock )
     else
         ret =  CPLAcquireMutex( psLock->u.hMutex, 1000 );
 #ifdef DEBUG_CONTENTION
-    if( ret && CPLAtomicInc(&(psLock->nCurrentHolders)) == 1 )
+    if( ret && psLock->bDebugPerfAsked &&
+        CPLAtomicInc(&(psLock->nCurrentHolders)) == 1 )
     {
-        if( psLock->bDebugPerf )
-        {
-            psLock->nStartTime = nStartTime;
-        }
+        psLock->bDebugPerf = true;
+        psLock->nStartTime = nStartTime;
     }
 #endif
     return ret;
@@ -2465,9 +2510,8 @@ void CPLReleaseLock( CPLLock* psLock )
     GIntBig nMaxDiff = 0;
     double dfAvgDiff = 0;
     GUIntBig nIters = 0;
-    if( CPLAtomicDec(&(psLock->nCurrentHolders)) == 0 &&
-        psLock->bDebugPerf &&
-        psLock->nStartTime )
+    if( psLock->bDebugPerf &&
+        CPLAtomicDec(&(psLock->nCurrentHolders)) == 0 )
     {
         const GUIntBig nStopTime = CPLrdtscp();
         const GIntBig nDiffTime =
@@ -2518,7 +2562,7 @@ void CPLDestroyLock( CPLLock* psLock )
 #ifdef DEBUG_CONTENTION
 void CPLLockSetDebugPerf(CPLLock* psLock, int bEnableIn)
 {
-    psLock->bDebugPerf = CPL_TO_BOOL(bEnableIn);
+    psLock->bDebugPerfAsked = CPL_TO_BOOL(bEnableIn);
 }
 #else
 void CPLLockSetDebugPerf(CPLLock* /* psLock */, int bEnableIn)

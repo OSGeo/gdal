@@ -186,7 +186,7 @@ CXXFLAGS :=	$(CXXFLAGS) -DCLOUDANT_ENABLED
 endif
 
 ifeq ($(HAVE_FREEXL),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DFREEXL_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DXLS_ENABLED
 endif
 
 ifeq ($(HAVE_EXPAT),yes)
@@ -229,6 +229,10 @@ ifeq ($(HAVE_CAD),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DCAD_ENABLED
 endif
 
+ifeq ($(CURL_SETTING),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DNGW_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
@@ -237,4 +241,3 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 $(O_OBJ):	../../../GDALmake.opt ../../swq.h
-

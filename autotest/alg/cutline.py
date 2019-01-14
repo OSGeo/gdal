@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,18 +30,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import ogrtest
 import gdaltest
+import pytest
 
 ###############################################################################
 
 
-def cutline_1():
+def test_cutline_1():
 
     tst = gdaltest.GDALTest('VRT', 'cutline_noblend.vrt', 1, 11409)
     return tst.testOpen()
@@ -49,10 +48,10 @@ def cutline_1():
 ###############################################################################
 
 
-def cutline_2():
+def test_cutline_2():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'cutline_blend.vrt', 1, 21395)
     return tst.testOpen()
@@ -60,10 +59,10 @@ def cutline_2():
 ###############################################################################
 
 
-def cutline_3():
+def test_cutline_3():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'cutline_multipolygon.vrt', 1, 20827)
     return tst.testOpen()
@@ -71,10 +70,10 @@ def cutline_3():
 ###############################################################################
 
 
-def cutline_4():
+def test_cutline_4():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Translate('/vsimem/utmsmall.tif', '../gcore/data/utmsmall.tif')
     ds.BuildOverviews('NEAR', [2])
@@ -113,28 +112,11 @@ def cutline_4():
 </VRTDataset>""")
     out_ds = gdal.Translate('', ds, options='-of MEM -outsize 50%% 50%%')
     cs = out_ds.GetRasterBand(1).Checksum()
-    if cs != 5170:
-        print(cs)
-        return 'fail'
+    assert cs == 5170
 
     gdal.Unlink('/vsimem/utmsmall.tif')
-
-    return 'success'
 
 ###############################################################################
 
 
-gdaltest_list = [
-    cutline_1,
-    cutline_2,
-    cutline_3,
-    cutline_4
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('cutline')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

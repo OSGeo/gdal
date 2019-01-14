@@ -161,6 +161,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
               static_cast<int>(nOffset), static_cast<int>(nWhence) );
 #endif
     bEOF = false;
+    int ret = 0;
     if( nWhence == SEEK_CUR )
     {
         nCurOffset += nOffset;
@@ -173,7 +174,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
         else
         {
-            m_poBaseHandle->Seek(nOffset, nWhence);
+            ret = m_poBaseHandle->Seek(nOffset, nWhence);
             nCurOffset = m_poBaseHandle->Tell();
             bNeedBaseHandleSeek = true;
         }
@@ -183,7 +184,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
         nCurOffset = nOffset;
     }
 
-    return 0;
+    return ret;
 }
 
 /************************************************************************/

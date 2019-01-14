@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 #
@@ -29,14 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Common usage tests.
@@ -85,12 +83,12 @@ def is_same(A, B):
             return False
 
 
-def algebra_setup():
+def test_algebra_setup():
 
     global ds, A, B, C, pointInB, D1, D2, empty
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     # Create three memory layers for intersection.
 
@@ -157,12 +155,10 @@ def algebra_setup():
 
     empty = ds.CreateLayer('empty')
 
-    return 'success'
 
-
-def algebra_intersection():
+def test_algebra_intersection():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -170,22 +166,15 @@ def algebra_intersection():
 
     err = A.Intersection(B, C)
 
-    if err != 0:
-        gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Intersection')
-        return 'fail'
+    assert err == 0, \
+        ('got non-zero result code ' + str(err) + ' from Layer.Intersection')
 
     C_defn = C.GetLayerDefn()
-    if C_defn.GetFieldCount() != 2 \
-       or C_defn.GetFieldDefn(0).GetName() != 'A' \
-       or C_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger \
-       or C_defn.GetFieldDefn(1).GetName() != 'B' \
-       or C_defn.GetFieldDefn(1).GetType() != ogr.OFTString:
-        gdaltest.post_reason('Did not get expected output schema.')
-        return 'fail'
+    assert C_defn.GetFieldCount() == 2 and C_defn.GetFieldDefn(0).GetName() == 'A' and C_defn.GetFieldDefn(0).GetType() == ogr.OFTInteger and C_defn.GetFieldDefn(1).GetName() == 'B' and C_defn.GetFieldDefn(1).GetType() == ogr.OFTString, \
+        'Did not get expected output schema.'
 
-    if C.GetFeatureCount() != 2:
-        gdaltest.post_reason('Layer.Intersection returned ' + str(C.GetFeatureCount()) + ' features')
-        return 'fail'
+    assert C.GetFeatureCount() == 2, \
+        ('Layer.Intersection returned ' + str(C.GetFeatureCount()) + ' features')
 
     f1 = (ogr.Geometry(wkt='POLYGON ((2 3,3 3,3 2,2 2,2 3))'), 1, 'first')
     f2 = (ogr.Geometry(wkt='POLYGON ((5 2,5 3,6 3,6 2,5 2))'), 2, 'first')
@@ -198,16 +187,13 @@ def algebra_intersection():
 
         g = feat.GetGeometryRef()
         if g.Equals(f1[0]):
-            if feat.GetField('A') != f1[1] or feat.GetField('B') != f1[2]:
-                gdaltest.post_reason('Did not get expected field values.')
-                return 'fail'
+            assert feat.GetField('A') == f1[1] and feat.GetField('B') == f1[2], \
+                'Did not get expected field values.'
         elif g.Equals(f2[0]):
-            if feat.GetField('A') != f2[1] or feat.GetField('B') != f2[2]:
-                gdaltest.post_reason('Did not get expected field values.')
-                return 'fail'
+            assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
+                'Did not get expected field values.'
         else:
-            gdaltest.post_reason('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
-            return 'fail'
+            pytest.fail('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
 
     # This time we test with PROMOTE_TO_MULTI and pre-created output fields.
     recreate_layer_C()
@@ -216,13 +202,11 @@ def algebra_intersection():
 
     err = A.Intersection(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if err != 0:
-        gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Intersection')
-        return 'fail'
+    assert err == 0, \
+        ('got non-zero result code ' + str(err) + ' from Layer.Intersection')
 
-    if C.GetFeatureCount() != 2:
-        gdaltest.post_reason('Layer.Intersection returned ' + str(C.GetFeatureCount()) + ' features')
-        return 'fail'
+    assert C.GetFeatureCount() == 2, \
+        ('Layer.Intersection returned ' + str(C.GetFeatureCount()) + ' features')
 
     f1 = (ogr.Geometry(wkt='MULTIPOLYGON (((2 3,3 3,3 2,2 2,2 3)))'), 1, 'first')
     f2 = (ogr.Geometry(wkt='MULTIPOLYGON (((5 2,5 3,6 3,6 2,5 2)))'), 2, 'first')
@@ -235,21 +219,13 @@ def algebra_intersection():
 
         g = feat.GetGeometryRef()
         if g.Equals(f1[0]):
-            if feat.GetField('A') != f1[1] or feat.GetField('B') != f1[2]:
-                gdaltest.post_reason('Did not get expected field values. (1)')
-                print(feat.GetField('A'))
-                print(feat.GetField('B'))
-                return 'fail'
+            assert feat.GetField('A') == f1[1] and feat.GetField('B') == f1[2], \
+                'Did not get expected field values. (1)'
         elif g.Equals(f2[0]):
-            if feat.GetField('A') != f2[1] or feat.GetField('B') != f2[2]:
-                gdaltest.post_reason('Did not get expected field values. (2)')
-                print(feat.GetField('A'))
-                print(feat.GetField('B'))
-                print(feat.GetField('B'))
-                return 'fail'
+            assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
+                'Did not get expected field values. (2)'
         else:
-            gdaltest.post_reason('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
-            return 'fail'
+            pytest.fail('Layer.Intersection returned wrong geometry: ' + g.ExportToWkt())
 
     recreate_layer_C()
 
@@ -257,20 +233,15 @@ def algebra_intersection():
 
     err = D1.Intersection(D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
 
-    if err != 0:
-        gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Intersection')
-        return 'fail'
+    assert err == 0, \
+        ('got non-zero result code ' + str(err) + ' from Layer.Intersection')
 
-    if not is_same(D1, C):
-        gdaltest.post_reason('D1 != C')
-        return 'fail'
-
-    return 'success'
+    assert is_same(D1, C), 'D1 != C'
 
 
-def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
+def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     driver = ogr.GetDriverByName('MEMORY')
     ds = driver.CreateDataSource('ds')
@@ -303,46 +274,37 @@ def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
 
     layer3 = ds.CreateLayer('layer3a')
     layer1.Intersection(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
-    if layer3.GetFeatureCount() != 0:
-        gdaltest.post_reason('Lower dimension geometries not removed in intersection')
-        return 'fail'
+    assert layer3.GetFeatureCount() == 0, \
+        'Lower dimension geometries not removed in intersection'
 
     layer3 = ds.CreateLayer('layer3b')
     layer1.Intersection(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=YES'])
-    if layer3.GetFeatureCount() != 2:
-        gdaltest.post_reason('Lower dimension geometries not kept in intersection')
-        return 'fail'
+    assert layer3.GetFeatureCount() == 2, \
+        'Lower dimension geometries not kept in intersection'
 
     layer3 = ds.CreateLayer('layer3c')
     layer1.Union(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
-    if layer3.GetFeatureCount() != 4:
-        gdaltest.post_reason('Lower dimension geometries not removed in union')
-        return 'fail'
+    assert layer3.GetFeatureCount() == 4, \
+        'Lower dimension geometries not removed in union'
 
     layer3 = ds.CreateLayer('layer3d')
     layer1.Union(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=YES'])
-    if layer3.GetFeatureCount() != 6:
-        gdaltest.post_reason('Lower dimension geometries not kept in union')
-        return 'fail'
+    assert layer3.GetFeatureCount() == 6, 'Lower dimension geometries not kept in union'
 
     layer3 = ds.CreateLayer('layer3e')
     layer1.Identity(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
-    if layer3.GetFeatureCount() != 2:
-        gdaltest.post_reason('Lower dimension geometries not removed in identity')
-        return 'fail'
+    assert layer3.GetFeatureCount() == 2, \
+        'Lower dimension geometries not removed in identity'
 
     layer3 = ds.CreateLayer('layer3f')
     layer1.Identity(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=YES'])
-    if layer3.GetFeatureCount() != 4:
-        gdaltest.post_reason('Lower dimension geometries not kept in identity')
-        return 'fail'
-
-    return 'success'
+    assert layer3.GetFeatureCount() == 4, \
+        'Lower dimension geometries not kept in identity'
 
 
-def algebra_union():
+def test_algebra_union():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -351,26 +313,20 @@ def algebra_union():
     err = A.Union(B, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Union')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        if C.GetFeatureCount() != 5:
-            gdaltest.post_reason('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 5, \
+            ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Union(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Union')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        if C.GetFeatureCount() != 5:
-            gdaltest.post_reason('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 5, \
+            ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -379,13 +335,9 @@ def algebra_union():
     err = D1.Union(D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Union')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        if not is_same(D1, C):
-            gdaltest.post_reason('D1 != C')
-            return 'fail'
+        assert is_same(D1, C), 'D1 != C'
 
     recreate_layer_C()
 
@@ -394,20 +346,16 @@ def algebra_union():
     err = B.Union(pointInB, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Union')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        if C.GetFeatureCount() != 2:
-            gdaltest.post_reason('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 2, \
+            ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
 
-    return 'success'
+    
 
-
-def algebra_symdifference():
+def test_algebra_symdifference():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -416,26 +364,20 @@ def algebra_symdifference():
     err = A.SymDifference(B, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
 
-        if C.GetFeatureCount() != 3:
-            gdaltest.post_reason('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 3, \
+            ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.SymDifference(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
 
-        if C.GetFeatureCount() != 3:
-            gdaltest.post_reason('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 3, \
+            ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -444,20 +386,15 @@ def algebra_symdifference():
     err = D1.SymDifference(D2, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
 
-    if C.GetFeatureCount() != 0:
-        gdaltest.post_reason('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
-        return 'fail'
-
-    return 'success'
+    assert C.GetFeatureCount() == 0, \
+        ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
 
 
-def algebra_identify():
+def test_algebra_identify():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -466,26 +403,20 @@ def algebra_identify():
     err = A.Identity(B, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Identity')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
 
-        if C.GetFeatureCount() != 4:
-            gdaltest.post_reason('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 4, \
+            ('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Identity(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Identity')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
 
-        if C.GetFeatureCount() != 4:
-            gdaltest.post_reason('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 4, \
+            ('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -494,20 +425,15 @@ def algebra_identify():
     err = D1.Identity(D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Identity')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
 
-        if not is_same(D1, C):
-            gdaltest.post_reason('D1 != C')
-            return 'fail'
+        assert is_same(D1, C), 'D1 != C'
 
-    return 'success'
+    
 
-
-def algebra_update():
+def test_algebra_update():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -516,26 +442,20 @@ def algebra_update():
     err = A.Update(B, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Update')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
 
-        if C.GetFeatureCount() != 3:
-            gdaltest.post_reason('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 3, \
+            ('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Update(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Update')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
 
-        if C.GetFeatureCount() != 3:
-            gdaltest.post_reason('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 3, \
+            ('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -544,20 +464,15 @@ def algebra_update():
     err = D1.Update(D2, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Update')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
 
-        if not is_same(D1, C):
-            gdaltest.post_reason('D1 != C')
-            return 'fail'
+        assert is_same(D1, C), 'D1 != C'
 
-    return 'success'
+    
 
-
-def algebra_clip():
+def test_algebra_clip():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -566,26 +481,20 @@ def algebra_clip():
     err = A.Clip(B, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Clip')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
 
-        if C.GetFeatureCount() != 2:
-            gdaltest.post_reason('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 2, \
+            ('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Clip(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Clip')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
 
-        if C.GetFeatureCount() != 2:
-            gdaltest.post_reason('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 2, \
+            ('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -594,20 +503,15 @@ def algebra_clip():
     err = D1.Update(D2, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Clip')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
 
-        if not is_same(D1, C):
-            gdaltest.post_reason('D1 != C')
-            return 'fail'
+        assert is_same(D1, C), 'D1 != C'
 
-    return 'success'
+    
 
-
-def algebra_erase():
+def test_algebra_erase():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     recreate_layer_C()
 
@@ -616,26 +520,20 @@ def algebra_erase():
     err = A.Erase(B, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Erase')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
 
-        if C.GetFeatureCount() != 2:
-            gdaltest.post_reason('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 2, \
+            ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Erase(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Erase')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
 
-        if C.GetFeatureCount() != 2:
-            gdaltest.post_reason('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
-            return 'fail'
+        assert C.GetFeatureCount() == 2, \
+            ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -644,13 +542,10 @@ def algebra_erase():
     err = D1.Erase(D2, C)
 
     if ogrtest.have_geos():
-        if err != 0:
-            gdaltest.post_reason('got non-zero result code ' + str(err) + ' from Layer.Erase')
-            return 'fail'
+        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
 
-    if C.GetFeatureCount() != 0:
-        gdaltest.post_reason('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
-        return 'fail'
+    assert C.GetFeatureCount() == 0, \
+        ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -658,35 +553,30 @@ def algebra_erase():
 
     A.Erase(empty, C)
 
-    if C.GetFeatureCount() != A.GetFeatureCount():
-        gdaltest.post_reason('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
-        return 'fail'
+    assert C.GetFeatureCount() == A.GetFeatureCount(), \
+        ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
 
     A.ResetReading()
     feat_a = A.GetNextFeature()
     feat_c = C.GetNextFeature()
     if feat_a.Equal(feat_c) != 0:
-        gdaltest.post_reason('features not identical')
         feat_a.DumpReadable()
         feat_c.DumpReadable()
-        return 'fail'
+        pytest.fail('features not identical')
 
     recreate_layer_C()
 
     A.Erase(empty, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if C.GetFeatureCount() != A.GetFeatureCount():
-        gdaltest.post_reason('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
-        return 'fail'
+    assert C.GetFeatureCount() == A.GetFeatureCount(), \
+        ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
-    return 'success'
 
-
-def algebra_cleanup():
+def test_algebra_cleanup():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     global ds, A, B, C, pointInB, D1, D2, empty
 
@@ -699,26 +589,5 @@ def algebra_cleanup():
     empty = None
     ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    algebra_setup,
-    algebra_intersection,
-    algebra_KEEP_LOWER_DIMENSION_GEOMETRIES,
-    algebra_union,
-    algebra_symdifference,
-    algebra_identify,
-    algebra_update,
-    algebra_clip,
-    algebra_erase,
-    algebra_cleanup,
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('algebra')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

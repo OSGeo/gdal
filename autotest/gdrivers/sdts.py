@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,11 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,32 +39,20 @@ import gdaltest
 # http://thor-f5.er.usgs.gov/sdts/datasets/raster/dem/dem_oct_2001/1107834.dem.sdts.tar.gz
 
 
-def sdts_1():
+def test_sdts_1():
 
     tst = gdaltest.GDALTest('SDTS', 'STDS_1107834_truncated/1107CATD.DDF', 1, 61672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     srs.SetUTM(16)
-    if tst.testOpen(check_prj=srs.ExportToWkt(),
+    tst.testOpen(check_prj=srs.ExportToWkt(),
                     check_gt=(666015, 30, 0, 5040735, 0, -30),
-                    check_filelist=False) != 'success':
-        return 'fail'
+                    check_filelist=False)
 
     ds = gdal.Open('data/STDS_1107834_truncated/1107CATD.DDF')
     md = ds.GetMetadata()
 
-    if md['TITLE'] != 'ALANSON, MI-24000':
-        return 'fail'
-
-    return 'success'
+    assert md['TITLE'] == 'ALANSON, MI-24000'
 
 
-gdaltest_list = [sdts_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('sdts')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

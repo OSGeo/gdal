@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,114 +31,13 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 from osgeo import osr, gdal
 
 bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["bonne"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",60.0],UNIT["Meter",1.0]]'
-
-###############################################################################
-# Class to perform the tests.
-
-
-class ProjTest(object):
-    def __init__(self, src_srs, src_xyz, src_error,
-                 dst_srs, dst_xyz, dst_error, options, requirements):
-        self.src_srs = src_srs
-        self.src_xyz = src_xyz
-        self.src_error = src_error
-        self.dst_srs = dst_srs
-        self.dst_xyz = dst_xyz
-        self.dst_error = dst_error
-        self.options = options
-        self.requirements = requirements
-
-    def testProj(self):
-
-        import osr_ct
-        osr_ct.osr_ct_1()
-        if gdaltest.have_proj4 == 0:
-            return 'skip'
-
-        if self.requirements is not None and self.requirements[:5] == 'GRID:':
-            proj_lib = os.getenv('PROJ_LIB')
-            if proj_lib is None:
-                # print( 'PROJ_LIB unset, skipping test.' )
-                return 'skip'
-
-            try:
-                open(proj_lib + '/' + self.requirements[5:])
-            except IOError:
-                # print( 'Did not find GRID:%s' % self.requirements[5:] )
-                return 'skip'
-
-        src = osr.SpatialReference()
-        if src.SetFromUserInput(self.src_srs) != 0:
-            gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.src_srs)
-            return 'fail'
-
-        dst = osr.SpatialReference()
-        if dst.SetFromUserInput(self.dst_srs) != 0:
-            gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.dst_srs)
-            return 'fail'
-
-        if self.requirements is not None and self.requirements[0] != 'G':
-            additionnal_error_str = ' Check that proj version is >= %s ' % self.requirements
-        else:
-            additionnal_error_str = ''
-
-        try:
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
-            ct = osr.CoordinateTransformation(src, dst)
-            gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-                return 'skip'
-        except ValueError:
-            gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-                return 'skip'
-            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-            return 'fail'
-        except:
-            gdal.PopErrorHandler()
-            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-            return 'fail'
-
-        ######################################################################
-        # Transform source point to destination SRS.
-
-        result = ct.TransformPoint(self.src_xyz[0], self.src_xyz[1], self.src_xyz[2])
-
-        error = abs(result[0] - self.dst_xyz[0]) \
-            + abs(result[1] - self.dst_xyz[1]) \
-            + abs(result[2] - self.dst_xyz[2])
-
-        if error > self.dst_error:
-            gdaltest.post_reason('Dest error is %g, got (%.15g,%.15g,%.15g)%s'
-                                 % (error, result[0], result[1], result[2], additionnal_error_str))
-            return 'fail'
-
-        ######################################################################
-        # Now transform back.
-
-        ct = osr.CoordinateTransformation(dst, src)
-
-        result = ct.TransformPoint(result[0], result[1], result[2])
-
-        error = abs(result[0] - self.src_xyz[0]) \
-            + abs(result[1] - self.src_xyz[1]) \
-            + abs(result[2] - self.src_xyz[2])
-
-        if error > self.src_error:
-            gdaltest.post_reason('Back to source error is %g.%s' % (error, additionnal_error_str))
-            return 'fail'
-
-        return 'success'
 
 ###############################################################################
 # Table of transformations, inputs and expected results (with a threshold)
@@ -233,18 +132,83 @@ transform_list = [
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = []
 
-for item in transform_list:
-    ut = ProjTest(item[0], item[1], item[2],
-                  item[3], item[4], item[5],
-                  item[7], item[8])
-    gdaltest_list.append((ut.testProj, item[6]))
+@pytest.mark.parametrize(
+    'src_srs,src_xyz,src_error,dst_srs,dst_xyz,dst_error,unit_name,options,requirements',
+    transform_list,
+    ids=[row[6] for row in transform_list]
+)
+def test_proj(src_srs, src_xyz, src_error,
+             dst_srs, dst_xyz, dst_error, unit_name, options, requirements):
 
-if __name__ == '__main__':
+    import osr_ct
+    osr_ct.test_osr_ct_1()
+    if gdaltest.have_proj4 == 0:
+        pytest.skip()
 
-    gdaltest.setup_run('osr_ct_proj')
+    if requirements is not None and requirements[:5] == 'GRID:':
+        proj_lib = os.getenv('PROJ_LIB')
+        if proj_lib is None:
+            # print( 'PROJ_LIB unset, skipping test.' )
+            pytest.skip()
 
-    gdaltest.run_tests(gdaltest_list)
+        try:
+            open(proj_lib + '/' + requirements[5:])
+        except IOError:
+            # print( 'Did not find GRID:%s' % requirements[5:] )
+            pytest.skip()
 
-    gdaltest.summarize()
+    src = osr.SpatialReference()
+    assert src.SetFromUserInput(src_srs) == 0, \
+        ('SetFromUserInput(%s) failed.' % src_srs)
+
+    dst = osr.SpatialReference()
+    assert dst.SetFromUserInput(dst_srs) == 0, \
+        ('SetFromUserInput(%s) failed.' % dst_srs)
+
+    if requirements is not None and requirements[0] != 'G':
+        additionnal_error_str = ' Check that proj version is >= %s ' % requirements
+    else:
+        additionnal_error_str = ''
+
+    try:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ct = osr.CoordinateTransformation(src, dst)
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
+            pytest.skip('PROJ.4 missing, transforms not available.')
+    except ValueError:
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
+            pytest.skip('PROJ.4 missing, transforms not available.')
+        pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+    except:
+        gdal.PopErrorHandler()
+        pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+
+    ######################################################################
+    # Transform source point to destination SRS.
+
+    result = ct.TransformPoint(src_xyz[0], src_xyz[1], src_xyz[2])
+
+    error = abs(result[0] - dst_xyz[0]) \
+        + abs(result[1] - dst_xyz[1]) \
+        + abs(result[2] - dst_xyz[2])
+
+    assert error <= dst_error, \
+        ('Dest error is %g, got (%.15g,%.15g,%.15g)%s'
+                             % (error, result[0], result[1], result[2], additionnal_error_str))
+
+    ######################################################################
+    # Now transform back.
+
+    ct = osr.CoordinateTransformation(dst, src)
+
+    result = ct.TransformPoint(result[0], result[1], result[2])
+
+    error = abs(result[0] - src_xyz[0]) \
+        + abs(result[1] - src_xyz[1]) \
+        + abs(result[2] - src_xyz[2])
+
+    assert error <= src_error, \
+        ('Back to source error is %g.%s' % (error, additionnal_error_str))

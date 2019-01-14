@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,7 +36,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def genbin_1():
+def test_genbin_1():
 
     tst = gdaltest.GDALTest('GenBin', 'tm4628_96.bil', 1, 5738,
                             0, 0, 500, 1)
@@ -73,15 +71,5 @@ def genbin_1():
     return tst.testOpen(check_prj=prj, check_gt=gt)
 
 
-gdaltest_list = [
-    genbin_1
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('genbin')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

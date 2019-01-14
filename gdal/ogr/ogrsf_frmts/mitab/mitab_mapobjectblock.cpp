@@ -282,8 +282,6 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
  **********************************************************************/
 int     TABMAPObjectBlock::CommitToFile()
 {
-    int nStatus = 0;
-
     if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -313,7 +311,7 @@ int     TABMAPObjectBlock::CommitToFile()
     WriteInt32(m_nFirstCoordBlock);
     WriteInt32(m_nLastCoordBlock);
 
-    nStatus = CPLGetLastErrorNo();
+    int nStatus = CPLGetLastErrorType() == CE_Failure ? -1 : 0;
 
     /*-----------------------------------------------------------------
      * OK, all object data has already been written in the block.
@@ -391,7 +389,7 @@ int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
         WriteInt32(0);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -426,7 +424,7 @@ int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
         nY = ReadInt32();
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -919,7 +917,7 @@ int TABMAPObjLine::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     SetMBR(m_nX1, m_nY1, m_nX2, m_nY2);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -942,7 +940,7 @@ int TABMAPObjLine::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     poObjBlock->WriteByte(m_nPenId);      // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1086,7 +1084,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nBrushId = 0;
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1177,7 +1175,7 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteByte(m_nBrushId);    // Brush index... REGION only
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1201,7 +1199,7 @@ int TABMAPObjPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     SetMBR(m_nX, m_nY, m_nX, m_nY);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1223,7 +1221,7 @@ int TABMAPObjPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     poObjBlock->WriteByte(m_nSymbolId);      // Symbol index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1261,7 +1259,7 @@ int TABMAPObjFontPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     SetMBR(m_nX, m_nY, m_nX, m_nY);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1297,7 +1295,7 @@ int TABMAPObjFontPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     poObjBlock->WriteByte(m_nFontId);      // Font name index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1325,7 +1323,7 @@ int TABMAPObjCustomPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     SetMBR(m_nX, m_nY, m_nX, m_nY);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1350,7 +1348,7 @@ int TABMAPObjCustomPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteByte(m_nSymbolId);      // Symbol index
     poObjBlock->WriteByte(m_nFontId);      // Font index
 
-  if (CPLGetLastErrorNo() != 0)
+  if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1389,7 +1387,7 @@ int TABMAPObjRectEllipse::ReadObj(TABMAPObjectBlock *poObjBlock)
     m_nPenId    = poObjBlock->ReadByte();      // Pen index
     m_nBrushId  = poObjBlock->ReadByte();      // Brush index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1428,7 +1426,7 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteByte(m_nPenId);      // Pen index
     poObjBlock->WriteByte(m_nBrushId);      // Brush index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1461,7 +1459,7 @@ int TABMAPObjArc::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     m_nPenId = poObjBlock->ReadByte();      // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1493,7 +1491,7 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     poObjBlock->WriteByte(m_nPenId);      // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1550,7 +1548,7 @@ int TABMAPObjText::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     m_nPenId = poObjBlock->ReadByte();      // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1602,7 +1600,7 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     poObjBlock->WriteByte(m_nPenId);      // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1710,7 +1708,7 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1778,7 +1776,7 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteInt32(m_nMaxY);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -2006,7 +2004,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -2102,7 +2100,7 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteInt32(m_nMaxY);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;

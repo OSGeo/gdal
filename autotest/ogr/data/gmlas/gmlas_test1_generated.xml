@@ -32,7 +32,7 @@
       <myns:dt_array>2012-01-01T12:34:56Z</myns:dt_array>
       <myns:dt_array>2012-01-02T12:34:56Z</myns:dt_array>
       <myns:date>2012-01-01</myns:date>
-      <myns:time>12:34:56Z</myns:time>
+      <myns:time>12:34:56</myns:time>
       <myns:boolean>true</myns:boolean>
       <myns:boolean_array>true</myns:boolean_array>
       <myns:boolean_array>false</myns:boolean_array>

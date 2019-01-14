@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -38,6 +36,7 @@ import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Open ArcSDE datasource.
@@ -55,30 +54,27 @@ except:
     pass
 
 
-def ogr_sde_1():
+def test_ogr_sde_1():
     "Test basic opening of a database"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base)
     if ds is None:
-        print("Could not open %s" % base)
         gdaltest.sde_dr = None
-        return 'skip'
+        pytest.skip("Could not open %s" % base)
     ds.Destroy()
 
     ds = ogr.Open(base, update=1)
     ds.Destroy()
 
-    return 'success'
 
-
-def ogr_sde_2():
+def test_ogr_sde_2():
     "Test creation of a layer"
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
 
     shp_ds = ogr.Open('data/poly.shp')
@@ -113,32 +109,27 @@ def ogr_sde_2():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-    return 'success'
 
 
-def ogr_sde_3():
+def test_ogr_sde_3():
     "Test basic version locking"
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
 
     ds2 = ogr.Open(base, update=1)
-    if ds2 is not None:
-        gdaltest.post_reason('A locked version was able to be opened')
-        return 'fail'
+    assert ds2 is None, 'A locked version was able to be opened'
 
     ds.Destroy()
 
-    return 'success'
 
-
-def ogr_sde_4():
+def test_ogr_sde_4():
     "Test basic version creation"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     version_name = 'TESTING'
     gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'TRUE')
 
@@ -152,14 +143,12 @@ def ogr_sde_4():
     ds = ogr.Open(base, update=1)
     ds.Destroy()
 
-    return 'success'
 
-
-def ogr_sde_5():
+def test_ogr_sde_5():
     "Test versioned editing"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     version_name = 'TESTING'
     gdal.SetConfigOption('SDE_VERSIONOVERWRITE', 'TRUE')
 
@@ -196,9 +185,8 @@ def ogr_sde_5():
     ds3 = ogr.Open(base)
     l3 = ds3.GetLayerByName('SDE.TPOLY')
     f3 = l3.GetFeature(1)
-    if f3.GetField("PRFEDEA") != "SDE.TESTING":
-        gdaltest.post_reason('versioned editing failed for child version SDE.TESTING')
-        return 'fail'
+    assert f3.GetField("PRFEDEA") == "SDE.TESTING", \
+        'versioned editing failed for child version SDE.TESTING'
 
     ds3.Destroy()
     del ds3
@@ -206,9 +194,8 @@ def ogr_sde_5():
     ds4 = ogr.Open(default)
     l4 = ds4.GetLayerByName('SDE.TPOLY')
     f4 = l4.GetFeature(1)
-    if f4.GetField("PRFEDEA") != "SDE.DEFAULT":
-        gdaltest.post_reason('versioned editing failed for parent version SDE.DEFAULT')
-        return 'fail'
+    assert f4.GetField("PRFEDEA") == "SDE.DEFAULT", \
+        'versioned editing failed for parent version SDE.DEFAULT'
 
     idx = f4.GetFieldIndex('WHEN')
     df = f4.GetField(idx)
@@ -216,14 +203,13 @@ def ogr_sde_5():
         gdaltest.post_reason("datetime handling did not work -- expected '2008/03/19 16:15:00' got '%s' " % df)
     ds4.Destroy()
     del ds4
-    return 'success'
 
 
-def ogr_sde_6():
+def test_ogr_sde_6():
     "Extent fetching"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (
         sde_server, sde_port, sde_db, sde_user, sde_password)
@@ -237,14 +223,13 @@ def ogr_sde_6():
     extent = l1.GetExtent(force=1)
     if extent != (478316.0, 481645.0, 4762881.0, 4765611.0):
         gdaltest.post_reason("forced extent did not equal expected value")
-    return 'success'
+    
 
-
-def ogr_sde_7():
+def test_ogr_sde_7():
     "Bad layer test"
 
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (
         sde_server, sde_port, sde_db, sde_user, sde_password)
@@ -280,13 +265,11 @@ def ogr_sde_7():
         gdaltest.post_reason("we got a layer when we should not have")
     ds.Destroy()
 
-    return 'success'
 
-
-def ogr_sde_8():
+def test_ogr_sde_8():
     "Test spatial references"
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
 
     shp_ds = ogr.Open('data/poly.shp')
@@ -324,37 +307,15 @@ def ogr_sde_8():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-    return 'success'
 
 
-def ogr_sde_cleanup():
+def test_ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
-        return 'skip'
+        pytest.skip()
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
     ds.DeleteLayer('%s.%s' % (sde_user.upper(), 'TPOLY'))
     ds.Destroy()
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_sde_1,
-    ogr_sde_2,
-    ogr_sde_3,
-    ogr_sde_4,
-    ogr_sde_5,
-    ogr_sde_6,
-    ogr_sde_7,
-    ogr_sde_8,
-
-    ogr_sde_cleanup
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sde')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

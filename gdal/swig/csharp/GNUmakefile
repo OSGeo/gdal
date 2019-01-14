@@ -10,7 +10,7 @@ include ../SWIGmake.base
 SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 LINK = $(LD_SHARED)
-LINK_EXTRAFLAGS = 
+LINK_EXTRAFLAGS =
 OBJ_EXT = o
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
@@ -32,10 +32,10 @@ veryclean: clean
 
 generate: interface
 interface:
-	$(SWIG) -$(BINDING) -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o const/gdalconst_wrap.c ../include/gdalconst.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.GDAL -dllimport gdal_wrap -o gdal/gdal_wrap.cpp ../include/gdal.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OSR -dllimport osr_wrap -o osr/osr_wrap.cpp ../include/osr.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OGR -dllimport ogr_wrap -o ogr/ogr_wrap.cpp ../include/ogr.i
+	$(SWIG) -DSWIG2_CSHARP -$(BINDING) -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o const/gdalconst_wrap.c ../include/gdalconst.i
+	$(SWIG) -DSWIG2_CSHARP $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.GDAL -dllimport gdal_wrap -o gdal/gdal_wrap.cpp ../include/gdal.i
+	$(SWIG) -DSWIG2_CSHARP $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OSR -dllimport osr_wrap -o osr/osr_wrap.cpp ../include/osr.i
+	$(SWIG) -DSWIG2_CSHARP $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OGR -dllimport ogr_wrap -o ogr/ogr_wrap.cpp ../include/ogr.i
 
 build: ${CSHARP_OBJECTS} ${CSHARP_MODULES} gdal_csharp samples
 
@@ -46,7 +46,7 @@ install:
 	@echo "No installation to be done"
 
 $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
-	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
+	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(GDAL_SLIB_LINK) $(LINK_EXTRAFLAGS)
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
 	echo "<dllmap dll=\""$*"_wrap\" target=\""$*csharp"\" />" >> $*_csharp.dll.config
@@ -86,12 +86,14 @@ samples:
 	$(CSC) /r:gdal_csharp.dll /out:GDALCreateCopy.exe apps/GDALCreateCopy.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALGetHistogram.exe apps/GDALGetHistogram.cs
 
-test:
+vagrant_safe_test:
 	LC_ALL=C mono createdata.exe Data pointlayer
 	LC_ALL=C mono ogrinfo.exe Data/pointlayer.shp
-	LC_ALL=C mono OSRTransform.exe
 	LC_ALL=C mono GDALWrite.exe Data/sample.tif
 	LC_ALL=C mono GDALDatasetWrite.exe Data/sample1.tif
 	LC_ALL=C mono GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
 	LC_ALL=C mono GDALOverviews.exe Data/sample.tif NEAREST 2 4
 	LC_ALL=C mono GDALInfo.exe Data/sample.tif
+
+test: vagrant_safe_test
+	LC_ALL=C mono OSRTransform.exe

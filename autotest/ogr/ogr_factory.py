@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,14 +30,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import ogrtest
-import gdaltest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 
 def save_as_csv(geom, filename):
@@ -48,21 +46,19 @@ def save_as_csv(geom, filename):
 # 30 degree rotated ellipse, just one quarter.
 
 
-def ogr_factory_1():
+def test_ogr_factory_1():
 
     geom = ogr.ApproximateArcAngles(20, 30, 40, 7, 3.5, 30.0, 270.0, 360.0, 6.0)
 
     expected_geom = 'LINESTRING (21.75 33.031088913245533 40,22.374083449152831 32.648634669593925 40,22.972155943227843 32.237161430239802 40,23.537664874825239 31.801177382099848 40,24.064414409750082 31.345459257641004 40,24.546633369868303 30.875 40,24.979038463342047 30.394954059253475 40,25.356892169480634 29.910580919184319 40,25.676054644008637 29.427187473276717 40,25.933029076066084 28.95006988128063 40,26.125 28.484455543377237 40,26.249864142195264 28.035445827688662 40,26.306253464980482 27.607960178621322 40,26.293550155134998 27.206682218403525 40,26.211893392779814 26.836008432340218 40,26.062177826491073 26.5 40)'
 
-    if ogrtest.check_feature_geometry(geom, expected_geom):
-        return 'fail'
-    return 'success'
+    assert not ogrtest.check_feature_geometry(geom, expected_geom)
 
 ###############################################################################
 # Test forceToPolygon()
 
 
-def ogr_factory_2():
+def test_ogr_factory_2():
 
     src_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
     exp_wkt = 'POLYGON((0 0,100 0,100 100,0 0))'
@@ -70,9 +66,7 @@ def ogr_factory_2():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTISURFACE (((0 0,100 0,100 100,0 0)))'
     exp_wkt = 'POLYGON((0 0,100 0,100 100,0 0))'
@@ -80,9 +74,7 @@ def ogr_factory_2():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'CURVEPOLYGON ((0 0,100 0,100 100,0 0))'
     exp_wkt = 'POLYGON((0 0,100 0,100 100,0 0))'
@@ -90,9 +82,7 @@ def ogr_factory_2():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'CURVEPOLYGON (CIRCULARSTRING(0 0,0 1,0 2,1 2,2 2,2 1,2 0,1 0,0 0))'
     exp_wkt = 'POLYGON ((0 0,0 1,0 2,1 2,2 2,2 1,2 0,1 0,0 0))'
@@ -100,17 +90,13 @@ def ogr_factory_2():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
-
-    return 'success'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
 ###############################################################################
 # Test forceToMultiPolygon()
 
 
-def ogr_factory_3():
+def test_ogr_factory_3():
 
     src_wkt = 'POLYGON((0 0,100 0,100 100,0 0))'
     exp_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
@@ -118,9 +104,7 @@ def ogr_factory_3():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'GEOMETRYCOLLECTION(POLYGON((0 0,100 0,100 100,0 0)))'
     exp_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
@@ -128,9 +112,7 @@ def ogr_factory_3():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'CURVEPOLYGON ((0 0,100 0,100 100,0 0))'
     exp_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
@@ -138,9 +120,7 @@ def ogr_factory_3():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTISURFACE (((0 0,100 0,100 100,0 0)))'
     exp_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
@@ -148,17 +128,13 @@ def ogr_factory_3():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiPolygon(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
-
-    return 'success'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
 ###############################################################################
 # Test forceToMultiPoint()
 
 
-def ogr_factory_4():
+def test_ogr_factory_4():
 
     src_wkt = 'POINT(2 5 3)'
     exp_wkt = 'MULTIPOINT(2 5 3)'
@@ -166,9 +142,7 @@ def ogr_factory_4():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiPoint(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'GEOMETRYCOLLECTION(POINT(2 5 3),POINT(4 5 5))'
     exp_wkt = 'MULTIPOINT(2 5 3,4 5 5)'
@@ -176,17 +150,13 @@ def ogr_factory_4():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiPoint(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
-
-    return 'success'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
 ###############################################################################
 # Test forceToMultiLineString()
 
 
-def ogr_factory_5():
+def test_ogr_factory_5():
 
     src_wkt = 'LINESTRING(2 5,10 20)'
     exp_wkt = 'MULTILINESTRING((2 5,10 20))'
@@ -194,9 +164,7 @@ def ogr_factory_5():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'GEOMETRYCOLLECTION(LINESTRING(2 5,10 20),LINESTRING(0 0,10 10))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10))'
@@ -204,9 +172,7 @@ def ogr_factory_5():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'POLYGON((2 5,10 20),(0 0,10 10))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10))'
@@ -214,9 +180,7 @@ def ogr_factory_5():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTIPOLYGON(((2 5,10 20),(0 0,10 10)),((2 5,10 20)))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10),(2 5,10 20))'
@@ -224,16 +188,13 @@ def ogr_factory_5():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToMultiLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
-    return 'success'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
 
 ###############################################################################
 # Test robustness of forceToXXX() primitives with various inputs (#3504)
 
-def ogr_factory_6():
+def test_ogr_factory_6():
 
     src_wkt_list = [None,
                     'POINT EMPTY',
@@ -294,13 +255,12 @@ def ogr_factory_6():
             gdal.PopErrorHandler()
         # print(src_geom.ExportToWkt(), dst_geom1.ExportToWkt(), dst_geom2.ExportToWkt(), dst_geom3.ExportToWkt(), dst_geom4.ExportToWkt())
 
-    return 'success'
-
+    
 ###############################################################################
 # Test forceToLineString()
 
 
-def ogr_factory_7():
+def test_ogr_factory_7():
 
     src_wkt = 'LINESTRING(2 5,10 20)'
     exp_wkt = 'LINESTRING(2 5,10 20)'
@@ -308,9 +268,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTILINESTRING((2 5,10 20))'
     exp_wkt = 'LINESTRING(2 5,10 20)'
@@ -318,9 +276,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTICURVE((2 5,10 20))'
     exp_wkt = 'LINESTRING(2 5,10 20)'
@@ -328,9 +284,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTICURVE(COMPOUNDCURVE((2 5,10 20)))'
     exp_wkt = 'LINESTRING(2 5,10 20)'
@@ -338,9 +292,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTILINESTRING((2 5,10 20),(3 4,30 40))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(3 4,30 40))'
@@ -348,9 +300,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTILINESTRING((2 5,10 20),(10 20,30 40))'
     exp_wkt = 'LINESTRING (2 5,10 20,30 40)'
@@ -358,9 +308,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'GEOMETRYCOLLECTION(LINESTRING(2 5,10 20),LINESTRING(10 20,30 40))'
     exp_wkt = 'LINESTRING (2 5,10 20,30 40)'
@@ -368,9 +316,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTILINESTRING((2 5,10 20),(10 20))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(10 20))'
@@ -378,9 +324,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'MULTILINESTRING((2 5,10 20),(10 20,30 40),(30 40,50 60))'
     exp_wkt = 'LINESTRING (2 5,10 20,30 40,50 60)'
@@ -388,9 +332,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'POLYGON ((0 0,0 1,1 1,1 0,0 0))'
     exp_wkt = 'LINESTRING (0 0,0 1,1 1,1 0,0 0)'
@@ -398,9 +340,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0))'
     exp_wkt = 'LINESTRING (0 0,0 1,1 1,1 0,0 0)'
@@ -408,9 +348,7 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
     src_wkt = 'CURVEPOLYGON (COMPOUNDCURVE((0 0,0 1,1 1,1 0,0 0)))'
     exp_wkt = 'LINESTRING (0 0,0 1,1 1,1 0,0 0)'
@@ -418,17 +356,13 @@ def ogr_factory_7():
     src_geom = ogr.CreateGeometryFromWkt(src_wkt)
     dst_geom = ogr.ForceToLineString(src_geom)
 
-    if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-        print(dst_geom.ExportToWkt())
-        return 'fail'
-
-    return 'success'
+    assert not ogrtest.check_feature_geometry(dst_geom, exp_wkt), dst_geom.ExportToWkt()
 
 ###############################################################################
 # Test forceTo()
 
 
-def ogr_factory_8():
+def test_ogr_factory_8():
 
     tests = [('POINT(2 5)', 'MULTIPOINT (2 5)', ogr.wkbMultiPoint),
 
@@ -585,37 +519,15 @@ def ogr_factory_8():
         if exp_wkt is None:
             exp_wkt = src_wkt
         elif target_type != ogr.wkbUnknown and dst_geom.GetGeometryType() != target_type:
-            gdaltest.post_reason('fail')
-            print(src_wkt)
             print(target_type)
             print(dst_geom.ExportToWkt())
-            return 'fail'
+            pytest.fail(src_wkt)
 
         if ogrtest.check_feature_geometry(dst_geom, exp_wkt):
-            gdaltest.post_reason('fail')
             print(src_wkt)
             print(target_type)
-            print(dst_geom.ExportToWkt())
-            return 'fail'
+            pytest.fail(dst_geom.ExportToWkt())
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    ogr_factory_1,
-    ogr_factory_2,
-    ogr_factory_3,
-    ogr_factory_4,
-    ogr_factory_5,
-    ogr_factory_6,
-    ogr_factory_7,
-    ogr_factory_8,
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_factory')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

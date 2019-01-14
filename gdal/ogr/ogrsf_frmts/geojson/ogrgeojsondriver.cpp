@@ -631,7 +631,7 @@ void RegisterOGRGeoJSON()
     poDriver->SetDescription( "GeoJSON" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoJSON" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json geojson topojson" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json geojson" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_geojson.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
@@ -662,6 +662,7 @@ void RegisterOGRGeoJSON()
 "    <Value>String</Value>"
 "    <Value>Integer</Value>"
 "  </Option>"
+"  <Option name='WRITE_NON_FINITE_VALUES' type='boolean' description='Whether to write NaN / Infinity values' default='NO'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

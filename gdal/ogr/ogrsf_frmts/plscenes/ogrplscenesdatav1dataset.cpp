@@ -149,8 +149,8 @@ bool OGRPLScenesDataV1Dataset::ParseItemTypes(json_object* poObj,
                 "Missing item_types object, or not of type array");
         return false;
     }
-    const int nCatalogsLength = json_object_array_length(poItemTypes);
-    for( int i=0; i<nCatalogsLength; i++ )
+    const auto nCatalogsLength = json_object_array_length(poItemTypes);
+    for( auto i=decltype(nCatalogsLength){0}; i<nCatalogsLength; i++ )
     {
         json_object* poItemType = json_object_array_get_idx(poItemTypes, i);
         ParseItemType(poItemType);
@@ -552,7 +552,7 @@ retry:
         CPLString osActivate = json_object_get_string(poActivate);
         poLocation = nullptr;
         json_object_put(poObj);
-        poObj = RunRequest( osActivate, FALSE, "POST", false );
+        poObj = RunRequest( osActivate, FALSE, "GET", false );
         if( poObj != nullptr )
             json_object_put(poObj);
         poObj = nullptr;

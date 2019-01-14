@@ -2860,23 +2860,10 @@ static inline void ComputeFloatNoDataValue( GDALDataType eDataType,
 {
     if( eDataType == GDT_Float32 && bGotNoDataValue )
     {
+        dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(dfNoDataValue);
         if (GDALIsValueInRange<float>(dfNoDataValue) )
         {
             fNoDataValue = static_cast<float>(dfNoDataValue);
-            bGotFloatNoDataValue = true;
-            bGotNoDataValue = false;
-        }
-        else if( fabs(dfNoDataValue - std::numeric_limits<float>::max()) <
-                         1e-10 * std::numeric_limits<float>::max() )
-        {
-            fNoDataValue = std::numeric_limits<float>::max();
-            bGotFloatNoDataValue = true;
-            bGotNoDataValue = false;
-        }
-        else if( fabs(dfNoDataValue - (-std::numeric_limits<float>::max())) <
-                         1e-10 * std::numeric_limits<float>::max() )
-        {
-            fNoDataValue = -std::numeric_limits<float>::max();
             bGotFloatNoDataValue = true;
             bGotNoDataValue = false;
         }
@@ -3980,7 +3967,7 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else if( nMin == std::numeric_limits<T>::min() &&
              nMax == std::numeric_limits<T>::max() )
@@ -4014,8 +4001,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4058,8 +4045,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
 }
 
@@ -4164,8 +4151,8 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4218,8 +4205,8 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
                 nSumSquare += nValue * nValue;
             }
         }
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
 }
 
@@ -4530,8 +4517,8 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
             nSumSquare += nValue * nValue;
         }
 
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4700,8 +4687,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             nSumSquare += nValue * nValue;
         }
 
-        nSampleCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<const GUIntBig>(nXCheck) * nYCheck;
+        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -5875,9 +5862,12 @@ CPLErr GDALRasterBand::SetDefaultRAT(
     const GDALRasterAttributeTable * /* poRAT */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
         ReportError( CE_Failure, CPLE_NotSupported,
                      "SetDefaultRAT() not implemented for this format." );
-
+        CPLPopErrorHandler();
+    }
     return CE_Failure;
 }
 

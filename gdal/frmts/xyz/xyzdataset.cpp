@@ -526,6 +526,11 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
     nCommentLineCount = 0;
 
     CPLString osFilename(poOpenInfo->pszFilename);
+    if( EQUAL(CPLGetExtension(osFilename), "GRA") )
+    {
+        // IGNFHeightASCIIGRID .GRA
+        return FALSE;
+    }
 
     GDALOpenInfo* poOpenInfoToDelete = nullptr;
     /*  GZipped .xyz files are common, so automagically open them */

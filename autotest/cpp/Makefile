@@ -60,6 +60,10 @@ OBJ = \
     test_osr_ct.o \
     test_osr_pci.o \
     test_osr_proj4.o \
+    test_marching_squares_square.o \
+    test_marching_squares_tile.o \
+    test_marching_squares_contour.o \
+    test_marching_squares_polygon.o \
     tut/tut_gdal.o
 
 gdal_unit_test: $(OBJ)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,19 +36,10 @@ import gdaltest
 # Test a fake EIR dataset
 
 
-def eir_1():
+def test_eir_1():
 
     tst = gdaltest.GDALTest('EIR', 'fakeeir.hdr', 1, 1)
     return tst.testOpen()
 
 
-gdaltest_list = [
-    eir_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('eir')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

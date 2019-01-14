@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,29 +28,23 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Basic test
 
 
-def ogr_openair_1():
+def test_ogr_openair_1():
 
     ds = ogr.Open('data/openair_test.txt')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayerByName('airspaces')
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer airspaces')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer airspaces'
 
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
@@ -59,37 +53,21 @@ def ogr_openair_1():
     if ogrtest.check_feature_geometry(feat, 'POLYGON ((49.75 2.75,49.75 3.0,49.5 3.0,49.5 2.75,49.75 2.75))',
                                       max_error=0.0000001) != 0:
         print('did not get expected first geom')
-        print(geom.ExportToWkt())
-        return 'fail'
+        pytest.fail(geom.ExportToWkt())
     style = feat.GetStyleString()
-    if style != 'PEN(c:#0000FF,w:2pt,p:"5px 5px");BRUSH(fc:#00FF00)':
-        print('did not get expected style')
-        print(style)
-        return 'fail'
+    assert style == 'PEN(c:#0000FF,w:2pt,p:"5px 5px");BRUSH(fc:#00FF00)', \
+        'did not get expected style'
 
     lyr = ds.GetLayerByName('labels')
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer labels')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer labels'
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat, 'POINT (49.2625 2.504166666666667)',
                                       max_error=0.0000001) != 0:
         print('did not get expected geom on labels layer')
-        print(geom.ExportToWkt())
-        return 'fail'
+        pytest.fail(geom.ExportToWkt())
 
-    return 'success'
-
-
-gdaltest_list = [
-    ogr_openair_1]
+    
 
 
-if __name__ == '__main__':
 
-    gdaltest.setup_run('ogr_openair')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,14 +29,12 @@
 ###############################################################################
 
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
-import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Dummy test : there is no nodata value in the source dataset !
@@ -46,16 +44,13 @@ def test_gdal_fillnodata_1():
 
     script_path = test_py_scripts.get_py_script('gdal_fillnodata')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/byte.tif tmp/test_gdal_fillnodata_1.tif')
 
     ds = gdal.Open('tmp/test_gdal_fillnodata_1.tif')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Make sure we copy the no data value to the dst when created
@@ -66,17 +61,14 @@ def test_gdal_fillnodata_2():
 
     script_path = test_py_scripts.get_py_script('gdal_fillnodata')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
 
     ds = gdal.Open('tmp/test_gdal_fillnodata_2.tif')
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Failed to copy No Data Value to dst dataset.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, \
+        'Failed to copy No Data Value to dst dataset.'
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -91,20 +83,7 @@ def test_gdal_fillnodata_cleanup():
         except OSError:
             pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_gdal_fillnodata_1,
-    test_gdal_fillnodata_2,
-    test_gdal_fillnodata_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_fillnodata')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

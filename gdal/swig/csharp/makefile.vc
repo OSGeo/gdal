@@ -1,7 +1,7 @@
 #
 # makefile.vc - MSVC++ makefile for the C#/GDAL extension
 #
-# This VC++ makefile will build the GDAL C# interface assemblies 
+# This VC++ makefile will build the GDAL C# interface assemblies
 #
 # To use the makefile:
 #  - Open a DOS prompt window
@@ -49,7 +49,6 @@ CSC = $(CSC) /define:CLR4
 
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
-
 all: ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
 
 gdal_csharp:
@@ -76,7 +75,7 @@ gdal_csharp:
 
 sign:
     sn -k gdal.snk
-    
+
 ogr_dir:
 	cd ogr
 	$(MAKE) /f makefile.vc
@@ -96,19 +95,19 @@ osr_dir:
 	cd osr
 	$(MAKE) /f makefile.vc
 	cd ..
-	
+
 interface:
 	cd const
-    $(SWIG) -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
+    $(SWIG) -DSWIG2_CSHARP -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
 	cd ..
 	cd gdal
-	$(SWIG) -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
 	cd ..
 	cd osr
-	$(SWIG) -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
 	cd ..
 	cd ogr
-	$(SWIG) -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
+	$(SWIG) -DSWIG2_CSHARP -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i
 	cd ..
 
 samples:
@@ -134,7 +133,7 @@ samples:
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALMemDataset.exe apps\GDALMemDataset.cs
 	$(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:OGRLayerAlg.exe apps\OGRLayerAlg.cs
 	$(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:OGRFeatureEdit.exe apps\OGRFeatureEdit.cs
-    
+
 test:
 !IFDEF MONO
 	mono createdata.exe Data pointlayer
@@ -157,8 +156,8 @@ test:
 	ogrlayeralg.exe Intersection Data/pointlayer.shp pointlayer Data/pointlayer.shp pointlayer Data intersectionresult
 	ogrinfo.exe Data/intersectionresult.shp
 !ENDIF
-	
-clean:	
+
+clean:
 	cd gdal
 	$(MAKE) /f makefile.vc clean
 	cd ..
@@ -170,7 +169,7 @@ clean:
 	cd ..
 	cd osr
 	$(MAKE) /f makefile.vc clean
-	cd ..	
+	cd ..
 	-del gdal.lib
 	-del *_wrap.dll
 	-del *_csharp.dll
@@ -184,7 +183,7 @@ clean:
 	-del *.exe
 	-del *.manifest
 	-del /q /s Data
-	
+
 install:
     -mkdir $(GDAL_HOME)\csharp
 	xcopy /Y /R /F *_wrap.dll $(GDAL_HOME)\csharp

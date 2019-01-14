@@ -95,6 +95,7 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef GEOJSON_ENABLED
     RegisterOGRGeoJSON();
+    RegisterOGRGeoJSONSeq();
     RegisterOGRESRIJSON();
     RegisterOGRTopoJSON();
 #endif
@@ -254,7 +255,7 @@ void OGRRegisterAllInternal()
 #ifdef SEGY_ENABLED
     RegisterOGRSEGY();
 #endif
-#ifdef FREEXL_ENABLED
+#ifdef XLS_ENABLED
     RegisterOGRXLS();
 #endif
 #ifdef ODS_ENABLED
@@ -311,5 +312,9 @@ void OGRRegisterAllInternal()
     RegisterOGRAVCBin();
     RegisterOGRAVCE00();
 #endif
+
+#ifdef NGW_ENABLED
+    RegisterOGRNGW();
+#endif // NGW_ENABLED
 
 } /* OGRRegisterAll */

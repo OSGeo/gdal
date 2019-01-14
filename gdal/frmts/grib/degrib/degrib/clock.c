@@ -2344,13 +2344,15 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
             month += Rel[i].amount;
          }
       }
-      while (month < 1) {
-         year--;
-         month += 12;
+      if (month > 12) {
+         int incrYearDueToMonth = (month-1) / 12;
+         year += incrYearDueToMonth;
+         month -= 12 * incrYearDueToMonth;
       }
-      while (month > 12) {
-         year++;
-         month -= 12;
+      else if( month <= 0) {
+         int incrYearDueToMonth = (month-12) / 12;
+         year += incrYearDueToMonth;
+         month -= 12 * incrYearDueToMonth;
       }
       *l_clock = 0;
       Clock_ScanDate (l_clock, year, month, day);
@@ -2386,13 +2388,15 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
          day -= (Clock_NumDay (month, 1, year, 1) - 1);
          month += monthAdj;
          year += yearAdj;
-         while (month < 1) {
-            year--;
-            month += 12;
+         if (month > 12) {
+            int incrYearDueToMonth = (month-1) / 12;
+            year += incrYearDueToMonth;
+            month -= 12 * incrYearDueToMonth;
          }
-         while (month > 12) {
-            year++;
-            month -= 12;
+         else if( month <= 0) {
+            int incrYearDueToMonth = (month-12) / 12;
+            year += incrYearDueToMonth;
+            month -= 12 * incrYearDueToMonth;
          }
          *l_clock = 0;
          Clock_ScanDate (l_clock, year, month, day);
@@ -2488,19 +2492,21 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
           fprintf(stderr, "invalid incrMonth = %d\n", incrMonth);
           return 0;
       }
-      if( incrMonth < 0 && month < INT_MIN - incrMonth )
+      if( incrMonth < 0 && month < INT_MIN-(-12) - incrMonth )
       {
           fprintf(stderr, "invalid incrMonth = %d\n", incrMonth);
           return 0;
       }
       month += incrMonth;
-      while (month > 12) {
-         year++;
-         month -= 12;
+      if (month > 12) {
+         int incrYearDueToMonth = (month-1) / 12;
+         year += incrYearDueToMonth;
+         month -= 12 * incrYearDueToMonth;
       }
-      while (month < 1) {
-         year--;
-         month += 12;
+      else if( month <= 0) {
+         int incrYearDueToMonth = (month-12) / 12;
+         year += incrYearDueToMonth;
+         month -= 12 * incrYearDueToMonth;
       }
    }
    /* Add the year. */

@@ -18,7 +18,7 @@ fi
 # shellcheck disable=SC2164
 GDAL_ROOT=$(cd $(dirname ${BASH_SOURCE[0]})/..; pwd)
 
-if [[ ! ${PATH,,} =~ $GDAL_ROOT/apps ]]; then
+if [[ ! ${PATH} =~ $GDAL_ROOT/apps ]]; then
     export PATH="$GDAL_ROOT/apps:$GDAL_ROOT/apps/.libs:$PATH"
     echo "Setting PATH=$PATH"
 fi

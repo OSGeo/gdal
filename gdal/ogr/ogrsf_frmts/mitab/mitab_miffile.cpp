@@ -203,7 +203,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
     TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
-    m_poMIFFile = new MIDDATAFile("");
+    m_poMIFFile = new MIDDATAFile(CharsetToEncoding(pszCharset));
 
     if (m_poMIFFile->Open(pszTmpFname, pszAccess) != 0)
     {
@@ -1955,6 +1955,10 @@ int MIFFile::SetCharset(const char* pszCharset)
     if(m_poMIDFile != nullptr)
     {
         m_poMIDFile->SetEncoding( CharsetToEncoding( pszCharset ) );
+    }
+    if(m_poMIFFile != nullptr)
+    {
+        m_poMIFFile->SetEncoding( CharsetToEncoding( pszCharset ) );
     }
     return 0;
 }

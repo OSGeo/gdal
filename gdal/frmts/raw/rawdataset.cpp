@@ -292,7 +292,9 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     const size_t nBytesActuallyRead = Read(pLineBuffer, 1, nBytesToRead);
     if( nBytesActuallyRead < nBytesToRead )
     {
-        if (poDS != nullptr && poDS->GetAccess() == GA_ReadOnly)
+        if (poDS != nullptr && poDS->GetAccess() == GA_ReadOnly &&
+            // ENVI datasets might be sparse (see #915)
+            poDS->GetMetadata("ENVI") == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed to read scanline %d.",
@@ -1211,7 +1213,10 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
             (nXSize-1) * static_cast<vsi_l_offset>(nPixelOffset);
         CPL_IGNORE_RET_VAL( VSIFSeekL(fp, 0, SEEK_END) );
         vsi_l_offset nFileSize = VSIFTellL(fp);
-        if( nFileSize < nExpectedFileSize )
+        // Do not strictly compare against nExpectedFileSize, but use an arbitrary
+        // 50% margin, since some raw formats such as ENVI
+        // allow for sparse files (see https://github.com/OSGeo/gdal/issues/915)
+        if( nFileSize < nExpectedFileSize / 2 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Image file is too small");
             return false;

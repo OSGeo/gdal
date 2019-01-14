@@ -27,19 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define H5_USE_16_API
-
-#ifdef _MSC_VER
-#pragma warning(push)
-// warning C4005: '_HDF5USEDLL_' : macro redefinition.
-#pragma warning(disable : 4005)
-#endif
-
-#include "hdf5.h"
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+#include "hdf5_api.h"
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -91,10 +79,8 @@ class HDF5ImageDataset : public HDF5Dataset
     hid_t        dataset_id;
     hid_t        dataspace_id;
     hsize_t      size;
-    haddr_t      address;
     hid_t        datatype;
     hid_t        native;
-    H5T_class_t  class_;
     Hdf5ProductType    iSubdatasetType;
     HDF5CSKProductEnum iCSKProductType;
     double       adfGeoTransform[6];
@@ -183,10 +169,8 @@ HDF5ImageDataset::HDF5ImageDataset() :
     dataset_id(-1),
     dataspace_id(-1),
     size(0),
-    address(0),
     datatype(-1),
     native(-1),
-    class_(H5T_NO_CLASS),
     iSubdatasetType(UNKNOWN_PRODUCT),
     iCSKProductType(PROD_UNKNOWN),
     bHasGeoTransform(false)
@@ -479,7 +463,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
 
     CPLString osFilename(papszName[1]);
 
-    if( strlen(papszName[1]) == 1 && papszName[3] != nullptr )
+    if( (strlen(papszName[1]) == 1 && papszName[3] != nullptr) ||
+        (STARTS_WITH(papszName[1], "/vsicurl/http") && papszName[3] != nullptr) )
     {
         osFilename += ":";
         osFilename += papszName[2];
@@ -495,16 +480,13 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     CSLDestroy(papszName);
     papszName = nullptr;
 
-    if( !H5Fis_hdf5(osFilename) )
-    {
-        delete poDS;
-        return nullptr;
-    }
-
     poDS->SetPhysicalFilename(osFilename);
 
     // Try opening the dataset.
-    poDS->hHDF5 = H5Fopen(osFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
+    poDS->hHDF5 = H5Fopen(osFilename, H5F_ACC_RDONLY, fapl);
+    H5Pclose(fapl);
 
     if( poDS->hHDF5 < 0 )
     {
@@ -551,9 +533,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->dimensions = H5Sget_simple_extent_dims(poDS->dataspace_id, poDS->dims,
                                                  poDS->maxdims);
     poDS->datatype = H5Dget_type(poDS->dataset_id);
-    poDS->class_ = H5Tget_class(poDS->datatype);
     poDS->size = H5Tget_size(poDS->datatype);
-    poDS->address = H5Dget_offset(poDS->dataset_id);
     poDS->native = H5Tget_native_type(poDS->datatype, H5T_DIR_ASCEND);
 
     // CSK code in IdentifyProductType() and CreateProjections()
@@ -602,6 +582,15 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
 }
 
 /************************************************************************/
+/*                   HDF5ImageDatasetDriverUnload()                     */
+/************************************************************************/
+
+static void HDF5ImageDatasetDriverUnload(GDALDriver*)
+{
+    HDF5UnloadFileDriver();
+}
+
+/************************************************************************/
 /*                        GDALRegister_HDF5Image()                      */
 /************************************************************************/
 void GDALRegister_HDF5Image()
@@ -619,9 +608,11 @@ void GDALRegister_HDF5Image()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "HDF5 Dataset");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = HDF5ImageDataset::Open;
     poDriver->pfnIdentify = HDF5ImageDataset::Identify;
+    poDriver->pfnUnloadDriver = HDF5ImageDatasetDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,126 +28,95 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import time
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 #
 
 
-def vsicurl_streaming_1():
+def test_vsicurl_streaming_1():
     drv = gdal.GetDriverByName('HTTP')
 
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('GDAL_HTTP_CONNECTTIMEOUT', '5')
     fp = gdal.VSIFOpenL('/vsicurl_streaming/http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem', 'rb')
     gdal.SetConfigOption('GDAL_HTTP_CONNECTTIMEOUT', None)
     if fp is None:
         if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem', timeout=4) is None:
-            print('cannot open URL')
-            return 'skip'
-        gdaltest.post_reason('fail')
-        return 'fail'
+            pytest.skip('cannot open URL')
+        pytest.fail()
 
     if gdal.VSIFTellL(fp) != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
     data = gdal.VSIFReadL(1, 50, fp)
     if data.decode('ascii') != '                              114p01DEMe   Base Ma':
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
     if gdal.VSIFTellL(fp) != 50:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     gdal.VSIFSeekL(fp, 0, 0)
 
     if gdal.VSIFTellL(fp) != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
     data = gdal.VSIFReadL(1, 50, fp)
     if data.decode('ascii') != '                              114p01DEMe   Base Ma':
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
     if gdal.VSIFTellL(fp) != 50:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     time.sleep(0.5)
     gdal.VSIFSeekL(fp, 2001, 0)
     data_2001 = gdal.VSIFReadL(1, 20, fp)
     if data_2001.decode('ascii') != '7-32767-32767-32767-':
-        print(data_2001)
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail(data_2001)
     if gdal.VSIFTellL(fp) != 2001 + 20:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     gdal.VSIFSeekL(fp, 0, 2)
     if gdal.VSIFTellL(fp) != 9839616:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     nRet = len(gdal.VSIFReadL(1, 10, fp))
     if nRet != 0:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     gdal.VSIFSeekL(fp, 2001, 0)
     data_2001_2 = gdal.VSIFReadL(1, 20, fp)
     if gdal.VSIFTellL(fp) != 2001 + 20:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     if data_2001 != data_2001_2:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     gdal.VSIFSeekL(fp, 1024 * 1024 + 100, 0)
     data = gdal.VSIFReadL(1, 20, fp)
     if data.decode('ascii') != '67-32767-32767-32767':
-        print(data)
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail(data)
     if gdal.VSIFTellL(fp) != 1024 * 1024 + 100 + 20:
-        gdaltest.post_reason('fail')
         gdal.VSIFCloseL(fp)
-        return 'fail'
+        pytest.fail()
 
     gdal.VSIFCloseL(fp)
 
-    return 'success'
 
 
-gdaltest_list = [vsicurl_streaming_1]
-
-if __name__ == '__main__':
-
-    gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
-
-    gdaltest.setup_run('vsicurl_streaming')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

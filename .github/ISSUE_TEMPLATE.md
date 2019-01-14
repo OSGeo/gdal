@@ -7,18 +7,18 @@ for new features.
 
 ## Expected behavior and actual behavior.
 
-For example: I expected to be able to open this raster file (with a link to
+For example (please modify !!!): I expected to be able to open this raster file (with a link to
 the raster file, or it as an attachment) and it returns an error message
 instead.
 
 ## Steps to reproduce the problem.
 
-For example: "gdalinfo myfile"
+For example (please modify !!!): "gdalinfo myfile"
 
 ## Operating system
 
-For example: Ubuntu 16.04 64 bit
+For example (please modify !!!): Ubuntu 16.04 64 bit
 
 ## GDAL version and provenance
 
-For example: the 2.2.3 version from ubuntugis-unstable PPA
+For example (please modify !!!): the 2.2.3 version from ubuntugis-unstable PPA

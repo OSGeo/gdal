@@ -155,13 +155,15 @@ typedef struct {
     /*! The "nodata" value real component for each input band, if NULL there isn't one */
     double             *padfSrcNoDataReal;
     /*! The "nodata" value imaginary component - may be NULL even if real
-      component is provided. */
+      component is provided. This value is not used to flag invalid values.
+      Only the real component is used. */
     double             *padfSrcNoDataImag;
 
     /*! The "nodata" value real component for each output band, if NULL there isn't one */
     double             *padfDstNoDataReal;
     /*! The "nodata" value imaginary component - may be NULL even if real
-      component is provided. */
+      component is provided. Note that warp operations only use real component
+      for flagging invalid data.*/
     double             *padfDstNoDataImag;
 
     /*! GDALProgressFunc() compatible progress reporting function, or NULL
@@ -453,6 +455,12 @@ private:
                                          int *pnSrcXSize, int *pnSrcYSize,
                                          double *pdfSrcXExtraSize, double *pdfSrcYExtraSize,
                                          double* pdfSrcFillRatio );
+
+    void            ComputeSourceWindowStartingFromSource(
+                                    int nDstXOff, int nDstYOff,
+                                    int nDstXSize, int nDstYSize,
+                                    double* padfSrcMinX, double* padfSrcMinY,
+                                    double* padfSrcMaxX, double* padfSrcMaxY);
 
     static CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand,
                                       const char *pszType );

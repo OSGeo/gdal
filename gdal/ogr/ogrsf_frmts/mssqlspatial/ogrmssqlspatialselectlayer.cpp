@@ -29,8 +29,14 @@
 
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
-#ifdef SQLNCLI_VERSION
-#include <sqlncli.h>
+
+// SQL_CA_SS_UDT_TYPE_NAME not defined in unixODBC headers
+#ifndef SQL_CA_SS_BASE
+#define SQL_CA_SS_BASE 1200
+#endif
+
+#ifndef SQL_CA_SS_UDT_TYPE_NAME
+#define SQL_CA_SS_UDT_TYPE_NAME (SQL_CA_SS_BASE+20)
 #endif
 
 CPL_CVSID("$Id$")
@@ -45,7 +51,7 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
     poDS = poDSIn;
 
     iNextShapeId = 0;
-    nSRSId = -1;
+    nSRSId = 0;
     poFeatureDefn = nullptr;
 
     poStmt = poStmtIn;
@@ -95,25 +101,28 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
         }
         else if ( EQUAL(poStmt->GetColTypeName( iColumn ), "udt") )
         {
-#ifdef SQL_CA_SS_UDT_TYPE_NAME
             SQLCHAR     szUDTTypeName[256];
             SQLSMALLINT nUDTTypeNameLength = 0;
 
             SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1), SQL_CA_SS_UDT_TYPE_NAME,
                                      szUDTTypeName, sizeof(szUDTTypeName),
-                                     &nUDTTypeNameLength, NULL);
+                                     &nUDTTypeNameLength, nullptr);
 
-            if ( EQUAL((char*)szUDTTypeName, "geometry") )
+            // For some reason on unixODBC, a UCS2 string is returned
+            if ( EQUAL((char*)szUDTTypeName, "geometry") ||
+                 (nUDTTypeNameLength == 16 &&
+                  memcmp(szUDTTypeName, "g\0e\0o\0m\0e\0t\0r\0y", 16) == 0) )
             {
                 nGeomColumnType = MSSQLCOLTYPE_GEOMETRY;
                 pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
             }
-            else if ( EQUAL((char*)szUDTTypeName, "geography") )
+            else if ( EQUAL((char*)szUDTTypeName, "geography") ||
+                 (nUDTTypeNameLength == 18 &&
+                  memcmp(szUDTTypeName, "g\0e\0o\0g\0r\0a\0p\0h\0y", 18) == 0) )
             {
                 nGeomColumnType = MSSQLCOLTYPE_GEOGRAPHY;
                 pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
             }
-#endif
             break;
         }
     }

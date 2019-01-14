@@ -185,12 +185,89 @@ static CPLErrorContext *CPLGetErrorContext()
 
 void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
 {
+    int bError = FALSE;
+
+    // check if there is an active error being propagated through the handlers
+    void **pActiveUserData = reinterpret_cast<void **>(
+            CPLGetTLSEx( CTLS_ERRORHANDLERACTIVEDATA, &bError ) );
+    if( bError )
+        return nullptr;
+
+    if ( pActiveUserData != nullptr)
+    {
+        return *pActiveUserData;
+    }
+
+    // get the current threadlocal or global error context user data
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if( psCtx == nullptr || IS_PREFEFINED_ERROR_CTX(psCtx) )
         abort();
     return reinterpret_cast<void*>(
         psCtx->psHandlerStack ?
         psCtx->psHandlerStack->pUserData : pErrorHandlerUserData );
+}
+
+
+static void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
+                        CPLErrorNum err_no, const char *pszMessage)
+{
+    void **pActiveUserData;
+    bool bProcessed = false;
+
+    // CTLS_ERRORHANDLERACTIVEDATA holds the active error handler userData
+
+    if( psCtx->psHandlerStack != nullptr )
+    {
+        // iterate through the threadlocal handler stack
+        if( (eErrClass != CE_Debug) || psCtx->psHandlerStack->bCatchDebug )
+        {
+            // call the error handler
+            pActiveUserData = &(psCtx->psHandlerStack->pUserData);
+            CPLSetTLS( CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false );
+            psCtx->psHandlerStack->pfnHandler(eErrClass, err_no, pszMessage);
+            bProcessed = true;
+        }
+        else
+        {
+            // need to iterate to a parent handler for debug messages
+            CPLErrorHandlerNode *psNode = psCtx->psHandlerStack->psNext;
+            while( psNode != nullptr )
+            {
+                if( psNode->bCatchDebug )
+                {
+                    pActiveUserData = &(psNode->pUserData);
+                    CPLSetTLS( CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false );
+                    psNode->pfnHandler( eErrClass, err_no, pszMessage );
+                    bProcessed = true;
+                    break;
+                }
+                psNode = psNode->psNext;
+            }
+        }
+    }
+
+    if( !bProcessed )
+    {
+        // hit the global error handler
+        CPLMutexHolderD( &hErrorMutex );
+        if( (eErrClass != CE_Debug) || gbCatchDebug )
+        {
+            if( pfnErrorHandler != nullptr )
+            {
+                pActiveUserData = &pErrorHandlerUserData;
+                CPLSetTLS( CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false );
+                pfnErrorHandler(eErrClass, err_no, pszMessage);
+            }
+        }
+        else if( eErrClass == CE_Debug )
+        {
+            // for CPLDebug messages we propagate to the default error handler
+            pActiveUserData = nullptr;
+            CPLSetTLS( CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false );
+            CPLDefaultErrorHandler(eErrClass, err_no, pszMessage);
+        }
+    }
+    CPLSetTLS( CTLS_ERRORHANDLERACTIVEDATA, nullptr, false );
 }
 
 /**********************************************************************
@@ -384,17 +461,7 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 /* -------------------------------------------------------------------- */
 /*      Invoke the current error handler.                               */
 /* -------------------------------------------------------------------- */
-    if( psCtx->psHandlerStack != nullptr )
-    {
-        psCtx->psHandlerStack->pfnHandler(eErrClass, err_no,
-                                          psCtx->szLastErrMsg);
-    }
-    else
-    {
-        CPLMutexHolderD( &hErrorMutex );
-        if( pfnErrorHandler != nullptr )
-            pfnErrorHandler(eErrClass, err_no, psCtx->szLastErrMsg);
-    }
+    ApplyErrorHandler(psCtx, eErrClass, err_no, psCtx->szLastErrMsg);
 
     if( eErrClass == CE_Fatal )
         abort();
@@ -432,15 +499,7 @@ void CPLEmergencyError( const char *pszMessage )
         CPLErrorContext *psCtx =
             static_cast<CPLErrorContext *>(CPLGetTLS( CTLS_ERRORCONTEXT ));
 
-        if( psCtx != nullptr && psCtx->psHandlerStack != nullptr )
-        {
-            psCtx->psHandlerStack->pfnHandler( CE_Fatal, CPLE_AppDefined,
-                                               pszMessage );
-        }
-        else if( pfnErrorHandler != nullptr )
-        {
-            pfnErrorHandler( CE_Fatal, CPLE_AppDefined, pszMessage );
-        }
+        ApplyErrorHandler(psCtx, CE_Fatal, CPLE_AppDefined, pszMessage);
     }
 
     // Ultimate fallback.
@@ -651,46 +710,7 @@ void CPLDebug( const char * pszCategory,
 /* -------------------------------------------------------------------- */
 /*      Invoke the current error handler.                               */
 /* -------------------------------------------------------------------- */
-    bool bDebugProcessed = false;
-    if( psCtx->psHandlerStack != nullptr )
-    {
-        if( psCtx->psHandlerStack->bCatchDebug )
-        {
-            bDebugProcessed = true;
-            psCtx->psHandlerStack->pfnHandler( CE_Debug, CPLE_None,
-                                               pszMessage );
-        }
-        else
-        {
-            CPLErrorHandlerNode *psNode = psCtx->psHandlerStack->psNext;
-            while( psNode != nullptr )
-            {
-                if( psNode->bCatchDebug )
-                {
-                    bDebugProcessed = true;
-                    psNode->pfnHandler( CE_Debug, CPLE_None, pszMessage );
-                    break;
-                }
-                psNode = psNode->psNext;
-            }
-        }
-    }
-
-    if( !bDebugProcessed )
-    {
-        CPLMutexHolderD( &hErrorMutex );
-        if( gbCatchDebug )
-        {
-            if( pfnErrorHandler != nullptr )
-            {
-                pfnErrorHandler( CE_Debug, CPLE_None, pszMessage );
-            }
-        }
-        else
-        {
-            CPLDefaultErrorHandler( CE_Debug, CPLE_None, pszMessage );
-        }
-    }
+    ApplyErrorHandler(psCtx, CE_Debug, CPLE_None, pszMessage);
 
     VSIFree( pszMessage );
 }

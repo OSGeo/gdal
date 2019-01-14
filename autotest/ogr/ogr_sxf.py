@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id: ogr_sxf.py 26513 2013-10-02 11:59:50Z bishop $
@@ -26,18 +26,17 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Open SXF datasource.
 
 
-def ogr_sxf_1():
+def test_ogr_sxf_1():
 
     gdaltest.sxf_ds = None
     with gdaltest.error_handler():
@@ -45,50 +44,33 @@ def ogr_sxf_1():
         gdaltest.sxf_ds = ogr.Open('data/100_test.sxf')
 
     if gdaltest.sxf_ds is not None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 
 ###############################################################################
 # Run test_ogrsf
 
-def ogr_sxf_2():
+def test_ogr_sxf_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' data/100_test.sxf')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 #
 
 
-def ogr_sxf_cleanup():
+def test_ogr_sxf_cleanup():
 
     if gdaltest.sxf_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.sxf_ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_sxf_1,
-    ogr_sxf_2,
-    ogr_sxf_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sxf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

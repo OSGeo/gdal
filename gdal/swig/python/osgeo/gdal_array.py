@@ -90,7 +90,7 @@ except AttributeError:
     _newclass = 0
 
 
-import gdal
+import osgeo.gdal
 class VirtualMem(_object):
     """Proxy of C++ CPLVirtualMemShadow class."""
 
@@ -160,8 +160,8 @@ def RATValuesIONumPyRead(poRAT, nField, nStart, nLength):
 
 import numpy
 
-import gdalconst
-import gdal
+from osgeo import gdalconst
+from osgeo import gdal
 gdal.AllRegister()
 
 codes = {gdalconst.GDT_Byte: numpy.uint8,
@@ -296,6 +296,9 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         if typecode is None:
             buf_type = gdalconst.GDT_Float32
             typecode = numpy.float32
+        else:
+            buf_type = NumericTypeCodeToGDALTypeCode(typecode)
+
         if buf_type == gdalconst.GDT_Byte and ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
             typecode = numpy.int8
         buf_shape = (ds.RasterCount, buf_ysize, buf_xsize) if interleave else (buf_ysize, buf_xsize, ds.RasterCount)

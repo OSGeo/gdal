@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,19 +29,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fairly default case.
 
 
-def sieve_1():
+def test_sieve_1():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
@@ -64,15 +62,13 @@ def sieve_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Try eight connected.
 
 
-def sieve_2():
+def test_sieve_2():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
@@ -95,15 +91,13 @@ def sieve_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Do a sieve resulting in unmergable polygons.
 
 
-def sieve_3():
+def test_sieve_3():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/unmergable.grd')
@@ -127,15 +121,13 @@ def sieve_3():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Try the bug 2634 simplified data.
 
 
-def sieve_4():
+def test_sieve_4():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_2634.grd')
@@ -158,16 +150,14 @@ def sieve_4():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 
 ###############################################################################
 # Same as sieve_1, but we provide a mask band
 # This should yield the same result as we use an opaque band
 
-def sieve_5():
+def test_sieve_5():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/sieve_src.grd')
@@ -190,21 +180,19 @@ def sieve_5():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Performance test. When increasing the 'size' parameter, performance
 # should stay roughly linear with the number of pixels (i.e. size^2)
 
 
-def sieve_6():
+def test_sieve_6():
 
     try:
         import numpy
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     # Try 3002. Should run in less than 10 seconds
     # size = 3002
@@ -229,16 +217,14 @@ def sieve_6():
     cs = band.Checksum()
     if (size == 102 and cs != 60955) or (size == 3002 and cs != 63178):
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test with nodata
 
 
-def sieve_7():
+def test_sieve_7():
 
     gdal.FileFromMemBuffer('/vsimem/sieve_7.asc', """ncols        7
 nrows        7
@@ -287,15 +273,13 @@ NODATA_value 0
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Test propagation in our search of biggest neighbour
 
 
-def sieve_8():
+def test_sieve_8():
 
     gdal.FileFromMemBuffer('/vsimem/sieve_8.asc',
                            """ncols        7
@@ -336,26 +320,7 @@ cellsize     60.000000000000
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
+        pytest.fail('got wrong checksum')
+    
 
 
-gdaltest_list = [
-    sieve_1,
-    sieve_2,
-    sieve_3,
-    sieve_4,
-    sieve_5,
-    sieve_6,
-    sieve_7,
-    sieve_8
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('sieve')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

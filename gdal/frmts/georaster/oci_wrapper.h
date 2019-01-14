@@ -362,20 +362,20 @@ public:
 
 private:
 
-    OWConnection*       poConnection;
-    OCIStmt*            hStmt;
-    OCIError*           hError;
+    OWConnection*       poConnection = nullptr;
+    OCIStmt*            hStmt = nullptr;
+    OCIError*           hError = nullptr;
 
-    int                 nNextCol;
-    int                 nNextBnd;
+    int                 nNextCol = 0;
+    int                 nNextBnd = 0;
 
-    ub4                 nStmtMode;
+    ub4                 nStmtMode = OCI_DEFAULT;
 
 public:
 
     bool                Execute( int nRows = 1 );
     bool                Fetch( int nRows = 1 );
-    unsigned int        nFetchCount;
+    unsigned int        nFetchCount = 0;
 
     int                 GetInteger( OCINumber* ppoData );
     double              GetDouble( OCINumber* ppoData );
@@ -417,6 +417,7 @@ public:
     unsigned long       ReadBlob( OCILobLocator* phLocator,
                             void* pBuffer, unsigned long nOffset, 
                                            unsigned long nSize );
+    void                FreeLob(OCILobLocator* phLocator);
     char*               ReadCLob( OCILobLocator* phLocator );
     void                WriteCLob( OCILobLocator** pphLocator, char* pszData );
     bool                WriteBlob( OCILobLocator* phLocator,

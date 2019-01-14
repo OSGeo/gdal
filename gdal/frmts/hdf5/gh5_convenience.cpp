@@ -219,3 +219,167 @@ GDALDataType GH5_GetDataType(hid_t TypeID)
 
     return GDT_Unknown;
 }
+
+/************************************************************************/
+/*                        GH5_CreateAttribute()                         */
+/************************************************************************/
+
+bool GH5_CreateAttribute (hid_t loc_id, const char *pszAttrName,
+                          hid_t TypeID, unsigned nMaxLen)
+{
+    hid_t hDataSpace = H5Screate(H5S_SCALAR);
+    if (hDataSpace < 0)
+        return false;
+
+    hid_t hDataType = H5Tcopy(TypeID);
+    if (hDataType < 0)
+    {
+        H5Sclose (hDataSpace);
+        return false;
+    }
+
+    if (TypeID == H5T_C_S1)
+    {
+        if( H5Tset_size(hDataType, nMaxLen) < 0 )
+        {
+            H5Tclose(hDataType);
+            H5Sclose(hDataSpace);
+            return false;
+        }
+    }
+
+    hid_t hAttr = H5Acreate(loc_id, pszAttrName,
+                            hDataType, hDataSpace, H5P_DEFAULT);
+    if (hAttr < 0)
+    {
+        H5Sclose(hDataSpace);
+        H5Tclose(hDataType);
+        return false;
+    }
+
+    H5Aclose(hAttr);
+    H5Sclose(hDataSpace);
+    H5Tclose(hDataType);
+
+    return true;
+}
+
+/************************************************************************/
+/*                        GH5_WriteAttribute()                          */
+/************************************************************************/
+
+bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
+                         const char* pszValue)
+{
+
+    hid_t hAttr = H5Aopen_name (loc_id, pszAttrName);
+    if (hAttr < 0)
+        return false;
+
+    hid_t hDataType = H5Aget_type (hAttr);
+    if (hDataType < 0)
+    {
+        H5Aclose (hAttr);
+        return false;
+    }
+
+    hid_t hAttrNativeType = H5Tget_native_type(hDataType, H5T_DIR_DEFAULT);
+    bool bSuccess = false;
+    if( H5Tget_class(hAttrNativeType) == H5T_STRING )
+    {
+        bSuccess = H5Awrite(hAttr, hDataType, pszValue) >= 0;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attribute %s is not of type string", pszAttrName);
+    }
+
+    H5Tclose(hAttrNativeType);
+    H5Tclose(hDataType);
+    H5Aclose(hAttr);
+
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                        GH5_WriteAttribute()                          */
+/************************************************************************/
+
+bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
+                         double dfValue)
+{
+
+    hid_t hAttr = H5Aopen_name (loc_id, pszAttrName);
+    if (hAttr < 0)
+        return false;
+
+    hid_t hDataType = H5Aget_type (hAttr);
+    if (hDataType < 0)
+    {
+        H5Aclose (hAttr);
+        return false;
+    }
+
+    hid_t hAttrNativeType = H5Tget_native_type(hDataType, H5T_DIR_DEFAULT);
+    bool bSuccess = false;
+    if( H5Tequal(hAttrNativeType, H5T_NATIVE_FLOAT) )
+    {
+        float fVal = static_cast<float>(dfValue);
+        bSuccess = H5Awrite(hAttr, hDataType, &fVal) >= 0;
+    }
+    else if( H5Tequal(hAttrNativeType, H5T_NATIVE_DOUBLE) )
+    {
+        bSuccess = H5Awrite(hAttr, hDataType, &dfValue) >= 0;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attribute %s is not of type float or double", pszAttrName);
+    }
+
+    H5Tclose(hAttrNativeType);
+    H5Aclose(hAttr);
+    H5Tclose(hDataType);
+
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                        GH5_WriteAttribute()                          */
+/************************************************************************/
+
+bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
+                         unsigned nValue)
+{
+
+    hid_t hAttr = H5Aopen_name (loc_id, pszAttrName);
+    if (hAttr < 0)
+        return false;
+
+    hid_t hDataType = H5Aget_type (hAttr);
+    if (hDataType < 0)
+    {
+        H5Aclose (hAttr);
+        return false;
+    }
+
+    hid_t hAttrNativeType = H5Tget_native_type(hDataType, H5T_DIR_DEFAULT);
+    bool bSuccess = false;
+    if( H5Tequal(hAttrNativeType, H5T_NATIVE_INT) ||
+        H5Tequal(hAttrNativeType, H5T_NATIVE_UINT) )
+    {
+        bSuccess = H5Awrite(hAttr, hDataType, &nValue) >= 0;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attribute %s is not of type int/uint", pszAttrName);
+    }
+
+    H5Tclose(hAttrNativeType);
+    H5Aclose(hAttr);
+    H5Tclose(hDataType);
+
+    return bSuccess;
+}

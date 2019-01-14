@@ -50,6 +50,7 @@ enum GeoJSONSourceType
 };
 
 GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo );
+GeoJSONSourceType GeoJSONSeqGetSourceType( GDALOpenInfo* poOpenInfo );
 GeoJSONSourceType ESRIJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo );
 GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo );
 
@@ -58,6 +59,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo );
 /************************************************************************/
 
 bool GeoJSONIsObject( const char* pszText );
+bool GeoJSONSeqIsObject( const char* pszText );
 bool ESRIJSONIsObject(const char *pszText);
 bool TopoJSONIsObject(const char *pszText);
 

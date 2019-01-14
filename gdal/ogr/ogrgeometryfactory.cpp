@@ -1781,10 +1781,16 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                         // iterate over the other points of i.
                         const int nPoints = poLR_i->getNumPoints();
                         int k = 1;  // Used after for.
+                        OGRPoint previousPoint = asPolyEx[i].poAPoint;
                         for( ; k < nPoints; k++ )
                         {
                             OGRPoint point;
                             poLR_i->getPoint(k, &point);
+                            if( point.getX() == previousPoint.getX() &&
+                                point.getY() == previousPoint.getY() )
+                            {
+                                continue;
+                            }
                             if( poLR_j->isPointOnRingBoundary(&point, FALSE) )
                             {
                                 // If it is on the boundary of j, iterate again.
@@ -1801,23 +1807,28 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                 // If it is outside, then i cannot be inside j.
                                 break;
                             }
+                            previousPoint = point;
                         }
                         if( !b_i_inside_j && k == nPoints && nPoints > 2 )
                         {
                             // All points of i are on the boundary of j.
                             // Take a point in the middle of a segment of i and
                             // test it against j.
-                            for( k = 0; k < nPoints - 1; k++ )
+                            poLR_i->getPoint(0, &previousPoint);
+                            for( k = 1; k < nPoints; k++ )
                             {
-                                OGRPoint point1;
-                                OGRPoint point2;
+                                OGRPoint point;
+                                poLR_i->getPoint(k, &point);
+                                if( point.getX() == previousPoint.getX() &&
+                                    point.getY() == previousPoint.getY() )
+                                {
+                                    continue;
+                                }
                                 OGRPoint pointMiddle;
-                                poLR_i->getPoint(k, &point1);
-                                poLR_i->getPoint(k+1, &point2);
-                                pointMiddle.setX((point1.getX() +
-                                                  point2.getX()) / 2);
-                                pointMiddle.setY((point1.getY() +
-                                                  point2.getY()) / 2);
+                                pointMiddle.setX((point.getX() +
+                                                  previousPoint.getX()) / 2);
+                                pointMiddle.setY((point.getY() +
+                                                  previousPoint.getY()) / 2);
                                 if( poLR_j->isPointOnRingBoundary(&pointMiddle,
                                                                   FALSE) )
                                 {
@@ -1838,6 +1849,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                     // j.
                                     break;
                                 }
+                                previousPoint = point;
                             }
                         }
                     }
@@ -2789,8 +2801,10 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
             const double dfDiffSpace = 360 - dfDateLineOffset;
 
             const double dfXOffset = (bAroundMinus180) ? 360.0 : 0.0;
-            if( oEnvelope.MinX + dfXOffset > dfLeftBorderX &&
-                oEnvelope.MaxX + dfXOffset > 180 )
+            if( oEnvelope.MinX < -180 ||
+                oEnvelope.MaxX > 180 ||
+                (oEnvelope.MinX + dfXOffset > dfLeftBorderX &&
+                 oEnvelope.MaxX + dfXOffset > 180) )
             {
 #ifndef HAVE_GEOS
                 CPLError( CE_Failure, CPLE_NotSupported,
@@ -2857,8 +2871,8 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                 OGRGeometry* poRectangle1 = nullptr;
                 OGRGeometry* poRectangle2 = nullptr;
                 const char* pszWKT1 = !bAroundMinus180 ?
-                    "POLYGON((0 90,180 90,180 -90,0 -90,0 90))" :
-                    "POLYGON((0 90,-180 90,-180 -90,0 -90,0 90))";
+                    "POLYGON((-180 90,180 90,180 -90,-180 -90,-180 90))" :
+                    "POLYGON((180 90,-180 90,-180 -90,180 -90,180 90))";
                 const char* pszWKT2 = !bAroundMinus180 ?
                     "POLYGON((180 90,360 90,360 -90,180 -90,180 90))" :
                     "POLYGON((-180 90,-360 90,-360 -90,-180 -90,-180 90))";

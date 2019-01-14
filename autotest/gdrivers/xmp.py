@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,11 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import pytest
 
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,94 +40,72 @@ import gdaltest
 #
 
 
-class TestXMPRead(object):
-    def __init__(self, drivername, filename, expect_xmp):
-        self.drivername = drivername
-        self.filename = filename
-        self.expect_xmp = expect_xmp
+lst = [
+    ["GTiff", "data/byte_with_xmp.tif", True],
+    ["GTiff", "data/byte.tif", False],
+    ["GIF", "data/byte_with_xmp.gif", True],
+    ["BIGGIF", "data/fakebig.gif", False],
+    ["JPEG", "data/byte_with_xmp.jpg", True],
+    ["JPEG", "data/rgbsmall_rgb.jpg", False],
+    ["PNG", "data/byte_with_xmp.png", True],
+    ["PNG", "data/test.png", False],
+    ["JP2ECW", "data/byte_with_xmp.jp2", True],
+    ["JP2ECW", "data/byte.jp2", False],
+    ["JP2MrSID", "data/byte_with_xmp.jp2", True],
+    ["JP2MrSID", "data/byte.jp2", False],
+    ["JPEG2000", "data/byte_with_xmp.jp2", True],
+    ["JPEG2000", "data/byte.jp2", False],
+    ["JP2OpenJPEG", "data/byte_with_xmp.jp2", True],
+    ["JP2OpenJPEG", "data/byte.jp2", False],
+    ["JP2KAK", "data/byte_with_xmp.jp2", True],
+    ["JP2KAK", "data/byte.jp2", False],
+    ["PDF", "data/adobe_style_geospatial_with_xmp.pdf", True],
+    ["PDF", "data/adobe_style_geospatial.pdf", False],
+    ["WEBP", "data/rgbsmall_with_xmp.webp", True],
+    ["WEBP", "data/rgbsmall.webp", False],
+]
 
-    def test(self):
-        drv = gdal.GetDriverByName(self.drivername)
-        if drv is None:
-            return 'skip'
 
-        if self.drivername == 'PDF':
-            md = drv.GetMetadata()
-            if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md:
-                return 'skip'
+@pytest.mark.parametrize(
+    'drivername,filename,expect_xmp',
+    lst,
+    ids=[
+        "xmp_read_%s_%s" % (drivername, str(expect_xmp))
+        for (drivername, filename, expect_xmp) in lst
+    ]
+)
+def test_xmp(drivername, filename, expect_xmp):
+    drv = gdal.GetDriverByName(drivername)
+    if drv is None:
+        pytest.skip()
 
-        # we set ECW to not resolve projection and datum strings to get 3.x behavior.
-        gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
+    if drivername == 'PDF':
+        md = drv.GetMetadata()
+        if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md:
+            pytest.skip()
 
-        if self.filename.find('.jp2') >= 0:
-            gdaltest.deregister_all_jpeg2000_drivers_but(self.drivername)
+    # we set ECW to not resolve projection and datum strings to get 3.x behavior.
+    gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
-        ret = 'success'
-        ds = gdal.Open(self.filename)
-        if ds is None:
-            # Old libwebp don't support VP8X containers
-            if self.filename == 'data/rgbsmall_with_xmp.webp':
-                ret = 'skip'
-            else:
-                gdaltest.post_reason('open failed')
-                ret = 'failure'
+    if '.jp2' in filename:
+        gdaltest.deregister_all_jpeg2000_drivers_but(drivername)
+
+    try:
+        ds = gdal.Open(filename)
+        if filename == 'data/rgbsmall_with_xmp.webp':
+            if ds is None:
+                pytest.skip("Old libwebp don't support VP8X containers")
         else:
-            xmp_md = ds.GetMetadata('xml:XMP')
-            if ds.GetDriver().ShortName != self.drivername:
-                gdaltest.post_reason('opened with wrong driver')
-                print(ds.GetDriver().ShortName)
-                ret = 'failure'
-            elif self.expect_xmp and not xmp_md:
-                gdaltest.post_reason('did not find xml:XMP metadata')
-                ret = 'failure'
-            elif self.expect_xmp and 'xml:XMP' not in ds.GetMetadataDomainList():
-                gdaltest.post_reason('did not find xml:XMP metadata domain')
-                ret = 'failure'
-            elif (not self.expect_xmp) and xmp_md:
-                gdaltest.post_reason('found unexpected xml:XMP metadata')
-                ret = 'failure'
+            assert ds is not None, 'open failed'
+
+        xmp_md = ds.GetMetadata('xml:XMP')
+
+        assert ds.GetDriver().ShortName == drivername, 'opened with wrong driver'
+        assert not (expect_xmp and not xmp_md), 'did not find xml:XMP metadata'
+        assert not (expect_xmp and 'xml:XMP' not in ds.GetMetadataDomainList()), 'did not find xml:XMP metadata domain'
+        assert expect_xmp or not xmp_md, 'found unexpected xml:XMP metadata'
+
         ds = None
-
-        if self.filename.find('.jp2') >= 0:
+    finally:
+        if '.jp2' in filename:
             gdaltest.reregister_all_jpeg2000_drivers()
-
-        return ret
-
-
-gdaltest_list = []
-
-lst = [["GTiff", "data/byte_with_xmp.tif", True],
-       ["GTiff", "data/byte.tif", False],
-       ["GIF", "data/byte_with_xmp.gif", True],
-       ["BIGGIF", "data/fakebig.gif", False],
-       ["JPEG", "data/byte_with_xmp.jpg", True],
-       ["JPEG", "data/rgbsmall_rgb.jpg", False],
-       ["PNG", "data/byte_with_xmp.png", True],
-       ["PNG", "data/test.png", False],
-       ["JP2ECW", "data/byte_with_xmp.jp2", True],
-       ["JP2ECW", "data/byte.jp2", False],
-       ["JP2MrSID", "data/byte_with_xmp.jp2", True],
-       ["JP2MrSID", "data/byte.jp2", False],
-       ["JPEG2000", "data/byte_with_xmp.jp2", True],
-       ["JPEG2000", "data/byte.jp2", False],
-       ["JP2OpenJPEG", "data/byte_with_xmp.jp2", True],
-       ["JP2OpenJPEG", "data/byte.jp2", False],
-       ["JP2KAK", "data/byte_with_xmp.jp2", True],
-       ["JP2KAK", "data/byte.jp2", False],
-       ["PDF", "data/adobe_style_geospatial_with_xmp.pdf", True],
-       ["PDF", "data/adobe_style_geospatial.pdf", False],
-       ["WEBP", "data/rgbsmall_with_xmp.webp", True],
-       ["WEBP", "data/rgbsmall.webp", False],
-      ]
-
-for drivername, filename, expect_xmp in lst:
-    ut = TestXMPRead(drivername, filename, expect_xmp)
-    gdaltest_list.append((ut.test, "xmp_read_%s_%s" % (drivername, "true" if expect_xmp is True else "false")))
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('xmp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -355,8 +355,6 @@ def generate_kmlsuperoverlay(filename):
     src_ds = None
 
 
-gdaltest_list = []
-
 if __name__ == '__main__':
 
     generate_libkml('test_ogrlibkml.kml')

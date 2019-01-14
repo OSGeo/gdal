@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,33 +29,31 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Verify we have the driver.
 
 
-def fast_1():
+def test_fast_1():
 
     gdaltest.fast_drv = gdal.GetDriverByName('FAST')
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Perform simple read test.
 
 
-def fast_2():
+def test_fast_2():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Actually, the band (a placeholder) is of 0 bytes size,
     # so the checksum is 0 expected.
@@ -68,33 +66,23 @@ def fast_2():
 # Verify metadata.
 
 
-def fast_3():
+def test_fast_3():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.fast_ds = gdal.Open('data/L71118038_03820020111_HPN.FST')
     ds = gdaltest.fast_ds
-    if ds is None:
-        gdaltest.post_reason('Missing test dataset')
-        return 'fail'
+    assert ds is not None, 'Missing test dataset'
 
     md = ds.GetMetadata()
-    if md is None:
-        gdaltest.post_reason('Missing metadata in test dataset')
-        return 'fail'
+    assert md is not None, 'Missing metadata in test dataset'
 
-    if md['ACQUISITION_DATE'] != '20020111':
-        gdaltest.post_reason('ACQUISITION_DATE wrong')
-        return 'fail'
+    assert md['ACQUISITION_DATE'] == '20020111', 'ACQUISITION_DATE wrong'
 
-    if md['SATELLITE'] != 'LANDSAT7':
-        gdaltest.post_reason('SATELLITE wrong')
-        return 'fail'
+    assert md['SATELLITE'] == 'LANDSAT7', 'SATELLITE wrong'
 
-    if md['SENSOR'] != 'ETM+':
-        gdaltest.post_reason('SENSOR wrong')
-        return 'fail'
+    assert md['SENSOR'] == 'ETM+', 'SENSOR wrong'
 
     # GAIN and BIAS expected values
     gb_expected = (-6.199999809265137, 0.775686297697179)
@@ -109,21 +97,18 @@ def fast_3():
         print('expected:', gb_expected[1])
         print('got:', bias)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test geotransform data.
 
 
-def fast_4():
+def test_fast_4():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.fast_ds
-    if ds is None:
-        gdaltest.post_reason('Missing test dataset')
-        return 'fail'
+    assert ds is not None, 'Missing test dataset'
 
     gt = ds.GetGeoTransform()
 
@@ -131,22 +116,19 @@ def fast_4():
     ds = None
 
     tolerance = 0.01
-    if abs(gt[0] - 280342.5) > tolerance or abs(gt[1] - 15.0) > tolerance or \
-       abs(gt[2] - 0.0) > tolerance or abs(gt[3] - 3621457.5) > tolerance or \
-       abs(gt[4] - 0.0) > tolerance or abs(gt[5] + 15.0) > tolerance:
-        gdaltest.post_reason('FAST geotransform wrong')
-        return 'fail'
-
-    return 'success'
+    assert (abs(gt[0] - 280342.5) <= tolerance and abs(gt[1] - 15.0) <= tolerance and \
+       abs(gt[2] - 0.0) <= tolerance and abs(gt[3] - 3621457.5) <= tolerance and \
+       abs(gt[4] - 0.0) <= tolerance and abs(gt[5] + 15.0) <= tolerance), \
+        'FAST geotransform wrong'
 
 
 ###############################################################################
 # Test 2 bands dataset with checking projections and geotransform.
 
-def fast_5():
+def test_fast_5():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('fast', 'L71230079_07920021111_HTM.FST', 2, 19110,
                             0, 0, 7000, 1)
@@ -183,10 +165,10 @@ def fast_5():
 ###############################################################################
 # Test Euromap LISS3 dataset
 
-def fast_6():
+def test_fast_6():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('fast', 'n0o0y867.0fl', 1, 0, 0, 0, 2741, 1)
 
@@ -204,10 +186,10 @@ def fast_6():
 ###############################################################################
 # Test Euromap PAN dataset
 
-def fast_7():
+def test_fast_7():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('fast', 'h0o0y867.1ah', 1, 0, 0, 0, 5815, 1)
 
@@ -236,10 +218,10 @@ def fast_7():
 # Test Euromap WIFS dataset
 
 
-def fast_8():
+def test_fast_8():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('fast', 'w0y13a4t.010', 1, 0, 0, 0, 4748, 1)
 
@@ -270,41 +252,18 @@ def fast_8():
 # Check some metadata and opening for a RevB L7 file (#3306, #3307).
 
 
-def fast_9():
+def test_fast_9():
 
     if gdaltest.fast_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/HEADER.DAT')
-    if ds.GetMetadataItem('SENSOR') != '':
-        gdaltest.post_reason('Did not get expected SENSOR value.')
-        return 'fail'
+    assert ds.GetMetadataItem('SENSOR') == '', 'Did not get expected SENSOR value.'
 
-    if ds.RasterCount != 7:
-        gdaltest.post_reason('Did not get expected band count.')
-        return 'fail'
-
-    return 'success'
+    assert ds.RasterCount == 7, 'Did not get expected band count.'
 
 ###############################################################################
 #
 
 
-gdaltest_list = [
-    fast_1,
-    fast_2,
-    fast_3,
-    fast_4,
-    fast_5,
-    fast_6,
-    fast_7,
-    fast_8,
-    fast_9]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('fast')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

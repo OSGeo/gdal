@@ -50,19 +50,20 @@ class OGRWFS3Dataset final: public GDALDataset
         friend class OGRWFS3Layer;
 
         CPLString                              m_osRootURL;
+        CPLString                              m_osUserPwd;
         int                                    m_nPageSize = 10;
         std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
         bool                                   m_bAPIDocLoaded = false;
         CPLJSONDocument                        m_oAPIDoc;
 
-        static bool                    Download(
+        bool                    Download(
             const CPLString& osURL,
             const char* pszAccept,
             CPLString& osResult,
             CPLString& osContentType,
             CPLStringList* paosHeaders = nullptr );
 
-        static bool                    DownloadJSon(
+        bool                    DownloadJSon(
             const CPLString& osURL,
             CPLJSONDocument& oDoc,
             const char* pszAccept = "application/geo+json, application/json",
@@ -170,6 +171,11 @@ bool OGRWFS3Dataset::Download(
 #endif
     char** papszOptions = CSLSetNameValue(nullptr,
             "HEADERS", (CPLString("Accept: ") + pszAccept).c_str());
+    if( !m_osUserPwd.empty() )
+    {
+        papszOptions = CSLSetNameValue(papszOptions,
+                                       "USERPWD", m_osUserPwd.c_str());
+    }
     CPLHTTPResult* psResult = CPLHTTPFetch(osURL, papszOptions);
     CSLDestroy(papszOptions);
     if( !psResult )
@@ -304,11 +310,13 @@ const CPLJSONDocument& OGRWFS3Dataset::GetAPIDoc()
 
 bool OGRWFS3Dataset::Open(GDALOpenInfo* poOpenInfo)
 {
-    m_osRootURL = 
+    m_osRootURL =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "URL",
             poOpenInfo->pszFilename + strlen("WFS3:"));
     m_nPageSize = atoi( CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                             "PAGE_SIZE",CPLSPrintf("%d", m_nPageSize)) );
+    m_osUserPwd =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "USERPWD", "");
     CPLString osResult;
     CPLString osContentType;
     // FIXME: json would be preferable in first position, but
@@ -1059,6 +1067,8 @@ void RegisterOGRWFS3()
         "description='URL to the WFS server endpoint' required='true'/>"
 "  <Option name='PAGE_SIZE' type='int' "
         "description='Maximum number of features to retrieve in a single request'/>"
+"  <Option name='USERPWD' type='string' "
+        "description='Basic authentication as username:password'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnIdentify = OGRWFS3DriverIdentify;

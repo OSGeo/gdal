@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,51 +28,47 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 from osgeo import gdal
 
 
-gdaltest_list = []
-
 init_list = [
-    ('byte.tif', 1, 4672, []),
-    ('byte_signed.tif', 1, 4672, []),
-    ('int16.tif', 1, 4672, []),
-    ('uint16.tif', 1, 4672, []),
-    ('int32.tif', 1, 4672, []),
-    ('uint32.tif', 1, 4672, []),
-    ('float32.tif', 1, 4672, []),
-    ('float64.tif', 1, 4672, []),
-    ('cint16.tif', 1, 5028, []),
-    ('cint32.tif', 1, 5028, []),
-    ('cfloat32.tif', 1, 5028, []),
-    ('cfloat64.tif', 1, 5028, []),
-    ('rgbsmall.tif', 1, 21212, [])]
+    ('byte.tif', 4672),
+    ('byte_signed.tif', 4672),
+    ('int16.tif', 4672),
+    ('uint16.tif', 4672),
+    ('int32.tif', 4672),
+    ('uint32.tif', 4672),
+    ('float32.tif', 4672),
+    ('float64.tif', 4672),
+    ('cint16.tif', 5028),
+    ('cint32.tif', 5028),
+    ('cfloat32.tif', 5028),
+    ('cfloat64.tif', 5028),
+    ('rgbsmall.tif', 21212)]
 
 ###############################################################################
 # Verify we have the driver.
 
 
-def gta_1():
+def test_gta_1():
 
     gdaltest.gta_drv = gdal.GetDriverByName('GTA')
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test updating existing dataset, check srs, check gt
 
 
-def gta_2():
+def test_gta_2():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/byte.gta', src_ds)
@@ -84,9 +80,7 @@ def gta_2():
 
     out_ds = gdal.Open('/vsimem/byte.gta')
     cs = out_ds.GetRasterBand(1).Checksum()
-    if cs != 0:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == 0, 'did not get expected checksum'
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/byte.gta', gdal.GA_Update)
@@ -95,9 +89,7 @@ def gta_2():
 
     out_ds = gdal.Open('/vsimem/byte.gta')
     cs = out_ds.GetRasterBand(1).Checksum()
-    if cs != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == src_ds.GetRasterBand(1).Checksum(), 'did not get expected checksum'
 
     gt = out_ds.GetGeoTransform()
     wkt = out_ds.GetProjectionRef()
@@ -105,26 +97,20 @@ def gta_2():
 
     expected_gt = src_ds.GetGeoTransform()
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-6:
-            gdaltest.post_reason('did not get expected wkt')
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-6, 'did not get expected wkt'
 
-    if wkt != src_ds.GetProjectionRef():
-        gdaltest.post_reason('did not get expected wkt')
-        return 'fail'
+    assert wkt == src_ds.GetProjectionRef(), 'did not get expected wkt'
 
     gdaltest.gta_drv.Delete('/vsimem/byte.gta')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and readings GCPs
 
 
-def gta_3():
+def test_gta_3():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/gcps.vrt')
 
@@ -133,38 +119,30 @@ def gta_3():
 
     new_ds = gdal.Open('/vsimem/gta_3.gta')
 
-    if new_ds.GetGeoTransform() != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
-        gdaltest.post_reason('GeoTransform not set properly.')
-        return 'fail'
+    assert new_ds.GetGeoTransform() == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), \
+        'GeoTransform not set properly.'
 
-    if new_ds.GetProjectionRef() != '':
-        gdaltest.post_reason('Projection not set properly.')
-        return 'fail'
+    assert new_ds.GetProjectionRef() == '', 'Projection not set properly.'
 
-    if new_ds.GetGCPProjection() != src_ds.GetGCPProjection():
-        gdaltest.post_reason('GCP Projection not set properly.')
-        return 'fail'
+    assert new_ds.GetGCPProjection() == src_ds.GetGCPProjection(), \
+        'GCP Projection not set properly.'
 
     gcps = new_ds.GetGCPs()
     expected_gcps = src_ds.GetGCPs()
-    if len(gcps) != len(expected_gcps):
-        gdaltest.post_reason('GCP count wrong.')
-        return 'fail'
+    assert len(gcps) == len(expected_gcps), 'GCP count wrong.'
 
     new_ds = None
 
     gdaltest.gta_drv.Delete('/vsimem/gta_3.gta')
 
-    return 'success'
-
 ###############################################################################
 # Test band metadata
 
 
-def gta_4():
+def test_gta_4():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 17)
     src_ds.GetRasterBand(1).Fill(255)
@@ -184,61 +162,32 @@ def gta_4():
 
     new_ds = gdal.Open('/vsimem/gta_4.gta')
     band = new_ds.GetRasterBand(1)
-    if band.GetNoDataValue() != 123:
-        gdaltest.post_reason('did not get expected nodata value')
-        print(band.GetNoDataValue())
-        return 'fail'
-    if band.GetMinimum() != 255:
-        gdaltest.post_reason('did not get expected minimum value')
-        print(band.GetMinimum())
-        return 'fail'
-    if band.GetMaximum() != 255:
-        gdaltest.post_reason('did not get expected maximum value')
-        print(band.GetMaximum())
-        return 'fail'
-    if band.GetCategoryNames() != ['a', 'b']:
-        gdaltest.post_reason('did not get expected category names')
-        print(band.GetCategoryNames())
-        return 'fail'
-    if band.GetOffset() != 2:
-        gdaltest.post_reason('did not get expected offset value')
-        print(band.GetOffset())
-        return 'fail'
-    if band.GetScale() != 3:
-        gdaltest.post_reason('did not get expected scale value')
-        print(band.GetScale())
-        return 'fail'
-    if band.GetUnitType() != 'custom':
-        gdaltest.post_reason('did not get expected unit value')
-        print(band.GetUnitType())
-        return 'fail'
-    if band.GetDescription() != 'description':
-        gdaltest.post_reason('did not get expected description')
-        print(band.GetDescription())
-        return 'fail'
+    assert band.GetNoDataValue() == 123, 'did not get expected nodata value'
+    assert band.GetMinimum() == 255, 'did not get expected minimum value'
+    assert band.GetMaximum() == 255, 'did not get expected maximum value'
+    assert band.GetCategoryNames() == ['a', 'b'], 'did not get expected category names'
+    assert band.GetOffset() == 2, 'did not get expected offset value'
+    assert band.GetScale() == 3, 'did not get expected scale value'
+    assert band.GetUnitType() == 'custom', 'did not get expected unit value'
+    assert band.GetDescription() == 'description', 'did not get expected description'
     for i in range(17):
         if i != gdal.GCI_PaletteIndex:
-            if new_ds.GetRasterBand(i + 1).GetColorInterpretation() != i:
-                gdaltest.post_reason(
-                    'did not get expected color interpretation '
+            assert new_ds.GetRasterBand(i + 1).GetColorInterpretation() == i, \
+                ('did not get expected color interpretation '
                     'for band %d' % (i + 1))
-                print(new_ds.GetRasterBand(i + 1).GetColorInterpretation())
-                return 'fail'
 
     new_ds = None
 
     gdaltest.gta_drv.Delete('/vsimem/gta_4.gta')
 
-    return 'success'
-
 ###############################################################################
 # Test compression algorithms
 
 
-def gta_5():
+def test_gta_5():
 
     if gdaltest.gta_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -262,30 +211,18 @@ def gta_5():
 
     gdaltest.gta_drv.Delete('/vsimem/gta_5.gta')
 
-    return 'success'
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('GTA')
+def test_gta_create(filename, checksum):
+    if filename != 'byte_signed.tif':
+        filename = '../../gcore/data/' + filename
+    ut = gdaltest.GDALTest('GTA', filename, 1, checksum, options=[])
+    ut.testCreateCopy()
 
 
-for item in init_list:
-    if item[0] == 'byte_signed.tif':
-        filename = item[0]
-    else:
-        filename = '../../gcore/data/' + item[0]
-    ut = gdaltest.GDALTest('GTA', filename, item[1], item[2], options=item[3])
-    if ut is None:
-        print('GTA tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testCreateCopy, item[0]))
 
-gdaltest_list.append(gta_1)
-gdaltest_list.append(gta_2)
-gdaltest_list.append(gta_3)
-gdaltest_list.append(gta_4)
-gdaltest_list.append(gta_5)
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gta')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -33,6 +33,7 @@
 #define CPL_VSI_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_progress.h"
 
 /**
  * \file cpl_vsi.h
@@ -301,12 +302,59 @@ GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 char CPL_DLL **VSIReadDir( const char * );
 char CPL_DLL **VSIReadDirRecursive( const char *pszPath );
 char CPL_DLL **VSIReadDirEx( const char *pszPath, int nMaxFiles );
+
+/** Opaque type for a directory iterator */
+typedef struct VSIDIR VSIDIR;
+
+VSIDIR CPL_DLL *VSIOpenDir( const char *pszPath,
+                            int nRecurseDepth,
+                            const char* const *papszOptions);
+
+/** Directory entry. */
+typedef struct VSIDIREntry
+{
+    /** Filename */
+    char*        pszName;
+    /** File mode. See VSI_ISREG() / VSI_ISDIR() */
+    int          nMode;
+    /** File size */
+    vsi_l_offset nSize;
+    /** Last modification time (seconds since 1970/01/01) */
+    GIntBig      nMTime;
+    /** Whether nMode is known: 0 = unknown, 1 = known. */
+    char         bModeKnown;
+    /** Whether nSize is known: 0 = unknown, 1 = known. */
+    char         bSizeKnown;
+    /** Whether nMTime is known: 0 = unknown, 1 = known. */
+    char         bMTimeKnown;
+    /** NULL-terminated list of extra properties. */
+    char**       papszExtra;
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+/*! @cond Doxygen_Suppress */
+    VSIDIREntry();
+    ~VSIDIREntry();
+    VSIDIREntry(const VSIDIREntry&) = delete;
+    VSIDIREntry& operator=(VSIDIREntry&) = delete;
+/*! @endcond */
+#endif
+} VSIDIREntry;
+
+const VSIDIREntry CPL_DLL *VSIGetNextDirEntry(VSIDIR* dir);
+void CPL_DLL VSICloseDir(VSIDIR* dir);
+
 int CPL_DLL VSIMkdir( const char * pszPathname, long mode );
 int CPL_DLL VSIMkdirRecursive( const char * pszPathname, long mode );
 int CPL_DLL VSIRmdir( const char * pszDirname );
 int CPL_DLL VSIRmdirRecursive( const char * pszDirname );
 int CPL_DLL VSIUnlink( const char * pszFilename );
 int CPL_DLL VSIRename( const char * oldpath, const char * newpath );
+int CPL_DLL VSISync( const char* pszSource, const char* pszTarget,
+                      const char* const * papszOptions,
+                      GDALProgressFunc pProgressFunc,
+                      void *pProgressData,
+                      char*** ppapszOutputs );
+
 char CPL_DLL *VSIStrerror( int );
 GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
 
@@ -336,6 +384,7 @@ void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */
 void VSIInstallHdfsHandler(void); /* No reason to export that */
+void VSIInstallWebHdfsHandler(void); /* No reason to export that */
 void VSIInstallStdoutHandler(void); /* No reason to export that */
 void CPL_DLL VSIInstallSparseFileHandler(void);
 void VSIInstallTarFileHandler(void); /* No reason to export that */

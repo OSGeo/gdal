@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,23 +28,21 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test reading
 
 
-def ogr_sdts_1():
+def test_ogr_sdts_1():
 
     gdaltest.sdts_ds = ogr.Open('data/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF')
 
-    if gdaltest.sdts_ds is None:
-        return 'fail'
+    assert gdaltest.sdts_ds is not None
 
     layers = [('ARDF', 164, ogr.wkbNone, [('ENTITY_LABEL', '1700005')]),
               ('ARDM', 21, ogr.wkbNone, [('ROUTE_NUMBER', 'SR 1200')]),
@@ -58,37 +56,21 @@ def ogr_sdts_1():
 
     for layer in layers:
         lyr = gdaltest.sdts_ds.GetLayerByName(layer[0])
-        if lyr is None:
-            gdaltest.post_reason('could not get layer %s' % (layer[0]))
-            return 'fail'
-        if lyr.GetFeatureCount() != layer[1]:
-            gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
-            return 'fail'
-        if lyr.GetLayerDefn().GetGeomType() != layer[2]:
-            return 'fail'
+        assert lyr is not None, ('could not get layer %s' % (layer[0]))
+        assert lyr.GetFeatureCount() == layer[1], \
+            ('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
+        assert lyr.GetLayerDefn().GetGeomType() == layer[2]
         feat_read = lyr.GetNextFeature()
         for item in layer[3]:
             if feat_read.GetFieldAsString(item[0]) != item[1]:
                 print(layer[0])
                 print('"%s"' % (item[1]))
-                print('"%s"' % (feat_read.GetField(item[0])))
-                return 'fail'
+                pytest.fail('"%s"' % (feat_read.GetField(item[0])))
 
     gdaltest.sdts_ds = None
-
-    return 'success'
 
 
 ###############################################################################
 #
 
-gdaltest_list = [
-    ogr_sdts_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sdts')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

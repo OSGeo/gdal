@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,19 +31,18 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test if driver is available
 
 
-def ogr_cloudant_init():
+def test_ogr_cloudant_init():
 
     ogrtest.cloudant_drv = None
 
@@ -53,7 +52,7 @@ def ogr_cloudant_init():
         pass
 
     if ogrtest.cloudant_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if 'CLOUDANT_TEST_SERVER' in os.environ:
         ogrtest.cloudant_test_server = os.environ['CLOUDANT_TEST_SERVER']
@@ -65,163 +64,113 @@ def ogr_cloudant_init():
     ogrtest.cloudant_test_layer = 'gdaltest'
 
     if gdaltest.gdalurlopen(ogrtest.cloudant_test_url) is None:
-        print('cannot open %s' % ogrtest.cloudant_test_url)
         ogrtest.cloudant_drv = None
-        return 'skip'
+        pytest.skip('cannot open %s' % ogrtest.cloudant_test_url)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GetFeatureCount()
 
 
-def ogr_cloudant_GetFeatureCount():
+def test_ogr_cloudant_GetFeatureCount():
     if ogrtest.cloudant_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     count = lyr.GetFeatureCount()
-    if count != 52:
-        gdaltest.post_reason('did not get expected feature count')
-        print(count)
-        return 'fail'
-
-    return 'success'
+    assert count == 52, 'did not get expected feature count'
 
 ###############################################################################
 # Test GetNextFeature()
 
 
-def ogr_cloudant_GetNextFeature():
+def test_ogr_cloudant_GetNextFeature():
     if ogrtest.cloudant_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('did not get expected feature')
-        return 'fail'
+    assert feat is not None, 'did not get expected feature'
     if feat.GetField('_id') != '0400000US01':
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GetSpatialRef()
 
 
-def ogr_cloudant_GetSpatialRef():
+def test_ogr_cloudant_GetSpatialRef():
     if ogrtest.cloudant_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     sr = lyr.GetSpatialRef()
 
     if sr is None:
-        return 'success'
+        return
 
-    return 'success'
-
+    
 ###############################################################################
 # Test GetExtent()
 
 
-def ogr_cloudant_GetExtent():
+def test_ogr_cloudant_GetExtent():
     if ogrtest.cloudant_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     extent = lyr.GetExtent()
-    if extent is None:
-        gdaltest.post_reason('did not get expected extent')
-        return 'fail'
+    assert extent is not None, 'did not get expected extent'
 
-    if extent != (-179.14734, 179.77847, 17.884813, 71.352561):
-        gdaltest.post_reason('did not get expected extent')
-        print(extent)
-        return 'fail'
-
-    return 'success'
+    assert extent == (-179.14734, 179.77847, 17.884813, 71.352561), \
+        'did not get expected extent'
 
 ###############################################################################
 # Test SetSpatialFilter()
 
 
-def ogr_cloudant_SetSpatialFilter():
+def test_ogr_cloudant_SetSpatialFilter():
     if ogrtest.cloudant_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     lyr.SetSpatialFilterRect(-104.9847, 39.7392, -104.9847, 39.7392)
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('did not get expected feature')
-        return 'fail'
+    assert feat is not None, 'did not get expected feature'
     if feat.GetField('NAME') != 'Colorado':
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
-    return 'success'
+    
 
 
-if gdaltest.skip_on_travis():
-    gdaltest_list = []
-else:
-    gdaltest_list = [
-        ogr_cloudant_init,
-        ogr_cloudant_GetFeatureCount,
-        ogr_cloudant_GetNextFeature,
-        ogr_cloudant_GetSpatialRef,
-        ogr_cloudant_GetExtent,
-        ogr_cloudant_SetSpatialFilter
-    ]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_cloudant')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -39,7 +37,7 @@ import gdaltest
 # Read test of simple byte reference data.
 
 
-def paux_1():
+def test_paux_1():
 
     tst = gdaltest.GDALTest('PAux', 'small16.raw', 2, 12816)
     return tst.testOpen()
@@ -48,7 +46,7 @@ def paux_1():
 # Test copying.
 
 
-def paux_2():
+def test_paux_2():
 
     tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
 
@@ -58,7 +56,7 @@ def paux_2():
 # Test /vsimem based.
 
 
-def paux_3():
+def test_paux_3():
 
     tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
 
@@ -68,22 +66,9 @@ def paux_3():
 # Cleanup.
 
 
-def paux_cleanup():
+def test_paux_cleanup():
     gdaltest.clean_tmp()
     gdal.Unlink('/vsimem/byte.tif.tst.aux.xml')
-    return 'success'
 
 
-gdaltest_list = [
-    paux_1,
-    paux_2,
-    paux_3,
-    paux_cleanup]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('paux')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

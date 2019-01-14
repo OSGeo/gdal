@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -27,80 +27,65 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Create a point in DB2 format, and verify the byte order flag.
 
 
-def ogr_db2_hack_1():
+def test_ogr_db2_hack_1():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER(1) != 0:
-        return 'skip'
+        pytest.skip()
 
     # XDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
     wkb = geom.ExportToWkb(byte_order=ogr.wkbXDR).decode('latin1')
     geom.Destroy()
 
-    if wkb[0] != '0':
-        gdaltest.post_reason('WKB wkbXDR point geometry has wrong byte order')
-        return 'fail'
+    assert wkb[0] == '0', 'WKB wkbXDR point geometry has wrong byte order'
 
     # NDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
     wkb = geom.ExportToWkb(byte_order=ogr.wkbNDR).decode('latin1')
     geom.Destroy()
 
-    if wkb[0] != '1':
-        gdaltest.post_reason('WKB wkbNDR point geometry has wrong byte order')
-        return 'fail'
-
-    return 'success'
+    assert wkb[0] == '1', 'WKB wkbNDR point geometry has wrong byte order'
 
 ###############################################################################
 # Verify that we can turn DB2 V7.2 mode back off!
 
 
-def ogr_db2_hack_2():
+def test_ogr_db2_hack_2():
 
-    if ogr.SetGenerate_DB2_V72_BYTE_ORDER(0) != 0:
-        gdaltest.post_reason('SetGenerate to turn off hack failed!')
-        return 'fail'
+    assert ogr.SetGenerate_DB2_V72_BYTE_ORDER(0) == 0, \
+        'SetGenerate to turn off hack failed!'
 
     # XDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
     wkb = geom.ExportToWkb(byte_order=ogr.wkbXDR).decode('latin1')
     geom.Destroy()
 
-    if wkb[0] != chr(0):
-        gdaltest.post_reason('WKB wkbXDR point geometry has wrong byte order')
-        return 'fail'
+    assert wkb[0] == chr(0), 'WKB wkbXDR point geometry has wrong byte order'
 
     # NDR Case.
     geom = ogr.CreateGeometryFromWkt('POINT(10 20)')
     wkb = geom.ExportToWkb(byte_order=ogr.wkbNDR).decode('latin1')
     geom.Destroy()
 
-    if wkb[0] != chr(1):
-        gdaltest.post_reason('WKB wkbNDR point geometry has wrong byte order')
-        return 'fail'
-
-    return 'success'
+    assert wkb[0] == chr(1), 'WKB wkbNDR point geometry has wrong byte order'
 
 
 ###############################################################################
 # Try a more complex geometry, and verify we can read it back.
 
-def ogr_db2_hack_3():
+def test_ogr_db2_hack_3():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER(1) != 0:
-        return 'skip'
+        pytest.skip()
 
     wkt = 'MULTIPOLYGON (((10.00121344 2.99853145,10.00121344 1.99853145,11.00121343 1.99853148,11.00121343 2.99853148)),((10.00121344 2.99853145,10.00121344 3.99853145,9.00121345 3.99853143,9.00121345 2.99853143)))'
 
@@ -109,38 +94,20 @@ def ogr_db2_hack_3():
     geom.Destroy()
 
     # Check primary byte order value.
-    if wkb.decode('latin1')[0] != '0' and wkb.decode('latin1')[0] != '1':
-        gdaltest.post_reason('corrupt primary geometry byte order')
-        return 'fail'
+    assert wkb.decode('latin1')[0] == '0' or wkb.decode('latin1')[0] == '1', \
+        'corrupt primary geometry byte order'
 
     # Check component geometry byte order
-    if wkb.decode('latin1')[9] != '0' and wkb.decode('latin1')[9] != '1':
-        gdaltest.post_reason('corrupt sub-geometry byte order')
-        return 'fail'
+    assert wkb.decode('latin1')[9] == '0' or wkb.decode('latin1')[9] == '1', \
+        'corrupt sub-geometry byte order'
 
     geom = ogr.CreateGeometryFromWkb(wkb)
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('Conversion to/from DB2 format seems to have '
+    assert geom.ExportToWkt() == wkt, ('Conversion to/from DB2 format seems to have '
                              'corrupted geometry.')
-        return 'fail'
 
     geom.Destroy()
 
     ogr.SetGenerate_DB2_V72_BYTE_ORDER(0)
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_db2_hack_1,
-    ogr_db2_hack_2,
-    ogr_db2_hack_3
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_db2_hack')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

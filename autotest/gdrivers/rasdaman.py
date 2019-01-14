@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,12 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 #
 # The rasdaman DB must be created like this :
@@ -46,10 +45,10 @@ import gdaltest
 #
 
 
-def rasdaman_1():
+def test_rasdaman_1():
     gdaltest.rasdamanDriver = gdal.GetDriverByName('RASDAMAN')
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from rgb as a'")
@@ -60,48 +59,33 @@ def rasdaman_1():
         gdaltest.rasdamanDriver = None
 
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 61774:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
-
-    return 'success'
+    assert cs == 61774, 'did not get expected checksum'
 
 ###############################################################################
 # Test opening a non existing collection
 
 
-def rasdaman_2():
+def test_rasdaman_2():
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'")
-    return 'success' if ds is None else 'fail'
+    assert ds is None
 
 ###############################################################################
 # Test syntax error
 
 
-def rasdaman_3():
+def test_rasdaman_3():
     if gdaltest.rasdamanDriver is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open("rasdaman:query='select'")
 
-    return 'success' if ds is None else 'fail'
+    assert ds is None
 
 
-gdaltest_list = [
-    rasdaman_1,
-    rasdaman_2,
-    rasdaman_3]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('RASDAMAN')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

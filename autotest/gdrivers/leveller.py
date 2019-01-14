@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,20 +36,11 @@ import gdaltest
 # Perform simple read test.
 
 
-def leveller_1():
+def test_leveller_1():
 
     tst = gdaltest.GDALTest('Leveller', 'ter6test.ter', 1, 33441)
     return tst.testOpen()
 
 
-gdaltest_list = [
-    leveller_1]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('leveller')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

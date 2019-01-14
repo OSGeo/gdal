@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,11 +28,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import gdal
 from osgeo import osr
 
@@ -41,7 +38,7 @@ from osgeo import osr
 #
 
 
-def osr_usgs_1():
+def test_osr_usgs_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromUSGS(
@@ -52,23 +49,15 @@ def osr_usgs_1():
          0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
         15)
 
-    if abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 47.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 62.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) - 54.5) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) - 45.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) > 0.0000005:
-        gdaltest.post_reason('Can not import Equidistant Conic projection.')
-        return 'fail'
-
-    return 'success'
+    assert abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 47.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 62.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) - 54.5) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) - 45.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) <= 0.0000005, \
+        'Can not import Equidistant Conic projection.'
 
 ###############################################################################
 # Test the osr.SpatialReference.ExportToUSGS() function.
 #
 
 
-def osr_usgs_2():
+def test_osr_usgs_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
@@ -86,26 +75,8 @@ def osr_usgs_2():
 
     (proj_code, _, parms, datum_code) = srs.ExportToUSGS()
 
-    if proj_code != 4 or datum_code != 0 \
-       or abs(gdal.PackedDMSToDec(parms[2]) - 33.90363403) > 0.0000005 \
-       or abs(gdal.PackedDMSToDec(parms[3]) - 33.62529003) > 0.0000005 \
-       or abs(gdal.PackedDMSToDec(parms[4]) - -117.4745429) > 0.0000005 \
-       or abs(gdal.PackedDMSToDec(parms[5]) - 33.76446203) > 0.0000005:
-        gdaltest.post_reason('Can not import Lambert Conformal Conic projection.')
-        return 'fail'
-
-    return 'success'
+    assert proj_code == 4 and datum_code == 0 and abs(gdal.PackedDMSToDec(parms[2]) - 33.90363403) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[3]) - 33.62529003) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[4]) - -117.4745429) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[5]) - 33.76446203) <= 0.0000005, \
+        'Can not import Lambert Conformal Conic projection.'
 
 
-gdaltest_list = [
-    osr_usgs_1,
-    osr_usgs_2,
-    None]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_usgs')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

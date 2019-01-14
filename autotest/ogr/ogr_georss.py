@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id: ogr_georss.py 15604 2008-10-26 11:21:34Z rouault $
@@ -30,17 +30,16 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 
-def ogr_georss_init():
+def test_ogr_georss_init():
 
     ds = ogr.Open('data/atom_rfc_sample.xml')
     if ds is None:
@@ -78,8 +77,6 @@ def ogr_georss_init():
                                   ('content_xml_lang', 'en', ogr.OFTString),
                                   ('content_xml_base', 'http://diveintomark.org/', ogr.OFTString)]
 
-    return 'success'
-
 ###############################################################################
 # Used by ogr_georss_1 and ogr_georss_1ter
 
@@ -87,33 +84,27 @@ def ogr_georss_init():
 def ogr_georss_test_atom(filename):
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayerByName('georss')
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('No spatial ref expected')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'No spatial ref expected'
 
     feat = lyr.GetNextFeature()
 
     for field_value in gdaltest.atom_field_values:
-        if feat.GetFieldAsString(field_value[0]) != field_value[1]:
-            gdaltest.post_reason('For field "%s", got "%s" instead of "%s"' % (field_value[0], feat.GetFieldAsString(field_value[0]), field_value[1]))
-            return 'fail'
+        assert feat.GetFieldAsString(field_value[0]) == field_value[1], \
+            ('For field "%s", got "%s" instead of "%s"' % (field_value[0], feat.GetFieldAsString(field_value[0]), field_value[1]))
 
-    if feat.GetFieldAsString('content').find('<div xmlns="http://www.w3.org/1999/xhtml">') == -1:
-        gdaltest.post_reason('For field "%s", got "%s"' % ('content', feat.GetFieldAsString('content')))
-        return 'fail'
-
-    return 'success'
+    assert feat.GetFieldAsString('content').find('<div xmlns="http://www.w3.org/1999/xhtml">') != -1, \
+        ('For field "%s", got "%s"' % ('content', feat.GetFieldAsString('content')))
 
 ###############################################################################
 # Test reading an ATOM document without any geometry
 
 
-def ogr_georss_1():
+def test_ogr_georss_1():
 
     return ogr_georss_test_atom('data/atom_rfc_sample.xml')
 
@@ -121,7 +112,7 @@ def ogr_georss_1():
 # Test reading an ATOM document with atom: prefiw
 
 
-def ogr_georss_1_atom_ns():
+def test_ogr_georss_1_atom_ns():
 
     return ogr_georss_test_atom('data/atom_rfc_sample_atom_ns.xml')
 
@@ -129,7 +120,7 @@ def ogr_georss_1_atom_ns():
 # Test writing a Atom 1.0 document (doesn't need read support)
 
 
-def ogr_georss_1bis():
+def test_ogr_georss_1bis():
 
     try:
         os.remove('tmp/test_atom.xml')
@@ -148,19 +139,15 @@ def ogr_georss_1bis():
         dst_feat.SetField(field_value[0], field_value[1])
     dst_feat.SetField('content', '<div xmlns="http://www.w3.org/1999/xhtml"><p><i>[Update: The Atom draft is finished.]</i></p></div>')
 
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
 # Test reading document created at previous step
 
-def ogr_georss_1ter():
+def test_ogr_georss_1ter():
 
     return ogr_georss_test_atom('tmp/test_atom.xml')
 
@@ -171,79 +158,59 @@ def ogr_georss_1ter():
 def ogr_georss_test_rss(filename, only_first_feature):
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(filename)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS84')
 
-    if lyr.GetSpatialRef() is None or not lyr.GetSpatialRef().IsSame(srs):
-        gdaltest.post_reason('SRS is not the one expected.')
-        return 'fail'
+    assert lyr.GetSpatialRef() is not None and lyr.GetSpatialRef().IsSame(srs), \
+        'SRS is not the one expected.'
 
     if lyr.GetSpatialRef().ExportToWkt().find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') != -1:
         lyr.GetSpatialRef().ExportToWkt()
-        gdaltest.post_reason('AXIS definition found with latitude/longitude order!')
-        return 'fail'
+        pytest.fail('AXIS definition found with latitude/longitude order!')
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POINT (2 49)'
-    if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
-        return 'fail'
-    if feat.GetFieldAsString('title') != 'A point':
-        return 'fail'
-    if feat.GetFieldAsString('author') != 'Author':
-        return 'fail'
-    if feat.GetFieldAsString('link') != 'http://gdal.org':
-        return 'fail'
-    if feat.GetFieldAsString('pubDate') != '2008/12/07 20:13:00+02':
-        return 'fail'
-    if feat.GetFieldAsString('category') != 'First category':
-        return 'fail'
-    if feat.GetFieldAsString('category_domain') != 'first_domain':
-        return 'fail'
-    if feat.GetFieldAsString('category2') != 'Second category':
-        return 'fail'
-    if feat.GetFieldAsString('category2_domain') != 'second_domain':
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == expected_wkt, \
+        ('%s' % feat.GetGeometryRef().ExportToWkt())
+    assert feat.GetFieldAsString('title') == 'A point'
+    assert feat.GetFieldAsString('author') == 'Author'
+    assert feat.GetFieldAsString('link') == 'http://gdal.org'
+    assert feat.GetFieldAsString('pubDate') == '2008/12/07 20:13:00+02'
+    assert feat.GetFieldAsString('category') == 'First category'
+    assert feat.GetFieldAsString('category_domain') == 'first_domain'
+    assert feat.GetFieldAsString('category2') == 'Second category'
+    assert feat.GetFieldAsString('category2_domain') == 'second_domain'
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'LINESTRING (2 48,2.1 48.1,2.2 48.0)'
-    if only_first_feature is False and feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
-        return 'fail'
-    if feat.GetFieldAsString('title') != 'A line':
-        return 'fail'
+    assert only_first_feature is not False or feat.GetGeometryRef().ExportToWkt() == expected_wkt, \
+        ('%s' % feat.GetGeometryRef().ExportToWkt())
+    assert feat.GetFieldAsString('title') == 'A line'
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POLYGON ((2 50,2.1 50.1,2.2 48.1,2.1 46.1,2 50))'
-    if only_first_feature is False and feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
-        return 'fail'
-    if feat.GetFieldAsString('title') != 'A polygon':
-        return 'fail'
+    assert only_first_feature is not False or feat.GetGeometryRef().ExportToWkt() == expected_wkt, \
+        ('%s' % feat.GetGeometryRef().ExportToWkt())
+    assert feat.GetFieldAsString('title') == 'A polygon'
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POLYGON ((2 49,2.0 49.5,2.2 49.5,2.2 49.0,2 49))'
-    if only_first_feature is False and feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
-        return 'fail'
-    if feat.GetFieldAsString('title') != 'A box':
-        return 'fail'
-
-    return 'success'
+    assert only_first_feature is not False or feat.GetGeometryRef().ExportToWkt() == expected_wkt, \
+        ('%s' % feat.GetGeometryRef().ExportToWkt())
+    assert feat.GetFieldAsString('title') == 'A box'
 
 ###############################################################################
 # Test reading a RSS 2.0 document with GeoRSS simple geometries
 
 
-def ogr_georss_2():
+def test_ogr_georss_2():
 
     return ogr_georss_test_rss('data/test_georss_simple.xml', False)
 
@@ -251,10 +218,10 @@ def ogr_georss_2():
 # Test reading a RSS 2.0 document with GeoRSS GML geometries
 
 
-def ogr_georss_3():
+def test_ogr_georss_3():
 
     if not gdaltest.have_gml_reader:
-        return 'skip'
+        pytest.skip()
 
     return ogr_georss_test_rss('data/test_georss_gml.xml', False)
 
@@ -292,9 +259,7 @@ def ogr_georss_create(filename, options):
     dst_feat.SetField('category2_domain', 'second_domain')
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
 
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('title', 'A line')
@@ -303,9 +268,7 @@ def ogr_georss_create(filename, options):
     dst_feat.SetField('pubDate', '2008/12/07 20:13:00+02')
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (2 48,2.1 48.1,2.2 48.0)'))
 
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('title', 'A polygon')
@@ -314,9 +277,7 @@ def ogr_georss_create(filename, options):
     dst_feat.SetField('pubDate', '2008/12/07 20:13:00+02')
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((2 50,2.1 50.1,2.2 48.1,2.1 46.1,2 50))'))
 
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetField('title', 'A box')
@@ -325,35 +286,26 @@ def ogr_georss_create(filename, options):
     dst_feat.SetField('pubDate', '2008/12/07 20:13:00+02')
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((2 49,2.0 49.5,2.2 49.5,2.2 49.0,2 49))'))
 
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test writing a RSS 2.0 document in Simple dialect (doesn't need read support)
 
 
-def ogr_georss_4():
+def test_ogr_georss_4():
 
-    if ogr_georss_create('tmp/test_rss2.xml', []) != 'success':
-        return 'fail'
+    ogr_georss_create('tmp/test_rss2.xml', [])
 
     content = open('tmp/test_rss2.xml').read()
-    if content.find('<georss:point>49 2') == -1:
-        print(('%s' % content))
-        return 'fail'
-
-    return 'success'
+    assert content.find('<georss:point>49 2') != -1, ('%s' % content)
 
 ###############################################################################
 # Test reading document created at previous step
 
 
-def ogr_georss_5():
+def test_ogr_georss_5():
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', False)
 
@@ -361,25 +313,21 @@ def ogr_georss_5():
 # Test writing a RSS 2.0 document in GML dialect (doesn't need read support)
 
 
-def ogr_georss_6():
+def test_ogr_georss_6():
 
-    if ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=GML']) != 'success':
-        return 'fail'
+    ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=GML'])
 
     content = open('tmp/test_rss2.xml').read()
-    if content.find('<georss:where><gml:Point><gml:pos>49 2') == -1:
-        print(('%s' % content))
-        return 'fail'
-
-    return 'success'
+    assert content.find('<georss:where><gml:Point><gml:pos>49 2') != -1, \
+        ('%s' % content)
 
 ###############################################################################
 # Test reading document created at previous step
 
 
-def ogr_georss_7():
+def test_ogr_georss_7():
     if not gdaltest.have_gml_reader:
-        return 'skip'
+        pytest.skip()
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', False)
 
@@ -387,23 +335,19 @@ def ogr_georss_7():
 # Test writing a RSS 2.0 document in W3C Geo dialect (doesn't need read support)
 
 
-def ogr_georss_8():
+def test_ogr_georss_8():
 
-    if ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=W3C_GEO']) != 'success':
-        return 'fail'
+    ogr_georss_create('tmp/test_rss2.xml', ['GEOM_DIALECT=W3C_GEO'])
 
     content = open('tmp/test_rss2.xml').read()
-    if content.find('<geo:lat>49') == -1 or content.find('<geo:long>2') == -1:
-        print(('%s' % content))
-        return 'fail'
-
-    return 'success'
+    assert not (content.find('<geo:lat>49') == -1 or content.find('<geo:long>2') == -1), \
+        ('%s' % content)
 
 ###############################################################################
 # Test reading document created at previous step
 
 
-def ogr_georss_9():
+def test_ogr_georss_9():
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', True)
 
@@ -411,7 +355,7 @@ def ogr_georss_9():
 # Test writing a RSS 2.0 document in GML dialect with EPSG:32631
 
 
-def ogr_georss_10():
+def test_ogr_georss_10():
     try:
         os.remove('tmp/test32631.rss')
     except OSError:
@@ -427,9 +371,7 @@ def ogr_georss_10():
     except:
         lyr = None
     gdal.PopErrorHandler()
-    if lyr is not None:
-        gdaltest.post_reason('should not have accepted EPSG:32631 with GEOM_DIALECT != GML')
-        return 'fail'
+    assert lyr is None, 'should not have accepted EPSG:32631 with GEOM_DIALECT != GML'
 
     ds = None
 
@@ -444,29 +386,24 @@ def ogr_georss_10():
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (500000 4000000)'))
 
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     ds = None
 
     content = open('tmp/test32631.rss').read()
-    if content.find('<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4000000') == -1:
-        print(('%s' % content))
-        return 'fail'
-
-    return 'success'
+    assert content.find('<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4000000') != -1, \
+        ('%s' % content)
 
 ###############################################################################
 # Test reading document created at previous step
 
 
-def ogr_georss_11():
+def test_ogr_georss_11():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
     if not gdaltest.have_gml_reader:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/test32631.rss')
     lyr = ds.GetLayer(0)
@@ -474,62 +411,52 @@ def ogr_georss_11():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
 
-    if lyr.GetSpatialRef() is None or not lyr.GetSpatialRef().IsSame(srs):
-        gdaltest.post_reason('SRS is not the one expected.')
-        return 'fail'
+    assert lyr.GetSpatialRef() is not None and lyr.GetSpatialRef().IsSame(srs), \
+        'SRS is not the one expected.'
 
     if lyr.GetSpatialRef().ExportToWkt().find('AXIS["Easting",EAST],AXIS["Northing",NORTH]') == -1:
         print(('%s' % lyr.GetSpatialRef().ExportToWkt()))
-        gdaltest.post_reason('AXIS definition expected is AXIS["Easting",EAST],AXIS["Northing",NORTH]!')
-        return 'fail'
+        pytest.fail('AXIS definition expected is AXIS["Easting",EAST],AXIS["Northing",NORTH]!')
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POINT (500000 4000000)'
-    if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-        print(('%s' % feat.GetGeometryRef().ExportToWkt()))
-        return 'fail'
-
-    return 'success'
+    assert feat.GetGeometryRef().ExportToWkt() == expected_wkt, \
+        ('%s' % feat.GetGeometryRef().ExportToWkt())
 
 ###############################################################################
 # Test various broken documents
 
 
-def ogr_georss_12():
+def test_ogr_georss_12():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     open('tmp/broken.rss', 'wt').write('<?xml version="1.0"?><rss><item><a></item></rss>')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('tmp/broken.rss')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
 
     open('tmp/broken.rss', 'wt').write('<?xml version="1.0"?><rss><channel><item><georss:box>49 2 49.5</georss:box></item></channel></rss>')
     ds = ogr.Open('tmp/broken.rss')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     feat = ds.GetLayer(0).GetNextFeature()
     gdal.PopErrorHandler()
-    if feat.GetGeometryRef() is not None:
-        return 'fail'
+    assert feat.GetGeometryRef() is None
 
     open('tmp/broken.rss', 'wt').write('<?xml version="1.0"?><rss><channel><item><georss:where><gml:LineString><gml:posList>48 2 48.1 2.1 48</gml:posList></gml:LineString></georss:where></item></channel></rss>')
     ds = ogr.Open('tmp/broken.rss')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     feat = ds.GetLayer(0).GetNextFeature()
     gdal.PopErrorHandler()
-    if feat.GetGeometryRef() is not None:
-        return 'fail'
-
-    return 'success'
+    assert feat.GetGeometryRef() is None
 
 ###############################################################################
 # Test writing non standard fields
 
 
-def ogr_georss_13():
+def test_ogr_georss_13():
     try:
         os.remove('tmp/nonstandard.rss')
     except OSError:
@@ -546,64 +473,49 @@ def ogr_georss_13():
     dst_feat.SetField('field2', 'val2')
     dst_feat.SetField('ogr_field3', 'val3')
 
-    if lyr.CreateFeature(dst_feat) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
+    assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
     ds = None
 
     content = open('tmp/nonstandard.rss').read()
-    if content.find('<myns:field>val</myns:field>') == -1:
-        print(('%s' % content))
-        return 'fail'
-    if content.find('<ogr:field2>val2</ogr:field2>') == -1:
-        print(('%s' % content))
-        return 'fail'
-    if content.find('<ogr:field3>val3</ogr:field3>') == -1:
-        print(('%s' % content))
-        return 'fail'
-
-    return 'success'
+    assert content.find('<myns:field>val</myns:field>') != -1, ('%s' % content)
+    assert content.find('<ogr:field2>val2</ogr:field2>') != -1, ('%s' % content)
+    assert content.find('<ogr:field3>val3</ogr:field3>') != -1, ('%s' % content)
 
 ###############################################################################
 # Test reading document created at previous step
 
 
-def ogr_georss_14():
+def test_ogr_georss_14():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/nonstandard.rss')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
 
-    if feat.GetFieldAsString('myns_field') != 'val':
-        print(('Expected %s. Got %s' % ('val', feat.GetFieldAsString('myns_field'))))
-        return 'fail'
-    if feat.GetFieldAsString('ogr_field2') != 'val2':
-        print(('Expected %s. Got %s' % ('val2', feat.GetFieldAsString('ogr_field2'))))
-        return 'fail'
-    if feat.GetFieldAsString('ogr_field3') != 'val3':
-        print(('Expected %s. Got %s' % ('val3', feat.GetFieldAsString('ogr_field3'))))
-        return 'fail'
-
-    return 'success'
+    assert feat.GetFieldAsString('myns_field') == 'val', \
+        ('Expected %s. Got %s' % ('val', feat.GetFieldAsString('myns_field')))
+    assert feat.GetFieldAsString('ogr_field2') == 'val2', \
+        ('Expected %s. Got %s' % ('val2', feat.GetFieldAsString('ogr_field2')))
+    assert feat.GetFieldAsString('ogr_field3') == 'val3', \
+        ('Expected %s. Got %s' % ('val3', feat.GetFieldAsString('ogr_field3')))
 
 ###############################################################################
 # Test reading an in memory file (#2931)
 
 
-def ogr_georss_15():
+def test_ogr_georss_15():
 
     if not gdaltest.georss_read_support:
-        return 'skip'
+        pytest.skip()
 
     try:
         gdal.FileFromMemBuffer
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     content = """<?xml version="1.0" encoding="UTF-8"?>
     <rss version="2.0" xmlns:georss="http://www.georss.org/georss" xmlns:gml="http://www.opengis.net/gml">
@@ -627,20 +539,17 @@ def ogr_georss_15():
 
     feat = lyr.GetNextFeature()
 
-    if feat.GetFieldAsString('title') != 'item title':
-        print(('Expected %s. Got %s' % ('item title', feat.GetFieldAsString('title'))))
-        return 'fail'
+    assert feat.GetFieldAsString('title') == 'item title', \
+        ('Expected %s. Got %s' % ('item title', feat.GetFieldAsString('title')))
 
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/georssinmem')
-
-    return 'success'
 
 ###############################################################################
 #
 
 
-def ogr_georss_cleanup():
+def test_ogr_georss_cleanup():
 
     list_files = ['tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss']
     for filename in list_files:
@@ -654,35 +563,6 @@ def ogr_georss_cleanup():
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
             os.unlink('data/' + filename)
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    ogr_georss_init,
-    ogr_georss_1,
-    ogr_georss_1_atom_ns,
-    ogr_georss_1bis,
-    ogr_georss_1ter,
-    ogr_georss_2,
-    ogr_georss_3,
-    ogr_georss_4,
-    ogr_georss_5,
-    ogr_georss_6,
-    ogr_georss_7,
-    ogr_georss_8,
-    ogr_georss_9,
-    ogr_georss_10,
-    ogr_georss_11,
-    ogr_georss_12,
-    ogr_georss_13,
-    ogr_georss_14,
-    ogr_georss_15,
-    ogr_georss_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_georss')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -348,7 +348,10 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             }
             else
             {
-                oField.SetDefault(pszDefault);
+                if( EQUAL(pszDefault, "CURRENT_TIMESTAMP()") )
+                    oField.SetDefault("CURRENT_TIMESTAMP");
+                else
+                    oField.SetDefault(pszDefault);
             }
         }
 
@@ -467,10 +470,20 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MaxY,
                 sEnvelope.MinX, sEnvelope.MinY);
 
+        const char* pszAxisOrder = "";
+        OGRSpatialReference* l_poSRS = GetSpatialRef();
+        if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() &&
+            l_poSRS && l_poSRS->IsGeographic() )
+        {
+            pszAxisOrder = ", 'axis-order=long-lat'";
+        }
+
         snprintf( pszWHERE, nWHERELen,
-                 "WHERE MBRIntersects(GeomFromText('%s', '%d'), `%s`)",
+                 "WHERE MBRIntersects(%s('%s', %d%s), `%s`)",
+                 poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeomFromText",
                  szEnvelope,
                  nSRSId,
+                 pszAxisOrder,
                  pszGeomColumn);
     }
 
@@ -776,10 +789,19 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         if( pszWKT != nullptr )
         {
+            const char* pszAxisOrder = "";
+            OGRSpatialReference* l_poSRS = GetSpatialRef();
+            if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() &&
+                l_poSRS && l_poSRS->IsGeographic() )
+            {
+                pszAxisOrder = ", 'axis-order=long-lat'";
+            }
 
             osCommand +=
                 CPLString().Printf(
-                    "GeometryFromText('%s',%d) ", pszWKT, nSRSId );
+                    "%s('%s',%d%s) ",
+                    poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeometryFromText",
+                    pszWKT, nSRSId, pszAxisOrder );
 
             CPLFree( pszWKT );
         }
@@ -993,7 +1015,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     else if( oField.GetType() == OFTDateTime )
     {
-        if( oField.GetDefault() != nullptr && EQUAL(oField.GetDefault(), "CURRENT_TIMESTAMP") )
+        if( oField.GetDefault() != nullptr && STARTS_WITH_CI(oField.GetDefault(), "CURRENT_TIMESTAMP") )
             snprintf( szFieldType, sizeof(szFieldType), "TIMESTAMP" );
         else
             snprintf( szFieldType, sizeof(szFieldType), "DATETIME" );
@@ -1218,11 +1240,21 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
         return OGRERR_FAILURE;
     }
 
+    ResetReading();
+
     OGREnvelope oEnv;
     CPLString   osCommand;
     GBool       bExtentSet = FALSE;
 
-    osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() )
+    {
+        // ST_Envelope() does not work on geographic SRS, so force to 0
+        osCommand.Printf( "SELECT ST_Envelope(ST_SRID(`%s`,0)) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    }
+    else
+    {
+        osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    }
 
     if (mysql_query(poDS->GetConn(), osCommand) == 0)
     {
@@ -1278,6 +1310,10 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
         }
 
         mysql_free_result(result);
+    }
+    else
+    {
+        poDS->ReportError(  osCommand.c_str() );
     }
 
     return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;

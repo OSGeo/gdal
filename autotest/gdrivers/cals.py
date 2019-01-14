@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -39,7 +37,7 @@ import gdaltest
 # Source has no color table
 
 
-def cals_1():
+def test_cals_1():
 
     tst = gdaltest.GDALTest('CALS', 'small1bit.img', 1, 9907)
 
@@ -49,7 +47,7 @@ def cals_1():
 # Source has a color table (0,0,0),(255,255,255)
 
 
-def cals_2():
+def test_cals_2():
 
     # Has no color table
     tst = gdaltest.GDALTest('CALS', '../../gcore/data/oddsize1bit.tif', 1, 3883)
@@ -60,68 +58,50 @@ def cals_2():
 # Source has a color table (255,255,255),(0,0,0)
 
 
-def cals_3():
+def test_cals_3():
 
     src_ds = gdal.Open('../gcore/data/oddsize1bit.tif')
     tmp_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_2_tmp.cal', src_ds)
     tmp_ds.SetMetadataItem('TIFFTAG_XRESOLUTION', '600')
     tmp_ds.SetMetadataItem('TIFFTAG_YRESOLUTION', '600')
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_2.cal', tmp_ds)
-    if gdal.VSIStatL('/vsimem/cals_2.cal.aux.xml') is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetRasterBand(1).Checksum() != 3883:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetMetadataItem('PIXEL_PATH') is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetMetadataItem('TIFFTAG_XRESOLUTION') != '600':
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/cals_2.cal.aux.xml') is None
+    assert out_ds.GetRasterBand(1).Checksum() == 3883
+    assert out_ds.GetMetadataItem('PIXEL_PATH') is None
+    assert out_ds.GetMetadataItem('TIFFTAG_XRESOLUTION') == '600'
+    assert out_ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
     tmp_ds = None
     out_ds = None
     gdal.Unlink('/vsimem/cals_2_tmp.cal')
     gdal.Unlink('/vsimem/cals_2_tmp.cal.aux.xml')
     gdal.Unlink('/vsimem/cals_2.cal')
 
-    return 'success'
-
 ###############################################################################
 # Test CreateCopy() error conditions
 
 
-def cals_4():
+def test_cals_4():
 
     # 0 band
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert out_ds is None
 
     # 2 bands
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert out_ds is None
 
     # 1 band but not 1-bit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert out_ds is None
 
     # Dimension > 999999
     src_ds = gdal.GetDriverByName('MEM').Create('', 1000000, 1, 1)
@@ -129,9 +109,7 @@ def cals_4():
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_4.cal', src_ds, strict=True)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert out_ds is None
 
     # Invalid output filename
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
@@ -139,53 +117,27 @@ def cals_4():
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/not_existing_dir/cals_4.cal', src_ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert out_ds is None
 
 ###############################################################################
 # Test PIXEL_PATH & LINE_PROGRESSION metadata item
 
 
-def cals_5():
+def test_cals_5():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
     src_ds.GetRasterBand(1).SetMetadataItem('NBITS', '1', 'IMAGE_STRUCTURE')
     src_ds.SetMetadataItem('PIXEL_PATH', '90')
     src_ds.SetMetadataItem('LINE_PROGRESSION', '270')
     out_ds = gdal.GetDriverByName('CALS').CreateCopy('/vsimem/cals_5.cal', src_ds)
-    if gdal.VSIStatL('/vsimem/cals_5.cal.aux.xml') is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetMetadataItem('PIXEL_PATH') != '90':
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetMetadataItem('LINE_PROGRESSION') != '270':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/cals_5.cal.aux.xml') is None
+    assert out_ds.GetMetadataItem('PIXEL_PATH') == '90'
+    assert out_ds.GetMetadataItem('LINE_PROGRESSION') == '270'
     out_ds = None
     gdal.Unlink('/vsimem/cals_5.cal')
-
-    return 'success'
 
 ###############################################################################
 
 
-gdaltest_list = [
-    cals_1,
-    cals_2,
-    cals_3,
-    cals_4,
-    cals_5,
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('cals')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

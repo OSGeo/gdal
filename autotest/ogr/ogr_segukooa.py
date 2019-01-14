@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,33 +28,25 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Read SEGP1
 
 
-def ogr_segp1_points():
+def test_ogr_segp1_points():
 
     ds = ogr.Open('data/test.segp1')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 
@@ -71,85 +63,65 @@ def ogr_segp1_points():
 
     for values in expected_values:
         if feat.GetField(values[0]) != values[1]:
-            print('did not get expected value for %s' % values[0])
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('did not get expected value for %s' % values[0])
 
     if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read SEGP1 lines
 
 
-def ogr_segp1_lines():
+def test_ogr_segp1_lines():
 
     ds = ogr.Open('data/test.segp1')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(1)
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'firstline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,2.0 49.5)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'secondline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read UKOOA
 
 
-def ogr_ukooa_points():
+def test_ogr_ukooa_points():
 
     ds = ogr.Open('data/test.ukooa')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 
@@ -165,79 +137,52 @@ def ogr_ukooa_points():
 
     for values in expected_values:
         if feat.GetField(values[0]) != values[1]:
-            print('did not get expected value for %s' % values[0])
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail('did not get expected value for %s' % values[0])
 
     if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read UKOOA lines
 
 
-def ogr_ukooa_lines():
+def test_ogr_ukooa_lines():
 
     ds = ogr.Open('data/test.ukooa')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(1)
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'firstline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,2.0 49.5)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     feat = lyr.GetNextFeature()
 
     if feat.GetField('LINENAME') != 'secondline':
-        print('did not get expected value for LINENAME')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value for LINENAME')
 
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
-
-gdaltest_list = [
-    ogr_segp1_points,
-    ogr_segp1_lines,
-    ogr_ukooa_points,
-    ogr_ukooa_lines,
-]
+    
 
 
-if __name__ == '__main__':
 
-    gdaltest.setup_run('ogr_segukooa')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

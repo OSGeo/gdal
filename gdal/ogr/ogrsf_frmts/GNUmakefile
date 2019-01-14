@@ -46,10 +46,10 @@ SUBDIRS-$(CURL_SETTING) += amigocloud
 SUBDIRS-$(CURL_SETTING) += plscenes
 SUBDIRS-$(CURL_SETTING) += csw
 SUBDIRS-$(HAVE_MONGODB) += mongodb
+SUBDIRS-$(CURL_SETTING) += ngw
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 
 clean:	$(foreach d,$(SUBDIRS-yes),$(d)-clean)
 	rm -f o/*.o
 	$(RM) o/*.lo
-

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,7 +36,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def ilwis_1():
+def test_ilwis_1():
 
     tst = gdaltest.GDALTest('ilwis', 'LanduseSmall.mpr', 1, 2351)
 
@@ -70,7 +68,7 @@ def ilwis_1():
 # copy byte data and verify.
 
 
-def ilwis_2():
+def test_ilwis_2():
 
     tst = gdaltest.GDALTest('ilwis', 'byte.tif', 1, 4672)
 
@@ -81,7 +79,7 @@ def ilwis_2():
 # copy floating point data and use Create interface.
 
 
-def ilwis_3():
+def test_ilwis_3():
 
     tst = gdaltest.GDALTest('ilwis', 'float.img', 1, 23529)
 
@@ -91,7 +89,7 @@ def ilwis_3():
 # Try multi band dataset.
 
 
-def ilwis_4():
+def test_ilwis_4():
 
     tst = gdaltest.GDALTest('ilwis', 'rgbsmall.tif', 2, 21053)
 
@@ -102,7 +100,7 @@ def ilwis_4():
 # Test vsi in-memory support.
 
 
-def ilwis_5():
+def test_ilwis_5():
 
     tst = gdaltest.GDALTest('ilwis', 'byte.tif', 1, 4672)
 
@@ -118,23 +116,8 @@ def ilwis_5():
 # properly. So we do the brute force approach...
 
 
-def ilwis_cleanup():
+def test_ilwis_cleanup():
     gdaltest.clean_tmp()
-    return 'success'
 
 
-gdaltest_list = [
-    ilwis_1,
-    ilwis_2,
-    ilwis_3,
-    ilwis_4,
-    ilwis_5,
-    ilwis_cleanup]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ilwis')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

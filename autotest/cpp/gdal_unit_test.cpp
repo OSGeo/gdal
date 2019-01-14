@@ -34,6 +34,7 @@
 #include "gdal.h"
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"
+#include "test_data.h"
 
 #include <tut_reporter.hpp>
 
@@ -45,9 +46,8 @@ namespace tut
     test_runner_singleton runner;
 
     // Common test data path
-    // Customize these paths if you need.
-    std::string const common::data_basedir("data");
-    std::string const common::tmp_basedir("tmp");
+    std::string const common::data_basedir(TUT_ROOT_DATA_DIR);
+    std::string const common::tmp_basedir(TUT_ROOT_TMP_DIR);
 
     static void check_test_group(char const* name)
     {
@@ -128,6 +128,8 @@ int main(int argc, char* argv[])
             std::cerr << "GDAL C/C++ API tests error: " << ex.what() << std::endl;
             nRetCode = EXIT_FAILURE;
         }
+        if( !visi.all_ok() )
+            nRetCode = EXIT_FAILURE;
     }
 
     CSLDestroy(argv);

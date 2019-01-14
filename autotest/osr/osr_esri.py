@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -37,12 +37,12 @@ import gzip
 import os
 import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # This test verifies that morphToESRI() translates idiosyncratic datum names
@@ -50,145 +50,121 @@ from osgeo import osr
 # gdal_datum.csv file.
 
 
-def osr_esri_1():
+def test_osr_esri_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4202)
 
-    if srs.GetAttrValue('DATUM') != 'Australian_Geodetic_Datum_1966':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after EPSG import.' %
+    assert srs.GetAttrValue('DATUM') == 'Australian_Geodetic_Datum_1966', \
+        ('Got wrong DATUM name (%s) after EPSG import.' %
                              srs.GetAttrValue('DATUM'))
-        return 'fail'
 
     srs.MorphToESRI()
 
-    if srs.GetAttrValue('DATUM') != 'D_Australian_1966':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('DATUM') == 'D_Australian_1966', \
+        ('Got wrong DATUM name (%s) after ESRI morph.' %
                              srs.GetAttrValue('DATUM'))
-        return 'fail'
 
     srs.MorphFromESRI()
 
-    if srs.GetAttrValue('DATUM') != 'Australian_Geodetic_Datum_1966':
-        gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI unmorph.' %
+    assert srs.GetAttrValue('DATUM') == 'Australian_Geodetic_Datum_1966', \
+        ('Got wrong DATUM name (%s) after ESRI unmorph.' %
                              srs.GetAttrValue('DATUM'))
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Verify that exact correct form of UTM names is established when
 # translating certain GEOGCSes to ESRI format.
 
 
-def osr_esri_2():
+def test_osr_esri_2():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=utm +zone=11 +south +datum=WGS84')
 
     srs.MorphToESRI()
 
-    if srs.GetAttrValue('GEOGCS') != 'GCS_WGS_1984':
-        gdaltest.post_reason('Got wrong GEOGCS name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('GEOGCS') == 'GCS_WGS_1984', \
+        ('Got wrong GEOGCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('GEOGCS'))
-        return 'fail'
 
-    if srs.GetAttrValue('PROJCS') != 'WGS_1984_UTM_Zone_11S':
-        gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('PROJCS') == 'WGS_1984_UTM_Zone_11S', \
+        ('Got wrong PROJCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJCS'))
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Verify that Unnamed is changed to Unknown in morphToESRI().
 
 
-def osr_esri_3():
+def test_osr_esri_3():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=mill +datum=WGS84')
 
     srs.MorphToESRI()
 
-    if srs.GetAttrValue('PROJCS') != 'Miller_Cylindrical':
-        gdaltest.post_reason('Got wrong PROJCS name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('PROJCS') == 'Miller_Cylindrical', \
+        ('Got wrong PROJCS name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJCS'))
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Verify Polar Stereographic translations work properly OGR to ESRI.
 
 
-def osr_esri_4():
+def test_osr_esri_4():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["PS Test",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",-80.2333],PARAMETER["central_meridian",171],PARAMETER["scale_factor",0.9999],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]')
 
     srs.MorphToESRI()
 
-    if srs.GetAttrValue('PROJECTION') != 'Stereographic_South_Pole':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('PROJECTION') == 'Stereographic_South_Pole', \
+        ('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
-        return 'fail'
 
-    if srs.GetProjParm('standard_parallel_1') != -80.2333:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
+    assert srs.GetProjParm('standard_parallel_1') == -80.2333, \
+        ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Verify Polar Stereographic translations work properly ESRI to OGR.
 
 
-def osr_esri_5():
+def test_osr_esri_5():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["PS Test",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Stereographic_South_Pole"],PARAMETER["standard_parallel_1",-80.2333],PARAMETER["central_meridian",171],PARAMETER["scale_factor",0.9999],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]')
 
     srs.MorphFromESRI()
 
-    if srs.GetAttrValue('PROJECTION') != 'Polar_Stereographic':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('PROJECTION') == 'Polar_Stereographic', \
+        ('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
-        return 'fail'
 
-    if srs.GetProjParm('latitude_of_origin') != -80.2333:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
+    assert srs.GetProjParm('latitude_of_origin') == -80.2333, \
+        ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('latitude_of_origin'))
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Verify Lambert 2SP with a 1.0 scale factor still gets translated to 2SP
 # per bug 187.
 
 
-def osr_esri_6():
+def test_osr_esri_6():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Texas Centric Mapping System/Lambert Conformal",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",1500000.0],PARAMETER["False_Northing",5000000.0],PARAMETER["Central_Meridian",-100.0],PARAMETER["Standard_Parallel_1",27.5],PARAMETER["Standard_Parallel_2",35.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",18.0],UNIT["Meter",1.0]]')
 
     srs.MorphFromESRI()
 
-    if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
-        gdaltest.post_reason(
-            'Got wrong PROJECTION name (%s) after ESRI morph, expected 2SP' %
+    assert srs.GetAttrValue('PROJECTION') == 'Lambert_Conformal_Conic_2SP', \
+        ('Got wrong PROJECTION name (%s) after ESRI morph, expected 2SP' %
             srs.GetAttrValue('PROJECTION'))
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Verify that FEET is treated as US survey feet per bug #1533.
 
 
-def osr_esri_7():
+def test_osr_esri_7():
 
     prj = ['Projection    STATEPLANE',
            'Fipszone      903',
@@ -230,16 +206,14 @@ def osr_esri_7():
 
     if not srs_prj.IsSame(srs_wkt):
         print('got: ', srs_prj.ExportToPrettyWkt())
-        gdaltest.post_reason('old style ESRI projection imported wrong, perhaps linear units?')
-        return 'fail'
+        pytest.fail('old style ESRI projection imported wrong, perhaps linear units?')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that handling of numerically specified units (see bug #1533)
 
 
-def osr_esri_8():
+def test_osr_esri_8():
 
     prj = ['Projection    STATEPLANE',
            'Fipszone      903',
@@ -278,17 +252,14 @@ def osr_esri_8():
 
     srs_wkt = osr.SpatialReference(wkt=wkt)
 
-    if not srs_prj.IsSame(srs_wkt):
-        gdaltest.post_reason('old style ESRI projection imported wrong, perhaps linear units?')
-        return 'fail'
-
-    return 'success'
+    assert srs_prj.IsSame(srs_wkt), \
+        'old style ESRI projection imported wrong, perhaps linear units?'
 
 ###############################################################################
 # Verify Equidistant Conic handling.
 
 
-def osr_esri_9():
+def test_osr_esri_9():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["edc",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Equidistant_Conic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-96.0],PARAMETER["Standard_Parallel_1",29.5],PARAMETER["Standard_Parallel_2",45.5],PARAMETER["Latitude_Of_Origin",37.5],UNIT["Meter",1.0]]')
@@ -301,8 +272,7 @@ def osr_esri_9():
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected Equidistant Conic SRS after morphFromESRI')
-        return 'fail'
+        pytest.fail('Did not get expected Equidistant Conic SRS after morphFromESRI')
 
     expected = 'PROJCS["edc",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Equidistant_Conic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["central_meridian",-96.0],PARAMETER["Standard_Parallel_1",29.5],PARAMETER["Standard_Parallel_2",45.5],PARAMETER["latitude_of_origin",37.5],UNIT["Meter",1.0]]'
 
@@ -312,16 +282,14 @@ def osr_esri_9():
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected Equidistant Conic SRS after morphToESRI')
-        return 'fail'
+        pytest.fail('Did not get expected Equidistant Conic SRS after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify Plate_Carree handling.
 
 
-def osr_esri_10():
+def test_osr_esri_10():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Plate_Carree"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]')
@@ -334,8 +302,7 @@ def osr_esri_10():
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected Equirectangular SRS after morphFromESRI')
-        return 'fail'
+        pytest.fail('Did not get expected Equirectangular SRS after morphFromESRI')
 
     expected = 'PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Equidistant_Cylindrical"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]'
 
@@ -345,16 +312,14 @@ def osr_esri_10():
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected Equidistant_Cylindrical SRS after morphToESRI')
-        return 'fail'
+        pytest.fail('Did not get expected Equidistant_Cylindrical SRS after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify arc/info style TM handling.
 
 
-def osr_esri_11():
+def test_osr_esri_11():
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['Projection    TRANSVERSE',
@@ -379,82 +344,70 @@ def osr_esri_11():
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected TM SRS after morphFromESRI')
-        return 'fail'
+        pytest.fail('Did not get expected TM SRS after morphFromESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
 
 
-def osr_esri_12():
+def test_osr_esri_12():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('ESRI::PROJCS["Lambert Conformal Conic",GEOGCS["grs80",DATUM["D_North_American_1983",SPHEROID["Geodetic_Reference_System_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["standard_parallel_1",34.33333333333334],PARAMETER["standard_parallel_2",36.16666666666666],PARAMETER["latitude_of_origin",33.75],PARAMETER["central_meridian",-79],PARAMETER["false_easting",609601.22],PARAMETER["false_northing",0],UNIT["Meter",1]]')
 
     # No MorphFromESRI() is required
 
-    if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('PROJECTION') == 'Lambert_Conformal_Conic_2SP', \
+        ('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
-        return 'fail'
 
-    if abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) > 0.00001:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
+    assert abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) <= 0.00001, \
+        ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
-        return 'fail'
 
     if srs.GetAttrValue('DATUM') != 'North_American_Datum_1983':
         gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %
                              srs.GetAttrValue('DATUM'))
 
-    if srs.GetAttrValue('UNIT') != 'Meter':
-        gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('UNIT') == 'Meter', \
+        ('Got wrong UNIT name (%s) after ESRI morph.' %
                              srs.GetAttrValue('UNIT'))
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
 # but read directly from file.
 
 
-def osr_esri_13():
+def test_osr_esri_13():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('data/lcc_esri.prj')
 
     # No MorphFromESRI() is required
 
-    if srs.GetAttrValue('PROJECTION') != 'Lambert_Conformal_Conic_2SP':
-        gdaltest.post_reason('Got wrong PROJECTION name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('PROJECTION') == 'Lambert_Conformal_Conic_2SP', \
+        ('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
-        return 'fail'
 
-    if abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) > 0.00001:
-        gdaltest.post_reason('Got wrong parameter value (%g) after ESRI morph.' %
+    assert abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) <= 0.00001, \
+        ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
-        return 'fail'
 
     if srs.GetAttrValue('DATUM') != 'North_American_Datum_1983':
         gdaltest.post_reason('Got wrong DATUM name (%s) after ESRI morph.' %
                              srs.GetAttrValue('DATUM'))
 
-    if srs.GetAttrValue('UNIT') != 'Meter':
-        gdaltest.post_reason('Got wrong UNIT name (%s) after ESRI morph.' %
+    assert srs.GetAttrValue('UNIT') == 'Meter', \
+        ('Got wrong UNIT name (%s) after ESRI morph.' %
                              srs.GetAttrValue('UNIT'))
-        return 'fail'
-
-    return 'success'
 
 
 ###############################################################################
 # Verify that state plane epsg authority values are not applied if the
 # linear units are changed for old style .prj files (bug #1697)
 
-def osr_esri_14():
+def test_osr_esri_14():
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['PROJECTION STATEPLANE',
@@ -462,10 +415,8 @@ def osr_esri_14():
                         'FIPSZONE 2600',
                         'DATUM NAD83',
                         'PARAMETERS'])
-    if srs.GetAuthorityCode('PROJCS') is not None:
-        print(srs.GetAuthorityCode('PROJCS'))
-        gdaltest.post_reason('Get epsg authority code inappropriately.')
-        return 'fail'
+    assert srs.GetAuthorityCode('PROJCS') is None, \
+        'Get epsg authority code inappropriately.'
 
     srs = osr.SpatialReference()
     srs.ImportFromESRI(['PROJECTION STATEPLANE',
@@ -473,19 +424,15 @@ def osr_esri_14():
                         'FIPSZONE 2600',
                         'DATUM NAD83',
                         'PARAMETERS'])
-    if srs.GetAuthorityCode('PROJCS') != '32104':
-        print(srs.GetAuthorityCode('PROJCS'))
-        gdaltest.post_reason('Did not get epsg authority code when expected.')
-        return 'fail'
-
-    return 'success'
+    assert srs.GetAuthorityCode('PROJCS') == '32104', \
+        'Did not get epsg authority code when expected.'
 
 ###############################################################################
 # Verify hotine oblique mercator handling, particularly handling
 # of the rectified_grid_angle parameter.
 
 
-def osr_esri_15():
+def test_osr_esri_15():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Bern_1898_Bern_LV03C",GEOGCS["GCS_Bern_1898_Bern",DATUM["D_Bern_1898",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Bern",7.439583333333333],UNIT["Degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",0.0],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0]]')
@@ -495,32 +442,27 @@ def osr_esri_15():
     srs.MorphFromESRI()
     wkt = srs.ExportToWkt()
 
-    if wkt.find('rectified_grid_angle') == -1:
-        print(wkt)
-        gdaltest.post_reason('Did not get rectified_grid_angle as expected.')
-        return 'fail'
+    assert wkt.find('rectified_grid_angle') != -1, \
+        'Did not get rectified_grid_angle as expected.'
 
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
-    if wkt.find('rectified_grid_angle') != -1:
-        gdaltest.post_reason('did not get rectified_grid_angle removed as expected.')
-        return 'fail'
+    assert wkt.find('rectified_grid_angle') == -1, \
+        'did not get rectified_grid_angle removed as expected.'
 
     if wkt != expected:
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected HOM projection after morphing')
-        return 'fail'
+        pytest.fail('Did not get expected HOM projection after morphing')
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify translation of equirectangular to equidistant cylindrical with
 # cleanup of parameters.
 
 
-def osr_esri_16():
+def test_osr_esri_16():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=eqc +lat_0=0 +lat_ts=-10 +lon_0=2 +x=100000 +y_0=200000 +ellps=sphere')
@@ -530,18 +472,13 @@ def osr_esri_16():
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
 
-    if expected != wkt:
-        print(wkt)
-        gdaltest.post_reason('Did not get expected equidistant cylindrical.')
-        return 'fail'
-
-    return 'success'
+    assert expected == wkt, 'Did not get expected equidistant cylindrical.'
 
 
 ###############################################################################
 # Test LAEA support (#3017)
 
-def osr_esri_17():
+def test_osr_esri_17():
 
     original = 'PROJCS["ETRS89 / ETRS-LAEA",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]],UNIT["metre",1],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",52],PARAMETER["longitude_of_center",10],PARAMETER["false_easting",4321000],PARAMETER["false_northing",3210000]]'
     srs = osr.SpatialReference()
@@ -555,8 +492,7 @@ def osr_esri_17():
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected LAEA SRS after morphToESRI')
-        return 'fail'
+        pytest.fail('Did not get expected LAEA SRS after morphToESRI')
 
     expected = 'PROJCS["ETRS89_ETRS_LAEA",GEOGCS["GCS_ETRS_1989",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",52],PARAMETER["longitude_of_center",10],PARAMETER["false_easting",4321000],PARAMETER["false_northing",3210000],UNIT["Meter",1]]'
 
@@ -566,16 +502,14 @@ def osr_esri_17():
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)
-        gdaltest.post_reason('Did not get expected LAEA SRS after morphFromESRI')
-        return 'fail'
+        pytest.fail('Did not get expected LAEA SRS after morphFromESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test EC morphing.
 
 
-def osr_esri_18():
+def test_osr_esri_18():
 
     original = """PROJCS["World_Equidistant_Cylindrical",
     GEOGCS["GCS_WGS_1984",
@@ -603,8 +537,7 @@ def osr_esri_18():
         print('')
         print('Got:      ', srs.ExportToPrettyWkt())
         print('Expected: ', srs_expected.ExportToPrettyWkt())
-        gdaltest.post_reason('Did not get expected EC SRS after morphFromESRI')
-        return 'fail'
+        pytest.fail('Did not get expected EC SRS after morphFromESRI')
 
     srs.MorphToESRI()
     srs_expected = osr.SpatialReference(wkt=original)
@@ -613,16 +546,14 @@ def osr_esri_18():
         print('')
         print('Got:      ', srs.ExportToPrettyWkt())
         print('Expected: ', srs_expected.ExportToPrettyWkt())
-        gdaltest.post_reason('Did not get expected EC SRS after morphToESRI')
-        return 'fail'
+        pytest.fail('Did not get expected EC SRS after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test spheroid remapping (per #3904)
 
 
-def osr_esri_19():
+def test_osr_esri_19():
 
     original = """GEOGCS["GCS_South_American_1969",DATUM["D_South_American_1969",SPHEROID["GRS_1967_Truncated",6378160.0,298.25]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]"""
 
@@ -635,8 +566,7 @@ def osr_esri_19():
     if srs.GetAttrValue('SPHEROID') != expected:
         print('')
         print('Got:      ', srs.ExportToPrettyWkt())
-        gdaltest.post_reason('Did not get expected spheroid name after morphFromESRI')
-        return 'fail'
+        pytest.fail('Did not get expected spheroid name after morphFromESRI')
 
     srs.MorphToESRI()
 
@@ -644,11 +574,9 @@ def osr_esri_19():
     if srs.GetAttrValue('SPHEROID') != expected:
         print('')
         print('Got:      ', srs.ExportToPrettyWkt())
-        gdaltest.post_reason('Did not get expected spheroid name after morphToESRI')
-        return 'fail'
+        pytest.fail('Did not get expected spheroid name after morphToESRI')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test esri->ogc, esri->proj / ogc->esri, ogc->proj / proj->esri, proj->ogc
 
@@ -738,7 +666,7 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
 # Orthographics (#4249)
 
 
-def osr_esri_20():
+def test_osr_esri_20():
 
     result = 'success'
 
@@ -788,9 +716,7 @@ def osr_esri_20():
 
 def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=False):
 
-    if not os.path.exists(ifile):
-        print('input file ' + ifile + ' does not exist')
-        return 'fail'
+    assert os.path.exists(ifile), ('input file ' + ifile + ' does not exist')
 
     result = 'success'
     check_srs = True
@@ -932,11 +858,11 @@ def osr_esri_test_esri_ogc_esri(ifile, ofile_base, fix_config='NO', check_epsg=F
     return result
 
 
-def osr_esri_21():
+def test_osr_esri_21():
 
     # FIXME ?
     if sys.version_info >= (3, 0, 0):
-        return 'skip'
+        pytest.skip()
 
     result = 'success'
 
@@ -971,9 +897,7 @@ def osr_esri_21():
 
 def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=False):
 
-    if not os.path.exists(ifile):
-        print('input file ' + ifile + ' does not exist')
-        return 'fail'
+    assert os.path.exists(ifile), ('input file ' + ifile + ' does not exist')
 
     result = 'success'
     check_srs = True
@@ -1117,7 +1041,7 @@ def osr_esri_test_ogc_esri_ogc(ifile, ofile_base, fix_config='NO', check_epsg=Fa
 # Test EPSG->OGC->ESRI->OGC
 
 
-def osr_esri_22():
+def test_osr_esri_22():
 
     result = 'success'
 
@@ -1138,7 +1062,7 @@ def osr_esri_22():
 # set GDAL_FIX_ESRI_WKT=DATUM (bugs #4378 and #4345), don't expect to fail
 
 
-def osr_esri_23():
+def test_osr_esri_23():
 
     result = 'success'
 
@@ -1161,7 +1085,7 @@ def osr_esri_23():
 #
 
 
-def osr_esri_24():
+def test_osr_esri_24():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt('''PROJCS["Custom",
@@ -1179,18 +1103,15 @@ def osr_esri_24():
                              PARAMETER["Central_Parallel",51.0],
                              UNIT["Meter",1.0]]''')
     srs.MorphFromESRI()
-    if srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN, 1000.0) == 1000.0:
-        gdaltest.post_reason('Failed to set latitude_of_origin')
-        return 'fail'
-
-    return 'success'
+    assert srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN, 1000.0) != 1000.0, \
+        'Failed to set latitude_of_origin'
 
 ###############################################################################
 # Test Pseudo-Mercator (#3962)
 #
 
 
-def osr_esri_25():
+def test_osr_esri_25():
     srs = osr.SpatialReference()
     srs.SetFromUserInput(
         'PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",'
@@ -1216,8 +1137,7 @@ def osr_esri_25():
     proj4_string = srs.ExportToProj4()
     if not (expected_proj4_string.split(' ').sort() == proj4_string.split(' ').sort()):  # pylint: disable=superfluous-parens
         print('Got: %s' % expected_proj4_string)
-        print('Expected: %s' % proj4_string)
-        return 'fail'
+        pytest.fail('Expected: %s' % proj4_string)
 
     # test an actual conversion
     (x, y, z) = transformer.TransformPoint(7000000, 7000000, 0)
@@ -1226,32 +1146,25 @@ def osr_esri_25():
         abs(exp_y - y) > 0.00001 or
             abs(exp_z - z) > 0.00001):
         print('Got:      (%f, %f, %f)' % (x, y, z))
-        print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
-        return 'fail'
+        pytest.fail('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test LCC_1SP (#2072)
 #
 
 
-def osr_esri_26():
+def test_osr_esri_26():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""PROJCS["NAD_1983_HARN_WISCRS_Washburn_County_Meters",GEOGCS["GCS_North_American_1983_HARN",DATUM["D_North_American_1983_HARN",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",234086.8682],PARAMETER["False_Northing",188358.6058],PARAMETER["Central_Meridian",-91.78333333333333],PARAMETER["Standard_Parallel_1",45.96121983333334],PARAMETER["Scale_Factor",1.0000475376],PARAMETER["Latitude_Of_Origin",45.96121983333334],UNIT["Meter",1.0]]""")
     srs.MorphFromESRI()
-    if srs.Validate() != 0:
-        gdaltest.post_reason('fail')
-        print(srs.ExportToWkt())
-        return 'fail'
-
-    return 'success'
+    assert srs.Validate() == 0, srs.ExportToWkt()
 
 ###############################################################################
 # Test Mercator_2SP (#4861)
 
 
-def osr_esri_27():
+def test_osr_esri_27():
 
     esri_wkt = """PROJCS["Batavia_NEIEZ",
     GEOGCS["GCS_Batavia",
@@ -1271,7 +1184,7 @@ def osr_esri_27():
     srs.MorphFromESRI()
 
     got_wkt = srs.ExportToPrettyWkt()
-    if got_wkt != """PROJCS["Batavia_NEIEZ",
+    assert got_wkt == """PROJCS["Batavia_NEIEZ",
     GEOGCS["GCS_Batavia",
         DATUM["Batavia",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1282,14 +1195,11 @@ def osr_esri_27():
     PARAMETER["False_Northing",900000.0],
     PARAMETER["Central_Meridian",110.0],
     PARAMETER["Standard_Parallel_1",4.45405154589751],
-    UNIT["Meter",1.0]]""":
-        gdaltest.post_reason('fail')
-        print(got_wkt)
-        return 'fail'
+    UNIT["Meter",1.0]]"""
 
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    if got_wkt != """PROJCS["Batavia_NEIEZ",
+    assert got_wkt == """PROJCS["Batavia_NEIEZ",
     GEOGCS["GCS_Batavia",
         DATUM["D_Batavia",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1300,18 +1210,13 @@ def osr_esri_27():
     PARAMETER["False_Northing",900000.0],
     PARAMETER["Central_Meridian",110.0],
     PARAMETER["Standard_Parallel_1",4.45405154589751],
-    UNIT["Meter",1.0]]""":
-        gdaltest.post_reason('fail')
-        print(got_wkt)
-        return 'fail'
-
-    return 'success'
+    UNIT["Meter",1.0]]"""
 
 
 ###############################################################################
 # Test Mercator_1SP (#4861)
 
-def osr_esri_28():
+def test_osr_esri_28():
 
     ogc_wkt = """PROJCS["Segara (Jakarta) / NEIEZ (deprecated)",
     GEOGCS["Segara (Jakarta)",
@@ -1343,7 +1248,7 @@ def osr_esri_28():
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
     # Do not do exact test because of subtle difference of precision among compilers
-    if got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    assert got_wkt.startswith("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
     GEOGCS["GCS_Segara (Jakarta)",
         DATUM["D_Gunung_Segara",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1353,15 +1258,12 @@ def osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",4.45405154""") != 0:
-        gdaltest.post_reason('fail')
-        print(got_wkt)
-        return 'fail'
+    PARAMETER["standard_parallel_1",4.45405154""")
 
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
     # Do not do exact test because of subtle difference of precision among compilers
-    if got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    assert got_wkt.startswith("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
     GEOGCS["GCS_Segara (Jakarta)",
         DATUM["Gunung_Segara_Jakarta",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1371,25 +1273,20 @@ def osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",4.45405154""") != 0:
-        gdaltest.post_reason('fail')
-        print(got_wkt)
-        return 'fail'
-
-    return 'success'
+    PARAMETER["standard_parallel_1",4.45405154""")
 
 ###############################################################################
 # Test Web Mercator
 
 
-def osr_esri_29():
+def test_osr_esri_29():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
 
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    if got_wkt != """PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",
+    assert got_wkt == """PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",
     GEOGCS["GCS_WGS_1984",
         DATUM["D_WGS_1984",
             SPHEROID["WGS_1984",6378137.0,298.257223563]],
@@ -1401,14 +1298,11 @@ def osr_esri_29():
     PARAMETER["Central_Meridian",0.0],
     PARAMETER["Standard_Parallel_1",0.0],
     PARAMETER["Auxiliary_Sphere_Type",0.0],
-    UNIT["Meter",1.0]]""":
-        gdaltest.post_reason('fail')
-        print(got_wkt)
-        return 'fail'
+    UNIT["Meter",1.0]]"""
 
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    if got_wkt != """PROJCS["WGS 84 / Pseudo-Mercator",
+    assert got_wkt == """PROJCS["WGS 84 / Pseudo-Mercator",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -1429,16 +1323,13 @@ def osr_esri_29():
     AXIS["X",EAST],
     AXIS["Y",NORTH],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],
-    AUTHORITY["EPSG","3857"]]""":
-        gdaltest.post_reason('fail')
-        print(got_wkt)
-        return 'fail'
+    AUTHORITY["EPSG","3857"]]"""
 
     # 6134
     srs.SetFromUserInput("""PROJCS["WGS_84_Pseudo_Mercator",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Mercator"],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1],PARAMETER["standard_parallel_1",0.0]]""")
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    if got_wkt != """PROJCS["WGS 84 / Pseudo-Mercator",
+    assert got_wkt == """PROJCS["WGS 84 / Pseudo-Mercator",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -1459,18 +1350,13 @@ def osr_esri_29():
     AXIS["X",EAST],
     AXIS["Y",NORTH],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],
-    AUTHORITY["EPSG","3857"]]""":
-        gdaltest.post_reason('fail')
-        print(got_wkt)
-        return 'fail'
-
-    return 'success'
+    AUTHORITY["EPSG","3857"]]"""
 
 ###############################################################################
 # Verify import of custom ellipsoid
 
 
-def osr_esri_30():
+def test_osr_esri_30():
 
     prj = ['Projection    GEOGRAPHIC',
            'Parameters    6370000.0  6370000.0',
@@ -1487,18 +1373,13 @@ def osr_esri_30():
 
     srs_wkt = osr.SpatialReference(wkt=wkt)
 
-    if not srs_prj.IsSame(srs_wkt):
-        gdaltest.post_reason('fail')
-        print(srs_prj)
-        return 'fail'
-
-    return 'success'
+    assert srs_prj.IsSame(srs_wkt)
 
 ###############################################################################
 # Verify import of old-style Mercator
 
 
-def osr_esri_31():
+def test_osr_esri_31():
 
     prj = ['Projection    MERCATOR',
            'Datum         WGS84',
@@ -1538,18 +1419,13 @@ def osr_esri_31():
 
     srs_wkt = osr.SpatialReference(wkt=wkt)
 
-    if not srs_prj.IsSame(srs_wkt):
-        gdaltest.post_reason('fail')
-        print(srs_prj)
-        return 'fail'
-
-    return 'success'
+    assert srs_prj.IsSame(srs_wkt)
 
 ###############################################################################
 # Bad Equidistant Conic
 
 
-def osr_esri_32():
+def test_osr_esri_32():
     # Autofuzz POC from b/65416453
     prj = [
         'PROJECTIONLOCA?L_CSw?(  EQUIDISTANT_CONIC',
@@ -1559,71 +1435,23 @@ def osr_esri_32():
     srs_prj = osr.SpatialReference()
     with gdaltest.error_handler('CPLQuietErrorHandler'):
         result = srs_prj.ImportFromESRI(prj)
-        if result != ogr.OGRERR_CORRUPT_DATA:
-            gdaltest.post_reason('Corrupt EQUIDISTANT_CONIC not marked corrupt')
-            return 'fail'
+        assert result == ogr.OGRERR_CORRUPT_DATA, \
+            'Corrupt EQUIDISTANT_CONIC not marked corrupt'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test morphing invalid PROJCS WKT does not crash
 
 
-def osr_esri_33():
+def test_osr_esri_33():
 
     sr = osr.SpatialReference()
     sr.ImportFromWkt('PROJCS[]')
     sr.MorphFromESRI()
     sr.MorphToESRI()
 
-    return 'success'
-
 ###############################################################################
 #
 
 
-gdaltest_list = [
-    osr_esri_1,
-    osr_esri_2,
-    osr_esri_3,
-    osr_esri_4,
-    osr_esri_5,
-    osr_esri_6,
-    osr_esri_7,
-    osr_esri_8,
-    osr_esri_9,
-    osr_esri_10,
-    osr_esri_11,
-    osr_esri_12,
-    osr_esri_13,
-    osr_esri_14,
-    osr_esri_15,
-    osr_esri_16,
-    osr_esri_17,
-    osr_esri_18,
-    osr_esri_19,
-    osr_esri_20,
-    osr_esri_21,
-    osr_esri_22,
-    osr_esri_23,
-    osr_esri_24,
-    osr_esri_25,
-    osr_esri_26,
-    osr_esri_27,
-    osr_esri_28,
-    osr_esri_29,
-    osr_esri_30,
-    osr_esri_31,
-    osr_esri_32,
-    osr_esri_33,
-    None]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_esri')
-
-    # make sure GDAL_FIX_ESRI_WKT does not interfere with tests
-    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', 'NO')
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

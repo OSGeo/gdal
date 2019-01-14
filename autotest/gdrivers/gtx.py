@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id: gsc.py 16265 2009-02-08 11:15:27Z rouault $
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,20 +36,11 @@ import gdaltest
 # Test reading a small gtx file.
 
 
-def gtx_1():
+def test_gtx_1():
 
     tst = gdaltest.GDALTest('GTX', 'hydroc1.gtx', 1, 64183)
     gt = (276.725, 0.05, 0.0, 42.775, 0.0, -0.05)
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-gdaltest_list = [
-    gtx_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gtx')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,33 +28,31 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
 # Test if GRASS driver is present
 
-def grass_1():
+def test_grass_1():
 
     gdaltest.grass_drv = gdal.GetDriverByName('GRASS')
     if gdaltest.grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read existing simple 1 band GRASS dataset.
 
 
-def grass_2():
+def test_grass_2():
 
     if gdaltest.grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('GRASS', 'small_grass_dataset/demomapset/cellhd/elevation', 1, 41487)
 
@@ -79,16 +77,5 @@ def grass_2():
     return ret
 
 
-gdaltest_list = [
-    grass_1,
-    grass_2
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('GRASS')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

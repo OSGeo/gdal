@@ -21,7 +21,8 @@ gdalinfo --version
 Run autotest suite:
 ```
 cd ../autotest
-python run_all.py
+pip install -r requirements.txt
+pytest
 ```
 
 Git workflows with GDAL
@@ -83,7 +84,15 @@ git rebase origin/master
 
 # At end of your work, make sure history is reasonable by folding non
 # significant commits into a consistent set
-git rebase -i master (use fixup for example to merge several commits together)
+git rebase -i master (use 'fixup' for example to merge several commits together,
+and 'reword' to modify commit messages)
+
+# or alternatively, in case there is a big number of commits and marking
+# all them as 'fixup' is tedious
+git fetch origin
+git rebase origin/master
+git reset --soft origin/master
+git commit -a -m "Put here the synthetic commit message"
 
 # push your branch
 git push my_user_name my_new_feature_branch
@@ -103,9 +112,12 @@ Backporting bugfixes from master to a stable branch
 git checkout master
 With git log, identify the sha1sum of the commit you want to backport
 git checkout 2.2 (if you want to backport to 2.2)
+git pull origin 2.2
+(git checkout -b branh_name: if you intend to submit the backport as a pull request)
 git cherry-pick the_sha1_sum
+git push ...
 ```
-If changes are needed, do them and git commit -a --amend
+If changes are needed, do them and ```git commit -a --amend```
 
 
 Things you should NOT do

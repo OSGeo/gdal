@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,19 +29,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test
 
 
-def dither_1():
+def test_dither_1():
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -69,9 +67,7 @@ def dither_1():
     dst_band = None
     dst_ds = None
 
-    if ct.GetCount() != nColors:
-        gdaltest.post_reason('color table size wrong')
-        return 'fail'
+    assert ct.GetCount() == nColors, 'color table size wrong'
 
     ref_ct = [(36, 48, 32, 255), (92, 120, 20, 255), (88, 96, 20, 255), (92, 132, 56, 255),
               (0, 0, 0, 255), (96, 152, 24, 255), (60, 112, 32, 255), (164, 164, 108, 255)]
@@ -83,29 +79,19 @@ def dither_1():
         for j in range(4):
 
             if ct_data[j] != ref_data[j]:
-                gdaltest.post_reason('color table mismatch')
                 for k in range(nColors):
                     print(ct.GetColorEntry(k))
                     print(ref_ct[k])
-                return 'fail'
+                pytest.fail('color table mismatch')
 
     if cs == cs_expected or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
         drv.Delete('tmp/rgbsmall.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
+        pytest.fail('got wrong checksum')
 
-    return 'success'
-
-
-gdaltest_list = [
-    dither_1
-]
+    
 
 
-if __name__ == '__main__':
-    gdaltest.setup_run('dither')
-    gdaltest.run_tests(gdaltest_list)
-    gdaltest.summarize()
+

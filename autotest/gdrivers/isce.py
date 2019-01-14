@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,10 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +38,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def isce_1():
+def test_isce_1():
 
     tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
 
@@ -68,20 +66,17 @@ def isce_1():
 # Test reading of metadata from the ISCE metadata domain
 
 
-def isce_2():
+def test_isce_2():
 
     ds = gdal.Open('data/isce.slc')
     val = ds.GetMetadataItem('IMAGE_TYPE', 'ISCE')
-    if val != 'slc':
-        return 'fail'
-
-    return 'success'
+    assert val == 'slc'
 
 ###############################################################################
 # Verify this can be exported losslessly.
 
 
-def isce_3():
+def test_isce_3():
 
     tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
     return tst.testCreateCopy(check_gt=0, new_filename='isce.tst.slc')
@@ -90,24 +85,11 @@ def isce_3():
 # Verify VSIF*L capacity
 
 
-def isce_4():
+def test_isce_4():
 
     tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
     return tst.testCreateCopy(check_gt=0, new_filename='isce.tst.slc', vsimem=1)
 
 
-gdaltest_list = [
-    isce_1,
-    isce_2,
-    isce_3,
-    isce_4,
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('isce')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

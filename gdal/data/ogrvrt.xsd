@@ -141,10 +141,10 @@
 
     <xs:complexType name="FIDType">
         <xs:simpleContent>
-            <xs:extension base="nonEmptyStringType">
+            <xs:extension base="xs:string">
                 <xs:attribute name="name" type="xs:string">
                     <xs:annotation>
-                        <xs:documentation>A user-facing name can be specified here so that a FID column name is reported even if it is not reported as a regular field.</xs:documentation>
+                        <xs:documentation>User-facing name of the FID column.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
             </xs:extension>

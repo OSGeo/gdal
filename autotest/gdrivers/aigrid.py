@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,18 +30,17 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read test of simple byte reference data.
 
 
-def aigrid_1():
+def test_aigrid_1():
 
     tst = gdaltest.GDALTest('AIG', 'abc3x1', 1, 3)
     return tst.testOpen()
@@ -50,59 +49,43 @@ def aigrid_1():
 # Verify some auxiliary data.
 
 
-def aigrid_2():
+def test_aigrid_2():
 
     ds = gdal.Open('data/abc3x1/prj.adf')
 
     gt = ds.GetGeoTransform()
 
-    if gt[0] != -0.5 or gt[1] != 1.0 or gt[2] != 0.0 \
-       or gt[3] != 0.5 or gt[4] != 0.0 or gt[5] != -1.0:
-        gdaltest.post_reason('Aigrid geotransform wrong.')
-        return 'fail'
+    assert gt[0] == -0.5 and gt[1] == 1.0 and gt[2] == 0.0 and gt[3] == 0.5 and gt[4] == 0.0 and gt[5] == -1.0, \
+        'Aigrid geotransform wrong.'
 
     prj = ds.GetProjection()
-    if prj.find('PROJCS["UTM Zone 55, Southern Hemisphere",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994"') == -1:
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj.find('PROJCS["UTM Zone 55, Southern Hemisphere",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994"') != -1, \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != 255:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == 255, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('Data type is not Byte!')
-        return 'fail'
-
-    return 'success'
+    assert band1.DataType == gdal.GDT_Byte, 'Data type is not Byte!'
 
 ###############################################################################
 # Verify the colormap, and nodata setting for test file.
 
 
-def aigrid_3():
+def test_aigrid_3():
 
     ds = gdal.Open('data/abc3x1')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
-    if cm.GetCount() != 256 \
-       or cm.GetColorEntry(0) != (95, 113, 150, 255)\
-       or cm.GetColorEntry(1) != (95, 57, 29, 255):
-        gdaltest.post_reason('Wrong colormap entries')
-        return 'fail'
+    assert cm.GetCount() == 256 and cm.GetColorEntry(0) == (95, 113, 150, 255) and cm.GetColorEntry(1) == (95, 57, 29, 255), \
+        'Wrong colormap entries'
 
     cm = None
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 255.0:
-        gdaltest.post_reason('Wrong nodata value.')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255.0, 'Wrong nodata value.'
 ###############################################################################
 # Read test of simple byte reference data with data directory name in all uppercase
 
 
-def aigrid_4():
+def test_aigrid_4():
 
     tst = gdaltest.GDALTest('AIG', 'ABC3X1UC', 1, 3)
     return tst.testOpen()
@@ -111,47 +94,34 @@ def aigrid_4():
 # Verify the colormap, and nodata setting for test file with names of coverage directory and all files in it in all uppercase. Additionally also test for case where clr file resides in parent directory of coverage.
 
 
-def aigrid_5():
+def test_aigrid_5():
 
     ds = gdal.Open('data/ABC3X1UC')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
-    if cm.GetCount() != 256 \
-       or cm.GetColorEntry(0) != (95, 113, 150, 255)\
-       or cm.GetColorEntry(1) != (95, 57, 29, 255):
-        gdaltest.post_reason('Wrong colormap entries')
-        return 'fail'
+    assert cm.GetCount() == 256 and cm.GetColorEntry(0) == (95, 113, 150, 255) and cm.GetColorEntry(1) == (95, 57, 29, 255), \
+        'Wrong colormap entries'
 
     cm = None
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 255.0:
-        gdaltest.post_reason('Wrong nodata value.')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255.0, 'Wrong nodata value.'
 
 ###############################################################################
 # Verify dataset whose sta.adf is 24 bytes
 
 
-def aigrid_6():
+def test_aigrid_6():
 
     ds = gdal.Open('data/aigrid_sta_24bytes/teststa')
 
-    if ds.GetRasterBand(1).GetMinimum() != 0.0:
-        gdaltest.post_reason('Wrong minimum')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 
-    if ds.GetRasterBand(1).GetMaximum() != 2.0:
-        gdaltest.post_reason('Wrong maximum')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetMaximum() == 2.0, 'Wrong maximum'
 
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
 
 
-def aigrid_online_1():
+def test_aigrid_online_1():
 
     list_files = ['info/arc.dir',
                   'info/arc0000.dat',
@@ -178,12 +148,10 @@ def aigrid_online_1():
 
     for filename in list_files:
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/nzdem/' + filename, 'nzdem/' + filename):
-            return 'skip'
+            pytest.skip()
 
     tst = gdaltest.GDALTest('AIG', 'tmp/cache/nzdem/nzdem500/hdr.adf', 1, 45334, filename_absolute=1)
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/nzdem/nzdem500/hdr.adf')
 
@@ -191,66 +159,40 @@ def aigrid_online_1():
         rat = ds.GetRasterBand(1).GetDefaultRAT()
     except:
         print('Skipping RAT checking... OG Python bindings have no RAT API')
-        return 'success'
+        return
 
-    if rat is None:
-        gdaltest.post_reason('No RAT found')
-        return 'fail'
+    assert rat is not None, 'No RAT found'
 
-    if rat.GetRowCount() != 2642:
-        gdaltest.post_reason('Wrong row count in RAT')
-        return 'fail'
+    assert rat.GetRowCount() == 2642, 'Wrong row count in RAT'
 
-    if rat.GetColumnCount() != 2:
-        gdaltest.post_reason('Wrong column count in RAT')
-        return 'fail'
+    assert rat.GetColumnCount() == 2, 'Wrong column count in RAT'
 
-    if rat.GetNameOfCol(0) != 'VALUE':
-        gdaltest.post_reason('Wrong name of col 0')
-        return 'fail'
+    assert rat.GetNameOfCol(0) == 'VALUE', 'Wrong name of col 0'
 
-    if rat.GetTypeOfCol(0) != gdal.GFT_Integer:
-        gdaltest.post_reason('Wrong type of col 0')
-        return 'fail'
+    assert rat.GetTypeOfCol(0) == gdal.GFT_Integer, 'Wrong type of col 0'
 
-    if rat.GetUsageOfCol(0) != gdal.GFU_MinMax:
-        gdaltest.post_reason('Wrong usage of col 0')
-        return 'fail'
+    assert rat.GetUsageOfCol(0) == gdal.GFU_MinMax, 'Wrong usage of col 0'
 
-    if rat.GetNameOfCol(1) != 'COUNT':
-        gdaltest.post_reason('Wrong name of col 1')
-        return 'fail'
+    assert rat.GetNameOfCol(1) == 'COUNT', 'Wrong name of col 1'
 
-    if rat.GetTypeOfCol(1) != gdal.GFT_Integer:
-        gdaltest.post_reason('Wrong type of col 1')
-        return 'fail'
+    assert rat.GetTypeOfCol(1) == gdal.GFT_Integer, 'Wrong type of col 1'
 
-    if rat.GetUsageOfCol(1) != gdal.GFU_PixelCount:
-        gdaltest.post_reason('Wrong usage of col 1')
-        return 'fail'
+    assert rat.GetUsageOfCol(1) == gdal.GFU_PixelCount, 'Wrong usage of col 1'
 
-    if rat.GetValueAsInt(2641, 0) != 3627:
-        gdaltest.post_reason('Wrong value in RAT')
-        return 'fail'
+    assert rat.GetValueAsInt(2641, 0) == 3627, 'Wrong value in RAT'
 
-    if ds.GetRasterBand(1).GetMinimum() != 0.0:
-        gdaltest.post_reason('Wrong minimum')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 
-    if ds.GetRasterBand(1).GetMaximum() != 3627.0:
-        gdaltest.post_reason('Wrong maximum')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetMaximum() == 3627.0, 'Wrong maximum'
 
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
 
 
-def aigrid_online_2():
+def test_aigrid_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/ai_bug_6886.zip', 'ai_bug_6886.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/ai_bug')
@@ -260,9 +202,9 @@ def aigrid_online_2():
             try:
                 os.stat('tmp/cache/ai_bug')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except:
-            return 'skip'
+            pytest.skip()
 
     tst = gdaltest.GDALTest('AIG', 'tmp/cache/ai_bug/ai_bug/hdr.adf', 1, 16018, filename_absolute=1)
     return tst.testOpen()
@@ -270,20 +212,4 @@ def aigrid_online_2():
 ###############################################################################
 
 
-gdaltest_list = [
-    aigrid_1,
-    aigrid_2,
-    aigrid_3,
-    aigrid_4,
-    aigrid_5,
-    aigrid_6,
-    aigrid_online_1,
-    aigrid_online_2]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('aigrid')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

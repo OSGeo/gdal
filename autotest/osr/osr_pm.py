@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,11 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import osr
 
 ###############################################################################
@@ -41,77 +38,49 @@ from osgeo import osr
 # and the central meridian.
 
 
-def osr_pm_1():
+def test_osr_pm_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27572)
 
-    if abs(float(srs.GetAttrValue('PRIMEM', 1)) - 2.33722917) > 0.0000005:
-        gdaltest.post_reason('Wrong prime meridian.')
-        return 'fail'
+    assert abs(float(srs.GetAttrValue('PRIMEM', 1)) - 2.33722917) <= 0.0000005, \
+        'Wrong prime meridian.'
 
-    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) - 0.0) > 0.0000005:
-        gdaltest.post_reason('Wrong central meridian.')
-        return 'fail'
-
-    return 'success'
+    assert abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) - 0.0) <= 0.0000005, \
+        'Wrong central meridian.'
 
 ###############################################################################
 # Check that EPSG:27572 lookup has the prime meridian properly set,
 # and the central meridian in the PROJ.4 string.
 
 
-def osr_pm_2():
+def test_osr_pm_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27572)
     proj4_srs = srs.ExportToProj4()
 
-    if proj4_srs.find('+pm=paris') == -1:
-        print(proj4_srs)
-        gdaltest.post_reason('prime meridian wrong or missing.')
-        return 'fail'
+    assert proj4_srs.find('+pm=paris') != -1, 'prime meridian wrong or missing.'
 
-    if proj4_srs.find('+lon_0=0') == -1:
-        print(proj4_srs)
-        gdaltest.post_reason('+lon_0 is wrong.')
-        return 'fail'
-
-    return 'success'
+    assert proj4_srs.find('+lon_0=0') != -1, '+lon_0 is wrong.'
 
 ###############################################################################
 # Convert PROJ.4 format to WKT and verify that PM and central meridian
 # are properly preserved.
 
 
-def osr_pm_3():
+def test_osr_pm_3():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4('+proj=utm +zone=30 +datum=WGS84 +pm=bogota')
 
-    if abs(float(srs.GetAttrValue('PRIMEM', 1)) + 74.08091666678081) > 0.0000005:
-        gdaltest.post_reason('Wrong prime meridian.')
-        return 'fail'
+    assert abs(float(srs.GetAttrValue('PRIMEM', 1)) + 74.08091666678081) <= 0.0000005, \
+        'Wrong prime meridian.'
 
-    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) + 3.0) > 0.0000005:
-        gdaltest.post_reason('Wrong central meridian.')
-        return 'fail'
-
-    return 'success'
+    assert abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) + 3.0) <= 0.0000005, \
+        'Wrong central meridian.'
 
 
 ###############################################################################
 
-gdaltest_list = [
-    osr_pm_1,
-    osr_pm_2,
-    osr_pm_3,
-    None]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_pm')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

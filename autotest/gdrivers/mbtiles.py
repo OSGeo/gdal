@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -33,57 +33,49 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
 import webserver
+import pytest
 
 ###############################################################################
 # Get the mbtiles driver
 
 
-def mbtiles_1():
+def test_mbtiles_1():
 
     gdaltest.mbtiles_drv = gdal.GetDriverByName('MBTiles')
-
-    return 'success'
 
 ###############################################################################
 # Basic test
 
 
-def mbtiles_2():
+def test_mbtiles_2():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('data/world_l1.mbtiles', open_options=['USE_BOUNDS=NO'])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 4, 'expected 3 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'did not get expected overview count'
 
     expected_cs_tab = [6324, 19386, 45258]
     expected_cs_tab_jpeg8 = [6016, 13996, 45168]
     expected_cs_tab_jpeg9b = [6016, 14034, 45168]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
-        if ds.GetRasterBand(i + 1).GetColorInterpretation() != gdal.GCI_RedBand + i:
-            gdaltest.post_reason('bad color interpretation')
-            return 'fail'
+        assert ds.GetRasterBand(i + 1).GetColorInterpretation() == gdal.GCI_RedBand + i, \
+            'bad color interpretation'
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
-            gdaltest.post_reason('for band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
-            return 'fail'
+        assert cs == expected_cs or cs == expected_cs_tab_jpeg8[i] or cs == expected_cs_tab_jpeg9b[i], \
+            ('for band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
 
     expected_cs_tab = [16642, 15772, 10029]
     expected_cs_tab_jpeg8 = [16621, 14725, 8988]
@@ -91,312 +83,248 @@ def mbtiles_2():
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
-            gdaltest.post_reason('for overview of band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
-            return 'fail'
+        assert cs == expected_cs or cs == expected_cs_tab_jpeg8[i] or cs == expected_cs_tab_jpeg9b[i], \
+            ('for overview of band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
 
-    if ds.GetProjectionRef().find('3857') == -1:
-        gdaltest.post_reason('projection_ref = %s' % ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetProjectionRef().find('3857') != -1, \
+        ('projection_ref = %s' % ds.GetProjectionRef())
 
     gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 20037508.342789244, 0.0, -78271.516964020484)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            gdaltest.post_reason('bad gt')
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15, 'bad gt'
 
     md = ds.GetMetadata()
-    if md['bounds'] != '-180.0,-85,180,85':
-        gdaltest.post_reason('bad metadata')
-        return 'fail'
+    assert md['bounds'] == '-180.0,-85,180,85', 'bad metadata'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Open a /vsicurl/ DB
 
 
-def mbtiles_3():
+def test_mbtiles_3():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
-        print("Hangs on MacOSX Travis sometimes. Not sure why.")
-        return 'skip'
+        pytest.skip("Hangs on MacOSX Travis sometimes. Not sure why.")
 
     # Check that we have SQLite VFS support
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/mbtiles_3.db')
     gdal.PopErrorHandler()
     if ds is None:
-        return 'skip'
+        pytest.skip()
     ds = None
     gdal.Unlink('/vsimem/mbtiles_3.db')
 
     ds = gdal.Open('/vsicurl/http://a.tiles.mapbox.com/v3/mapbox.geography-class.mbtiles')
     if ds is None:
         # Just skip. The service isn't perfectly reliable sometimes
-        return 'skip'
+        pytest.skip()
 
     # long=2,lat=49 in WGS 84 --> x=222638,y=6274861 in Google Mercator
     locationInfo = ds.GetRasterBand(1).GetMetadataItem('GeoPixel_222638_6274861', 'LocationInfo')
     if locationInfo is None or locationInfo.find("France") == -1:
-        gdaltest.post_reason('did not get expected LocationInfo')
         print(locationInfo)
         if gdaltest.skip_on_travis():
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail('did not get expected LocationInfo')
 
     locationInfo2 = ds.GetRasterBand(1).GetOverview(5).GetMetadataItem('GeoPixel_222638_6274861', 'LocationInfo')
     if locationInfo2 != locationInfo:
-        gdaltest.post_reason('did not get expected LocationInfo on overview')
         print(locationInfo2)
         if gdaltest.skip_on_travis():
-            return 'skip'
-        return 'fail'
+            pytest.skip()
+        pytest.fail('did not get expected LocationInfo on overview')
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
 
-def mbtiles_start_webserver():
+def test_mbtiles_start_webserver():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
 
-def mbtiles_http_jpeg_three_bands():
+def test_mbtiles_http_jpeg_three_bands():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.FileHandler(
         {'/world_l1.mbtiles': open('data/world_l1.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 #
 
 
-def mbtiles_http_jpeg_single_band():
+def test_mbtiles_http_jpeg_single_band():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.FileHandler(
         {'/byte_jpeg.mbtiles': open('data/byte_jpeg.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 #
 
 
-def mbtiles_http_png():
+def test_mbtiles_http_png():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.FileHandler(
         {'/byte.mbtiles': open('data/byte.mbtiles', 'rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 #
 
 
-def mbtiles_stop_webserver():
+def test_mbtiles_stop_webserver():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('HTTP') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic test without any option
 
 
-def mbtiles_4():
+def test_mbtiles_4():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/world_l1.mbtiles')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('expected 4 bands')
-        return 'fail'
+    assert ds.RasterCount == 4, 'expected 4 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'did not get expected overview count'
 
-    if ds.RasterXSize != 512 or ds.RasterYSize != 510:
-        gdaltest.post_reason('bad dimensions')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 512 and ds.RasterYSize == 510, 'bad dimensions'
 
     gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 19971868.880408563, 0.0, -78271.516964020484)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            gdaltest.post_reason('bad gt')
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15, 'bad gt'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test write support of a single band dataset
 
 
-def mbtiles_5():
+def test_mbtiles_5():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_5.mbtiles', src_ds)
     src_ds = None
 
     ds = gdal.OpenEx('/vsimem/mbtiles_5.mbtiles', open_options=['BAND_COUNT=2'])
-    if ds.RasterXSize != 19 or ds.RasterYSize != 19:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
-    if ds.RasterCount != 2:
-        gdaltest.post_reason('fail')
-        print(ds.RasterCount)
-        return 'fail'
+    assert ds.RasterXSize == 19 and ds.RasterYSize == 19
+    assert ds.RasterCount == 2
     got_gt = ds.GetGeoTransform()
     expected_gt = (-13095853.550435878, 76.437028285176254, 0.0, 4015708.8887064462, 0.0, -76.437028285176254)
     for i in range(6):
-        if abs(expected_gt[i] - got_gt[i]) > 1e-6:
-            gdaltest.post_reason('fail')
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(expected_gt[i] - got_gt[i]) <= 1e-6
     got_cs = ds.GetRasterBand(1).Checksum()
-    if got_cs != 4118:
-        gdaltest.post_reason('fail')
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 4118
     got_cs = ds.GetRasterBand(2).Checksum()
-    if got_cs != 4406:
-        gdaltest.post_reason('fail')
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 4406
     got_md = ds.GetMetadata()
     expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'name': 'mbtiles_5', 'format': 'png', 'bounds': '-117.6420540294745,33.89160566594387,-117.6290077648261,33.90243460427036', 'version': '1.1', 'type': 'overlay', 'description': 'mbtiles_5'}
-    if set(got_md.keys()) != set(expected_md.keys()):
-        gdaltest.post_reason('fail')
-        print(got_md)
-        return 'fail'
+    assert set(got_md.keys()) == set(expected_md.keys())
     for key in got_md:
-        if key != 'bounds' and got_md[key] != expected_md[key]:
-            gdaltest.post_reason('fail')
-            print(got_md)
-            return 'fail'
+        assert key == 'bounds' or got_md[key] == expected_md[key]
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_5.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 # Test write support with options
 
 
-def mbtiles_6():
+def test_mbtiles_6():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     # Test options
     src_ds = gdal.Open('data/byte.tif')
@@ -413,33 +341,25 @@ def mbtiles_6():
 
     ds = gdal.Open('tmp/mbtiles_6.mbtiles')
     got_cs = ds.GetRasterBand(1).Checksum()
-    if got_cs == 0:
-        gdaltest.post_reason('fail')
-        print(got_cs)
-        return 'fail'
+    assert got_cs != 0
     got_md = ds.GetMetadata()
     expected_md = {'ZOOM_LEVEL': '11', 'minzoom': '11', 'maxzoom': '11', 'format': 'jpg', 'version': 'version', 'type': 'baselayer', 'name': 'name', 'description': 'description'}
-    if got_md != expected_md:
-        gdaltest.post_reason('fail')
-        print(got_md)
-        return 'fail'
+    assert got_md == expected_md
     ds = None
 
     gdal.Unlink('tmp/mbtiles_6.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 # Test building overview
 
 
-def mbtiles_7():
+def test_mbtiles_7():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/small_world.tif')
     data = src_ds.ReadRaster()
@@ -465,20 +385,11 @@ def mbtiles_7():
     ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
     expected_ovr_cs = [21179, 22577, 11996, 17849]
     got_ovr_cs = [ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)]
-    if expected_ovr_cs != got_ovr_cs:
-        gdaltest.post_reason('fail')
-        print(got_ovr_cs)
-        return 'fail'
-    if ds.GetMetadataItem('minzoom') != '0':
-        gdaltest.post_reason('fail')
-        print(ds.GetMetadata())
-        return 'fail'
+    assert expected_ovr_cs == got_ovr_cs
+    assert ds.GetMetadataItem('minzoom') == '0', ds.GetMetadata()
     ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles', gdal.GA_Update)
@@ -486,31 +397,23 @@ def mbtiles_7():
     ds = None
 
     ds = gdal.Open('/vsimem/mbtiles_7.mbtiles')
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
-    if ds.GetMetadataItem('minzoom') != '1':
-        gdaltest.post_reason('fail')
-        print(ds.GetMetadata())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    assert ds.GetMetadataItem('minzoom') == '1', ds.GetMetadata()
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_7.mbtiles')
-
-    return 'success'
 
 ###############################################################################
 # Single band with 24 bit color table, PNG
 
 
-def mbtiles_8():
+def test_mbtiles_8():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/small_world_pct.tif')
     out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options=['RESAMPLING=NEAREST'])
@@ -520,18 +423,10 @@ def mbtiles_8():
     expected_cs = [993, 50461, 64354]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
+    assert got_cs == expected_cs
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
-    if got_ct is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetRasterBand(1).GetBlockSize() != [256, 256]:
-        gdaltest.post_reason('fail')
-        print(out_ds.GetRasterBand(1).GetBlockSize())
-        return 'fail'
+    assert got_ct is None
+    assert out_ds.GetRasterBand(1).GetBlockSize() == [256, 256]
     out_ds = None
 
     # 512 pixel tiles
@@ -543,33 +438,25 @@ def mbtiles_8():
     expected_cs = [60844, 7388, 53813]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
+    assert got_cs == expected_cs
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
-    if got_ct is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.GetRasterBand(1).GetBlockSize() != [512, 512]:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert got_ct is None
+    assert out_ds.GetRasterBand(1).GetBlockSize() == [512, 512]
     out_ds = None
 
     gdal.Unlink('/vsimem/mbtiles_8.mbtiles')
-    return 'success'
 
 ###############################################################################
 # Test we are robust to invalid bounds
 
 
-def mbtiles_9():
+def test_mbtiles_9():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options=['RESAMPLING=NEAREST'])
@@ -580,29 +467,23 @@ def mbtiles_9():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/mbtiles_9.mbtiles')
-    if ds.RasterXSize != 256 or ds.RasterYSize != 256:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if abs(ds.GetGeoTransform()[0] - -13110479.091473430395126) > 1e-6:
-        gdaltest.post_reason('fail')
-        print(ds.GetGeoTransform())
-        return 'fail'
+    assert ds.RasterXSize == 256 and ds.RasterYSize == 256
+    assert abs(ds.GetGeoTransform()[0] - -13110479.091473430395126) <= 1e-6
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_9.mbtiles')
-    return 'success'
 
 ###############################################################################
 # Test compaction of temporary database
 
 
-def mbtiles_10():
+def test_mbtiles_10():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
 
     old_val_GPKG_FORCE_TEMPDB_COMPACTION = gdal.GetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION')
     gdal.SetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION', 'YES')
@@ -612,64 +493,51 @@ def mbtiles_10():
 
     ds = gdal.Open('/vsimem/mbtiles_10.mbtiles')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 29925:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 29925
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_10.mbtiles')
-    return 'success'
 
 ###############################################################################
 # Test opening a .mbtiles.sql file
 
 
-def mbtiles_11():
+def test_mbtiles_11():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.mbtiles_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PNG') is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open('data/byte.mbtiles.sql')
-    if ds.GetRasterBand(1).Checksum() != 4118:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).Checksum() == 4118, 'validation failed'
 
 ###############################################################################
 
 
-def mbtiles_raster_open_in_vector_mode():
+def test_mbtiles_raster_open_in_vector_mode():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/byte.mbtiles')
-    if ds is not None:
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 
 
-def mbtiles_create():
+def test_mbtiles_create():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsimem/mbtiles_create.mbtiles'
     gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
     with gdaltest.error_handler():
-        if gdal.Open(filename) is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert gdal.Open(filename) is None
 
     # Nominal case
     gdal.Unlink(filename)
@@ -681,24 +549,18 @@ def mbtiles_create():
     # Cannot modify geotransform once set"
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     ds = None
 
     ds = gdal.Open('data/byte.mbtiles')
     # SetGeoTransform() not supported on read-only dataset"
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     # SetProjection() not supported on read-only dataset
     with gdaltest.error_handler():
         ret = ds.SetProjection(src_ds.GetProjectionRef())
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
@@ -706,9 +568,7 @@ def mbtiles_create():
     # Only EPSG:3857 supported on MBTiles dataset
     with gdaltest.error_handler():
         ret = ds.SetProjection('LOCAL_CS["foo"]')
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
@@ -716,9 +576,7 @@ def mbtiles_create():
     # Only north-up non rotated geotransform supported
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
@@ -726,54 +584,16 @@ def mbtiles_create():
     # Could not find an appropriate zoom level that matches raster pixel size
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
-
-    return 'success'
 
 
 ###############################################################################
 # Cleanup
 
-def mbtiles_cleanup():
+def test_mbtiles_cleanup():
 
     if gdaltest.mbtiles_drv is None:
-        return 'skip'
-
-    return 'success'
-
-
-gdaltest_list = [
-    mbtiles_1,
-    mbtiles_2,
-    mbtiles_3,
-    mbtiles_start_webserver,
-    mbtiles_http_jpeg_three_bands,
-    mbtiles_http_jpeg_single_band,
-    mbtiles_http_png,
-    mbtiles_stop_webserver,
-    mbtiles_4,
-    mbtiles_5,
-    mbtiles_6,
-    mbtiles_7,
-    mbtiles_8,
-    mbtiles_9,
-    mbtiles_10,
-    mbtiles_11,
-    mbtiles_raster_open_in_vector_mode,
-    mbtiles_create,
-    mbtiles_cleanup]
-
-# gdaltest_list = [ mbtiles_1, mbtiles_create ]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('mbtiles')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()
+        pytest.skip()

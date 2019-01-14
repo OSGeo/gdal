@@ -9,11 +9,13 @@
  *
 */
 
+#if (SWIG_VERSION < 0x020000)
 // Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4
 %pragma(csharp) imclasscode=%{
   static $imclassname() {
   }
 %}
+#endif
 
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
     $&csclassname ret = new $&csclassname($imcall, true, null);$excode
@@ -88,11 +90,13 @@
   }
 %}
 
+
+#if SWIG_VERSION > 0x020000
 // Derived proxy classes
 %typemap(csbody_derived) SWIGTYPE %{
   private HandleRef swigCPtr;
 
-  public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwn, parent) {
+  public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassname_SWIGUpcast(cPtr), cMemoryOwn, parent) {
     swigCPtr = new HandleRef(this, cPtr);
   }
 
@@ -123,6 +127,42 @@
     }
   }
 %}
+#else
+// Derived proxy classes
+%typemap(csbody_derived) SWIGTYPE %{
+  private HandleRef swigCPtr;
+
+  public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwn, parent) {
+    swigCPtr = new HandleRef(this, cPtr);
+  }
+  public static HandleRef getCPtr($csclassname obj) {
+    return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
+  }
+  public static HandleRef getCPtrAndDisown($csclassname obj, object parent) {
+    if (obj != null)
+    {
+      obj.swigCMemOwn = false;
+      obj.swigParentRef = parent;
+      return obj.swigCPtr;
+    }
+    else
+    {
+      return new HandleRef(null, IntPtr.Zero);
+    }
+  }
+  public static HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
+    if (obj != null)
+    {
+      obj.swigParentRef = parent;
+      return obj.swigCPtr;
+    }
+    else
+    {
+      return new HandleRef(null, IntPtr.Zero);
+    }
+  }
+%}
+#endif
 
 // Typewrapper classes
 %typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) %{

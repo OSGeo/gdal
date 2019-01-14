@@ -39,6 +39,9 @@ gdal_vector_translate_fuzzer$(EXE): gdal_vector_translate_fuzzer.$(OBJ_EXT) $(DE
 aig_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@ -DREGISTER_FUNC=GDALRegister_AIGrid -DMEM_FILENAME="\"/vsimem/test.tar\"" -DGDAL_FILENAME="\"/vsitar//vsimem/test.tar/hdr.adf\""
 
+gdal_vrt_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@ -DMEM_FILENAME="\"/vsimem/test.tar\"" -DGDAL_FILENAME="\"/vsitar//vsimem/test.tar/test.vrt\""
+
 ogr_fuzzer$(EXE): ogr_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) ogr_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 

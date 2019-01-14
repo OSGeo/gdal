@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,10 +28,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,7 +37,7 @@ import gdaltest
 # Test a fake CTG dataset
 
 
-def ctg_1():
+def test_ctg_1():
 
     tst = gdaltest.GDALTest('CTG', 'fake_grid_cell', 1, 21)
     expected_gt = [421000.0, 200.0, 0.0, 5094400.0, 0.0, -200.0]
@@ -70,27 +68,13 @@ def ctg_1():
     if ret == 'success':
         ds = gdal.Open('data/fake_grid_cell')
         lst = ds.GetRasterBand(1).GetCategoryNames()
-        if lst is None or not lst:
-            gdaltest.post_reason('expected non empty category names for band 1')
-            return 'fail'
+        assert lst is not None and lst, 'expected non empty category names for band 1'
         lst = ds.GetRasterBand(2).GetCategoryNames()
-        if lst is not None:
-            gdaltest.post_reason('expected empty category names for band 2')
-            return 'fail'
-        if ds.GetRasterBand(1).GetNoDataValue() != 0:
-            gdaltest.post_reason('did not get expected nodata value')
-            return 'fail'
+        assert lst is None, 'expected empty category names for band 2'
+        assert ds.GetRasterBand(1).GetNoDataValue() == 0, \
+            'did not get expected nodata value'
 
     return ret
 
 
-gdaltest_list = [
-    ctg_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ctg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

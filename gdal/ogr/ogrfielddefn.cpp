@@ -720,6 +720,9 @@ const char * OGRFieldDefn::GetFieldSubTypeName( OGRFieldSubType eSubType )
       case OFSTFloat32:
         return "Float32";
 
+      case OFSTJSON:
+        return "JSON";
+
       default:
         return "(unknown)";
     }
@@ -767,6 +770,8 @@ int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
         return eType == OFTInteger || eType == OFTIntegerList;
     if( eSubType == OFSTFloat32 )
         return eType == OFTReal || eType == OFTRealList;
+    if( eSubType == OFSTJSON )
+        return eType == OFTString;
     return FALSE;
 }
 

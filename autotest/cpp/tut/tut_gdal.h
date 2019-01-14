@@ -36,9 +36,9 @@ namespace tut
 {
 
 #if defined(WIN32)
-#define SEP '\\'
+#define SEP "\\"
 #else
-#define SEP '/'
+#define SEP "/"
 #endif
 
 //

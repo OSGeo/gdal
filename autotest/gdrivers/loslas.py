@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,40 +29,37 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
 
-def loslas_online_1():
+def test_loslas_online_1():
 
     if not gdaltest.download_file('http://www.ngs.noaa.gov/PC_PROD/NADCON/NADCON.zip', 'NADCON.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/NADCON.zip')
     except OSError:
-        return 'skip'
+        pytest.skip()
 
-    tst = gdaltest.GDALTest('LOSLAS', '/vsizip/tmp/cache/NADCON.zip/wyhpgn.los', 1, 0, filename_absolute=1)
+    try:
+        gdaltest.unzip('tmp/cache/NADCON', 'tmp/cache/NADCON.zip')
+        os.stat('tmp/cache/NADCON/nadcon.jar')
+        gdaltest.unzip('tmp/cache/NADCON', 'tmp/cache/NADCON/nadcon.jar')
+        os.stat('tmp/cache/NADCON/grids/wyhpgn.los')
+    except OSError:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('LOSLAS', 'tmp/cache/NADCON/grids/wyhpgn.los', 1, 0, filename_absolute=1)
     gt = (-111.625, 0.25, 0.0, 45.625, 0.0, -0.25)
     stats = (-0.0080000003799796, 0.031125999987125001, 0.0093017323318172005, 0.0075646520354096004)
     return tst.testOpen(check_gt=gt, check_stat=stats, check_prj='WGS84')
 
 
-gdaltest_list = [
-    loslas_online_1,
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('LOSLAS')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

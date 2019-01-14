@@ -43,8 +43,8 @@ S57Writer::S57Writer() :
     nNext0001Index(0),
     poRegistrar(nullptr),
     poClassContentExplorer(nullptr),
-    nCOMF(10000000),
-    nSOMF(10)
+    m_nCOMF(nDEFAULT_COMF),
+    m_nSOMF(nDEFAULT_SOMF)
 {}
 
 /************************************************************************/
@@ -431,11 +431,13 @@ bool S57Writer::CreateS57File( const char *pszFilename )
 /*                             WriteDSID()                              */
 /************************************************************************/
 
-bool S57Writer::WriteDSID( int nEXPP /*1*/, int nINTU /*4*/,
+bool S57Writer::WriteDSID( int nEXPP, int nINTU,
                            const char *pszDSNM, const char *pszEDTN,
                            const char *pszUPDN, const char *pszUADT,
                            const char *pszISDT, const char *pszSTED,
                            int nAGEN, const char *pszCOMT,
+                           int nAALL,
+                           int nNALL,
                            int nNOMR, int nNOGR, int nNOLR, int nNOIN,
                            int nNOCN, int nNOED )
 
@@ -490,8 +492,8 @@ bool S57Writer::WriteDSID( int nEXPP /*1*/, int nINTU /*4*/,
     /* poField = */ poRec->AddField( poModule->FindFieldDefn( "DSSI" ) );
 
     poRec->SetIntSubfield   ( "DSSI", 0, "DSTR", 0, 2 ); // "Chain node"
-    poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NALL", 0, 0 );
+    poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, nAALL );
+    poRec->SetIntSubfield   ( "DSSI", 0, "NALL", 0, nNALL );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOMR", 0, nNOMR ); // Meta records
     // Cartographic records are not permitted in ENC.
     poRec->SetIntSubfield   ( "DSSI", 0, "NOCR", 0, 0 );
@@ -519,17 +521,12 @@ bool S57Writer::WriteDSID( int nEXPP /*1*/, int nINTU /*4*/,
 /*                             WriteDSPM()                              */
 /************************************************************************/
 
-bool S57Writer::WriteDSPM( int nHDAT, int nVDAT, int nSDAT, int nCSCL )
+bool S57Writer::WriteDSPM( int nHDAT, int nVDAT, int nSDAT, int nCSCL,
+                           int nCOMF, int nSOMF )
 
 {
-    if( nHDAT == 0 )
-        nHDAT = 2;
-    if( nVDAT == 0 )
-        nVDAT = 17;
-    if( nSDAT == 0 )
-        nSDAT = 23;
-    if( nCSCL == 0 )
-        nCSCL = 52000;
+    m_nCOMF = nCOMF;
+    m_nSOMF = nSOMF;
 
 /* -------------------------------------------------------------------- */
 /*      Add the DSID field.                                             */
@@ -612,9 +609,9 @@ bool S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
     for( int i = 0; i < nVertCount; i++ )
     {
         const GInt32 nXCOO = CPL_LSBWORD32(
-            static_cast<GInt32>( floor(padfX[i] * nCOMF + 0.5)) );
+            static_cast<GInt32>( floor(padfX[i] * m_nCOMF + 0.5)) );
         const GInt32 nYCOO = CPL_LSBWORD32(
-            static_cast<GInt32>( floor(padfY[i] * nCOMF + 0.5)) );
+            static_cast<GInt32>( floor(padfY[i] * m_nCOMF + 0.5)) );
 
         if( padfZ == nullptr )
         {
@@ -624,7 +621,7 @@ bool S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
         else
         {
             const GInt32 nVE3D = CPL_LSBWORD32(
-                static_cast<GInt32>( floor( padfZ[i] * nSOMF + 0.5 )) );
+                static_cast<GInt32>( floor( padfZ[i] * m_nSOMF + 0.5 )) );
             memcpy( pabyRawData + i * 12, &nYCOO, 4 );
             memcpy( pabyRawData + i * 12 + 4, &nXCOO, 4 );
             memcpy( pabyRawData + i * 12 + 8, &nVE3D, 4 );

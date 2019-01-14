@@ -191,6 +191,10 @@ reported in the DESCRIPTION metadata item of the layer.</li>
 written as the 'id' member of Feature objects.</li>
 <li><b>ID_TYPE</b>=AUTO/String/Integer. (OGR &gt;= 2.3) Type of the 'id'
 memer of Feature objects.</li>
+<li><b>WRITE_NON_FINITE_VALUES</b>=YES/NO. (OGR &gt;= 2.4) Whether to write NaN / Infinity values.
+Such values are not allowed in strict JSon mode, but some JSon parsers
+(libjson-c &gt;= 0.12 for exampl) can understand them as they are allowed by ECMAScript.
+Defaults to NO</li>
 </ul>
 
 <h2>VSI Virtual File System API support</h2>
@@ -295,6 +299,7 @@ ogr2ogr -f GeoJSON cities.json cities.shp -lco RFC7946=YES
 <li><a href="https://tools.ietf.org/html/rfc7946">RFC 7946</a> standard.</li>
 <li><a href="http://geojson.org/geojson-spec.html">GeoJSON 2008</a> specification (obsoleted by RFC 7946).</li>
 <li><a href="http://json.org/">JSON</a> - JavaScript Object Notation</li>
+<li><a href="drv_geojsonseq.html">GeoJSON sequence driver</a></li>
 <li><a href="drv_esrijson.html">ESRI JSon / FeatureService driver</a></li>
 <li><a href="drv_topojson.html">TopoJSON driver</a></li>
 </ul>

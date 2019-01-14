@@ -104,6 +104,7 @@ void RegisterOGRElastic() {
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='INDEX_NAME' type='string' description='Name of the index to create (or reuse). By default the index name is the layer name.'/>"
+    "  <Option name='INDEX_DEFINITION' type='string' description='Filename from which to read a user-defined index definition, or index definition as serialized JSon.'/>"
     "  <Option name='MAPPING_NAME' type='string' description='Name of the mapping type within the index.' default='FeatureCollection'/>"
     "  <Option name='MAPPING' type='string' description='Filename from which to read a user-defined mapping, or mapping as serialized JSon.'/>"
     "  <Option name='WRITE_MAPPING' type='string' description='Filename where to write the OGR generated mapping.'/>"
@@ -132,6 +133,9 @@ void RegisterOGRElastic() {
 "<OpenOptionList>"
 "  <Option name='HOST' type='string' description='Server hostname' default='localhost'/>"
 "  <Option name='PORT' type='integer' description='Server port' default='9200'/>"
+"  <Option name='USERPWD' type='string' "
+        "description='Basic authentication as username:password'/>"
+"  <Option name='LAYER' type='string' description='Index name or index_mapping to use for restricting layer listing'/>"
 "  <Option name='BATCH_SIZE' type='integer' description='Number of features to retrieve per batch' default='100'/>"
 "  <Option name='FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN' type='integer' description='Number of features to retrieve to establish feature definition. -1 = unlimited' default='100'/>"
 "  <Option name='JSON_FIELD' type='boolean' description='Whether to include a field with the full document as JSON' default='NO'/>"

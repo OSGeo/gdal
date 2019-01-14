@@ -163,8 +163,10 @@ class XMLWriter(object):
         xml_attrs = ''
         if attrs is not None:
             for key in attrs:
-                xml_attrs = xml_attrs + ' %s=\"%s\"' % (key, _Esc(attrs[key]))
-        _VSIFPrintfL(self.f, '%s<%s%s>\n' % (self._indent(), name, xml_attrs))
+                xml_attrs = xml_attrs + ' %s=\"%s\"' % (key, _Esc(attrs[key].encode('utf-8')))
+        x = '%s<%s%s>\n' % (self._indent(), name, xml_attrs)
+        x = x.encode('utf-8')
+        _VSIFPrintfL(self.f, x)
         self.inc = self.inc + 1
         self.elements.append(name)
 
@@ -172,10 +174,11 @@ class XMLWriter(object):
         xml_attrs = ''
         if attrs is not None:
             for key in attrs:
-                xml_attrs = xml_attrs + ' %s=\"%s\"' % (key, _Esc(attrs[key]))
-        _VSIFPrintfL(self.f, '%s<%s%s>%s</%s>\n' %
-                     (self._indent(), name, xml_attrs,
-                      _Esc(value), name))
+                xml_attrs = xml_attrs + ' %s=\"%s\"' % (key, _Esc(attrs[key].encode('utf-8')))
+        x = '%s<%s%s>%s</%s>\n' % (self._indent(), name, xml_attrs,
+                      _Esc(value.encode('utf-8')), name)
+        x = x.encode('utf-8')
+        _VSIFPrintfL(self.f, x)
 
     def close_element(self, closing_name=None):
         self.inc = self.inc - 1
@@ -285,7 +288,10 @@ def process(argv, progress=None, progress_arg=None):
             return Usage()
         else:
             if '*' in arg:
-                src_datasets += glob.glob(arg)
+                if sys.version_info < (3,0,0):
+                    src_datasets += [fn.decode(sys.getfilesystemencoding()) for fn in glob.glob(arg)]
+                else:
+                    src_datasets += glob.glob(arg)
             else:
                 src_datasets.append(arg)
         i = i + 1
@@ -406,21 +412,27 @@ def process(argv, progress=None, progress_arg=None):
 
                 layer_name = src_layer_field_content
 
+                src_lyr_name = src_lyr.GetName()
+                try:
+                    src_lyr_name = src_lyr_name.decode('utf-8')
+                except AttributeError:
+                    pass
+
                 basename = None
                 if os.path.exists(src_dsname):
                     basename = os.path.basename(src_dsname)
-                    if basename.find('.') >= 0:
+                    if '.' in basename:
                         basename = '.'.join(basename.split(".")[0:-1])
 
-                if basename == src_lyr.GetName():
+                if basename == src_lyr_name:
                     layer_name = layer_name.replace('{AUTO_NAME}', basename)
                 elif basename is None:
                     layer_name = layer_name.replace(
                         '{AUTO_NAME}',
-                        'Dataset%d_%s' % (src_ds_idx, src_lyr.GetName()))
+                        'Dataset%d_%s' % (src_ds_idx, src_lyr_name))
                 else:
                     layer_name = layer_name.replace(
-                        '{AUTO_NAME}', basename + '_' + src_lyr.GetName())
+                        '{AUTO_NAME}', basename + '_' + src_lyr_name)
 
                 if basename is not None:
                     layer_name = layer_name.replace('{DS_BASENAME}', basename)
@@ -432,7 +444,7 @@ def process(argv, progress=None, progress_arg=None):
                 layer_name = layer_name.replace('{DS_INDEX}', '%d' %
                                                 src_ds_idx)
                 layer_name = layer_name.replace('{LAYER_NAME}',
-                                                src_lyr.GetName())
+                                                src_lyr_name)
                 layer_name = layer_name.replace('{LAYER_INDEX}', '%d' %
                                                 src_lyr_idx)
 
@@ -445,8 +457,8 @@ def process(argv, progress=None, progress_arg=None):
                 if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
-                   vrt_filename.find('/') < 0 and \
-                   vrt_filename.find('\\') < 0:
+                   '/' not in vrt_filename and \
+                   '\\' not in vrt_filename:
                     attrs = {'relativeToVRT': '1'}
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
@@ -485,28 +497,34 @@ def process(argv, progress=None, progress_arg=None):
                     if gt not in src_geom_types:
                         continue
 
+                src_lyr_name = src_lyr.GetName()
+                try:
+                    src_lyr_name = src_lyr_name.decode('utf-8')
+                except AttributeError:
+                    pass
+
                 layer_name = layer_name_template
                 basename = None
                 if os.path.exists(src_dsname):
                     basename = os.path.basename(src_dsname)
-                    if basename.find('.') >= 0:
+                    if '.' in basename:
                         basename = '.'.join(basename.split(".")[0:-1])
 
-                if basename == src_lyr.GetName():
+                if basename == src_lyr_name:
                     layer_name = layer_name.replace('{AUTO_NAME}', basename)
                 elif basename is None:
                     layer_name = layer_name.replace(
                         '{AUTO_NAME}',
-                        'Dataset%d_%s' % (src_ds_idx, src_lyr.GetName()))
+                        'Dataset%d_%s' % (src_ds_idx, src_lyr_name))
                 else:
                     layer_name = layer_name.replace(
-                        '{AUTO_NAME}', basename + '_' + src_lyr.GetName())
+                        '{AUTO_NAME}', basename + '_' + src_lyr_name)
 
                 if basename is not None:
                     layer_name = layer_name.replace('{DS_BASENAME}', basename)
-                elif layer_name.find('{DS_BASENAME}') >= 0:
+                elif '{DS_BASENAME}' in layer_name:
                     if skip_failures:
-                        if layer_name.find('{DS_INDEX}') < 0:
+                        if '{DS_INDEX}' not in layer_name:
                             layer_name = layer_name.replace(
                                 '{DS_BASENAME}', 'Dataset%d' % src_ds_idx)
                     else:
@@ -523,7 +541,7 @@ def process(argv, progress=None, progress_arg=None):
                 layer_name = layer_name.replace('{DS_INDEX}', '%d' %
                                                 src_ds_idx)
                 layer_name = layer_name.replace('{LAYER_NAME}',
-                                                src_lyr.GetName())
+                                                src_lyr_name)
                 layer_name = layer_name.replace('{LAYER_INDEX}', '%d' %
                                                 src_lyr_idx)
 
@@ -536,12 +554,12 @@ def process(argv, progress=None, progress_arg=None):
                 if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
-                   vrt_filename.find('/') < 0 and \
-                   vrt_filename.find('\\') < 0:
+                   '/' not in vrt_filename and \
+                   '\\' not in vrt_filename:
                     attrs = {'relativeToVRT': '1'}
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
-                writer.write_element_value('SrcLayer', src_lyr.GetName())
+                writer.write_element_value('SrcLayer', src_lyr_name)
 
                 if a_srs is not None:
                     writer.write_element_value('LayerSRS', a_srs)
@@ -586,7 +604,10 @@ def process(argv, progress=None, progress_arg=None):
 
 
 def main():
-    argv = ogr.GeneralCmdLineProcessor(sys.argv)
+    argv = sys.argv
+    if sys.version_info < (3,0,0):
+        argv = [fn.decode(sys.getfilesystemencoding()) for fn in argv]
+    argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 1
     return process(argv[1:])

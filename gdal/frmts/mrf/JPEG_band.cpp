@@ -164,7 +164,7 @@ static boolean empty_output_buffer(j_compress_ptr /*cinfo*/) {
 }
 
 // Returns the number of zero pixels in the page, as well as clearing those bits in the mask
-template<typename T> int update_mask(BitMask &mask, T *src, int nc) {
+template<typename T> static int update_mask(BitMask &mask, T *src, int nc) {
     int zeros = 0;
     int h = mask.getHeight();
     int w = mask.getWidth();
@@ -379,7 +379,7 @@ static void ProgressMonitor(j_common_ptr cinfo)
 }
 
 // Returns the number of zero pixels, as well as clearing those bits int the mask
-template<typename T> void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
+template<typename T> static void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
     if (NO_MASK == sJ.mask_state)
         return;
 

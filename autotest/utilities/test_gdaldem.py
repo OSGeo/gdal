@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,15 +29,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import osr
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Test gdaldem hillshade
@@ -45,45 +44,30 @@ import test_cli_utilities
 
 def test_gdaldem_hillshade():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_hillshade.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 45587:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 45587, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade
@@ -91,33 +75,23 @@ def test_gdaldem_hillshade():
 
 def test_gdaldem_hillshade_compressed_tiled_output():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compressed_tiled.tif -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/n43_hillshade_compressed_tiled.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 45587:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 45587, 'Bad checksum'
 
     ds = None
 
     stat_uncompressed = os.stat('tmp/n43_hillshade.tif')
     stat_compressed = os.stat('tmp/n43_hillshade_compressed_tiled.tif')
-    if stat_uncompressed.st_size < stat_compressed.st_size:
-        gdaltest.post_reason('failure: compressed size greater than uncompressed one')
-        return 'fail'
-
-    return 'success'
+    assert stat_uncompressed.st_size >= stat_compressed.st_size, \
+        'failure: compressed size greater than uncompressed one'
 
 ###############################################################################
 # Test gdaldem hillshade -combined
@@ -125,41 +99,29 @@ def test_gdaldem_hillshade_compressed_tiled_output():
 
 def test_gdaldem_hillshade_combined():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 -combined ../gdrivers/data/n43.dt0 tmp/n43_hillshade_combined.tif')
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_hillshade_combined.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 43876:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 43876, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, 'Bad nodata value'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges
@@ -167,23 +129,17 @@ def test_gdaldem_hillshade_combined():
 
 def test_gdaldem_hillshade_compute_edges():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -compute_edges -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compute_edges.tif')
 
     ds = gdal.Open('tmp/n43_hillshade_compute_edges.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 50239:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 50239, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade with -az parameter
@@ -191,7 +147,7 @@ def test_gdaldem_hillshade_compute_edges():
 
 def test_gdaldem_hillshade_azimuth():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     from sys import version_info
     ds = gdal.GetDriverByName('GTiff').Create('tmp/pyramid.tif', 100, 100, 1)
@@ -215,13 +171,9 @@ def test_gdaldem_hillshade_azimuth():
 
     ds_ref = gdal.Open('data/pyramid_shaded_ref.tif')
     ds = gdal.Open('tmp/pyramid_shaded.tif')
-    if gdaltest.compare_ds(ds, ds_ref, verbose=1) > 1:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert gdaltest.compare_ds(ds, ds_ref, verbose=1) <= 1, 'Bad checksum'
     ds = None
     ds_ref = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade to PNG
@@ -229,23 +181,17 @@ def test_gdaldem_hillshade_azimuth():
 
 def test_gdaldem_hillshade_png():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.png')
 
     ds = gdal.Open('tmp/n43_hillshade.png')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 45587:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 45587, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem hillshade to PNG with -compute_edges
@@ -253,23 +199,17 @@ def test_gdaldem_hillshade_png():
 
 def test_gdaldem_hillshade_png_compute_edges():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -compute_edges -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compute_edges.png')
 
     ds = gdal.Open('tmp/n43_hillshade_compute_edges.png')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 50239:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 50239, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem slope
@@ -277,39 +217,28 @@ def test_gdaldem_hillshade_png_compute_edges():
 
 def test_gdaldem_slope():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' slope -s 111120 ../gdrivers/data/n43.dt0 tmp/n43_slope.tif')
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_slope.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 63748:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 63748, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != -9999.0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == -9999.0, 'Bad nodata value'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem aspect
@@ -317,39 +246,28 @@ def test_gdaldem_slope():
 
 def test_gdaldem_aspect():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' aspect ../gdrivers/data/n43.dt0 tmp/n43_aspect.tif')
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_aspect.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 54885:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 54885, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != -9999.0:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == -9999.0, 'Bad nodata value'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief
@@ -357,45 +275,29 @@ def test_gdaldem_aspect():
 
 def test_gdaldem_color_relief():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.tif')
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_colorrelief.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 55009:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 55009, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 37543:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 37543, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47711:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47711, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -403,45 +305,29 @@ def test_gdaldem_color_relief():
 
 def test_gdaldem_color_relief_cpt():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief ../gdrivers/data/n43.dt0 data/color_file.cpt tmp/n43_colorrelief_cpt.tif')
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_colorrelief_cpt.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 55009:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 55009, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 37543:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 37543, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47711:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47711, 'Bad checksum'
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief to VRT
@@ -449,36 +335,27 @@ def test_gdaldem_color_relief_cpt():
 
 def test_gdaldem_color_relief_vrt():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of VRT ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.vrt')
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_colorrelief.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds_ref = gdal.Open('tmp/n43_colorrelief.tif')
-    if gdaltest.compare_ds(ds, ds_ref, verbose=0) > 1:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert gdaltest.compare_ds(ds, ds_ref, verbose=0) <= 1, 'Bad checksum'
     ds_ref = None
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
-            gdaltest.post_reason('Bad geotransform')
-            return 'fail'
+        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
-    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
-        gdaltest.post_reason('Bad projection')
-        return 'fail'
+    assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief from a Float32 dataset
@@ -486,34 +363,22 @@ def test_gdaldem_color_relief_vrt():
 
 def test_gdaldem_color_relief_from_float32():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -ot Float32 ../gdrivers/data/n43.dt0 tmp/n43_float32.tif')
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.tif')
     ds = gdal.Open('tmp/n43_colorrelief_from_float32.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 55009:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 55009, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 37543:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 37543, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47711:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47711, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief to PNG
@@ -521,31 +386,19 @@ def test_gdaldem_color_relief_from_float32():
 
 def test_gdaldem_color_relief_png():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.png')
     ds = gdal.Open('tmp/n43_colorrelief.png')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 55009:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 55009, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 37543:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 37543, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47711:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47711, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief from a Float32 to PNG
@@ -553,33 +406,21 @@ def test_gdaldem_color_relief_png():
 
 def test_gdaldem_color_relief_from_float32_to_png():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of PNG tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.png')
     ds = gdal.Open('tmp/n43_colorrelief_from_float32.png')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 55009:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 55009, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 37543:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 37543, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47711:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47711, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry
@@ -587,31 +428,19 @@ def test_gdaldem_color_relief_from_float32_to_png():
 
 def test_gdaldem_color_relief_nearest_color_entry():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.tif')
     ds = gdal.Open('tmp/n43_colorrelief_nearest.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 57296:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 57296, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 42926:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 42926, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47181:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47181, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry and -of VRT
@@ -619,31 +448,19 @@ def test_gdaldem_color_relief_nearest_color_entry():
 
 def test_gdaldem_color_relief_nearest_color_entry_vrt():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief -of VRT -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.vrt')
     ds = gdal.Open('tmp/n43_colorrelief_nearest.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 57296:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 57296, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 42926:
-        print(ds.GetRasterBand(2).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 42926, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 47181:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 47181, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief with a nan nodata
@@ -651,7 +468,7 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
 
 def test_gdaldem_color_relief_nodata_nan():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/nodata_nan_src.asc', 'wt')
     f.write("""ncols        2
@@ -677,16 +494,11 @@ NODATA_value nan
 
     import struct
     val = struct.unpack('B' * 4, val)
-    if val != (0, 0, 0, 1):
-        gdaltest.post_reason('fail')
-        print(val)
-        return 'fail'
+    assert val == (0, 0, 0, 1)
 
     os.unlink('tmp/nodata_nan_src.asc')
     os.unlink('tmp/nodata_nan_plt.txt')
     os.unlink('tmp/nodata_nan_out.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test gdaldem color relief with entries with repeated DEM values in the color table (#6422)
@@ -694,7 +506,7 @@ NODATA_value nan
 
 def test_gdaldem_color_relief_repeated_entry():
     if test_cli_utilities.get_gdaldem_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdaldem_color_relief_repeated_entry.asc', 'wt')
     f.write("""ncols        2
@@ -716,7 +528,10 @@ NODATA_value 5
     f.write('nv 5 5 5\n')
     f.close()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
+    gdaltest.runexternal(
+        test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.tif',
+        display_live_on_parent_stdout=True,
+    )
 
     ds = gdal.Open('tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
     val = ds.GetRasterBand(1).ReadRaster()
@@ -724,29 +539,24 @@ NODATA_value 5
 
     import struct
     val = struct.unpack('B' * 6, val)
-    if val != (1, 1, 5, 10, 10, 25):
-        gdaltest.post_reason('fail')
-        print(val)
-        return 'fail'
+    assert val == (1, 1, 5, 10, 10, 25)
 
-    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.vrt -of VRT')
+    gdaltest.runexternal(
+        test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.vrt -of VRT',
+        display_live_on_parent_stdout=True,
+    )
 
     ds = gdal.Open('tmp/test_gdaldem_color_relief_repeated_entry_out.vrt')
     val = ds.GetRasterBand(1).ReadRaster()
     ds = None
 
     val = struct.unpack('B' * 6, val)
-    if val != (1, 1, 5, 10, 10, 25):
-        gdaltest.post_reason('fail')
-        print(val)
-        return 'fail'
+    assert val == (1, 1, 5, 10, 10, 25)
 
     os.unlink('tmp/test_gdaldem_color_relief_repeated_entry.asc')
     os.unlink('tmp/test_gdaldem_color_relief_repeated_entry.txt')
     os.unlink('tmp/test_gdaldem_color_relief_repeated_entry_out.tif')
     os.unlink('tmp/test_gdaldem_color_relief_repeated_entry_out.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -827,37 +637,7 @@ def test_gdaldem_cleanup():
         os.remove('tmp/n43_colorrelief_nearest.vrt')
     except OSError:
         pass
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_gdaldem_hillshade,
-    test_gdaldem_hillshade_compressed_tiled_output,
-    test_gdaldem_hillshade_combined,
-    test_gdaldem_hillshade_compute_edges,
-    test_gdaldem_hillshade_azimuth,
-    test_gdaldem_hillshade_png,
-    test_gdaldem_hillshade_png_compute_edges,
-    test_gdaldem_slope,
-    test_gdaldem_aspect,
-    test_gdaldem_color_relief,
-    test_gdaldem_color_relief_cpt,
-    test_gdaldem_color_relief_vrt,
-    test_gdaldem_color_relief_from_float32,
-    test_gdaldem_color_relief_png,
-    test_gdaldem_color_relief_from_float32_to_png,
-    test_gdaldem_color_relief_nearest_color_entry,
-    test_gdaldem_color_relief_nearest_color_entry_vrt,
-    test_gdaldem_color_relief_nodata_nan,
-    test_gdaldem_color_relief_repeated_entry,
-    test_gdaldem_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdaldem')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

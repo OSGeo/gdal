@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -32,18 +32,17 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
 
 
-def aaigrid_1():
+def test_aaigrid_1():
 
     tst = gdaltest.GDALTest('aaigrid', 'pixel_per_line.asc', 1, 1123)
     return tst.testOpen()
@@ -52,68 +51,49 @@ def aaigrid_1():
 # Verify some auxiliary data.
 
 
-def aaigrid_2():
+def test_aaigrid_2():
 
     ds = gdal.Open('data/pixel_per_line.asc')
 
     gt = ds.GetGeoTransform()
 
-    if gt[0] != 100000.0 or gt[1] != 50 or gt[2] != 0 \
-       or gt[3] != 650600.0 or gt[4] != 0 or gt[5] != -50:
-        gdaltest.post_reason('Aaigrid geotransform wrong.')
-        return 'fail'
+    assert gt[0] == 100000.0 and gt[1] == 50 and gt[2] == 0 and gt[3] == 650600.0 and gt[4] == 0 and gt[5] == -50, \
+        'Aaigrid geotransform wrong.'
 
     prj = ds.GetProjection()
-    if prj != 'PROJCS["unnamed",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",61.66666666666666],PARAMETER["standard_parallel_2",68],PARAMETER["latitude_of_center",59],PARAMETER["longitude_of_center",-132.5],PARAMETER["false_easting",500000],PARAMETER["false_northing",500000],UNIT["METERS",1]]':
-        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
-        return 'fail'
+    assert prj == 'PROJCS["unnamed",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",61.66666666666666],PARAMETER["standard_parallel_2",68],PARAMETER["latitude_of_center",59],PARAMETER["longitude_of_center",-132.5],PARAMETER["false_easting",500000],PARAMETER["false_northing",500000],UNIT["METERS",1]]', \
+        ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
-    if band1.GetNoDataValue() != -99999:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == -99999, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Float32:
-        gdaltest.post_reason('Data type is not Float32!')
-        return 'fail'
-
-    return 'success'
+    assert band1.DataType == gdal.GDT_Float32, 'Data type is not Float32!'
 
 
 ###############################################################################
 # Test reading a file where decimal separator is comma (#3668)
 
-def aaigrid_comma():
+def test_aaigrid_comma():
 
     ds = gdal.Open('data/pixel_per_line_comma.asc')
 
     gt = ds.GetGeoTransform()
 
-    if gt[0] != 100000.0 or gt[1] != 50 or gt[2] != 0 \
-       or gt[3] != 650600.0 or gt[4] != 0 or gt[5] != -50:
-        gdaltest.post_reason('Aaigrid geotransform wrong.')
-        return 'fail'
+    assert gt[0] == 100000.0 and gt[1] == 50 and gt[2] == 0 and gt[3] == 650600.0 and gt[4] == 0 and gt[5] == -50, \
+        'Aaigrid geotransform wrong.'
 
     band1 = ds.GetRasterBand(1)
-    if band1.Checksum() != 1123:
-        gdaltest.post_reason('Did not get expected nodata value.')
-        return 'fail'
+    assert band1.Checksum() == 1123, 'Did not get expected nodata value.'
 
-    if band1.GetNoDataValue() != -99999:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert band1.GetNoDataValue() == -99999, 'Grid NODATA value wrong or missing.'
 
-    if band1.DataType != gdal.GDT_Float32:
-        gdaltest.post_reason('Data type is not Float32!')
-        return 'fail'
-
-    return 'success'
+    assert band1.DataType == gdal.GDT_Float32, 'Data type is not Float32!'
 
 ###############################################################################
 # Create simple copy and check.
 
 
-def aaigrid_3():
+def test_aaigrid_3():
 
     tst = gdaltest.GDALTest('AAIGRID', 'byte.tif', 1, 4672)
 
@@ -125,7 +105,7 @@ def aaigrid_3():
 # Read subwindow.  Tests the tail recursion problem.
 
 
-def aaigrid_4():
+def test_aaigrid_4():
 
     tst = gdaltest.GDALTest('aaigrid', 'pixel_per_line.asc', 1, 187,
                             5, 5, 5, 5)
@@ -135,7 +115,7 @@ def aaigrid_4():
 # Perform simple read test on mixed-case .PRJ filename
 
 
-def aaigrid_5():
+def test_aaigrid_5():
 
     # Mixed-case files pair used in the test:
     # - case_sensitive.ASC
@@ -171,45 +151,33 @@ def aaigrid_5():
 # Verify data type determination from type of nodata
 
 
-def aaigrid_6():
+def test_aaigrid_6():
 
     ds = gdal.Open('data/nodata_float.asc')
 
     b = ds.GetRasterBand(1)
-    if b.GetNoDataValue() != -99999:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert b.GetNoDataValue() == -99999, 'Grid NODATA value wrong or missing.'
 
-    if b.DataType != gdal.GDT_Float32:
-        gdaltest.post_reason('Data type is not Float32!')
-        return 'fail'
-
-    return 'success'
+    assert b.DataType == gdal.GDT_Float32, 'Data type is not Float32!'
 
 ###############################################################################
 # Verify data type determination from type of nodata
 
 
-def aaigrid_6bis():
+def test_aaigrid_6bis():
 
     ds = gdal.Open('data/nodata_int.asc')
 
     b = ds.GetRasterBand(1)
-    if b.GetNoDataValue() != -99999:
-        gdaltest.post_reason('Grid NODATA value wrong or missing.')
-        return 'fail'
+    assert b.GetNoDataValue() == -99999, 'Grid NODATA value wrong or missing.'
 
-    if b.DataType != gdal.GDT_Int32:
-        gdaltest.post_reason('Data type is not Int32!')
-        return 'fail'
-
-    return 'success'
+    assert b.DataType == gdal.GDT_Int32, 'Data type is not Int32!'
 
 ###############################################################################
 # Verify writing files with non-square pixels.
 
 
-def aaigrid_7():
+def test_aaigrid_7():
 
     tst = gdaltest.GDALTest('AAIGRID', 'nonsquare.vrt', 1, 12481)
 
@@ -219,7 +187,7 @@ def aaigrid_7():
 ###############################################################################
 # Test creating an in memory copy.
 
-def aaigrid_8():
+def test_aaigrid_8():
 
     tst = gdaltest.GDALTest('AAIGRID', 'byte.tif', 1, 4672)
 
@@ -229,7 +197,7 @@ def aaigrid_8():
 ###############################################################################
 # Test DECIMAL_PRECISION creation option
 
-def aaigrid_9():
+def test_aaigrid_9():
 
     ds = gdal.Open('data/float32.bil')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options=['DECIMAL_PRECISION=2'])
@@ -239,20 +207,18 @@ def aaigrid_9():
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Test AAIGRID_DATATYPE configuration option and DATATYPE open options
 
 
-def aaigrid_10():
+def test_aaigrid_10():
 
     # By default detected as 32bit float
     ds = gdal.Open('data/float64.asc')
-    if ds.GetRasterBand(1).DataType != gdal.GDT_Float32:
-        gdaltest.post_reason('Data type is not Float32!')
-        return 'fail'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32, 'Data type is not Float32!'
 
     for i in range(2):
 
@@ -268,35 +234,28 @@ def aaigrid_10():
         else:
             ds = gdal.OpenEx('data/float64.asc', open_options=['DATATYPE=Float64'])
 
-        if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-            gdaltest.post_reason('Data type is not Float64!')
-            return 'fail'
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64, 'Data type is not Float64!'
 
         nv = ds.GetRasterBand(1).GetNoDataValue()
-        if abs(nv - -1.234567890123) > 1e-16:
-            gdaltest.post_reason('did not get expected nodata value')
-            return 'fail'
+        assert abs(nv - -1.234567890123) <= 1e-16, 'did not get expected nodata value'
 
         got_minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
-        if abs(got_minmax[0] - 1.234567890123) > 1e-16:
-            gdaltest.post_reason('did not get expected min value')
-            return 'fail'
-        if abs(got_minmax[1] - 1.234567890123) > 1e-16:
-            gdaltest.post_reason('did not get expected max value')
-            return 'fail'
+        assert abs(got_minmax[0] - 1.234567890123) <= 1e-16, \
+            'did not get expected min value'
+        assert abs(got_minmax[1] - 1.234567890123) <= 1e-16, \
+            'did not get expected max value'
 
         try:
             os.remove('data/float64.asc.aux.xml')
         except OSError:
             pass
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SIGNIFICANT_DIGITS creation option (same as DECIMAL_PRECISION test)
 
 
-def aaigrid_11():
+def test_aaigrid_11():
 
     ds = gdal.Open('data/float32.bil')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options=['SIGNIFICANT_DIGITS=2'])
@@ -306,14 +265,14 @@ def aaigrid_11():
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
 
     if abs(got_minmax[0] - -0.84) < 1e-7:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Test no data is written to correct precision with DECIMAL_PRECISION.
 
 
-def aaigrid_12():
+def test_aaigrid_12():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
@@ -321,28 +280,20 @@ def aaigrid_12():
     del ds2
 
     aai = open('tmp/aaigrid.tmp')
-    if not aai:
-        return 'fail'
+    assert aai
     for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
-    if not ndv.startswith('nodata_value'):
-        gdaltest.post_reason('fail')
-        print(ndv)
-        return 'fail'
-    if not ndv.endswith('-99999.000'):
-        gdaltest.post_reason('fail')
-        print(ndv)
-        return 'fail'
-    return 'success'
+    assert ndv.startswith('nodata_value')
+    assert ndv.endswith('-99999.000')
 
 ###############################################################################
 # Test no data is written to correct precision WITH SIGNIFICANT_DIGITS.
 
 
-def aaigrid_13():
+def test_aaigrid_13():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
@@ -350,28 +301,20 @@ def aaigrid_13():
     del ds2
 
     aai = open('tmp/aaigrid.tmp')
-    if not aai:
-        return 'fail'
+    assert aai
     for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
-    if not ndv.startswith('nodata_value'):
-        gdaltest.post_reason('fail')
-        print(ndv)
-        return 'fail'
-    if not ndv.endswith('-1e+05') and not ndv.endswith('-1e+005'):
-        gdaltest.post_reason('fail')
-        print(ndv)
-        return 'fail'
-    return 'success'
+    assert ndv.startswith('nodata_value')
+    assert ndv.endswith('-1e+05') or ndv.endswith('-1e+005')
 
 ###############################################################################
 # Test fix for #6060
 
 
-def aaigrid_14():
+def test_aaigrid_14():
 
     ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Float32)
@@ -385,18 +328,13 @@ def aaigrid_14():
 
     gdal.GetDriverByName('AAIGRID').Delete('/vsimem/aaigrid_14.asc')
 
-    if data.find('107.0 123') < 0:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
-
-    return 'success'
+    assert '107.0 123' in data
 
 ###############################################################################
 # Test Float64 detection when nodata = DBL_MIN
 
 
-def aaigrid_15():
+def test_aaigrid_15():
 
     gdal.FileFromMemBuffer('/vsimem/aaigrid_15.asc', """ncols        4
 nrows        1
@@ -408,41 +346,12 @@ NODATA_value  2.2250738585072014e-308
 """)
 
     ds = gdal.Open('/vsimem/aaigrid_15.asc')
-    if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
     ds = None
 
     gdal.Unlink('/vsimem/aaigrid_15.asc')
 
-    return 'success'
-
 ###############################################################################
 
 
-gdaltest_list = [
-    aaigrid_1,
-    aaigrid_2,
-    aaigrid_comma,
-    aaigrid_3,
-    aaigrid_4,
-    aaigrid_5,
-    aaigrid_6,
-    aaigrid_6bis,
-    aaigrid_7,
-    aaigrid_8,
-    aaigrid_9,
-    aaigrid_10,
-    aaigrid_11,
-    aaigrid_12,
-    aaigrid_13,
-    aaigrid_14,
-    aaigrid_15]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('aaigrid')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

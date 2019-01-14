@@ -147,10 +147,10 @@ or GeoTIFF profile are used, those non standard metadata items are stored into a
 RasterPixelIsPoint for GDALGeoTIFF or GeoTIFF profiles.</p>
 
 <p>Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
-stored as XML raw content in the xml:XMP metadata domain.</p>
+reported as XML raw content in the xml:XMP metadata domain.</p>
 
 <p>Starting with GDAL 1.10, EXIF metadata can be extracted from the file, and will be
-stored the EXIF metadata domain.</p>
+reported in the EXIF metadata domain.</p>
 
 <h2>Color Profile Metadata</h2>
 
@@ -261,8 +261,8 @@ non-standard (regarding to the intrinsics TIFF capabilities) band color
 interpretation, such as BGR ordering, will be handled in creation and reading,
 by storing them in the GDAL internal metadata TIFF tag.</p>
 
-<p>Note that the GeoTIFF format does not support parametric description of datums,
-so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.</p>
+<p>The TIFF format only supports R,G,B components for palettes / color tables.
+Thus on writing the alpha information will be silently discarded.</p>
 
 <p>You may want to read hints to <a href="https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF">
 generate and read cloud optimized GeoTIFF files</a></p>
@@ -302,7 +302,7 @@ a value from 1 to 7.  The apparent pixel type should be Byte.
 From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted.
 From GDAL 2.2, n=16 is accepted for Float32 type to generate half-precision floating point values.</p></li>
 
-<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/NONE]</b>:
+<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
 But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
@@ -312,7 +312,7 @@ LZW, DEFLATE and ZSTD compressions can be used with the PREDICTOR creation optio
 ZSTD is available since GDAL 2.3 when using internal libtiff and if GDAL built
 against libzstd &gt;=1.0, or if built against external libtiff with zstd support.
 LERC/LERC_DEFLATE/LERC_ZSTD are available since GDAL 2.4 when using internal
-libtiff (and for LERC_ZSTD, see above mentionned conditions).
+libtiff (and for LERC_ZSTD, see above mentioned conditions).
 None is the default.</p></li>
 
 <li><p><b>NUM_THREADS=number_of_threads/ALL_CPUS</b>: (From GDAL 2.1)
@@ -355,6 +355,10 @@ This is generally the optimal choice for smallest file size, and consequently is
 <li><p><b>ZSTD_LEVEL=[1-22]</b>:  Set the level of compression when using ZSTD compression (or LERC_ZSTD). A value of 22 is best (very slow), and 1 is least compression. The default is 9.</p></li>
 
 <li><p><b>MAX_Z_ERROR=threshold</b>:  Set the maximum error threshold on values for LERC/LERC_DEFLATE/LERC_ZSTD compression. The default is 0 (lossless).</p></li>
+
+<li><p><b>WEBP_LEVEL=[1-100]</b>:  Set the WEBP quality level when using WEBP compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.</p></li>
+
+<li><p><b>WEBP_LOSSLESS=True/False</b>: (GDAL >= 2.4.0 and libwebp >= 0.1.4): By default, lossy compression is used. If set to True, lossless compression will be used.</p></li>
 
 <li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>:
 Set the photometric interpretation tag. Default is MINISBLACK, but if the

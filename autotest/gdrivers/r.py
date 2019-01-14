@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,7 +36,7 @@ import gdaltest
 # Perform simple read test on an ascii file.
 
 
-def r_1():
+def test_r_1():
 
     tst = gdaltest.GDALTest('R', 'r_test.asc', 2, 202)
 
@@ -48,7 +46,7 @@ def r_1():
 # Perform a simple read test on a binary (uncompressed) file.
 
 
-def r_2():
+def test_r_2():
 
     tst = gdaltest.GDALTest('R', 'r_test.rdb', 1, 202)
     return tst.testOpen()
@@ -57,7 +55,7 @@ def r_2():
 # Verify a simple createcopy operation with 16bit data.
 
 
-def r_3():
+def test_r_3():
 
     tst = gdaltest.GDALTest('R', 'byte.tif', 1, 4672,
                             options=['ASCII=YES'])
@@ -67,7 +65,7 @@ def r_3():
 # Test creating a compressed binary stream and reading it back.
 
 
-def r_4():
+def test_r_4():
 
     tst = gdaltest.GDALTest('R', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(new_filename='tmp/r_4.rda')
@@ -75,16 +73,4 @@ def r_4():
 ###############################################################################
 
 
-gdaltest_list = [
-    r_1,
-    r_2,
-    r_3,
-    r_4]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('r')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

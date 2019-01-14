@@ -199,9 +199,9 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
     }
 
-    int nTables = json_object_array_length(poAnswerObj);
+    auto nTables = json_object_array_length(poAnswerObj);
 
-    for(int i=0;i<nTables;i++)
+    for(auto i=decltype(nTables){0};i<nTables;i++)
     {
         json_object* poAnswerObjDBName = json_object_array_get_idx(poAnswerObj, i);
         if ( json_object_is_type(poAnswerObjDBName, json_type_string) )

@@ -194,7 +194,7 @@ int     TABMAPCoordBlock::CommitToFile()
     WriteInt32(m_nNextCoordBlock);
 
     if( CPLGetLastErrorType() == CE_Failure )
-        nStatus = CPLGetLastErrorNo();
+        nStatus = -1;
 
     /*-----------------------------------------------------------------
      * OK, call the base class to write the block to disk.
@@ -361,7 +361,7 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
             panXY[i+1] = ReadInt16();
             TABSaturatedAdd(panXY[i], m_nComprOrgX);
             TABSaturatedAdd(panXY[i+1], m_nComprOrgY);
-            if (CPLGetLastErrorType() != 0)
+            if (CPLGetLastErrorType() == CE_Failure)
                 return -1;
         }
     }
@@ -371,7 +371,7 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
         {
             panXY[i]   = ReadInt32();
             panXY[i+1] = ReadInt32();
-            if (CPLGetLastErrorType() != 0)
+            if (CPLGetLastErrorType() == CE_Failure)
                 return -1;
         }
     }

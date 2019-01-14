@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,12 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 gdaltest.buggy_jasper = None
 
@@ -64,22 +63,20 @@ def is_buggy_jasper():
 # Verify we have the driver.
 
 
-def jpeg2000_1():
+def test_jpeg2000_1():
 
     gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JPEG2000')
 
-    return 'success'
-
 ###############################################################################
 # Open byte.jp2
 
 
-def jpeg2000_2():
+def test_jpeg2000_2():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -109,10 +106,10 @@ def jpeg2000_2():
 # Open int16.jp2
 
 
-def jpeg2000_3():
+def test_jpeg2000_3():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
@@ -125,40 +122,34 @@ def jpeg2000_3():
     ds_ref = None
 
     # Quite a bit of difference...
-    if maxdiff > 6:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 6, 'Image too different from reference'
 
 ###############################################################################
 # Test copying byte.jp2
 
 
-def jpeg2000_4():
+def test_jpeg2000_4():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'byte.jp2', 1, 50054)
-    if tst.testCreateCopy() != 'success':
-        return 'fail'
+    tst.testCreateCopy()
 
     # This may fail for a good reason
     if tst.testCreateCopy(check_gt=1, check_srs=1) != 'success':
         gdaltest.post_reason('This is an expected failure if Jasper has not the jp2_encode_uuid function')
         return 'expected_fail'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test copying int16.jp2
 
 
-def jpeg2000_5():
+def test_jpeg2000_5():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'int16.jp2', 1, None)
     return tst.testCreateCopy()
@@ -167,30 +158,27 @@ def jpeg2000_5():
 # Test reading ll.jp2
 
 
-def jpeg2000_6():
+def test_jpeg2000_6():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'll.jp2', 1, None)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('data/ll.jp2')
     ds.GetRasterBand(1).Checksum()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def jpeg2000_7():
+def test_jpeg2000_7():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
     return tst.testOpen()
@@ -199,60 +187,46 @@ def jpeg2000_7():
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
 
-def jpeg2000_8():
+def test_jpeg2000_8():
 
     if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
 
     expected_checksums = [64570, 57277, 56048, 61292]
 
     for i in range(4):
-        if ds.GetRasterBand(i + 1).Checksum() != expected_checksums[i]:
-            gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
-            return 'fail'
+        assert ds.GetRasterBand(i + 1).Checksum() == expected_checksums[i], \
+            ('unexpected checksum (%d) for band %d' % (expected_checksums[i], i + 1))
 
-    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('unexpected data type')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16, 'unexpected data type'
 
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
 
-def jpeg2000_9():
+def test_jpeg2000_9():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0] - 440720) > 0.1 \
-            or abs(geotransform[1] - 60) > 0.001 \
-            or abs(geotransform[2] - 0) > 0.001 \
-            or abs(geotransform[3] - 3751320) > 0.1 \
-            or abs(geotransform[4] - 0) > 0.001 \
-            or abs(geotransform[5] - -60) > 0.001:
-        print(geotransform)
-        gdaltest.post_reason('geotransform differs from expected')
-        return 'fail'
+    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+        'geotransform differs from expected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check writing a file with more than 4 bands (#4686)
 
 
-def jpeg2000_10():
+def test_jpeg2000_10():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg2000_10_src.tif', 128, 128, 5)
     for i in range(src_ds.RasterCount):
@@ -262,40 +236,30 @@ def jpeg2000_10():
     ds = None
 
     ds = gdal.Open('/vsimem/jpeg2000_10_dst.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     for i in range(src_ds.RasterCount):
-        if ds.GetRasterBand(i + 1).Checksum() != src_ds.GetRasterBand(i + 1).Checksum():
-            gdaltest.post_reason('bad checksum for band %d' % (i + 1))
-            print(ds.GetRasterBand(i + 1).Checksum())
-            print(src_ds.GetRasterBand(i + 1).Checksum())
-            return 'fail'
+        assert ds.GetRasterBand(i + 1).Checksum() == src_ds.GetRasterBand(i + 1).Checksum(), \
+            ('bad checksum for band %d' % (i + 1))
     ds = None
     src_ds = None
 
     gdal.Unlink('/vsimem/jpeg2000_10_src.tif')
     gdal.Unlink('/vsimem/jpeg2000_10_dst.tif')
 
-    return 'success'
-
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
 
 
-def jpeg2000_11():
+def test_jpeg2000_11():
 
     if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
-        return 'fail'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
-    if got_cs != 8527:
-        gdaltest.post_reason('fail')
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
     jp2_bands_data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
@@ -308,100 +272,78 @@ def jpeg2000_11():
     # gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/jpeg2000_11.tif')
-    if got_cs != 8527:
-        gdaltest.post_reason('fail')
-        print(got_cs)
-        return 'fail'
+    assert got_cs == 8527
 
-    if jp2_bands_data != gtiff_bands_data:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert jp2_bands_data == gtiff_bands_data
 
-    if jp2_fourth_band_data != gtiff_fourth_band_data:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert jp2_fourth_band_data == gtiff_fourth_band_data
 
     ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
-    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
 ###############################################################################
 
 
-def jpeg2000_online_1():
+def test_jpeg2000_online_1():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 32669 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
-def jpeg2000_online_2():
+def test_jpeg2000_online_2():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 15621 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/gcp.jp2')
     ds.GetRasterBand(1).Checksum()
-    if len(ds.GetGCPs()) != 15:
-        gdaltest.post_reason('bad number of GCP')
-        return 'fail'
+    assert len(ds.GetGCPs()) == 15, 'bad number of GCP'
 
     expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
-    if ds.GetGCPProjection() != expected_wkt:
-        gdaltest.post_reason('bad GCP projection')
-        return 'fail'
+    assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
 
-def jpeg2000_online_3():
+def test_jpeg2000_online_3():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 14443 on my PC
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
@@ -413,24 +355,20 @@ def jpeg2000_online_3():
     ds_ref = None
 
     # Difference between the image before and after compression
-    if maxdiff > 17:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 17, 'Image too different from reference'
 
 ###############################################################################
 
 
-def jpeg2000_online_4():
+def test_jpeg2000_online_4():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
@@ -450,96 +388,56 @@ def jpeg2000_online_4():
     ds_ref = None
 
     # Difference between the image before and after compression
-    if maxdiff > 17:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 17, 'Image too different from reference'
 
 ###############################################################################
 # Try reading JPEG2000 with color table
 
 
-def jpeg2000_online_5():
+def test_jpeg2000_online_5():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9.jp2', 'file9.jp2'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/file9.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
-    if cs1 != 48954 or cs2 != 4939 or cs3 != 17734:
-        print(cs1, cs2, cs3)
-        gdaltest.post_reason('Did not get expected checksums')
-        return 'fail'
+    assert cs1 == 48954 and cs2 == 4939 and cs3 == 17734, \
+        'Did not get expected checksums'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Try reading YCbCr JPEG2000 as RGB
 
 
-def jpeg2000_online_6():
+def test_jpeg2000_online_6():
 
     if gdaltest.jpeg2000_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_03/file3.jp2', 'file3.jp2'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/file3.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
-    if cs1 != 25337 or cs2 != 28262 or cs3 != 59580:
-        print(cs1, cs2, cs3)
-        gdaltest.post_reason('Did not get expected checksums')
-        return 'fail'
+    assert cs1 == 25337 and cs2 == 28262 and cs3 == 59580, \
+        'Did not get expected checksums'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
 
-def jpeg2000_cleanup():
+def test_jpeg2000_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
-    return 'success'
 
 
-gdaltest_list = [
-    jpeg2000_1,
-    jpeg2000_2,
-    jpeg2000_3,
-    jpeg2000_4,
-    jpeg2000_5,
-    jpeg2000_6,
-    jpeg2000_7,
-    jpeg2000_8,
-    jpeg2000_9,
-    jpeg2000_10,
-    jpeg2000_11,
-    jpeg2000_online_1,
-    jpeg2000_online_2,
-    jpeg2000_online_3,
-    jpeg2000_online_4,
-    jpeg2000_online_5,
-    jpeg2000_online_6,
-    jpeg2000_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jpeg2000')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

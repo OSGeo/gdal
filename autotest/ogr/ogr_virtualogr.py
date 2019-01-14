@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,14 +31,19 @@
 
 import sys
 
-sys.path.append('../pymod')
 
 from osgeo import ogr
 from osgeo import gdal
 import gdaltest
-import ogrtest
+import pytest
+
+# Linter says this isn't used, but it actually is via pytest magic :)
+from ogr.ogr_sql_sqlite import require_ogr_sql_sqlite  # noqa
 
 ###############################################################################
+
+
+pytestmark = pytest.mark.usefixtures('require_ogr_sql_sqlite')
 
 
 def ogr_virtualogr_run_sql(sql_statement):
@@ -70,86 +75,47 @@ def ogr_virtualogr_run_sql(sql_statement):
 # Basic tests
 
 
-def ogr_virtualogr_1():
-
-    import ogr_sql_sqlite
-    if not ogr_sql_sqlite.ogr_sql_sqlite_available():
-        return 'skip'
-
+def test_ogr_virtualogr_1():
     # Invalid syntax
-    if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()")
 
     # Nonexistent dataset
-    if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('foo')"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('foo')")
 
     # Dataset with 0 layer
-    if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('<OGRVRTDataSource></OGRVRTDataSource>')"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('<OGRVRTDataSource></OGRVRTDataSource>')")
 
     # Dataset with more than 1 layer
-    if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data')"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data')")
 
-    if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp')"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp')")
 
-    if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0)"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0)")
 
-    if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 1)"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 1)")
 
     # Invalid value for update_mode
-    if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 'foo')"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 'foo')")
 
     # Nonexistent layer
-    if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'foo')"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'foo')")
 
-    if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly')"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly')")
 
-    if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 0)"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 0)")
 
-    if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1)"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1)")
 
-    if not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1, 1)"):
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1, 1)")
 
     # Too many arguments
-    if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1, 1, bla)"):
-        gdaltest.post_reason('failed')
-        return 'fail'
-
-    return 'success'
+    assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR('data/poly.shp', 0, 'poly', 1, 1, bla)")
 
 ###############################################################################
 # Test detection of suspicious use of VirtualOGR
 
 
-def ogr_virtualogr_2():
-
-    if not ogrtest.has_sqlite_dialect:
-        return 'skip'
-
+def test_ogr_virtualogr_2():
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_2.db')
     ds.ExecuteSQL("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
     ds.ExecuteSQL("CREATE TABLE spy_table (spy_content VARCHAR)")
@@ -159,9 +125,7 @@ def ogr_virtualogr_2():
     # Check that foo isn't listed
     ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
     for i in range(ds.GetLayerCount()):
-        if ds.GetLayer(i).GetName() == 'foo':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert ds.GetLayer(i).GetName() != 'foo'
     ds = None
 
     # Check that it is listed if OGR_SQLITE_LIST_VIRTUAL_OGR=YES
@@ -172,9 +136,7 @@ def ogr_virtualogr_2():
     for i in range(ds.GetLayerCount()):
         if ds.GetLayer(i).GetName() == 'foo':
             found = True
-    if not found:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert found
     ds = None
 
     # Add suspicious trigger
@@ -187,9 +149,7 @@ def ogr_virtualogr_2():
     gdal.ErrorReset()
     ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
     for i in range(ds.GetLayerCount()):
-        if ds.GetLayer(i).GetName() == 'foo':
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert ds.GetLayer(i).GetName() != 'foo'
     # An error will be triggered at the time the trigger is used
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds.ExecuteSQL("INSERT INTO regular_table (bar) VALUES ('bar')")
@@ -199,8 +159,7 @@ def ogr_virtualogr_2():
 
     if did_not_get_error:
         gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
-        gdaltest.post_reason('expected a failure')
-        return 'fail'
+        pytest.fail('expected a failure')
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -211,32 +170,23 @@ def ogr_virtualogr_2():
     if gdal.GetLastErrorMsg() == '':
         ds = None
         gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
-        gdaltest.post_reason('expected an error message')
-        return 'fail'
+        pytest.fail('expected an error message')
     did_not_get_error = gdal.GetLastErrorMsg() == ''
     ds = None
 
     gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
 
-    if did_not_get_error:
-        gdaltest.post_reason('expected a failure')
-        return 'fail'
-
-    return 'success'
+    assert not did_not_get_error, 'expected a failure'
 
 ###############################################################################
 # Test GDAL as a SQLite3 dynamically loaded extension
 
 
-def ogr_virtualogr_3():
-
-    if not ogrtest.has_sqlite_dialect:
-        return 'skip'
-
+def test_ogr_virtualogr_3():
     # Find path of libgdal
     libgdal_name = gdaltest.find_lib('gdal')
     if libgdal_name is None:
-        return 'skip'
+        pytest.skip()
     print('Found ' + libgdal_name)
 
     # Find path of libsqlite3 or libspatialite
@@ -244,7 +194,7 @@ def ogr_virtualogr_3():
     if libsqlite_name is None:
         libsqlite_name = gdaltest.find_lib('spatialite')
     if libsqlite_name is None:
-        return 'skip'
+        pytest.skip()
     print('Found ' + libsqlite_name)
 
     python_exe = sys.executable
@@ -255,23 +205,15 @@ def ogr_virtualogr_3():
 
     ret = gdaltest.runexternal(python_exe + ' ogr_as_sqlite_extension.py "%s" "%s"' % (libsqlite_name, libgdal_name), check_memleak=False)
 
-    if ret.find('skip') == 0:
-        return 'skip'
-    if ret.find(gdal.VersionInfo('RELEASE_NAME')) < 0:
-        gdaltest.post_reason('fail : %s' % ret)
-        return 'fail'
-
-    return 'success'
+    if ret.startswith('skip'):
+        pytest.skip()
+    assert gdal.VersionInfo('RELEASE_NAME') in ret
 
 ###############################################################################
 # Test ogr_datasource_load_layers()
 
 
-def ogr_virtualogr_4():
-
-    if not ogrtest.has_sqlite_dialect:
-        return 'skip'
-
+def test_ogr_virtualogr_4():
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
     sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp')")
     ds.ReleaseResultSet(sql_lyr)
@@ -285,9 +227,7 @@ def ogr_virtualogr_4():
     ds = None
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
-    if ret != 10:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 10
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
     sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp', 0)")
@@ -298,9 +238,7 @@ def ogr_virtualogr_4():
     ds = None
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
-    if ret != 10:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 10
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
     sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp', 0, 'prefix')")
@@ -311,9 +249,7 @@ def ogr_virtualogr_4():
     ds = None
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
-    if ret != 10:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 10
 
     # Various error conditions
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
@@ -330,16 +266,11 @@ def ogr_virtualogr_4():
     ds = None
     gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
 
-    return 'success'
-
 ###############################################################################
 # Test failed CREATE VIRTUAL TABLE USING VirtualOGR
 
 
-def ogr_virtualogr_5():
-
-    if not ogrtest.has_sqlite_dialect:
-        return 'skip'
+def test_ogr_virtualogr_5():
 
     # Create a CSV with duplicate column name
     fp = gdal.VSIFOpenL('/vsimem/ogr_virtualogr_5.csv', 'wt')
@@ -353,27 +284,10 @@ def ogr_virtualogr_5():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = ds.ExecuteSQL("CREATE VIRTUAL TABLE lyr2 USING VirtualOGR('/vsimem/ogr_virtualogr_5.csv')", dialect='SQLITE')
     gdal.PopErrorHandler()
-    if sql_lyr is not None:
-        return 'fail'
+    assert sql_lyr is None
     ds = None
 
     gdal.Unlink('/vsimem/ogr_virtualogr_5.csv')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_virtualogr_1,
-    ogr_virtualogr_2,
-    ogr_virtualogr_3,
-    ogr_virtualogr_4,
-    ogr_virtualogr_5,
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_virtualogr')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

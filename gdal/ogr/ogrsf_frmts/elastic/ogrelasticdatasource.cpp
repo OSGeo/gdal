@@ -43,8 +43,6 @@ CPL_CVSID("$Id$")
 
 OGRElasticDataSource::OGRElasticDataSource() :
     m_pszName(nullptr),
-    m_papoLayers(nullptr),
-    m_nLayers(0),
     m_bOverwrite(false),
     m_nBulkUpload(0),
     m_pszWriteMap(nullptr),
@@ -66,9 +64,7 @@ OGRElasticDataSource::OGRElasticDataSource() :
 /************************************************************************/
 
 OGRElasticDataSource::~OGRElasticDataSource() {
-    for (int i = 0; i < m_nLayers; i++)
-        delete m_papoLayers[i];
-    CPLFree(m_papoLayers);
+    m_apoLayers.clear();
     CPLFree(m_pszName);
     CPLFree(m_pszMapping);
     CPLFree(m_pszWriteMap);
@@ -91,14 +87,170 @@ int OGRElasticDataSource::TestCapability(const char * pszCap)
 }
 
 /************************************************************************/
+/*                             GetLayerCount()                          */
+/************************************************************************/
+
+int OGRElasticDataSource::GetLayerCount()
+{
+    if( m_bAllLayersListed )
+    {
+        return static_cast<int>(m_apoLayers.size());
+    }
+    m_bAllLayersListed = true;
+
+    CPLHTTPResult* psResult = HTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), nullptr);
+    if( psResult == nullptr || psResult->pszErrBuf != nullptr ||
+        psResult->pabyData == nullptr )
+    {
+        CPLHTTPDestroyResult(psResult);
+        return 0;
+    }
+
+    char* pszCur = (char*)psResult->pabyData;
+    char* pszNextEOL = strchr(pszCur, '\n');
+    while( pszNextEOL && pszNextEOL > pszCur )
+    {
+        *pszNextEOL = '\0';
+
+        char* pszBeforeEOL = pszNextEOL - 1;
+        while( *pszBeforeEOL == ' ' )
+        {
+            *pszBeforeEOL = '\0';
+            pszBeforeEOL  --;
+        }
+
+        const char* pszIndexName = pszCur;
+
+        pszCur = pszNextEOL + 1;
+        pszNextEOL = strchr(pszCur, '\n');
+
+        if( STARTS_WITH(pszIndexName, ".security") ||
+            STARTS_WITH(pszIndexName, ".monitoring") )
+        {
+            continue;
+        }
+
+        FetchMapping(pszIndexName);
+    }
+
+    CPLHTTPDestroyResult(psResult);
+    return static_cast<int>(m_apoLayers.size());
+}
+
+/************************************************************************/
+/*                            FetchMapping()                            */
+/************************************************************************/
+
+void OGRElasticDataSource::FetchMapping(const char* pszIndexName)
+{
+    if( m_oSetLayers.find(pszIndexName) != m_oSetLayers.end() )
+        return;
+
+    CPLString osURL(m_osURL + CPLString("/") + pszIndexName +
+                    CPLString("/_mapping?pretty"));
+    json_object* poRes = RunRequest(osURL, nullptr, std::vector<int>({403}));
+    if( poRes )
+    {
+        json_object* poLayerObj = CPL_json_object_object_get(poRes, pszIndexName);
+        json_object* poMappings = nullptr;
+        if( poLayerObj && json_object_get_type(poLayerObj) == json_type_object )
+            poMappings = CPL_json_object_object_get(poLayerObj, "mappings");
+        if( poMappings && json_object_get_type(poMappings) == json_type_object )
+        {
+            json_object_iter it;
+            it.key = nullptr;
+            it.val = nullptr;
+            it.entry = nullptr;
+            std::vector<CPLString> aosMappings;
+            json_object_object_foreachC( poMappings, it )
+            {
+                aosMappings.push_back(it.key);
+            }
+            if( aosMappings.size() == 1 &&
+                (aosMappings[0] == "FeatureCollection" || aosMappings[0] == "default") )
+            {
+                m_oSetLayers.insert(pszIndexName);
+                OGRElasticLayer* poLayer = new OGRElasticLayer(
+                    pszIndexName, pszIndexName, aosMappings[0], this, papszOpenOptions);
+                poLayer->InitFeatureDefnFromMapping(
+                    CPL_json_object_object_get(poMappings, aosMappings[0]),
+                    "", std::vector<CPLString>());
+                m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+            }
+            else
+            {
+                for(size_t i=0; i<aosMappings.size();i++)
+                {
+                    CPLString osLayerName(pszIndexName + CPLString("_") + aosMappings[i]);
+                    if( m_oSetLayers.find(osLayerName) == m_oSetLayers.end() )
+                    {
+                        m_oSetLayers.insert(osLayerName);
+                        OGRElasticLayer* poLayer = new OGRElasticLayer(
+                            osLayerName,
+                            pszIndexName, aosMappings[i], this, papszOpenOptions);
+                        poLayer->InitFeatureDefnFromMapping(
+                            CPL_json_object_object_get(poMappings, aosMappings[i]),
+                            "", std::vector<CPLString>());
+
+                        m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+                    }
+                }
+            }
+        }
+
+        json_object_put(poRes);
+    }
+}
+
+/************************************************************************/
+/*                            GetLayerByName()                          */
+/************************************************************************/
+
+OGRLayer* OGRElasticDataSource::GetLayerByName(const char* pszName)
+{
+    if( !m_bAllLayersListed )
+    {
+        for( auto& poLayer: m_apoLayers )
+        {
+            if( EQUAL( poLayer->GetName(), pszName) )
+            {
+                return poLayer.get();
+            }
+        }
+        size_t nSizeBefore = m_apoLayers.size();
+        FetchMapping(pszName);
+        const char* pszLastUnderscore = strrchr(pszName, '_');
+        if( pszLastUnderscore && m_apoLayers.size() == nSizeBefore )
+        {
+            CPLString osIndexName(pszName);
+            osIndexName.resize( pszLastUnderscore - pszName);
+            FetchMapping(osIndexName);
+        }
+        for( auto& poLayer: m_apoLayers )
+        {
+            if( EQUAL( poLayer->GetName(), pszName) )
+            {
+                return poLayer.get();
+            }
+        }
+        return nullptr;
+    }
+    else
+    {
+        return GDALDataset::GetLayerByName(pszName);
+    }
+}
+
+/************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
 OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
-    if (iLayer < 0 || iLayer >= m_nLayers)
+    const int nLayers = GetLayerCount();
+    if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
     else
-        return m_papoLayers[iLayer];
+        return m_apoLayers[iLayer].get();
 }
 
 /************************************************************************/
@@ -114,16 +266,16 @@ OGRErr OGRElasticDataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
     }
 
-    if( iLayer < 0 || iLayer >= m_nLayers )
+    if( iLayer < 0 || iLayer >= GetLayerCount() )
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    CPLString osLayerName = m_papoLayers[iLayer]->GetName();
-    CPLString osIndex = m_papoLayers[iLayer]->GetIndexName();
-    CPLString osMapping = m_papoLayers[iLayer]->GetMappingName();
+    CPLString osLayerName = m_apoLayers[iLayer]->GetName();
+    CPLString osIndex = m_apoLayers[iLayer]->GetIndexName();
+    CPLString osMapping = m_apoLayers[iLayer]->GetMappingName();
 
     bool bSeveralMappings = false;
     json_object* poIndexResponse = RunRequest(CPLSPrintf("%s/%s",
@@ -157,10 +309,8 @@ OGRErr OGRElasticDataSource::DeleteLayer( int iLayer )
 
     CPLDebug( "ES", "DeleteLayer(%s)", osLayerName.c_str() );
 
-    delete m_papoLayers[iLayer];
-    memmove(m_papoLayers + iLayer, m_papoLayers + iLayer + 1,
-            (m_nLayers - 1 - iLayer) * sizeof(OGRLayer*));
-    m_nLayers --;
+    m_oSetLayers.erase(osLayerName);
+    m_apoLayers.erase(m_apoLayers.begin() + iLayer);
 
     Delete(CPLSPrintf("%s/%s",  GetURL(), osIndex.c_str()));
 
@@ -270,14 +420,38 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     // Create the index
     if( !bIndexExists )
     {
-        if( !UploadFile(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()), "") )
+        CPLString osIndexURL(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()));
+
+        // If we have a user specified index definition, use it
+        const char* pszDef = CSLFetchNameValue(papszOptions, "INDEX_DEFINITION");
+        CPLString osDef;
+        if (pszDef != nullptr)
+        {
+            osDef = pszDef;
+            if( strchr(pszDef, '{') == nullptr )
+            {
+                VSILFILE* fp = VSIFOpenL(pszDef, "rb");
+                if( fp )
+                {
+                    GByte* pabyRet = nullptr;
+                    CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszDef, &pabyRet, nullptr, -1));
+                    if( pabyRet )
+                    {
+                        osDef = reinterpret_cast<char*>(pabyRet);
+                        VSIFree(pabyRet);
+                    }
+                    VSIFCloseL(fp);
+                }
+            }
+        }
+        if( !UploadFile(osIndexURL, osDef.c_str(), "PUT") )
             return nullptr;
     }
 
     // If we have a user specified mapping, then go ahead and update it now
     const char* pszLayerMapping = CSLFetchNameValueDef(papszOptions, "MAPPING", m_pszMapping);
     if (pszLayerMapping != nullptr) {
-        CPLString osLayerMapping;
+        CPLString osLayerMapping(pszLayerMapping);
         if( strchr(pszLayerMapping, '{') == nullptr )
         {
             VSILFILE* fp = VSIFOpenL(pszLayerMapping, "rb");
@@ -287,17 +461,16 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                 CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszLayerMapping, &pabyRet, nullptr, -1));
                 if( pabyRet )
                 {
-                    osLayerMapping = (char*)pabyRet;
-                    pszLayerMapping = osLayerMapping.c_str();
+                    osLayerMapping = reinterpret_cast<char*>(pabyRet);
                     VSIFree(pabyRet);
                 }
                 VSIFCloseL(fp);
             }
         }
 
-        if( !UploadFile(CPLSPrintf("%s/%s/%s/_mapping",
-                            GetURL(), osLaunderedName.c_str(), pszMappingName),
-                        pszLayerMapping) )
+        CPLString osMappingURL(CPLSPrintf("%s/%s/%s/_mapping",
+                            GetURL(), osLaunderedName.c_str(), pszMappingName));
+        if( !UploadFile(osMappingURL, osLayerMapping.c_str()) )
         {
             return nullptr;
         }
@@ -307,10 +480,6 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                                                    osLaunderedName.c_str(),
                                                    pszMappingName,
                                                    this, papszOptions);
-    m_nLayers++;
-    m_papoLayers = (OGRElasticLayer **) CPLRealloc(m_papoLayers, m_nLayers * sizeof (OGRElasticLayer*));
-    m_papoLayers[m_nLayers - 1] = poLayer;
-
     poLayer->FinalizeFeatureDefn(false);
 
     if( eGType != wkbNone )
@@ -330,14 +499,32 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
     poLayer->SetNextFID(0);
 
+    m_oSetLayers.insert(poLayer->GetName());
+    m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+
     return poLayer;
+}
+
+/************************************************************************/
+/*                               HTTPFetch()                            */
+/************************************************************************/
+
+CPLHTTPResult* OGRElasticDataSource::HTTPFetch(const char* pszURL,
+                                               char** papszOptions)
+{
+    CPLStringList aosOptions(papszOptions, false);
+    if( !m_osUserPwd.empty() )
+        aosOptions.SetNameValue("USERPWD", m_osUserPwd.c_str());
+    return CPLHTTPFetch(pszURL, aosOptions);
 }
 
 /************************************************************************/
 /*                               RunRequest()                           */
 /************************************************************************/
 
-json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* pszPostContent)
+json_object* OGRElasticDataSource::RunRequest(const char* pszURL,
+                                              const char* pszPostContent,
+                                              const std::vector<int>& anSilentedHTTPErrors)
 {
     char** papszOptions = nullptr;
 
@@ -347,15 +534,33 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
                                        pszPostContent);
     }
 
-    CPLHTTPResult * psResult = CPLHTTPFetch( pszURL, papszOptions );
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    CPLHTTPResult * psResult = HTTPFetch( pszURL, papszOptions );
+    CPLPopErrorHandler();
     CSLDestroy(papszOptions);
 
     if( psResult->pszErrBuf != nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+        CPLString osErrorMsg(
                 psResult->pabyData ? (const char*) psResult->pabyData :
                 psResult->pszErrBuf);
-
+        bool bSilence = false;
+        for( auto nCode: anSilentedHTTPErrors )
+        {
+            if( strstr(psResult->pszErrBuf, CPLSPrintf("%d", nCode)) )
+            {
+                bSilence = true;
+                break;
+            }
+        }
+        if( bSilence )
+        {
+            CPLDebug("ES", "%s", osErrorMsg.c_str());
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
+        }
         CPLHTTPDestroyResult(psResult);
         return nullptr;
     }
@@ -424,7 +629,7 @@ bool OGRElasticDataSource::CheckVersion()
         CPLError(CE_Failure, CPLE_AppDefined, "Server version not found");
         return false;
     }
-    if( m_nMajorVersion != 1 && m_nMajorVersion != 2 && m_nMajorVersion != 5 )
+    if( m_nMajorVersion < 1 || m_nMajorVersion > 6 )
     {
         CPLDebug("ES", "Server version untested with current driver");
     }
@@ -449,6 +654,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
         const char* pszPort = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "PORT", "9200");
         m_osURL += pszPort;
     }
+    m_osUserPwd = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "USERPWD", "");
     m_nBatchSize = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "BATCH_SIZE", "100"));
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
@@ -461,94 +667,15 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     if( !CheckVersion() )
         return FALSE;
 
-    CPLHTTPResult* psResult = CPLHTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), nullptr);
-    if( psResult == nullptr || psResult->pszErrBuf != nullptr )
+    const char* pszLayerName = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                                 "LAYER");
+    if( pszLayerName )
     {
-        CPLHTTPDestroyResult(psResult);
-        return FALSE;
+        bool bFound = GetLayerByName(pszLayerName) != nullptr;
+        m_bAllLayersListed = true;
+        return bFound;
     }
 
-    // If no indices, fallback to querying _stats
-    if( psResult->pabyData == nullptr )
-    {
-        CPLHTTPDestroyResult(psResult);
-
-        json_object* poRes = RunRequest((m_osURL + "/_stats").c_str());
-        if( poRes == nullptr )
-            return FALSE;
-        json_object_put(poRes);
-        return TRUE;
-    }
-
-    char* pszCur = (char*)psResult->pabyData;
-    char* pszNextEOL = strchr(pszCur, '\n');
-    while( pszNextEOL && pszNextEOL > pszCur )
-    {
-        *pszNextEOL = '\0';
-
-        char* pszBeforeEOL = pszNextEOL - 1;
-        while( *pszBeforeEOL == ' ' )
-        {
-            *pszBeforeEOL = '\0';
-            pszBeforeEOL  --;
-        }
-
-        const char* pszIndexName = pszCur;
-
-        json_object* poRes = RunRequest((m_osURL + CPLString("/") + pszIndexName + CPLString("/_mapping?pretty")).c_str());
-        if( poRes )
-        {
-            json_object* poLayerObj = CPL_json_object_object_get(poRes, pszIndexName);
-            json_object* poMappings = nullptr;
-            if( poLayerObj && json_object_get_type(poLayerObj) == json_type_object )
-                poMappings = CPL_json_object_object_get(poLayerObj, "mappings");
-            if( poMappings && json_object_get_type(poMappings) == json_type_object )
-            {
-                json_object_iter it;
-                it.key = nullptr;
-                it.val = nullptr;
-                it.entry = nullptr;
-                std::vector<CPLString> aosMappings;
-                json_object_object_foreachC( poMappings, it )
-                {
-                    aosMappings.push_back(it.key);
-                }
-                if( aosMappings.size() == 1 &&
-                    (aosMappings[0] == "FeatureCollection" || aosMappings[0] == "default") )
-                {
-                    OGRElasticLayer* poLayer = new OGRElasticLayer(
-                        pszCur, pszCur, aosMappings[0], this, poOpenInfo->papszOpenOptions);
-                    poLayer->InitFeatureDefnFromMapping(CPL_json_object_object_get(poMappings, aosMappings[0]),
-                                                        "", std::vector<CPLString>());
-
-                    m_nLayers++;
-                    m_papoLayers = (OGRElasticLayer **) CPLRealloc(m_papoLayers, m_nLayers * sizeof (OGRElasticLayer*));
-                    m_papoLayers[m_nLayers - 1] = poLayer;
-                }
-                else
-                {
-                    for(size_t i=0; i<aosMappings.size();i++)
-                    {
-                        OGRElasticLayer* poLayer = new OGRElasticLayer(
-                            (pszCur + CPLString("_") + aosMappings[i]).c_str(), pszCur, aosMappings[i], this, poOpenInfo->papszOpenOptions);
-                        poLayer->InitFeatureDefnFromMapping(CPL_json_object_object_get(poMappings, aosMappings[i]),
-                                                            "", std::vector<CPLString>());
-
-                        m_nLayers++;
-                        m_papoLayers = (OGRElasticLayer **) CPLRealloc(m_papoLayers, m_nLayers * sizeof (OGRElasticLayer*));
-                        m_papoLayers[m_nLayers - 1] = poLayer;
-                    }
-                }
-            }
-
-            json_object_put(poRes);
-        }
-
-        pszCur = pszNextEOL + 1;
-        pszNextEOL = strchr(pszCur, '\n');
-    }
-
-    CPLHTTPDestroyResult(psResult);
     return TRUE;
 }
 
@@ -559,7 +686,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
 void OGRElasticDataSource::Delete(const CPLString &url) {
     char** papszOptions = nullptr;
     papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST", "DELETE");
-    CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);
+    CPLHTTPResult* psResult = HTTPFetch(url, papszOptions);
     CSLDestroy(papszOptions);
     if (psResult) {
         CPLHTTPDestroyResult(psResult);
@@ -571,18 +698,32 @@ void OGRElasticDataSource::Delete(const CPLString &url) {
 /************************************************************************/
 
 bool OGRElasticDataSource::UploadFile( const CPLString &url,
-                                       const CPLString &data )
+                                       const CPLString &data,
+                                       const CPLString &osVerb )
 {
     bool bRet = true;
     char** papszOptions = nullptr;
+    if( !osVerb.empty() )
+    {
+        papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST",
+                                       osVerb.c_str());
+    }
     if( data.empty() )
-        papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST", "PUT");
+    {
+        if( osVerb.empty() )
+        {
+            papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST", "PUT");
+        }
+    }
     else
-        papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", data.c_str());
-    papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
-            "Content-Type: application/x-javascript; charset=UTF-8");
+    {
 
-    CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);
+        papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", data.c_str());
+    }
+    papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
+            "Content-Type: application/json; charset=UTF-8");
+
+    CPLHTTPResult* psResult = HTTPFetch(url, papszOptions);
     CSLDestroy(papszOptions);
     if( psResult )
     {
@@ -642,14 +783,15 @@ int OGRElasticDataSource::Create(const char *pszFilename,
 
 int OGRElasticDataSource::GetLayerIndex( const char* pszName )
 {
-    for( int i=0; i < m_nLayers; ++i )
+    const int nLayerCount = GetLayerCount();
+    for( int i=0; i < nLayerCount; ++i )
     {
-        if( strcmp( m_papoLayers[i]->GetName(), pszName ) == 0 )
+        if( strcmp( m_apoLayers[i]->GetName(), pszName ) == 0 )
             return i;
     }
-    for( int i=0; i < m_nLayers; ++i )
+    for( int i=0; i < nLayerCount; ++i )
     {
-        if( EQUAL( m_papoLayers[i]->GetName(), pszName ) )
+        if( EQUAL( m_apoLayers[i]->GetName(), pszName ) )
             return i;
     }
     return -1;
@@ -663,9 +805,10 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
                                             const char *pszDialect )
 {
-    for(int i=0; i<m_nLayers; i++ )
+    const int nLayerCount = GetLayerCount();
+    for(int i=0; i<nLayerCount; i++ )
     {
-        m_papoLayers[i]->SyncToDisk();
+        m_apoLayers[i]->SyncToDisk();
     }
 
 /* -------------------------------------------------------------------- */
@@ -678,9 +821,9 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
         while( *pszLayerName == ' ' )
             pszLayerName++;
 
-        for( int iLayer = 0; iLayer < m_nLayers; iLayer++ )
+        for( int iLayer = 0; iLayer < nLayerCount; iLayer++ )
         {
-            if( EQUAL(m_papoLayers[iLayer]->GetName(),
+            if( EQUAL(m_apoLayers[iLayer]->GetName(),
                       pszLayerName ))
             {
                 DeleteLayer( iLayer );
@@ -721,7 +864,7 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
             psSelectInfo->order_specs > 0 &&
             psSelectInfo->poOtherSelect == nullptr )
         {
-            OGRElasticLayer* poSrcLayer = m_papoLayers[iLayer];
+            OGRElasticLayer* poSrcLayer = m_apoLayers[iLayer].get();
             std::vector<OGRESSortDesc> aoSortColumns;
             int i = 0;  // Used after for.
             for( ; i < psSelectInfo->order_specs; i++ )
@@ -756,11 +899,13 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
                 /* Just set poDupLayer in the papoLayers for the time of the */
                 /* base ExecuteSQL(), so that the OGRGenSQLResultsLayer */
                 /* references  that temporary layer */
-                m_papoLayers[iLayer] = poDupLayer;
+                m_apoLayers[iLayer].release();
+                m_apoLayers[iLayer].reset(poDupLayer);
 
                 OGRLayer* poResLayer = GDALDataset::ExecuteSQL(
                     pszSQLWithoutOrderBy, poSpatialFilter, pszDialect );
-                m_papoLayers[iLayer] = poSrcLayer;
+                m_apoLayers[iLayer].release();
+                m_apoLayers[iLayer].reset(poSrcLayer);
 
                 CPLFree(pszSQLWithoutOrderBy);
 

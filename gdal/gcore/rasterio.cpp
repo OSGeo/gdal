@@ -470,10 +470,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
 /* -------------------------------------------------------------------- */
@@ -657,7 +653,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             // Add small epsilon to avoid some numeric precision issues.
             dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff + EPS;
             dfSrcX = 0.5 * dfSrcXInc + dfXOff + EPS;
-            iSrcY = static_cast<int>(dfSrcY);
+            iSrcY = static_cast<int>(std::min(std::max(0.0, dfSrcY),
+                                        static_cast<double>(nRasterYSize - 1)));
 
             GPtrDiff_t iBufOffset =
                 static_cast<GPtrDiff_t>(iBufYOff)
@@ -690,7 +687,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                  iBufXOff < nBufXSize;
                  iBufXOff++, dfSrcX += dfSrcXInc )
             {
-                iSrcX = static_cast<int>( dfSrcX );
+                // TODO?: try to avoid the clamping for most iterations
+                iSrcX = static_cast<int>(std::min(std::max(0.0, dfSrcX),
+                                        static_cast<double>(nRasterXSize - 1)));
 
     /* -------------------------------------------------------------------- */
     /*      Ensure we have the appropriate block loaded.                    */
@@ -786,19 +785,30 @@ struct GDALRasterIOTransformerStruct
 };
 
 static int GDALRasterIOTransformer( void *pTransformerArg,
-                                    CPL_UNUSED int bDstToSrc,
+                                    int bDstToSrc,
                                     int nPointCount,
                                     double *x, double *y, double * /* z */,
                                     int *panSuccess )
 {
-    CPLAssert(bDstToSrc);
     GDALRasterIOTransformerStruct* psParams =
         static_cast<GDALRasterIOTransformerStruct *>( pTransformerArg );
-    for(int i = 0; i < nPointCount; i++)
+    if( bDstToSrc )
     {
-        x[i] = x[i] * psParams->dfXRatioDstToSrc + psParams->dfXOff;
-        y[i] = y[i] * psParams->dfYRatioDstToSrc + psParams->dfYOff;
-        panSuccess[i] = TRUE;
+        for(int i = 0; i < nPointCount; i++)
+        {
+            x[i] = x[i] * psParams->dfXRatioDstToSrc + psParams->dfXOff;
+            y[i] = y[i] * psParams->dfYRatioDstToSrc + psParams->dfYOff;
+            panSuccess[i] = TRUE;
+        }
+    }
+    else
+    {
+        for(int i = 0; i < nPointCount; i++)
+        {
+            x[i] = (x[i] - psParams->dfXOff) / psParams->dfXRatioDstToSrc;
+            y[i] = (y[i] - psParams->dfYOff) / psParams->dfYRatioDstToSrc;
+            panSuccess[i] = TRUE;
+        }
     }
     return TRUE;
 }
@@ -831,10 +841,6 @@ CPLErr GDALRasterBand::RasterIOResampled(
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
     const double dfXRatioDstToSrc = dfXSize / nBufXSize;
@@ -917,6 +923,9 @@ CPLErr GDALRasterBand::RasterIOResampled(
     // Do the resampling.
     if( bUseWarp )
     {
+        int bHasNoData = FALSE;
+        double dfNoDataValue = GetNoDataValue(&bHasNoData) ;
+
         VRTDatasetH hVRTDS = nullptr;
         GDALRasterBandH hVRTBand = nullptr;
         if( GetDataset() == nullptr )
@@ -982,6 +991,23 @@ CPLErr GDALRasterBand::RasterIOResampled(
                     psExtraArg->pfnProgress : GDALDummyProgress;
         psWarpOptions->pProgressArg = psExtraArg->pProgressData;
         psWarpOptions->pfnTransformer = GDALRasterIOTransformer;
+        if (bHasNoData)
+        {
+            psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions,
+                                                    "INIT_DEST", "NO_DATA");
+            if (psWarpOptions->padfSrcNoDataReal == nullptr)
+            {
+                psWarpOptions->padfSrcNoDataReal = static_cast<double*>(CPLMalloc(sizeof(double)));
+                psWarpOptions->padfSrcNoDataReal[0] = dfNoDataValue;
+            }
+
+            if (psWarpOptions->padfDstNoDataReal == nullptr)
+            {
+                psWarpOptions->padfDstNoDataReal = static_cast<double*>(CPLMalloc(sizeof(double)));
+                psWarpOptions->padfDstNoDataReal[0] = dfNoDataValue;
+            }
+        }
+
         GDALRasterIOTransformerStruct sTransformer;
         sTransformer.dfXOff = bHasXOffVirtual ? 0 : dfXOff;
         sTransformer.dfYOff = bHasYOffVirtual ? 0 : dfYOff;
@@ -1307,10 +1333,6 @@ CPLErr GDALDataset::RasterIOResampled(
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
     const double dfXRatioDstToSrc = dfXSize / nBufXSize;
@@ -2673,13 +2695,50 @@ inline void GDALCopyWordsFromT( const T* const CPL_RESTRICT pSrcData,
 /*                          GDALReplicateWord()                         */
 /************************************************************************/
 
+template <class T>
+inline void GDALReplicateWordT( void * pDstData,
+                                int nDstPixelStride,
+                                unsigned int nWordCount )
+{
+    const T valSet = *static_cast<const T*>(pDstData);
+    if( nDstPixelStride == static_cast<int>(sizeof(T)) )
+    {
+        T* pDstPtr = static_cast<T*>(pDstData) + 1;
+        while( nWordCount >= 4 )
+        {
+            nWordCount -= 4;
+            pDstPtr[0] = valSet;
+            pDstPtr[1] = valSet;
+            pDstPtr[2] = valSet;
+            pDstPtr[3] = valSet;
+            pDstPtr += 4;
+        }
+        while( nWordCount > 0 )
+        {
+            --nWordCount;
+            *pDstPtr = valSet;
+            pDstPtr++;
+        }
+    }
+    else
+    {
+        GByte *pabyDstPtr = static_cast<GByte *>(pDstData) + nDstPixelStride;
+        while( nWordCount > 0 )
+        {
+            --nWordCount;
+            *reinterpret_cast<T*>(pabyDstPtr) = valSet;
+            pabyDstPtr += nDstPixelStride;
+        }
+    }
+}
+
 static
 void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
                         GDALDataType eSrcType,
                         void * CPL_RESTRICT pDstData,
                         GDALDataType eDstType,
                         int nDstPixelStride,
-                        int nWordCount)
+                        unsigned int nWordCount)
 {
 /* ----------------------------------------------------------------------- */
 /* Special case when the source data is always the same value              */
@@ -2709,8 +2768,9 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
             else
             {
                 GByte valSet = *reinterpret_cast<const GByte*>(pDstData);
-                while(nWordCount--)
+                while( nWordCount > 0 )
                 {
+                    --nWordCount;
                     *pabyDstWord = valSet;
                     pabyDstWord += nDstPixelStride;
                 }
@@ -2721,12 +2781,7 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
 #define CASE_DUPLICATE_SIMPLE(enum_type, c_type) \
         case enum_type:\
         { \
-            c_type valSet = *reinterpret_cast<const c_type*>(pDstData); \
-            while(nWordCount--) \
-            { \
-                *reinterpret_cast<c_type*>(pabyDstWord) = valSet; \
-                pabyDstWord += nDstPixelStride; \
-            } \
+            GDALReplicateWordT<c_type>(pDstData, nDstPixelStride, nWordCount); \
             break; \
         }
 
@@ -2742,8 +2797,9 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
         { \
             c_type valSet1 = reinterpret_cast<const c_type*>(pDstData)[0]; \
             c_type valSet2 = reinterpret_cast<const c_type*>(pDstData)[1]; \
-            while(nWordCount--) \
+            while( nWordCount > 0 ) \
             { \
+                --nWordCount; \
                 reinterpret_cast<c_type*>(pabyDstWord)[0] = valSet1; \
                 reinterpret_cast<c_type*>(pabyDstWord)[1] = valSet2; \
                 pabyDstWord += nDstPixelStride; \

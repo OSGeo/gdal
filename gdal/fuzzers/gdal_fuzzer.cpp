@@ -163,10 +163,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     break;
                 }
 
-                // Limit to 10000 blocks read for each band.
+                // Limit to 1000 blocks read for each band.
                 while( (nXSizeToRead > 1 || nYSizeToRead > 1) &&
                        (DIV_ROUND_UP(nXSizeToRead, nBXSize) *
-                        DIV_ROUND_UP(nYSizeToRead, nBYSize) > 10000) )
+                        DIV_ROUND_UP(nYSizeToRead, nBYSize) > 1000) )
                 {
                     if( nXSizeToRead > 1 &&
                         DIV_ROUND_UP(nXSizeToRead, nBXSize) >
@@ -195,7 +195,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
                     if( EQUAL(pszCompress, "PIXARLOG") &&
-                        GDALGetRasterYSize(hDS) > INT_MAX /
+                        GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
                             static_cast<int>(sizeof(GUInt16)) /
                                 nSimultaneousBands / GDALGetRasterXSize(hDS) )
                     {
@@ -203,7 +203,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     }
                     // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2874
                     else if( EQUAL(pszCompress, "SGILOG24") &&
-                        GDALGetRasterYSize(hDS) > INT_MAX /
+                        GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
                             static_cast<int>(sizeof(GUInt32)) /
                                 nSimultaneousBands / GDALGetRasterXSize(hDS) )
                     {

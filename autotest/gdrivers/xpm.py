@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,57 +28,35 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-from osgeo import gdal
 
-sys.path.append('../pymod')
+import pytest
+
+from osgeo import gdal
 
 import gdaltest
 
 
-###############################################################################
-#
-class TestXPM(object):
-    def __init__(self, downloadURL, fileName, checksum, download_size):
-        self.downloadURL = downloadURL
-        self.fileName = fileName
-        self.checksum = checksum
-        self.download_size = download_size
-
-    def test(self):
-        if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
-            return 'skip'
-
-        ds = gdal.Open('tmp/cache/' + self.fileName)
-
-        if ds.GetRasterBand(1).Checksum() != self.checksum:
-            gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'fail'
-
-        return 'success'
+xpm_list = [('http://download.osgeo.org/gdal/data/xpm', 'utm.xpm', 44206, -1)]
 
 
-def xpm_1():
+@pytest.mark.parametrize(
+    'downloadURL,fileName,checksum,download_size',
+    xpm_list,
+    ids=[item[1] for item in xpm_list],
+)
+def test_xpm(downloadURL, fileName, checksum, download_size):
+    if not gdaltest.download_file(downloadURL + '/' + fileName, fileName, download_size):
+        pytest.skip()
 
+    ds = gdal.Open('tmp/cache/' + fileName)
+
+    assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
+
+
+def test_xpm_1():
     tst = gdaltest.GDALTest('XPM', 'byte.tif', 1, 4583)
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
-gdaltest_list = []
 
-xpm_list = [('http://download.osgeo.org/gdal/data/xpm', 'utm.xpm', 44206, -1),
-            ]
 
-for item in xpm_list:
-    ut = TestXPM(item[0], item[1], item[2], item[3])
-    gdaltest_list.append((ut.test, item[1]))
-
-gdaltest_list.append(xpm_1)
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('xpm')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

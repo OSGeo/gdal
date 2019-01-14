@@ -1774,17 +1774,27 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     }
     osCreateTable = osCommand;
 
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == nullptr || CPLTestBool(pszSI) );
+    const char *pszSI = CSLFetchNameValueDef( papszOptions, "SPATIAL_INDEX", "GIST" );
+    bool bCreateSpatialIndex = ( EQUAL(pszSI, "GIST") ||
+        EQUAL(pszSI, "SPGIST") || EQUAL(pszSI, "BRIN") ||
+        EQUAL(pszSI, "YES") || EQUAL(pszSI, "ON") || EQUAL(pszSI, "TRUE") );
+    if( !bCreateSpatialIndex && !EQUAL(pszSI, "NO") && !EQUAL(pszSI, "OFF") &&
+        !EQUAL(pszSI, "FALSE") && !EQUAL(pszSI, "NONE") )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "SPATIAL_INDEX=%s not supported", pszSI);
+    }
+    const char* pszSpatialIndexType = EQUAL(pszSI, "SPGIST") ? "SPGIST" :
+                                      EQUAL(pszSI, "BRIN") ? "BRIN" : "GIST";
     if( eType != wkbNone &&
-        pszSI == nullptr &&
+        bCreateSpatialIndex &&
         CPLFetchBool( papszOptions, "UNLOGGED", false ) &&
         !(sPostgreSQLVersion.nMajor > 9 ||
          (sPostgreSQLVersion.nMajor == 9 && sPostgreSQLVersion.nMinor >= 3)) )
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "GiST index only supported since Postgres 9.3 on unlogged table");
-        bCreateSpatialIndex = FALSE;
+        bCreateSpatialIndex = false;
     }
 
     CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
@@ -1880,11 +1890,12 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     /*      so this may not be exactly the best way to do it.               */
     /* -------------------------------------------------------------------- */
 
-            osCommand.Printf("CREATE INDEX %s ON %s.%s USING GIST (%s)",
+            osCommand.Printf("CREATE INDEX %s ON %s.%s USING %s (%s)",
                             OGRPGEscapeColumnName(
                                 CPLSPrintf("%s_%s_geom_idx", pszTableName, pszGFldName)).c_str(),
                             OGRPGEscapeColumnName(pszSchemaName).c_str(),
                             OGRPGEscapeColumnName(pszTableName).c_str(),
+                            pszSpatialIndexType,
                             OGRPGEscapeColumnName(pszGFldName).c_str());
 
             hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
@@ -1926,7 +1937,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
     //poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);
-    poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
+    poLayer->SetCreateSpatialIndex(bCreateSpatialIndex, pszSpatialIndexType);
     poLayer->SetDeferredCreation(bDeferredCreation, osCreateTable);
 
     const char* pszDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");

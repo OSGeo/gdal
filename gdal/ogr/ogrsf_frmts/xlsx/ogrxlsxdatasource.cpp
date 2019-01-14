@@ -1001,6 +1001,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                         else if (eFieldType != OFTString && eValType != eFieldType)
                         {
                             OGRFieldDefn oNewFieldDefn(poFieldDefn);
+                            oNewFieldDefn.SetSubType(OFSTNone);
                             if ((eFieldType == OFTDate || eFieldType == OFTTime) &&
                                    eValType == OFTDateTime)
                                 oNewFieldDefn.SetType(OFTDateTime);

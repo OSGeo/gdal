@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -27,9 +27,8 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
+import pytest
 
 from osgeo import gdal
 import gdaltest
@@ -38,7 +37,7 @@ import gdaltest
 # Test GDAL_READDIR_LIMIT_ON_OPEN
 
 
-def envi_1():
+def test_envi_1():
 
     gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', '1')
 
@@ -47,43 +46,34 @@ def envi_1():
 
     gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', None)
 
-    if len(filelist) != 2:
-        gdaltest.post_reason('did not get expected file list.')
-        return 'fail'
-
-    return 'success'
+    assert len(filelist) == 2, 'did not get expected file list.'
 
 ###############################################################################
 # When imported build a list of units based on the files available.
 
 
-gdaltest_list = []
-
 init_list = [
-    ('byte.raw', 1, 4672, None),
-    ('int16.raw', 1, 4672, None),
-    ('uint16.raw', 1, 4672, None),
-    ('int32.raw', 1, 4672, None),
-    ('uint32.raw', 1, 4672, None),
-    ('float32.raw', 1, 4672, None),
-    ('float64.raw', 1, 4672, None)]
-#    ('cfloat32.raw', 1, 5028, None),
-#    ('cfloat64.raw', 1, 5028, None)]
+    ('byte.raw', 4672),
+    ('int16.raw', 4672),
+    ('uint16.raw', 4672),
+    ('int32.raw', 4672),
+    ('uint32.raw', 4672),
+    ('float32.raw', 4672),
+    ('float64.raw', 4672),
+    # ('cfloat32.raw', 5028),
+    # ('cfloat64.raw', 5028),
+]
 
 
-for item in init_list:
-    ut = gdaltest.GDALTest('ENVI', item[0], item[1], item[2])
-    if ut is None:
-        print('ENVI tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('ENVI')
+def test_envi_open(filename, checksum):
+    ut = gdaltest.GDALTest('ENVI', filename, 1, checksum)
+    ut.testOpen()
 
-gdaltest_list.append(envi_1)
 
-if __name__ == '__main__':
 
-    gdaltest.setup_run('envi_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

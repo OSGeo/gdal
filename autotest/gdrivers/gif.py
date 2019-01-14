@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,10 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +38,7 @@ import gdaltest
 # Get the GIF driver, and verify a few things about it.
 
 
-def gif_1():
+def test_gif_1():
 
     gdaltest.gif_drv = gdal.GetDriverByName('GIF')
     if gdaltest.gif_drv is None:
@@ -57,13 +55,12 @@ def gif_1():
         gdaltest.post_reason('mime type is wrong')
         return 'false'
 
-    return 'success'
-
+    
 ###############################################################################
 # Read test of simple byte reference data.
 
 
-def gif_2():
+def test_gif_2():
 
     tst = gdaltest.GDALTest('GIF', 'bug407.gif', 1, 57921)
     return tst.testOpen()
@@ -72,7 +69,7 @@ def gif_2():
 # Test lossless copying.
 
 
-def gif_3():
+def test_gif_3():
 
     tst = gdaltest.GDALTest('GIF', 'bug407.gif', 1, 57921,
                             options=['INTERLACING=NO'])
@@ -83,35 +80,26 @@ def gif_3():
 # Verify the colormap, and nodata setting for test file.
 
 
-def gif_4():
+def test_gif_4():
 
     ds = gdal.Open('data/bug407.gif')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
-    if cm.GetCount() != 16 \
-       or cm.GetColorEntry(0) != (255, 255, 255, 255) \
-       or cm.GetColorEntry(1) != (255, 255, 208, 255):
-        gdaltest.post_reason('Wrong colormap entries')
-        return 'fail'
+    assert cm.GetCount() == 16 and cm.GetColorEntry(0) == (255, 255, 255, 255) and cm.GetColorEntry(1) == (255, 255, 208, 255), \
+        'Wrong colormap entries'
 
     cm = None
 
-    if ds.GetRasterBand(1).GetNoDataValue() is not None:
-        gdaltest.post_reason('Wrong nodata value.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() is None, 'Wrong nodata value.'
 
     md = ds.GetRasterBand(1).GetMetadata()
-    if 'GIF_BACKGROUND' not in md or md['GIF_BACKGROUND'] != '0':
-        print(md)
-        gdaltest.post_reason('background metadata missing.')
-        return 'fail'
-
-    return 'success'
+    assert 'GIF_BACKGROUND' in md and md['GIF_BACKGROUND'] == '0', \
+        'background metadata missing.'
 
 ###############################################################################
 # Test creating an in memory copy.
 
 
-def gif_5():
+def test_gif_5():
 
     tst = gdaltest.GDALTest('GIF', 'byte.tif', 1, 4672)
 
@@ -121,7 +109,7 @@ def gif_5():
 # Verify nodata support
 
 
-def gif_6():
+def test_gif_6():
 
     src_ds = gdal.Open('../gcore/data/nodata_byte.tif')
 
@@ -157,13 +145,11 @@ def gif_6():
 
     gdaltest.gif_drv.Delete('tmp/nodata_byte.gif')
 
-    return 'success'
-
 
 ###############################################################################
 # Confirm reading with the BIGGIF driver.
 
-def gif_7():
+def test_gif_7():
 
     # Move the GIF driver after the BIGGIF driver.
     drv = gdal.GetDriverByName('GIF')
@@ -172,23 +158,18 @@ def gif_7():
 
     tst = gdaltest.GDALTest('BIGGIF', 'bug407.gif', 1, 57921)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('data/bug407.gif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetDriver().ShortName != 'BIGGIF':
-        return 'fail'
-
-    return 'success'
+    assert ds.GetDriver().ShortName == 'BIGGIF'
 
 ###############################################################################
 # Confirm that BIGGIF driver is selected for huge gifs
 
 
-def gif_8():
+def test_gif_8():
 
     # Move the BIGGIF driver after the GIF driver.
     drv = gdal.GetDriverByName('BIGGIF')
@@ -196,43 +177,34 @@ def gif_8():
     drv.Register()
 
     ds = gdal.Open('data/fakebig.gif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetDriver().ShortName != 'BIGGIF':
-        return 'fail'
-
-    return 'success'
+    assert ds.GetDriver().ShortName == 'BIGGIF'
 
 ###############################################################################
 # Test writing to /vsistdout/
 
 
-def gif_9():
+def test_gif_9():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('GIF').CreateCopy(
         '/vsistdout_redirect//vsimem/tmp.gif', src_ds)
-    if ds.GetRasterBand(1).Checksum() != 0:
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 0
     src_ds = None
     ds = None
 
     ds = gdal.Open('/vsimem/tmp.gif')
-    if ds is None:
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        return 'fail'
+    assert ds is not None
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
     gdal.Unlink('/vsimem/tmp.gif')
-
-    return 'success'
 
 ###############################################################################
 # Test interlacing
 
 
-def gif_10():
+def test_gif_10():
 
     tst = gdaltest.GDALTest('GIF', 'byte.tif', 1, 4672,
                             options=['INTERLACING=YES'])
@@ -243,28 +215,8 @@ def gif_10():
 # Cleanup.
 
 
-def gif_cleanup():
+def test_gif_cleanup():
     gdaltest.clean_tmp()
-    return 'success'
 
 
-gdaltest_list = [
-    gif_1,
-    gif_2,
-    gif_3,
-    gif_4,
-    gif_5,
-    gif_6,
-    gif_7,
-    gif_8,
-    gif_9,
-    gif_10,
-    gif_cleanup]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gif')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

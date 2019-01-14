@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,44 +29,30 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
 
-def ogr_sosi_1():
+def test_ogr_sosi_1():
 
     if ogr.GetDriverByName('SOSI') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/3638/20BygnAnlegg.SOS', '20BygnAnlegg.SOS'):
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/cache/20BygnAnlegg.SOS')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 
-gdaltest_list = [
-    ogr_sosi_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sosi')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

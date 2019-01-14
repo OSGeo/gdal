@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,43 +29,36 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
-
-import gdaltest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 #
-
 
 def CheckFileSize(src_filename):
 
     import test_py_scripts
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '/vsimem/CheckFileSize.dbf ' + src_filename)
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/CheckFileSize.dbf ' + src_filename)
     statBufSrc = gdal.VSIStatL(src_filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    statBufDst = gdal.VSIStatL('/vsimem/CheckFileSize.dbf', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/CheckFileSize.dbf')
+    statBufDst = gdal.VSIStatL('tmp/CheckFileSize.dbf', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/CheckFileSize.dbf')
 
-    if statBufSrc.size != statBufDst.size:
-        print('src_size = %d, dst_size = %d', statBufSrc.size, statBufDst.size)
-        return 'fail'
-
-    return 'success'
+    assert statBufSrc.size == statBufDst.size, \
+        ('src_size = %d, dst_size = %d', statBufSrc.size, statBufDst.size)
 
 ###############################################################################
 # Initiate the test file
 
 
-def ogr_rfc35_shape_1():
+def test_ogr_rfc35_shape_1():
 
-    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/rfc35_test.dbf')
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/rfc35_test.dbf')
     lyr = ds.CreateLayer('rfc35_test')
 
     lyr.ReorderFields([])
@@ -104,8 +97,6 @@ def ogr_rfc35_shape_1():
     fd.SetWidth(20)
     lyr.CreateField(fd)
 
-    return 'success'
-
 ###############################################################################
 # Test ReorderField()
 
@@ -137,54 +128,40 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
            (field3 is not None and feat.GetField(field3) != Truncate(expected_values[i][2], lyr_defn, field3)) or \
            (field4 is not None and feat.GetField(field4) != Truncate(expected_values[i][3], lyr_defn, field4)):
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = lyr.GetNextFeature()
         i = i + 1
 
-    return 'success'
-
+    
 
 def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
     for i, exp_order in enumerate(expected_order):
-        if lyr_defn.GetFieldDefn(i).GetName() != exp_order:
-            return 'fail'
+        assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
-    return 'success'
-
+    
 
 def Check(lyr, expected_order):
 
-    ret = CheckColumnOrder(lyr, expected_order)
-    if ret != 'success':
-        return ret
+    CheckColumnOrder(lyr, expected_order)
 
-    ret = CheckFeatures(lyr)
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr)
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr_reopen = ds.GetLayer(0)
 
-    ret = CheckColumnOrder(lyr_reopen, expected_order)
-    if ret != 'success':
-        return ret
+    CheckColumnOrder(lyr_reopen, expected_order)
 
-    ret = CheckFeatures(lyr_reopen)
-    if ret != 'success':
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr_reopen)
 
 
-def ogr_rfc35_shape_2():
+def test_ogr_rfc35_shape_2():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
 
-    if lyr.TestCapability(ogr.OLCReorderFields) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCReorderFields) == 1
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 'foo3')
@@ -194,75 +171,51 @@ def ogr_rfc35_shape_2():
     lyr.CreateFeature(feat)
     feat = None
 
-    if lyr.ReorderField(1, 3) != 0:
-        return 'fail'
-    ret = Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
-    if ret != 'success':
-        return ret
+    assert lyr.ReorderField(1, 3) == 0
+    Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
 
     lyr.ReorderField(3, 1)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 2)
-    ret = Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
-    if ret != 'success':
-        return ret
+    Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
 
     lyr.ReorderField(2, 0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 1)
-    ret = Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
-    if ret != 'success':
-        return ret
+    Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
 
     lyr.ReorderField(1, 0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
-    if ret != 'success':
-        return ret
+    Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.ReorderFields([0, 0, 0, 0])
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
 
-    ret = CheckColumnOrder(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        return ret
+    CheckColumnOrder(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
-    ret = CheckFeatures(lyr)
-    if ret != 'success':
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr)
 
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
 
-def ogr_rfc35_shape_3():
+def test_ogr_rfc35_shape_3():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
 
     fd = ogr.FieldDefn("baz25", ogr.OFTString)
@@ -273,20 +226,16 @@ def ogr_rfc35_shape_3():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz25')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz25')
 
     fd = ogr.FieldDefn("baz5", ogr.OFTString)
     fd.SetWidth(5)
@@ -294,37 +243,29 @@ def ogr_rfc35_shape_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
-    if fld_defn.GetWidth() != 5:
-        return 'fail'
+    assert fld_defn.GetWidth() == 5
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
 
 
-def ogr_rfc35_shape_4():
+def test_ogr_rfc35_shape_4():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
 
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
     lyr.CreateField(fd)
@@ -342,30 +283,24 @@ def ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 12345:
-        return 'fail'
+    assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     fd.SetWidth(5)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 12345:
-        return 'fail'
+    assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -374,22 +309,17 @@ def ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 1234:
-        return 'fail'
+    assert feat.GetField("intfield") == 1234
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
     # Check that the file size has decreased after column shrinking
-    ret = CheckFileSize('/vsimem/rfc35_test.dbf')
-    if ret == 'fail':
-        return ret
+    CheckFileSize('tmp/rfc35_test.dbf')
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -399,45 +329,36 @@ def ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '1234':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '1234'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '1234':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '1234'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     lyr.DeleteField(lyr_defn.GetFieldIndex("oldintfld"))
 
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
     fd.SetWidth(10)
-    if lyr.CreateField(fd) != 0:
-        return 'fail'
+    assert lyr.CreateField(fd) == 0
 
-    if lyr.ReorderField(lyr_defn.GetFieldIndex("intfield"), 0) != 0:
-        return 'fail'
+    assert lyr.ReorderField(lyr_defn.GetFieldIndex("intfield"), 0) == 0
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     feat.SetField("intfield", 98765)
-    if lyr.SetFeature(feat) != 0:
-        return 'fail'
+    assert lyr.SetFeature(feat) == 0
     feat = None
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
@@ -446,135 +367,91 @@ def ogr_rfc35_shape_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '98765':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '98765'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '98765':
-        return 'fail'
+    assert feat.GetField("oldintfld") == '98765'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test DeleteField()
 
 
-def ogr_rfc35_shape_5():
+def test_ogr_rfc35_shape_5():
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    if lyr.TestCapability(ogr.OLCDeleteField) != 1:
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCDeleteField) == 1
 
-    if lyr.DeleteField(0) != 0:
-        return 'fail'
+    assert lyr.DeleteField(0) == 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(-1)
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     gdal.PopErrorHandler()
-    if ret == 0:
-        return 'fail'
+    assert ret != 0
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) == 0
 
     ds = None
 
     # Check that the file size has decreased after column removing
-    ret = CheckFileSize('/vsimem/rfc35_test.dbf')
+    CheckFileSize('tmp/rfc35_test.dbf')
     if ret == 'fail':
         return ret
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, field3='baz5', field4=None)
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3='baz5', field4=None)
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) == 0
 
-    ret = CheckFeatures(lyr, field3=None, field4=None)
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field3=None, field4=None)
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) == 0
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) != 0:
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) == 0
 
-    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
-    if ret != 'success':
-        return ret
+    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
     ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.dbf', update=1)
+    ds = ogr.Open('tmp/rfc35_test.dbf', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
-    if ret != 'success':
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
 ###############################################################################
 # Initiate the test file
 
 
-def ogr_rfc35_shape_cleanup():
+def test_ogr_rfc35_shape_cleanup():
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/rfc35_test.dbf')
-
-    return 'success'
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/rfc35_test.dbf')
 
 
-gdaltest_list = [
-    ogr_rfc35_shape_1,
-    ogr_rfc35_shape_2,
-    ogr_rfc35_shape_3,
-    ogr_rfc35_shape_4,
-    ogr_rfc35_shape_5,
-    ogr_rfc35_shape_cleanup]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_rfc35_shape')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,31 +28,29 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test driver availability
 
 
-def bsb_0():
+def test_bsb_0():
     gdaltest.bsb_dr = gdal.GetDriverByName('BSB')
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Read
 
 
-def bsb_1():
+def test_bsb_1():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
 
@@ -62,13 +60,13 @@ def bsb_1():
 # Test CreateCopy
 
 
-def bsb_2():
+def test_bsb_2():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     md = gdaltest.bsb_dr.GetMetadata()
     if 'DMD_CREATIONDATATYPES' not in md:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
 
@@ -81,9 +79,9 @@ def bsb_2():
 # --> This is probably not a valid BSB file, but it proves that we can read the index table
 
 
-def bsb_3():
+def test_bsb_3():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_index.kap', 1, 30321)
 
@@ -95,9 +93,9 @@ def bsb_3():
 # adding a 0 character in the middle of line data
 
 
-def bsb_4():
+def test_bsb_4():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_with_line_break.kap', 1, 30321)
 
@@ -107,9 +105,9 @@ def bsb_4():
 # Read a truncated BSB (at the level of the written scanline number starting a new row)
 
 
-def bsb_5():
+def test_bsb_5():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated.kap', 1, 29696)
 
@@ -123,9 +121,9 @@ def bsb_5():
 # Read another truncated BSB (in the middle of row data)
 
 
-def bsb_6():
+def test_bsb_6():
     if gdaltest.bsb_dr is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated2.kap', 1, 29696)
 
@@ -136,21 +134,5 @@ def bsb_6():
     return ret
 
 
-gdaltest_list = [
-    bsb_0,
-    bsb_1,
-    bsb_2,
-    bsb_3,
-    bsb_4,
-    bsb_5,
-    bsb_6
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('BSB')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

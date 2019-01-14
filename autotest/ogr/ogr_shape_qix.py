@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,12 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import random
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import ogr
 
 ###############################################################################
@@ -61,9 +58,8 @@ def check_qix_non_overlapping_geoms(lyr):
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         got_geom = feat.GetGeometryRef()
-        if got_geom.Equals(geom) == 0:
-            gdaltest.post_reason('expected %s. got %s' % (geom.ExportToWkt(), got_geom.ExportToWkt()))
-            return 'fail'
+        assert got_geom.Equals(geom) != 0, \
+            ('expected %s. got %s' % (geom.ExportToWkt(), got_geom.ExportToWkt()))
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
@@ -71,11 +67,7 @@ def check_qix_non_overlapping_geoms(lyr):
     lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
-    if fc != fc_ref:
-        gdaltest.post_reason('expected %d. got %d' % (fc_ref, fc))
-        return 'fail'
-
-    return 'success'
+    assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
 
 ###############################################################################
 
@@ -88,7 +80,7 @@ def build_rectangle_from_point(x, y, radius=0.1):
 # Test geoms on a 10x10 grid
 
 
-def ogr_shape_qix_1():
+def test_ogr_shape_qix_1():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -117,7 +109,7 @@ def ogr_shape_qix_1():
 # Test geoms on a 100x100 grid
 
 
-def ogr_shape_qix_2():
+def test_ogr_shape_qix_2():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -146,7 +138,7 @@ def ogr_shape_qix_2():
 # Test 2 separated regions of 10x10 geoms
 
 
-def ogr_shape_qix_3():
+def test_ogr_shape_qix_3():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -208,9 +200,7 @@ def check_qix_random_geoms(lyr):
                 found_geom = True
             else:
                 feat = lyr.GetNextFeature()
-        if not found_geom:
-            gdaltest.post_reason('did not find geometry for %s' % (geom.ExportToWkt()))
-            return 'fail'
+        assert found_geom, ('did not find geometry for %s' % (geom.ExportToWkt()))
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
@@ -218,11 +208,7 @@ def check_qix_random_geoms(lyr):
     lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
-    if fc != fc_ref:
-        gdaltest.post_reason('expected %d. got %d' % (fc_ref, fc))
-        return 'fail'
-
-    return 'success'
+    assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
 
 ###############################################################################
 
@@ -235,7 +221,7 @@ def build_rectangle(x1, y1, x2, y2):
 # Test random geometries
 
 
-def ogr_shape_qix_4():
+def test_ogr_shape_qix_4():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
@@ -273,17 +259,4 @@ def ogr_shape_qix_4():
     return ret
 
 
-gdaltest_list = [
-    ogr_shape_qix_1,
-    ogr_shape_qix_2,
-    ogr_shape_qix_3,
-    ogr_shape_qix_4,
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_shape_qix')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

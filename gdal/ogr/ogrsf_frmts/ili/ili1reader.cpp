@@ -246,7 +246,6 @@ int ILI1Reader::ReadFeatures() {
 
 int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
     char **tokens = nullptr;
-    int ret = TRUE;
     int warned = FALSE;
     int geomIdx = -1;
 
@@ -254,7 +253,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
     OGRFeature *feature = nullptr;
     bool bFeatureAdded = false;
 
-    while (ret && (tokens = ReadParseLine()) != nullptr)
+    while ((tokens = ReadParseLine()) != nullptr)
     {
       const char *firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "OBJE"))
@@ -418,7 +417,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
     if( !bFeatureAdded )
         delete feature;
 
-    return ret;
+    return TRUE;
 }
 
 void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,

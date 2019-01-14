@@ -50,20 +50,14 @@ typedef char retStringAndCPLFree;
     CPLDebug( msg_class, "%s", message );
   }
 
-  CPLErr SetErrorHandler( char const * pszCallbackName = NULL )
+  CPLErr SetErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
   {
-    CPLErrorHandler pfnHandler = NULL;
-    if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
-      pfnHandler = CPLQuietErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
-      pfnHandler = CPLDefaultErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
-      pfnHandler = CPLLoggingErrorHandler;
+    if( pfnErrorHandler == NULL )
+    {
+        pfnErrorHandler = CPLDefaultErrorHandler;
+    }
 
-    if ( pfnHandler == NULL )
-      return CE_Fatal;
-
-    CPLSetErrorHandler( pfnHandler );
+    CPLSetErrorHandlerEx( pfnErrorHandler, user_data );
 
     return CE_None;
   }
@@ -74,8 +68,17 @@ typedef char retStringAndCPLFree;
 %nothread;
 
 %{
+extern "C" int CPL_DLL GDALIsInGlobalDestructor();
+
 void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
 {
+    if( GDALIsInGlobalDestructor() )
+    {
+        // this is typically during Python interpreter shutdown, and ends up in a crash
+        // because error handling tries to do thread initialisation.
+        return;
+    }
+
     void* user_data = CPLGetErrorHandlerUserData();
     PyObject *psArgs;
 
@@ -308,6 +311,7 @@ unsigned int CPLGetErrorCounter();
 
 int VSIGetLastErrorNo();
 const char *VSIGetLastErrorMsg();
+void VSIErrorReset();
 
 void CPLPushFinderLocation( const char * utf8_path );
 
@@ -329,6 +333,104 @@ char **wrapper_VSIReadDirEx( const char * utf8_path, int nMaxFiles = 0 )
 %apply (char **CSL) {char **};
 char **VSIReadDirRecursive( const char * utf8_path );
 %clear char **;
+
+#ifdef SWIGPYTHON
+%rename (OpenDir) wrapper_VSIOpenDir;
+%inline {
+VSIDIR* wrapper_VSIOpenDir( const char * utf8_path,
+                            int nRecurseDepth = -1,
+                            char** options = NULL )
+{
+    return VSIOpenDir(utf8_path, nRecurseDepth, options);
+}
+}
+
+%{
+typedef struct
+{
+    char*        name;
+    int          mode;
+    GIntBig      size;
+    GIntBig      mtime;
+    bool         modeKnown;
+    bool         sizeKnown;
+    bool         mtimeKnown;
+    char**       extra;
+} DirEntry;
+%}
+
+struct DirEntry
+{
+%immutable;
+    char*        name;
+    int          mode;
+    GIntBig      size;
+    GIntBig      mtime;
+    bool         modeKnown;
+    bool         sizeKnown;
+    bool         mtimeKnown;
+
+%apply (char **dict) {char **};
+    char**       extra;
+%clear char **;
+%mutable;
+
+%extend {
+  DirEntry( const DirEntry *entryIn ) {
+    DirEntry *self = (DirEntry*) CPLMalloc( sizeof( DirEntry ) );
+    self->name = CPLStrdup(entryIn->name);
+    self->mode = entryIn->mode;
+    self->size = entryIn->size;
+    self->mtime = entryIn->mtime;
+    self->modeKnown = entryIn->modeKnown;
+    self->sizeKnown = entryIn->sizeKnown;
+    self->mtimeKnown = entryIn->mtimeKnown;
+    self->extra = CSLDuplicate(entryIn->extra);
+    return self;
+  }
+
+  ~DirEntry() {
+    CPLFree(self->name);
+    CSLDestroy(self->extra);
+    CPLFree(self);
+  }
+
+  bool IsDirectory()
+  {
+     return (self->mode & S_IFDIR) != 0;
+  }
+
+} /* extend */
+} /* DirEntry */ ;
+
+%rename (GetNextDirEntry) wrapper_VSIGetNextDirEntry;
+%newobject wrapper_VSIGetNextDirEntry;
+%apply Pointer NONNULL {VSIDIR* dir};
+%inline {
+DirEntry* wrapper_VSIGetNextDirEntry(VSIDIR* dir)
+{
+    const VSIDIREntry* vsiEntry = VSIGetNextDirEntry(dir);
+    if( vsiEntry == nullptr )
+    {
+        return nullptr;
+    }
+    DirEntry* entry = (DirEntry*) CPLMalloc( sizeof( DirEntry ) );
+    entry->name = CPLStrdup(vsiEntry->pszName);
+    entry->mode = vsiEntry->nMode;
+    entry->size = vsiEntry->nSize;
+    entry->mtime = vsiEntry->nMTime;
+    entry->modeKnown = vsiEntry->bModeKnown == TRUE;
+    entry->sizeKnown = vsiEntry->bSizeKnown == TRUE;
+    entry->mtimeKnown = vsiEntry->bMTimeKnown == TRUE;
+    entry->extra = CSLDuplicate(vsiEntry->papszExtra);
+    return entry;
+}
+}
+
+%rename (CloseDir) VSICloseDir;
+void VSICloseDir(VSIDIR* dir);
+
+#endif
 
 %apply Pointer NONNULL {const char * pszKey};
 void CPLSetConfigOption( const char * pszKey, const char * pszValue );
@@ -429,6 +531,29 @@ VSI_RETVAL VSIRmdirRecursive(const char *utf8_path );
 VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
 %clear (const char* pszOld);
 %clear (const char* pszNew);
+
+#if defined(SWIGPYTHON)
+%rename (Sync) wrapper_VSISync;
+
+%apply (const char* utf8_path) {(const char* pszSource)};
+%apply (const char* utf8_path) {(const char* pszTarget)};
+%feature( "kwargs" ) wrapper_VSISync;
+
+%inline {
+bool wrapper_VSISync(const char* pszSource,
+                     const char* pszTarget,
+                     char** options = NULL,
+                     GDALProgressFunc callback=NULL,
+                     void* callback_data=NULL)
+{
+    return VSISync( pszSource, pszTarget, options, callback, callback_data, nullptr );
+}
+}
+
+%clear (const char* pszSource);
+%clear (const char* pszTarget);
+
+#endif
 
 const char* VSIGetActualURL(const char * utf8_path);
 
@@ -551,6 +676,7 @@ VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int
 %}
 
 int VSIFEofL( VSILFILE* fp );
+int VSIFFlushL( VSILFILE* fp );
 
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 

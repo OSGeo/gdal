@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,8 +30,8 @@
 ###############################################################################
 
 import sys
+import pytest
 
-sys.path.append('../pymod')
 sys.path.append('../gcore')
 
 from osgeo import gdal
@@ -44,24 +44,17 @@ import test_cli_utilities
 
 def test_gdallocationinfo_1():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdallocationinfo_path() + ' ../gcore/data/byte.tif 0 0')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ret = ret.replace('\r\n', '\n')
     expected_ret = """Report:
   Location: (0P,0L)
   Band 1:
     Value: 107"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -xml
@@ -69,7 +62,7 @@ def test_gdallocationinfo_1():
 
 def test_gdallocationinfo_2():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -xml ../gcore/data/byte.tif 0 0')
     ret = ret.replace('\r\n', '\n')
@@ -78,11 +71,7 @@ def test_gdallocationinfo_2():
     <Value>107</Value>
   </BandReport>
 </Report>"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -valonly
@@ -90,15 +79,11 @@ def test_gdallocationinfo_2():
 
 def test_gdallocationinfo_3():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -b 1 -valonly ../gcore/data/byte.tif 0 0')
     expected_ret = """107"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -geoloc
@@ -106,7 +91,7 @@ def test_gdallocationinfo_3():
 
 def test_gdallocationinfo_4():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -geoloc ../gcore/data/byte.tif 440720.000 3751320.000')
     ret = ret.replace('\r\n', '\n')
@@ -114,11 +99,7 @@ def test_gdallocationinfo_4():
   Location: (0P,0L)
   Band 1:
     Value: 107"""
-    if ret.find(expected_ret) != 0:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.startswith(expected_ret)
 
 ###############################################################################
 # Test -lifonly
@@ -126,16 +107,12 @@ def test_gdallocationinfo_4():
 
 def test_gdallocationinfo_5():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -lifonly ../gcore/data/byte.vrt 0 0')
     expected_ret1 = """../gcore/data/byte.tif"""
     expected_ret2 = """../gcore/data\\byte.tif"""
-    if ret.find(expected_ret1) < 0 and ret.find(expected_ret2) < 0:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert expected_ret1 in ret or expected_ret2 in ret
 
 ###############################################################################
 # Test -overview
@@ -143,7 +120,7 @@ def test_gdallocationinfo_5():
 
 def test_gdallocationinfo_6():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/test_gdallocationinfo_6.tif', src_ds)
@@ -155,27 +132,8 @@ def test_gdallocationinfo_6():
 
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdallocationinfo_6.tif')
     expected_ret = """Value: 130"""
-    if ret.find(expected_ret) < 0:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert expected_ret in ret
 
 
-gdaltest_list = [
-    test_gdallocationinfo_1,
-    test_gdallocationinfo_2,
-    test_gdallocationinfo_3,
-    test_gdallocationinfo_4,
-    test_gdallocationinfo_5,
-    test_gdallocationinfo_6,
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdallocationinfo')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

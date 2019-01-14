@@ -3265,10 +3265,10 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
   }
 
   /*
-  ** We do not want to interfere with warnings or debug messages since
+  ** We do not want to interfere with non-failure messages since
   ** they won't be translated into exceptions.
   */
-  else if (eclass == CE_Warning || eclass == CE_Debug ) {
+  else if (eclass != CE_Failure ) {
     pfnPreviousHandler(eclass, code, msg );
   }
   else {
@@ -3296,8 +3296,9 @@ void UseExceptions() {
                    CPLGetConfigOption("__chain_python_error_handlers", "")));
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
+    // if the previous logger was custom, we need the user data available
     pfnPreviousHandler =
-        CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
+        CPLSetErrorHandlerEx( (CPLErrorHandler) PythonBindingErrorHandler, CPLGetErrorHandlerUserData() );
   }
 }
 
@@ -3321,7 +3322,8 @@ void DontUseExceptions() {
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
     bUseExceptions = 0;
-    CPLSetErrorHandler( pfnPreviousHandler );
+    // if the previous logger was custom, we need the user data available. Preserve it.
+    CPLSetErrorHandlerEx( pfnPreviousHandler, CPLGetErrorHandlerUserData());
   }
 }
 
@@ -4758,6 +4760,7 @@ SWIGINTERN int OGRFeatureDefnShadow_IsSame(OGRFeatureDefnShadow *self,OGRFeature
             case OFSTBoolean:
             case OFSTInt16:
             case OFSTFloat32:
+            case OFSTJSON:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field subtype value");
@@ -6452,6 +6455,17 @@ SWIGINTERN PyObject *OFSTFloat32_swigconstant(PyObject *SWIGUNUSEDPARM(self), Py
   d = PyModule_GetDict(module);
   if (!d) return NULL;
   SWIG_Python_SetConstant(d, "OFSTFloat32",SWIG_From_int(static_cast< int >(3)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *OFSTJSON_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OFSTJSON",SWIG_From_int(static_cast< int >(4)));
   return SWIG_Py_Void();
 }
 
@@ -30730,6 +30744,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"OFSTBoolean_swigconstant", OFSTBoolean_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OFSTInt16_swigconstant", OFSTInt16_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OFSTFloat32_swigconstant", OFSTFloat32_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"OFSTJSON_swigconstant", OFSTJSON_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OJUndefined_swigconstant", OJUndefined_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OJLeft_swigconstant", OJLeft_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OJRight_swigconstant", OJRight_swigconstant, METH_VARARGS, NULL},

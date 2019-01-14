@@ -1,0 +1,78 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<n1:Level-2A_Tile_ID xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-2A_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-2A_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.10.03/scripts/../../../schemas/02.12.06/PSD/S2_PDI_Level-2A_Tile_Metadata.xsd">
+  <n1:General_Info>
+    <TILE_ID_2A metadataLevel="Brief">S2A_USER_MSI_L2A_TL_SGS__20170823T133142_A011330_T34VFJ_N02.05</TILE_ID_2A>
+    <DATASTRIP_ID_2A metadataLevel="Standard">S2A_USER_MSI_L2A_DS_SGS__20170823T133142_S20170823T094252_N02.05</DATASTRIP_ID_2A>
+    <DOWNLINK_PRIORITY metadataLevel="Standard">NOMINAL</DOWNLINK_PRIORITY>
+    <SENSING_TIME metadataLevel="Standard">2017-08-23T09:42:52.161Z</SENSING_TIME>
+    <Archiving_Info metadataLevel="Expertise">
+      <ARCHIVING_CENTRE>SGS_</ARCHIVING_CENTRE>
+      <ARCHIVING_TIME>2017-08-23T14:08:32.325838Z</ARCHIVING_TIME>
+    </Archiving_Info>
+  </n1:General_Info>
+  <n1:Geometric_Info>
+    <Tile_Geocoding metadataLevel="Brief">
+      <HORIZONTAL_CS_NAME>WGS84 / UTM zone 34N</HORIZONTAL_CS_NAME>
+      <HORIZONTAL_CS_CODE>EPSG:32634</HORIZONTAL_CS_CODE>
+      <Size resolution="10">
+        <NROWS>10980</NROWS>
+        <NCOLS>10980</NCOLS>
+      </Size>
+      <Size resolution="20">
+        <NROWS>5490</NROWS>
+        <NCOLS>5490</NCOLS>
+      </Size>
+      <Size resolution="60">
+        <NROWS>1830</NROWS>
+        <NCOLS>1830</NCOLS>
+      </Size>
+      <Geoposition resolution="10">
+        <ULX>600000</ULX>
+        <ULY>6400020</ULY>
+        <XDIM>10</XDIM>
+        <YDIM>-10</YDIM>
+      </Geoposition>
+      <Geoposition resolution="20">
+        <ULX>600000</ULX>
+        <ULY>6400020</ULY>
+        <XDIM>20</XDIM>
+        <YDIM>-20</YDIM>
+      </Geoposition>
+      <Geoposition resolution="60">
+        <ULX>600000</ULX>
+        <ULY>6400020</ULY>
+        <XDIM>60</XDIM>
+        <YDIM>-60</YDIM>
+      </Geoposition>
+    </Tile_Geocoding>
+  </n1:Geometric_Info>
+  <n1:Quality_Indicators_Info metadataLevel="Standard">
+    <L1C_Image_Content_QI>
+      <CLOUDY_PIXEL_PERCENTAGE>86.3421</CLOUDY_PIXEL_PERCENTAGE>
+      <DEGRADED_MSI_DATA_PERCENTAGE>0</DEGRADED_MSI_DATA_PERCENTAGE>
+    </L1C_Image_Content_QI>
+    <L2A_Image_Content_QI>
+      <NODATA_PIXEL_PERCENTAGE>0.000000</NODATA_PIXEL_PERCENTAGE>
+      <SATURATED_DEFECTIVE_PIXEL_PERCENTAGE>0.000000</SATURATED_DEFECTIVE_PIXEL_PERCENTAGE>
+      <DARK_FEATURES_PERCENTAGE>1.058892</DARK_FEATURES_PERCENTAGE>
+      <CLOUD_SHADOW_PERCENTAGE>4.194147</CLOUD_SHADOW_PERCENTAGE>
+      <VEGETATION_PERCENTAGE>5.036503</VEGETATION_PERCENTAGE>
+      <BARE_SOILS_PERCENTAGE>0.448578</BARE_SOILS_PERCENTAGE>
+      <WATER_PERCENTAGE>2.938666</WATER_PERCENTAGE>
+      <LOW_PROBA_CLOUDS_PERCENTAGE>1.662363</LOW_PROBA_CLOUDS_PERCENTAGE>
+      <MEDIUM_PROBA_CLOUDS_PERCENTAGE>28.919381</MEDIUM_PROBA_CLOUDS_PERCENTAGE>
+      <HIGH_PROBA_CLOUDS_PERCENTAGE>36.154309</HIGH_PROBA_CLOUDS_PERCENTAGE>
+      <THIN_CIRRUS_PERCENTAGE>19.373934</THIN_CIRRUS_PERCENTAGE>
+      <CLOUD_COVERAGE_PERCENTAGE>84.447624</CLOUD_COVERAGE_PERCENTAGE>
+      <SNOW_ICE_PERCENTAGE>0.213228</SNOW_ICE_PERCENTAGE>
+      <RADIATIVE_TRANSFER_ACCURAY>0.0</RADIATIVE_TRANSFER_ACCURAY>
+      <WATER_VAPOUR_RETRIEVAL_ACCURACY>0.0</WATER_VAPOUR_RETRIEVAL_ACCURACY>
+      <AOT_RETRIEVAL_ACCURACY>0.0</AOT_RETRIEVAL_ACCURACY>
+    </L2A_Image_Content_QI>
+    <L2A_Pixel_Level_QI>
+      <CLOUD_CONFIDENCE_MASK>L2A_T34VFJ_20170823T094031_CLD</CLOUD_CONFIDENCE_MASK>
+      <SNOW_ICE_CONFIDENCE_MASK>L2A_T34VFJ_20170823T094031_SNW</SNOW_ICE_CONFIDENCE_MASK>
+    </L2A_Pixel_Level_QI>
+    <PVI_FILENAME>L2A_T34VFJ_20170823T094031_PVI</PVI_FILENAME>
+  </n1:Quality_Indicators_Info>
+</n1:Level-2A_Tile_ID>

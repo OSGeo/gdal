@@ -140,7 +140,9 @@ http://trac.osgeo.org/gdal/wiki/NewsAndStatus .
 the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 ( procedure taken from http://peterdowns.com/posts/first-time-with-pypi.html )
 
-a) Create a $HOME/.pypirc file :
+a) Install twine https://pypi.org/project/twine/
+
+b) Create a $HOME/.pypirc file :
 
 [distutils] # this tells distutils what package indexes you can push to
 index-servers = pypi
@@ -156,13 +158,15 @@ repository: https://test.pypi.org/legacy/
 username: yourlogin
 password: yourpassword
 
-b) cd swig/python
+c) cd swig/python
 
-c) For trial :
-    python setup.py sdist upload -r pypitest
+d) python setup.py sdist
 
-d) For real :
-    python setup.py sdist upload -r pypi
+e) For trial :
+    twine upload dist/GDAL*.gz -r pypitest
+
+f) For real :
+    twine upload dist/GDAL*.gz
 
 21) Build and bundle the java bindings.
 

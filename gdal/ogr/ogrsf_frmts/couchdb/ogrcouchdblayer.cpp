@@ -285,15 +285,15 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
         {
             if ( json_object_get_type(poValue) == json_type_array )
             {
-                int nLength = json_object_array_length(poValue);
+                const auto nLength = json_object_array_length(poValue);
                 int* panVal = static_cast<int *>(
                     CPLMalloc(sizeof(int) * nLength));
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poRow = json_object_array_get_idx(poValue, i);
                     panVal[i] = json_object_get_int(poRow);
                 }
-                poFeature->SetField( nField, nLength, panVal );
+                poFeature->SetField( nField, static_cast<int>(nLength), panVal );
                 CPLFree(panVal);
             }
         }
@@ -301,15 +301,15 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
         {
             if ( json_object_get_type(poValue) == json_type_array )
             {
-                const int nLength = json_object_array_length(poValue);
+                const auto nLength = json_object_array_length(poValue);
                 double* padfVal = static_cast<double *>(
                     CPLMalloc(sizeof(double) * nLength));
-                for( int i = 0; i < nLength; i++ )
+                for( auto i = decltype(nLength){0}; i < nLength; i++ )
                 {
                     json_object* poRow = json_object_array_get_idx(poValue, i);
                     padfVal[i] = json_object_get_double(poRow);
                 }
-                poFeature->SetField( nField, nLength, padfVal );
+                poFeature->SetField( nField, static_cast<int>(nLength), padfVal );
                 CPLFree(padfVal);
             }
         }
@@ -317,10 +317,10 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
         {
             if ( json_object_get_type(poValue) == json_type_array )
             {
-                int nLength = json_object_array_length(poValue);
+                const auto nLength = json_object_array_length(poValue);
                 char** papszVal = static_cast<char **>(
                     CPLMalloc(sizeof(char*) * (nLength+1)));
-                int i = 0;  // Used after for.
+                auto i = decltype(nLength){0};  // Used after for.
                 for( ; i < nLength; i++ )
                 {
                     json_object* poRow = json_object_array_get_idx(poValue, i);
@@ -421,10 +421,10 @@ bool OGRCouchDBLayer::BuildFeatureDefnFromRows( json_object* poAnswerObj )
         return false;
     }
 
-    int nRows = json_object_array_length(poRows);
+    const auto nRows = json_object_array_length(poRows);
 
     json_object* poRow = nullptr;
-    for(int i=0;i<nRows;i++)
+    for(auto i=decltype(nRows){0};i<nRows;i++)
     {
         json_object* poTmpRow = json_object_array_get_idx(poRows, i);
         if (poTmpRow != nullptr &&
@@ -494,8 +494,8 @@ bool OGRCouchDBLayer::FetchNextRowsAnalyseDocs( json_object* poAnswerObj )
         return false;
     }
 
-    int nRows = json_object_array_length(poRows);
-    for(int i=0;i<nRows;i++)
+    const auto nRows = json_object_array_length(poRows);
+    for(auto i=decltype(nRows){0};i<nRows;i++)
     {
         json_object* poRow = json_object_array_get_idx(poRows, i);
         if ( poRow == nullptr ||
@@ -527,7 +527,7 @@ bool OGRCouchDBLayer::FetchNextRowsAnalyseDocs( json_object* poAnswerObj )
         }
     }
 
-    bEOF = nRows < GetFeaturesToFetch();
+    bEOF = static_cast<int>(nRows) < GetFeaturesToFetch();
 
     poFeatures = poAnswerObj;
 

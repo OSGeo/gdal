@@ -16,7 +16,7 @@ as a vector layer, using Google Earth Engine REST API.<p>
 
 The minimal syntax to open a datasource is : <pre>EEDA:[collection]</pre><p>
 
-where collection is something like COPERNICUS/S2.
+where collection is something like projects/earthengine-public/assets/COPERNICUS/S2.
 
 <h2>Open options</h2>
 
@@ -24,6 +24,24 @@ The following open options are available :
 <ul>
 <li><b>COLLECTION</b>=string: To specify the collection if not specified in
 the connection string.</li>
+</ul>
+
+<h2>Authentication methods</h2>
+
+The following authentication methods can be used:
+<ul>
+<li>Authentication Bearer header passed through the EEDA_BEARER or
+EEDA_BEARER_FILE configuration options.</li>
+<li>Service account private key file, through the GOOGLE_APPLICATION_CREDENTIALS
+configuration option.</li>
+<li>OAuth2 Service Account authentication through the EEDA_PRIVATE_KEY/
+EEDA_PRIVATE_KEY_FILE + EEDA_CLIENT_EMAIL configuration options.</li>
+<li>Finally if none of the above method succeeds, the code
+will check if the current machine is a Google Compute Engine instance, and
+if so will use the permissions associated to it (using the default service
+account associated with the VM). To force a machine to be detected as a GCE instance
+(for example for code running in a container with no access to the boot logs), you
+can set CPL_MACHINE_IS_GCE to YES.</li>
 </ul>
 
 <h2>Configuration options</h2>
@@ -36,6 +54,8 @@ bearer validity is typically one hour from the time where it as been requested.<
 <li><b>EEDA_BEARER_FILE</b>=filename: Similar to EEDA_BEARER option, except than
 instead of passing the value directly, it is the filename where the value should
 be read.</li>
+<li><b>GOOGLE_APPLICATION_CREDENTIALS</b>=file.json: Service account private key
+file that contains a private key and client email</li>
 <li><b>EEDA_PRIVATE_KEY</b>=string: RSA private key encoded as a PKCS#8 PEM file,
 with its header and footer.
 Used together with EEDA_CLIENT_EMAIL to use OAuth2 Service Account authentication.
@@ -52,7 +72,7 @@ EEDA_PRIVATE_KEY/EEDA_PRIVATE_KEY_FILE to use OAuth2 Service Account authenticat
 <p>The layer field definition is built by requesting a single image from the
 collection and guessing the schema from its "properties" element. The "eedaconf.json"
 file from the GDAL configuration will also be read to check if the collection
-schema is described in it, in which case the above mentionned schema guessing
+schema is described in it, in which case the above mentioned schema guessing
 will not done.</p>
 
 <p>The following attributes will always be present:</p>
@@ -65,8 +85,10 @@ will not done.</p>
 <th>Server-side filter compatible</th>
 </tr>
 
-<tr><td>path</td><td>String</td><td>Image path (e.g. COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)</td><td>No</td></tr>
-<tr><td>gdal_dataset</td><td>String</td><td>GDAL dataset name (e.g. EEDAI:COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)<br/>hat can be opened with the <a href="frmt_eedai.html">Google Earth Engine Data API Image driver</a></td><td>No</td></tr>
+<tr><td>name</td><td>String</td><td>Image name (e.g. projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)</td><td>No</td></tr>
+<tr><td>id</td><td>String</td><td>Image ID; equivalent to name without the "projects/*/assets/" prefix (e.g. users/USER/ASSET)</td><td>No</td></tr>
+<tr><td>path</td><td>String</td><td>(Deprecated) Image path; equivalent to id</td><td>No</td></tr>
+<tr><td>gdal_dataset</td><td>String</td><td>GDAL dataset name (e.g. EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)<br/>that can be opened with the <a href="frmt_eedai.html">Google Earth Engine Data API Image driver</a></td><td>No</td></tr>
 <tr><td>time</td><td>DateTime</td><td>Acquisition date</td><td><b>Yes</b></td></tr>
 <tr><td>updateTime</td><td>DateTime</td><td>Update date</td><td>No</td></tr>
 <tr><td>sizeBytes</td><td>Integer64</td><td>File size in bytes</td><td>No</td></tr>
@@ -114,25 +136,25 @@ server.
 <li>
 Listing all images available:
 <pre>
-ogrinfo -ro -al "EEDA:" -oo COLLECTION=COPERNICUS/S2 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:" -oo COLLECTION=projects/earthengine-public/assets/COPERNICUS/S2 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 or
 <pre>
-ogrinfo -ro -al "EEDA:COPERNICUS/S2" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 
 <li>
 Listing all images under a point of (lat,lon)=(40,-100) :
 <pre>
-ogrinfo -ro -al "EEDA:COPERNICUS/S2" -spat -100 40 -100 40 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -spat -100 40 -100 40 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 
 <li>
 Listing all images available matching criteria :
 <pre>
-ogrinfo -ro -al "EEDA:COPERNICUS/S2" -where "time &gt;= '2015/03/26 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE &lt; 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -where "time &gt;= '2015/03/26 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE &lt; 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 

@@ -534,12 +534,11 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
     }
     if (poGrid != nullptr && json_object_is_type(poGrid, json_type_array))
     {
-        int nLines;
         int nFactor;
         json_object* poRow;
         char* pszRow = nullptr;
 
-        nLines = json_object_array_length(poGrid);
+        const auto nLines = json_object_array_length(poGrid);
         if (nLines == 0)
             goto end;
 

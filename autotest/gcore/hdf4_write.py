@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -25,51 +25,39 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
-
-sys.path.append('../pymod')
-
+import pytest
 import gdaltest
 
 init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, None),
-    ('uint16.tif', 1, 4672, None),
-    ('int32.tif', 1, 4672, None),
-    ('uint32.tif', 1, 4672, None),
-    ('float32.tif', 1, 4672, None),
-    ('float64.tif', 1, 4672, None),
-    ('utmsmall.tif', 1, 50054, None)]
+    ('byte.tif', 4672),
+    ('int16.tif', 4672),
+    ('uint16.tif', 4672),
+    ('int32.tif', 4672),
+    ('uint32.tif', 4672),
+    ('float32.tif', 4672),
+    ('float64.tif', 4672),
+    ('utmsmall.tif', 50054)
+]
 
-gdaltest_list = []
 
-for item in init_list:
-    ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2],
-                           options=['RANK=3'])
-    if ut is None:
-        print('HDF4 tests skipped')
-    gdaltest_list.append((ut.testCreateCopy, item[0] + " rank=3"))
-    gdaltest_list.append((ut.testCreate, item[0] + " rank=3"))
-    gdaltest_list.append((ut.testSetGeoTransform, item[0] + " rank=3"))
-    gdaltest_list.append((ut.testSetProjection, item[0] + " rank=3"))
-    gdaltest_list.append((ut.testSetMetadata, item[0] + " rank=3"))
-    gdaltest_list.append((ut.testSetNoDataValue, item[0] + " rank=3"))
-    gdaltest_list.append((ut.testSetDescription, item[0] + " rank=3"))
-    ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2],
-                           options=['RANK=2'])
-    if ut is None:
-        print('HDF4 tests skipped')
-    gdaltest_list.append((ut.testCreateCopy, item[0] + " rank=2"))
-    gdaltest_list.append((ut.testSetGeoTransform, item[0] + " rank=2"))
-    gdaltest_list.append((ut.testSetProjection, item[0] + " rank=2"))
-    gdaltest_list.append((ut.testSetMetadata, item[0] + " rank=2"))
-    gdaltest_list.append((ut.testSetNoDataValue, item[0] + " rank=2"))
-    gdaltest_list.append((ut.testSetDescription, item[0] + " rank=2"))
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hdf_write')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()
+@pytest.mark.parametrize(
+    'rank', [2, 3], ids=lambda x: 'rank%d' % x
+)
+@pytest.mark.parametrize(
+    'filename,checksum', init_list, ids=[arg[0].split('.')[0] for arg in init_list]
+)
+@pytest.mark.parametrize(
+    'testfunction', [
+        'testCreateCopy',
+        'testCreate',
+        'testSetGeoTransform',
+        'testSetProjection',
+        'testSetMetadata',
+        'testSetNoDataValue',
+        'testSetDescription',
+    ]
+)
+@pytest.mark.require_driver('HDF4Image')
+def test_hdf4_write(filename, checksum, testfunction, rank):
+    ut = gdaltest.GDALTest('HDF4Image', filename, 1, checksum, options=['RANK=%d' % rank])
+    getattr(ut, testfunction)()

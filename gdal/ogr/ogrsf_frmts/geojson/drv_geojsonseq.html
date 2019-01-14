@@ -1,0 +1,68 @@
+<html>
+<head>
+<title>GeoJSONSeq</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GeoJSONSeq: sequence of GeoJSON features</h1>
+
+<p>Starting with GDAL 2.4</p>
+
+<p>This driver implements read/creation support for features encoded individually
+as <a href="http://geojson.org/">GeoJSON</a> Feature objects,
+separated by newline (LF)
+(<a href="http://ndjson.org/">Newline Delimited JSON</a>) or
+record-separator (RS) characters
+(<a href="https://tools.ietf.org/html/rfc8142">RFC 8142</a> standard:
+GeoJSON Text Sequences)
+</p>
+
+<p>Such files are equivalent to a GeoJSON FeatureCollection, but are more
+friendly for incremental parsing.</p>
+
+<h2>Datasource</h2>
+
+<p>The driver accepts three types of sources of data:</p>
+<ul>
+<li>Uniform Resource Locator (<a href="http://en.wikipedia.org/wiki/URL">URL</a>) - a Web address to
+perform <a href="http://en.wikipedia.org/wiki/HTTP">HTTP</a> request</li>
+<li>Plain text file with GeoJSON data - identified from the file extension .geojsonl or .geojsons</li>
+<li>Text passed directly as filename, and encoded as GeoJSON sequences</li>
+</ul>
+
+The URL/filename/text might be prefixed with GeoJSONSeq: to avoid any ambiguity with other drivers.
+
+<h2>Layer creation options</h2>
+
+<ul>
+<li><b>RS</b>=YES/NO: whether to start records with the RS=0x1E character, so as to
+be compatible with the <a href="https://tools.ietf.org/html/rfc8142">RFC 8142</a> standard.
+Defaults to NO, unless the filename extension is "geojsons"</li>
+<li><b>COORDINATE_PRECISION</b> = int_number:  Maximum number of figures after decimal separator to write in coordinates.
+Default to 7. "Smart" truncation will occur to remove trailing zeros.</li>
+<li><b>SIGNIFICANT_FIGURES</b> = int_number: Maximum number of significant figures when writing floating-point numbers.
+Default to 17. If explicitly specified, and COORDINATE_PRECISION is not, this will also apply to coordinates.</li>
+<li><b>ID_FIELD</b>=string. Name of the source field that must be
+written as the 'id' member of Feature objects.</li>
+<li><b>ID_TYPE</b>=AUTO/String/Integer. Type of the 'id'
+memer of Feature objects.</li>
+</ul>
+
+<h2>See Also</h2>
+
+<p>
+<ul>
+<li><a href="drv_geojson.html">GeoJSON driver</a></li>
+<li><a href="https://tools.ietf.org/html/rfc7946">RFC 7946</a> standard:
+the GeoJSON Format.</li>
+<li><a href="https://tools.ietf.org/html/rfc8142">RFC 8142</a> standard:
+GeoJSON Text Sequences (RS separator)</li>
+<li><a href="http://ndjson.org/">Newline Delimited JSON</a></li>
+<li><a href="https://www.interline.io/blog/geojsonl-extracts/">GeoJSONL</a>:
+An optimized format for large geographic datasets</li>
+</ul>
+</p>
+
+</body>
+</html>

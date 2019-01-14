@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -26,37 +26,36 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Open DODS datasource.
 
 
-def ogr_dods_1():
+@pytest.mark.skip()
+def test_ogr_dods_1():
     gdaltest.dods_ds = None
     ogrtest.dods_drv = ogr.GetDriverByName('DODS')
 
     if ogrtest.dods_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('DODS_AIS_FILE', 'data/ais.xml')
 
     srv = 'http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp?&_id=1'
     if gdaltest.gdalurlopen(srv) is None:
         gdaltest.dods_ds = None
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_ds = ogr.Open('DODS:' + srv)
 
-    if gdaltest.dods_ds is None:
-        return 'fail'
+    assert gdaltest.dods_ds is not None
 
     try:
         gdaltest.dods_profiles = gdaltest.dods_ds.GetLayerByName('profiles')
@@ -68,61 +67,52 @@ def ogr_dods_1():
 
     if gdaltest.dods_profiles is None:
         gdaltest.dods_ds = None
-        gdaltest.post_reason('profiles layer missing, likely AIS stuff not working.')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('profiles layer missing, likely AIS stuff not working.')
+    
 ###############################################################################
 # Read a single feature from the profiles layer and verify a few things.
 #
 
 
-def ogr_dods_2():
+@pytest.mark.skip()
+def test_ogr_dods_2():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_profiles.ResetReading()
     feat = gdaltest.dods_profiles.GetNextFeature()
 
-    if feat.GetField('time') != -1936483200000:
-        gdaltest.post_reason('time wrong')
-        return 'fail'
+    assert feat.GetField('time') == -1936483200000, 'time wrong'
 
-    if feat.GetField('profile.depth') != [0, 10, 20, 30, 39]:
-        gdaltest.post_reason('depth wrong')
-        return 'fail'
+    assert feat.GetField('profile.depth') == [0, 10, 20, 30, 39], 'depth wrong'
 
-    if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-            != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)') == 0
 
     feat.Destroy()
 
     feat = gdaltest.dods_profiles.GetNextFeature()
     if feat is not None:
         feat.Destroy()
-        gdaltest.post_reason('got more than expected number of features.')
-        return 'fail'
+        pytest.fail('got more than expected number of features.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read the normalized form of the same profile, and verify some values.
 #
 
 
-def ogr_dods_3():
+@pytest.mark.skip()
+def test_ogr_dods_3():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_normalized.ResetReading()
     expect = [0, 10, 20, 30, 39]
     tr = ogrtest.check_features_against_list(gdaltest.dods_normalized,
                                              'depth', expect)
-    if tr == 0:
-        return 'fail'
+    assert tr != 0
 
     expected = [14.8100004196167, 14.8100004196167, 14.8100004196167, 14.60999965667725, 14.60999965667725]
 
@@ -130,17 +120,11 @@ def ogr_dods_3():
     for i in range(5):
         feat = gdaltest.dods_normalized.GetNextFeature()
 
-        if feat.GetField('time') != -1936483200000:
-            gdaltest.post_reason('time wrong')
-            return 'fail'
+        assert feat.GetField('time') == -1936483200000, 'time wrong'
 
-        if abs(feat.GetField('T_20') - expected[i]) > 0.001:
-            gdaltest.post_reason('T_20 wrong')
-            return 'fail'
+        assert abs(feat.GetField('T_20') - expected[i]) <= 0.001, 'T_20 wrong'
 
-        if ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)')\
-                != 0:
-            return 'fail'
+        assert ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)') == 0
 
         feat.Destroy()
         feat = None
@@ -148,107 +132,76 @@ def ogr_dods_3():
     feat = gdaltest.dods_normalized.GetNextFeature()
     if feat is not None:
         feat.Destroy()
-        gdaltest.post_reason('got more than expected number of features.')
-        return 'fail'
+        pytest.fail('got more than expected number of features.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read the "lines" from from the same server and verify some values.
 #
 
 
-def ogr_dods_4():
+@pytest.mark.skip()
+def test_ogr_dods_4():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_lines.ResetReading()
     feat = gdaltest.dods_lines.GetNextFeature()
 
-    if feat.GetField('time') != -1936483200000:
-        gdaltest.post_reason('time wrong')
-        return 'fail'
+    assert feat.GetField('time') == -1936483200000, 'time wrong'
 
-    if feat.GetField('profile.depth') != [0, 10, 20, 30, 39]:
-        gdaltest.post_reason('depth wrong')
-        return 'fail'
+    assert feat.GetField('profile.depth') == [0, 10, 20, 30, 39], 'depth wrong'
 
     wkt_geom = 'LINESTRING (0.00000000 14.81000042,10.00000000 14.81000042,20.00000000 14.81000042,30.00000000 14.60999966,39.00000000 14.60999966)'
 
-    if ogrtest.check_feature_geometry(feat, wkt_geom) != 0:
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, wkt_geom) == 0, \
+        feat.GetGeometryRef().ExportToWkt()
 
     feat.Destroy()
 
     feat = gdaltest.dods_lines.GetNextFeature()
     if feat is not None:
         feat.Destroy()
-        gdaltest.post_reason('got more than expected number of features.')
-        return 'fail'
+        pytest.fail('got more than expected number of features.')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Simple 1D Grid.
 #
 
-def ogr_dods_5():
+@pytest.mark.skip()
+def test_ogr_dods_5():
 
     if ogrtest.dods_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srv = 'http://uhslc1.soest.hawaii.edu/cgi-bin/nph-nc/fast/m004.nc.dds'
     if gdaltest.gdalurlopen(srv) is None:
-        return 'skip'
+        pytest.skip()
 
     grid_ds = ogr.Open('DODS:' + srv)
-    if grid_ds is None:
-        return 'fail'
+    assert grid_ds is not None
 
     lat_lyr = grid_ds.GetLayerByName('latitude')
 
     expect = [-0.53166663646698]
     tr = ogrtest.check_features_against_list(lat_lyr, 'latitude', expect)
-    if tr == 0:
-        return 'fail'
-
-    return 'success'
+    assert tr != 0
 
 ###############################################################################
 #
 
 
-def ogr_dods_cleanup():
+@pytest.mark.skip()
+def test_ogr_dods_cleanup():
 
     if gdaltest.dods_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.dods_profiles = None
     gdaltest.dods_lines = None
     gdaltest.dods_normalized = None
     gdaltest.dods_ds.Destroy()
     gdaltest.dods_ds = None
-
-    return 'success'
-
-
-gdaltest_list = []
-
-manual_gdaltest_list = [
-    ogr_dods_1,
-    ogr_dods_2,
-    ogr_dods_3,
-    ogr_dods_4,
-    ogr_dods_5,
-    ogr_dods_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_dods')
-
-    gdaltest.run_tests(manual_gdaltest_list)
-
-    gdaltest.summarize()

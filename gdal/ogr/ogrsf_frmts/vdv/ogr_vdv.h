@@ -42,14 +42,17 @@ class OGRVDVDataSource;
 
 class OGRIDFDataSource : public GDALDataset
 {
+    CPLString           m_osFilename;
     VSILFILE*           m_fpL;
     bool                m_bHasParsed;
-    GDALDataset        *m_poMemDS;
+    GDALDataset        *m_poTmpDS;
+    bool                m_bDestroyTmpDS = false;
 
     void                Parse();
 
   public:
-    explicit            OGRIDFDataSource(VSILFILE* fpL);
+    explicit            OGRIDFDataSource(const char* pszFilename,
+                                         VSILFILE* fpL);
                         virtual ~OGRIDFDataSource();
 
     virtual int                 GetLayerCount() override;

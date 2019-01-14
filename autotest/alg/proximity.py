@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,19 +28,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fairly default case.
 
 
-def proximity_1():
+def test_proximity_1():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/pat.tif')
@@ -63,15 +61,13 @@ def proximity_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Try several options
 
 
-def proximity_2():
+def test_proximity_2():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/pat.tif')
@@ -98,15 +94,13 @@ def proximity_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Try input nodata option
 
 
-def proximity_3():
+def test_proximity_3():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('data/pat.tif')
@@ -133,21 +127,7 @@ def proximity_3():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
+        pytest.fail('got wrong checksum')
+    
 
 
-gdaltest_list = [
-    proximity_1,
-    proximity_2,
-    proximity_3
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('proximity')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

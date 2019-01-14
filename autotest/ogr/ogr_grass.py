@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,68 +28,45 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
 # Test if GRASS driver is present
 
-def ogr_grass_1():
+def test_ogr_grass_1():
 
     gdaltest.ogr_grass_drv = ogr.GetDriverByName('GRASS')
     if gdaltest.ogr_grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Read 'point' datasource
 
 
-def ogr_grass_2():
+def test_ogr_grass_2():
 
     if gdaltest.ogr_grass_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('./data/PERMANENT/vector/point/head')
-    if ds is None:
-        gdaltest.post_reason('Cannot open datasource')
-        return 'fail'
+    assert ds is not None, 'Cannot open datasource'
 
     lyr = ds.GetLayerByName('1')
-    if lyr is None:
-        gdaltest.post_reason('Cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'Cannot find layer'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 0)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (0 0)'
 
-    if feat.GetFieldAsString('name') != 'my point':
-        print(feat.GetFieldAsString('name'))
-        return 'fail'
+    assert feat.GetFieldAsString('name') == 'my point'
 
     ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_grass_1,
-    ogr_grass_2
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('GRASS')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

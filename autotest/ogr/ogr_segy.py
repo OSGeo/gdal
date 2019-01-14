@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,127 +28,71 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Read SEG-Y
 
 
-def ogr_segy_1():
+def test_ogr_segy_1():
 
     ds = ogr.Open('data/segy/testsegy.segy')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.TestCapability("foo") == 0
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
-    if lyr.GetLayerDefn().GetFieldCount() != 71:
-        gdaltest.post_reason('fail')
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 71
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT (500000 4500000)',
                                       max_error=0.0000001) != 0:
-        print('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert feat is None
 
     lyr = ds.GetLayer(1)
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbNone, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
-    if lyr.GetLayerDefn().GetFieldCount() != 32:
-        gdaltest.post_reason('fail')
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 32
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert feat is not None
 
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert feat is None
 
 ###############################################################################
 # Read ASCII header SEG-Y
 
 
-def ogr_segy_2():
+def test_ogr_segy_2():
     ds = ogr.Open('data/segy/ascii-header-with-nuls.sgy')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
-
-    # TODO(schwehr): Test the values of fields and data.
-
-    return 'success'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
 
-gdaltest_list = [
-    ogr_segy_1,
-    ogr_segy_2,
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_segy')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

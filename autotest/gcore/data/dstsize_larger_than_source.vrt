@@ -1,0 +1,14 @@
+<VRTDataset rasterXSize="3476" rasterYSize="5828">
+  <SRS>PROJCS["WGS 84 / UTM zone 11N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","32611"]]</SRS>
+  <GeoTransform>  1.3468857985001034e+05,  5.0009600968988252e+01,  0.0000000000000000e+00,  4.0103732789101200e+06,  0.0000000000000000e+00, -5.0009600968988252e+01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">dstsize_larger_than_source.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="528" RasterYSize="528" DataType="Byte" BlockXSize="528" BlockYSize="15" />
+      <SrcRect xOff="0" yOff="0" xSize="528" ySize="528" />
+      <DstRect xOff="27.9291767207669" yOff="4736.24196374206" xSize="528.428209166479" ySize="528.428209166479" />
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>

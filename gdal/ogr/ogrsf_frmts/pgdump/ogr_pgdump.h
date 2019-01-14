@@ -112,6 +112,7 @@ class OGRPGDumpLayer : public OGRLayer
     int                 nForcedSRSId;
     int                 nForcedGeometryTypeFlags;
     bool                bCreateSpatialIndexFlag;
+    CPLString           osSpatialIndexType;
     int                 nPostGISMajor;
     int                 nPostGISMinor;
 
@@ -175,8 +176,9 @@ class OGRPGDumpLayer : public OGRLayer
                                 { nForcedSRSId = nForcedSRSIdIn; }
     void                SetForcedGeometryTypeFlags( int GeometryTypeFlagsIn )
                                 { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
-    void                SetCreateSpatialIndexFlag( bool bFlag )
-                                { bCreateSpatialIndexFlag = bFlag; }
+    void                SetCreateSpatialIndex( bool bFlag, const char* pszSpatialIndexType )
+                                { bCreateSpatialIndexFlag = bFlag;
+                                  osSpatialIndexType = pszSpatialIndexType; }
     void                SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)
                                 { nPostGISMajor = nPostGISMajorIn; nPostGISMinor = nPostGISMinorIn; }
     void                SetGeometryFieldName( const char* pszGeomFieldName )

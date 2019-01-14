@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,20 +29,18 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 
 from osgeo import gdal
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test a trivial case.
 
 
-def reproject_1():
+def test_reproject_1():
 
     drv = gdal.GetDriverByName('GTiff')
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -62,15 +60,13 @@ def reproject_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Test a real reprojection case.
 
 
-def reproject_2():
+def test_reproject_2():
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32611)
@@ -95,15 +91,13 @@ def reproject_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Test nodata values
 
 
-def reproject_3():
+def test_reproject_3():
 
     data = '\x02\x7f\x7f\x02\x02\x7f\x7f\x02\x02\x7f\x7f\x02'
     src_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
@@ -120,18 +114,15 @@ def reproject_3():
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0, 0, 6, 3).decode('latin1')
     expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
-        gdaltest.post_reason('fail')
         import struct
-        print(struct.unpack('B' * 18, got_data))
-        return 'fail'
+        pytest.fail(struct.unpack('B' * 18, got_data))
 
-    return 'success'
-
+    
 ###############################################################################
 # Test warp options
 
 
-def reproject_4():
+def test_reproject_4():
 
     data = '\x02\x7f\x7f\x02\x02\x7f\x7f\x02\x02\x7f\x7f\x02'
     src_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
@@ -147,25 +138,9 @@ def reproject_4():
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0, 0, 6, 3).decode('latin1')
     expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
-        gdaltest.post_reason('fail')
         import struct
-        print(struct.unpack('B' * 18, got_data))
-        return 'fail'
+        pytest.fail(struct.unpack('B' * 18, got_data))
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    reproject_1,
-    reproject_2,
-    reproject_3,
-    reproject_4
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('reproject')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

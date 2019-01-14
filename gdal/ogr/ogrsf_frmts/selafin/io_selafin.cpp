@@ -617,6 +617,11 @@ namespace Selafin {
                 delete poHeader;
                 return nullptr;
             }
+            if( poHeader->nPoints != 0 && poHeader->paadfCoords[i] == nullptr )
+            {
+                delete poHeader;
+                return nullptr;
+            }
             for (int j=0;j<poHeader->nPoints;++j) poHeader->paadfCoords[i][j]+=poHeader->adfOrigin[i];
         }
         // Update the boundinx box

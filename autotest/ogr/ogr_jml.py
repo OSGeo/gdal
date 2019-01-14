@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,17 +29,16 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 
-def ogr_jml_init():
+def test_ogr_jml_init():
 
     ds = ogr.Open('data/test.jml')
 
@@ -49,30 +48,21 @@ def ogr_jml_init():
         gdaltest.jml_read_support = 1
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test reading
 
 
-def ogr_jml_1():
+def test_ogr_jml_1():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/test.jml')
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayer(1) is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.TestCapability(ogr.ODsCCreateLayer) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.TestCapability(ogr.ODsCDeleteLayer) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetLayerCount() == 1
+    assert ds.GetLayer(1) is None
+    assert ds.TestCapability(ogr.ODsCCreateLayer) == 0
+    assert ds.TestCapability(ogr.ODsCDeleteLayer) == 0
     lyr = ds.GetLayer(0)
     fields = [('first_property', ogr.OFTString),
               ('another_property', ogr.OFTString),
@@ -85,15 +75,10 @@ def ogr_jml_1():
               ('datetime', ogr.OFTDateTime),
               ('R_G_B', ogr.OFTString),
               ('not_ignored', ogr.OFTString)]
-    if lyr.GetLayerDefn().GetFieldCount() != len(fields):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == len(fields)
     for i, field in enumerate(fields):
         field_defn = lyr.GetLayerDefn().GetFieldDefn(i)
-        if field_defn.GetName() != field[0] or field_defn.GetType() != field[1]:
-            print(i)
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert field_defn.GetName() == field[0] and field_defn.GetType() == field[1], i
     feat = lyr.GetNextFeature()
     if feat.GetField('first_property') != 'even' or \
        feat.GetField('another_property') != 'rouault' or \
@@ -109,8 +94,7 @@ def ogr_jml_1():
        feat.GetStyleString() != 'BRUSH(fc:#0000FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 10,10 10,10 0,0 0))':
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('datetime') != '2014/10/18 21:36:45+02' or \
@@ -118,22 +102,19 @@ def ogr_jml_1():
        feat.GetStyleString() != 'PEN(c:#FF00FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POINT (-1 -1)':
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creating a file
 
 
-def ogr_jml_2():
+def test_ogr_jml_2():
 
     # Invalid filename
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -152,7 +133,7 @@ def ogr_jml_2():
     data = gdal.VSIFReadL(1, 1000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data != """<?xml version='1.0' encoding='UTF-8'?>
+    assert data == """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -170,10 +151,7 @@ def ogr_jml_2():
   </gml:boundedBy>
 </featureCollection>
 </JCSDataFile>
-""":
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+"""
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -192,29 +170,17 @@ def ogr_jml_2():
     with gdaltest.error_handler():
         lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
 
-    if lyr.TestCapability(ogr.OLCCreateField) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.TestCapability(ogr.OLCSequentialWrite) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.TestCapability(ogr.OLCRandomWrite) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCCreateField) == 1
+    assert lyr.TestCapability(ogr.OLCSequentialWrite) == 1
+    assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
     # empty feature
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
 
-    if lyr.TestCapability(ogr.OLCCreateField) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.CreateField(ogr.FieldDefn('that_wont_work')) == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCCreateField) == 0
+    assert lyr.CreateField(ogr.FieldDefn('that_wont_work')) != 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('str', 'fo<o')
@@ -239,7 +205,7 @@ def ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data != """<?xml version='1.0' encoding='UTF-8'?>
+    assert data == """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -344,10 +310,7 @@ def ogr_jml_2():
      </feature>
 </featureCollection>
 </JCSDataFile>
-""":
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+"""
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -372,10 +335,7 @@ def ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('112233') < 0 or data.find('445566') < 0:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+    assert '112233' in data and '445566' in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -391,10 +351,7 @@ def ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('R_G_B') >= 0:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+    assert 'R_G_B' not in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -411,10 +368,7 @@ def ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+    assert 'OGR_STYLE' in data and 'PEN(c:#445566)' in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
@@ -433,44 +387,35 @@ def ogr_jml_2():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0 or data.find('112233') < 0:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+    assert 'OGR_STYLE' in data and 'PEN(c:#445566)' in data and '112233' in data
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
 
 
-def ogr_jml_3():
+def test_ogr_jml_3():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.jml')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Test a few error cases
 
 
-def ogr_jml_4():
+def test_ogr_jml_4():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     # Missing CollectionElement, FeatureElement or GeometryElement
     gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
@@ -491,9 +436,7 @@ def ogr_jml_4():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorType() != 0
     ds = None
 
     # XML malformed in JCSGMLInputTemplate
@@ -515,9 +458,7 @@ def ogr_jml_4():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorType() != 0
     ds = None
 
     # XML malformed in featureCollection
@@ -545,9 +486,7 @@ def ogr_jml_4():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn().GetFieldCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorType() != 0
     ds = None
 
     # XML malformed in featureCollection
@@ -576,9 +515,7 @@ def ogr_jml_4():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr.GetLayerDefn().GetFieldCount()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorType() == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorType() != 0
     del ds
 
     # Invalid column definitions
@@ -646,59 +583,32 @@ def ogr_jml_4():
 
     ds = ogr.Open('/vsimem/ogr_jml.jml')
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
     lyr.GetNextFeature()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading SRS
 
 
-def ogr_jml_read_srs():
+def test_ogr_jml_read_srs():
 
     if not gdaltest.jml_read_support:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/one_point_srid_4326.jml')
     lyr = ds.GetLayer(0)
-    if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetSpatialRef().ExportToWkt().find('4326') >= 0
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef() is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert f.GetGeometryRef() is not None
 
 ###############################################################################
 #
 
 
-def ogr_jml_cleanup():
+def test_ogr_jml_cleanup():
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_jml_init,
-    ogr_jml_1,
-    ogr_jml_2,
-    ogr_jml_3,
-    ogr_jml_4,
-    ogr_jml_read_srs,
-    ogr_jml_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_jml')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -195,6 +195,13 @@
 #include "cpl_string.h"
 #else
 
+#if defined(WIN32) || defined(_WIN32)
+#    define STRCASECMP(a,b)         (stricmp(a,b))
+#  else
+#include <strings.h>
+#    define STRCASECMP(a,b)         (strcasecmp(a,b))
+#endif
+
 #if defined(_MSC_VER)
 # if _MSC_VER < 1900
 #     define snprintf _snprintf
@@ -1823,22 +1830,6 @@ DBFGetNativeFieldType( DBFHandle psDBF, int iField )
 }
 
 /************************************************************************/
-/*                            str_to_upper()                            */
-/************************************************************************/
-
-static void str_to_upper (char *string)
-{
-    int len;
-    int i = -1;
-
-    len = STATIC_CAST(int, strlen (string));
-
-    while (++i < len)
-        if (isalpha(string[i]) && islower(string[i]))
-            string[i] = STATIC_CAST(char, toupper (STATIC_CAST(int,string[i])));
-}
-
-/************************************************************************/
 /*                          DBFGetFieldIndex()                          */
 /*                                                                      */
 /*      Get the index number for a field in a .dbf file.                */
@@ -1850,23 +1841,13 @@ int SHPAPI_CALL
 DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName)
 
 {
-    char          name[XBASE_FLDNAME_LEN_READ+1],
-                  name1[XBASE_FLDNAME_LEN_READ+1],
-                  name2[XBASE_FLDNAME_LEN_READ+1];
+    char          name[XBASE_FLDNAME_LEN_READ+1];
     int           i;
-
-    strncpy(name1, pszFieldName,XBASE_FLDNAME_LEN_READ);
-    name1[XBASE_FLDNAME_LEN_READ] = '\0';
-    str_to_upper(name1);
 
     for( i = 0; i < DBFGetFieldCount(psDBF); i++ )
     {
         DBFGetFieldInfo( psDBF, i, name, SHPLIB_NULLPTR, SHPLIB_NULLPTR );
-        strncpy(name2,name,XBASE_FLDNAME_LEN_READ);
-        name2[XBASE_FLDNAME_LEN_READ] = '\0';
-        str_to_upper(name2);
-
-        if(!strcmp(name1,name2))
+        if(!STRCASECMP(pszFieldName,name))
             return(i);
     }
     return(-1);
@@ -2057,6 +2038,10 @@ DBFDeleteField(DBFHandle psDBF, int iField)
     if( psDBF->bWriteEndOfFileChar )
     {
         char ch = END_OF_FILE_CHARACTER;
+        SAOffset nEOFOffset =
+            psDBF->nRecordLength * STATIC_CAST(SAOffset,psDBF->nRecords) + psDBF->nHeaderLength;
+
+        psDBF->sHooks.FSeek( psDBF->fp, nEOFOffset, 0 );
         psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
     }
 

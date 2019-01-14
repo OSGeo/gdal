@@ -30,6 +30,23 @@
 #include "tendian.h"
 #include "myutil.h"
 
+#include "cpl_string.h"
+
+static void debug_printf(const char* fmt, ... ) CPL_PRINT_FUNC_FORMAT (1, 2);
+
+static void debug_printf(const char* fmt, ... )
+{
+    va_list args;
+
+    va_start( args, fmt );
+    CPLDebug("GRIB", "%s", CPLString().vPrintf(fmt, args ).c_str() );
+    va_end( args );
+}
+
+#undef printf
+#define printf debug_printf
+
+
 /*****************************************************************************
  * MetaInit() --
  *
@@ -924,8 +941,15 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          if ((is3[21] != GRIB2MISSING_s4) && (is3[20] != GRIB2MISSING_s1) &&
              (is3[26] != GRIB2MISSING_s4) && (is3[25] != GRIB2MISSING_s1)) {
             /* Assumes data is given in km (not m). */
-            meta->gds.majEarth = is3[21] / (pow (10.0, is3[20]));
-            meta->gds.minEarth = is3[26] / (pow (10.0, is3[25]));
+            double denomMaj = pow (10.0, is3[20]);
+            double denomMin = pow (10.0, is3[25]);
+            if( denomMaj == 0.0 || denomMin == 0.0 )
+            {
+                errSprintf ("Invalid major / minor axis.\n");
+                return -2;
+            }
+            meta->gds.majEarth = is3[21] / denomMaj;
+            meta->gds.minEarth = is3[26] / denomMin;
          } else {
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
@@ -949,8 +973,15 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          if ((is3[21] != GRIB2MISSING_s4) && (is3[20] != GRIB2MISSING_s1) &&
              (is3[26] != GRIB2MISSING_s4) && (is3[25] != GRIB2MISSING_s1)) {
             /* Assumes data is given in m (not km). */
-            meta->gds.majEarth = is3[21] / (pow (10.0, is3[20]) * 1000.);
-            meta->gds.minEarth = is3[26] / (pow (10.0, is3[25]) * 1000.);
+            double denomMaj = pow (10.0, is3[20]) * 1000.;
+            double denomMin = pow (10.0, is3[25]) * 1000.;
+            if( denomMaj == 0.0 || denomMin == 0.0 )
+            {
+                errSprintf ("Invalid major / minor axis.\n");
+                return -2;
+            }
+            meta->gds.majEarth = is3[21] / denomMaj;
+            meta->gds.minEarth = is3[26] / denomMin;
          } else {
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
@@ -2875,7 +2906,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
  * NOTES
  *****************************************************************************
  */
-void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
+void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
                 uInt4 *grib_DataLen, uInt4 Nx, uInt4 Ny, int scan,
                 sInt4 nd2x3, sInt4 *iain, sInt4 ibitmap, sInt4 *ib, double unitM,
                 double unitB, uChar f_txtType, uInt4 txt_dataLen,
@@ -2920,12 +2951,12 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
 
       if( subNx * subNy > 100 * 1024 * 1024 )
       {
-          long curPos = fp.DataSourceFtell();
-          fp.DataSourceFseek(0, SEEK_END);
-          long fileSize = fp.DataSourceFtell();
-          fp.DataSourceFseek(curPos, SEEK_SET);
+          vsi_l_offset curPos = VSIFTellL(fp);
+          VSIFSeekL(fp, 0, SEEK_END);
+          vsi_l_offset fileSize = VSIFTellL(fp);
+          VSIFSeekL(fp, curPos, SEEK_SET);      
           // allow a compression ratio of 1:1000
-          if( subNx * subNy / 1000 > (uInt4)fileSize )
+          if( subNx * subNy / 1000 > fileSize )
           {
             errSprintf ("ERROR: File too short\n");
             *grib_DataLen = 0;

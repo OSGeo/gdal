@@ -139,6 +139,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     int                 nMaxChunkSize;
 
     void                BuildWhere();
+    std::vector<bool>   m_abFieldSetForInsert;
 
     virtual CPLString    GetSRS_SQL(const char* pszGeomCol) override;
 
@@ -200,7 +201,6 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                             bool bHasUserFieldMatchingFID, 
                                             bool bHasJustGotNextFID );
     char *              OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i );
-    int                 FieldSetBitMap( OGRFeature *poFeature );
 };
 
 /************************************************************************/

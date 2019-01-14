@@ -147,10 +147,10 @@ class OGRDB2Session
 protected:
 // From CPLODBCSession
     char      m_szLastError[SQL_MAX_MESSAGE_LENGTH + 1];
-    HENV      m_hEnv;
-    HDBC      m_hDBC;
-    int       m_bInTransaction;
-    int       m_bAutoCommit;
+    HENV      m_hEnv = nullptr;
+    HDBC      m_hDBC = nullptr;
+    int       m_bInTransaction = FALSE;
+    int       m_bAutoCommit = TRUE;
 
 public:
     OGRDB2Session( );

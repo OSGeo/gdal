@@ -12,8 +12,9 @@ Edit in place various information of an existing GDAL dataset.
 
 \verbatim
 gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
-          [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]
+          [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]
           [-unsetstats] [-stats] [-approx_stats]
+          [-setstats min max mean stddev]
           [-scale value] [-offset value]
           [-colorinterp_X red|green|blue|alpha|gray|undefined]*
           [-gcp pixel line easting northing [elevation]]*
@@ -62,11 +63,19 @@ Both must be positive values.</dd>
 <dt> <b>-unsetgt</b></dt>:<dd>
 Remove the georeference information.</dd>
 
+<dt> <b>-unsetrpc</b></dt>:<dd> (GDAL >= 2.4)
+Remove RPC information.</dd>
+
 <dt> <b>-unsetstats</b></dt>:<dd> (GDAL >= 2.0)
 Remove band statistics information.</dd>
 
 <dt> <b>-stats</b></dt>:<dd> (GDAL >= 2.0)
 Calculate and store band statistics.</dd>
+
+<dt> <b>-setstats</b>min max mean stddev:</dt><dd> (GDAL >= 2.4)
+Store user-defined values for band statistics (minimum, maximum, mean and standard deviation).
+If any of the values is set to None, the real statistics are calclulated from the file
+and the ones set to None are used from the real statistics.</dd>
 
 <dt> <b>-approx_stats</b></dt>:<dd> (GDAL >= 2.0)
 Calculate and store approximate band statistics.</dd>

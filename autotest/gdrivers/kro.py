@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,18 +29,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Create 3-band byte
 
 
-def kro_1():
+def test_kro_1():
 
     tst = gdaltest.GDALTest('KRO', 'rgbsmall.tif', 2, 21053)
 
@@ -50,7 +49,7 @@ def kro_1():
 # Create 1-band uint16
 
 
-def kro_2():
+def test_kro_2():
 
     tst = gdaltest.GDALTest('KRO', '../../gcore/data/uint16.tif', 1, 4672)
 
@@ -60,7 +59,7 @@ def kro_2():
 # Create 1-band float32
 
 
-def kro_3():
+def test_kro_3():
 
     tst = gdaltest.GDALTest('KRO', '../../gcore/data/float32.tif', 1, 4672)
 
@@ -70,7 +69,7 @@ def kro_3():
 # Create 4-band rgba uint16
 
 
-def kro_4():
+def test_kro_4():
 
     tst = gdaltest.GDALTest('KRO', 'rgba16.png', 1, 1886)
 
@@ -80,12 +79,12 @@ def kro_4():
 # Test optimized IO
 
 
-def kro_5():
+def test_kro_5():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('KRO').Create('tmp/kro_5.kro', 100000, 10000, 4)
     ds = None
@@ -96,22 +95,6 @@ def kro_5():
 
     gdal.Unlink('tmp/kro_5.kro')
 
-    return 'success'
 
 
-gdaltest_list = [
-    kro_1,
-    kro_2,
-    kro_3,
-    kro_4,
-    kro_5,
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('KRO')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

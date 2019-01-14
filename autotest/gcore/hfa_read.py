@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,54 +28,42 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
+import pytest
 
 from osgeo import gdal
 import gdaltest
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
 
 init_list = [
-    ('byte.img', 1, 4672, None),
-    ('int16.img', 1, 4672, None),
-    ('uint16.img', 1, 4672, None),
-    ('int32.img', 1, 4672, None),
-    ('uint32.img', 1, 4672, None),
-    ('float32.img', 1, 4672, None),
-    ('float64.img', 1, 4672, None),
-    ('utmsmall.img', 1, 50054, None),
-    ('2bit_compressed.img', 1, 11918, None)]
+    ('byte.img', 4672),
+    ('int16.img', 4672),
+    ('uint16.img', 4672),
+    ('int32.img', 4672),
+    ('uint32.img', 4672),
+    ('float32.img', 4672),
+    ('float64.img', 4672),
+    ('utmsmall.img', 50054),
+    ('2bit_compressed.img', 11918)]
 
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('HFA')
+def test_hfa_open(filename, checksum):
+    ut = gdaltest.GDALTest('HFA', filename, 1, checksum)
+    ut.testOpen()
 
 ###############################################################################
 # Test bugfix for https://oss-fuzz.com/v2/testcase-detail/6053338875428864
 
-def hfa_read_completedefn_recursion():
+def test_hfa_read_completedefn_recursion():
 
     with gdaltest.error_handler():
         gdal.Open('data/hfa_completedefn_recursion.img')
-    return 'success'
+    
 
 
-for item in init_list:
-    ut = gdaltest.GDALTest('HFA', item[0], item[1], item[2])
-    if ut is None:
-        print('HFA tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
-
-
-gdaltest_list.append((hfa_read_completedefn_recursion))
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hfa_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

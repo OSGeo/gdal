@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,19 +30,18 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Get the rasterlite driver
 
 
-def rasterlite_1():
+def test_rasterlite_1():
 
     gdaltest.rasterlite_drv = gdal.GetDriverByName('RASTERLITE')
     gdaltest.epsilon_drv = gdal.GetDriverByName('EPSILON')
@@ -52,16 +51,14 @@ def rasterlite_1():
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
 
-    return 'success'
-
 ###############################################################################
 # Test opening a rasterlite DB without overviews
 
 
-def rasterlite_2():
+def test_rasterlite_2():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Test if SQLite3 supports rtrees
     try:
@@ -78,186 +75,143 @@ def rasterlite_2():
         pass
     if gdal.GetLastErrorMsg().find('rtree') != -1:
         gdaltest.rasterlite_drv = None
-        gdaltest.post_reason('Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!')
-        return 'skip'
+        pytest.skip('Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!')
 
     gdal.ErrorReset()
     ds = gdal.Open('data/rasterlite.sqlite')
     if ds is None:
         if gdal.GetLastErrorMsg().find('unsupported file format') != -1:
             gdaltest.rasterlite_drv = None
-            gdaltest.post_reason('Please upgrade your sqlite3 library to be able to read Rasterlite DBs!')
-            return 'skip'
-        return 'fail'
+            pytest.skip('Please upgrade your sqlite3 library to be able to read Rasterlite DBs!')
+        pytest.fail()
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 3, 'expected 3 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('did not expect overview')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, 'did not expect overview'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 11746
-    if cs != expected_cs and cs != 11751:
-        gdaltest.post_reason('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 11751, \
+        ('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(2).Checksum()
     expected_cs = 19843
-    if cs != expected_cs and cs != 20088 and cs != 20083:
-        gdaltest.post_reason('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 20088 or cs == 20083, \
+        ('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).Checksum()
     expected_cs = 48911
-    if cs != expected_cs and cs != 47978:
-        gdaltest.post_reason('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 47978, \
+        ('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
-    if ds.GetProjectionRef().find('WGS_1984') == -1:
-        gdaltest.post_reason('projection_ref = %s' % ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetProjectionRef().find('WGS_1984') != -1, \
+        ('projection_ref = %s' % ds.GetProjectionRef())
 
     gt = ds.GetGeoTransform()
     expected_gt = (-180.0, 360. / ds.RasterXSize, 0.0, 90.0, 0.0, -180. / ds.RasterYSize)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening a rasterlite DB with overviews
 
 
-def rasterlite_3():
+def test_rasterlite_3():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pyramids.sqlite,table=test')
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 3, 'expected 3 bands'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('expected 1 overview')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, 'expected 1 overview'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 59551
-    if cs != expected_cs and cs != 59833:
-        gdaltest.post_reason('for overview of band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 59833, \
+        ('for overview of band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
     expected_cs = 59603
-    if cs != expected_cs and cs != 59588:
-        gdaltest.post_reason('for overview of band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 59588, \
+        ('for overview of band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).GetOverview(0).Checksum()
     expected_cs = 42173
-    if cs != expected_cs and cs != 42361:
-        gdaltest.post_reason('for overview of band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs or cs == 42361, \
+        ('for overview of band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening a rasterlite DB with color table and user-defined spatial extent
 
 
-def rasterlite_4():
+def test_rasterlite_4():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,minx=0,miny=0,maxx=180,maxy=90')
 
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('expected 1 band')
-        return 'fail'
+    assert ds.RasterCount == 1, 'expected 1 band'
 
-    if ds.RasterXSize != 169 or ds.RasterYSize != 85:
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 169 and ds.RasterYSize == 85
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
-    if ct is None:
-        gdaltest.post_reason('did not get color table')
-        return 'fail'
+    assert ct is not None, 'did not get color table'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 36473
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test opening a rasterlite DB with color table and do color table expansion
 
 
-def rasterlite_5():
+def test_rasterlite_5():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,bands=3')
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('expected 3 bands')
-        return 'fail'
+    assert ds.RasterCount == 3, 'expected 3 bands'
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
-    if ct is not None:
-        gdaltest.post_reason('did not expect color table')
-        return 'fail'
+    assert ct is None, 'did not expect color table'
 
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 506
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 1, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(2).Checksum()
     expected_cs = 3842
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 2, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     cs = ds.GetRasterBand(3).Checksum()
     expected_cs = 59282
-    if cs != expected_cs:
-        gdaltest.post_reason('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
-        return 'fail'
+    assert cs == expected_cs, \
+        ('for band 3, cs = %d, different from expected_cs = %d' % (cs, expected_cs))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy()
 
 
-def rasterlite_6():
+def test_rasterlite_6():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Test first if spatialite is available
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -270,7 +224,7 @@ def rasterlite_6():
     if sql_lyr is None:
         gdaltest.has_spatialite = False
         ogr_ds = None
-        return 'skip'
+        pytest.skip()
 
     gdaltest.has_spatialite = True
     ogr_ds.ReleaseResultSet(sql_lyr)
@@ -279,108 +233,87 @@ def rasterlite_6():
     # Test now CreateCopy()
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('RASTERLITE').CreateCopy('RASTERLITE:tmp/byte.sqlite,table=byte', src_ds)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('Wrong checksum')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum(), \
+        'Wrong checksum'
 
     gt = ds.GetGeoTransform()
     expected_gt = src_ds.GetGeoTransform()
     for i in range(6):
-        if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
-            return 'fail'
+        assert not abs(gt[i] - expected_gt[i] > 1e-5), \
+            ('Expected : %s\nGot : %s' % (expected_gt, gt))
 
-    if ds.GetProjectionRef().find('NAD27 / UTM zone 11N') == -1:
-        gdaltest.post_reason('Wrong SRS')
-        return 'fail'
+    assert ds.GetProjectionRef().find('NAD27 / UTM zone 11N') != -1, 'Wrong SRS'
 
     src_ds = None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test BuildOverviews()
 
 
-def rasterlite_7():
+def test_rasterlite_7():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
     # Resampling method is not taken into account
     ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
 
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
-        gdaltest.post_reason('Wrong checksum for overview 0')
-        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192, \
+        'Wrong checksum for overview 0'
 
-    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
-        gdaltest.post_reason('Wrong checksum for overview 1')
-        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 233, \
+        'Wrong checksum for overview 1'
 
     # Reopen and test
     ds = None
     ds = gdal.Open('tmp/byte.sqlite')
 
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
-        gdaltest.post_reason('Wrong checksum for overview 0')
-        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192, \
+        'Wrong checksum for overview 0'
 
-    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 233:
-        gdaltest.post_reason('Wrong checksum for overview 1')
-        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 233, \
+        'Wrong checksum for overview 1'
 
 ###############################################################################
 # Test CleanOverviews()
 
 
-def rasterlite_8():
+def test_rasterlite_8():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
     ds.BuildOverviews(overviewlist=[])
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
 
 ###############################################################################
 # Create a rasterlite dataset with EPSILON tiles
 
 
-def rasterlite_9():
+def test_rasterlite_9():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.epsilon_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('RASTERLITE', 'byte.tif', 1, 4866, options=['DRIVER=EPSILON'])
 
@@ -390,16 +323,16 @@ def rasterlite_9():
 # Create a rasterlite dataset with EPSILON tiles
 
 
-def rasterlite_10():
+def test_rasterlite_10():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.epsilon_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('RASTERLITE', 'rgbsmall.tif', 1, 23189, options=['DRIVER=EPSILON'])
 
@@ -409,13 +342,13 @@ def rasterlite_10():
 # Test BuildOverviews() with AVERAGE resampling
 
 
-def rasterlite_11():
+def test_rasterlite_11():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
@@ -428,65 +361,53 @@ def rasterlite_11():
     ds = None
     ds = gdal.Open('tmp/byte.sqlite')
 
-    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1152:
-        gdaltest.post_reason('Wrong checksum for overview 0')
-        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152, \
+        'Wrong checksum for overview 0'
 
-    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 215:
-        gdaltest.post_reason('Wrong checksum for overview 1')
-        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 215, \
+        'Wrong checksum for overview 1'
 
 ###############################################################################
 # Test opening a .rasterlite file
 
 
-def rasterlite_12():
+def test_rasterlite_12():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.rasterlite')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
-    return 'success'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
 ###############################################################################
 # Test opening a .rasterlite.sql file
 
 
-def rasterlite_13():
+def test_rasterlite_13():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.has_spatialite is False:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.rasterlite_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.rasterlite.sql')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
-    return 'success'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
 ###############################################################################
 # Cleanup
 
 
-def rasterlite_cleanup():
+def test_rasterlite_cleanup():
 
     if gdaltest.rasterlite_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/spatialite_test.db')
@@ -508,29 +429,6 @@ def rasterlite_cleanup():
     except OSError:
         pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    rasterlite_1,
-    rasterlite_2,
-    rasterlite_3,
-    rasterlite_4,
-    rasterlite_5,
-    rasterlite_6,
-    rasterlite_7,
-    rasterlite_8,
-    rasterlite_9,
-    rasterlite_10,
-    rasterlite_11,
-    rasterlite_12,
-    rasterlite_13,
-    rasterlite_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rasterlite')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,34 +28,18 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import osr
 
 
 ###############################################################################
 # Test osr.GetProjectionMethods()
 
-def osr_getprojectionmethods_1():
+def test_osr_getprojectionmethods_1():
 
     methods = osr.GetProjectionMethods()
-    if methods[0][0] != 'Transverse_Mercator':
-        return 'fail'
-
-    return 'success'
+    assert methods[0][0] == 'Transverse_Mercator'
 
 
-gdaltest_list = [
-    osr_getprojectionmethods_1,
-    None]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_getprojectionmethods')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

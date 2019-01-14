@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,14 +29,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -44,25 +43,17 @@ import test_cli_utilities
 
 def test_gdal_translate_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/test1.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -70,21 +61,16 @@ def test_gdal_translate_1():
 
 def test_gdal_translate_2():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of GTiff ../gcore/data/byte.tif tmp/test2.tif')
 
     ds = gdal.Open('tmp/test2.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -92,25 +78,18 @@ def test_gdal_translate_2():
 
 def test_gdal_translate_3():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/test3.tif')
 
     ds = gdal.Open('tmp/test3.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('Bad data type')
-        return 'fail'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16, 'Bad data type'
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -b option
@@ -118,29 +97,20 @@ def test_gdal_translate_3():
 
 def test_gdal_translate_4():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -b 3 -b 2 -b 1 ../gcore/data/rgbsmall.tif tmp/test4.tif')
 
     ds = gdal.Open('tmp/test4.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 21349:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 21349, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 21053:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 21053, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 21212:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 21212, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -expand option
@@ -148,41 +118,29 @@ def test_gdal_translate_4():
 
 def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/bug407.gif tmp/test5.tif')
 
     ds = gdal.Open('tmp/test5.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('Bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand, \
+        'Bad color interpretation'
 
-    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('Bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(2).GetRasterColorInterpretation() == gdal.GCI_GreenBand, \
+        'Bad color interpretation'
 
-    if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('Bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(3).GetRasterColorInterpretation() == gdal.GCI_BlueBand, \
+        'Bad color interpretation'
 
-    if ds.GetRasterBand(1).Checksum() != 20615:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 20615, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 59147:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 59147, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 63052:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 63052, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -190,21 +148,16 @@ def test_gdal_translate_5():
 
 def test_gdal_translate_6():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 40 40 ../gcore/data/byte.tif tmp/test6.tif')
 
     ds = gdal.Open('tmp/test6.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 18784:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -outsize option in percentage mode
@@ -212,21 +165,16 @@ def test_gdal_translate_6():
 
 def test_gdal_translate_7():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 200% 200% ../gcore/data/byte.tif tmp/test7.tif')
 
     ds = gdal.Open('tmp/test7.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 18784:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -a_srs and -gcp options
@@ -234,30 +182,21 @@ def test_gdal_translate_7():
 
 def test_gdal_translate_8():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/test8.tif')
 
     ds = gdal.Open('tmp/test8.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     gcps = ds.GetGCPs()
-    if len(gcps) != 4:
-        gdaltest.post_reason('GCP count wrong.')
-        return 'fail'
+    assert len(gcps) == 4, 'GCP count wrong.'
 
-    if ds.GetGCPProjection().find('26711') == -1:
-        gdaltest.post_reason('Bad GCP projection.')
-        return 'fail'
+    assert ds.GetGCPProjection().find('26711') != -1, 'Bad GCP projection.'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -265,21 +204,16 @@ def test_gdal_translate_8():
 
 def test_gdal_translate_9():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata 1 ../gcore/data/byte.tif tmp/test9.tif')
 
     ds = gdal.Open('tmp/test9.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 1:
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1, 'Bad nodata value'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -287,21 +221,16 @@ def test_gdal_translate_9():
 
 def test_gdal_translate_10():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -srcwin 0 0 1 1 ../gcore/data/byte.tif tmp/test10.tif')
 
     ds = gdal.Open('tmp/test10.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 2:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 2, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -projwin option
@@ -309,25 +238,19 @@ def test_gdal_translate_10():
 
 def test_gdal_translate_11():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -projwin 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test11.tif')
 
     ds = gdal.Open('tmp/test11.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9), \
+        'Bad geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -a_ullr option
@@ -335,25 +258,19 @@ def test_gdal_translate_11():
 
 def test_gdal_translate_12():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_ullr 440720.000 3751320.000 441920.000 3750120.000 ../gcore/data/byte.tif tmp/test12.tif')
 
     ds = gdal.Open('tmp/test12.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9), \
+        'Bad geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -mo option
@@ -361,22 +278,17 @@ def test_gdal_translate_12():
 
 def test_gdal_translate_13():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -mo TIFFTAG_DOCUMENTNAME=test13 ../gcore/data/byte.tif tmp/test13.tif')
 
     ds = gdal.Open('tmp/test13.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     md = ds.GetMetadata()
-    if 'TIFFTAG_DOCUMENTNAME' not in md:
-        gdaltest.post_reason('Did not get TIFFTAG_DOCUMENTNAME')
-        return 'fail'
+    assert 'TIFFTAG_DOCUMENTNAME' in md, 'Did not get TIFFTAG_DOCUMENTNAME'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -co option
@@ -384,22 +296,17 @@ def test_gdal_translate_13():
 
 def test_gdal_translate_14():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -co COMPRESS=LZW ../gcore/data/byte.tif tmp/test14.tif')
 
     ds = gdal.Open('tmp/test14.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
-    if 'COMPRESSION' not in md or md['COMPRESSION'] != 'LZW':
-        gdaltest.post_reason('Did not get COMPRESSION')
-        return 'fail'
+    assert 'COMPRESSION' in md and md['COMPRESSION'] == 'LZW', 'Did not get COMPRESSION'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -sds option
@@ -407,17 +314,14 @@ def test_gdal_translate_14():
 
 def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/A.TOC tmp/test15.tif')
 
     ds = gdal.Open('tmp/test15_1.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -of VRT which is a special case
@@ -425,21 +329,16 @@ def test_gdal_translate_15():
 
 def test_gdal_translate_16():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/test16.vrt')
 
     ds = gdal.Open('tmp/test16.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -expand option to VRT
@@ -447,50 +346,34 @@ def test_gdal_translate_16():
 
 def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/bug407.gif tmp/test17.vrt')
 
     ds = gdal.Open('tmp/test17.vrt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('Bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand, \
+        'Bad color interpretation'
 
-    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
-        gdaltest.post_reason('Bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(2).GetRasterColorInterpretation() == gdal.GCI_GreenBand, \
+        'Bad color interpretation'
 
-    if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason('Bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(3).GetRasterColorInterpretation() == gdal.GCI_BlueBand, \
+        'Bad color interpretation'
 
-    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('Bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_AlphaBand, \
+        'Bad color interpretation'
 
-    if ds.GetRasterBand(1).Checksum() != 20615:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 20615, 'Bad checksum'
 
-    if ds.GetRasterBand(2).Checksum() != 59147:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(2).Checksum() == 59147, 'Bad checksum'
 
-    if ds.GetRasterBand(3).Checksum() != 63052:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(3).Checksum() == 63052, 'Bad checksum'
 
-    if ds.GetRasterBand(4).Checksum() != 63052:
-        print(ds.GetRasterBand(3).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(4).Checksum() == 63052, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -498,27 +381,21 @@ def test_gdal_translate_17():
 
 def test_gdal_translate_18():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/8bit_pal.bmp -of VRT tmp/test18_1.vrt')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_1.vrt -expand rgb -of VRT tmp/test18_2.vrt')
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test18_2.vrt tmp/test18_2.tif')
 
     # Check that all datasets are closed
-    if ret_stderr.find('Open GDAL Datasets') != -1:
-        return 'fail'
+    assert ret_stderr.find('Open GDAL Datasets') == -1
 
     ds = gdal.Open('tmp/test18_2.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -526,7 +403,7 @@ def test_gdal_translate_18():
 
 def test_gdal_translate_19():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif', 1, 1, 2)
     ct = gdal.ColorTable()
@@ -539,25 +416,14 @@ def test_gdal_translate_19():
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgba tmp/test_gdal_translate_19_src.tif tmp/test_gdal_translate_19_dst.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_19_dst.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 1:
-        gdaltest.post_reason('Bad checksum for band 1')
-        return 'fail'
-    if ds.GetRasterBand(2).Checksum() != 2:
-        gdaltest.post_reason('Bad checksum for band 2')
-        return 'fail'
-    if ds.GetRasterBand(3).Checksum() != 3:
-        gdaltest.post_reason('Bad checksum for band 3')
-        return 'fail'
-    if ds.GetRasterBand(4).Checksum() != 250 % 7:
-        gdaltest.post_reason('Bad checksum for band 4')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 1, 'Bad checksum for band 1'
+    assert ds.GetRasterBand(2).Checksum() == 2, 'Bad checksum for band 2'
+    assert ds.GetRasterBand(3).Checksum() == 3, 'Bad checksum for band 3'
+    assert ds.GetRasterBand(4).Checksum() == 250 % 7, 'Bad checksum for band 4'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -a_nodata None
@@ -565,23 +431,18 @@ def test_gdal_translate_19():
 
 def test_gdal_translate_20():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata 255 ../gcore/data/byte.tif tmp/test_gdal_translate_20_src.tif')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata None tmp/test_gdal_translate_20_src.tif tmp/test_gdal_translate_20_dst.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_20_dst.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     nodata = ds.GetRasterBand(1).GetNoDataValue()
-    if nodata is not None:
-        print(nodata)
-        return 'fail'
+    assert nodata is None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that statistics are copied only when appropriate (#3889)
@@ -590,7 +451,7 @@ def test_gdal_translate_20():
 
 def test_gdal_translate_21():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of HFA ../gcore/data/utmsmall.img tmp/test_gdal_translate_21.img')
 
@@ -598,16 +459,10 @@ def test_gdal_translate_21():
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
-    if md['STATISTICS_MINIMUM'] != '8':
-        gdaltest.post_reason('STATISTICS_MINIMUM is wrong.')
-        print(md['STATISTICS_MINIMUM'])
-        return 'fail'
+    assert md['STATISTICS_MINIMUM'] == '8', 'STATISTICS_MINIMUM is wrong.'
 
-    if md['STATISTICS_HISTOBINVALUES'] != '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|':
-        gdaltest.post_reason('STATISTICS_HISTOBINVALUES is wrong.')
-        return 'fail'
-
-    return 'success'
+    assert md['STATISTICS_HISTOBINVALUES'] == '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|', \
+        'STATISTICS_HISTOBINVALUES is wrong.'
 
 ###############################################################################
 # Test that statistics are copied only when appropriate (#3889)
@@ -616,7 +471,7 @@ def test_gdal_translate_21():
 
 def test_gdal_translate_22():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of HFA -scale 0 255 0 128 ../gcore/data/utmsmall.img tmp/test_gdal_translate_22.img')
 
@@ -624,15 +479,11 @@ def test_gdal_translate_22():
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
-    if 'STATISTICS_MINIMUM' in md:
-        gdaltest.post_reason('did not expected a STATISTICS_MINIMUM value.')
-        return 'fail'
+    assert 'STATISTICS_MINIMUM' not in md, \
+        'did not expected a STATISTICS_MINIMUM value.'
 
-    if 'STATISTICS_HISTOBINVALUES' in md:
-        gdaltest.post_reason('did not expected a STATISTICS_MINIMUM value.')
-        return 'fail'
-
-    return 'success'
+    assert 'STATISTICS_HISTOBINVALUES' not in md, \
+        'did not expected a STATISTICS_HISTOBINVALUES value.'
 
 ###############################################################################
 # Test -stats option (#3889)
@@ -640,7 +491,7 @@ def test_gdal_translate_22():
 
 def test_gdal_translate_23():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -stats ../gcore/data/byte.tif tmp/test_gdal_translate_23.tif')
 
@@ -648,21 +499,13 @@ def test_gdal_translate_23():
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
-    if md['STATISTICS_MINIMUM'] != '74':
-        gdaltest.post_reason('STATISTICS_MINIMUM is wrong.')
-        print(md['STATISTICS_MINIMUM'])
-        return 'fail'
+    assert md['STATISTICS_MINIMUM'] == '74', 'STATISTICS_MINIMUM is wrong.'
 
-    try:
+    with pytest.raises(OSError, message='did not expect .aux.xml file presence'):
         os.stat('tmp/test_gdal_translate_23.tif.aux.xml')
-        gdaltest.post_reason('did not expect .aux.xml file presence')
-        return 'fail'
-    except OSError:
-        pass
+    
 
     gdal.Unlink('../gcore/data/byte.tif.aux.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test -srcwin option when partially outside
@@ -670,23 +513,17 @@ def test_gdal_translate_23():
 
 def test_gdal_translate_24():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q -srcwin -10 -10 40 40 ../gcore/data/byte.tif tmp/test_gdal_translate_24.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_24.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 4620:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4620, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -norat
@@ -694,18 +531,14 @@ def test_gdal_translate_24():
 
 def test_gdal_translate_25():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q ../gdrivers/data/int.img tmp/test_gdal_translate_25.tif -norat')
 
     ds = gdal.Open('tmp/test_gdal_translate_25.tif')
-    if ds.GetRasterBand(1).GetDefaultRAT() is not None:
-        gdaltest.post_reason('RAT unexpected')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetDefaultRAT() is None, 'RAT unexpected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -a_nodata and -stats (#5463)
@@ -713,7 +546,7 @@ def test_gdal_translate_25():
 
 def test_gdal_translate_26():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_translate_26.xyz', 'wb')
     f.write("""X Y Z
@@ -725,18 +558,10 @@ def test_gdal_translate_26():
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata -999 -stats tmp/test_gdal_translate_26.xyz tmp/test_gdal_translate_26.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_26.tif')
-    if ds.GetRasterBand(1).GetMinimum() != 10:
-        gdaltest.post_reason('failure')
-        print(ds.GetRasterBand(1).GetMinimum())
-        return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != -999:
-        gdaltest.post_reason('failure')
-        print(ds.GetRasterBand(1).GetNoDataValue())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 10
+    assert ds.GetRasterBand(1).GetNoDataValue() == -999
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that we don't preserve statistics when we ought not.
@@ -744,9 +569,9 @@ def test_gdal_translate_26():
 
 def test_gdal_translate_27():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
     if test_cli_utilities.get_gdalinfo_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_translate_27.asc', 'wb')
     f.write("""ncols        2
@@ -764,30 +589,22 @@ cellsize     60.000000000000
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_27.asc tmp/test_gdal_translate_27.tif -ot UInt16')
 
     ds = gdal.Open('tmp/test_gdal_translate_27.tif')
-    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is not None
     ds = None
 
     # Translate to an output type that accepts 256 as maximum
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_27.asc tmp/test_gdal_translate_27.tif -ot Float64')
 
     ds = gdal.Open('tmp/test_gdal_translate_27.tif')
-    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is not None
     ds = None
 
     # Translate to an output type that doesn't accept 256 as maximum
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_27.asc tmp/test_gdal_translate_27.tif -ot Byte')
 
     ds = gdal.Open('tmp/test_gdal_translate_27.tif')
-    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -oo
@@ -795,17 +612,13 @@ cellsize     60.000000000000
 
 def test_gdal_translate_28():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/float64.asc tmp/test_gdal_translate_28.tif -oo datatype=float64')
 
     ds = gdal.Open('tmp/test_gdal_translate_28.tif')
-    if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -r
@@ -813,50 +626,31 @@ def test_gdal_translate_28():
 
 def test_gdal_translate_29():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.tif -outsize 50% 50% -r cubic')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/test_gdal_translate_29.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 1059:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 1059, 'Bad checksum'
 
     ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.vrt -outsize 50% 50% -r cubic -of VRT')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_29.vrt tmp/test_gdal_translate_29.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/test_gdal_translate_29.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 1059:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 1059, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -tr option
@@ -864,23 +658,17 @@ def test_gdal_translate_29():
 
 def test_gdal_translate_30():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -tr 30 30 ../gcore/data/byte.tif tmp/test_gdal_translate_30.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_30.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 18784:
-        print(cs)
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert cs == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -projwin_srs option
@@ -888,25 +676,19 @@ def test_gdal_translate_30():
 
 def test_gdal_translate_31():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -projwin_srs EPSG:4267 -projwin -117.641168620797 33.9023526904262 -117.628110837847 33.8915970129613 ../gcore/data/byte.tif tmp/test_gdal_translate_31.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_31.tif')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-6):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-6), \
+        'Bad geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test subsetting a file with a RPC
@@ -914,20 +696,23 @@ def test_gdal_translate_31():
 
 def test_gdal_translate_32():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin 1 2 13 14 -outsize 150% 300%')
     ds = gdal.Open('tmp/test_gdal_translate_32.tif')
     md = ds.GetMetadata('RPC')
-    if abs(float(md['LINE_OFF']) - 47496) > 1e-5 or \
-       abs(float(md['LINE_SCALE']) - 47502) > 1e-5 or \
-       abs(float(md['SAMP_OFF']) - 19676.6923076923) > 1e-5 or \
-       abs(float(md['SAMP_SCALE']) - 19678.1538461538) > 1e-5:
-        gdaltest.post_reason('fail')
-        print(md)
-        return 'fail'
+    assert (abs(float(md['LINE_OFF']) - 47496) <= 1e-5 and \
+       abs(float(md['LINE_SCALE']) - 47502) <= 1e-5 and \
+       abs(float(md['SAMP_OFF']) - 19676.6923076923) <= 1e-5 and \
+       abs(float(md['SAMP_SCALE']) - 19678.1538461538) <= 1e-5)
 
-    return 'success'
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin -10 -5 20 20')
+    ds = gdal.Open('tmp/test_gdal_translate_32.tif')
+    md = ds.GetMetadata('RPC')
+    assert (abs(float(md['LINE_OFF']) - (15834 - -5)) <= 1e-5 and \
+       abs(float(md['LINE_SCALE']) - 15834) <= 1e-5 and \
+       abs(float(md['SAMP_OFF']) - (13464 - -10)) <= 1e-5 and \
+       abs(float(md['SAMP_SCALE']) - 13464) <= 1e-5)
 
 ###############################################################################
 # Test -outsize option in auto mode
@@ -935,34 +720,24 @@ def test_gdal_translate_32():
 
 def test_gdal_translate_33():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 100 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_33.tif')
-    if ds.RasterYSize != 50:
-        gdaltest.post_reason('fail')
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterYSize == 50
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 100 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_33.tif')
-    if ds.RasterXSize != 200:
-        gdaltest.post_reason('fail')
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 200, ds.RasterYSize
     ds = None
 
     os.unlink('tmp/test_gdal_translate_33.tif')
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
-    if err.find('-outsize 0 0 invalid') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert '-outsize 0 0 invalid' in err
 
 ###############################################################################
 # Test NBITS is preserved
@@ -970,19 +745,15 @@ def test_gdal_translate_33():
 
 def test_gdal_translate_34():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/oddsize1bit.tif tmp/test_gdal_translate_34.vrt -of VRT -mo FOO=BAR')
 
     ds = gdal.Open('tmp/test_gdal_translate_34.vrt')
-    if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
     ds = None
 
     os.unlink('tmp/test_gdal_translate_34.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Test various errors (missing source or dest...)
@@ -990,33 +761,81 @@ def test_gdal_translate_34():
 
 def test_gdal_translate_35():
     if test_cli_utilities.get_gdal_translate_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path())
-    if err.find('No source dataset specified') < 0:
-        gdaltest.post_reason('fail')
-        print(err)
-        return 'fail'
+    assert 'No source dataset specified' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif')
-    if err.find('No target dataset specified') < 0:
-        gdaltest.post_reason('fail')
-        print(err)
-        return 'fail'
+    assert 'No target dataset specified' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' /non_existing_path/non_existing.tif /vsimem/out.tif')
-    if err.find('does not exist in the file system') < 0 and err.find('No such file or directory') < 0:
-        gdaltest.post_reason('fail')
-        print(err)
-        return 'fail'
+    assert 'does not exist in the file system' in err or 'No such file or directory' in err
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif /non_existing_path/non_existing.tif')
-    if err.find('Attempt to create new tiff file') < 0:
-        gdaltest.post_reason('fail')
-        print(err)
-        return 'fail'
+    assert 'Attempt to create new tiff file' in err
 
-    return 'success'
+###############################################################################
+# Test RAT is copied from hfa to gtiff - continuous/athematic
+
+def test_gdal_translate_36():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        pytest.skip()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of gtiff data/onepixelcontinuous.img tmp/test_gdal_translate_36.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_36.tif')
+    assert ds is not None
+
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+    assert rat, 'Did not get RAT'
+
+    assert rat.GetRowCount() == 256, 'RAT has incorrect row count'
+
+    assert rat.GetTableType() == 1, 'RAT not athematic'
+    rat = None
+    ds = None
+
+###############################################################################
+# Test RAT is copied from hfa to gtiff - thematic
+
+def test_gdal_translate_37():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        pytest.skip()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q -of gtiff data/onepixelthematic.img tmp/test_gdal_translate_37.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_37.tif')
+    assert ds is not None
+
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+    assert rat, 'Did not get RAT'
+
+    assert rat.GetRowCount() == 256, 'RAT has incorrect row count'
+
+    assert rat.GetTableType() == 0, 'RAT not thematic'
+    rat = None
+    ds = None
+
+# Test RAT is copied round trip back to hfa
+
+def test_gdal_translate_38():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        pytest.skip()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q -of hfa tmp/test_gdal_translate_37.tif tmp/test_gdal_translate_38.img')
+
+    ds = gdal.Open('tmp/test_gdal_translate_38.img')
+    assert ds is not None
+
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+    assert rat, 'Did not get RAT'
+
+    assert rat.GetRowCount() == 256, 'RAT has incorrect row count'
+
+    assert rat.GetTableType() == 0, 'RAT not thematic'
+    rat = None
+    ds = None
 
 ###############################################################################
 # Cleanup
@@ -1126,53 +945,27 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test_gdal_translate_32.tif')
     except OSError:
         pass
-    return 'success'
+    try:
+        os.remove('tmp/test_gdal_translate_36.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/test_gdal_translate_36.tif.aux.xml')
+    except:
+        pass
+    try:
+        os.remove('tmp/test_gdal_translate_37.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/test_gdal_translate_37.tif.aux.xml')
+    except:
+        pass
+    try:
+        gdal.GetDriverByName('HFA').Delete('tmp/test_gdal_translate_38.img')
+    except:
+        pass
+    
 
 
-gdaltest_list = [
-    test_gdal_translate_1,
-    test_gdal_translate_2,
-    test_gdal_translate_3,
-    test_gdal_translate_4,
-    test_gdal_translate_5,
-    test_gdal_translate_6,
-    test_gdal_translate_7,
-    test_gdal_translate_8,
-    test_gdal_translate_9,
-    test_gdal_translate_10,
-    test_gdal_translate_11,
-    test_gdal_translate_12,
-    test_gdal_translate_13,
-    test_gdal_translate_14,
-    test_gdal_translate_15,
-    test_gdal_translate_16,
-    test_gdal_translate_17,
-    test_gdal_translate_18,
-    test_gdal_translate_19,
-    test_gdal_translate_20,
-    test_gdal_translate_21,
-    test_gdal_translate_22,
-    test_gdal_translate_23,
-    test_gdal_translate_24,
-    test_gdal_translate_25,
-    test_gdal_translate_26,
-    test_gdal_translate_27,
-    test_gdal_translate_28,
-    test_gdal_translate_29,
-    test_gdal_translate_30,
-    test_gdal_translate_31,
-    test_gdal_translate_32,
-    test_gdal_translate_33,
-    test_gdal_translate_34,
-    test_gdal_translate_35,
-    test_gdal_translate_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_translate')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,21 +31,20 @@
 
 import os
 import struct
-import sys
 import json
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 ###############################################################################
 # Find RDA driver
 
 
-def rda_test_presence():
+def test_rda_test_presence():
 
     gdaltest.rda_drv = gdal.GetDriverByName('RDA')
 
@@ -53,70 +52,57 @@ def rda_test_presence():
     gdal.SetConfigOption('GDBX_CONFIG_FILE', '')
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
-def rda_bad_connection_string():
+def test_rda_bad_connection_string():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Bad json
     with gdaltest.error_handler():
         ds = gdal.Open('graph-id node-id')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Missing graph-id
     with gdaltest.error_handler():
         ds = gdal.Open('"graph-id node-id"')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Missing node-id
     with gdaltest.error_handler():
         ds = gdal.Open('{"graph-id": "node-id"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 
 
-def rda_missing_credentials():
+def test_rda_missing_credentials():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 
 
-def rda_failed_authentication():
+def test_rda_failed_authentication():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # invalid characters in env variable
     with gdaltest.config_options({'GBDX_AUTH_URL': '\\',
@@ -125,9 +111,7 @@ def rda_failed_authentication():
                                   'GBDX_PASSWORD': 'password'}):
         with gdaltest.error_handler():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # invalid URL
     with gdaltest.config_options({'GBDX_AUTH_URL': '/vsimem/auth_url',
@@ -135,9 +119,7 @@ def rda_failed_authentication():
                                   'GBDX_PASSWORD': 'password'}):
         with gdaltest.error_handler():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # 404
     handler = webserver.SequentialHandler()
@@ -148,9 +130,7 @@ def rda_failed_authentication():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Invalid json
     handler = webserver.SequentialHandler()
@@ -161,9 +141,7 @@ def rda_failed_authentication():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No access token
     handler = webserver.SequentialHandler()
@@ -174,21 +152,17 @@ def rda_failed_authentication():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 
 
-def rda_error_metadata():
+def test_rda_error_metadata():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     # 404
     handler = webserver.SequentialHandler()
@@ -202,9 +176,7 @@ def rda_error_metadata():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # 404 with payload
     handler = webserver.SequentialHandler()
@@ -218,9 +190,7 @@ def rda_error_metadata():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # invalid json
     handler = webserver.SequentialHandler()
@@ -234,9 +204,7 @@ def rda_error_metadata():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # a lot of missing elements
     handler = webserver.SequentialHandler()
@@ -248,9 +216,7 @@ def rda_error_metadata():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Bad dataType
     handler = webserver.SequentialHandler()
@@ -285,9 +251,7 @@ def rda_error_metadata():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Huge numBands
     handler = webserver.SequentialHandler()
@@ -322,9 +286,7 @@ def rda_error_metadata():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Invalid dataset dimensions
     handler = webserver.SequentialHandler()
@@ -359,21 +321,17 @@ def rda_error_metadata():
                                       'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
                 ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 
 
-def rda_graph_nominal():
+def test_rda_graph_nominal():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     metadata_json = {"imageMetadata": {
@@ -420,18 +378,10 @@ def rda_graph_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterXSize != 320:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterYSize != 300:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 320
+    assert ds.RasterYSize == 300
     expected_md = {
         'SENSOR_NAME': 'SENSOR_NAME',
         'CLOUD_COVER': '1.2',
@@ -444,17 +394,10 @@ def rda_graph_nominal():
         'SAT_ELEVATION': '5.2'
     }
     got_md = ds.GetMetadata()
-    if got_md != expected_md:
-        gdaltest.post_reason('fail')
-        print(got_md)
-        return 'fail'
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert got_md == expected_md
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
 
-    if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef() == ''
 
     ds = None
 
@@ -464,18 +407,10 @@ def rda_graph_nominal():
             with open('tmp/rda_test1.dgrda', "w") as fd:
                 fd.write('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
             ds = gdal.Open('tmp/rda_test1.dgrda')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterXSize != 320:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterYSize != 300:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 320
+    assert ds.RasterYSize == 300
     expected_md = {
         'SENSOR_NAME': 'SENSOR_NAME',
         'CLOUD_COVER': '1.2',
@@ -488,17 +423,10 @@ def rda_graph_nominal():
         'SAT_ELEVATION': '5.2'
     }
     got_md = ds.GetMetadata()
-    if got_md != expected_md:
-        gdaltest.post_reason('fail')
-        print(got_md)
-        return 'fail'
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert got_md == expected_md
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
 
-    if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef() == ''
 
     try:
         os.remove('tmp/rda_test1.dgrda')
@@ -509,12 +437,8 @@ def rda_graph_nominal():
     # Retry without any network setup to test caching
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 3
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -527,18 +451,11 @@ def rda_graph_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-        if ds is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        if ds.GetProjectionRef().find('32631') < 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert ds is not None
+        assert ds.GetProjectionRef().find('32631') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (125.0, 1.0, 0.0, 462.0, 0.0, 2.0)
 
     ds = None
 
@@ -546,10 +463,7 @@ def rda_graph_nominal():
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
     got_gt = ds.GetGeoTransform()
-    if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (125.0, 1.0, 0.0, 462.0, 0.0, 2.0)
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -562,12 +476,8 @@ def rda_graph_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-        if ds is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        if ds.GetMetadata('RPC') != {}:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert ds is not None
+        assert ds.GetMetadata('RPC') == {}
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -582,12 +492,8 @@ def rda_graph_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-        if ds is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        if ds.GetMetadata('RPC') != {}:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert ds is not None
+        assert ds.GetMetadata('RPC') == {}
 
     tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_00.tif', 256, 256, 3)
     tile_ds.GetRasterBand(1).Fill(255)
@@ -636,44 +542,26 @@ def rda_graph_nominal():
     handler.add('GET', '/rda_api/tile/foo/bar/1/1.tif', 200, {}, tile11_data)
     with webserver.install_http_handler(handler):
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [54287, 50451, 21110]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == [54287, 50451, 21110]
 
     # Retry without any network setup to test caching
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [54287, 50451, 21110]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == [54287, 50451, 21110]
 
     data = struct.unpack('B' * (320 * 300 * 3), ds.ReadRaster())
-    if data[0] != 255:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0] == 255
 
-    if data[0 + 320 * 300] != 250:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0 + 320 * 300] == 250
 
-    if data[0 + 320 * 300 * 2] != 245:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0 + 320 * 300 * 2] == 245
 
-    if data[319] != 240:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[319] == 240
 
-    if data[320 * 299] != 225:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[320 * 299] == 225
 
-    if data[320 * 299 + 319] != 210:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[320 * 299 + 319] == 210
 
     ds = None
 
@@ -727,20 +615,15 @@ def rda_graph_nominal():
         data = ds.GetRasterBand(1).ReadBlock(0, 0)
 
     data = struct.unpack('B' * (256 * 256), data)
-    if data[0] != 255:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if data[256 * (256 - 2)] != 225:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0] == 255
+    assert data[256 * (256 - 2)] == 225
+
 
     # Try IReadBlock() when data for other bands is already cached
     ds.GetRasterBand(1).FlushCache()
     data = ds.GetRasterBand(1).ReadBlock(0, 0)
     data = struct.unpack('B' * (256 * 256), data)
-    if data[0] != 255:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0] == 255
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -755,23 +638,19 @@ def rda_graph_nominal():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
             with gdaltest.error_handler():
                 data = ds.GetRasterBand(1).ReadBlock(0, 0)
-                if data is not None:
-                    gdaltest.post_reason('fail')
-                    return 'fail'
+                assert data is None
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
-
-    return 'success'
 
 ###############################################################################
 
 
-def rda_template_nominal():
+def test_rda_template_nominal():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     metadata_json = {"imageMetadata": {
@@ -810,33 +689,19 @@ def rda_template_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterXSize != 320:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterYSize != 300:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetProjectionRef() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 320
+    assert ds.RasterYSize == 300
+    assert ds.GetProjectionRef() == ''
 
     ds = None
 
     # Retry without any network setup to test caching
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 3
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -849,18 +714,11 @@ def rda_template_nominal():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
-        if ds is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        if ds.GetProjectionRef().find('32631') < 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert ds is not None
+        assert ds.GetProjectionRef().find('32631') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (125.0, 1.0, 0.0, 462.0, 0.0, 2.0)
 
     ds = None
 
@@ -868,10 +726,7 @@ def rda_template_nominal():
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
     got_gt = ds.GetGeoTransform()
-    if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (125.0, 1.0, 0.0, 462.0, 0.0, 2.0)
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -927,92 +782,202 @@ def rda_template_nominal():
             ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
 
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-        if cs != [54287, 50451, 21110]:
-            gdaltest.post_reason('fail')
-            print(cs)
-            return 'fail'
+        assert cs == [54287, 50451, 21110]
 
     # Retry without any network setup to test caching
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"template-id": "foo","params": [{"nodeId": "bar"}],"options":{"delete-on-close":false}}')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [54287, 50451, 21110]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == [54287, 50451, 21110]
 
     data = struct.unpack('B' * (320 * 300 * 3), ds.ReadRaster())
-    if data[0] != 255:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0] == 255
 
-    if data[0 + 320 * 300] != 250:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0 + 320 * 300] == 250
 
-    if data[0 + 320 * 300 * 2] != 245:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[0 + 320 * 300 * 2] == 245
 
-    if data[319] != 240:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[319] == 240
 
-    if data[320 * 299] != 225:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[320 * 299] == 225
 
-    if data[320 * 299 + 319] != 210:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert data[320 * 299 + 319] == 210
 
     ds = None
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    #
-    # # Test ReadBlock directly
-    # handler = webserver.SequentialHandler()
-    # handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    # handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
-    # handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile00_data)
-    # handler.add('GET', '/rda_api/tile/foo/bar/1/0.tif', 200, {}, tile01_data)
-    # handler.add('GET', '/rda_api/tile/foo/bar/0/1.tif', 200, {}, tile10_data)
-    # handler.add('GET', '/rda_api/tile/foo/bar/1/1.tif', 200, {}, tile11_data)
-    # with webserver.install_http_handler(handler):
-    #     with gdaltest.config_options(config_options):
-    #         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-    #     data = ds.GetRasterBand(1).ReadBlock(0,0)
-    #
-    # data = struct.unpack('B' * (256 * 256), data)
-    # if data[0] != 255:
-    #     gdaltest.post_reason('fail')
-    #     return 'fail'
-    # if data[256*(256-2)] != 225:
-    #     gdaltest.post_reason('fail')
-    #     return 'fail'
-    #
-    # # Try IReadBlock() when data for other bands is already cached
-    # ds.GetRasterBand(1).FlushCache()
-    # data = ds.GetRasterBand(1).ReadBlock(0,0)
-    # data = struct.unpack('B' * (256 * 256), data)
-    # if data[0] != 255:
-    #     gdaltest.post_reason('fail')
-    #     return 'fail'
-    #
-    # gdal.RmdirRecursive('/vsimem/cache_dir')
-
-    return 'success'
-
 ###############################################################################
 
-
-def rda_read_gbdx_config():
+def test_rda_template_image_reference_nominal():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    metadata_json = {"imageMetadata": {
+        "imageId": "imageId",
+        "profileName": "profileName",
+        "version": "1.1",
+        "tileXOffset": 0,
+        "tileYOffset": 0,
+        "numXTiles": 2,
+        "numYTiles": 2,
+        "tileXSize": 256,
+        "tileYSize": 256,
+        "numBands": 3,
+        "dataType": "BYTE",
+        "imageBoundsWGS84": "POLYGON ((38.40860454495335 -7.930519355111963, 38.58835646791296 -7.930735794243954, 38.5882467165898 -8.04033318299107, 38.40844687441741 -8.040113715005461, 38.40860454495335 -7.930519355111963))",
+        "imageHeight": 300,
+        "imageWidth": 320,
+        "minX": 2,
+        "minY": 3,
+        "maxX": 322,
+        "maxY": 303,
+        "minTileX": 0,
+        "minTileY": 0,
+        "maxTileX": 1,
+        "maxTileY": 1
+    }}
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
+    handler.add('GET', '/rda_api/template/foo/metadata?nodeId=bar&p1=baz', 200, {}, json.dumps(metadata_json))
+
+    config_options = {
+        'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
+        'GBDX_RDA_API_URL': '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
+        'GBDX_USERNAME': 'user_name',
+        'GBDX_PASSWORD': 'password'
+    }
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
+    assert ds is not None
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 320
+    assert ds.RasterYSize == 300
+    assert ds.GetProjectionRef() == ''
+
+    ds = None
+
+    # Retry without any network setup to test caching
+    with gdaltest.config_options(config_options):
+        ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
+    assert ds is not None
+    assert ds.RasterCount == 3
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    metadata_json["imageGeoreferencing"] = {"spatialReferenceSystemCode": "EPSG:32631", "scaleX": 1.0, "scaleY": 2.0,
+                                            "translateX": 123.0, "translateY": 456.0, "shearX": 0.0, "shearY": 0.0}
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
+    handler.add('GET', '/rda_api/template/foo/metadata?nodeId=bar&p1=baz', 200, {}, json.dumps(metadata_json))
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
+        assert ds is not None
+        assert ds.GetProjectionRef().find('32631') >= 0
+
+    got_gt = ds.GetGeoTransform()
+    assert got_gt == (125.0, 1.0, 0.0, 462.0, 0.0, 2.0)
+
+    ds = None
+
+    # Retry without any network setup to test caching
+    with gdaltest.config_options(config_options):
+        ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
+    got_gt = ds.GetGeoTransform()
+    assert got_gt == (125.0, 1.0, 0.0, 462.0, 0.0, 2.0)
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_00.tif', 256, 256, 3)
+    tile_ds.GetRasterBand(1).Fill(255)
+    tile_ds.GetRasterBand(2).Fill(250)
+    tile_ds.GetRasterBand(3).Fill(245)
+    tile_ds = None
+    f = gdal.VSIFOpenL('/vsimem/tile_00.tif', 'rb')
+    tile00_data = gdal.VSIFReadL(1, 10000 + 256 * 256 * 3, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/tile_00.tif')
+
+    tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_01.tif', 256, 256, 3)
+    tile_ds.GetRasterBand(1).Fill(240)
+    tile_ds.GetRasterBand(2).Fill(235)
+    tile_ds.GetRasterBand(3).Fill(230)
+    tile_ds = None
+    f = gdal.VSIFOpenL('/vsimem/tile_01.tif', 'rb')
+    tile01_data = gdal.VSIFReadL(1, 10000 + 256 * 256 * 3, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/tile_01.tif')
+
+    tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_10.tif', 256, 256, 3)
+    tile_ds.GetRasterBand(1).Fill(225)
+    tile_ds.GetRasterBand(2).Fill(220)
+    tile_ds.GetRasterBand(3).Fill(215)
+    tile_ds = None
+    f = gdal.VSIFOpenL('/vsimem/tile_10.tif', 'rb')
+    tile10_data = gdal.VSIFReadL(1, 10000 + 256 * 256 * 3, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/tile_10.tif')
+
+    tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_11.tif', 256, 256, 3)
+    tile_ds.GetRasterBand(1).Fill(210)
+    tile_ds.GetRasterBand(2).Fill(205)
+    tile_ds.GetRasterBand(3).Fill(200)
+    tile_ds = None
+    f = gdal.VSIFOpenL('/vsimem/tile_11.tif', 'rb')
+    tile11_data = gdal.VSIFReadL(1, 10000 + 256 * 256 * 3, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/tile_11.tif')
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
+    handler.add('GET', '/rda_api/template/foo/metadata?nodeId=bar&p1=baz', 200, {}, json.dumps(metadata_json))
+    handler.add('GET', '/rda_api/template/foo/tile/0/0?nodeId=bar&p1=baz', 200, {}, tile00_data)
+    handler.add('GET', '/rda_api/template/foo/tile/1/0?nodeId=bar&p1=baz', 200, {}, tile01_data)
+    handler.add('GET', '/rda_api/template/foo/tile/0/1?nodeId=bar&p1=baz', 200, {}, tile10_data)
+    handler.add('GET', '/rda_api/template/foo/tile/1/1?nodeId=bar&p1=baz', 200, {}, tile11_data)
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
+
+        cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
+        assert cs == [54287, 50451, 21110]
+
+    # Retry without any network setup to test caching
+    with gdaltest.config_options(config_options):
+        ds = gdal.Open('{"templateId": "foo", "nodeId": "bar", "parameters": {"p1": "baz"},"options":{"delete-on-close":false}}')
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
+    assert cs == [54287, 50451, 21110]
+
+    data = struct.unpack('B' * (320 * 300 * 3), ds.ReadRaster())
+    assert data[0] == 255
+
+    assert data[0 + 320 * 300] == 250
+
+    assert data[0 + 320 * 300 * 2] == 245
+
+    assert data[319] == 240
+
+    assert data[320 * 299] == 225
+
+    assert data[320 * 299 + 319] == 210
+
+    ds = None
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+
+def test_rda_read_gbdx_config():
+
+    if gdaltest.rda_drv is None:
+        pytest.skip()
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1056,22 +1021,19 @@ idaho_api_url = 127.0.0.1:%d/rda_api
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     gdal.Unlink('/vsimem/.gbdx-config')
-
-    return 'success'
 
 ###############################################################################
 
 
-def rda_download_queue():
+def test_rda_download_queue():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1136,21 +1098,17 @@ def rda_download_queue():
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         data = ds.ReadRaster(0, 1, 4, 2)
-    if data != ref_data:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert data == ref_data
 
 ###############################################################################
 
 
-def rda_rpc():
+def test_rda_rpc():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1196,9 +1154,7 @@ def rda_rpc():
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
         md = ds.GetMetadata('RPC')
-    if md != {}:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md == {}
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1213,9 +1169,7 @@ def rda_rpc():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
         with gdaltest.error_handler():
             md = ds.GetMetadata('RPC')
-    if md != {}:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md == {}
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1231,36 +1185,28 @@ def rda_rpc():
     expected_md = {'HEIGHT_OFF': '151', 'SAMP_OFF': '13775', 'LINE_NUM_COEFF': '0.00346238799999999984 -0.00331988499999999985 -1.00417299999999998 -0.000569458199999999968 0.00138283000000000004 1.97361499999999982e-06 0.000360684200000000019 -0.000828726199999999967 -0.00134833700000000002 3.39903600000000002e-07 -1.43147900000000003e-06 1.05879399999999997e-06 2.70590600000000004e-05 -9.73226600000000015e-08 -2.98801499999999988e-05 -0.000120552999999999996 -2.95605399999999987e-05 2.81748900000000025e-07 0 -1.66303899999999993e-08', 'LONG_OFF': '2.19589999999999996', 'MIN_LAT': '48.6908414600000015', 'MAX_LONG': '2.31489579000000001', 'LINE_SCALE': '13314', 'SAMP_NUM_COEFF': '-0.0036275840000000001 1.01546899999999996 -0.0016947380000000001 -0.0107358999999999996 -0.00195866699999999987 0.000532514199999999951 -0.000400355199999999985 0.00366687099999999993 0.0002035126 -5.42788399999999972e-06 -1.176796e-06 -1.53613099999999988e-05 -6.90779199999999995e-05 -1.67062600000000002e-05 7.90828899999999939e-05 -4.44276200000000027e-06 1.14346699999999995e-07 3.32255499999999999e-06 8.62453100000000019e-07 1.74167099999999993e-07', 'LONG_SCALE': '0.120300000000000004', 'SAMP_DEN_COEFF': '1 -3.70703199999999978e-05 0.00197828100000000014 -0.000580411299999999963 -4.49799400000000022e-05 -2.65957199999999999e-06 9.73095999999999941e-07 -1.25065499999999997e-05 4.71401100000000002e-05 -1.69761699999999998e-05 -6.04184799999999996e-08 0 2.17301699999999993e-07 5.60807800000000004e-08 -2.6601939999999999e-07 -2.02055599999999998e-07 -6.34738299999999952e-08 1.32195600000000006e-08 -8.62653499999999976e-08 1.90874699999999984e-08', 'MIN_LONG': '2.07724377999999987', 'SAMP_SCALE': '13776', 'MAX_LAT': '48.8406507799999972', 'LAT_SCALE': '0.0749999999999999972', 'LAT_OFF': '48.7657000000000025', 'LINE_OFF': '13313', 'LINE_DEN_COEFF': '1 0.00139346600000000011 0.002175939 0.000361590300000000006 1.18845299999999999e-05 -5.55040999999999947e-07 -2.20758000000000013e-06 1.68834400000000011e-05 -6.33621000000000011e-05 2.9116880000000001e-05 -2.33314100000000006e-08 1.36765299999999997e-07 1.00699499999999992e-06 8.29065599999999946e-08 -7.30275400000000041e-07 -0.0001959288 2.55592200000000014e-08 2.07427299999999992e-08 6.76678700000000044e-07 2.106776e-08', 'HEIGHT_SCALE': '500'}
     for key in expected_md:
         if not key.endswith('_COEFF'):
-            if abs(float(expected_md[key]) - float(md[key])) > 1e-8 * abs(float(expected_md[key])):
-                gdaltest.post_reason('fail')
-                print(key, md)
-                return 'fail'
+            assert abs(float(expected_md[key]) - float(md[key])) <= 1e-8 * abs(float(expected_md[key]))
         else:
             expected_vals = [float(v) for v in expected_md[key].split(' ')]
             got_vals = [float(v) for v in md[key].split(' ')]
             for x in range(20):
-                if abs(expected_vals[x] - got_vals[x]) > 1e-8 * abs(expected_vals[x]):
-                    gdaltest.post_reason('fail')
-                    print(key, md)
-                    return 'fail'
+                assert abs(expected_vals[x] - got_vals[x]) <= 1e-8 * abs(expected_vals[x]), (key, md)
     ds = None
     gdal.RmdirRecursive('/vsimem/cache_dir')
-
-    return 'success'
 
 ###############################################################################
 
 
-def rda_real_cache_dir():
+def test_rda_real_cache_dir():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     home = gdal.GetConfigOption('HOME', gdal.GetConfigOption('USERPROFILE', None))
     if home is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1309,8 +1255,7 @@ def rda_real_cache_dir():
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
 
-    if not os.path.exists(cached_file):
-        return 'fail'
+    assert os.path.exists(cached_file)
     gdal.RmdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo'))
 
     handler = webserver.SequentialHandler()
@@ -1321,8 +1266,7 @@ def rda_real_cache_dir():
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
 
-    if os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'foo')):
-        return 'fail'
+    assert not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'foo'))
 
     # 493 = 0755
     gdal.MkdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo', 'baz'), 493)
@@ -1335,22 +1279,19 @@ def rda_real_cache_dir():
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
 
-    if not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'foo', 'baz')):
-        return 'fail'
+    assert os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'foo', 'baz'))
 
     gdal.RmdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo'))
-
-    return 'success'
 
 ###############################################################################
 
 
-def rda_real_expired_authentication():
+def test_rda_real_expired_authentication():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1401,17 +1342,16 @@ def rda_real_expired_authentication():
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
 
-    return 'success'
-
+    
 ###############################################################################
 
 
-def rda_bad_tile():
+def test_rda_bad_tile():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
@@ -1465,9 +1405,7 @@ def rda_bad_tile():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
         with gdaltest.error_handler():
             data = ds.ReadRaster()
-        if data is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert data is None
     ds = None
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -1481,9 +1419,7 @@ def rda_bad_tile():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
         with gdaltest.error_handler():
             data = ds.GetRasterBand(1).ReadBlock(0, 0)
-        if data is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert data is None
     ds = None
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -1497,9 +1433,7 @@ def rda_bad_tile():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
         with gdaltest.error_handler():
             data = ds.ReadRaster()
-        if data is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert data is None
     ds = None
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
@@ -1513,50 +1447,22 @@ def rda_bad_tile():
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
         with gdaltest.error_handler():
             data = ds.GetRasterBand(1).ReadBlock(0, 0)
-        if data is not None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert data is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 #
 
 
-def rda_cleanup():
+def test_rda_cleanup():
 
     if gdaltest.rda_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    return 'success'
 
 
-gdaltest_list = [
-    rda_test_presence,
-    rda_bad_connection_string,
-    rda_missing_credentials,
-    rda_failed_authentication,
-    rda_error_metadata,
-    rda_graph_nominal,
-    rda_template_nominal,
-    rda_read_gbdx_config,
-    rda_download_queue,
-    rda_rpc,
-    rda_real_cache_dir,
-    rda_real_expired_authentication,
-    rda_bad_tile,
-    rda_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('RDA')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

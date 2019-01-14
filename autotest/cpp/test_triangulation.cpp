@@ -113,8 +113,8 @@ namespace tut
 
             // Points inside
             {
-                double adfX[] = { 0, 1, 0, -1 };
-                double adfY[] = { 1, 0, -1, 0 };
+                double adfX[] = { 0.1, 0.9, 0.499, -0.9 };
+                double adfY[] = { 0.9, 0.1, -0.5, 0.1 };
                 for(int i=0;i<4;i++)
                 {
                     double x = adfX[i];
@@ -137,7 +137,7 @@ namespace tut
                     ensure(l1 >= 0 && l1 <= 1);
                     ensure(l2 >= 0 && l2 <= 1);
                     ensure(l3 >= 0 && l3 <= 1);
-                    ensure_equals(l3, 1 -l1 - l2);
+                    ensure_equals("",l3, 1.0 -l1 - l2,1e-10);
                 }
             }
 
@@ -152,7 +152,7 @@ namespace tut
                     int new_face;
                     int face;
                     ensure_equals(GDALTriangulationFindFacetDirected(psDT, 0, x, y, &face), FALSE);
-                    ensure(face >= 0 && face < 4);
+                    ensure(face < 0 || (face >= 0 && face < 4));
                     ensure_equals(GDALTriangulationFindFacetDirected(psDT, 1, x, y, &new_face), FALSE);
                     ensure_equals(face, new_face);
                     ensure_equals(GDALTriangulationFindFacetDirected(psDT, 2, x, y, &new_face), FALSE);
@@ -163,9 +163,11 @@ namespace tut
                     ensure_equals(face, new_face);
 
                     double l1, l2, l3;
+                    if( face < 0 )
+                        face = 0;
                     GDALTriangulationComputeBarycentricCoordinates(psDT, face, x, y, &l1, &l2, &l3);
                     ensure("outside", !((l1 >= 0 && l1 <= 1) && (l2 >= 0 && l2 <= 1) && (l3 >= 0 && l3 <= 1)));
-                    ensure_equals(l3, 1 -l1 - l2);
+                    ensure_equals("",l3, 1.0 -l1 - l2,1e-10);
                 }
             }
         }

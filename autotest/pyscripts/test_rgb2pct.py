@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,15 +29,14 @@
 ###############################################################################
 
 
-import sys
 import os
 import struct
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
 import test_py_scripts
+import pytest
 
 ###############################################################################
 # Test rgb2pct
@@ -47,17 +46,13 @@ def test_rgb2pct_1():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'rgb2pct', '../gcore/data/rgbsmall.tif tmp/test_rgb2pct_1.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_1.tif')
-    if ds.GetRasterBand(1).Checksum() != 31231:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 31231
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test pct2rgb
@@ -68,28 +63,23 @@ def test_pct2rgb_1():
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
     except:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('pct2rgb')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'pct2rgb', 'tmp/test_rgb2pct_1.tif tmp/test_pct2rgb_1.tif')
 
     ds = gdal.Open('tmp/test_pct2rgb_1.tif')
-    if ds.GetRasterBand(1).Checksum() != 20963:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 20963
 
     ori_ds = gdal.Open('../gcore/data/rgbsmall.tif')
     max_diff = gdaltest.compare_ds(ori_ds, ds)
-    if max_diff > 18:
-        return 'fail'
+    assert max_diff <= 18
 
     ds = None
     ori_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test rgb2pct -n option
@@ -99,25 +89,20 @@ def test_rgb2pct_2():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'rgb2pct', '-n 16 ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_2.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_2.tif')
-    if ds.GetRasterBand(1).Checksum() != 16596:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 16596
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     for i in range(16, 255):
         entry = ct.GetColorEntry(i)
-        if not (entry[0] == 0 and entry[1] == 0 and entry[2] == 0):
-            gdaltest.post_reason('Color table has more than 16 entries')
-            return 'fail'
+        assert (entry[0] == 0 and entry[1] == 0 and entry[2] == 0), \
+            'Color table has more than 16 entries'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test rgb2pct -pct option
@@ -127,25 +112,20 @@ def test_rgb2pct_3():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'rgb2pct', '-pct tmp/test_rgb2pct_2.tif ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_3.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_3.tif')
-    if ds.GetRasterBand(1).Checksum() != 16596:
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 16596
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     for i in range(16, 255):
         entry = ct.GetColorEntry(i)
-        if not (entry[0] == 0 and entry[1] == 0 and entry[2] == 0):
-            gdaltest.post_reason('Color table has more than 16 entries')
-            return 'fail'
+        assert (entry[0] == 0 and entry[1] == 0 and entry[2] == 0), \
+            'Color table has more than 16 entries'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test pct2rgb with big CT (>256 entries)
@@ -156,11 +136,11 @@ def test_pct2rgb_4():
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('pct2rgb')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'pct2rgb', '-rgba ../gcore/data/rat.img tmp/test_pct2rgb_4.tif')
 
@@ -176,13 +156,10 @@ def test_pct2rgb_4():
     ct = ori_ds.GetRasterBand(1).GetRasterColorTable()
     entry = ct.GetColorEntry(ori_data)
 
-    if entry != data:
-        return 'fail'
+    assert entry == data
 
     ds = None
     ori_ds = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -202,23 +179,7 @@ def test_rgb2pct_cleanup():
         except OSError:
             pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_rgb2pct_1,
-    test_pct2rgb_1,
-    test_rgb2pct_2,
-    test_rgb2pct_3,
-    test_pct2rgb_4,
-    test_rgb2pct_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_rgb2pct')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

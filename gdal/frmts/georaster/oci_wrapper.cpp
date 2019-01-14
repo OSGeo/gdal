@@ -652,15 +652,9 @@ bool OWConnection::Commit()
 /*                           OWStatement                                     */
 /*****************************************************************************/
 
-OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
+OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement ):
+    poConnection(pConnect), hError(poConnection->hError)
 {
-    poConnection    = pConnect;
-    nStmtMode       = OCI_DEFAULT;
-    nNextCol        = 0;
-    nNextBnd        = 0;
-    hError          = poConnection->hError;
-    nFetchCount     = 0;
-
     //  -----------------------------------------------------------
     //  Create Statement handler
     //  -----------------------------------------------------------
@@ -1123,15 +1117,19 @@ void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
 {
     nNextCol++;
 
-    CheckError( OCIDescriptorAlloc(
+    if (CheckError( OCIDescriptorAlloc(
         poConnection->hEnv,
         (void**) pphLocator,
         OCI_DTYPE_LOB,
         (size_t) 0,
         (dvoid **) nullptr),
-        hError );
+        hError ))
+    {
+        CPLDebug("OCI", "Error in WriteCLob");
+        return;
+    }
 
-    CheckError( OCILobCreateTemporary(
+    if (CheckError( OCILobCreateTemporary(
         poConnection->hSvcCtx,
         poConnection->hError,
         (OCILobLocator*) *pphLocator,
@@ -1140,11 +1138,15 @@ void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
         (ub1) OCI_TEMP_CLOB,
         false,
         OCI_DURATION_SESSION ),
-        hError );
+        hError ))
+    {
+        CPLDebug("OCI", "Error in WriteCLob creating temporary lob");
+        return;
+    }
 
     ub4 nAmont = (ub4) strlen(pszData);
 
-    CheckError( OCILobWrite(
+    if (CheckError( OCILobWrite(
         poConnection->hSvcCtx,
         hError,
         *pphLocator,
@@ -1157,7 +1159,11 @@ void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
         nullptr,
         (ub2) 0,
         (ub1) SQLCS_IMPLICIT ),
-        hError );
+        hError ))
+    {
+        CPLDebug("OCI", "Error in WriteCLob writing the lob");
+        return;
+    }
 }
 
 void OWStatement::Define( OCIArray** pphData )
@@ -1587,6 +1593,44 @@ char* OWStatement::ReadCLob( OCILobLocator* phLocator )
     pszBuffer[nAmont] = '\0';
 
     return pszBuffer;
+}
+
+// Free OCIDescriptor for the LOB, if it is temporary lob, it is freed too.
+void OWStatement::FreeLob(OCILobLocator* phLocator)
+{
+    boolean        is_temporary;
+
+    if (phLocator == nullptr)
+        return;
+
+    if( CheckError( OCILobIsTemporary(
+        poConnection->hEnv,
+        hError,
+        phLocator,
+        &is_temporary), 
+        hError))
+    {
+        CPLDebug("OCI", "OCILobIsTemporary failed");
+        OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+        return;
+    }
+
+    if(is_temporary)
+    {
+      if( CheckError( OCILobFreeTemporary(
+        poConnection->hSvcCtx,
+        hError,
+        phLocator),
+        hError))
+      {
+        CPLDebug("OCI", "OCILobFreeTemporary failed");
+        OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+        return;
+      }
+
+    }
+
+    OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
 }
 
 void OWStatement::BindName( const char* pszName, int* pnData )

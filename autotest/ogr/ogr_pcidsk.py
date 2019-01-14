@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,15 +28,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
 
 
 wkts = [('POINT (0 1 2)', 'points', 0),
@@ -49,11 +48,11 @@ wkts = [('POINT (0 1 2)', 'points', 0),
 # Test creation
 
 
-def ogr_pcidsk_1():
+def test_ogr_pcidsk_1():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr_drv.CreateDataSource('tmp/ogr_pcidsk_1.pix')
 
@@ -63,9 +62,7 @@ def ogr_pcidsk_1():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert feat is not None
 
     lyr = ds.CreateLayer('fields', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
@@ -84,30 +81,18 @@ def ogr_pcidsk_1():
     feat.SetField(0, 'bar')
     lyr.CreateFeature(feat)
 
-    if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
 
     lyr.DeleteFeature(1)
 
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if feat.GetField(0) != 'foo':
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if feat.GetField(1) != 1:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if feat.GetField(2) != 3.45:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert feat is not None
+    assert feat.GetField(0) == 'foo'
+    assert feat.GetField(1) == 1
+    assert feat.GetField(2) == 3.45
 
     for (wkt, layername, epsgcode) in wkts:
         geom = ogr.CreateGeometryFromWkt(wkt)
@@ -123,104 +108,69 @@ def ogr_pcidsk_1():
 
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
-        if feat is None:
-            gdaltest.post_reason('failure')
-            print(layername)
-            return 'fail'
+        assert feat is not None, layername
         if feat.GetGeometryRef().ExportToWkt() != wkt:
-            gdaltest.post_reason('failure')
             feat.DumpReadable()
-            print(layername)
-            return 'fail'
+            pytest.fail(layername)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading
 
 
-def ogr_pcidsk_2():
+def test_ogr_pcidsk_2():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/ogr_pcidsk_1.pix')
-    if ds.GetLayerCount() != 2 + len(wkts):
-        return 'fail'
+    assert ds.GetLayerCount() == 2 + len(wkts)
 
     lyr = ds.GetLayerByName('nothing')
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbNone
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert feat is not None
 
     lyr = ds.GetLayerByName('fields')
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if feat.GetField(0) != 'foo':
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if feat.GetField(1) != 1:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if feat.GetField(2) != 3.45:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert feat is not None
+    assert feat.GetField(0) == 'foo'
+    assert feat.GetField(1) == 1
+    assert feat.GetField(2) == 3.45
 
     for (wkt, layername, epsgcode) in wkts:
         geom = ogr.CreateGeometryFromWkt(wkt)
         lyr = ds.GetLayerByName(layername)
-        if lyr.GetGeomType() != geom.GetGeometryType():
-            gdaltest.post_reason('failure')
-            print(layername)
-            return 'fail'
+        assert lyr.GetGeomType() == geom.GetGeometryType(), layername
 
         srs = lyr.GetSpatialRef()
         if epsgcode != 0:
             ref_srs = osr.SpatialReference()
             ref_srs.ImportFromEPSG(epsgcode)
-            if srs is None or ref_srs.IsSame(srs) != 1:
-                gdaltest.post_reason('failure')
-                print(layername)
-                print(ref_srs)
-                print(srs)
-                return 'fail'
+            assert srs is not None and ref_srs.IsSame(srs) == 1, layername
 
         feat = lyr.GetNextFeature()
-        if feat is None:
-            gdaltest.post_reason('failure')
-            print(layername)
-            return 'fail'
+        assert feat is not None, layername
         if feat.GetGeometryRef().ExportToWkt() != wkt:
-            gdaltest.post_reason('failure')
             feat.DumpReadable()
-            print(layername)
-            return 'fail'
+            pytest.fail(layername)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Check with test_ogrsf
 
 
-def ogr_pcidsk_3():
+def test_ogr_pcidsk_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_pcidsk_1.pix')
 
@@ -243,47 +193,41 @@ def ogr_pcidsk_3():
 # Test that we cannot open a raster only pcidsk in read-only mode
 
 
-def ogr_pcidsk_4():
+def test_ogr_pcidsk_4():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('../gdrivers/data/utm.pix')
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that we can open a raster only pcidsk in update mode
 
 
-def ogr_pcidsk_5():
+def test_ogr_pcidsk_5():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('../gdrivers/data/utm.pix', update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
 
-def ogr_pcidsk_add_field_to_non_empty_layer():
+def test_ogr_pcidsk_add_field_to_non_empty_layer():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     tmpfile = '/vsimem/tmp.pix'
     ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
@@ -294,8 +238,7 @@ def ogr_pcidsk_add_field_to_non_empty_layer():
     lyr.CreateFeature(f)
     f = None
     with gdaltest.error_handler():
-        if lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString)) == 0:
-            return 'fail'
+        assert lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString)) != 0
     f = ogr.Feature(lyr.GetLayerDefn())
     f['foo'] = 'bar2'
     lyr.CreateFeature(f)
@@ -304,115 +247,78 @@ def ogr_pcidsk_add_field_to_non_empty_layer():
 
     ogr.GetDriverByName('PCIDSK').DeleteDataSource(tmpfile)
 
-    return 'success'
-
 ###############################################################################
 
 
-def ogr_pcidsk_too_many_layers():
+def test_ogr_pcidsk_too_many_layers():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     tmpfile = '/vsimem/tmp.pix'
     ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
     for i in range(1023):
         ds.CreateLayer('foo%d' % i)
     with gdaltest.error_handler():
-        if ds.CreateLayer('foo') is not None:
-            return 'fail'
+        assert ds.CreateLayer('foo') is None
     ds = None
 
     ogr.GetDriverByName('PCIDSK').DeleteDataSource(tmpfile)
 
-    return 'success'
-
 
 ###############################################################################
 # Check a polygon layer
 
-def ogr_pcidsk_online_1():
+def test_ogr_pcidsk_online_1():
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/polygon.pix', 'polygon.pix'):
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('tmp/cache/polygon.pix')
-    if ds is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr is not None
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert feat is not None
 
     geom = 'POLYGON ((479819.84375 4765180.5 0,479690.1875 4765259.5 0,479647.0 4765369.5 0,479730.375 4765400.5 0,480039.03125 4765539.5 0,480035.34375 4765558.5 0,480159.78125 4765610.5 0,480202.28125 4765482.0 0,480365.0 4765015.5 0,480389.6875 4764950.0 0,480133.96875 4764856.5 0,480080.28125 4764979.5 0,480082.96875 4765049.5 0,480088.8125 4765139.5 0,480059.90625 4765239.5 0,480019.71875 4765319.5 0,479980.21875 4765409.5 0,479909.875 4765370.0 0,479859.875 4765270.0 0,479819.84375 4765180.5 0))'
     if ogrtest.check_feature_geometry(feat, geom) != 0:
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Check a polygon layer
 
 
-def ogr_pcidsk_online_2():
+def test_ogr_pcidsk_online_2():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if ogr.GetDriverByName('PCIDSK') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/polygon.pix', 'polygon.pix'):
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/cache/polygon.pix')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Cleanup
 
 
-def ogr_pcidsk_cleanup():
+def test_ogr_pcidsk_cleanup():
 
     gdal.Unlink('tmp/ogr_pcidsk_1.pix')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_pcidsk_1,
-    ogr_pcidsk_2,
-    ogr_pcidsk_3,
-    ogr_pcidsk_4,
-    ogr_pcidsk_5,
-    ogr_pcidsk_add_field_to_non_empty_layer,
-    ogr_pcidsk_too_many_layers,
-    ogr_pcidsk_online_1,
-    ogr_pcidsk_online_2,
-    ogr_pcidsk_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_pcidsk')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

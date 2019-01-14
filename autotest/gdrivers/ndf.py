@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,7 +36,7 @@ import gdaltest
 # Simple image test of an NLAPS/NDF2 dataset.
 
 
-def ndf_1():
+def test_ndf_1():
 
     tst = gdaltest.GDALTest('NDF', 'LE7134052000500350.H3', 1, 6510,
                             xoff=0, yoff=0, xsize=15620, ysize=1)
@@ -71,13 +69,4 @@ def ndf_1():
                         check_prj=wkt)
 
 
-gdaltest_list = [
-    ndf_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ndf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

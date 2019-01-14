@@ -145,6 +145,8 @@ static void CPLOpenSSLCleanup()
         }
         CPLFree(pahSSLMutex);
         pahSSLMutex = nullptr;
+        CRYPTO_set_id_callback(nullptr);
+        CRYPTO_set_locking_callback(nullptr);
     }
 }
 
@@ -421,15 +423,24 @@ typedef struct {
 
 static int NewProcessFunction(void *p,
                               curl_off_t dltotal, curl_off_t dlnow,
-                              curl_off_t /*ultotal*/, curl_off_t /*ulnow*/)
+                              curl_off_t ultotal, curl_off_t ulnow)
 {
     CurlProcessDataL pData = static_cast<CurlProcessDataL>(p);
-    if(pData->pfnProgress) {
-        double dfDone = double(dlnow) / dltotal;
-        return pData->pfnProgress(dfDone, "Downloading ...",
-                                  pData->pProgressArg) == TRUE ? 0 : 1;
+    if( nullptr != pData && pData->pfnProgress ) {
+        double dfDone = 0.0;
+        if( dltotal > 0 )
+        {
+            dfDone = double(dlnow) / dltotal;
+            return pData->pfnProgress(dfDone, "Downloading ...",
+                pData->pProgressArg) == TRUE ? 0 : 1;
+        }
+        else if( ultotal > 0 )
+        {
+            dfDone = double(ulnow) / ultotal;
+            return pData->pfnProgress(dfDone, "Uploading ...",
+                pData->pProgressArg) == TRUE ? 0 : 1;
+        }
     }
-
     return 0;
 }
 
@@ -463,6 +474,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_LOW_SPEED_LIMIT", "LOW_SPEED_LIMIT" },
     { "GDAL_HTTP_USERPWD", "USERPWD" },
     { "GDAL_HTTP_PROXY", "PROXY" },
+    { "GDAL_HTTPS_PROXY", "HTTPS_PROXY" },
     { "GDAL_HTTP_PROXYUSERPWD", "PROXYUSERPWD" },
     { "GDAL_PROXY_AUTH", "PROXYAUTH" },
     { "GDAL_HTTP_NETRC", "NETRC" },
@@ -574,12 +586,23 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the server
  *                     with a POST request.</li>
  * <li>PROXY=val, to make requests go through a proxy server, where val is of the
- *                form proxy.server.com:port_number</li>
+ *                form proxy.server.com:port_number. This option affects both HTTP and HTTPS
+ *                URLs.</li>
+ * <li>HTTPS_PROXY=val (GDAL >= 2.4), the same meaning as PROXY, but this option is taken into account only
+ *                 for HTTPS URLs.</li>
  * <li>PROXYUSERPWD=val, where val is of the form username:password</li>
  * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.</li>
  * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.</li>
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)</li>
+ * <li>FORM_FILE_NAME=val, where val is upload file name. If this option and
+ *          FORM_FILE_PATH present, request type will set to POST.</li>
+ * <li>FORM_FILE_PATH=val, where val is upload file path.</li>
+ * <li>FORM_KEY_0=val...FORM_KEY_N, where val is name of form item.</li>
+ * <li>FORM_VALUE_0=val...FORM_VALUE_N, where val is value of the form item.</li>
+ * <li>FORM_ITEM_COUNT=val, where val is count of form items.</li>
  * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...</li>
+ * <li>COOKIEFILE=val, where val is file name to read cookies from (GDAL >= 2.4)</li>
+ * <li>COOKIEJAR=val, where val is file name to store cookies to (GDAL >= 2.4)</li>
  * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 429, 502, 503 or
  *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)</li>
  * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
@@ -599,7 +622,7 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  * <li>SSL_VERIFYSTATUS=YES/NO (GDAL >= 2.3, and curl >= 7.41): determines whether
  *     the status of the server cert using the "Certificate Status Request" TLS
  *     extension (aka. OCSP stapling) should be checked. If this option is enabled
- *     but the server does not support the TLS extension, the verification will fail. 
+ *     but the server does not support the TLS extension, the verification will fail.
  *     Default to NO.</li>
  * <li>USE_CAPI_STORE=YES/NO (GDAL >= 2.3, Windows only): whether CA certificates from
  *     the Windows certificate store. Defaults to NO.</li>
@@ -607,12 +630,12 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
- * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
+ * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
  * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION, SSL_VERIFYSTATUS, USE_CAPI_STORE
  * values are searched in the configuration
  * options respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
- * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
+ * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
  * GDAL_HTTP_USE_CAPI_STORE
@@ -652,6 +675,12 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         {
             osURL += "&CUSTOMREQUEST=";
             osURL += pszCustomRequest;
+        }
+        const char* pszUserPwd = CSLFetchNameValue( papszOptions, "USERPWD" );
+        if( pszUserPwd != nullptr )
+        {
+            osURL += "&USERPWD=";
+            osURL += pszUserPwd;
         }
         const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
         if( pszPost != nullptr ) // Hack: We append post content to filename.
@@ -796,10 +825,8 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
     CPLHTTPResult *psResult =
         static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));
 
-    curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
-
     struct curl_slist* headers= reinterpret_cast<struct curl_slist*>(
-                            CPLHTTPSetOptions(http_handle, papszOptions));
+                            CPLHTTPSetOptions(http_handle, pszURL, papszOptions));
 
     // Set Headers.
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
@@ -851,9 +878,9 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
     curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, pWriteArg );
     curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, pfnWrite );
 
+    CurlProcessData stProcessData = { pfnProgress, pProgressArg };
     if( nullptr != pfnProgress)
     {
-        CurlProcessData stProcessData = { pfnProgress, pProgressArg };
         curl_easy_setopt(http_handle, CURLOPT_PROGRESSFUNCTION, ProcessFunction);
         curl_easy_setopt(http_handle, CURLOPT_PROGRESSDATA, &stProcessData);
 
@@ -874,6 +901,82 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
     {
         bGZipRequested = true;
         curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
+    }
+
+    // Fill POST form if present
+    const char* pszFormFilePath = CSLFetchNameValue( papszOptions,
+        "FORM_FILE_PATH" );
+    const char* pszParametersCount = CSLFetchNameValue( papszOptions,
+        "FORM_ITEM_COUNT" );
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+    curl_mime *mime = nullptr;
+#else // LIBCURL_VERSION_NUM >= 0x073800
+    struct curl_httppost *formpost = nullptr;
+#endif // LIBCURL_VERSION_NUM >= 0x073800
+
+    if( pszFormFilePath != nullptr || pszParametersCount != nullptr )
+    {
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+        mime = curl_mime_init(http_handle);
+        curl_mimepart *mimepart = curl_mime_addpart(mime);
+#else // LIBCURL_VERSION_NUM >= 0x073800
+        struct curl_httppost *lastptr = nullptr;
+#endif // LIBCURL_VERSION_NUM >= 0x073800
+        if( pszFormFilePath != nullptr )
+        {
+            const char* pszFormFileName = CSLFetchNameValue( papszOptions,
+                "FORM_FILE_NAME" );
+            if( pszFormFileName == nullptr )
+            {
+                pszFormFileName = CPLGetFilename( pszFormFilePath );
+            }
+
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+            curl_mime_name(mimepart, pszFormFileName);
+            curl_mime_filedata(mimepart, pszFormFilePath);
+#else // LIBCURL_VERSION_NUM >= 0x073800
+            curl_formadd(&formpost, &lastptr,
+                CURLFORM_COPYNAME, pszFormFileName,
+                CURLFORM_FILE, pszFormFilePath,
+                CURLFORM_END);
+#endif // LIBCURL_VERSION_NUM >= 0x073800
+
+            CPLDebug("HTTP", "Send file: %s, COPYNAME: %s", pszFormFilePath,
+                pszFormFileName);
+        }
+
+        int nParametersCount = 0;
+        if( pszParametersCount != nullptr )
+        {
+            nParametersCount = atoi( pszParametersCount );
+        }
+
+        for(int i = 0; i < nParametersCount; ++i)
+        {
+            const char *pszKey = CSLFetchNameValue( papszOptions,
+                CPLSPrintf("FORM_KEY_%d", i) );
+            const char *pszValue = CSLFetchNameValue( papszOptions,
+                CPLSPrintf("FORM_VALUE_%d", i) );
+
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+            mimepart = curl_mime_addpart(mime);
+            curl_mime_name(mimepart, pszKey);
+            curl_mime_data(mimepart, pszValue, CURL_ZERO_TERMINATED);
+#else // LIBCURL_VERSION_NUM >= 0x073800
+            curl_formadd(&formpost, &lastptr,
+                CURLFORM_COPYNAME, pszKey,
+                CURLFORM_COPYCONTENTS, pszValue,
+                CURLFORM_END);
+#endif // LIBCURL_VERSION_NUM >= 0x073800
+
+            CPLDebug("HTTP", "COPYNAME: %s, COPYCONTENTS: %s", pszKey, pszValue);
+        }
+
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+        curl_easy_setopt(http_handle, CURLOPT_MIMEPOST, mime);
+#else // LIBCURL_VERSION_NUM >= 0x073800
+        curl_easy_setopt(http_handle, CURLOPT_HTTPPOST, formpost);
+#endif // LIBCURL_VERSION_NUM >= 0x073800
     }
 
 /* -------------------------------------------------------------------- */
@@ -1008,6 +1111,18 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
 
     if( !pszPersistent )
         curl_easy_cleanup( http_handle );
+
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+    if( mime != nullptr )
+    {
+        curl_mime_free(mime);
+    }
+#else // LIBCURL_VERSION_NUM >= 0x073800
+    if( formpost != nullptr)
+    {
+        curl_formfree(formpost);
+    }
+#endif // LIBCURL_VERSION_NUM >= 0x073800
 
     curl_slist_free_all(headers);
 
@@ -1205,10 +1320,9 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
 
         const char* pszURL = papszURL[i];
         CURL* http_handle = curl_easy_init();
-        curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
         aHeaders[i] = reinterpret_cast<struct curl_slist*>(
-                            CPLHTTPSetOptions(http_handle, papszOptions));
+                            CPLHTTPSetOptions(http_handle, pszURL, papszOptions));
 
         // Set Headers.
         const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
@@ -1405,11 +1519,14 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 // see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html
 // caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS
 
-void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
+void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
+                       const char * const* papszOptions)
 {
     CheckCurlFeatures();
 
     CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
+
+    curl_easy_setopt(http_handle, CURLOPT_URL, pszURL);
 
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
         curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
@@ -1568,6 +1685,12 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", nullptr);
     if( pszProxy )
         curl_easy_setopt(http_handle, CURLOPT_PROXY, pszProxy);
+
+    const char* pszHttpsProxy = CSLFetchNameValue( papszOptions, "HTTPS_PROXY" );
+    if ( pszHttpsProxy == nullptr )
+        pszHttpsProxy = CPLGetConfigOption("GDAL_HTTPS_PROXY", nullptr);
+    if ( pszHttpsProxy && (STARTS_WITH(pszURL, "https")) )
+        curl_easy_setopt(http_handle, CURLOPT_PROXY, pszHttpsProxy);
 
     const char* pszProxyUserPwd =
         CSLFetchNameValue( papszOptions, "PROXYUSERPWD" );
@@ -1737,20 +1860,25 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
 #endif
 
-    /* Set POST mode */
-    const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
-    if( pszPost != nullptr )
+    const char* pszFormFilePath = CSLFetchNameValue( papszOptions, "FORM_FILE_PATH" );
+    const char* pszParametersCount = CSLFetchNameValue( papszOptions, "FORM_ITEM_COUNT" );
+    if( pszFormFilePath == nullptr && pszParametersCount == nullptr )
     {
-        CPLDebug("HTTP", "These POSTFIELDS were sent:%.4000s", pszPost);
-        curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
-        curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
-    }
+        /* Set POST mode */
+        const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
+        if( pszPost != nullptr )
+        {
+            CPLDebug("HTTP", "These POSTFIELDS were sent:%.4000s", pszPost);
+            curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
+            curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
+        }
 
-    const char* pszCustomRequest =
-        CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
-    if( pszCustomRequest != nullptr )
-    {
-        curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
+        const char* pszCustomRequest =
+            CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
+        if( pszCustomRequest != nullptr )
+        {
+            curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
+        }
     }
 
     const char* pszCookie = CSLFetchNameValue(papszOptions, "COOKIE");
@@ -1758,6 +1886,19 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         pszCookie = CPLGetConfigOption("GDAL_HTTP_COOKIE", nullptr);
     if( pszCookie != nullptr )
         curl_easy_setopt(http_handle, CURLOPT_COOKIE, pszCookie);
+
+    const char* pszCookieFile = CSLFetchNameValue(papszOptions, "COOKIEFILE");
+    if( pszCookieFile == nullptr )
+        pszCookieFile = CPLGetConfigOption("GDAL_HTTP_COOKIEFILE", nullptr);
+    if( pszCookieFile != nullptr )
+        curl_easy_setopt(http_handle, CURLOPT_COOKIEFILE, pszCookieFile);
+
+    const char* pszCookieJar = CSLFetchNameValue(papszOptions, "COOKIEJAR");
+    if( pszCookieJar == nullptr )
+        pszCookieJar = CPLGetConfigOption("GDAL_HTTP_COOKIEJAR", nullptr);
+    if( pszCookieJar != nullptr )
+        curl_easy_setopt(http_handle, CURLOPT_COOKIEJAR, pszCookieJar);
+
 
     struct curl_slist* headers = nullptr;
     const char *pszHeaderFile = CSLFetchNameValue( papszOptions, "HEADER_FILE" );

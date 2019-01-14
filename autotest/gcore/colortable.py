@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,18 +30,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Create a color table.
 
 
-def colortable_1():
+def test_colortable_1():
 
     gdaltest.test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
@@ -49,13 +48,12 @@ def colortable_1():
     for i in range(len(gdaltest.test_ct_data)):
         gdaltest.test_ct.SetColorEntry(i, gdaltest.test_ct_data[i])
 
-    return 'success'
-
+    
 ###############################################################################
 # verify contents.
 
 
-def colortable_2():
+def test_colortable_2():
 
     for i in range(len(gdaltest.test_ct_data)):
         g_data = gdaltest.test_ct.GetColorEntry(i)
@@ -67,53 +65,33 @@ def colortable_2():
             else:
                 o_v = o_data[j]
 
-            if g_data[j] != o_v:
-                gdaltest.post_reason('color table mismatch')
-                return 'fail'
+            assert g_data[j] == o_v, 'color table mismatch'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateColorRamp()
 
 
-def colortable_3():
+def test_colortable_3():
 
     ct = gdal.ColorTable()
     try:
         ct.CreateColorRamp
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     ct.CreateColorRamp(0, (255, 0, 0), 255, (0, 0, 255))
 
-    if ct.GetColorEntry(0) != (255, 0, 0, 255):
-        return 'fail'
+    assert ct.GetColorEntry(0) == (255, 0, 0, 255)
 
-    if ct.GetColorEntry(255) != (0, 0, 255, 255):
-        return 'fail'
-
-    return 'success'
+    assert ct.GetColorEntry(255) == (0, 0, 255, 255)
 
 ###############################################################################
 # Cleanup.
 
 
-def colortable_cleanup():
+def test_colortable_cleanup():
     gdaltest.test_ct = None
-    return 'success'
 
 
-gdaltest_list = [
-    colortable_1,
-    colortable_2,
-    colortable_3,
-    colortable_cleanup]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('colortable')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

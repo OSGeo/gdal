@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,18 +29,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Verify simple 3x3 averaging filter.
 
 
-def vrtfilt_1():
+def test_vrtfilt_1():
 
     tst = gdaltest.GDALTest('VRT', 'avfilt.vrt', 1, 21890)
     return tst.testOpen()
@@ -49,7 +48,7 @@ def vrtfilt_1():
 # Verify simple 3x3 averaging filter (normalized) on a dataset with nodata
 
 
-def vrtfilt_2():
+def test_vrtfilt_2():
 
     ds = gdal.Open('data/test_vrt_filter_nodata.tif')
     checksum = ds.GetRasterBand(1).Checksum()
@@ -65,7 +64,7 @@ def vrtfilt_2():
 # Same result expected as for vrtfilt_1
 
 
-def vrtfilt_3():
+def test_vrtfilt_3():
 
     ds = gdal.OpenShared('data/rgbsmall.tif')
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
@@ -85,19 +84,16 @@ def vrtfilt_3():
     try:
         vrt_ds.GetRasterBand(1).SetMetadataItem
     except:
-        return 'skip'
+        pytest.skip()
 
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'vrt_sources')
-    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
-        return 'fail'
-
-    return 'success'
+    assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
 ###############################################################################
 # Variant for SetMetadataItem('source_0', xml, 'vrt_sources')
 
 
-def vrtfilt_4():
+def test_vrtfilt_4():
 
     vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1)
 
@@ -115,19 +111,16 @@ def vrtfilt_4():
     try:
         vrt_ds.GetRasterBand(1).SetMetadataItem
     except:
-        return 'skip'
+        pytest.skip()
 
     vrt_ds.GetRasterBand(1).SetMetadataItem('source_0', filterSourceXML, 'new_vrt_sources')
-    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
-        return 'fail'
-
-    return 'success'
+    assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
 ###############################################################################
 # Variant for SetMetadata(md, 'vrt_sources')
 
 
-def vrtfilt_5():
+def test_vrtfilt_5():
 
     vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1)
 
@@ -146,16 +139,13 @@ def vrtfilt_5():
     md['source_0'] = filterSourceXML
 
     vrt_ds.GetRasterBand(1).SetMetadata(md, 'vrt_sources')
-    if vrt_ds.GetRasterBand(1).Checksum() != 21890:
-        return 'fail'
-
-    return 'success'
+    assert vrt_ds.GetRasterBand(1).Checksum() == 21890
 
 ###############################################################################
 # Verify separable Gaussian blur filter.
 
 
-def vrtfilt_6():
+def test_vrtfilt_6():
 
     tst = gdaltest.GDALTest('VRT', 'avfilt_1d.vrt', 1, 22377)
     return tst.testOpen()
@@ -164,23 +154,7 @@ def vrtfilt_6():
 # Cleanup.
 
 
-def vrtfilt_cleanup():
-    return 'success'
+def test_vrtfilt_cleanup():
+    pass
 
 
-gdaltest_list = [
-    vrtfilt_1,
-    vrtfilt_2,
-    vrtfilt_3,
-    vrtfilt_4,
-    vrtfilt_5,
-    vrtfilt_6,
-    vrtfilt_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vrtfilt')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

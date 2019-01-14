@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,19 +30,18 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read test of floating point reference data.
 
 
-def pcidsk_1():
+def test_pcidsk_1():
 
     tst = gdaltest.GDALTest('PCIDSK', 'utm.pix', 1, 39576)
     return tst.testOpen()
@@ -51,7 +50,7 @@ def pcidsk_1():
 # Test lossless copying (16, multiband) via Create().
 
 
-def pcidsk_2():
+def test_pcidsk_2():
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042)
 
@@ -61,7 +60,7 @@ def pcidsk_2():
 # Test copying of georeferencing and projection.
 
 
-def pcidsk_3():
+def test_pcidsk_3():
 
     tst = gdaltest.GDALTest('PCIDSK', 'utm.pix', 1, 39576)
 
@@ -71,34 +70,28 @@ def pcidsk_3():
 # Test overview reading.
 
 
-def pcidsk_4():
+def test_pcidsk_4():
 
     ds = gdal.Open('data/utm.pix')
 
     band = ds.GetRasterBand(1)
-    if band.GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 1, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    if cs != 8368:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 8368, ('wrong overview checksum (%d)' % cs)
 
 ###############################################################################
 # Test writing metadata to a newly created file.
 
 
-def pcidsk_5():
+def test_pcidsk_5():
 
     # Are we using the new PCIDSK SDK based driver?
     driver = gdal.GetDriverByName('PCIDSK')
     col = driver.GetMetadataItem('DMD_CREATIONOPTIONLIST')
     if col.find('COMPRESSION') == -1:
         gdaltest.pcidsk_new = 0
-        return 'skip'
+        pytest.skip()
     else:
         gdaltest.pcidsk_new = 1
 
@@ -132,16 +125,15 @@ def pcidsk_5():
         print(mdalt)
         gdaltest.post_reason('file alt domain metadata broken. ')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test writing metadata to a band.
 
 
-def pcidsk_6():
+def test_pcidsk_6():
 
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -168,16 +160,15 @@ def pcidsk_6():
         print(mdalt)
         gdaltest.post_reason('channel alt domain metadata broken. ')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test creating a color table and reading it back.
 
 
-def pcidsk_7():
+def test_pcidsk_7():
 
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -185,9 +176,7 @@ def pcidsk_7():
 
     ct = band.GetColorTable()
 
-    if ct is not None:
-        gdaltest.post_reason('Got color table unexpectedly.')
-        return 'fail'
+    assert ct is None, 'Got color table unexpectedly.'
 
     ct = gdal.ColorTable()
     ct.SetColorEntry(0, (0, 255, 0, 255))
@@ -197,9 +186,8 @@ def pcidsk_7():
 
     ct = band.GetColorTable()
 
-    if ct.GetColorEntry(1) != (255, 0, 255, 255):
-        gdaltest.post_reason('Got wrong color table entry immediately.')
-        return 'fail'
+    assert ct.GetColorEntry(1) == (255, 0, 255, 255), \
+        'Got wrong color table entry immediately.'
 
     ct = None
     band = None
@@ -212,33 +200,22 @@ def pcidsk_7():
 
     ct = band.GetColorTable()
 
-    if ct.GetColorEntry(1) != (255, 0, 255, 255):
-        gdaltest.post_reason('Got wrong color table entry after reopen.')
-        return 'fail'
+    assert ct.GetColorEntry(1) == (255, 0, 255, 255), \
+        'Got wrong color table entry after reopen.'
 
-    if band.GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        gdaltest.post_reason('Not a palette?')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_PaletteIndex, 'Not a palette?'
 
-    if band.SetColorTable(None) != 0:
-        gdaltest.post_reason('SetColorTable failed.')
-        return 'fail'
+    assert band.SetColorTable(None) == 0, 'SetColorTable failed.'
 
-    if band.GetColorTable() is not None:
-        gdaltest.post_reason('color table still exists!')
-        return 'fail'
+    assert band.GetColorTable() is None, 'color table still exists!'
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('Paletted?')
-        return 'fail'
-
-    return 'success'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined, 'Paletted?'
 
 ###############################################################################
 # Test FILE interleaving.
 
 
-def pcidsk_8():
+def test_pcidsk_8():
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
                             options=['INTERLEAVING=FILE'])
@@ -253,11 +230,11 @@ def pcidsk_8():
 def pcidsk_9():
 
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
     if ogr_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr_drv.CreateDataSource('/vsimem/pcidsk_9.pix')
     ds.CreateLayer('foo')
@@ -266,21 +243,18 @@ def pcidsk_9():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('/vsimem/pcidsk_9.pix')
     gdal.PopErrorHandler()
-    if ds is not None:
-        return 'fail'
+    assert ds is None
     ds = None
 
     gdal.Unlink('/vsimem/pcidsk_9.pix')
-
-    return 'success'
 
 ###############################################################################
 # Test overview creation.
 
 
-def pcidsk_10():
+def test_pcidsk_10():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_10.pix', src_ds)
@@ -292,28 +266,22 @@ def pcidsk_10():
     band = ds.GetRasterBand(1)
     ds.BuildOverviews('NEAR', [2])
 
-    if band.GetOverviewCount() != 1:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 1, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    if cs != 1087:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 1087, ('wrong overview checksum (%d)' % cs)
 
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_10.pix')
 
-    return 'success'
-
 ###############################################################################
 # Test INTERLEAVING=TILED interleaving.
 
 
-def pcidsk_11():
+def test_pcidsk_11():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
                             options=['INTERLEAVING=TILED', 'TILESIZE=32'])
@@ -324,9 +292,9 @@ def pcidsk_11():
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=RLE
 
 
-def pcidsk_12():
+def test_pcidsk_12():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
                             options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
@@ -337,12 +305,12 @@ def pcidsk_12():
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=JPEG
 
 
-def pcidsk_13():
+def test_pcidsk_13():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('JPEG') is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_13.pix', src_ds, options=['INTERLEAVING=TILED', 'COMPRESSION=JPEG'])
@@ -359,20 +327,15 @@ def pcidsk_13():
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_13.pix')
 
-    if cs != 4645:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 4645, 'bad checksum'
 
 ###############################################################################
 # Test SetDescription()
 
 
-def pcidsk_14():
+def test_pcidsk_14():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('PCIDSK').Create('/vsimem/pcidsk_14.pix', 1, 1)
     band = ds.GetRasterBand(1).SetDescription('mydescription')
@@ -388,20 +351,15 @@ def pcidsk_14():
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_14.pix')
 
-    if desc != 'mydescription':
-        gdaltest.post_reason('bad description')
-        print(desc)
-        return 'fail'
-
-    return 'success'
+    assert desc == 'mydescription', 'bad description'
 
 ###############################################################################
 # Test mixed raster and vector
 
 
-def pcidsk_15():
+def test_pcidsk_15():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     # One raster band and vector layer
     ds = gdal.GetDriverByName('PCIDSK').Create('/vsimem/pcidsk_15.pix', 1, 1)
@@ -409,24 +367,16 @@ def pcidsk_15():
     ds = None
 
     ds = gdal.Open('/vsimem/pcidsk_15.pix')
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 1
+    assert ds.GetLayerCount() == 1
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
     ds2 = None
     ds = None
 
     ds = gdal.Open('/vsimem/pcidsk_15_2.pix')
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 1
+    assert ds.GetLayerCount() == 1
     ds = None
 
     # One vector layer only
@@ -435,24 +385,16 @@ def pcidsk_15():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
-    if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 1
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
     ds2 = None
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
-    if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 1
     ds = None
 
     # Zero raster band and vector layer
@@ -460,41 +402,64 @@ def pcidsk_15():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
-    if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 0
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy('/vsimem/pcidsk_15_2.pix', ds)
     del ds2
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
-    if ds.RasterCount != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() == 0
     ds = None
 
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_15.pix')
     gdal.GetDriverByName('PCIDSK').Delete('/vsimem/pcidsk_15_2.pix')
 
-    return 'success'
+###############################################################################
+
+
+def test_pcidsk_external_ovr():
+
+    gdal.Translate('/vsimem/test.pix', 'data/byte.tif', format='PCIDSK')
+    ds = gdal.Open('/vsimem/test.pix')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+    assert gdal.VSIStatL('/vsimem/test.pix.ovr') is not None
+    ds = gdal.Open('/vsimem/test.pix')
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
+
+###############################################################################
+
+
+def test_pcidsk_external_ovr_rrd():
+
+    gdal.Translate('/vsimem/test.pix', 'data/byte.tif', format='PCIDSK')
+    ds = gdal.Open('/vsimem/test.pix', gdal.GA_Update)
+    with gdaltest.config_option('USE_RRD', 'YES'):
+        ds.BuildOverviews('NEAR', [2])
+    ds = None
+    assert gdal.VSIStatL('/vsimem/test.aux') is not None
+    ds = gdal.Open('/vsimem/test.pix')
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete('/vsimem/test.pix')
 
 ###############################################################################
 # Check various items from a modern irvine.pix
 
 
-def pcidsk_online_1():
+def test_pcidsk_online_1():
     if gdaltest.pcidsk_new == 0:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/irvine_gcp2.pix', 'irvine_gcp2.pix'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('tmp/cache/irvine_gcp2.pix')
 
@@ -510,57 +475,23 @@ def pcidsk_online_1():
         return 'false'
 
     band = ds.GetRasterBand(20)
-    if band.GetDescription() != 'Training site for type 2 crop':
-        gdaltest.post_reason('did not get expected band 20 description')
-        return 'fail'
+    assert band.GetDescription() == 'Training site for type 2 crop', \
+        'did not get expected band 20 description'
 
     exp_checksum = 2057
     checksum = band.Checksum()
-    if exp_checksum != checksum:
-        print(checksum)
-        gdaltest.post_reason('did not get right bitmap checksum.')
-        return 'fail'
+    assert exp_checksum == checksum, 'did not get right bitmap checksum.'
 
     md = band.GetMetadata('IMAGE_STRUCTURE')
-    if md['NBITS'] != '1':
-        gdaltest.post_reason('did not get expected NBITS=1 metadata.')
-        return 'fail'
-
-    return 'success'
+    assert md['NBITS'] == '1', 'did not get expected NBITS=1 metadata.'
 
 ###############################################################################
 # Cleanup.
 
 
-def pcidsk_cleanup():
+def test_pcidsk_cleanup():
     gdaltest.pcidsk_ds = None
     gdaltest.clean_tmp()
-    return 'success'
 
 
-gdaltest_list = [
-    pcidsk_1,
-    pcidsk_2,
-    pcidsk_3,
-    pcidsk_4,
-    pcidsk_5,
-    pcidsk_6,
-    pcidsk_7,
-    pcidsk_8,
-    # pcidsk_9,
-    pcidsk_10,
-    pcidsk_11,
-    pcidsk_12,
-    pcidsk_13,
-    pcidsk_14,
-    pcidsk_15,
-    pcidsk_online_1,
-    pcidsk_cleanup]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('pcidsk')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

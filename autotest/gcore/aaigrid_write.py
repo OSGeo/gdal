@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -26,35 +26,27 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
-
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = []
-
 init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, None),
-    ('uint16.tif', 1, 4672, None),
-    ('float32.tif', 1, 4672, None),
-    ('utmsmall.tif', 1, 50054, None)]
+    ('byte.tif', 4672),
+    ('int16.tif', 4672),
+    ('uint16.tif', 4672),
+    ('float32.tif', 4672),
+    ('utmsmall.tif', 50054)]
 
-for item in init_list:
-    ut = gdaltest.GDALTest('AAIGrid', item[0], item[1], item[2])
-    if ut is None:
-        print('AAIGrid tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testCreateCopy, item[0]))
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('aaigrid_write')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('AAIGrid')
+def test_aaigrid_create(filename, checksum):
+    ut = gdaltest.GDALTest('AAIGrid', filename, 1, checksum)
+    ut.testCreateCopy()

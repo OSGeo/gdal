@@ -65,7 +65,7 @@ for developers.<p>
 
 \section gdal_vrttut_format .vrt Format
 
-A <a href="http://svn.osgeo.org/gdal/trunk/gdal/data/gdalvrt.xsd">XML schema of the GDAL VRT format</a>
+A <a href="https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/data/gdalvrt.xsd">XML schema of the GDAL VRT format</a>
 is available.<p>
 
 Virtual files stored on disk are kept in an XML format with the following
@@ -1196,6 +1196,14 @@ def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
 
 </li>
 
+\subsection gdal_vrttut_derived_python_python_module_path Python module path
+
+When importing modules from inline Python code or when relying on out-of-line
+code (PixelFunctionType of the form "module_name.function_name"), you need
+to make sure the modules are accessible through the python path. Note that
+contrary to the Python interactive interpreter, the current path is not
+automatically added when used from GDAL. So you may need to define the
+PYTHONPATH environment variable if you get ModuleNotFoundError exceptions.
 
 \subsection gdal_vrttut_derived_python_security Security implications
 

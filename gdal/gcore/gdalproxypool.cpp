@@ -694,6 +694,16 @@ void GDALProxyPoolDataset::AddSrcBandDescription( GDALDataType eDataType, int nB
 }
 
 /************************************************************************/
+/*                    AddSrcBand()                                      */
+/************************************************************************/
+
+void GDALProxyPoolDataset::AddSrcBand(int nBand, GDALDataType eDataType, int nBlockXSize, int nBlockYSize)
+{
+    SetBand(nBand, new GDALProxyPoolRasterBand(this, nBand, eDataType, nBlockXSize, nBlockYSize));
+}
+
+
+/************************************************************************/
 /*                    RefUnderlyingDataset()                            */
 /************************************************************************/
 

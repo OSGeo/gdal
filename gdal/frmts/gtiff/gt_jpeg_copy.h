@@ -42,7 +42,7 @@ int GTIFF_CanDirectCopyFromJPEG( GDALDataset* poSrcDS,
 CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
                                  GDALProgressFunc pfnProgress,
                                  void * pProgressData,
-                                 int& bShouldFallbackToNormalCopyIfFail );
+                                 bool& bShouldFallbackToNormalCopyIfFail );
 
 #endif // JPEG_DIRECT_COPY
 
@@ -57,7 +57,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
 
 CPLErr GTIFF_CopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
                            GDALProgressFunc pfnProgress, void * pProgressData,
-                           int& bShouldFallbackToNormalCopyIfFail );
+                           bool& bShouldFallbackToNormalCopyIfFail );
 
 #endif // HAVE_LIBJPEG
 

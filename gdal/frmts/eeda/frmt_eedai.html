@@ -16,7 +16,8 @@ using Google Earth Engine REST API.<p>
 
 The minimal syntax to open a datasource is : <pre>EEDAI:[asset][:band_names]</pre><p>
 
-where asset is something like COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG,
+where asset is something like
+projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG,
 and band_names a comma separated list of band names (typically indicated by
 subdatasets on the main image)
 
@@ -27,10 +28,28 @@ The following open options are available :
 <li><b>ASSET</b>=string: To specify the asset if not specified in
 the connection string.</li>
 <li><b>BANDS</b>=bandname1[,bandnameX]*: Comma separated list of band names.</li>
-<li><b>PIXEL_ENCODING</b>=AUTO/PNG/JPEG/AUTO_PNG_JPEG/GEOTIFF/NPY: Format in which to
+<li><b>PIXEL_ENCODING</b>=AUTO/PNG/JPEG/AUTO_PNG_JPEG/GEO_TIFF/NPY: Format in which to
 request pixels.</li>
 <li><b>BLOCK_SIZE</b>=integer: Size of a GDAL block, which is the minimum unit
 to query pixels. Default is 256.</li>
+</ul>
+
+<h2>Authentication methods</h2>
+
+The following authentication methods can be used:
+<ul>
+<li>Authentication Bearer header passed through the EEDA_BEARER or
+EEDA_BEARER_FILE configuration options.</li>
+<li>Service account private key file, through the GOOGLE_APPLICATION_CREDENTIALS
+configuration option.</li>
+<li>OAuth2 Service Account authentication through the EEDA_PRIVATE_KEY/
+EEDA_PRIVATE_KEY_FILE + EEDA_CLIENT_EMAIL configuration options.</li>
+<li>Finally if none of the above method succeeds, the code
+will check if the current machine is a Google Compute Engine instance, and
+if so will use the permissions associated to it (using the default service
+account associated with the VM). To force a machine to be detected as a GCE instance
+(for example for code running in a container with no access to the boot logs), you
+can set CPL_MACHINE_IS_GCE to YES.</li>
 </ul>
 
 <h2>Configuration options</h2>
@@ -43,6 +62,8 @@ bearer validity is typically one hour from the time where it as been requested.<
 <li><b>EEDA_BEARER_FILE</b>=filename: Similar to EEDA_BEARER option, except than
 instead of passing the value directly, it is the filename where the value should
 be read.</li>
+<li><b>GOOGLE_APPLICATION_CREDENTIALS</b>=file.json: Service account private key
+file that contains a private key and client email</li>
 <li><b>EEDA_PRIVATE_KEY</b>=string: RSA private key encoded as a PKCS#8 PEM file,
 with its header and footer.
 Used together with EEDA_CLIENT_EMAIL to use OAuth2 Service Account authentication.
@@ -81,11 +102,11 @@ AUTO_PNG_JPEG can only be used with bands of type Byte.
 <li>
 Get metadata on an image:
 <pre>
-gdalinfo "EEDAI:" -oo ASSET=COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+gdalinfo "EEDAI:" -oo ASSET=projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 or
 <pre>
-gdalinfo "EEDAI:COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+gdalinfo "EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 

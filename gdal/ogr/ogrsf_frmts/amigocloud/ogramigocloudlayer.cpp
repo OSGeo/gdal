@@ -234,7 +234,7 @@ OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
             json_object_put(poCachedObj);
         poCachedObj = poObj;
 
-        nFetchedObjects = json_object_array_length(poRows);
+        nFetchedObjects = static_cast<decltype(nFetchedObjects)>(json_object_array_length(poRows));
         iNextInFetchedObjects = 0;
     }
 
@@ -334,9 +334,9 @@ void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
         return;
     }
 
-    int size = json_object_array_length(poFields);
+    auto size = json_object_array_length(poFields);
 
-    for(int i=0; i< size; i++)
+    for(auto i=decltype(size){0}; i< size; i++)
     {
         json_object *obj = json_object_array_get_idx(poFields, i);
 

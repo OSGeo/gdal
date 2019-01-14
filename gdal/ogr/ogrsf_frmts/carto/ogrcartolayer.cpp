@@ -235,7 +235,7 @@ OGRFeature *OGRCARTOLayer::GetNextRawFeature()
             json_object_put(poCachedObj);
         poCachedObj = poObj;
 
-        nFetchedObjects = json_object_array_length(poRows);
+        nFetchedObjects = static_cast<decltype(nFetchedObjects)>(json_object_array_length(poRows));
         iNextInFetchedObjects = 0;
     }
 

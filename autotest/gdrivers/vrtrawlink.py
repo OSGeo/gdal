@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,10 +31,8 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -48,7 +46,7 @@ def _xmlsearch(root, nodetype, name):
 # Verify reading from simple existing raw definition.
 
 
-def vrtrawlink_1():
+def test_vrtrawlink_1():
 
     tst = gdaltest.GDALTest('VRT', 'small.vrt', 2, 12816)
     return tst.testOpen()
@@ -57,7 +55,7 @@ def vrtrawlink_1():
 # Create a new VRT raw link via the AddBand() method.
 
 
-def vrtrawlink_2():
+def test_vrtrawlink_2():
 
     driver = gdal.GetDriverByName("VRT")
     ds = driver.Create('tmp/rawlink.vrt', 31, 35, 0)
@@ -68,49 +66,36 @@ def vrtrawlink_2():
     ]
 
     result = ds.AddBand(gdal.GDT_Byte, options)
-    if result != gdal.CE_None:
-        gdaltest.post_reason('AddBand() returned error code')
-        return 'fail'
+    assert result == gdal.CE_None, 'AddBand() returned error code'
 
     band = ds.GetRasterBand(1)
     chksum = band.Checksum()
 
-    if chksum != 12481:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 12481, 'Wrong checksum'
 
     # Force it to be written to disk.
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Confirm that the newly written file is was saved properly
 
 
-def vrtrawlink_3():
+def test_vrtrawlink_3():
 
     gdaltest.rawlink_ds = gdal.Open('tmp/rawlink.vrt', gdal.GA_Update)
     filelist = gdaltest.rawlink_ds.GetFileList()
     band = gdaltest.rawlink_ds.GetRasterBand(1)
     chksum = band.Checksum()
 
-    if chksum != 12481:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 12481, 'Wrong checksum'
 
-    if len(filelist) != 2:
-        gdaltest.post_reason('Wrong filelist')
-        print(filelist)
-        return 'fail'
-
-    return 'success'
+    assert len(filelist) == 2, 'Wrong filelist'
 
 ###############################################################################
 # Add a new band, and we will test if we can write to it.
 
 
-def vrtrawlink_4():
+def test_vrtrawlink_4():
 
     # force creation of the file.
     open('tmp/rawlink.dat', 'w').write(chr(0))
@@ -127,9 +112,7 @@ def vrtrawlink_4():
     ]
 
     result = gdaltest.rawlink_ds.AddBand(gdal.GDT_UInt16, options)
-    if result != gdal.CE_None:
-        gdaltest.post_reason('AddBand() returned error code')
-        return 'fail'
+    assert result == gdal.CE_None, 'AddBand() returned error code'
 
     # write out some simple data.
     band_1 = gdaltest.rawlink_ds.GetRasterBand(1)
@@ -143,9 +126,7 @@ def vrtrawlink_4():
     # Verify it seems to be right.
     chksum = band.Checksum()
 
-    if chksum != 12481:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 12481, 'Wrong checksum'
 
     band_1 = None
     band = None
@@ -157,23 +138,17 @@ def vrtrawlink_4():
     band = gdaltest.rawlink_ds.GetRasterBand(2)
     chksum = band.Checksum()
 
-    if chksum != 12481:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 12481, 'Wrong checksum'
 
     # verify file length.
     statinfo = os.stat('tmp/rawlink.dat')
-    if statinfo.st_size != 3354:
-        gdaltest.post_reason('data file is wrong size')
-        return 'fail'
-
-    return 'success'
+    assert statinfo.st_size == 3354, 'data file is wrong size'
 
 ###############################################################################
 # Add a new band, and check the relativeToVRT property.
 
 
-def vrtrawlink_5():
+def test_vrtrawlink_5():
 
     driver = gdal.GetDriverByName("VRT")
     ds = driver.Create('tmp/rawlink.vrt', 31, 35, 0)
@@ -190,9 +165,7 @@ def vrtrawlink_5():
     ]
 
     result = ds.AddBand(gdal.GDT_UInt16, options)
-    if result != gdal.CE_None:
-        gdaltest.post_reason('AddBand() returned error code')
-        return 'fail'
+    assert result == gdal.CE_None, 'AddBand() returned error code'
 
     gdaltest.rawlink_ds.FlushCache()
 
@@ -205,24 +178,17 @@ def vrtrawlink_5():
     node = _xmlsearch(node, gdal.CXT_Element, 'SourceFilename')
     node = _xmlsearch(node, gdal.CXT_Attribute, 'relativeToVRT')
 
-    if node is None or node[2][1] != "1":
-        gdaltest.post_reason('incorrect relativeToVRT value')
-        return 'fail'
+    assert node is not None and node[2][1] == "1", 'incorrect relativeToVRT value'
 
-    if xmlstring.find('<ImageOffset>100</ImageOffset>') < 0 or \
-       xmlstring.find('<PixelOffset>3</PixelOffset>') < 0 or \
-       xmlstring.find('<LineOffset>93</LineOffset>') < 0:
-        gdaltest.post_reason('fail')
-        print(xmlstring)
-        return 'fail'
-
-    return 'success'
+    assert ('<ImageOffset>100</ImageOffset>' in xmlstring and \
+       '<PixelOffset>3</PixelOffset>' in xmlstring and \
+       '<LineOffset>93</LineOffset>' in xmlstring)
 
 ###############################################################################
 # Add a new band with relativeToVRT=1, and re-open the dataset.
 
 
-def vrtrawlink_6():
+def test_vrtrawlink_6():
 
     driver = gdal.GetDriverByName("VRT")
     ds = driver.Create('tmp/rawlink.vrt', 31, 35, 0)
@@ -239,9 +205,7 @@ def vrtrawlink_6():
     ]
 
     result = ds.AddBand(gdal.GDT_UInt16, options)
-    if result != gdal.CE_None:
-        gdaltest.post_reason('AddBand() returned error code')
-        return 'fail'
+    assert result == gdal.CE_None, 'AddBand() returned error code'
 
     ds.FlushCache()
 
@@ -249,27 +213,19 @@ def vrtrawlink_6():
     ds = None
 
     ds = gdal.Open('tmp/rawlink.vrt')
-    if ds is None:
-        gdaltest.post_reason('unable to open the dataset: "tmp/rawlink.vrt"')
-        return 'fail'
+    assert ds is not None, 'unable to open the dataset: "tmp/rawlink.vrt"'
 
     b = ds.GetRasterBand(1)
-    if b is None:
-        gdaltest.post_reason('unable to open the raster band #1')
-        return 'fail'
+    assert b is not None, 'unable to open the raster band #1'
 
-    if not os.path.exists('tmp/rawlink6.dat'):
-        gdaltest.post_reason(
-            'tha raw file is not in the expected location ("tmp/rawlink6.dat")')
-        return 'fail'
-
-    return 'success'
+    assert os.path.exists('tmp/rawlink6.dat'), \
+        'tha raw file is not in the expected location ("tmp/rawlink6.dat")'
 
 ###############################################################################
 # Add a new band with relativeToVRT=1, change directory and re-open the dataset.
 
 
-def vrtrawlink_7():
+def test_vrtrawlink_7():
 
     driver = gdal.GetDriverByName("VRT")
     ds = driver.Create('tmp/rawlink.vrt', 31, 35, 0)
@@ -286,9 +242,7 @@ def vrtrawlink_7():
     ]
 
     result = ds.AddBand(gdal.GDT_UInt16, options)
-    if result != gdal.CE_None:
-        gdaltest.post_reason('AddBand() returned error code')
-        return 'fail'
+    assert result == gdal.CE_None, 'AddBand() returned error code'
 
     ds.FlushCache()
 
@@ -298,24 +252,19 @@ def vrtrawlink_7():
     os.chdir('tmp')
     try:
         ds = gdal.Open('rawlink.vrt')
-        if ds is None:
-            gdaltest.post_reason('unable to open the dataset: "rawlink.vrt"')
-            return 'fail'
+        assert ds is not None, 'unable to open the dataset: "rawlink.vrt"'
 
         b = ds.GetRasterBand(1)
-        if b is None:
-            gdaltest.post_reason('unable to open the raster band #1')
-            return 'fail'
+        assert b is not None, 'unable to open the raster band #1'
     finally:
         os.chdir('..')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test error case (too much memory allocation)
 
 
-def vrtrawlink_8():
+def test_vrtrawlink_8():
 
     for _ in range(2):
         with gdaltest.error_handler():
@@ -328,17 +277,14 @@ def vrtrawlink_8():
             <ByteOrder>LSB</ByteOrder>
         </VRTRasterBand>
         </VRTDataset>""")
-        if ds or gdal.GetLastErrorMsg().find('Image file is too small') < 0:
-            print(gdal.GetLastErrorMsg())
-            return 'fail'
+        assert not (ds or gdal.GetLastErrorMsg().find('Image file is too small') < 0)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test error case (inexisting file)
 
 
-def vrtrawlink_9():
+def test_vrtrawlink_9():
 
     with gdaltest.error_handler():
         ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
@@ -346,17 +292,13 @@ def vrtrawlink_9():
         <SourceFilename relativetoVRT="0">i/do/not/exist</SourceFilename>
     </VRTRasterBand>
     </VRTDataset>""")
-    if ds or gdal.GetLastErrorMsg().find('Unable to open') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-
-    return 'success'
+    assert not (ds or gdal.GetLastErrorMsg().find('Unable to open') < 0)
 
 ###############################################################################
 # Test error case (invalid byte order)
 
 
-def vrtrawlink_10():
+def test_vrtrawlink_10():
 
     with gdaltest.error_handler():
         ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
@@ -365,17 +307,13 @@ def vrtrawlink_10():
         <ByteOrder>invalid</ByteOrder>
     </VRTRasterBand>
     </VRTDataset>""")
-    if ds or gdal.GetLastErrorMsg().find('ByteOrder') < 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-
-    return 'success'
+    assert not (ds or gdal.GetLastErrorMsg().find('ByteOrder') < 0)
 
 ###############################################################################
 # Cleanup.
 
 
-def vrtrawlink_cleanup():
+def test_vrtrawlink_cleanup():
     gdaltest.rawlink_ds = None
 
     try:
@@ -386,26 +324,6 @@ def vrtrawlink_cleanup():
         os.remove('tmp/rawlink7.dat')
     except OSError:
         pass
-    return 'success'
+    
 
 
-gdaltest_list = [
-    vrtrawlink_1,
-    vrtrawlink_2,
-    vrtrawlink_3,
-    vrtrawlink_4,
-    vrtrawlink_5,
-    vrtrawlink_6,
-    vrtrawlink_7,
-    vrtrawlink_8,
-    vrtrawlink_9,
-    vrtrawlink_10,
-    vrtrawlink_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vrtrawlink')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

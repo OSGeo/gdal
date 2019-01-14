@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,23 +28,19 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import ogr
 
 ###############################################################################
 # Test apt.dat reading
 
 
-def ogr_xplane_apt_dat():
+def test_ogr_xplane_apt_dat():
 
     xplane_apt_ds = ogr.Open('data/apt.dat')
 
-    if xplane_apt_ds is None:
-        return 'fail'
+    assert xplane_apt_ds is not None
 
     layers = [('APT', 8, [('apt_icao', 'E46')]),
               ('RunwayPolygon', 19, [('apt_icao', 'E46')]),
@@ -68,29 +64,22 @@ def ogr_xplane_apt_dat():
 
     for layer in layers:
         lyr = xplane_apt_ds.GetLayerByName(layer[0])
-        if lyr.GetFeatureCount() != layer[1]:
-            gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
-            return 'fail'
+        assert lyr.GetFeatureCount() == layer[1], \
+            ('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
-            if feat_read.GetField(item[0]) != item[1]:
-                print(layer[0])
-                print(item[0])
-                print(feat_read.GetField(item[0]))
-                return 'fail'
+            assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test apt.dat v810 reading
 
-def ogr_xplane_apt_v810_dat():
+def test_ogr_xplane_apt_v810_dat():
 
     xplane_apt_ds = ogr.Open('data/apt810/apt.dat')
 
-    if xplane_apt_ds is None:
-        return 'fail'
+    assert xplane_apt_ds is not None
 
     layers = [('APT', 6, [('apt_icao', 'UHP1')]),
               ('RunwayPolygon', 6, [('apt_icao', 'UHP1')]),
@@ -114,29 +103,22 @@ def ogr_xplane_apt_v810_dat():
 
     for layer in layers:
         lyr = xplane_apt_ds.GetLayerByName(layer[0])
-        if lyr.GetFeatureCount() != layer[1]:
-            gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
-            return 'fail'
+        assert lyr.GetFeatureCount() == layer[1], \
+            ('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
-            if feat_read.GetField(item[0]) != item[1]:
-                print(layer[0])
-                print(item[0])
-                print(feat_read.GetField(item[0]))
-                return 'fail'
+            assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 ###############################################################################
 # Test nav.dat reading
 
 
-def ogr_xplane_nav_dat():
+def test_ogr_xplane_nav_dat():
 
     xplane_nav_ds = ogr.Open('data/nav.dat')
 
-    if xplane_nav_ds is None:
-        return 'fail'
+    assert xplane_nav_ds is not None
 
     layers = [('ILS', 6, [('navaid_id', 'IMQS')]),
               ('VOR', 3, [('navaid_id', 'AAL')]),
@@ -149,31 +131,23 @@ def ogr_xplane_nav_dat():
 
     for layer in layers:
         lyr = xplane_nav_ds.GetLayerByName(layer[0])
-        if lyr.GetFeatureCount() != layer[1]:
-            gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
-            return 'fail'
+        assert lyr.GetFeatureCount() == layer[1], \
+            ('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
-            if feat_read.GetField(item[0]) != item[1]:
-                print(layer[0])
-                print(item[0])
-                print(feat_read.GetField(item[0]))
-                return 'fail'
+            assert feat_read.GetField(item[0]) == item[1], layer[0]
 
     xplane_nav_ds = None
-
-    return 'success'
 
 
 ###############################################################################
 # Test awy.dat reading
 
-def ogr_xplane_awy_dat():
+def test_ogr_xplane_awy_dat():
 
     xplane_awy_ds = ogr.Open('data/awy.dat')
 
-    if xplane_awy_ds is None:
-        return 'fail'
+    assert xplane_awy_ds is not None
 
     layers = [('AirwaySegment', 11, [('segment_name', 'R464')]),
               ('AirwayIntersection', 14, [('name', '00MKK')])
@@ -181,63 +155,37 @@ def ogr_xplane_awy_dat():
 
     for layer in layers:
         lyr = xplane_awy_ds.GetLayerByName(layer[0])
-        if lyr.GetFeatureCount() != layer[1]:
-            gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
-            return 'fail'
+        assert lyr.GetFeatureCount() == layer[1], \
+            ('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
-            if feat_read.GetField(item[0]) != item[1]:
-                print(layer[0])
-                print(item[0])
-                print(feat_read.GetField(item[0]))
-                return 'fail'
+            assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 ###############################################################################
 # Test fix.dat reading
 
 
-def ogr_xplane_fix_dat():
+def test_ogr_xplane_fix_dat():
 
     xplane_fix_ds = ogr.Open('data/fix.dat')
 
-    if xplane_fix_ds is None:
-        return 'fail'
+    assert xplane_fix_ds is not None
 
     layers = [('FIX', 1, [('fix_name', '00MKK')])
               ]
 
     for layer in layers:
         lyr = xplane_fix_ds.GetLayerByName(layer[0])
-        if lyr.GetFeatureCount() != layer[1]:
-            gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
-            return 'fail'
+        assert lyr.GetFeatureCount() == layer[1], \
+            ('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
         feat_read = lyr.GetNextFeature()
         for item in layer[2]:
-            if feat_read.GetField(item[0]) != item[1]:
-                print(layer[0])
-                print(item[0])
-                print(feat_read.GetField(item[0]))
-                return 'fail'
+            assert feat_read.GetField(item[0]) == item[1], layer[0]
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
 
-gdaltest_list = [
-    ogr_xplane_apt_dat,
-    ogr_xplane_apt_v810_dat,
-    ogr_xplane_nav_dat,
-    ogr_xplane_awy_dat,
-    ogr_xplane_fix_dat]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_xplane')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

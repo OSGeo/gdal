@@ -449,6 +449,10 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
          * index exist.
          **/
 
+        CPLString osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
+        CPLString osTableI(CPLQuotedSQLIdentifier(pszTable));
+        CPLString osColumnI(CPLQuotedSQLIdentifier(pszColumn));
+
         CPLString osWHERE;
         if (!osIDsToFetch.empty() && (poRDS->bIsFastPK || !(poRDS->HasSpatialIndex())) ) {
             if( nTilesToFetch < poRDS->m_nTiles || poRDS->bBuildQuadTreeDynamically )
@@ -459,13 +463,13 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
                 osWHERE += ")";
             }
         }
-
-        else {
+        else
+        {
             if( poRDS->HasSpatialIndex() )
             {
                 osWHERE += CPLSPrintf("%s && "
                         "ST_GeomFromText('POLYGON((%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f))')",
-                        pszColumn,
+                        osColumnI.c_str(),
                         adfProjWin[0], adfProjWin[1],
                         adfProjWin[2], adfProjWin[3],
                         adfProjWin[4], adfProjWin[5],
@@ -477,8 +481,10 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
                 #define EPS 1e-5
                 osWHERE += CPLSPrintf("ST_UpperLeftX(%s)"
                     " BETWEEN %f AND %f AND ST_UpperLeftY(%s) BETWEEN "
-                    "%f AND %f", pszColumn, sAoi.minx-EPS, sAoi.maxx+EPS,
-                    pszColumn, sAoi.miny-EPS, sAoi.maxy+EPS);
+                    "%f AND %f", osColumnI.c_str(),
+                    sAoi.minx-EPS, sAoi.maxx+EPS,
+                    osColumnI.c_str(),
+                    sAoi.miny-EPS, sAoi.maxy+EPS);
             }
         }
 
@@ -501,9 +507,9 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
 
         CPLString osRasterToFetch;
         if (bAllBandCaching)
-            osRasterToFetch = pszColumn;
+            osRasterToFetch = osColumnI;
         else
-            osRasterToFetch.Printf("ST_Band(%s, %d)", pszColumn, nBand);
+            osRasterToFetch.Printf("ST_Band(%s, %d)", osColumnI.c_str(), nBand);
         if( poRDS->eOutDBResolution == OutDBResolution::SERVER_SIDE ||
             !bCanUseClientSide )
         {
@@ -513,9 +519,9 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         CPLString osCommand;
         osCommand.Printf("SELECT %s, ST_Metadata(%s), %s FROM %s.%s",
                          (poRDS->GetPrimaryKeyRef()) ? poRDS->GetPrimaryKeyRef() : "NULL",
-                         pszColumn,
+                         osColumnI.c_str(),
                          osRasterToFetch.c_str(),
-                         pszSchema, pszTable);
+                         osSchemaI.c_str(), osTableI.c_str());
         if( !osWHERE.empty() )
         {
             osCommand += " WHERE " + osWHERE;

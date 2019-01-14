@@ -6,6 +6,7 @@ set -e
 # Run it in isolation
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export PATH=$JAVA_HOME/jre/bin:$PATH
+export PYTEST="pytest -vv -p no:sugar --color=no"
 
 cd gdal
 # Perl unit tests
@@ -14,6 +15,9 @@ make test
 cd ../..
 # Java unit tests
 cd swig/java
+make test
+cd ../..
+cd swig/csharp
 make test
 cd ../..
 # CPP unit tests
@@ -31,13 +35,17 @@ cd ogr/tmp/cache/
 wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
 unzip PGeoTest.zip
 cd ../../..
-# Run ogr_fgdb.py in isolation from the rest
+
 export PYTHONPATH=/usr/lib/python2.7/dist-packages
-(cd ogr && python ogr_fgdb.py)
-(cd ogr && mkdir disabled && mv ogr_fgdb.* disabled)
+
+# Run ogr_fgdb.py in isolation from the rest
+$PYTEST ogr/ogr_fgdb.py
+PYTESTARGS="--ignore ogr/ogr_fgdb.py"
+
 # Run ogr_pgeo.py in isolation from the rest
 # This crashes on Trusty since travis-ci upgraded their Trusty workers
 #python ogr_pgeo.py
-(cd ogr && mv ogr_pgeo.* disabled)
+PYTESTARGS="$PYTESTARGS --ignore ogr/ogr_pgeo.py"
+
 # Run all the Python autotests
-GDAL_SKIP="JP2ECW ECW" python run_all.py
+GDAL_SKIP="JP2ECW ECW" $PYTEST $PYTESTARGS

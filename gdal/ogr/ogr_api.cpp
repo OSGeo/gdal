@@ -344,16 +344,16 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
  * aligned.
  *
  * @param hGeom handle to the geometry from which to get the coordinates.
- * @param pabyX a buffer of at least (sizeof(double) * nXStride * nPointCount)
+ * @param pabyX a buffer of at least (nXStride * nPointCount)
  * bytes, may be NULL.
  * @param nXStride the number of bytes between 2 elements of pabyX.
- * @param pabyY a buffer of at least (sizeof(double) * nYStride * nPointCount)
+ * @param pabyY a buffer of at least (nYStride * nPointCount)
  * bytes, may be NULL.
  * @param nYStride the number of bytes between 2 elements of pabyY.
- * @param pabyZ a buffer of at last size (sizeof(double) * nZStride *
+ * @param pabyZ a buffer of at last size (nZStride *
  * nPointCount) bytes, may be NULL.
  * @param nZStride the number of bytes between 2 elements of pabyZ.
- * @param pabyM a buffer of at last size (sizeof(double) * nMStride *
+ * @param pabyM a buffer of at last size (nMStride *
  * nPointCount) bytes, may be NULL.
  * @param nMStride the number of bytes between 2 elements of pabyM.
  *

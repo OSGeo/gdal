@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,61 +28,38 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
-import gdaltest
 
 ###############################################################################
 # Read a truncated and modified version of C3607614.NWS
 # downloaded from http://edcftp.cr.usgs.gov/pub/data/samples/doq-clr-native.tar.gz
 
 
-def doq2_1():
+def test_doq2_1():
 
     ds = gdal.Open('data/C3607614_truncated.NWS')
 
     mem_ds = gdal.GetDriverByName('MEM').Create('mem_1.mem', 500, 1, gdal.GDT_Byte, 1)
 
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 500, 1, ds.GetRasterBand(1).ReadRaster(0, 0, 500, 1))
-    if mem_ds.GetRasterBand(1).Checksum() != 4201:
-        gdaltest.post_reason('wrong checksum for band 1')
-        return 'fail'
+    assert mem_ds.GetRasterBand(1).Checksum() == 4201, 'wrong checksum for band 1'
 
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 500, 1, ds.GetRasterBand(2).ReadRaster(0, 0, 500, 1))
-    if mem_ds.GetRasterBand(1).Checksum() != 4010:
-        gdaltest.post_reason('wrong checksum for band 2')
-        return 'fail'
+    assert mem_ds.GetRasterBand(1).Checksum() == 4010, 'wrong checksum for band 2'
 
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 500, 1, ds.GetRasterBand(3).ReadRaster(0, 0, 500, 1))
-    if mem_ds.GetRasterBand(1).Checksum() != 5820:
-        gdaltest.post_reason('wrong checksum for band 3')
-        return 'fail'
+    assert mem_ds.GetRasterBand(1).Checksum() == 5820, 'wrong checksum for band 3'
 
-    if ds.GetGeoTransform() != (377054, 1, 0, 4082205, 0, -1):
-        gdaltest.post_reason('wrong geotransform')
-        return 'fail'
+    assert ds.GetGeoTransform() == (377054, 1, 0, 4082205, 0, -1), 'wrong geotransform'
 
     md = ds.GetMetadata()
-    if md['QUADRANGLE_NAME'] != 'NORFOLK SOUTH 3.45 or 7.5-min. name*':
-        gdaltest.post_reason('wrong metadata')
-        return 'fail'
+    assert md['QUADRANGLE_NAME'] == 'NORFOLK SOUTH 3.45 or 7.5-min. name*', \
+        'wrong metadata'
 
     mem_ds = None
     ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    doq2_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('doq2')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

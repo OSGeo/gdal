@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,14 +30,12 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import test_py_scripts
 
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fairly default case.
@@ -47,7 +45,7 @@ def test_gdal_proximity_1():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     dst_ds = drv.Create('tmp/proximity_1.tif', 25, 25, 1, gdal.GDT_Byte)
@@ -66,10 +64,8 @@ def test_gdal_proximity_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Try several options
 
@@ -78,7 +74,7 @@ def test_gdal_proximity_2():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata -1 -fixed-buf-val 255 ../alg/data/pat.tif tmp/proximity_2.tif')
 
@@ -93,10 +89,8 @@ def test_gdal_proximity_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Try input nodata option
 
@@ -105,7 +99,7 @@ def test_gdal_proximity_3():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata 0 -use_input_nodata yes ../alg/data/pat.tif tmp/proximity_3.tif')
 
@@ -120,10 +114,8 @@ def test_gdal_proximity_3():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason('got wrong checksum')
-        return 'fail'
-    return 'success'
-
+        pytest.fail('got wrong checksum')
+    
 ###############################################################################
 # Cleanup
 
@@ -139,20 +131,6 @@ def test_gdal_proximity_cleanup():
         except OSError:
             pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_gdal_proximity_1,
-    test_gdal_proximity_2,
-    test_gdal_proximity_3,
-    test_gdal_proximity_cleanup,
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_proximity')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

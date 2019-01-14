@@ -1429,8 +1429,9 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
  *
  * This method is the same as the C function GDALBuildOverviews().
  *
- * @param pszResampling one of "NEAREST", "GAUSS", "CUBIC", "AVERAGE", "MODE",
- * "AVERAGE_MAGPHASE" or "NONE" controlling the downsampling method applied.
+ * @param pszResampling one of "AVERAGE", "AVERAGE_MAGPHASE", "BILINEAR",
+ * "CUBIC", "CUBICSPLINE", "GAUSS", "LANCZOS", "MODE", "NEAREST", or "NONE"
+ * controlling the downsampling method applied.
  * @param nOverviews number of overviews to build, or 0 to clean overviews.
  * @param panOverviewList the list of overview decimation factors to build, or
  *                        NULL if nOverviews == 0.
@@ -1587,6 +1588,8 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
         int nFirstMaskFlags = 0;
         GDALRasterBand *poFirstMaskBand = nullptr;
         int nOKBands = 0;
+
+        // Check if bands share the same mask band
         for( int i = 0; i < nBandCount; ++i )
         {
             GDALRasterBand *poBand = GetRasterBand(panBandMap[i]);
@@ -1609,6 +1612,12 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 eFirstBandDT = eDT;
                 nFirstMaskFlags = poBand->GetMaskFlags();
+                if( nFirstMaskFlags == GMF_NODATA)
+                {
+                    // The dataset-level resampling code is not ready for nodata
+                    // Fallback to band-level resampling
+                    break;
+                }
                 poFirstMaskBand = poBand->GetMaskBand();
             }
             else
@@ -1618,6 +1627,12 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                     break;
                 }
                 int nMaskFlags = poBand->GetMaskFlags();
+                if( nMaskFlags == GMF_NODATA)
+                {
+                    // The dataset-level resampling code is not ready for nodata
+                    // Fallback to band-level resampling
+                    break;
+                }
                 GDALRasterBand *poMaskBand = poBand->GetMaskBand();
                 if( nFirstMaskFlags == GMF_ALL_VALID &&
                     nMaskFlags == GMF_ALL_VALID )
@@ -2699,7 +2714,31 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
     // Prevent infinite recursion.
     struct AntiRecursionStruct
     {
-        std::set<std::pair<std::string, int>> aosDatasetNamesWithFlags{};
+        struct DatasetContext
+        {
+            std::string osFilename;
+            int         nOpenFlags;
+            int         nSizeAllowedDrivers;
+
+            DatasetContext(const std::string& osFilenameIn,
+                           int nOpenFlagsIn,
+                           int nSizeAllowedDriversIn) :
+                osFilename(osFilenameIn),
+                nOpenFlags(nOpenFlagsIn),
+                nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
+        };
+
+        struct DatasetContextCompare {
+            bool operator() (const DatasetContext& lhs, const DatasetContext& rhs) const {
+                return lhs.osFilename < rhs.osFilename ||
+                       (lhs.osFilename == rhs.osFilename &&
+                        (lhs.nOpenFlags < rhs.nOpenFlags ||
+                         (lhs.nOpenFlags == rhs.nOpenFlags &&
+                          lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
+            }
+        };
+
+        std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
         int nRecLevel = 0;
     };
     static thread_local AntiRecursionStruct sAntiRecursion;
@@ -2709,8 +2748,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                     "GDALOpen() called with too many recursion levels");
         return nullptr;
     }
-    if( sAntiRecursion.aosDatasetNamesWithFlags.find(
-            std::pair<std::string, int>(std::string(pszFilename), nOpenFlags)) !=
+
+    auto dsCtxt = AntiRecursionStruct::DatasetContext(
+        std::string(pszFilename), nOpenFlags, CSLCount(papszAllowedDrivers));
+    if( sAntiRecursion.aosDatasetNamesWithFlags.find(dsCtxt) !=
                 sAntiRecursion.aosDatasetNamesWithFlags.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2797,8 +2838,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
 #endif
 
         sAntiRecursion.nRecLevel ++;
-        sAntiRecursion.aosDatasetNamesWithFlags.insert(
-            std::pair<std::string, int>(std::string(pszFilename), nOpenFlags));
+        sAntiRecursion.aosDatasetNamesWithFlags.insert(dsCtxt);
 
         GDALDataset *poDS = nullptr;
         if ( poDriver->pfnOpen != nullptr )
@@ -2815,8 +2855,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         }
 
         sAntiRecursion.nRecLevel --;
-        sAntiRecursion.aosDatasetNamesWithFlags.erase(
-            std::pair<std::string, int>(std::string(pszFilename), nOpenFlags));
+        sAntiRecursion.aosDatasetNamesWithFlags.erase(dsCtxt);
 
         CSLDestroy(papszTmpOpenOptions);
         CSLDestroy(papszTmpOpenOptionsToValidate);

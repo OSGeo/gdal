@@ -1762,7 +1762,7 @@ int TABDATFile::ReadDateField(int nWidth, int *nYear, int *nMonth, int *nDay)
         *nDay = m_poRecordBlock->ReadByte();
     }
 
-    if (CPLGetLastErrorNo() != 0 || (*nYear == 0 && *nMonth == 0 && *nDay == 0))
+    if (CPLGetLastErrorType() == CE_Failure || (*nYear == 0 && *nMonth == 0 && *nDay == 0))
        return -1;
 
     return 0;
@@ -1831,7 +1831,7 @@ int TABDATFile::ReadTimeField(int nWidth, int *nHour, int *nMinute,
     }
 
     // nS is set to -1 when the value is 'not set'
-    if (CPLGetLastErrorNo() != 0 || nS < 0 || (nS > 86400000))
+    if (CPLGetLastErrorType() == CE_Failure || nS < 0 || (nS > 86400000))
         return -1;
 
     *nHour = int(nS / 3600000);
@@ -1915,7 +1915,7 @@ int TABDATFile::ReadDateTimeField(int nWidth, int *nYear, int *nMonth,
         nS = m_poRecordBlock->ReadInt32();
     }
 
-    if (CPLGetLastErrorNo() != 0 ||
+    if (CPLGetLastErrorType() == CE_Failure ||
         (*nYear == 0 && *nMonth == 0 && *nDay == 0) || (nS > 86400000))
         return -1;
 
@@ -2232,7 +2232,7 @@ int TABDATFile::WriteDateField(int nYear, int nMonth, int nDay,
     m_poRecordBlock->WriteByte(static_cast<GByte>(nMonth));
     m_poRecordBlock->WriteByte(static_cast<GByte>(nDay));
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     // Update Index
@@ -2349,7 +2349,7 @@ int TABDATFile::WriteTimeField(int nHour, int nMinute, int nSecond, int nMS,
         nS = -1;
     m_poRecordBlock->WriteInt32(nS);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     // Update Index
@@ -2492,7 +2492,7 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay,
     m_poRecordBlock->WriteByte(static_cast<GByte>(nDay));
     m_poRecordBlock->WriteInt32(nS);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     // Update Index

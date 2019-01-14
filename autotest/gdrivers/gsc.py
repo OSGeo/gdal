@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,19 +36,10 @@ import gdaltest
 # Test a fake - and certainly incorrect - GSC dataset
 
 
-def gsc_1():
+def test_gsc_1():
 
     tst = gdaltest.GDALTest('GSC', 'fakegsc.gsc', 1, 0)
     return tst.testOpen()
 
 
-gdaltest_list = [
-    gsc_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gsc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

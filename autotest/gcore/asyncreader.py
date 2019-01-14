@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,27 +28,22 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import gdal
 
 ###############################################################################
 # Test AsyncReader interface on the default (synchronous) implementation
 
 
-def asyncreader_1():
+def test_asyncreader_1():
 
     ds = gdal.Open('data/rgbsmall.tif')
     asyncreader = ds.BeginAsyncReader(0, 0, ds.RasterXSize, ds.RasterYSize)
     buf = asyncreader.GetBuffer()
     result = asyncreader.GetNextUpdatedRegion(0)
-    if result != [gdal.GARIO_COMPLETE, 0, 0, ds.RasterXSize, ds.RasterYSize]:
-        gdaltest.post_reason('wrong return values for GetNextUpdatedRegion()')
-        print(result)
-        return 'fail'
+    assert result == [gdal.GARIO_COMPLETE, 0, 0, ds.RasterXSize, ds.RasterYSize], \
+        'wrong return values for GetNextUpdatedRegion()'
     ds.EndAsyncReader(asyncreader)
     asyncreader = None
 
@@ -63,22 +58,9 @@ def asyncreader_1():
     gdal.Unlink('/vsimem/asyncresult.tif')
 
     for i, csum in enumerate(cs):
-        if csum != expected_cs[i]:
-            gdaltest.post_reason('did not get expected checksum for band %d' % (i + 1))
-            print(csum)
-            print(expected_cs[i])
-            return 'fail'
+        assert csum == expected_cs[i], ('did not get expected checksum for band %d' % (i + 1))
 
-    return 'success'
+    
 
 
-gdaltest_list = [asyncreader_1]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('asyncreader')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

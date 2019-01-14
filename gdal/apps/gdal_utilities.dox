@@ -969,11 +969,12 @@ Builds vector contour lines from a raster elevation model.
 \section gdal_contour_synopsis SYNOPSIS
 
 \verbatim
-Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
+Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-amin <attribute_name>] [-amax <attribute_name>]
+       		    [-3d] [-inodata]
                     [-snodata n] [-i <interval>]
                     [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]
-                    [-off <offset>] [-fl <level> <level>...]
-                    [-nln <outlayername>]
+                    [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]
+                    [-nln <outlayername>] [-p]
                     <src_filename> <dst_filename>
 \endverbatim
 
@@ -991,6 +992,11 @@ clockwise around a top.
 <dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
 
 <dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. </dd>
+
+<dt> <b>-amin</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the minimum elevation of contour polygon. If not provided no minimum elevation attribute is attached. </dd>
+
+<dt> <b>-amax</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the maximum elevation of contour polygon. If not provided no maximim elevation attribute is attached. </dd>
+
 <dt> <b>-3d</b>:</dt> <dd>
       Force production of 3D vectors instead of 2D.  Includes elevation at
       every vertex.</dd>
@@ -1016,8 +1022,16 @@ was ESRI Shapefile). </dd>
 
 <dt> <b>-fl</b> <em>level</em>:</dt>
 <dd> Name one or more "fixed levels" to extract.</dd>
+
+<dt> <b>-e</b> <em>base</em>:</dt><dd>
+ (Since GDAL 2.4) will generate levels on an exponential scale: base ^ k, for k an integer.</dd>
+
 <dt> <b>-nln</b> <em>outlayername</em>:</dt>
 <dd> Provide a name for the output vector layer.  Defaults to "contour".</dd>
+
+<dt> <b>-p</b>:</dt>
+<dd> (Since GDAL 2.4) Generate contour polygons rather than contour lines.</dd>
+
 </dl>
 
 \section gdal_contour_api C API
@@ -1667,6 +1681,7 @@ Generates directory with TMS tiles, KMLs and simple web viewers.
 gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
               [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
               [-w webviewer] [-t title] [-c copyright]
+              [--processes=NB_PROCESSES]
               [-g googlekey] [-b bingkey] input_file [output_dir]
 \endverbatim
 
@@ -1702,6 +1717,8 @@ can publish a picture without proper georeferencing too.
   <dd>Generate verbose output of tile generation.</dd>
 <dt> <b>-q, --quiet</b></dt>
   <dd>Disable messages and status to stdout (GDAL &gt;= 2.1).</dd>
+<dt> <b>--processes=</b><i>NB_PROCESSES</i></dt>
+  <dd>Number of processes to use for tiling (GDAL &gt;= 2.3).</dd>
 <dt> <b>-h, --help</b></dt>
   <dd>Show help message and exit.</dd>
 <dt> <b>\-\-version</b></dt>

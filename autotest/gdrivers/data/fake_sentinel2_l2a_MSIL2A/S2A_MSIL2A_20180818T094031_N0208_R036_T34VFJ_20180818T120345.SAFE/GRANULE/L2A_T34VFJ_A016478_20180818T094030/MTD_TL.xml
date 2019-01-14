@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<n1:Level-2A_Tile_ID xmlns:n1="https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-2A_Tile_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-2A_Tile_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_TILE_L1C/02.11.02/scripts/../../../schemas/02.13.02/PSD/S2_PDI_Level-2A_Tile_Metadata.xsd">
+  <n1:General_Info>
+    <L1C_TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L1C_TL_MTI__20180818T101348_A016478_T34VFJ_N02.06</L1C_TILE_ID>
+    <TILE_ID metadataLevel="Brief">S2A_OPER_MSI_L2A_TL_MTI__20180818T120345_A016478_T34VFJ_N02.08</TILE_ID>
+    <DATASTRIP_ID metadataLevel="Standard">S2A_OPER_MSI_L2A_DS_MTI__20180818T120345_S20180818T094030_N02.08</DATASTRIP_ID>
+    <DOWNLINK_PRIORITY metadataLevel="Standard">NOMINAL</DOWNLINK_PRIORITY>
+    <SENSING_TIME metadataLevel="Standard">2018-08-18T09:40:30.459Z</SENSING_TIME>
+    <Archiving_Info metadataLevel="Expertise">
+      <ARCHIVING_CENTRE>MTI_</ARCHIVING_CENTRE>
+      <ARCHIVING_TIME>2018-08-18T15:07:55.560Z</ARCHIVING_TIME>
+    </Archiving_Info>
+  </n1:General_Info>
+  <n1:Geometric_Info>
+    <Tile_Geocoding metadataLevel="Brief">
+      <HORIZONTAL_CS_NAME>WGS84 / UTM zone 34N</HORIZONTAL_CS_NAME>
+      <HORIZONTAL_CS_CODE>EPSG:32634</HORIZONTAL_CS_CODE>
+      <Size resolution="10">
+        <NROWS>10980</NROWS>
+        <NCOLS>10980</NCOLS>
+      </Size>
+      <Size resolution="20">
+        <NROWS>5490</NROWS>
+        <NCOLS>5490</NCOLS>
+      </Size>
+      <Size resolution="60">
+        <NROWS>1830</NROWS>
+        <NCOLS>1830</NCOLS>
+      </Size>
+      <Geoposition resolution="10">
+        <ULX>600000</ULX>
+        <ULY>6400020</ULY>
+        <XDIM>10</XDIM>
+        <YDIM>-10</YDIM>
+      </Geoposition>
+      <Geoposition resolution="20">
+        <ULX>600000</ULX>
+        <ULY>6400020</ULY>
+        <XDIM>20</XDIM>
+        <YDIM>-20</YDIM>
+      </Geoposition>
+      <Geoposition resolution="60">
+        <ULX>600000</ULX>
+        <ULY>6400020</ULY>
+        <XDIM>60</XDIM>
+        <YDIM>-60</YDIM>
+      </Geoposition>
+    </Tile_Geocoding>
+  </n1:Geometric_Info>
+  <n1:Quality_Indicators_Info metadataLevel="Standard">
+    <Image_Content_QI>
+      <CLOUDY_PIXEL_PERCENTAGE>54.416476</CLOUDY_PIXEL_PERCENTAGE>
+      <DEGRADED_MSI_DATA_PERCENTAGE>0</DEGRADED_MSI_DATA_PERCENTAGE>
+      <NODATA_PIXEL_PERCENTAGE>0.000000</NODATA_PIXEL_PERCENTAGE>
+      <SATURATED_DEFECTIVE_PIXEL_PERCENTAGE>0.000000</SATURATED_DEFECTIVE_PIXEL_PERCENTAGE>
+      <DARK_FEATURES_PERCENTAGE>1.566982</DARK_FEATURES_PERCENTAGE>
+      <CLOUD_SHADOW_PERCENTAGE>1.521106</CLOUD_SHADOW_PERCENTAGE>
+      <VEGETATION_PERCENTAGE>14.057219</VEGETATION_PERCENTAGE>
+      <NOT_VEGETATED_PERCENTAGE>3.544726</NOT_VEGETATED_PERCENTAGE>
+      <WATER_PERCENTAGE>18.739088</WATER_PERCENTAGE>
+      <UNCLASSIFIED_PERCENTAGE>5.750781</UNCLASSIFIED_PERCENTAGE>
+      <MEDIUM_PROBA_CLOUDS_PERCENTAGE>24.111301</MEDIUM_PROBA_CLOUDS_PERCENTAGE>
+      <HIGH_PROBA_CLOUDS_PERCENTAGE>15.382876</HIGH_PROBA_CLOUDS_PERCENTAGE>
+      <THIN_CIRRUS_PERCENTAGE>14.922300</THIN_CIRRUS_PERCENTAGE>
+      <SNOW_ICE_PERCENTAGE>0.403622</SNOW_ICE_PERCENTAGE>
+      <RADIATIVE_TRANSFER_ACCURACY>0.0</RADIATIVE_TRANSFER_ACCURACY>
+      <WATER_VAPOUR_RETRIEVAL_ACCURACY>0.0</WATER_VAPOUR_RETRIEVAL_ACCURACY>
+      <AOT_RETRIEVAL_ACCURACY>0.0</AOT_RETRIEVAL_ACCURACY>
+    </Image_Content_QI>
+  </n1:Quality_Indicators_Info>
+</n1:Level-2A_Tile_ID>

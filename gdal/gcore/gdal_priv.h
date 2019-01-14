@@ -1469,6 +1469,12 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     static CPLErr        DefaultCopyMasks( GDALDataset *poSrcDS,
                                            GDALDataset *poDstDS,
                                            int bStrict );
+    static CPLErr        DefaultCopyMasks( GDALDataset *poSrcDS,
+                                           GDALDataset *poDstDS,
+                                           int bStrict,
+                                           CSLConstList papszOptions,
+                                           GDALProgressFunc pfnProgress,
+                                           void * pProgressData );
 //! @endcond
     static CPLErr       QuietDelete( const char * pszName );
 
@@ -1812,6 +1818,8 @@ template<class T> inline bool ARE_REAL_EQUAL(T fVal1, T fVal2, int ulp = 2)
     return fVal1 == fVal2 || /* Should cover infinity */
            std::abs(fVal1 - fVal2) < std::numeric_limits<float>::epsilon() * std::abs(fVal1+fVal2) * ulp;
 }
+
+double GDALAdjustNoDataCloseToFloatMax(double dfVal);
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,20 +29,18 @@
 ###############################################################################
 
 import struct
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 
 from osgeo import gdal, ogr, osr
+import pytest
 
 ###############################################################################
 # Simple polygon rasterization.
 
 
-def rasterize_1():
+def test_rasterize_1():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -84,10 +82,7 @@ def rasterize_1():
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
                               burn_values=[200, 220, 240])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 
@@ -95,18 +90,15 @@ def rasterize_1():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_1.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test rasterization with ALL_TOUCHED.
 
 
-def rasterize_2():
+def test_rasterize_2():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -130,10 +122,7 @@ def rasterize_2():
                               options=["ALL_TOUCHED=TRUE"])
     gdal.PopErrorHandler()
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 
@@ -141,18 +130,15 @@ def rasterize_2():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_2.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Rasterization with BURN_VALUE_FROM.
 
 
-def rasterize_3():
+def test_rasterize_3():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -187,10 +173,7 @@ def rasterize_3():
     err = gdal.RasterizeLayer(target_ds, [3, 2, 1], rast_mem_lyr,
                               burn_values=[10, 10, 55], options=["BURN_VALUE_FROM=Z"])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 
@@ -198,17 +181,15 @@ def rasterize_3():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_3.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Rasterization with ATTRIBUTE.
 
 
-def rasterize_4():
+def test_rasterize_4():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -247,27 +228,22 @@ def rasterize_4():
     err = gdal.RasterizeLayer(target_ds, [1, 2, 3], rast_mem_lyr,
                               options=["ATTRIBUTE=CELSIUS"])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
     expected = 16265
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_4.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 ###############################################################################
 # Rasterization with MERGE_ALG=ADD.
 
 
-def rasterize_5():
+def test_rasterize_5():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -316,10 +292,7 @@ def rasterize_5():
                               burn_values=[100, 110, 120],
                               options=["MERGE_ALG=ADD"])
 
-    if err != 0:
-        print(err)
-        gdaltest.post_reason('got non-zero result code from RasterizeLayer')
-        return 'fail'
+    assert err == 0, 'got non-zero result code from RasterizeLayer'
 
     # Check results.
 
@@ -327,18 +300,15 @@ def rasterize_5():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
         gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif', target_ds)
-        return 'fail'
+        pytest.fail('Did not get expected image checksum')
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test bug fix for #5580 (used to hang)
 
-def rasterize_6():
+def test_rasterize_6():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -358,22 +328,5 @@ def rasterize_6():
 
     gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1], options=["ALL_TOUCHED"])
 
-    return 'success'
 
 
-gdaltest_list = [
-    rasterize_1,
-    rasterize_2,
-    rasterize_3,
-    rasterize_4,
-    rasterize_5,
-    rasterize_6
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rasterize')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -33,6 +33,8 @@ The open options available are :
 <ul>
 <li><b>HOST</b>=hostname: Server hostname. Default to localhost.</li>
 <li><b>PORT</b>=port. Server port. Default to 9200.</li>
+<li><b>USERPWD</b>=user:password. (GDAL &gt;=2.4) Basic authentication as username:password.</li>
+<li><b>LAYER</b>=name. (GDAL &gt;=2.4) Index name or index_mapping to use for restricting layer listing.</li>
 <li><b>BATCH_SIZE</b>=number. Number of features to retrieve per batch. Default is 100.</li>
 <li><b>FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN</b>=number. Number of features to
 retrieve to establish feature definition. -1 = unlimited. Defaults to 100.</li>
@@ -223,6 +225,8 @@ is set and that is not already EPSG:4326.<p>
 Starting with GDAL 2.1, the driver supports the following layer creation options:
 <ul>
 <li><b>INDEX_NAME</b>=name. Name of the index to create (or reuse). By default the index name is the layer name.</li>
+<li><b>INDEX_DEFINITION</b>=filename or JSon. (GDAL &gt;= 2.4) Filename from which to read a user-defined
+index definition, or inlined index definition as serialized JSon.</li>
 <li><b>MAPPING_NAME=</b>=name. Name of the mapping type within the index.
 By default, the mapping name is "FeatureCollection" and the documents will be
 written as GeoJSON Feature objects. If another mapping name is chosen, a more "flat" structure will be used.</li>
@@ -247,7 +251,7 @@ mapping type. If used, the "centroid" of the geometry is used.
 This is the behaviour of GDAL &lt; 2.1.
 GEO_SHAPE uses the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html">geo_shape</a>
 mapping type, compatible of all geometry types.
-When using AUTO, if there is a single geometry field of type Point, a geo_point is used.
+When using AUTO, for geometry fields of type Point, a geo_point is used.
 In other cases, geo_shape is used.</li>
 <li><b>GEOM_PRECISION</b>={value}{unit}'. Desired geometry precision. Number followed by unit. For example 1m.
 For a geo_point geometry field, this causes a compressed geometry format to be used.

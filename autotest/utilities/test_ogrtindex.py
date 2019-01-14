@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,16 +29,15 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
 from osgeo import ogr
 from osgeo import osr
 import ogrtest
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -46,7 +45,7 @@ import test_cli_utilities
 
 def test_ogrtindex_1(srs=None):
     if test_cli_utilities.get_ogrtindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
 
@@ -86,24 +85,16 @@ def test_ogrtindex_1(srs=None):
     shape_ds.Destroy()
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrtindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     ds = ogr.Open('tmp/tileindex.shp')
-    if ds.GetLayer(0).GetFeatureCount() != 4:
-        gdaltest.post_reason('did not get expected feature count')
-        return 'fail'
+    assert ds.GetLayer(0).GetFeatureCount() == 4, 'did not get expected feature count'
 
     if srs is not None:
-        if ds.GetLayer(0).GetSpatialRef() is None or not ds.GetLayer(0).GetSpatialRef().IsSame(srs):
-            gdaltest.post_reason('did not get expected spatial ref')
-            return 'fail'
+        assert ds.GetLayer(0).GetSpatialRef() is not None and ds.GetLayer(0).GetSpatialRef().IsSame(srs), \
+            'did not get expected spatial ref'
     else:
-        if ds.GetLayer(0).GetSpatialRef() is not None:
-            gdaltest.post_reason('did not get expected spatial ref')
-            return 'fail'
+        assert ds.GetLayer(0).GetSpatialRef() is None, 'did not get expected spatial ref'
 
     expected_wkts = ['POLYGON ((49 2,49 2,49 2,49 2,49 2))',
                      'POLYGON ((49 3,49 3,49 3,49 3,49 3))',
@@ -112,14 +103,11 @@ def test_ogrtindex_1(srs=None):
     i = 0
     feat = ds.GetLayer(0).GetNextFeature()
     while feat is not None:
-        if feat.GetGeometryRef().ExportToWkt() != expected_wkts[i]:
-            print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
-            return 'fail'
+        assert feat.GetGeometryRef().ExportToWkt() == expected_wkts[i], \
+            ('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
         i = i + 1
         feat = ds.GetLayer(0).GetNextFeature()
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Same test but with a SRS set on the different tiles to index
@@ -139,7 +127,7 @@ def test_ogrtindex_2():
 def test_ogrtindex_3():
 
     if test_cli_utilities.get_ogrtindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
 
@@ -196,19 +184,15 @@ def test_ogrtindex_3():
             test_cli_utilities.get_ogrtindex_path() +
             ' -src_srs_name src_srs -t_srs EPSG:4326 ' + output_filename + ' tmp/point1.shp tmp/point2.shp ' + src_srs_format + output_format)
 
-        if src_srs_format != '-src_srs_format WKT' and not (err is None or err == ''):
-            gdaltest.post_reason('got error/warning')
-            print(err)
-            return 'fail'
+        assert src_srs_format == '-src_srs_format WKT' or (err is None or err == ''), \
+            'got error/warning'
 
         ds = ogr.Open(output_filename)
-        if ds.GetLayer(0).GetFeatureCount() != 2:
-            gdaltest.post_reason('did not get expected feature count')
-            return 'fail'
+        assert ds.GetLayer(0).GetFeatureCount() == 2, \
+            'did not get expected feature count'
 
-        if ds.GetLayer(0).GetSpatialRef().GetAuthorityCode(None) != '4326':
-            gdaltest.post_reason('did not get expected spatial ref')
-            return 'fail'
+        assert ds.GetLayer(0).GetSpatialRef().GetAuthorityCode(None) == '4326', \
+            'did not get expected spatial ref'
 
         expected_wkts = ['POLYGON ((2 49,2 49,2 49,2 49,2 49))',
                          'POLYGON ((3 50,3 50,3 50,3 50,3 50))']
@@ -216,13 +200,10 @@ def test_ogrtindex_3():
         feat = ds.GetLayer(0).GetNextFeature()
         while feat is not None:
             if feat.GetField('src_srs') != expected_srss[i]:
-                gdaltest.post_reason('fail')
-                print(i, src_srs_format)
                 feat.DumpReadable()
-                return 'fail'
-            if ogrtest.check_feature_geometry(feat, expected_wkts[i]) != 0:
-                print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
-                return 'fail'
+                pytest.fail(i, src_srs_format)
+            assert ogrtest.check_feature_geometry(feat, expected_wkts[i]) == 0, \
+                ('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
             i = i + 1
             feat = ds.GetLayer(0).GetNextFeature()
         ds = None
@@ -232,15 +213,14 @@ def test_ogrtindex_3():
     if os.path.exists('tmp/tileindex.db'):
         os.unlink('tmp/tileindex.db')
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
 
 def test_ogrtindex_cleanup():
     if test_cli_utilities.get_ogrtindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     shape_drv.DeleteDataSource('tmp/tileindex.shp')
@@ -251,21 +231,7 @@ def test_ogrtindex_cleanup():
     if os.path.exists('tmp/point4.shp'):
         shape_drv.DeleteDataSource('tmp/point4.shp')
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_ogrtindex_1,
-    test_ogrtindex_2,
-    test_ogrtindex_3,
-    test_ogrtindex_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_ogrtindex')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

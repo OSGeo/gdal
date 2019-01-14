@@ -669,6 +669,7 @@ PODOFO_INC
 HAVE_PODOFO
 POPPLER_PLUGIN_LIB
 POPPLER_INC
+POPPLER_0_69_OR_LATER
 POPPLER_0_58_OR_LATER
 POPPLER_0_23_OR_LATER
 POPPLER_0_20_OR_LATER
@@ -695,6 +696,7 @@ GEOS_VERSION
 HAVE_GEOS
 GEOS_CFLAGS
 GEOS_LIBS
+WEBP_SETTING
 SDE_LIB
 SDE_INC
 SDE_ENABLED
@@ -782,6 +784,7 @@ HAVE_JASPER
 NETCDF_HAS_HDF4
 NETCDF_HAS_NC4
 NETCDF_ROOT
+NETCDF_MEM
 NETCDF_SETTING
 NETCDF_NCCONFIG
 KEA_LIB
@@ -792,7 +795,6 @@ HDF5_INCLUDE
 HAVE_HDF5
 HDF5_LIBS
 HDF5_CFLAGS
-PKG_CONFIG
 HDF4_HAS_MAXOPENFILES
 HDF4_INCLUDE
 HAVE_HDF4
@@ -805,6 +807,9 @@ SOSI_ENABLED
 X_FME_HOME
 OGDI_INCLUDE
 HAVE_OGDI
+OGDI_LIBS
+OGDI_CFLAGS
+PKG_CONFIG
 GIF_SETTING
 TIFF_JPEG12_ENABLED
 JPEG12_ENABLED
@@ -850,6 +855,7 @@ HAVE_GCC_BSWAP
 HAVE_GCC_ATOMIC_BUILTINS
 CXXFLAGS_NOFTRAPV
 CFLAGS_NOFTRAPV
+ENABLE_UFFD
 HAVE_LIBTOOL
 SO_EXT
 LD_SHARED
@@ -928,6 +934,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1097,6 +1104,8 @@ LT_SYS_LIBRARY_PATH
 CPP
 CXXCPP
 PKG_CONFIG
+OGDI_CFLAGS
+OGDI_LIBS
 HDF5_CFLAGS
 HDF5_LIBS
 OPENJPEG_CFLAGS
@@ -1141,6 +1150,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1393,6 +1403,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1530,7 +1549,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1683,6 +1702,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1885,6 +1905,8 @@ Some influential environment variables:
   CPP         C preprocessor
   CXXCPP      C++ preprocessor
   PKG_CONFIG  path to pkg-config utility
+  OGDI_CFLAGS C compiler flags for OGDI, overriding pkg-config
+  OGDI_LIBS   linker flags for OGDI, overriding pkg-config
   HDF5_CFLAGS C compiler flags for HDF5, overriding pkg-config
   HDF5_LIBS   linker flags for HDF5, overriding pkg-config
   OPENJPEG_CFLAGS
@@ -20383,6 +20405,23 @@ fi
 done
 
 
+for ac_header in linux/userfaultfd.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "linux/userfaultfd.h" "ac_cv_header_linux_userfaultfd_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_userfaultfd_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LINUX_USERFAULTFD_H 1
+_ACEOF
+ ENABLE_UFFD="yes"
+else
+  ENABLE_UFFD="no"
+fi
+
+done
+
+ENABLE_UFFD=$ENABLE_UFFD
+
+
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
 $as_echo_n "checking whether byte ordering is bigendian... " >&6; }
 if ${ac_cv_c_bigendian+:} false; then :
@@ -21183,6 +21222,43 @@ _ACEOF
 
 fi
 done
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for RLIMIT_AS" >&5
+$as_echo_n "checking for RLIMIT_AS... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/time.h>
+#include <sys/resource.h>
+
+int
+main ()
+{
+
+    return RLIMIT_AS;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_RLIMIT_AS 1
+_ACEOF
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
@@ -25358,7 +25434,198 @@ if test "$with_ogdi" = "no" ; then
 
 elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
-  for ac_header in ecs.h
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.9.0
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OGDI" >&5
+$as_echo_n "checking for OGDI... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$OGDI_CFLAGS"; then
+        pkg_cv_OGDI_CFLAGS="$OGDI_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"ogdi\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "ogdi") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OGDI_CFLAGS=`$PKG_CONFIG --cflags "ogdi" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$OGDI_LIBS"; then
+        pkg_cv_OGDI_LIBS="$OGDI_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"ogdi\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "ogdi") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OGDI_LIBS=`$PKG_CONFIG --libs "ogdi" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        OGDI_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "ogdi"`
+        else
+	        OGDI_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "ogdi"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$OGDI_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                :
+elif test $pkg_failed = untried; then
+	:
+else
+	OGDI_CFLAGS=$pkg_cv_OGDI_CFLAGS
+	OGDI_LIBS=$pkg_cv_OGDI_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	HAVE_OGDI=yes
+fi
+  if test "$HAVE_OGDI" = yes; then
+    OGDI_INCLUDE=$OGDI_CFLAGS
+    LIBS="$OGDI_LIBS $LIBS"
+  else
+    for ac_header in ecs.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "ecs.h" "ac_cv_header_ecs_h" "$ac_includes_default"
 if test "x$ac_cv_header_ecs_h" = xyes; then :
@@ -25370,21 +25637,20 @@ fi
 
 done
 
-
-  if test "$ac_cv_header_ecs_h" = "no" ; then
-    if test -f "/usr/include/ogdi/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/include/ogdi"
-    elif test -f "/usr/local/include/ogdi/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/local/include/ogdi"
-    elif test -f "/usr/include/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/include"
-    elif test -f "/usr/local/include/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/local/include"
+    if test "$ac_cv_header_ecs_h" = "no" ; then
+      if test -f "/usr/include/ogdi/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/include/ogdi"
+      elif test -f "/usr/local/include/ogdi/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/local/include/ogdi"
+      elif test -f "/usr/include/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/include"
+      elif test -f "/usr/local/include/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/local/include"
+      fi
     fi
-  fi
 
-  if test "$OGDI_INCLUDE" != "" -o "$ac_cv_header_ecs_h" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cln_GetLayerCapabilities in -logdi" >&5
+    if test "$OGDI_INCLUDE" != "" -o "$ac_cv_header_ecs_h" = "yes"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cln_GetLayerCapabilities in -logdi" >&5
 $as_echo_n "checking for cln_GetLayerCapabilities in -logdi... " >&6; }
 if ${ac_cv_lib_ogdi_cln_GetLayerCapabilities+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -25426,10 +25692,10 @@ else
   HAVE_OGDI=no
 fi
 
-    if test "$HAVE_OGDI" = "yes" ; then
-      LIBS="-logdi $LIBS"
-    else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cln_GetLayerCapabilities in -logdi31" >&5
+      if test "$HAVE_OGDI" = "yes" ; then
+        LIBS="-logdi $LIBS"
+      else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cln_GetLayerCapabilities in -logdi31" >&5
 $as_echo_n "checking for cln_GetLayerCapabilities in -logdi31... " >&6; }
 if ${ac_cv_lib_ogdi31_cln_GetLayerCapabilities+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -25471,12 +25737,13 @@ else
   HAVE_OGDI=no
 fi
 
-      if test "$HAVE_OGDI" = "yes" ; then
-        LIBS="-logdi31 $LIBS"
+        if test "$HAVE_OGDI" = "yes" ; then
+          LIBS="-logdi31 $LIBS"
+        fi
       fi
+    else
+      HAVE_OGDI=no
     fi
-  else
-    HAVE_OGDI=no
   fi
 
 else
@@ -26359,7 +26626,7 @@ fi
 
 fi
 if test -n "$PKG_CONFIG"; then
-	_pkg_min_version=0.25
+	_pkg_min_version=0.21
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
 $as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
 	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
@@ -26735,6 +27002,7 @@ fi
 
 
 NETCDF_SETTING=
+NETCDF_MEM=
 NETCDF_ROOT=
 NETCDF_HAS_NC4=
 NETCDF_HAS_HDF4=
@@ -26750,6 +27018,7 @@ fi
 if test "$with_netcdf" = "no" ; then
 
   NETCDF_SETTING=no
+  NETCDF_MEM=no
 
   echo "netCDF support disabled."
 
@@ -26978,6 +27247,7 @@ fi
       echo -n "libnetcdf is installed but its location cannot be found, "
       echo "use --with-netcdf=/path_to_netcdf for proper support"
     fi
+    NETCDF_INCLUDEDIR="$NETCDF_ROOT/include/"
 
     LIBS="-lnetcdf $LIBS"
     if test "$NETCDF_ROOT" != "" ; then
@@ -27045,6 +27315,7 @@ fi
       LIBS="-L$with_netcdf -lnetcdf $LIBS"
       EXTRA_INCLUDES="-I$with_netcdf $EXTRA_INCLUDES"
     fi
+    NETCDF_INCLUDEDIR="$with_netcdf/include/"
 
     echo "using libnetcdf from $with_netcdf"
 
@@ -27095,6 +27366,24 @@ NETCDF_SETTING=$NETCDF_SETTING
 
 
 if test "$NETCDF_SETTING" != "no" ; then
+
+   for ac_header in $NETCDF_INCLUDEDIR/netcdf_mem.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ NETCDF_MEM=yes
+else
+  NETCDF_MEM=no
+fi
+
+done
+
+
+   NETCDF_MEM=$NETCDF_MEM
 
    NETCDF_ROOT=$NETCDF_ROOT
 
@@ -27448,7 +27737,7 @@ fi
 
 fi
 if test -n "$PKG_CONFIG"; then
-	_pkg_min_version=0.25
+	_pkg_min_version=0.21
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
 $as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
 	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
@@ -27907,7 +28196,7 @@ $as_echo "found Intergraph 5.x+ SDK in ${ECW_LIBDIR}." >&6; }
             echo "#include <string>" > testnewabi.cpp
             echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
             echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
-            if test -z "`$${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
                 ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF
                 ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
                 with_ecw=$with_ecw/$ecw_license_type
@@ -32985,6 +33274,9 @@ fi
 
 fi
 
+WEBP_SETTING=$WEBP_SETTING
+
+
 if test "$WEBP_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="webp $OPT_GDAL_FORMATS"
 fi
@@ -34548,6 +34840,7 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 POPPLER_0_20_OR_LATER=no
 POPPLER_0_23_OR_LATER=no
 POPPLER_0_58_OR_LATER=no
+POPPLER_0_69_OR_LATER=no
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for poppler" >&5
 $as_echo_n "checking for poppler... " >&6; }
@@ -34590,24 +34883,51 @@ $as_echo "yes" >&6; }
 
         CHECK_OTHER_POPPLER_VERSION=yes
 
-        # And now we check if we have Poppler >= 0.58.0
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Object does have new API (>= 0.58.0)" >&5
-$as_echo_n "checking if Object does have new API (>= 0.58.0)... " >&6; }
-        rm -f testpoppler.*
-        echo '#include <poppler/Object.h>' > testpoppler.cpp
-        echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-            POPPLER_0_58_OR_LATER=yes
-            POPPLER_0_23_OR_LATER=yes
-            POPPLER_0_20_OR_LATER=yes
-            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-            POPPLER_HAS_OPTCONTENT=yes
-            CHECK_OTHER_POPPLER_VERSION=no
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if OptionalContent has API >= 0.69.0" >&5
+$as_echo_n "checking if OptionalContent has API >= 0.69.0... " >&6; }
+            rm -f testpoppler.*
+            echo '#include <poppler/OptionalContent.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) {' >> testpoppler.cpp
+            echo 'OCGs ocg(nullptr, nullptr);' >> testpoppler.cpp
+            echo 'ocg.getOCGs().size();' >> testpoppler.cpp
+            echo 'return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_69_OR_LATER=yes
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+            fi
+        fi
+
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            # And now we check if we have Poppler >= 0.58.0
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Object does have new API (>= 0.58.0)" >&5
+$as_echo_n "checking if Object does have new API (>= 0.58.0)... " >&6; }
+            rm -f testpoppler.*
+            echo '#include <poppler/Object.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            fi
         fi
 
         if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
@@ -34711,6 +35031,8 @@ POPPLER_0_20_OR_LATER=$POPPLER_0_20_OR_LATER
 POPPLER_0_23_OR_LATER=$POPPLER_0_23_OR_LATER
 
 POPPLER_0_58_OR_LATER=$POPPLER_0_58_OR_LATER
+
+POPPLER_0_69_OR_LATER=$POPPLER_0_69_OR_LATER
 
 POPPLER_INC=$POPPLER_INC
 
@@ -36671,8 +36993,8 @@ if test "${with_lerc+set}" = set; then :
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MRF" >&5
-$as_echo_n "checking for MRF... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LERC" >&5
+$as_echo_n "checking for LERC... " >&6; }
 if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
     HAVE_LERC=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
@@ -39164,6 +39486,11 @@ echo "  Kea support:               ${HAVE_KEA}"
 
 echo "  NetCDF support:            ${NETCDF_SETTING}"
 
+if test "$NETCDF_SETTING" = "yes" ; then
+
+echo "  NetCDF has netcdf_mem.h:   ${NETCDF_MEM}"
+
+fi
 
 echo "  Kakadu support:            ${HAVE_KAKADU}"
 
@@ -39324,6 +39651,9 @@ echo "  MongoDB support:           ${MONGODB_ENABLED}"
 
 
 echo "  HDFS support:              ${HDFS_ENABLED}"
+
+
+echo "  userfaultfd support:       ${ENABLE_UFFD}"
 
 
 

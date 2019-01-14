@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <wchar.h>
+
 #include "cpl_odbc.h"
 #include "cpl_vsi.h"
 #include "cpl_string.h"
@@ -351,7 +353,8 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
                 achSQLState, &nNativeError,
                 reinterpret_cast<SQLCHAR *>(achCurErrMsg),
                 sizeof(achCurErrMsg) - 1, &nTextLength );
-        if (nDiagRetCode == SQL_SUCCESS)
+        if (nDiagRetCode == SQL_SUCCESS ||
+            nDiagRetCode == SQL_SUCCESS_WITH_INFO)
         {
             achCurErrMsg[nTextLength] = '\0';
             m_osLastError += CPLString().Printf("%s[%5s]%s(" CPL_FRMT_GIB ")",
@@ -1029,7 +1032,24 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != nullptr
             && m_panColValueLengths[iCol] > 0 )
         {
+#if WCHAR_MAX == 0xFFFFu
             wchar_t *pwszSrc = reinterpret_cast<wchar_t*>(m_papszColValues[iCol]);
+#else
+            unsigned int i = 0;
+            GUInt16 *panColValue =
+                reinterpret_cast<GUInt16 *>(m_papszColValues[iCol]);
+            wchar_t *pwszSrc =
+                static_cast<wchar_t *>(CPLMalloc((m_panColValueLengths[iCol] / 2 + 1)
+                                                 * sizeof(wchar_t)));
+
+            while( panColValue[i] != 0 ) {
+                pwszSrc[i] = static_cast<wchar_t>(panColValue[i]);
+                i += 1;
+            }
+            pwszSrc[i] = L'\0';
+
+            CPLFree( panColValue );
+#endif
 
             m_papszColValues[iCol] =
                 CPLRecodeFromWChar( pwszSrc, CPL_ENC_UCS2, CPL_ENC_UTF8 );

@@ -538,9 +538,11 @@ TIFFSetupStrips(TIFF* tif)
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
 		td->td_stripsperimage /= td->td_samplesperpixel;
 	td->td_stripoffset = (uint64 *)
-	    _TIFFmalloc(td->td_nstrips * sizeof (uint64));
+            _TIFFCheckMalloc(tif, td->td_nstrips, sizeof (uint64),
+                             "for \"StripOffsets\" array");
 	td->td_stripbytecount = (uint64 *)
-	    _TIFFmalloc(td->td_nstrips * sizeof (uint64));
+            _TIFFCheckMalloc(tif, td->td_nstrips, sizeof (uint64),
+                             "for \"StripByteCounts\" array");
 	if (td->td_stripoffset == NULL || td->td_stripbytecount == NULL)
 		return (0);
 	/*

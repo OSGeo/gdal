@@ -1796,7 +1796,13 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     m_pszString = TABUnEscapeString(pszTmpString, TRUE);
     if (pszTmpString != m_pszString)
         CPLFree(pszTmpString);
-
+    if (!fp->GetEncoding().empty())
+    {
+        char *pszUtf8String =
+            CPLRecode(m_pszString, fp->GetEncoding(), CPL_ENC_UTF8);
+        CPLFree(m_pszString);
+        m_pszString = pszUtf8String;
+    }
     if (!bXYBoxRead)
     {
         CSLDestroy(papszToken);
@@ -2015,7 +2021,20 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * form. Those characters are unescaped in memory to be like
      * other OGR drivers. See MapTools bug 1107 for more details.
      *------------------------------------------------------------*/
-    char *pszTmpString = TABEscapeString(m_pszString);
+    char *pszTmpString;
+    if(fp->GetEncoding().empty())
+    {
+        pszTmpString = TABEscapeString(m_pszString);
+    }
+    else
+    {
+        char *pszEncString =
+            CPLRecode(m_pszString, CPL_ENC_UTF8, fp->GetEncoding());
+        pszTmpString = TABEscapeString(pszEncString);
+        if(pszTmpString != pszEncString)
+            CPLFree(pszEncString);
+    }
+
     if(pszTmpString == nullptr)
         fp->WriteLine("Text \"\"\n" );
     else

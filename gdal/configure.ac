@@ -80,7 +80,7 @@ AX_CHECK_COMPILE_FLAG([-Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAG
 dnl -Wclobbered is not reliable on most gcc versions
 dnl AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
-dnl Warn when macros __TIME__, __DATE__ or __TIMESTAMP__ are encountered as they might prevent bit-wise-identical reproducible compilations. 
+dnl Warn when macros __TIME__, __DATE__ or __TIMESTAMP__ are encountered as they might prevent bit-wise-identical reproducible compilations.
 AX_CHECK_COMPILE_FLAG([-Wdate-time], [C_WFLAGS="$C_WFLAGS -Wdate-time" CXX_WFLAGS="$CXX_WFLAGS -Wdate-time"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl GCC 6 warnings
@@ -293,6 +293,10 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h direct.h)
 
+dnl Check for userfaultfd support
+AC_CHECK_HEADERS([linux/userfaultfd.h], [ENABLE_UFFD="yes"], [ENABLE_UFFD="no"], [])
+AC_SUBST(ENABLE_UFFD,$ENABLE_UFFD)
+
 AC_C_BIGENDIAN
 
 dnl Check for 64 bit file API
@@ -351,6 +355,23 @@ AC_CHECK_FUNCS(sigaction)
 AC_CHECK_FUNCS(statvfs)
 AC_CHECK_FUNCS(statvfs64)
 AC_CHECK_FUNCS(getrlimit)
+
+AC_MSG_CHECKING([for RLIMIT_AS])
+AC_TRY_COMPILE(
+  [
+#include <sys/time.h>
+#include <sys/resource.h>
+  ], [
+    return RLIMIT_AS;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_RLIMIT_AS, 1,
+          [Define to 1 if you have the `RLIMIT_AS' constant.])
+  ], [
+    AC_MSG_RESULT([no])
+])
+
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on
 dnl some platforms.
@@ -1964,33 +1985,38 @@ if test "$with_ogdi" = "no" ; then
 
 elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
-  AC_CHECK_HEADERS(ecs.h)
-
-  if test "$ac_cv_header_ecs_h" = "no" ; then
-    if test -f "/usr/include/ogdi/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/include/ogdi"
-    elif test -f "/usr/local/include/ogdi/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/local/include/ogdi"
-    elif test -f "/usr/include/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/include"
-    elif test -f "/usr/local/include/ecs.h"; then
-        OGDI_INCLUDE="-I/usr/local/include"
-    fi
-  fi
-
-  if test "$OGDI_INCLUDE" != "" -o "$ac_cv_header_ecs_h" = "yes"; then
-    AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
-    if test "$HAVE_OGDI" = "yes" ; then
-      LIBS="-logdi $LIBS"
-    else
-      dnl For backward compatibility. Retry with ogdi31 as a name
-      AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
-      if test "$HAVE_OGDI" = "yes" ; then
-        LIBS="-logdi31 $LIBS"
+  PKG_CHECK_MODULES([OGDI], [ogdi], [HAVE_OGDI=yes], [:])
+  if test "$HAVE_OGDI" = yes; then
+    OGDI_INCLUDE=$OGDI_CFLAGS
+    LIBS="$OGDI_LIBS $LIBS"
+  else
+    AC_CHECK_HEADERS(ecs.h)
+    if test "$ac_cv_header_ecs_h" = "no" ; then
+      if test -f "/usr/include/ogdi/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/include/ogdi"
+      elif test -f "/usr/local/include/ogdi/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/local/include/ogdi"
+      elif test -f "/usr/include/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/include"
+      elif test -f "/usr/local/include/ecs.h"; then
+          OGDI_INCLUDE="-I/usr/local/include"
       fi
     fi
-  else
-    HAVE_OGDI=no
+
+    if test "$OGDI_INCLUDE" != "" -o "$ac_cv_header_ecs_h" = "yes"; then
+      AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
+      if test "$HAVE_OGDI" = "yes" ; then
+        LIBS="-logdi $LIBS"
+      else
+        dnl For backward compatibility. Retry with ogdi31 as a name
+        AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,)
+        if test "$HAVE_OGDI" = "yes" ; then
+          LIBS="-logdi31 $LIBS"
+        fi
+      fi
+    else
+      HAVE_OGDI=no
+    fi
   fi
 
 else
@@ -2364,7 +2390,7 @@ elif test "$with_hdf5" = "yes" -o "$with_hdf5" = "" ; then
 
   HDF5_CFLAGS=""
   HDF5_LIBS=""
-  PKG_PROG_PKG_CONFIG([0.25]) # check and set $PKG_CONFIG
+  PKG_PROG_PKG_CONFIG([0.21]) # check and set $PKG_CONFIG
   PKG_CHECK_MODULES([HDF5], [hdf5], [HAVE_HDF5=yes], [HAVE_HDF5=no])
 
   if test "$HAVE_HDF5" = "yes"; then
@@ -2487,6 +2513,7 @@ dnl Check if netcdf library is available.
 dnl ---------------------------------------------------------------------------
 
 NETCDF_SETTING=
+NETCDF_MEM=
 NETCDF_ROOT=
 NETCDF_HAS_NC4=
 NETCDF_HAS_HDF4=
@@ -2497,6 +2524,7 @@ AC_ARG_WITH([netcdf],[  --with-netcdf[=ARG]     Include netCDF support (ARG=no o
 if test "$with_netcdf" = "no" ; then
 
   NETCDF_SETTING=no
+  NETCDF_MEM=no
 
   echo "netCDF support disabled."
 
@@ -2570,6 +2598,7 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
       echo -n "libnetcdf is installed but its location cannot be found, "
       echo "use --with-netcdf=/path_to_netcdf for proper support"
     fi
+    NETCDF_INCLUDEDIR="$NETCDF_ROOT/include/"
 
     LIBS="-lnetcdf $LIBS"
     if test "$NETCDF_ROOT" != "" ; then
@@ -2597,6 +2626,7 @@ else
       LIBS="-L$with_netcdf -lnetcdf $LIBS"
       EXTRA_INCLUDES="-I$with_netcdf $EXTRA_INCLUDES"
     fi
+    NETCDF_INCLUDEDIR="$with_netcdf/include/"
 
     echo "using libnetcdf from $with_netcdf"
 
@@ -2643,6 +2673,9 @@ AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
 
 if test "$NETCDF_SETTING" != "no" ; then
 
+   AC_CHECK_HEADERS([$NETCDF_INCLUDEDIR/netcdf_mem.h], [NETCDF_MEM=yes], [NETCDF_MEM=no],)
+
+   AC_SUBST([NETCDF_MEM], [$NETCDF_MEM])
    AC_SUBST([NETCDF_ROOT], [$NETCDF_ROOT])
    AC_SUBST([NETCDF_HAS_NC4], [$NETCDF_HAS_NC4])
    AC_SUBST([NETCDF_HAS_HDF4], [$NETCDF_HAS_HDF4])
@@ -2715,7 +2748,7 @@ if test "$with_openjpeg" = "no" ; then
 
 else
 
-  PKG_PROG_PKG_CONFIG([0.25])
+  PKG_PROG_PKG_CONFIG([0.21])
   PKG_CHECK_MODULES([OPENJPEG], [libopenjp2 >= 2.1.0],
         [OPENJPEG_VERSION=`$PKG_CONFIG --modversion libopenjp2`],
         [OPENJPEG_VERSION=;])
@@ -2909,7 +2942,7 @@ else
             echo "#include <string>" > testnewabi.cpp
             echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
             echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
-            if test -z "`$${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
                 ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF
                 ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
                 with_ecw=$with_ecw/$ecw_license_type
@@ -4141,6 +4174,8 @@ elif test "$with_webp" != "no" -a "$with_webp" != ""; then
 
 fi
 
+AC_SUBST(WEBP_SETTING,$WEBP_SETTING)
+
 if test "$WEBP_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="webp $OPT_GDAL_FORMATS"
 fi
@@ -4480,6 +4515,7 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 POPPLER_0_20_OR_LATER=no
 POPPLER_0_23_OR_LATER=no
 POPPLER_0_58_OR_LATER=no
+POPPLER_0_69_OR_LATER=no
 
 AC_MSG_CHECKING([for poppler])
 
@@ -4520,21 +4556,45 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
 
         CHECK_OTHER_POPPLER_VERSION=yes
 
-        # And now we check if we have Poppler >= 0.58.0
-        AC_MSG_CHECKING([if Object does have new API (>= 0.58.0)])
-        rm -f testpoppler.*
-        echo '#include <poppler/Object.h>' > testpoppler.cpp
-        echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-            POPPLER_0_58_OR_LATER=yes
-            POPPLER_0_23_OR_LATER=yes
-            POPPLER_0_20_OR_LATER=yes
-            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-            POPPLER_HAS_OPTCONTENT=yes
-            CHECK_OTHER_POPPLER_VERSION=no
-            AC_MSG_RESULT([yes])
-        else
-            AC_MSG_RESULT([no])
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            AC_MSG_CHECKING([if OptionalContent has API >= 0.69.0])
+            rm -f testpoppler.*
+            echo '#include <poppler/OptionalContent.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) {' >> testpoppler.cpp
+            echo 'OCGs ocg(nullptr, nullptr);' >> testpoppler.cpp
+            echo 'ocg.getOCGs().size();' >> testpoppler.cpp
+            echo 'return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_69_OR_LATER=yes
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
+        fi
+
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            # And now we check if we have Poppler >= 0.58.0
+            AC_MSG_CHECKING([if Object does have new API (>= 0.58.0)])
+            rm -f testpoppler.*
+            echo '#include <poppler/Object.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
         fi
 
         if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
@@ -4619,6 +4679,7 @@ AC_SUBST(POPPLER_BASE_STREAM_HAS_TWO_ARGS, $POPPLER_BASE_STREAM_HAS_TWO_ARGS)
 AC_SUBST(POPPLER_0_20_OR_LATER, $POPPLER_0_20_OR_LATER)
 AC_SUBST(POPPLER_0_23_OR_LATER, $POPPLER_0_23_OR_LATER)
 AC_SUBST(POPPLER_0_58_OR_LATER, $POPPLER_0_58_OR_LATER)
+AC_SUBST(POPPLER_0_69_OR_LATER, $POPPLER_0_69_OR_LATER)
 AC_SUBST(POPPLER_INC, $POPPLER_INC)
 AC_SUBST(POPPLER_PLUGIN_LIB, $POPPLER_PLUGIN_LIB)
 
@@ -5701,7 +5762,7 @@ AC_ARG_WITH([lerc],
             AS_HELP_STRING([--without-lerc],
                [Disable LERC library]),,)
 
-AC_MSG_CHECKING([for MRF])
+AC_MSG_CHECKING([for LERC])
 if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
     HAVE_LERC=yes
     AC_MSG_RESULT([enabled])
@@ -5821,6 +5882,9 @@ LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
 LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
+if test "$NETCDF_SETTING" = "yes" ; then
+  LOC_MSG([  NetCDF has netcdf_mem.h:   ${NETCDF_MEM}])
+fi
 LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 if test "x$HAVE_JASPER_UUID" != "x" ; then
   LOC_MSG([  JasPer support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
@@ -5878,6 +5942,7 @@ LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then

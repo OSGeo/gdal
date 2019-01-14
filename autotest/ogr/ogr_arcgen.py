@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,234 +28,160 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Read points
 
 
-def ogr_arcgen_points():
+def test_ogr_arcgen_points():
 
     ds = ogr.Open('data/points.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPoint:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
-        gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected ID')
     if ogrtest.check_feature_geometry(feat, 'POINT (2 49)',
                                       max_error=0.0000001) != 0:
-        gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read points25d
 
 
-def ogr_arcgen_points25d():
+def test_ogr_arcgen_points25d():
 
     ds = ogr.Open('data/points25d.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPoint25D:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPoint25D, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
-        gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected ID')
     if ogrtest.check_feature_geometry(feat, 'POINT (2 49 10)',
                                       max_error=0.0000001) != 0:
-        gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read lines
 
 
-def ogr_arcgen_lines():
+def test_ogr_arcgen_lines():
 
     ds = ogr.Open('data/lines.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbLineString:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
-        gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected ID')
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49,3 50)',
                                       max_error=0.0000001) != 0:
-        gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read lines25d
 
 
-def ogr_arcgen_lines25d():
+def test_ogr_arcgen_lines25d():
 
     ds = ogr.Open('data/lines25d.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbLineString25D:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbLineString25D, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
-        gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected ID')
     if ogrtest.check_feature_geometry(feat, 'LINESTRING (2 49 10,3 50 10)',
                                       max_error=0.0000001) != 0:
-        gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read polygons
 
 
-def ogr_arcgen_polygons():
+def test_ogr_arcgen_polygons():
 
     ds = ogr.Open('data/polygons.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPolygon:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
-        print('did not get expected ID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected ID')
     if ogrtest.check_feature_geometry(feat, 'POLYGON ((2 49,2 50,3 50,3 49,2 49))',
                                       max_error=0.0000001) != 0:
-        gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
+    
 ###############################################################################
 # Read polygons25d
 
 
-def ogr_arcgen_polygons25d():
+def test_ogr_arcgen_polygons25d():
 
     ds = ogr.Open('data/polygons25d.gen')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
 
-    if lyr.GetGeomType() != ogr.wkbPolygon25D:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbPolygon25D, 'bad layer geometry type'
 
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 1:
-        gdaltest.post_reason('did not get expected ID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected ID')
     if ogrtest.check_feature_geometry(feat, 'POLYGON ((2 49 10,2 50 10,3 50 10,3 49 10,2 49 10))',
                                       max_error=0.0000001) != 0:
-        gdaltest.post_reason('did not get expected first geom')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected first geom')
 
-    return 'success'
-
-
-gdaltest_list = [
-    ogr_arcgen_points,
-    ogr_arcgen_points25d,
-    ogr_arcgen_lines,
-    ogr_arcgen_lines25d,
-    ogr_arcgen_polygons,
-    ogr_arcgen_polygons25d]
+    
 
 
-if __name__ == '__main__':
 
-    gdaltest.setup_run('ogr_arcgen')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

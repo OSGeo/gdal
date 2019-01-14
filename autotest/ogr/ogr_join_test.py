@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -27,39 +27,35 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
 from osgeo import ogr
 import ogrtest
+import pytest
 
 ###############################################################################
 # Test a join.
 
 
-def ogr_join_1():
+def test_ogr_join_1():
     gdaltest.ds = ogr.Open('data')
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
         'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.eas_id')
 
     count = sql_lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
-        return 'fail'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Check the values we are actually getting back (restricting the search a bit)
 
 
-def ogr_join_2():
+def test_ogr_join_2():
 
     expect = ['_166_', '_158_', '_165_']
 
@@ -72,13 +68,13 @@ def ogr_join_2():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Try various naming conversions for the selected fields.
 
 
-def ogr_join_3():
+def test_ogr_join_3():
 
     expect = ['_166_', '_158_', '_165_']
 
@@ -91,13 +87,13 @@ def ogr_join_3():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that records for which a join can't be found work ok.
 
 
-def ogr_join_4():
+def test_ogr_join_4():
 
     expect = ['_179_', '_171_', None, None]
 
@@ -110,13 +106,13 @@ def ogr_join_4():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that table aliases work
 
 
-def ogr_join_5():
+def test_ogr_join_5():
 
     expect = [179, 171, 173, 172]
 
@@ -129,13 +125,13 @@ def ogr_join_5():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Again, ordering by a primary field.
 
 
-def ogr_join_6():
+def test_ogr_join_6():
 
     expect = [171, 172, 173, 179]
 
@@ -148,13 +144,13 @@ def ogr_join_6():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test joining to an external datasource.
 
 
-def ogr_join_7():
+def test_ogr_join_7():
 
     expect = [171, 172, 173, 179]
 
@@ -167,13 +163,13 @@ def ogr_join_7():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test doing two joins at once.
 
 
-def ogr_join_8():
+def test_ogr_join_8():
 
     expect = [171, None, None, 179]
 
@@ -187,14 +183,14 @@ def ogr_join_8():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify fix for #2788 (memory corruption on wildcard expansion in SQL request
 # with join clauses)
 
 
-def ogr_join_9():
+def test_ogr_join_9():
 
     expect = [179, 171, 173, 172]
 
@@ -207,12 +203,12 @@ def ogr_join_9():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 
 
-def ogr_join_10():
+def test_ogr_join_10():
 
     expect = [None, None, None, None, None, None, None, None, None, None]
 
@@ -224,13 +220,13 @@ def ogr_join_10():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test join on string field
 
 
-def ogr_join_11():
+def test_ogr_join_11():
 
     expect = ['_168_', '_179_', '_171_', '_170_', '_165_', '_158_', '_166_']
 
@@ -241,32 +237,29 @@ def ogr_join_11():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test fix for #4112 (join between 2 datasources)
 
 
-def ogr_join_12():
+def test_ogr_join_12():
     ds = ogr.Open('data/poly.shp')
 
     sql_lyr = ds.ExecuteSQL(
         "SELECT * FROM poly LEFT JOIN 'data/idlink.dbf'.idlink ON poly.eas_id = idlink.eas_id")
 
     count = sql_lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
-        return 'fail'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
     ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test joining a float column with a string column (#4321)
 
 
-def ogr_join_13():
+def test_ogr_join_13():
 
     expect = ['_168_', '_179_', '_171_', None, None, None, '_166_', '_158_', '_165_', '_170_']
 
@@ -278,13 +271,13 @@ def ogr_join_13():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test joining a string column with a float column (#4321, actually addressed by #4259)
 
 
-def ogr_join_14():
+def test_ogr_join_14():
 
     expect = [168, 179, 171, 170, 165, 158, 166]
 
@@ -296,13 +289,13 @@ def ogr_join_14():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test multiple joins with expressions (#4521)
 
 
-def ogr_join_15():
+def test_ogr_join_15():
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_join_14')
     lyr = ds.CreateLayer('first')
@@ -330,23 +323,15 @@ def ogr_join_15():
     gdal.Unlink('/vsimem/ogr_join_14/third.csv')
     gdal.Unlink('/vsimem/ogr_join_14')
 
-    if val1 != 'c2':
-        gdaltest.post_reason('fail')
-        print(val1)
-        return 'fail'
+    assert val1 == 'c2'
 
-    if val2 != 'c2':
-        gdaltest.post_reason('fail')
-        print(val2)
-        return 'fail'
-
-    return 'success'
+    assert val2 == 'c2'
 
 ###############################################################################
 # Test non-support of a secondarytable.fieldname in a where clause
 
 
-def ogr_join_16():
+def test_ogr_join_16():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -356,18 +341,17 @@ def ogr_join_16():
         'WHERE idlink.name = \'_165\'')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Cannot use field') == 0
 
     if sql_lyr is None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Test non-support of a secondarytable.fieldname in a order by clause
 
 
-def ogr_join_17():
+def test_ogr_join_17():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -377,37 +361,32 @@ def ogr_join_17():
         'ORDER BY name')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Cannot use field') == 0
 
     if sql_lyr is None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Test inverted order of fields in ON
 
 
-def ogr_join_18():
+def test_ogr_join_18():
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
         'SELECT * FROM poly LEFT JOIN idlink ON idlink.eas_id = poly.eas_id')
 
     count = sql_lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
-        return 'fail'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test unrecognized primary field
 
 
-def ogr_join_19():
+def test_ogr_join_19():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -415,19 +394,17 @@ def ogr_join_19():
         'SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field') == 0
 
     if sql_lyr is None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Test unrecognized secondary field
 
 
-def ogr_join_20():
+def test_ogr_join_20():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -435,19 +412,17 @@ def ogr_join_20():
         'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('"idlink"."foo" not recognised as an available field') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('"idlink"."foo" not recognised as an available field') == 0
 
     if sql_lyr is None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Test unexpected secondary table
 
 
-def ogr_join_21():
+def test_ogr_join_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -457,19 +432,17 @@ def ogr_join_21():
         'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id')
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') == 0
 
     if sql_lyr is None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Test join with a complex expression as ON
 
 
-def ogr_join_22():
+def test_ogr_join_22():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('first')
@@ -489,18 +462,13 @@ def ogr_join_22():
 
     ds = None
 
-    if val != '2':
-        gdaltest.post_reason('fail')
-        print(val)
-        return 'fail'
-
-    return 'success'
+    assert val == '2'
 
 ###############################################################################
 # Test join with NULL keys
 
 
-def ogr_join_23():
+def test_ogr_join_23():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('first')
@@ -516,60 +484,22 @@ def ogr_join_23():
     sql_lyr = ds.ExecuteSQL("SELECT * FROM first JOIN second ON first.f = second.f")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull('second.f'):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     feat = sql_lyr.GetNextFeature()
     if feat['f'] != 'key1' or feat['second.f'] != 'key1':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
-def ogr_join_cleanup():
+def test_ogr_join_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_join_1,
-    ogr_join_2,
-    ogr_join_3,
-    ogr_join_4,
-    ogr_join_5,
-    ogr_join_6,
-    ogr_join_7,
-    ogr_join_8,
-    ogr_join_9,
-    ogr_join_10,
-    ogr_join_11,
-    ogr_join_12,
-    ogr_join_13,
-    ogr_join_14,
-    ogr_join_15,
-    ogr_join_16,
-    ogr_join_17,
-    ogr_join_18,
-    ogr_join_19,
-    ogr_join_20,
-    ogr_join_21,
-    ogr_join_22,
-    ogr_join_23,
-    ogr_join_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_join_test')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

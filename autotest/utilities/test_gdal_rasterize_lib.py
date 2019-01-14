@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,12 +30,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal, ogr, osr
 import gdaltest
+import pytest
 
 ###############################################################################
 # Simple polygon rasterization (adapted from alg/rasterize.py).
@@ -90,22 +89,14 @@ def test_gdal_rasterize_lib_1():
     rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, bands=[3, 2, 1], burnValues=[200, 220, 240], layers='rast1')
-    if ret != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 1
 
     # Check results.
     expected = 6452
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
-        return 'fail'
+    assert checksum == expected, 'Did not get expected image checksum'
 
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test creating an output file
@@ -115,15 +106,13 @@ def test_gdal_rasterize_lib_3():
 
     import test_cli_utilities
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
 
     with gdaltest.error_handler():
         ds = gdal.Rasterize('/vsimem/bogus.tif', 'tmp/n43dt0.shp')
-    if ds is not None:
-        gdaltest.post_reason('did not expected success')
-        return 'fail'
+    assert ds is None, 'did not expected success'
 
     ds = gdal.Rasterize('', 'tmp/n43dt0.shp', format='MEM', outputType=gdal.GDT_Byte, useZ=True, layers=['n43dt0'], width=121, height=121, noData=0)
 
@@ -131,30 +120,19 @@ def test_gdal_rasterize_lib_3():
 
     ds_ref = gdal.Open('../gdrivers/data/n43.dt0')
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0.0:
-        gdaltest.post_reason('did not get expected nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0.0, \
+        'did not get expected nodata value'
 
-    if ds.RasterXSize != 121 or ds.RasterYSize != 121:
-        gdaltest.post_reason('did not get expected dimensions')
-        return 'fail'
+    assert ds.RasterXSize == 121 and ds.RasterYSize == 121, \
+        'did not get expected dimensions'
 
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(gt[i] - gt_ref[i]) > 1e-6:
-            gdaltest.post_reason('did not get expected geotransform')
-            print(gt)
-            print(gt_ref)
-            return 'fail'
+        assert abs(gt[i] - gt_ref[i]) <= 1e-6, 'did not get expected geotransform'
 
     wkt = ds.GetProjectionRef()
-    if wkt.find("WGS_1984") == -1:
-        gdaltest.post_reason('did not get expected SRS')
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'
 
 ###############################################################################
 # Rasterization without georeferencing
@@ -178,22 +156,14 @@ def test_gdal_rasterize_lib_100():
     rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[255])
-    if ret != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 1
 
     # Check results.
     expected = 44190
     checksum = target_ds.GetRasterBand(1).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
-        return 'fail'
+    assert checksum == expected, 'Did not get expected image checksum'
 
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Rasterization on empty geometry
@@ -218,21 +188,13 @@ def test_gdal_rasterize_lib_101():
     rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[255])
-    if ret != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 1
 
     # Check results.
     checksum = target_ds.GetRasterBand(1).Checksum()
-    if checksum != 0:
-        print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
-        return 'fail'
+    assert checksum == 0, 'Did not get expected image checksum'
 
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Rasterization on raster with RPC
@@ -275,36 +237,22 @@ def test_gdal_rasterize_lib_102():
     rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[0])
-    if ret != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 1
 
     # Check results.
     checksum = target_ds.GetRasterBand(1).Checksum()
-    if checksum != 1604:
-        print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
-        return 'fail'
+    assert checksum == 1604, 'Did not get expected image checksum'
 
     # Re-try with transformer options
     target_ds.GetRasterBand(1).Fill(255)
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[0],
                          transformerOptions=['RPC_HEIGHT=1000'])
-    if ret != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 1
 
     # Check results.
     checksum = target_ds.GetRasterBand(1).Checksum()
-    if checksum != 2003:
-        print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
-        return 'fail'
+    assert checksum == 2003, 'Did not get expected image checksum'
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Simple rasterization with all values of the optim option
@@ -359,37 +307,18 @@ def test_gdal_rasterize_lib_4():
         rast_lyr.CreateFeature(feat)
 
         ret = gdal.Rasterize(target_ds, vector_ds, bands=[3, 2, 1], burnValues=[200, 220, 240], layers='rast1', optim=optim)
-        if ret != 1:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert ret == 1
 
         # Check results.
         expected = 6452
         checksum = target_ds.GetRasterBand(2).Checksum()
         if checksum != expected:
             print(checksum, optim)
-            gdaltest.post_reason('Did not get expected image checksum')
 
-            return 'fail'
+            pytest.fail('Did not get expected image checksum')
 
         target_ds = None
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_gdal_rasterize_lib_1,
-    test_gdal_rasterize_lib_3,
-    test_gdal_rasterize_lib_100,
-    test_gdal_rasterize_lib_101,
-    test_gdal_rasterize_lib_102,
-    test_gdal_rasterize_lib_4
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_rasterize_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

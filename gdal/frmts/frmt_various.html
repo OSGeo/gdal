@@ -59,7 +59,7 @@ for Arc/Info Binary Grid format.</p>
 
 <h2><a name="ACE2">ACE2 -- ACE2</a></h2>
 
-<p>(GDAL >= 1.9.0)</p>
+<p>(GDAL &gt;= 1.9.0)</p>
 
 <p>This is a convenience driver to read ACE2 DEMs. Those files contain
 raw binary data. The georeferencing is entirely determined by the
@@ -191,7 +191,7 @@ SAR CEOS data products.</p>
 
 <h2><a name="CTG">CTG -- USGS LULC Composite Theme Grid</a></h2>
 
-<p>(GDAL >= 1.9.0)</p>
+<p>(GDAL &gt;= 1.9.0)</p>
 
 <p>
 This driver can read USGS Land Use and Land Cover (LULC) grids encoded in the
@@ -230,7 +230,7 @@ Land Use and Land Cover Digital Data (Data Users Guide 4)</a> - HTML version con
 
 <h2><a name="DDS">DDS -- DirectDraw Surface</a></h2>
 
-<p>(GDAL >= 1.10.0)</p>
+<p>(GDAL &gt;= 1.10.0)</p>
 
 <p>
 Supported for writing and creation.  The DirectDraw Surface file format (uses
@@ -314,7 +314,7 @@ USGS DOQ Standards</a></p>
 
 <h2><a name="E00GRID">E00GRID -- Arc/Info Export E00 GRID</a></h2>
 
-<p>(GDAL >= 1.9.0)</p>
+<p>(GDAL &gt;= 1.9.0)</p>
 
 <p>GDAL supports reading DEMs/rasters exported as E00 Grids.</p>
 
@@ -537,7 +537,7 @@ when provided. </p>
 
 <h2><a name="GRASSASCIIGrid">GRASSASCIIGrid -- GRASS ASCII Grid</a></h2>
 
-<p> (GDAL >= 1.9.0)</p>
+<p> (GDAL &gt;= 1.9.0)</p>
 
 <p>Supports reading GRASS ASCII grid format (similar to Arc/Info ASCIIGRID command).</p>
 
@@ -629,6 +629,21 @@ be used if the data is to be rescaled to original raw values for analysis. </p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
+<h2><a name="IGNFHeightASCIIGrid">IGNFHeightASCIIGrid -- IGN-France height correction ASCII grids</a></h2>
+
+<p> (GDAL &gt;= 2.4.0)</p>
+
+<p>Supports reading IGN-France height correction ASCII grids (.txt, .mnt, .gra).</p>
+
+<p>See also:
+<ul>
+<li><a href="https://geodesie.ign.fr/contenu/fichiers/documentation/grilles/notices/Grilles-MNT-TXT_Formats.pdf">Format description (in French)</a></li>
+<li><a href="https://geodesie.ign.fr/index.php?page=grilles">Height correction grids</a></li>
+</ul>
+</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
 <h2><a name="ILWIS">ILWIS -- Raster Map</a></h2>
 
 <p>This driver implements reading and writing of ILWIS raster maps and map lists. Select the raster files with the.mpr (for raster map) or .mpl (for maplist) extensions</p>
@@ -712,7 +727,7 @@ Institute (GSI) Web Site.</a></p>
 
 <h2><a name="KRO">KRO -- KOLOR Raw format</a></h2>
 
-<p>(GDAL >= 1.11)</p>
+<p>(GDAL &gt;= 1.11)</p>
 
 <p>Supported for read access, update and creation.
 This format is a binary raw format, that supports data of several depths (
@@ -1285,9 +1300,25 @@ created files are always RLE compressed..</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
+<h2><a name="SIGDEM">SIGDEM -- Scaled Integer Gridded DEM</a></h2>
+
+<p>(GDAL &gt;= 2.4.0)</p>
+
+<p>The SIGDEM driver supports reading and writing
+<a href="https://github.com/revolsys/sigdem">Scaled Integer Gridded DEM</a> files.</p>
+
+<p>SIGDEM files contain exactly 1 band. The in-memory band data is stored using GDT_Float64.</p>
+
+<p>SIGDEM prefers use of an EPSG ID inside the file for coordinate systems.
+Only if the spatial reference doesn't have an EPSG ID will a .prj file be written or read.</p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/sigdem/sigdemdataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
 <h2><a name="SNODAS">SNODAS -- Snow Data Assimilation System</a></h2>
 
-<p>(GDAL >= 1.9.0)</p>
+<p>(GDAL &gt;= 1.9.0)</p>
 
 <p>This is a convenience driver to read Snow Data Assimilation System
 data.  Those files contain Int16 raw binary data. The file to provide
@@ -1412,7 +1443,7 @@ to about 70 colors automatically.</p>
 
 <h2><a name="ZMap">ZMap -- ZMap Plus Grid</a></h2>
 
-<p>(GDAL >= 1.9.0)</p>
+<p>(GDAL &gt;= 1.9.0)</p>
 
 <p>
 Supported for read access and creation.
@@ -1438,7 +1469,7 @@ left of the values that appear in the file).</p>
 
 <h2><a name="CAD">CAD -- AutoCAD DWG raster layer</a></h2>
 
-<p>(GDAL >= 2.2.0)</p>
+<p>(GDAL &gt;= 2.2.0)</p>
 
 <p>
 OGR DWG support is based on libopencad, so the list of supported DWG (DXF)

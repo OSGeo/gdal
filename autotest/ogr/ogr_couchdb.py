@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,27 +30,26 @@
 ###############################################################################
 
 import os
-import sys
 import uuid
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test if driver is available
 
 
-def ogr_couchdb_init():
+def test_ogr_couchdb_init():
 
     ogrtest.couchdb_drv = None
 
     ogrtest.couchdb_drv = ogr.GetDriverByName('CouchDB')
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if 'COUCHDB_TEST_SERVER' in os.environ:
         ogrtest.couchdb_test_server = os.environ['COUCHDB_TEST_SERVER']
@@ -59,48 +58,41 @@ def ogr_couchdb_init():
     ogrtest.couchdb_temp_layer_name = 'layer_' + str(uuid.uuid1()).replace('-', '_')
 
     if gdaltest.gdalurlopen(ogrtest.couchdb_test_server) is None:
-        print('cannot open %s' % ogrtest.couchdb_test_server)
         ogrtest.couchdb_drv = None
-        return 'skip'
+        pytest.skip('cannot open %s' % ogrtest.couchdb_test_server)
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic test
 
 
-def ogr_couchdb_1():
+def test_ogr_couchdb_1():
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.VectorTranslate('CouchDB:' + ogrtest.couchdb_test_server, 'data/poly.shp',
                          format='CouchDB',
                          layerName=ogrtest.couchdb_temp_layer_name,
                          layerCreationOptions=['UPDATE_PERMISSIONS=ALL'])
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     lyr = ds.GetLayerByName(ogrtest.couchdb_temp_layer_name)
     f = lyr.GetNextFeature()
     if f['AREA'] != 215229.266 or f['EAS_ID'] != '168' or f.GetGeometryRef() is None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
-
-    return 'success'
 
 ###############################################################################
 # Test null / unset
 
 
-def ogr_couchdb_2():
+def test_ogr_couchdb_2():
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     lyr = ds.CreateLayer(ogrtest.couchdb_temp_layer_name, geom_type=ogr.wkbNone, options=['UPDATE_PERMISSIONS=ALL'])
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
 
@@ -117,51 +109,31 @@ def ogr_couchdb_2():
 
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f['str_field'] is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.IsFieldSet('str_field'):
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Cleanup
 
-def ogr_couchdb_cleanup():
+def test_ogr_couchdb_cleanup():
     if ogrtest.couchdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_couchdb_init,
-    ogr_couchdb_1,
-    ogr_couchdb_2,
-    ogr_couchdb_cleanup
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_couchdb')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

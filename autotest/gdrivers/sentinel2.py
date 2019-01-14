@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -33,22 +33,20 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test opening a L1C product
 
 
-def sentinel2_l1c_1():
+def test_sentinel2_l1c_1():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -80,10 +78,9 @@ def sentinel2_l1c_1():
                    'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution, UTM 32N',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:10m:EPSG_32632',
@@ -95,29 +92,24 @@ def sentinel2_l1c_1():
                    'SUBDATASET_4_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml:PREVIEW:EPSG_32632'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening a zip file as distributed from https://scihub.esa.int/
     if not sys.platform.startswith('win'):
         os.system('sh -c "cd data/fake_sentinel2_l1c && zip -r ../../tmp/S2A_OPER_PRD_MSIL1C.zip S2A_OPER_PRD_MSIL1C.SAFE >/dev/null" && cd ../..')
         if os.path.exists('tmp/S2A_OPER_PRD_MSIL1C.zip'):
             ds = gdal.Open('tmp/S2A_OPER_PRD_MSIL1C.zip')
-            if ds is None:
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert ds is not None
             os.unlink('tmp/S2A_OPER_PRD_MSIL1C.zip')
 
     # Try opening the 4 subdatasets
     for i in range(4):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1C:',
@@ -131,25 +123,19 @@ def sentinel2_l1c_1():
                  'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            gdaltest.post_reason('fail')
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C subdataset on the 10m bands
 
 
-def sentinel2_l1c_2():
+def test_sentinel2_l1c_2():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C:%s:10m:EPSG_32632' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -180,30 +166,18 @@ def sentinel2_l1c_2():
                    'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if ds.RasterXSize != 20984 or ds.RasterYSize != 20980:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 20984 and ds.RasterYSize == 20980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 4
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -220,14 +194,9 @@ def sentinel2_l1c_2():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="10004" yOff="10000" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        gdaltest.post_reason('fail')
-        print(vrt)
-        return 'fail'
+    assert placement_vrt in vrt
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -239,28 +208,19 @@ def sentinel2_l1c_2():
                    'WAVELENGTH': '665',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
@@ -271,85 +231,62 @@ def sentinel2_l1c_2():
                    'WAVELENGTH': '842',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C subdataset on the 60m bands and enabling alpha band
 
 
-def sentinel2_l1c_3():
+def test_sentinel2_l1c_3():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:60m:EPSG_32632' % filename_xml, open_options=['ALPHA=YES'])
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 4
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_AlphaBand
 
     gdal.ErrorReset()
     cs = band.Checksum()
-    if cs != 0 or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert cs == 0 and gdal.GetLastErrorMsg() == ''
 
     band.ReadRaster()
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L1C subdataset on the PREVIEW bands
 
 
-def sentinel2_l1c_4():
+def test_sentinel2_l1c_4():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:PREVIEW:EPSG_32632' % filename_xml)
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 3
 
     fl = ds.GetFileList()
     # main XML + 2 granule XML + 2 jp2
     if len(fl) != 1 + 2 + 2:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(fl)
-        return 'fail'
+        pytest.fail()
 
     band = ds.GetRasterBand(1)
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert band.DataType == gdal.GDT_Byte
 
 ###############################################################################
 # Test opening invalid XML files
 
 
-def sentinel2_l1c_5():
+def test_sentinel2_l1c_5():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -358,15 +295,11 @@ def sentinel2_l1c_5():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # File is OK, but granule MTD are missing
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -439,16 +372,12 @@ def sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         gdal.Open('/vsimem/test.xml')
-    if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No Product_Info
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -460,16 +389,12 @@ def sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No Product_Organisation
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -482,16 +407,12 @@ def sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No Band_List
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -507,9 +428,7 @@ def sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No valid bands
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -530,46 +449,36 @@ def sentinel2_l1c_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/test.xml')
-
-    return 'success'
 
 ###############################################################################
 # Windows specific test to test support for long filenames
 
 
-def sentinel2_l1c_6():
+def test_sentinel2_l1c_6():
 
     if sys.platform != 'win32':
-        return 'skip'
+        pytest.skip()
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     filename_xml = filename_xml.replace('/', '\\')
     filename_xml = '\\\\?\\' + os.getcwd() + '\\' + filename_xml
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     subds_name = ds.GetMetadataItem('SUBDATASET_1_NAME', 'SUBDATASETS')
     gdal.ErrorReset()
     ds = gdal.Open(subds_name)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
 ###############################################################################
 # Test with a real JP2 tile
 
 
-def sentinel2_l1c_7():
+def test_sentinel2_l1c_7():
 
     gdal.FileFromMemBuffer('/vsimem/test.xml',
                            """<n1:Level-1C_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1C.xsd S2_User_Product_Level-1C_Metadata.xsd">
@@ -630,28 +539,21 @@ def sentinel2_l1c_7():
 
     ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:60m:EPSG_32753')
     nbits = ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
-    if nbits != '10':
-        gdaltest.post_reason('fail')
-        print(nbits)
-        return 'fail'
+    assert nbits == '10'
 
     gdal.Unlink('/vsimem/test.xml')
     gdal.Unlink('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_bla_B01.jp2')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L1C tile
 
 
-def sentinel2_l1c_tile_1():
+def test_sentinel2_l1c_tile_1():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -686,10 +588,9 @@ def sentinel2_l1c_tile_1():
                    'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
@@ -701,19 +602,16 @@ def sentinel2_l1c_tile_1():
                    'SUBDATASET_4_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:PREVIEW'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(4):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1C_TILE:',
@@ -722,27 +620,21 @@ def sentinel2_l1c_tile_1():
                  'SENTINEL2_L1C_TILE:%s:' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            gdaltest.post_reason('fail')
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C tile without main MTD file
 
 
-def sentinel2_l1c_tile_2():
+def test_sentinel2_l1c_tile_2():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO')  # Simulate absence of main MTD file
     ds = gdal.Open(filename_xml)
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', None)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -752,10 +644,9 @@ def sentinel2_l1c_tile_2():
                    'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:10m',
@@ -767,25 +658,21 @@ def sentinel2_l1c_tile_2():
                    'SUBDATASET_4_NAME': 'SENTINEL2_L1C_TILE:data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml:PREVIEW'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C tile subdataset on the 10m bands
 
 
-def sentinel2_l1c_tile_3():
+def test_sentinel2_l1c_tile_3():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C_TILE:%s:10m' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -820,30 +707,18 @@ def sentinel2_l1c_tile_3():
                    'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if ds.RasterXSize != 10980 or ds.RasterYSize != 10980:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 4
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -853,14 +728,9 @@ def sentinel2_l1c_tile_3():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        gdaltest.post_reason('fail')
-        print(vrt)
-        return 'fail'
+    assert placement_vrt in vrt
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -872,28 +742,19 @@ def sentinel2_l1c_tile_3():
                    'WAVELENGTH': '665',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
@@ -904,27 +765,23 @@ def sentinel2_l1c_tile_3():
                    'WAVELENGTH': '842',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C tile subdataset on the 10m bands without main MTD file
 
 
-def sentinel2_l1c_tile_4():
+def test_sentinel2_l1c_tile_4():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', 'NO')  # Simulate absence of main MTD file
     ds = gdal.OpenEx('SENTINEL2_L1C_TILE:%s:10m' % filename_xml, open_options=['ALPHA=YES'])
     gdal.SetConfigOption('SENTINEL2_USE_MAIN_MTD', None)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -934,30 +791,18 @@ def sentinel2_l1c_tile_4():
                    'TILE_ID': 'S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A000123_T32TQR_N01.03'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if ds.RasterXSize != 10980 or ds.RasterYSize != 10980:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 5:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 5
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -967,14 +812,9 @@ def sentinel2_l1c_tile_4():
       <SrcRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        gdaltest.post_reason('fail')
-        print(vrt)
-        return 'fail'
+    assert placement_vrt in vrt
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -984,63 +824,39 @@ def sentinel2_l1c_tile_4():
                    'WAVELENGTH': '665',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(5)
 
-    if band.GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert band.GetColorInterpretation() == gdal.GCI_AlphaBand
 
 ###############################################################################
 # Test opening a L1C tile subdataset on the preview bands
 
 
-def sentinel2_l1c_tile_5():
+def test_sentinel2_l1c_tile_5():
 
     filename_xml = 'data/fake_sentinel2_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/S2A_OPER_MTD_L1C_T32TQR.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C_TILE:%s:PREVIEW' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
-    if ds.RasterXSize != 343 or ds.RasterYSize != 343:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 343 and ds.RasterYSize == 343
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 320.0, 0.0, 5100060.0, 0.0, -320.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 320.0, 0.0, 5100060.0, 0.0, -320.0)
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 3
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -1050,18 +866,13 @@ def sentinel2_l1c_tile_5():
       <SrcRect xOff="0" yOff="0" xSize="343" ySize="343" />
       <DstRect xOff="0" yOff="0" xSize="343" ySize="343" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        gdaltest.post_reason('fail')
-        print(vrt)
-        return 'fail'
-
-    return 'success'
+    assert placement_vrt in vrt
 
 ###############################################################################
 # Test opening invalid XML files
 
 
-def sentinel2_l1c_tile_6():
+def test_sentinel2_l1c_tile_6():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1070,15 +881,11 @@ def sentinel2_l1c_tile_6():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C_TILE:/vsimem/test.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.FileFromMemBuffer('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml',
                            """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -1110,27 +917,21 @@ def sentinel2_l1c_tile_6():
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1C_TILE:/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/test.xml')
     gdal.Unlink('/vsimem/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L1B product
 
 
-def sentinel2_l1b_1():
+def test_sentinel2_l1b_1():
 
     filename_xml = 'data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/S2B_OPER_MTD_SAFL1B.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -1159,10 +960,9 @@ def sentinel2_l1b_1():
                    'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 of granule S2B_OPER_MTD_L1B.xml with 10m resolution',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
@@ -1172,19 +972,16 @@ def sentinel2_l1b_1():
                    'SUBDATASET_3_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 3 subdatasets
     for i in range(3):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1B:',
@@ -1194,25 +991,19 @@ def sentinel2_l1b_1():
                  'SENTINEL2_L1B:%s:30m' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            gdaltest.post_reason('fail')
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1B granule
 
 
-def sentinel2_l1b_2():
+def test_sentinel2_l1b_2():
 
     filename_xml = 'data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -1250,10 +1041,9 @@ def sentinel2_l1b_2():
                    'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     subdatasets_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution',
                       'SUBDATASET_1_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:10m',
@@ -1263,10 +1053,9 @@ def sentinel2_l1b_2():
                       'SUBDATASET_3_NAME': 'SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != subdatasets_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     cwd = os.getcwd()
     gdal.ErrorReset()
@@ -1275,29 +1064,23 @@ def sentinel2_l1b_2():
         ds = gdal.Open('S2B_OPER_MTD_L1B.xml')
     finally:
         os.chdir(cwd)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1B subdataset
 
 
-def sentinel2_l1b_3():
+def test_sentinel2_l1b_3():
 
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1B:data/fake_sentinel2_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m')
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUDY_PIXEL_PERCENTAGE': '0',
                    'DATASTRIP_ID': 'S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03',
@@ -1335,75 +1118,48 @@ def sentinel2_l1b_3():
                    'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if ds.RasterXSize != 1276 or ds.RasterYSize != 384:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 1276 and ds.RasterYSize == 384
 
-    if ds.GetGCPProjection().find('4326') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetGCPProjection().find('4326') >= 0
 
     gcps = ds.GetGCPs()
-    if len(gcps) != 5:
-        gdaltest.post_reason('fail')
-        print(len(gcps))
-        return 'fail'
+    assert len(gcps) == 5
 
-    if gcps[0].GCPPixel != 0 or \
-       gcps[0].GCPLine != 0 or \
-       gcps[0].GCPX != 11 or \
-       gcps[0].GCPY != 46 or \
-       gcps[0].GCPZ != 1:
-        gdaltest.post_reason('fail')
-        print(gcps[0])
-        return 'fail'
+    assert (gcps[0].GCPPixel == 0 and \
+       gcps[0].GCPLine == 0 and \
+       gcps[0].GCPX == 11 and \
+       gcps[0].GCPY == 46 and \
+       gcps[0].GCPZ == 1)
 
-    if gcps[1].GCPPixel != 0 or \
-       gcps[1].GCPLine != 384 or \
-       gcps[1].GCPX != 11 or \
-       gcps[1].GCPY != 45 or \
-       gcps[1].GCPZ != 2:
-        gdaltest.post_reason('fail')
-        print(gcps[1])
-        return 'fail'
+    assert (gcps[1].GCPPixel == 0 and \
+       gcps[1].GCPLine == 384 and \
+       gcps[1].GCPX == 11 and \
+       gcps[1].GCPY == 45 and \
+       gcps[1].GCPZ == 2)
 
-    if gcps[2].GCPPixel != 1276 or \
-       gcps[2].GCPLine != 384 or \
-       gcps[2].GCPX != 13 or \
-       gcps[2].GCPY != 45 or \
-       gcps[2].GCPZ != 3:
-        gdaltest.post_reason('fail')
-        print(gcps[2])
-        return 'fail'
+    assert (gcps[2].GCPPixel == 1276 and \
+       gcps[2].GCPLine == 384 and \
+       gcps[2].GCPX == 13 and \
+       gcps[2].GCPY == 45 and \
+       gcps[2].GCPZ == 3)
 
-    if gcps[3].GCPPixel != 1276 or \
-       gcps[3].GCPLine != 0 or \
-       gcps[3].GCPX != 13 or \
-       gcps[3].GCPY != 46 or \
-       gcps[3].GCPZ != 4:
-        gdaltest.post_reason('fail')
-        print(gcps[3])
-        return 'fail'
+    assert (gcps[3].GCPPixel == 1276 and \
+       gcps[3].GCPLine == 0 and \
+       gcps[3].GCPX == 13 and \
+       gcps[3].GCPY == 46 and \
+       gcps[3].GCPZ == 4)
 
-    if gcps[4].GCPPixel != 1276. / 2 or \
-       gcps[4].GCPLine != 384. / 2 or \
-       gcps[4].GCPX != 12 or \
-       gcps[4].GCPY != 45.5 or \
-       gcps[4].GCPZ != 2.5:
-        gdaltest.post_reason('fail')
-        print(gcps[4])
-        return 'fail'
+    assert (gcps[4].GCPPixel == 1276. / 2 and \
+       gcps[4].GCPLine == 384. / 2 and \
+       gcps[4].GCPX == 12 and \
+       gcps[4].GCPY == 45.5 and \
+       gcps[4].GCPZ == 2.5)
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 3
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -1413,14 +1169,9 @@ def sentinel2_l1b_3():
       <SrcRect xOff="0" yOff="0" xSize="1276" ySize="384" />
       <DstRect xOff="0" yOff="0" xSize="1276" ySize="384" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        gdaltest.post_reason('fail')
-        print(vrt)
-        return 'fail'
+    assert placement_vrt in vrt
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -1430,26 +1181,19 @@ def sentinel2_l1b_3():
                    'WAVELENGTH': '443',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if band.DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
 ###############################################################################
 # Test opening a L1B granule (with missing tile, without any ../../main_mtd.xml)
 
 
-def sentinel2_l1b_4():
+def test_sentinel2_l1b_4():
 
     gdal.FileFromMemBuffer('/vsimem/foo/S2B_PROD_MTD_foo.xml',
                            """<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
@@ -1510,9 +1254,7 @@ def sentinel2_l1b_4():
 </n1:Level-1B_Granule_ID>
 """)
     ds = gdal.Open('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m')
-    if ds.RasterXSize != 500:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterXSize == 500
 
     # With standard granule metadata (with Granule_Dimensions)
     gdal.FileFromMemBuffer('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml',
@@ -1537,31 +1279,24 @@ def sentinel2_l1b_4():
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
     ds = None
 
     ds = gdal.OpenEx('SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m', open_options=['ALPHA=YES'])
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.RasterCount != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
+    assert ds.RasterCount == 2
     ds = None
 
     gdal.Unlink('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml')
     gdal.Unlink('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/IMG_DATA/S2B_OPER_MSI_L1B_B01.jp2')
 
-    return 'success'
-
 ###############################################################################
 # Test opening invalid XML files
 
 
-def sentinel2_l1b_5():
+def test_sentinel2_l1b_5():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1570,9 +1305,7 @@ def sentinel2_l1b_5():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No Product_Info
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1584,9 +1317,7 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No Product_Organisation
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1599,16 +1330,12 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No Band_List
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1624,9 +1351,7 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No valid bands
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1647,9 +1372,7 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1658,16 +1381,12 @@ def sentinel2_l1b_5():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No Granule_Dimensions
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1681,9 +1400,7 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No ROWS
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1703,9 +1420,7 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # No NCOLS
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1725,9 +1440,7 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Not the desired resolution
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -1743,27 +1456,21 @@ def sentinel2_l1b_5():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L1B:/vsimem/test.xml:10m')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
     gdal.Unlink('/vsimem/test.xml')
 
     gdal.Unlink('/vsimem/test.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a L2A product
 
 
-def sentinel2_l2a_1():
+def test_sentinel2_l2a_1():
 
     filename_xml = 'data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'AOT_RETRIEVAL_ACCURACY': '0',
                    'BARE_SOILS_PERCENTAGE': '0',
@@ -1817,10 +1524,9 @@ def sentinel2_l2a_1():
                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B1, B2, B3, B4, B5, B6, B7, B9, B10, B11, B12, B8A, AOT, CLD, SCL, SNW, WVP with 60m resolution, UTM 32N',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L2A:data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml:60m:EPSG_32632',
@@ -1828,19 +1534,16 @@ def sentinel2_l2a_1():
                    'SUBDATASET_2_NAME': 'SENTINEL2_L2A:data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml:PREVIEW:EPSG_32632'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(2):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L2A:',
@@ -1854,25 +1557,19 @@ def sentinel2_l2a_1():
                  'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            gdaltest.post_reason('fail')
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L21 subdataset on the 60m bands
 
 
-def sentinel2_l2a_2():
+def test_sentinel2_l2a_2():
 
     filename_xml = 'data/fake_sentinel2_l2a/S2A_USER_PRD_MSIL2A.SAFE/S2A_USER_MTD_SAFL2A.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32632' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'AOT_RETRIEVAL_ACCURACY': '0',
                    'BARE_SOILS_PERCENTAGE': '0',
@@ -1925,31 +1622,18 @@ def sentinel2_l2a_2():
                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if ds.RasterXSize != 1830 or ds.RasterYSize != 1830:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 60.0, 0.0, 5100060.0, 0.0, -60.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 60.0, 0.0, 5100060.0, 0.0, -60.0)
 
-    if ds.RasterCount != 17:
-        gdaltest.post_reason('fail')
-        print(ds.RasterCount)
-        return 'fail'
+    assert ds.RasterCount == 17
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -1959,14 +1643,9 @@ def sentinel2_l2a_2():
       <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
       <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
     </SimpleSource>"""
-    if vrt.find(placement_vrt) < 0:
-        gdaltest.post_reason('fail')
-        print(vrt)
-        return 'fail'
+    assert placement_vrt in vrt
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -1978,36 +1657,28 @@ def sentinel2_l2a_2():
                    'WAVELENGTH': '443',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if band.DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
     band = ds.GetRasterBand(13)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'AOT'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     scl_band = 0
     for i in range(ds.RasterCount):
         if ds.GetRasterBand(i + 1).GetMetadataItem('BANDNAME') == 'SCL':
             scl_band = i + 1
-    if scl_band == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert scl_band != 0
     band = ds.GetRasterBand(scl_band)
     expected_categories = ['NODATA',
                            'SATURATED_DEFECTIVE',
@@ -2023,18 +1694,16 @@ def sentinel2_l2a_2():
                            'SNOW_ICE']
     got_categories = band.GetCategoryNames()
     if got_categories != expected_categories:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_categories)
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening invalid XML files
 
 
-def sentinel2_l2a_3():
+def test_sentinel2_l2a_3():
 
     # Invalid XML
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -2043,15 +1712,11 @@ def sentinel2_l2a_3():
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L2A:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # File is OK, but granule MTD are missing
     gdal.FileFromMemBuffer('/vsimem/test.xml',
@@ -2095,33 +1760,464 @@ def sentinel2_l2a_3():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         gdal.Open('/vsimem/test.xml')
-    if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() != ''
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdal.Open('SENTINEL2_L2A:/vsimem/test.xml:10m:EPSG_32632')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/test.xml')
 
-    return 'success'
+###############################################################################
+# Test opening a L2A MSIL2A product
+
+
+def test_sentinel2_l2a_4():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open(filename_xml)
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
+
+    expected_md = {
+                    'AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BOA_QUANTIFICATION_VALUE': '10000',
+                    'BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'CLOUD_COVERAGE_ASSESSMENT': '54.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '1.5',
+                    'DARK_FEATURES_PERCENTAGE': '1.5',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2018-08-18T09:40:31.024Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20180818T094031_016478_N02.08',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FOOTPRINT': 'POLYGON((22.6 57.7, 24.5 57.6, 24.4 56.7, 22.6 56.7, 22.6 57.7))',
+                    'FORMAT_CORRECTNESS': 'PASSED',
+                    'GENERAL_QUALITY': 'PASSED',
+                    'GENERATION_TIME': '2018-08-18T12:03:45.000000Z',
+                    'GEOMETRIC_QUALITY': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '15.3',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '24.1',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'NOT_VEGETATED_PERCENTAGE': '3.5',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.08',
+                    'PROCESSING_LEVEL': 'Level-2A',
+                    'PRODUCT_START_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_STOP_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_TYPE': 'S2MSI2A',
+                    'PRODUCT_URI': 'S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURACY': '0.0',
+                    'RADIOMETRIC_QUALITY': 'PASSED',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.4',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '14.9',
+                    'UNCLASSIFIED_PERCENTAGE': '5.7',
+                    'VEGETATION_PERCENTAGE': '14.0',
+                    'WATER_PERCENTAGE': '18.7',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0',
+                    'WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'WVP_QUANTIFICATION_VALUE_UNIT': 'cm'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    expected_md = {
+                    'SUBDATASET_1_DESC':
+                    'Bands B2, B3, B4, B8 with 10m resolution, UTM 34N',
+                    'SUBDATASET_1_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634',
+                    'SUBDATASET_2_DESC':
+                    'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 34N',
+                    'SUBDATASET_2_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634',
+                    'SUBDATASET_3_DESC':
+                    'Bands B1, B9 with 60m resolution, UTM 34N',
+                    'SUBDATASET_3_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:60m:EPSG_32634',
+                    'SUBDATASET_4_DESC':
+                    'True color image, UTM 34N',
+                    'SUBDATASET_4_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:TCI:EPSG_32634'}
+    got_md = ds.GetMetadata('SUBDATASETS')
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    # Try opening the 4 subdatasets
+    for i in range(2):
+        gdal.ErrorReset()
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
+
+    # Try various invalid subdataset names
+    for name in ['SENTINEL2_L2A:',
+                 'SENTINEL2_L2A:foo.xml:10m:EPSG_32632',
+                 'SENTINEL2_L2A:%s' % filename_xml,
+                 'SENTINEL2_L2A:%s:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_' % filename_xml,
+                 'SENTINEL2_L2A:%s:50m:EPSG_32632' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
+        with gdaltest.error_handler():
+            ds = gdal.Open(name)
+        assert ds is None, name
+
+    
+
+###############################################################################
+# Test opening a L2A MSIL2A subdataset on the 60m bands
+
+
+def test_sentinel2_l2a_5():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32634' % filename_xml)
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
+
+    expected_md = {
+                    'AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BOA_QUANTIFICATION_VALUE': '10000',
+                    'BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'CLOUD_COVERAGE_ASSESSMENT': '54.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '1.5',
+                    'DARK_FEATURES_PERCENTAGE': '1.5',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2018-08-18T09:40:31.024Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20180818T094031_016478_N02.08',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FORMAT_CORRECTNESS': 'PASSED',
+                    'GENERAL_QUALITY': 'PASSED',
+                    'GENERATION_TIME': '2018-08-18T12:03:45.000000Z',
+                    'GEOMETRIC_QUALITY': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '15.3',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '24.1',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'NOT_VEGETATED_PERCENTAGE': '3.5',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.08',
+                    'PROCESSING_LEVEL': 'Level-2A',
+                    'PRODUCT_START_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_STOP_TIME': '2018-08-18T09:40:31.024Z',
+                    'PRODUCT_TYPE': 'S2MSI2A',
+                    'PRODUCT_URI': 'S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURACY': '0.0',
+                    'RADIOMETRIC_QUALITY': 'PASSED',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.4',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '14.9',
+                    'UNCLASSIFIED_PERCENTAGE': '5.7',
+                    'VEGETATION_PERCENTAGE': '14.0',
+                    'WATER_PERCENTAGE': '18.7',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0',
+                    'WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'WVP_QUANTIFICATION_VALUE_UNIT': 'cm'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
+
+    assert ds.GetProjectionRef().find('32634') >= 0
+
+    got_gt = ds.GetGeoTransform()
+    assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
+
+    assert ds.RasterCount == 2
+
+    vrt = ds.GetMetadata('xml:VRT')[0]
+    placement_vrt = """<SimpleSource>
+      <SourceFilename relativeToVRT="0">data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/GRANULE/L2A_T34VFJ_A016478_20180818T094030/IMG_DATA/R60m/T34VFJ_20180818T094031_B01_60m.jp2</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1830" RasterYSize="1830" DataType="UInt16" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+      <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+    </SimpleSource>"""
+    assert placement_vrt in vrt
+
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
+
+    band = ds.GetRasterBand(1)
+    got_md = band.GetMetadata()
+    expected_md = {'BANDNAME': 'B1',
+                   'BANDWIDTH': '20',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1884.69',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '443',
+                   'WAVELENGTH_UNIT': 'nm'}
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    assert band.DataType == gdal.GDT_UInt16
+
+###############################################################################
+# Test opening a L2A MSIL2Ap product
+
+
+def test_sentinel2_l2a_6():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open(filename_xml)
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
+
+    expected_md = {
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BARE_SOILS_PERCENTAGE': '0.4',
+                    'CLOUD_COVERAGE_ASSESSMENT': '86.3',
+                    'CLOUD_COVERAGE_PERCENTAGE': '84.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '4.1',
+                    'DARK_FEATURES_PERCENTAGE': '1.0',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2017-08-23T09:40:31.026Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20170823T094031_011330_N02.05',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FOOTPRINT': 'POLYGON((22.6 57.7, 24.5 57.6, 24.4 56.7, 22.6 56.7, 22.6 57.7))',
+                    'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                    'GENERAL_QUALITY_FLAG': 'PASSED',
+                    'GENERATION_TIME': '2017-08-25T08:50:10Z',
+                    'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '36.1',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '28.9',
+                    'L1C_TOA_QUANTIFICATION_VALUE': '10000',
+                    'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_BOA_QUANTIFICATION_VALUE': '10000',
+                    'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
+                    'LOW_PROBA_CLOUDS_PERCENTAGE': '1.6',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.05',
+                    'PROCESSING_LEVEL': 'Level-2Ap',
+                    'PRODUCT_START_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_STOP_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_TYPE': 'S2MSI2Ap',
+                    'PRODUCT_URI_1C': 'S2A_MSIL1C_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'PRODUCT_URI_2A': 'S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURAY': '0.0',
+                    'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'REFERENCE_BAND': 'B1',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY_FLAG': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.2',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '19.3',
+                    'VEGETATION_PERCENTAGE': '5.0',
+                    'WATER_PERCENTAGE': '2.9',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    expected_md = {
+                    'SUBDATASET_1_DESC':
+                    'Bands B2, B3, B4, B8 with 10m resolution, UTM 34N',
+                    'SUBDATASET_1_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634',
+                    'SUBDATASET_2_DESC':
+                    'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 34N',
+                    'SUBDATASET_2_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634',
+                    'SUBDATASET_3_DESC':
+                    'Bands B1, B9 with 60m resolution, UTM 34N',
+                    'SUBDATASET_3_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:60m:EPSG_32634',
+                    'SUBDATASET_4_DESC':
+                    'True color image, UTM 34N',
+                    'SUBDATASET_4_NAME':
+                    'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:TCI:EPSG_32634'}
+    got_md = ds.GetMetadata('SUBDATASETS')
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    # Try opening the 4 subdatasets
+    for i in range(2):
+        gdal.ErrorReset()
+        ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
+
+    # Try various invalid subdataset names
+    for name in ['SENTINEL2_L2A:',
+                 'SENTINEL2_L2A:foo.xml:10m:EPSG_32632',
+                 'SENTINEL2_L2A:%s' % filename_xml,
+                 'SENTINEL2_L2A:%s:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_' % filename_xml,
+                 'SENTINEL2_L2A:%s:50m:EPSG_32632' % filename_xml,
+                 'SENTINEL2_L2A:%s:10m:EPSG_32633' % filename_xml]:
+        with gdaltest.error_handler():
+            ds = gdal.Open(name)
+        assert ds is None, name
+
+    
+
+###############################################################################
+# Test opening a L2A MSIL2Ap subdataset on the 60m bands
+
+
+def test_sentinel2_l2a_7():
+
+    filename_xml = 'data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml'
+    gdal.ErrorReset()
+    ds = gdal.Open('SENTINEL2_L2A:%s:60m:EPSG_32634' % filename_xml)
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
+
+    expected_md = {
+                    'AOT_RETRIEVAL_ACCURACY': '0.0',
+                    'BARE_SOILS_PERCENTAGE': '0.4',
+                    'CLOUD_COVERAGE_ASSESSMENT': '86.3',
+                    'CLOUD_COVERAGE_PERCENTAGE': '84.4',
+                    'CLOUD_SHADOW_PERCENTAGE': '4.1',
+                    'DARK_FEATURES_PERCENTAGE': '1.0',
+                    'DATATAKE_1_DATATAKE_SENSING_START': '2017-08-23T09:40:31.026Z',
+                    'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+                    'DATATAKE_1_ID': 'GS2A_20170823T094031_011330_N02.05',
+                    'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'DESCENDING',
+                    'DATATAKE_1_SENSING_ORBIT_NUMBER': '36',
+                    'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2A',
+                    'DEGRADED_ANC_DATA_PERCENTAGE': '0',
+                    'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+                    'FORMAT_CORRECTNESS_FLAG': 'PASSED',
+                    'GENERAL_QUALITY_FLAG': 'PASSED',
+                    'GENERATION_TIME': '2017-08-25T08:50:10Z',
+                    'GEOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'HIGH_PROBA_CLOUDS_PERCENTAGE': '36.1',
+                    'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '28.9',
+                    'L1C_TOA_QUANTIFICATION_VALUE': '10000',
+                    'L1C_TOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_AOT_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_AOT_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_BOA_QUANTIFICATION_VALUE': '10000',
+                    'L2A_BOA_QUANTIFICATION_VALUE_UNIT': 'none',
+                    'L2A_WVP_QUANTIFICATION_VALUE': '1000.0',
+                    'L2A_WVP_QUANTIFICATION_VALUE_UNIT': 'cm',
+                    'LOW_PROBA_CLOUDS_PERCENTAGE': '1.6',
+                    'NODATA_PIXEL_PERCENTAGE': '0.0',
+                    'PREVIEW_GEO_INFO': 'Not applicable',
+                    'PREVIEW_IMAGE_URL': 'Not applicable',
+                    'PROCESSING_BASELINE': '02.05',
+                    'PROCESSING_LEVEL': 'Level-2Ap',
+                    'PRODUCT_START_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_STOP_TIME': '2017-08-23T09:40:31.026Z',
+                    'PRODUCT_TYPE': 'S2MSI2Ap',
+                    'PRODUCT_URI_1C': 'S2A_MSIL1C_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'PRODUCT_URI_2A': 'S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE',
+                    'RADIATIVE_TRANSFER_ACCURAY': '0.0',
+                    'RADIOMETRIC_QUALITY_FLAG': 'PASSED',
+                    'REFERENCE_BAND': 'B1',
+                    'REFLECTANCE_CONVERSION_U': '0.97',
+                    'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
+                    'SENSOR_QUALITY_FLAG': 'PASSED',
+                    'SNOW_ICE_PERCENTAGE': '0.2',
+                    'SPECIAL_VALUE_NODATA': '0',
+                    'SPECIAL_VALUE_SATURATED': '6',
+                    'THIN_CIRRUS_PERCENTAGE': '19.3',
+                    'VEGETATION_PERCENTAGE': '5.0',
+                    'WATER_PERCENTAGE': '2.9',
+                    'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0'}
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    assert ds.RasterXSize == 1830 and ds.RasterYSize == 1830
+
+    assert ds.GetProjectionRef().find('32634') >= 0
+
+    got_gt = ds.GetGeoTransform()
+    assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
+
+    assert ds.RasterCount == 2
+
+    vrt = ds.GetMetadata('xml:VRT')[0]
+    placement_vrt = """<SimpleSource>
+      <SourceFilename relativeToVRT="0">data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/GRANULE/L2A_T34VFJ_A011330_20170823T094252/IMG_DATA/R60m/L2A_T34VFJ_20170823T094031_B01_60m.jp2</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1830" RasterYSize="1830" DataType="UInt16" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+      <DstRect xOff="0" yOff="0" xSize="1830" ySize="1830" />
+    </SimpleSource>"""
+    assert placement_vrt in vrt
+
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
+
+    band = ds.GetRasterBand(1)
+    got_md = band.GetMetadata()
+    expected_md = {'BANDNAME': 'B1',
+                   'BANDWIDTH': '20',
+                   'BANDWIDTH_UNIT': 'nm',
+                   'SOLAR_IRRADIANCE': '1913.57',
+                   'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+                   'WAVELENGTH': '443',
+                   'WAVELENGTH_UNIT': 'nm'}
+    if got_md != expected_md:
+        import pprint
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    assert band.DataType == gdal.GDT_UInt16
+
 
 ###############################################################################
 # Test opening a L1C Safe Compact product
 
 
-def sentinel2_l1c_safe_compact_1():
+def test_sentinel2_l1c_safe_compact_1():
 
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open(filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -2153,10 +2249,9 @@ def sentinel2_l1c_safe_compact_1():
                    'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     expected_md = {'SUBDATASET_1_DESC': 'Bands B2, B3, B4, B8 with 10m resolution, UTM 32N',
                    'SUBDATASET_1_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:10m:EPSG_32632',
@@ -2168,19 +2263,16 @@ def sentinel2_l1c_safe_compact_1():
                    'SUBDATASET_4_NAME': 'SENTINEL2_L1C:data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml:TCI:EPSG_32632'}
     got_md = ds.GetMetadata('SUBDATASETS')
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
     # Try opening the 4 subdatasets
     for i in range(4):
         gdal.ErrorReset()
         ds = gdal.Open(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-        if ds is None or gdal.GetLastErrorMsg() != '':
-            gdaltest.post_reason('fail')
-            print(got_md['SUBDATASET_%d_NAME' % (i + 1)])
-            return 'fail'
+        assert ds is not None and gdal.GetLastErrorMsg() == '', \
+            got_md['SUBDATASET_%d_NAME' % (i + 1)]
 
     # Try various invalid subdataset names
     for name in ['SENTINEL2_L1C:',
@@ -2194,35 +2286,27 @@ def sentinel2_l1c_safe_compact_1():
                  'SENTINEL2_L1C:%s:10m:EPSG_32633' % filename_xml]:
         with gdaltest.error_handler():
             ds = gdal.Open(name)
-        if ds is not None:
-            gdaltest.post_reason('fail')
-            print(name)
-            return 'fail'
+        assert ds is None, name
 
     # Try opening a zip file as distributed from https://scihub.esa.int/
     if not sys.platform.startswith('win'):
         os.system('sh -c "cd data/fake_sentinel2_l1c_safecompact && zip -r ../../tmp/S2A_MSIL1C_test.zip S2A_OPER_PRD_MSIL1C.SAFE >/dev/null" && cd ../..')
         if os.path.exists('tmp/S2A_MSIL1C_test.zip'):
             ds = gdal.Open('tmp/S2A_MSIL1C_test.zip')
-            if ds is None:
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert ds is not None
             os.unlink('tmp/S2A_MSIL1C_test.zip')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C Safe Compact subdataset on the 10m bands
 
 
-def sentinel2_l1c_safe_compact_2():
+def test_sentinel2_l1c_safe_compact_2():
 
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     gdal.ErrorReset()
     ds = gdal.Open('SENTINEL2_L1C:%s:10m:EPSG_32632' % filename_xml)
-    if ds is None or gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
 
     expected_md = {'CLOUD_COVERAGE_ASSESSMENT': '0.0',
                    'DATATAKE_1_DATATAKE_SENSING_START': '2015-12-31T23:59:59.999Z',
@@ -2253,30 +2337,18 @@ def sentinel2_l1c_safe_compact_2():
                    'SPECIAL_VALUE_SATURATED': '0'}
     got_md = ds.GetMetadata()
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if ds.RasterXSize != 10980 or ds.RasterYSize != 10980:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
 
-    if ds.GetProjectionRef().find('32632') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetProjectionRef().find('32632') >= 0
 
     got_gt = ds.GetGeoTransform()
-    if got_gt != (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0):
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
+    assert got_gt == (699960.0, 10.0, 0.0, 5100060.0, 0.0, -10.0)
 
-    if ds.RasterCount != 4:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 4
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -2287,14 +2359,9 @@ def sentinel2_l1c_safe_compact_2():
       <DstRect xOff="0" yOff="0" xSize="10980" ySize="10980" />
     </SimpleSource>
 """
-    if vrt.find(placement_vrt) < 0:
-        gdaltest.post_reason('fail')
-        print(vrt)
-        return 'fail'
+    assert placement_vrt in vrt
 
-    if ds.GetMetadata('xml:SENTINEL2') is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetMetadata('xml:SENTINEL2') is not None
 
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
@@ -2306,28 +2373,19 @@ def sentinel2_l1c_safe_compact_2():
                    'WAVELENGTH': '665',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_UInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.DataType == gdal.GDT_UInt16
 
-    if band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '12':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '12'
 
     band = ds.GetRasterBand(4)
 
-    if band.GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
 
     got_md = band.GetMetadata()
     expected_md = {'BANDNAME': 'B8',
@@ -2338,80 +2396,34 @@ def sentinel2_l1c_safe_compact_2():
                    'WAVELENGTH': '842',
                    'WAVELENGTH_UNIT': 'nm'}
     if got_md != expected_md:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(got_md)
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a L1C subdataset on the TCI bands
 
 
-def sentinel2_l1c_safe_compact_3():
+def test_sentinel2_l1c_safe_compact_3():
 
     filename_xml = 'data/fake_sentinel2_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml'
     ds = gdal.OpenEx('SENTINEL2_L1C:%s:TCI:EPSG_32632' % filename_xml)
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterCount == 3
 
     fl = ds.GetFileList()
     # main XML + 1 granule XML + 1 jp2
     if len(fl) != 1 + 1 + 1:
-        gdaltest.post_reason('fail')
         import pprint
         pprint.pprint(fl)
-        return 'fail'
+        pytest.fail()
 
     band = ds.GetRasterBand(1)
-    if band.GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
 
-    if band.DataType != gdal.GDT_Byte:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert band.DataType == gdal.GDT_Byte
 
 
-gdaltest_list = [
-    sentinel2_l1c_1,
-    sentinel2_l1c_2,
-    sentinel2_l1c_3,
-    sentinel2_l1c_4,
-    sentinel2_l1c_5,
-    sentinel2_l1c_6,
-    sentinel2_l1c_7,
-    sentinel2_l1c_tile_1,
-    sentinel2_l1c_tile_2,
-    sentinel2_l1c_tile_3,
-    sentinel2_l1c_tile_4,
-    sentinel2_l1c_tile_5,
-    sentinel2_l1c_tile_6,
-    sentinel2_l1b_1,
-    sentinel2_l1b_2,
-    sentinel2_l1b_3,
-    sentinel2_l1b_4,
-    sentinel2_l1b_5,
-    sentinel2_l2a_1,
-    sentinel2_l2a_2,
-    sentinel2_l2a_3,
-    sentinel2_l1c_safe_compact_1,
-    sentinel2_l1c_safe_compact_2,
-    sentinel2_l1c_safe_compact_3
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('sentinel2')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

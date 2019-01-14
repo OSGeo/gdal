@@ -181,6 +181,9 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
             CPLFree(papszColData);
         }
     }
+
+    poRAT->SetTableType(this->GetTableType());
+
     return poRAT;
 }
 
@@ -907,14 +910,14 @@ CPLErr KEARasterAttributeTable::CreateColumn( const char *pszFieldName,
     return CE_None;
 }
 
-CPLErr KEARasterAttributeTable::SetLinearBinning( double dfRow0Min,
-                                            double dfBinSize )
+CPLErr KEARasterAttributeTable::SetLinearBinning( double ldfRow0Min,
+                                            double ldfBinSize )
 {
     size_t nRows = m_poKEATable->getSize();
 
-    osWorkingResult.Printf( "%.16g", dfRow0Min);
+    osWorkingResult.Printf( "%.16g", ldfRow0Min);
     m_poBand->SetMetadataItem("STATISTICS_HISTOMIN", osWorkingResult);
-    osWorkingResult.Printf( "%.16g", (nRows - 1) * dfBinSize + dfRow0Min);
+    osWorkingResult.Printf( "%.16g", (nRows - 1) * ldfBinSize + ldfRow0Min);
     m_poBand->SetMetadataItem("STATISTICS_HISTOMAX", osWorkingResult);
 
     // STATISTICS_HISTONUMBINS now returned by metadata
@@ -943,4 +946,31 @@ CPLXMLNode *KEARasterAttributeTable::Serialize() const
         return nullptr;
 
     return GDALRasterAttributeTable::Serialize();
+}
+
+GDALRATTableType KEARasterAttributeTable::GetTableType() const
+{
+    kealib::KEALayerType keaType = m_poBand->getLayerType();
+    if( keaType == kealib::kea_continuous )
+    {
+        return GRTT_ATHEMATIC;
+    }
+    else
+    {
+        return GRTT_THEMATIC;
+    }
+}
+
+CPLErr KEARasterAttributeTable::SetTableType(const GDALRATTableType eInTableType)
+{
+    kealib::KEALayerType keaType = (eInTableType == GRTT_ATHEMATIC) ? kealib::kea_continuous : kealib::kea_thematic;
+    try
+    {
+        m_poBand->setLayerType(keaType);
+        return CE_None;
+    }
+    catch (const kealib::KEAIOException &)
+    {
+        return CE_Failure;
+    }
 }

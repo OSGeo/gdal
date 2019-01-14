@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,20 +28,19 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
 
-def jpegls_1():
+def test_jpegls_1():
 
     if gdal.GetDriverByName('JPEGLS') is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEGLS', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -49,24 +48,14 @@ def jpegls_1():
 ###############################################################################
 
 
-def jpegls_2():
+def test_jpegls_2():
 
     if gdal.GetDriverByName('JPEGLS') is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('JPEGLS', 'int16.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
 
 
-gdaltest_list = [
-    jpegls_1,
-    jpegls_2]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('JPEGLS')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

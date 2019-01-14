@@ -703,7 +703,7 @@ void  _AVCE00WriteCloseCoverFile(AVCE00WritePtr psInfo)
      *----------------------------------------------------------------*/
     if (psInfo->eCurFileType == AVCFilePRJ)
     {
-        AVCBinWriteObject(psInfo->hFile, psInfo->hParseInfo->cur.papszPrj);
+        AVCBinWriteObject(psInfo->hFile, psInfo->hParseInfo->aosPrj.List());
     }
 
     AVCBinWriteClose(psInfo->hFile);

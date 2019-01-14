@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,21 +30,27 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import os
 import csv
 
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 
 from osgeo import osr, gdal
 
+
 ###############################################################################
-# Class to perform the tests.
+# When imported build a list of units based on the files available.
+
+csv_rows = list(csv.DictReader(open(os.path.join(os.path.dirname(__file__), 'data/Test_Data_File.csv'), 'rt')))
 
 
-class MetaCRSTest(object):
-    def __init__(self, test_line):
+class TestMetaCRS(object):
+    @pytest.mark.parametrize(
+        'test_line', csv_rows, ids=[row['testName'] for row in csv_rows]
+    )
+    def test_metacrs(self, test_line):
         self.test_line = test_line
         self.src_xyz = None
         self.dst_xyz = None
@@ -52,81 +58,22 @@ class MetaCRSTest(object):
         self.dst_srs = None
         self.dst_error = None
 
-    def parse_line(self):
-        test_line = self.test_line
-
-        self.src_srs = self.build_srs(test_line['srcCrsAuth'],
-                                      test_line['srcCrs'])
-        try:
-            self.dst_srs = self.build_srs(test_line['tgtCrsAuth'],
-                                          test_line['tgtCrs'])
-        except:
-            # Old style
-            self.dst_srs = self.build_srs(test_line['tgtCrsType'],
-                                          test_line['tgtCrs'])
-
-        if self.src_srs is None or self.dst_srs is None:
-            return 'fail'
-
-        try:
-            self.src_xyz = (float(test_line['srcOrd1']),
-                            float(test_line['srcOrd2']),
-                            float(test_line['srcOrd3']))
-        except:
-            self.src_xyz = (float(test_line['srcOrd1']),
-                            float(test_line['srcOrd2']),
-                            0.0)
-        try:
-            self.dst_xyz = (float(test_line['tgtOrd1']),
-                            float(test_line['tgtOrd2']),
-                            float(test_line['tgtOrd3']))
-        except:
-            self.dst_xyz = (float(test_line['tgtOrd1']),
-                            float(test_line['tgtOrd2']),
-                            0.0)
-        try:
-            self.dst_error = max(float(test_line['tolOrd1']),
-                                 float(test_line['tolOrd2']),
-                                 float(test_line['tolOrd3']))
-        except:
-            self.dst_error = max(float(test_line['tolOrd1']),
-                                 float(test_line['tolOrd2']))
-
-        return 'success'
-
-    def build_srs(self, typ, crstext):
-        if typ == 'EPSG':
-            srs = osr.SpatialReference()
-            if srs.ImportFromEPSGA(int(crstext)) == 0:
-                return srs
-            gdaltest.post_reason('failed to translate EPSG:' + crstext)
-            return None
-        gdaltest.post_reason('unsupported srs type: ' + typ)
-        return None
-
-    def testMetaCRS(self):
         result = self.parse_line()
-        if result != 'success':
-            return result
 
         try:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
             ct = osr.CoordinateTransformation(self.src_srs, self.dst_srs)
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-                return 'skip'
+                pytest.skip('PROJ.4 missing, transforms not available.')
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
-                return 'skip'
-            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-            return 'fail'
+                pytest.skip('PROJ.4 missing, transforms not available.')
+            pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
         except:
             gdal.PopErrorHandler()
-            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-            return 'fail'
+            pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
 
         ######################################################################
         # Transform source point to destination SRS, swapping EPSG GEOGCS
@@ -153,32 +100,57 @@ class MetaCRSTest(object):
                          result[0], result[1], result[2],
                          self.dst_xyz[0], self.dst_xyz[1], self.dst_xyz[2])
 
-            gdaltest.post_reason(err_msg)
-
             gdal.Debug('OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n'
                        % (self.src_srs.ExportToPrettyWkt(),
                           self.dst_srs.ExportToPrettyWkt()))
 
-            return 'fail'
+            pytest.fail(err_msg)
 
-        return 'success'
+    def parse_line(self):
+        test_line = self.test_line
 
-###############################################################################
-# When imported build a list of units based on the files available.
+        self.src_srs = self.build_srs(test_line['srcCrsAuth'],
+                                      test_line['srcCrs'])
+        try:
+            self.dst_srs = self.build_srs(test_line['tgtCrsAuth'],
+                                          test_line['tgtCrs'])
+        except:
+            # Old style
+            self.dst_srs = self.build_srs(test_line['tgtCrsType'],
+                                          test_line['tgtCrs'])
 
+        assert not (self.src_srs is None or self.dst_srs is None)
 
-gdaltest_list = []
+        try:
+            self.src_xyz = (float(test_line['srcOrd1']),
+                            float(test_line['srcOrd2']),
+                            float(test_line['srcOrd3']))
+        except:
+            self.src_xyz = (float(test_line['srcOrd1']),
+                            float(test_line['srcOrd2']),
+                            0.0)
+        try:
+            self.dst_xyz = (float(test_line['tgtOrd1']),
+                            float(test_line['tgtOrd2']),
+                            float(test_line['tgtOrd3']))
+        except:
+            self.dst_xyz = (float(test_line['tgtOrd1']),
+                            float(test_line['tgtOrd2']),
+                            0.0)
+        try:
+            self.dst_error = max(float(test_line['tolOrd1']),
+                                 float(test_line['tolOrd2']),
+                                 float(test_line['tolOrd3']))
+        except:
+            self.dst_error = max(float(test_line['tolOrd1']),
+                                 float(test_line['tolOrd2']))
 
-csv_reader = csv.DictReader(open('data/Test_Data_File.csv', 'rt'))
-
-for test in csv_reader:
-    ut = MetaCRSTest(test)
-    gdaltest_list.append((ut.testMetaCRS, test['testName']))
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_metacrs')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()
+    def build_srs(self, typ, crstext):
+        if typ == 'EPSG':
+            srs = osr.SpatialReference()
+            if srs.ImportFromEPSGA(int(crstext)) == 0:
+                return srs
+            gdaltest.post_reason('failed to translate EPSG:' + crstext)
+            return None
+        gdaltest.post_reason('unsupported srs type: ' + typ)
+        return None

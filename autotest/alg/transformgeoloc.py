@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,24 +30,22 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import gdal
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test a fairly default case.
 
 
-def transformgeoloc_1():
+def test_transformgeoloc_1():
 
     try:
         import numpy
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
 
@@ -82,17 +80,5 @@ def transformgeoloc_1():
 
     print(geoloc_ds.ReadAsArray())
 
-    return 'success'
 
 
-gdaltest_list = [
-    transformgeoloc_1,
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('transform_geoloc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

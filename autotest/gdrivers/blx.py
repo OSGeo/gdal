@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,10 +28,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,7 +37,7 @@ import gdaltest
 ###############################################################################
 # Test reading a little-endian BLX
 
-def blx_1():
+def test_blx_1():
 
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
@@ -50,7 +48,7 @@ def blx_1():
 ###############################################################################
 # Test reading a big-endian BLX
 
-def blx_2():
+def test_blx_2():
 
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
@@ -61,7 +59,7 @@ def blx_2():
 ###############################################################################
 # Test writing a little-endian BLX
 
-def blx_3():
+def test_blx_3():
 
     tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
     return tst.testCreateCopy(check_gt=1, check_srs=1)
@@ -70,7 +68,7 @@ def blx_3():
 ###############################################################################
 # Test writing a big-endian BLX
 
-def blx_4():
+def test_blx_4():
 
     tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024, options=['BIGENDIAN=YES'])
     return tst.testCreateCopy(check_gt=1, check_srs=1)
@@ -79,51 +77,25 @@ def blx_4():
 ###############################################################################
 # Test overviews
 
-def blx_5():
+def test_blx_5():
 
     ds = gdal.Open('data/s4103.blx')
 
     band = ds.GetRasterBand(1)
-    if band.GetOverviewCount() != 4:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 4, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    if cs != 42981:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 42981, ('wrong overview checksum (%d)' % cs)
 
     cs = band.GetOverview(1).Checksum()
-    if cs != 61363:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 61363, ('wrong overview checksum (%d)' % cs)
 
     cs = band.GetOverview(2).Checksum()
-    if cs != 48060:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
+    assert cs == 48060, ('wrong overview checksum (%d)' % cs)
 
     cs = band.GetOverview(3).Checksum()
-    if cs != 12058:
-        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 12058, ('wrong overview checksum (%d)' % cs)
 
 
-gdaltest_list = [
-    blx_1,
-    blx_2,
-    blx_3,
-    blx_4,
-    blx_5
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('blx')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

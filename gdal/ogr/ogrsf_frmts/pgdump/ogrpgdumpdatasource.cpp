@@ -554,8 +554,19 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         Log(osCommand);
     }
 
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    const bool bCreateSpatialIndex = pszSI == nullptr || CPLTestBool(pszSI);
+    const char *pszSI = CSLFetchNameValueDef( papszOptions, "SPATIAL_INDEX", "GIST" );
+    const bool bCreateSpatialIndex = ( EQUAL(pszSI, "GIST") ||
+        EQUAL(pszSI, "SPGIST") || EQUAL(pszSI, "BRIN") ||
+        EQUAL(pszSI, "YES") || EQUAL(pszSI, "ON") || EQUAL(pszSI, "TRUE") );
+    if( !bCreateSpatialIndex && !EQUAL(pszSI, "NO") && !EQUAL(pszSI, "OFF") &&
+        !EQUAL(pszSI, "FALSE") && !EQUAL(pszSI, "NONE") )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "SPATIAL_INDEX=%s not supported", pszSI);
+    }
+    const char* pszSpatialIndexType = EQUAL(pszSI, "SPGIST") ? "SPGIST" :
+                                      EQUAL(pszSI, "BRIN") ? "BRIN" : "GIST";
+
     if( bCreateTable && bHavePostGIS && bCreateSpatialIndex )
     {
 /* -------------------------------------------------------------------- */
@@ -567,8 +578,9 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         osCommand.Printf(
             "CREATE INDEX \"%s_%s_geom_idx\" "
             "ON \"%s\".\"%s\" "
-            "USING GIST (\"%s\")",
+            "USING %s (\"%s\")",
             pszTableName, pszGFldName, pszSchemaName, pszTableName,
+            pszSpatialIndexType,
             pszGFldName);
 
         Log(osCommand);
@@ -591,7 +603,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
     poLayer->SetUnknownSRSId(nUnknownSRSId);
     poLayer->SetForcedSRSId(nForcedSRSId);
-    poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
+    poLayer->SetCreateSpatialIndex(bCreateSpatialIndex, pszSpatialIndexType);
     poLayer->SetPostGISVersion(nPostGISMajor, nPostGISMinor);
     poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);
 

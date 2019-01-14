@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,14 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import struct
 
-sys.path.append('../pymod')
 
 from osgeo import gdal, ogr
 
-import gdaltest
 import ogrtest
 
 ###############################################################################
@@ -79,17 +76,12 @@ def test_gdal_grid_lib_1():
                     algorithm='nearest:radius1=0.0:radius2=0.0:angle=0.0',
                     spatFilter=spatFilter)
     # We should get the same values as in n43.td0
-    if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
-        print('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum(), ds2.GetRasterBand(1).Checksum()))
-        return 'fail'
-    if ds2.GetRasterBand(1).GetNoDataValue() is not None:
-        print('did not expect nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == ds2.GetRasterBand(1).Checksum(), \
+        ('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum(), ds2.GetRasterBand(1).Checksum()))
+    assert ds2.GetRasterBand(1).GetNoDataValue() is None, 'did not expect nodata value'
 
     ds = None
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # Test with a point number not multiple of 8 or 16
@@ -122,19 +114,12 @@ def test_gdal_grid_lib_2():
         gdal.SetConfigOption('GDAL_USE_SSE', None)
 
         cs = ds1.GetRasterBand(1).Checksum()
-        if cs != 2:
-            gdaltest.post_reason('fail')
-            print(cs)
-            return 'fail'
+        assert cs == 2
 
         cs = ds2.GetRasterBand(1).Checksum()
-        if cs != 1064:
-            gdaltest.post_reason('fail')
-            print(cs)
-            return 'fail'
+        assert cs == 1064
 
-    return 'success'
-
+    
 ###############################################################################
 # Test bugfix for #7101 (segmentation fault with linear interpolation)
 
@@ -148,8 +133,6 @@ def test_gdal_grid_lib_3():
               width=115, height=93, outputBounds=[37.3495161160827, 55.6901531392856, 37.3497618734837, 55.6902650179072],
               format='MEM', algorithm='linear')
 
-    return 'success'
-
 ###############################################################################
 # Cleanup
 
@@ -158,21 +141,6 @@ def test_gdal_grid_lib_cleanup():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp')
 
-    return 'success'
 
 
-gdaltest_list = [
-    test_gdal_grid_lib_1,
-    test_gdal_grid_lib_2,
-    test_gdal_grid_lib_3,
-    test_gdal_grid_lib_cleanup,
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_grid_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

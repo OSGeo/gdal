@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_vsil_curl_class.h"
 
 #include <algorithm>
 #include <map>
@@ -84,18 +85,11 @@ void VSIInstallSwiftStreamingFileHandler(void)
 
 #include <curl/curl.h>
 
-struct curl_slist* VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
-                        const char * const* papszOptions );
-struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
-                                        struct curl_slist* poSrcToDestroy );
-
 #define ENABLE_DEBUG        0
 
 #define N_MAX_REGIONS       10
 
 #define BKGND_BUFFER_SIZE   (1024 * 1024)
-
-void VSICurlStreamingClearCache( void );  // used in cpl_vsil_curl.cpp
 
 /************************************************************************/
 /*                               RingBuffer                             */

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,18 +29,17 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fake TIL dataset
 
 
-def til_1():
+def test_til_1():
 
     tst = gdaltest.GDALTest('TIL', 'testtil.til', 1, 4672)
     return tst.testOpen()
@@ -49,7 +48,7 @@ def til_1():
 # Check GetFileList() result (#4018) & IMD
 
 
-def til_2():
+def test_til_2():
 
     try:
         os.remove('data/testtil.til.aux.xml')
@@ -59,37 +58,26 @@ def til_2():
     ds = gdal.Open('data/testtil.til')
     filelist = ds.GetFileList()
 
-    if len(filelist) != 3:
-        gdaltest.post_reason('did not get expected file list.')
-        return 'fail'
+    assert len(filelist) == 3, 'did not get expected file list.'
 
     md = ds.GetMetadata('IMAGERY')
-    if 'SATELLITEID' not in md:
-        print('SATELLITEID not present in IMAGERY Domain')
-        return 'fail'
-    if 'CLOUDCOVER' not in md:
-        print('CLOUDCOVER not present in IMAGERY Domain')
-        return 'fail'
-    if 'ACQUISITIONDATETIME' not in md:
-        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
-        return 'fail'
+    assert 'SATELLITEID' in md, 'SATELLITEID not present in IMAGERY Domain'
+    assert 'CLOUDCOVER' in md, 'CLOUDCOVER not present in IMAGERY Domain'
+    assert 'ACQUISITIONDATETIME' in md, \
+        'ACQUISITIONDATETIME not present in IMAGERY Domain'
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
         os.stat('data/testtil.til.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/testtil.til.aux.xml')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    return 'success'
-
+    
 ###############################################################################
 # Check GetFileList() & XML
 
 
-def til_3():
+def test_til_3():
 
     try:
         os.remove('data/testtil.til.aux.xml')
@@ -99,42 +87,20 @@ def til_3():
     ds = gdal.Open('data/testtil2.til')
     filelist = ds.GetFileList()
 
-    if len(filelist) != 3:
-        gdaltest.post_reason('did not get expected file list.')
-        return 'fail'
+    assert len(filelist) == 3, 'did not get expected file list.'
 
     md = ds.GetMetadata('IMAGERY')
-    if 'SATELLITEID' not in md:
-        print('SATELLITEID not present in IMAGERY Domain')
-        return 'fail'
-    if 'CLOUDCOVER' not in md:
-        print('CLOUDCOVER not present in IMAGERY Domain')
-        return 'fail'
-    if 'ACQUISITIONDATETIME' not in md:
-        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
-        return 'fail'
+    assert 'SATELLITEID' in md, 'SATELLITEID not present in IMAGERY Domain'
+    assert 'CLOUDCOVER' in md, 'CLOUDCOVER not present in IMAGERY Domain'
+    assert 'ACQUISITIONDATETIME' in md, \
+        'ACQUISITIONDATETIME not present in IMAGERY Domain'
 
     ds = None
 
-    try:
+    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
         os.stat('data/testtil.til.aux.xml')
-        gdaltest.post_reason('Expected not generation of data/testtil.til.aux.xml')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    til_1,
-    til_2,
-    til_3]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('til')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

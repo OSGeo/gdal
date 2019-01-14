@@ -4,30 +4,47 @@ set -e
 
 sudo dpkg -l | grep geos
 sudo apt-get purge -y libgeos* libspatialite*
+sudo apt-get remove libpq* postgresql*
 find  /etc/apt/sources.list.d
 sudo mv /etc/apt/sources.list.d/pgdg* /tmp
-#sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
-#sudo apt-get remove -y postgresql-9.1
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update
-# postgis postgresql-9.5 postgresql-client-9.5 postgresql-9.5-postgis-2.2 libpq-dev
-sudo apt-get install -y --allow-unauthenticated ccache python-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
+
+# install test dependencies
+# note: pip 9 is installed on the box, but it hits a strange error after upgrading setuptools.
+# so we install a newer pip first.
+sudo apt-get remove -y python-*
+sudo apt-get install python-minimal
+curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python
+(cd autotest; sudo -H pip install -U -r ./requirements.txt)
+
+sudo pip install lxml flake8 numpy
+
+# MSSQL: server side
+docker pull microsoft/mssql-server-linux:2017-latest
+sudo docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DummyPassw0rd'  -p 1433:1433 --name sql1 -d microsoft/mssql-server-linux:2017-latest
+sleep 10
+docker exec -it sql1 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P DummyPassw0rd -Q "CREATE DATABASE TestDB;"
+
+sudo apt-get install -y --allow-unauthenticated ccache libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev postgresql-9.3-postgis-2.2 postgresql-9.3-postgis-scripts libpq-dev
 # libgta-dev
-sudo apt-get install -y python-lxml
-sudo apt-get install -y python-pip
 sudo apt-get install -y libqhull-dev
 sudo apt-get install -y libogdi3.2-dev
+# MONO
+sudo apt-get install -y mono-mcs libmono-system-drawing4.0-cil
 # Boost for Mongo
 #sudo apt-get install -y libboost-regex-dev libboost-system-dev libboost-thread-dev
-sudo pip install pyflakes
+
 sudo apt-get install doxygen texlive-latex-base
-pyflakes autotest
-pyflakes gdal/swig/python/scripts
-pyflakes gdal/swig/python/samples
-#psql -c "drop database if exists autotest" -U postgres
-#psql -c "create database autotest" -U postgres
-#psql -c "create extension postgis" -d autotest -U postgres
+# flake8 codes to just emulate pyflakes (http://flake8.pycqa.org/en/latest/user/error-codes.html)
+FLAKE8="flake8 --select=F401,F402,F403,F404,F405,F406,F407,F601,F602,F621,F622,F631,F701,F702,F703,F704,F705,F706,F707,F721,F722,F811,F812,F821,F822,F823,F831,F841,F901"
+$FLAKE8 autotest
+$FLAKE8 gdal/swig/python/scripts
+$FLAKE8 gdal/swig/python/samples
+psql -c "drop database if exists autotest" -U postgres
+psql -c "create database autotest" -U postgres
+psql -c "create extension postgis" -d autotest -U postgres
 #mysql -e "create database autotest;"
 #mysql -e "GRANT ALL ON autotest.* TO 'root'@'localhost';" -u root
 #mysql -e "GRANT ALL ON autotest.* TO 'travis'@'localhost';" -u root
@@ -73,5 +90,20 @@ cd zstd-1.3.3/lib
 make -j3 PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
 sudo make install PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
 cd ../..
+
+# MSSQL: client side
+sudo bash -c "curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -"
+sudo bash -c "curl https://packages.microsoft.com/config/ubuntu/14.04/prod.list | tee /etc/apt/sources.list.d/msprod.list"
+sudo apt-get update
+sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
+
+# Nasty: force reinstallation of unixodbc-dev since the previous line installed unixodbc 2.3.1 from microsoft repo, which lacks the -dev package
+# DONT DO THAT ON YOUR PRODUCTION SERVER.
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/libodbc1_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst1debian2_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/unixodbc-dev_2.3.1-4.1_amd64.deb
+wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/unixodbc_2.3.1-4.1_amd64.deb
+sudo dpkg -i --force-all libodbc1_2.3.1-4.1_amd64.deb odbcinst1debian2_2.3.1-4.1_amd64.deb odbcinst_2.3.1-4.1_amd64.deb unixodbc-dev_2.3.1-4.1_amd64.deb unixodbc_2.3.1-4.1_amd64.deb
 
 sudo ldconfig

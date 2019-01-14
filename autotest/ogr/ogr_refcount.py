@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -26,9 +26,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -37,7 +35,7 @@ from osgeo import ogr
 # Open two datasets in shared mode.
 
 
-def ogr_refcount_1():
+def test_ogr_refcount_1():
     # if ogr.GetOpenDSCount() != 0:
     #    gdaltest.post_reason( 'Initial Open DS count is not zero!' )
     #    return 'failed'
@@ -53,13 +51,12 @@ def ogr_refcount_1():
         gdaltest.post_reason('Reference count not 1 on one of datasources.')
         return 'failed'
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that reopening one of the datasets returns the existing shared handle.
 
 
-def ogr_refcount_2():
+def test_ogr_refcount_2():
 
     ds_3 = ogr.OpenShared('data/idlink.dbf')
 
@@ -81,13 +78,11 @@ def ogr_refcount_2():
 
     gdaltest.ds_3 = ds_3
 
-    return 'success'
-
 ###############################################################################
 # Verify that releasing the datasources has the expected behaviour.
 
 
-def ogr_refcount_3():
+def test_ogr_refcount_3():
 
     gdaltest.ds_3.Release()
 
@@ -97,17 +92,11 @@ def ogr_refcount_3():
 
     gdaltest.ds_1.Release()
 
-    # if ogr.GetOpenDSCount() != 1:
-    #    gdaltest.post_reason( 'Open DS count not back to one.' )
-    #    return 'failed'
-
-    return 'success'
-
 ###############################################################################
 # Verify that we can walk the open datasource list.
 
 
-def ogr_refcount_4():
+def test_ogr_refcount_4():
 
     with gdaltest.error_handler():
         ds = ogr.GetOpenDS(0)
@@ -118,32 +107,12 @@ def ogr_refcount_4():
     except:
         pass
 
-    return 'success'
-
+    
 ###############################################################################
 
 
-def ogr_refcount_cleanup():
+def test_ogr_refcount_cleanup():
     gdaltest.ds_2.Release()
 
-    # if ogr.GetOpenDSCount() != 0:
-    #    gdaltest.post_reason( 'Open DS count not back to zero.' )
-    #    return 'failed'
-
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_refcount_1,
-    ogr_refcount_2,
-    ogr_refcount_3,
-    ogr_refcount_4,
-    ogr_refcount_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_refcount')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

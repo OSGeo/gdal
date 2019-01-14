@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,10 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +38,7 @@ import gdaltest
 # Test reading a - fake - IRIS dataset
 
 
-def iris_1():
+def test_iris_1():
 
     tst = gdaltest.GDALTest('IRIS', 'fakeiris.dat', 1, 65532)
     return tst.testOpen()
@@ -49,12 +47,10 @@ def iris_1():
 # Test reading a real world IRIS dataset.
 
 
-def iris_2():
+def test_iris_2():
 
     ds = gdal.Open('data/iristest.dat')
-    if ds.GetRasterBand(1).Checksum() != 52872:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 52872
 
     ds.GetProjectionRef()
     # expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
@@ -74,12 +70,8 @@ def iris_2():
     got_gt = ds.GetGeoTransform()
     expected_gt = [16435.721785269096, 1370.4263720754534, 0.0, 5289830.4584420761, 0.0, -1357.6498705837876]
     for i in range(6):
-        if (expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
-           (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i]) / abs(expected_gt[i]) > 1e-5):
-            gdaltest.post_reason('fail')
-            print(got_gt)
-            print(i)
-            return 'fail'
+        assert (not (expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
+           (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i]) / abs(expected_gt[i]) > 1e-5))
 
     expected_metadata = [
         "AZIMUTH_SMOOTHING_FOR_SHEAR=0.0",
@@ -113,22 +105,8 @@ def iris_2():
     for md in expected_metadata:
         key = md[0:md.find('=')]
         value = md[md.find('=') + 1:]
-        if got_metadata[key] != value:
-            gdaltest.post_reason('did not find %s' % key)
-            print(got_metadata)
-            return 'fail'
+        assert got_metadata[key] == value, ('did not find %s' % key)
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    iris_1,
-    iris_2]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('iris')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

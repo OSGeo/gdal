@@ -28,9 +28,9 @@
 <h2>Dataset name syntax</h2>
 
 The minimal syntax to open a datasource is :
-<pre>{"graph-id":"some_value", "node-id": "another_value"}</pre>
+<pre>{"graphId":"some_value", "nodeId": "another_value"}</pre>
 OR
-<pre>{"template-id":"some_value", "params": [{ "someparam": "someparamval"}]}</pre>
+<pre>{"templateId":"some_value", "parameters": { "someparam": "someparamval"}}</pre>
 <p>
 
     So a JSon serialized document with 2 attributes graph-id and node-id.
@@ -129,7 +129,7 @@ is found in the dataset name.</p>
 <ul>
     <li> Display metadata, and keep it cached:
 
-        <pre>gdalinfo '{"graph-id":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","node-id":"Orthorectify_hko89y", "options": {"delete-on-close": false}}'</pre>
+        <pre>gdalinfo '{"graphId":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","nodeId":"Orthorectify_hko89y", "options": {"delete-on-close": false}}'</pre>
 
         <pre>
 Driver: RDA/DigitalGlobe Raster Data Access driver
@@ -179,15 +179,15 @@ Band 8 Block=256x256 Type=UInt16, ColorInterp=Undefined
 
     <li> Extract a subwindow from a dataset:
 
-        <pre>gdal_translate -srcwin 1000 2000 500 500 '{"graph-id":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","node-id":"Orthorectify_hko89y"}' out.tif</pre>
+        <pre>gdal_translate -srcwin 1000 2000 500 500 '{"graphId":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","nodeId":"Orthorectify_hko89y"}' out.tif</pre>
     </li>
 
     <li> Materialize a dataset specifying a custom number of concurrent connections:
-        <pre>gdal_translate -oo MAXCONNECT=96 '{"graph-id":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","node-id":"Orthorectify_hko89y"}' out.tif</pre>
+        <pre>gdal_translate -oo MAXCONNECT=96 '{"graphId":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","nodeId":"Orthorectify_hko89y"}' out.tif</pre>
     </li>
 
     <li> Materialize a dataset from a template:
-        <pre>gdal_translate '{"template-id": "sample", "params": [{ "imageId": "afa56b05-35ad-47d1-bc7f-3e23d220482d"}]}' out.tif</pre>
+        <pre>gdal_translate '{"templateId": "sample", "parameters": { "imageId": "afa56b05-35ad-47d1-bc7f-3e23d220482d"}}' out.tif</pre>
     </li>
 </ul>
 </body>

@@ -528,3 +528,23 @@ CPLString CPLOvPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list args )
     osTarget.vPrintf( pszFormat, args);
     return osTarget;
 }
+
+/************************************************************************/
+/*                            CPLQuotedSQLIdentifer()                   */
+/************************************************************************/
+
+/** Return a CPLString of the SQL quoted identifier */
+CPLString CPLQuotedSQLIdentifier(const char *pszIdent)
+
+{
+    CPLString osIdent;
+
+    if(pszIdent)
+    {
+        char *pszQuotedIdent = CPLEscapeString(pszIdent, -1, CPLES_SQLI);
+        osIdent.Printf("\"%s\"", pszQuotedIdent);
+        CPLFree(pszQuotedIdent);
+    }
+
+    return osIdent;
+}

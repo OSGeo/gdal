@@ -325,6 +325,27 @@ CPLE_NoWriteAccess = _gdalconst.CPLE_NoWriteAccess
 _gdalconst.CPLE_UserInterrupt_swigconstant(_gdalconst)
 CPLE_UserInterrupt = _gdalconst.CPLE_UserInterrupt
 
+_gdalconst.CPLE_ObjectNull_swigconstant(_gdalconst)
+CPLE_ObjectNull = _gdalconst.CPLE_ObjectNull
+
+_gdalconst.CPLE_HttpResponse_swigconstant(_gdalconst)
+CPLE_HttpResponse = _gdalconst.CPLE_HttpResponse
+
+_gdalconst.CPLE_AWSBucketNotFound_swigconstant(_gdalconst)
+CPLE_AWSBucketNotFound = _gdalconst.CPLE_AWSBucketNotFound
+
+_gdalconst.CPLE_AWSObjectNotFound_swigconstant(_gdalconst)
+CPLE_AWSObjectNotFound = _gdalconst.CPLE_AWSObjectNotFound
+
+_gdalconst.CPLE_AWSAccessDenied_swigconstant(_gdalconst)
+CPLE_AWSAccessDenied = _gdalconst.CPLE_AWSAccessDenied
+
+_gdalconst.CPLE_AWSInvalidCredentials_swigconstant(_gdalconst)
+CPLE_AWSInvalidCredentials = _gdalconst.CPLE_AWSInvalidCredentials
+
+_gdalconst.CPLE_AWSSignatureDoesNotMatch_swigconstant(_gdalconst)
+CPLE_AWSSignatureDoesNotMatch = _gdalconst.CPLE_AWSSignatureDoesNotMatch
+
 _gdalconst.OF_ALL_swigconstant(_gdalconst)
 OF_ALL = _gdalconst.OF_ALL
 
@@ -486,6 +507,12 @@ GFU_AlphaMax = _gdalconst.GFU_AlphaMax
 
 _gdalconst.GFU_MaxCount_swigconstant(_gdalconst)
 GFU_MaxCount = _gdalconst.GFU_MaxCount
+
+_gdalconst.GRTT_THEMATIC_swigconstant(_gdalconst)
+GRTT_THEMATIC = _gdalconst.GRTT_THEMATIC
+
+_gdalconst.GRTT_ATHEMATIC_swigconstant(_gdalconst)
+GRTT_ATHEMATIC = _gdalconst.GRTT_ATHEMATIC
 
 _gdalconst.GMF_ALL_VALID_swigconstant(_gdalconst)
 GMF_ALL_VALID = _gdalconst.GMF_ALL_VALID

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,54 +28,82 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import glob
 
-sys.path.append('../pymod')
+import pytest
+
 
 from osgeo import gdal
 
 import gdaltest
 
-init_list = [
-    ('byte.tif', 1, 4672, None),
-    ('byte.tif', 1, 4672, ['COMPRESS=DEFLATE']),
-    ('byte.tif', 1, 4672, ['COMPRESS=NONE']),
-    ('byte.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('byte.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
-    ('byte.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('int16.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('int16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/uint16.tif', 1, 4672, None),
-    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint16.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/int32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/uint32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/float32.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=TIF']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC']),
-    ('../../gcore/data/float64.tif', 1, [4672, 5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
-    ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
-    ('../../gcore/data/utmsmall.tif', 1, 50054, None),
-    ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
-    ('byte.tif', 1, [4672, [4603, 4652]], ['COMPRESS=JPEG', 'QUALITY=99']),
+
+mrf_list = [
+    ('byte.tif', 4672, [4672], []),
+    ('byte.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
+    ('byte.tif', 4672, [4672], ['COMPRESS=NONE']),
+    ('byte.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('byte.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
+    ('byte.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('int16.tif', 4672, [4672], []),
+    ('int16.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('int16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/uint16.tif', 4672, [4672], []),
+    ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/int32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/float32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=TIF']),
+    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/float64.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
+    ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
+    ('../../gcore/data/utmsmall.tif', 50054, [50054], []),
+    ('small_world_pct.tif', 14890, [14890], ['COMPRESS=PPNG']),
+    ('byte.tif', 4672, [4603, 4652], ['COMPRESS=JPEG', 'QUALITY=99']),
     # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX
-    ('rgbsmall.tif', 1, [21212, [21162, 21110, 21155, 21116]], ['COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21266, 21369, 21256, 21495]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21261, 21209, 21254, 21215]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
-    ('rgbsmall.tif', 1, [21212, [21283, 21127, 21278, 21124]], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
-    ('12bit_rose_extract.jpg', 1, [30075, [29650, 29680, 29680, 29650]], ['COMPRESS=JPEG']),
+    ('rgbsmall.tif', 21212, [21162, 21110, 21155, 21116], ['COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 21212, [21266, 21369, 21256, 21495], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 21212, [21261, 21209, 21254, 21215], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
+    ('rgbsmall.tif', 21212, [21283, 21127, 21278, 21124], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
+    ('12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
 ]
 
 
-def mrf_zen_test():
+@pytest.mark.parametrize(
+    'src_filename,chksum,chksum_after_reopening,options',
+    mrf_list,
+    ids=['{0}-{3}'.format(*r) for r in mrf_list],
+)
+def test_mrf(src_filename, chksum, chksum_after_reopening, options):
+    if src_filename == '12bit_rose_extract.jpg':
+        import jpeg
+        jpeg.test_jpeg_1()
+        if gdaltest.jpeg_version == '9b':
+            pytest.skip()
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/' + src_filename)
+    if ds is None:
+        pytest.skip()
+
+    ds = None
+    ut = gdaltest.GDALTest('MRF', src_filename, 1, chksum, options=options, chksum_after_reopening=chksum_after_reopening)
+
+    check_minmax = 'COMPRESS=JPEG' not in ut.options
+    for x in ut.options:
+        if 'OPTIONS:LERC_PREC=' in x:
+            check_minmax = False
+    return ut.testCreateCopy(check_minmax=check_minmax)
+
+
+def test_mrf_zen_test():
     result = 'success'
     expectedCS = 770
     testvrt = '''
@@ -104,13 +132,11 @@ def mrf_zen_test():
             result = 'fail'
         for f in glob.glob('tmp/masked.*'):
             gdal.Unlink(f)
-        if result != 'success':
-            return result
 
     return result
 
 
-def mrf_overview_near_fact_2():
+def test_mrf_overview_near_fact_2():
 
     ref_ds = gdal.Translate('/vsimem/out.tif', 'data/byte.tif')
     ref_ds.BuildOverviews('NEAR', [2])
@@ -131,12 +157,7 @@ def mrf_overview_near_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            gdaltest.post_reason('fail')
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -145,10 +166,9 @@ def mrf_overview_near_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
+    
 
-
-def mrf_overview_near_with_nodata_fact_2():
+def test_mrf_overview_near_with_nodata_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -165,12 +185,7 @@ def mrf_overview_near_with_nodata_fact_2():
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         expected_cs = 1117
-        if cs != expected_cs:
-            gdaltest.post_reason('fail')
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -179,10 +194,9 @@ def mrf_overview_near_with_nodata_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
+    
 
-
-def mrf_overview_avg_fact_2():
+def test_mrf_overview_avg_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -199,12 +213,7 @@ def mrf_overview_avg_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            gdaltest.post_reason('fail')
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -213,10 +222,9 @@ def mrf_overview_avg_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
+    
 
-
-def mrf_overview_avg_with_nodata_fact_2():
+def test_mrf_overview_avg_with_nodata_fact_2():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -234,12 +242,7 @@ def mrf_overview_avg_with_nodata_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            gdaltest.post_reason('fail')
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -248,10 +251,9 @@ def mrf_overview_avg_with_nodata_fact_2():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
+    
 
-
-def mrf_overview_near_fact_3():
+def test_mrf_overview_near_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                             format='MRF',
@@ -262,11 +264,7 @@ def mrf_overview_near_fact_3():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 478
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -275,10 +273,8 @@ def mrf_overview_near_fact_3():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_overview_avg_fact_3():
+def test_mrf_overview_avg_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                             format='MRF',
@@ -289,11 +285,7 @@ def mrf_overview_avg_fact_3():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 658
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -302,10 +294,8 @@ def mrf_overview_avg_fact_3():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_overview_avg_with_nodata_fact_3():
+def test_mrf_overview_avg_with_nodata_fact_3():
 
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
@@ -323,12 +313,7 @@ def mrf_overview_avg_with_nodata_fact_3():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        if cs != expected_cs:
-            gdaltest.post_reason('fail')
-            print(dt)
-            print(cs)
-            print(expected_cs)
-            return 'fail'
+        assert cs == expected_cs, dt
         ds = None
 
         gdal.Unlink('/vsimem/out.mrf')
@@ -337,10 +322,9 @@ def mrf_overview_avg_with_nodata_fact_3():
         gdal.Unlink('/vsimem/out.ppg')
         gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
+    
 
-
-def mrf_overview_partial_block():
+def test_mrf_overview_partial_block():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                             creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=8'])
@@ -349,10 +333,7 @@ def mrf_overview_partial_block():
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 1087
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -361,10 +342,8 @@ def mrf_overview_partial_block():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_overview_near_implicit_level():
+def test_mrf_overview_near_implicit_level():
 
     # We ask only overview level 2, but MRF automatically creates 2 and 4
     # so check that 4 is properly initialized
@@ -375,24 +354,16 @@ def mrf_overview_near_implicit_level():
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 328:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 328
     ds = None
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.mrf:MRF:L2')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     ds = gdal.Open('/vsimem/out.mrf:MRF:L1')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 328:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 328
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -401,10 +372,8 @@ def mrf_overview_near_implicit_level():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_overview_external():
+def test_mrf_overview_external():
 
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     ds = gdal.Open('/vsimem/out.mrf')
@@ -414,11 +383,7 @@ def mrf_overview_external():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 1087
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -428,26 +393,17 @@ def mrf_overview_external():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_lerc_nodata():
+def test_mrf_lerc_nodata():
 
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                    noData=107, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
     nodata = ds.GetRasterBand(1).GetNoDataValue()
-    if nodata != 107:
-        gdaltest.post_reason('fail')
-        print(nodata)
-        return 'fail'
+    assert nodata == 107
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -456,21 +412,15 @@ def mrf_lerc_nodata():
     gdal.Unlink('/vsimem/out.lrc')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_lerc_with_huffman():
+def test_mrf_lerc_with_huffman():
 
     gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format='MRF',
                    width=5000, height=5000, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 31204
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -479,10 +429,8 @@ def mrf_lerc_with_huffman():
     gdal.Unlink('/vsimem/out.lrc')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_cached_source():
+def test_mrf_cached_source():
 
     # Caching MRF
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
@@ -491,11 +439,7 @@ def mrf_cached_source():
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 0
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('/vsimem/out.mrf')
@@ -513,22 +457,14 @@ def mrf_cached_source():
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/byte.tif')
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     # Caching MRF in mp_safe mode
@@ -557,22 +493,14 @@ def mrf_cached_source():
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/byte.tif')
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     # Cloning MRF
@@ -593,11 +521,7 @@ def mrf_cached_source():
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/out.mrf')
@@ -609,11 +533,7 @@ def mrf_cached_source():
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     gdal.Unlink('tmp/cloning.mrf')
@@ -622,10 +542,8 @@ def mrf_cached_source():
     gdal.Unlink('tmp/cloning.ppg')
     gdal.Unlink('tmp/cloning.til')
 
-    return 'success'
 
-
-def mrf_versioned():
+def test_mrf_versioned():
 
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')
@@ -653,38 +571,24 @@ def mrf_versioned():
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 0
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     ds = gdal.Open('/vsimem/out.mrf:MRF:V0')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 0
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     ds = gdal.Open('/vsimem/out.mrf:MRF:V1')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
+    assert cs == expected_cs
     ds = None
 
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.mrf:MRF:V2')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')
@@ -692,10 +596,8 @@ def mrf_versioned():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
-
-def mrf_cleanup():
+def test_mrf_cleanup():
 
     files = [
         '12bit_rose_extract.jpg.*',
@@ -724,79 +626,5 @@ def mrf_cleanup():
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
 
-    return 'success'
 
 
-gdaltest_list = []
-
-
-class myTestCreateCopyWrapper(object):
-
-    def __init__(self, ut):
-        self.ut = ut
-
-    def myTestCreateCopy(self):
-        check_minmax = 'COMPRESS=JPEG' not in self.ut.options
-        for x in self.ut.options:
-            if x.find('OPTIONS:LERC_PREC=') >= 0:
-                check_minmax = False
-        return self.ut.testCreateCopy(check_minmax=check_minmax)
-
-
-for item in init_list:
-    src_filename = item[0]
-
-    if src_filename == '12bit_rose_extract.jpg':
-        import jpeg
-        jpeg.jpeg_1()
-        if gdaltest.jpeg_version == '9b':
-            continue
-
-    with gdaltest.error_handler():
-        ds = gdal.Open('data/' + src_filename)
-    if ds is None:
-        continue
-    ds = None
-    options = []
-    if item[3]:
-        options = item[3]
-    chksum_param = item[2]
-    if isinstance(chksum_param, list):
-        chksum = chksum_param[0]
-        chksum_after_reopening = chksum_param[1]
-    else:
-        chksum = chksum_param
-        chksum_after_reopening = chksum_param
-
-    ut = gdaltest.GDALTest('MRF', src_filename, item[1], chksum, options=options, chksum_after_reopening=chksum_after_reopening)
-    if ut is None:
-        print('MRF tests skipped')
-
-    ut = myTestCreateCopyWrapper(ut)
-
-    gdaltest_list.append((ut.myTestCreateCopy, item[0] + ' ' + str(options)))
-
-gdaltest_list += [mrf_overview_near_fact_2]
-gdaltest_list += [mrf_overview_near_with_nodata_fact_2]
-gdaltest_list += [mrf_overview_avg_fact_2]
-gdaltest_list += [mrf_overview_avg_with_nodata_fact_2]
-gdaltest_list += [mrf_overview_near_fact_3]
-gdaltest_list += [mrf_overview_avg_fact_3]
-gdaltest_list += [mrf_overview_avg_with_nodata_fact_3]
-gdaltest_list += [mrf_overview_partial_block]
-gdaltest_list += [mrf_overview_near_implicit_level]
-gdaltest_list += [mrf_overview_external]
-gdaltest_list += [mrf_lerc_nodata]
-gdaltest_list += [mrf_lerc_with_huffman]
-gdaltest_list += [mrf_cached_source]
-gdaltest_list += [mrf_versioned]
-gdaltest_list += [mrf_zen_test]
-gdaltest_list += [mrf_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('mrf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

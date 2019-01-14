@@ -113,6 +113,14 @@ public:
     virtual const char* GetActualURL(const char* /*pszFilename*/) { return nullptr; }
     virtual const char* GetOptions() { return nullptr; }
     virtual char* GetSignedURL(const char* /*pszFilename*/, CSLConstList /* papszOptions */) { return nullptr; }
+    virtual bool Sync( const char* pszSource, const char* pszTarget,
+                            const char* const * papszOptions,
+                            GDALProgressFunc pProgressFunc,
+                            void *pProgressData,
+                            char*** ppapszOutputs  );
+
+    virtual VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
+                             const char* const *papszOptions);
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -225,6 +233,22 @@ public:
     virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);
     virtual VSIArchiveReader* OpenArchiveFile(const char* archiveFilename, const char* fileInArchiveName);
     virtual int FindFileInArchive(const char* archiveFilename, const char* fileInArchiveName, const VSIArchiveEntry** archiveEntry);
+};
+
+/************************************************************************/
+/*                              VSIDIR                                  */
+/************************************************************************/
+
+struct CPL_DLL VSIDIR
+{
+    VSIDIR() = default;
+    virtual ~VSIDIR();
+
+    virtual const VSIDIREntry* NextDirEntry() = 0;
+
+  private:
+    VSIDIR(const VSIDIR&) = delete;
+    VSIDIR& operator=(const VSIDIR&) = delete;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

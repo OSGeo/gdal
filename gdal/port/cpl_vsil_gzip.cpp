@@ -723,13 +723,6 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         offset *= 1024 * 1024;
     }
 
-    if( // whence == SEEK_END ||
-        z_err == Z_ERRNO || z_err == Z_DATA_ERROR )
-    {
-        CPL_VSIL_GZ_RETURN(-1);
-        return -1L;
-    }
-
     // Rest of function is for reading only.
 
     // Compute absolute position.
@@ -747,6 +740,12 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
     {
             CPL_VSIL_GZ_RETURN(-1);
             return -1L;
+    }
+
+    if( z_err != Z_OK && z_err != Z_STREAM_END )
+    {
+        CPL_VSIL_GZ_RETURN(-1);
+        return -1L;
     }
 
     for( unsigned int i = 0;
@@ -899,13 +898,6 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
              static_cast<int>(nMemb));
 #endif
 
-    if( z_err == Z_DATA_ERROR || z_err == Z_ERRNO )
-    {
-        z_eof = 1;  // To avoid infinite loop in reader code.
-        in = 0;
-        CPL_VSIL_GZ_RETURN(0);
-        return 0;
-    }
     if( (z_eof && in == 0) || z_err == Z_STREAM_END )
     {
         z_eof = 1;
@@ -1109,20 +1101,22 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
     }
     crc = crc32(crc, pStart, static_cast<uInt>(stream.next_out - pStart));
 
-    if( len == stream.avail_out &&
-        (z_err == Z_DATA_ERROR || z_err == Z_ERRNO || z_err == Z_BUF_ERROR) )
+    size_t ret = (len - stream.avail_out) / nSize;
+    if( z_err != Z_OK && z_err != Z_STREAM_END )
     {
         z_eof = 1;
         in = 0;
-        CPL_VSIL_GZ_RETURN(0);
-        return 0;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "In file %s, at line %d, decompression failed with "
+                 "z_err = %d, return = %d",
+                 __FILE__, __LINE__, z_err, static_cast<int>(ret));
     }
+
 #ifdef ENABLE_DEBUG
     CPLDebug("GZIP", "Read return %d (z_err=%d, z_eof=%d)",
-             static_cast<int>((len - stream.avail_out) / nSize),
-             z_err, z_eof);
+             static_cast<int>(ret), z_err, z_eof);
 #endif
-    return static_cast<int>(len - stream.avail_out) / nSize;
+    return ret;
 }
 
 /************************************************************************/
@@ -1553,17 +1547,17 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                 if( !psJob->bInCRCComputation_ )
                 {
                     psJob->bInCRCComputation_ = true;
+                    sMutex_.unlock();
                     if( poPool_ )
                     {
-                        sMutex_.unlock();
                         poPool_->SubmitJob( VSIGZipWriteHandleMT::CRCCompute,
                                             psJob );
-                        sMutex_.lock();
                     }
                     else
                     {
                         CRCCompute(psJob);
                     }
+                    sMutex_.lock();
                 }
             }
         }

@@ -36,7 +36,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
-    bDSUpdate(FALSE)
+    bDSUpdate(false)
 {
     pszName = nullptr;
     pszCatalog = nullptr;
@@ -53,6 +53,7 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
     pszConnection = nullptr;
 
     bUseGeometryColumns = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "YES"));
+    bAlwaysOutputFid = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_ALWAYS_OUTPUT_FID", "NO"));
     bListAllTables = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_LIST_ALL_TABLES", "NO"));
 
     const char* nBCPSizeParam = CPLGetConfigOption("MSSQLSPATIAL_BCP_SIZE", nullptr);
@@ -529,7 +530,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char *pszTableName,
                                           const char *pszGeomCol, int nCoordDimension,
                                           int nSRID, const char *pszSRText, OGRwkbGeometryType eType,
-                                          CPL_UNUSED int bUpdate )
+                                          bool bUpdate )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -541,6 +542,7 @@ int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char 
         delete poLayer;
         return FALSE;
     }
+    poLayer->SetUpdate(bUpdate);
 
     if (bUseCopy)
         poLayer->SetUseCopy(nBCPSize);
@@ -595,7 +597,7 @@ int OGRMSSQLSpatialDataSource::ParseValue(char** pszValue, char* pszSource, cons
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
+int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
                              int bTestOpen )
 
 {
@@ -753,6 +755,10 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         pszDriver = CPLStrdup("{SQL Server Native Client 11.0}");
 #elif SQLNCLI_VERSION == 10
         pszDriver = CPLStrdup("{SQL Server Native Client 10.0}");
+#elif MSODBCSQL_VERSION == 13
+        pszDriver = CPLStrdup("{ODBC Driver 13 for SQL Server}");
+#elif MSODBCSQL_VERSION == 17
+        pszDriver = CPLStrdup("{ODBC Driver 17 for SQL Server}");
 #else
         pszDriver = CPLStrdup("{SQL Server}");
 #endif
@@ -940,7 +946,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         if (papszSRIds != nullptr)
             nSRId = atoi(papszSRIds[iTable]);
         else
-            nSRId = -1;
+            nSRId = 0;
 
         if (papszCoordDimensions != nullptr)
             nCoordDimension = atoi(papszCoordDimensions[iTable]);

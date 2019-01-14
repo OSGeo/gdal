@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -27,46 +27,43 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
+import pytest
+
+
+pytestmark = [
+    pytest.mark.skipif('OCI_DSNAME' not in os.environ, reason='no OCI_DSNAME in environment'),
+    pytest.mark.require_driver('OCI'),
+]
 
 ###############################################################################
 # Open ORACLE.
 
 
-def ogr_oci_1():
+def test_ogr_oci_1():
 
     gdaltest.oci_ds = None
-
-    try:
-        ogr.GetDriverByName('OCI')
-    except:
-        return 'skip'
-
-    if 'OCI_DSNAME' not in os.environ:
-        return 'skip'
 
     gdaltest.oci_ds = ogr.Open(os.environ['OCI_DSNAME'])
 
     if gdaltest.oci_ds is not None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 # Create Oracle table from data/poly.shp
 
 
-def ogr_oci_2():
+def test_ogr_oci_2():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:tpoly')
@@ -110,16 +107,12 @@ def ogr_oci_2():
     shp_lyr.ResetReading()
     feat = shp_lyr.GetNextFeature()
     feat.SetFID(-10)
-    if gdaltest.oci_lyr.SetFeature(feat) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        gdaltest.post_reason('Expected failure of SetFeature().')
-        return 'fail'
+    assert gdaltest.oci_lyr.SetFeature(feat) == ogr.OGRERR_NON_EXISTING_FEATURE, \
+        'Expected failure of SetFeature().'
 
     # Test deleting non-existing feature
-    if gdaltest.oci_lyr.DeleteFeature(-10) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        gdaltest.post_reason('Expected failure of DeleteFeature().')
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.oci_lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE, \
+        'Expected failure of DeleteFeature().'
 
 ###############################################################################
 # Helper method to reverse ring winding.  This is needed because the
@@ -141,9 +134,9 @@ def reverse_rings(poly):
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_oci_3():
+def test_ogr_oci_3():
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -161,17 +154,15 @@ def ogr_oci_3():
         if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.000000001) != 0:
             print('expected:', orig_feat.GetGeometryRef().ExportToWkt())
-            print('got:', read_feat.GetGeometryRef().ExportToWkt())
-            return 'fail'
+            pytest.fail('got:', read_feat.GetGeometryRef().ExportToWkt())
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason('Attribute %d does not match' % fld)
                 print('expected:')
                 print(orig_feat.DumpReadable())
                 print('got:')
                 print(read_feat.DumpReadable())
-                return 'fail'
+                pytest.fail('Attribute %d does not match' % fld)
 
         read_feat.Destroy()
         orig_feat.Destroy()
@@ -179,17 +170,17 @@ def ogr_oci_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
 # geometries are still OK.
 
 
-def ogr_oci_4():
+def test_ogr_oci_4():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
 
@@ -211,50 +202,43 @@ def ogr_oci_4():
 
         gdaltest.oci_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.oci_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
-            return 'fail'
+        assert ogrtest.check_feature_geometry(feat_read, geom) == 0
 
         feat_read.Destroy()
 
     dst_feat.Destroy()
 
-    return 'success'
-
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_oci_5():
+def test_ogr_oci_5():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
     sql_lyr = gdaltest.oci_ds.ExecuteSQL('select distinct eas_id from tpoly order by eas_id desc')
-    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 0
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
 
 
-def ogr_oci_6():
+def test_ogr_oci_6():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     sql_lyr = gdaltest.oci_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
-    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 1
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea', ['2'])
     if tr:
@@ -266,16 +250,16 @@ def ogr_oci_6():
 
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
 
 
-def ogr_oci_7():
+def test_ogr_oci_7():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_lyr.SetAttributeFilter(None)
 
@@ -289,17 +273,17 @@ def ogr_oci_7():
 
     gdaltest.oci_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test that we can create a layer with a coordinate system that is mapped
 # to an oracle coordinate system using the ORACLE authority code.
 
 
-def ogr_oci_8():
+def test_ogr_oci_8():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Preclean.
@@ -325,29 +309,24 @@ def ogr_oci_8():
     # oracle SRS.
     srs2 = oci_lyr2.GetSpatialRef()
 
-    if srs2.GetAuthorityCode('GEOGCS') != '8241':
-        gdaltest.post_reason('Did not get expected authority code')
-        return 'fail'
+    assert srs2.GetAuthorityCode('GEOGCS') == '8241', \
+        'Did not get expected authority code'
 
-    if srs2.GetAuthorityName('GEOGCS') != 'Oracle':
-        gdaltest.post_reason('Did not get expected authority name')
-        return 'fail'
+    assert srs2.GetAuthorityName('GEOGCS') == 'Oracle', \
+        'Did not get expected authority name'
 
-    if srs2.GetAttrValue('GEOGCS|DATUM') != 'Kertau 1948':
-        gdaltest.post_reason('Did not get expected datum name')
-        return 'fail'
-
-    return 'success'
+    assert srs2.GetAttrValue('GEOGCS|DATUM') == 'Kertau 1948', \
+        'Did not get expected datum name'
 
 ###############################################################################
 # This time we create a layer with a EPSG marked GEOGCS, and verify that
 # the coordinate system gets properly remapped to the Oracle WGS84.
 
 
-def ogr_oci_9():
+def test_ogr_oci_9():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Preclean.
@@ -371,28 +350,23 @@ def ogr_oci_9():
     # oracle SRS we expect.
     srs2 = oci_lyr2.GetSpatialRef()
 
-    if srs2.GetAuthorityCode('GEOGCS') != '4326':
-        gdaltest.post_reason('Did not get expected authority code')
-        return 'fail'
+    assert srs2.GetAuthorityCode('GEOGCS') == '4326', \
+        'Did not get expected authority code'
 
-    if srs2.GetAuthorityName('GEOGCS') != 'EPSG':
-        gdaltest.post_reason('Did not get expected authority name')
-        return 'fail'
+    assert srs2.GetAuthorityName('GEOGCS') == 'EPSG', \
+        'Did not get expected authority name'
 
-    if srs2.GetAttrValue('GEOGCS|DATUM') != 'WGS 84':
-        gdaltest.post_reason('Did not get expected datum name')
-        return 'fail'
-
-    return 'success'
+    assert srs2.GetAttrValue('GEOGCS|DATUM') == 'WGS 84', \
+        'Did not get expected datum name'
 
 ###############################################################################
 # Test handling of specialized Oracle Rectangle Geometries.
 
 
-def ogr_oci_10():
+def test_ogr_oci_10():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # Create a test table.
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -431,16 +405,16 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of specialized Oracle circle Geometries.
 
 
-def ogr_oci_11():
+def test_ogr_oci_11():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -470,16 +444,16 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of specialized Oracle circular arc linestring Geometries.
 
 
-def ogr_oci_12():
+def test_ogr_oci_12():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -508,16 +482,16 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of specialized Oracle circular arc polygon Geometries.
 
 
-def ogr_oci_13():
+def test_ogr_oci_13():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -547,16 +521,16 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of compount linestring.
 
 
-def ogr_oci_14():
+def test_ogr_oci_14():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -586,16 +560,16 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test handling of compount polygon.
 
 
-def ogr_oci_15():
+def test_ogr_oci_15():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL("""
@@ -625,16 +599,16 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
     feat_read.Destroy()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test deleting an existing layer.
 
 
-def ogr_oci_16():
+def test_ogr_oci_16():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     target_index = -1
     lc = gdaltest.oci_ds.GetLayerCount()
@@ -647,30 +621,22 @@ def ogr_oci_16():
 
     lyr = None
 
-    if target_index == -1:
-        gdaltest.post_reason('did not find testsrs2 layer')
-        return 'fail'
+    assert target_index != -1, 'did not find testsrs2 layer'
 
     result = gdaltest.oci_ds.DeleteLayer(target_index)
-    if result != 0:
-        gdaltest.post_reason('DeleteLayer() failed.')
-        return 'fail'
+    assert result == 0, 'DeleteLayer() failed.'
 
     lyr = gdaltest.oci_ds.GetLayerByName('testsrs2')
-    if lyr is not None:
-        gdaltest.post_reason('apparently failed to remove testsrs2 layer')
-        return 'fail'
-
-    return 'success'
+    assert lyr is None, 'apparently failed to remove testsrs2 layer'
 
 ###############################################################################
 # Test that synctodisk actually sets the layer bounds metadata.
 
 
-def ogr_oci_17():
+def test_ogr_oci_17():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:xpoly')
 
@@ -715,36 +681,28 @@ def ogr_oci_17():
     oci_ds2 = ogr.Open(os.environ['OCI_DSNAME'])
 
     sql_lyr = oci_ds2.ExecuteSQL("select column_name from user_sdo_geom_metadata where table_name = 'XPOLY'")
-    if sql_lyr.GetFeatureCount() > 0:
-        gdaltest.post_reason('user_sdo_geom_metadata already populated!')
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() <= 0, 'user_sdo_geom_metadata already populated!'
 
     oci_ds2.ReleaseResultSet(sql_lyr)
 
     result = gdaltest.oci_ds.SyncToDisk()
-    if result != 0:
-        gdaltest.post_reason('SyncToDisk() failed.')
-        return 'fail'
+    assert result == 0, 'SyncToDisk() failed.'
 
     sql_lyr = oci_ds2.ExecuteSQL("select column_name from user_sdo_geom_metadata where table_name = 'XPOLY'")
-    if sql_lyr.GetFeatureCount() == 0:
-        gdaltest.post_reason('user_sdo_geom_metadata still not populated!')
-        return 'fail'
+    assert sql_lyr.GetFeatureCount() != 0, 'user_sdo_geom_metadata still not populated!'
 
     oci_ds2.ReleaseResultSet(sql_lyr)
 
     oci_ds2 = None
 
-    return 'success'
-
 ###############################################################################
 # Test layer geometry types
 
 
-def ogr_oci_18():
+def test_ogr_oci_18():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     wkts = ['POINT (0 1)', 'LINESTRING (0 1,2 3)', 'POLYGON ((0 0,1 0,1 1,0 1,0 0))',
             'MULTIPOINT (0 1)', 'MULTILINESTRING ((0 1,2 3))', 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))',
@@ -781,40 +739,28 @@ def ogr_oci_18():
             strgeomtype = strgeomtype + '3'
 
         lyr = oci_ds2.GetLayerByName('test_%s' % strgeomtype)
-        if lyr.GetGeomType() != geomtype:
-            gdaltest.post_reason('fail')
-            print(wkt)
-            print(lyr.GetGeomType())
-            return 'fail'
+        assert lyr.GetGeomType() == geomtype, wkt
         feat = lyr.GetNextFeature()
-        if feat.GetGeometryRef().ExportToWkt() != wkt:
-            gdaltest.post_reason('fail')
-            print(wkt)
-            print(feat.GetGeometryRef().ExportToWkt())
-            return 'fail'
+        assert feat.GetGeometryRef().ExportToWkt() == wkt
 
     dsname = os.environ['OCI_DSNAME']
-    if dsname.find('@') < 0:
+    if '@' not in dsname:
         dsname = dsname + '@:test_NONE'
     else:
         dsname = dsname + ':test_NONE'
 
     oci_ds2 = ogr.Open(dsname)
     lyr = oci_ds2.GetLayerByName('test_NONE')
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert lyr.GetGeomType() == ogr.wkbNone
 
 ###############################################################################
 # Test date / datetime
 
 
-def ogr_oci_19():
+def test_ogr_oci_19():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.oci_ds.CreateLayer('testdate', geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn('MYDATE', ogr.OFTDate))
@@ -826,33 +772,24 @@ def ogr_oci_19():
     lyr.SyncToDisk()
 
     sql_lyr = gdaltest.oci_ds.ExecuteSQL('SELECT MYDATE, MYDATETIME FROM testdate')
-    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTDate:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTDateTime:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDate
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
     f = sql_lyr.GetNextFeature()
     if f.GetField(0) != '2015/02/03' or f.GetField(1) != '2015/02/03 11:33:44':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test not nullable fields
 
 
-def ogr_oci_20():
+def test_ogr_oci_20():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
     lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_20', geom_type=ogr.wkbPoint, options=['GEOMETRY_NULLABLE=NO', 'DIM=2'])
-    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() == 0
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
     lyr.CreateField(field_defn)
@@ -864,9 +801,7 @@ def ogr_oci_20():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 1)'))
     ret = lyr.CreateFeature(f)
     f = None
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 0
 
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -874,9 +809,7 @@ def ogr_oci_20():
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
@@ -885,69 +818,47 @@ def ogr_oci_20():
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
     f = None
     lyr.SyncToDisk()
 
     # Test with nullable geometry
     lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_20bis', geom_type=ogr.wkbPoint, options=['DIM=2'])
-    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() == 1
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 1)'))
     ret = lyr.CreateFeature(f)
     f = None
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(f)
     f = None
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 0
     lyr.SyncToDisk()
 
     oci_ds2 = ogr.Open(os.environ['OCI_DSNAME'])
 
     lyr = oci_ds2.GetLayerByName('ogr_oci_20')
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() == 1
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() == 0
 
     lyr = oci_ds2.GetLayerByName('ogr_oci_20bis')
-    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() == 1
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef() is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert feat.GetGeometryRef() is not None
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef() is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert feat.GetGeometryRef() is None
 
 ###############################################################################
 # Test default values
 
 
-def ogr_oci_21():
+def test_ogr_oci_21():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.oci_ds.CreateLayer('ogr_oci_21', geom_type=ogr.wkbPoint, options=['DIM=2'])
 
@@ -1003,25 +914,12 @@ def ogr_oci_21():
     oci_ds2 = ogr.Open(os.environ['OCI_DSNAME'])
 
     lyr = oci_ds2.GetLayerByName('ogr_oci_21')
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() != '123':
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_real')).GetDefault() != '1.23':
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nodefault')).GetDefault() is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
-        gdaltest.post_reason('fail')
-        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() == "'a''b'"
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() == '123'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_real')).GetDefault() == '1.23'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nodefault')).GetDefault() is None
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() == 'CURRENT_TIMESTAMP'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() == "'2015/06/30 12:34:56'"
     # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
     #    gdaltest.post_reason('fail')
     #    print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault())
@@ -1032,31 +930,27 @@ def ogr_oci_21():
 
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'c':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
        not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime') or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
-
-    return 'success'
 
 ###############################################################################
 #
 
 
-def ogr_oci_cleanup():
+def test_ogr_oci_cleanup():
 
     if gdaltest.oci_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:tpoly')
     gdaltest.oci_ds.ExecuteSQL('DELLAYER:xpoly')
@@ -1083,42 +977,5 @@ def ogr_oci_cleanup():
     gdaltest.oci_ds = None
     gdaltest.shp_ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_oci_1,
-    ogr_oci_2,
-    ogr_oci_3,
-    ogr_oci_4,
-    ogr_oci_5,
-    ogr_oci_6,
-    ogr_oci_7,
-    ogr_oci_8,
-    ogr_oci_9,
-    ogr_oci_10,
-    ogr_oci_11,
-    ogr_oci_12,
-    ogr_oci_13,
-    ogr_oci_14,
-    ogr_oci_15,
-    ogr_oci_16,
-    ogr_oci_17,
-    ogr_oci_18,
-    ogr_oci_19,
-    ogr_oci_20,
-    ogr_oci_21,
-    ogr_oci_cleanup]
-
-if __name__ == '__main__':
-
-    if 'OCI_DSNAME' not in os.environ:
-        print('Enter ORACLE DataSource (e.g. OCI:scott/tiger):')
-        oci_dsname = sys.stdin.readline().strip()
-        os.environ['OCI_DSNAME'] = oci_dsname
-
-    gdaltest.setup_run('ogr_oci')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

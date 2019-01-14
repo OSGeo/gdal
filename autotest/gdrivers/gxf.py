@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,10 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+
+import pytest
+
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +41,7 @@ import gdaltest
 # Test a small GXF sample
 
 
-def gxf_1():
+def test_gxf_1():
 
     tst = gdaltest.GDALTest('GXF', 'small.gxf', 1, 90)
 
@@ -50,7 +51,7 @@ def gxf_1():
 # Test an other GXF sample (with continuous line)
 
 
-def gxf_2():
+def test_gxf_2():
 
     tst = gdaltest.GDALTest('GXF', 'small2.gxf', 1, 65042)
     wkt = """PROJCS["NAD27 / Ohio North",
@@ -69,49 +70,30 @@ def gxf_2():
 
     return tst.testOpen(check_prj=wkt)
 
-###############################################################################
-#
+
+gxf_list = [
+    ('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1),
+    ('http://download.osgeo.org/gdal/data/gxf', 'gxf_compressed.gxf', 20120, -1),
+    ('http://download.osgeo.org/gdal/data/gxf', 'gxf_text.gxf', 20265, -1),
+    ('http://download.osgeo.org/gdal/data/gxf', 'gxf_ul_r.gxf', 19930, -1),
+    ('http://download.osgeo.org/gdal/data/gxf', 'latlong.gxf', 12243, -1),
+    ('http://download.osgeo.org/gdal/data/gxf', 'spif83.gxf', 28752, -1),
+]
 
 
-class TestGXF(object):
-    def __init__(self, downloadURL, fileName, checksum, download_size):
-        self.downloadURL = downloadURL
-        self.fileName = fileName
-        self.checksum = checksum
-        self.download_size = download_size
+@pytest.mark.parametrize(
+    'downloadURL,fileName,checksum,download_size',
+    gxf_list,
+    ids=[tup[1] for tup in gxf_list],
+)
+def test_gxf(downloadURL, fileName, checksum, download_size):
+    if not gdaltest.download_file(downloadURL + '/' + fileName, fileName, download_size):
+        pytest.skip()
 
-    def test(self):
-        if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
-            return 'skip'
+    ds = gdal.Open('tmp/cache/' + fileName)
 
-        ds = gdal.Open('tmp/cache/' + self.fileName)
-
-        if ds.GetRasterBand(1).Checksum() != self.checksum:
-            gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'fail'
-
-        return 'success'
+    assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
 
-gdaltest_list = [gxf_1, gxf_2]
-
-gxf_list = [('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1),
-            ('http://download.osgeo.org/gdal/data/gxf', 'gxf_compressed.gxf', 20120, -1),
-            ('http://download.osgeo.org/gdal/data/gxf', 'gxf_text.gxf', 20265, -1),
-            ('http://download.osgeo.org/gdal/data/gxf', 'gxf_ul_r.gxf', 19930, -1),
-            ('http://download.osgeo.org/gdal/data/gxf', 'latlong.gxf', 12243, -1),
-            ('http://download.osgeo.org/gdal/data/gxf', 'spif83.gxf', 28752, -1)
-           ]
-
-for item in gxf_list:
-    ut = TestGXF(item[0], item[1], item[2], item[3])
-    gdaltest_list.append((ut.test, item[1]))
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gxf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

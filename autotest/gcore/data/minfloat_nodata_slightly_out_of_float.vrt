@@ -1,0 +1,11 @@
+<VRTDataset rasterXSize="4" rasterYSize="1">
+  <VRTRasterBand dataType="Float32" band="1">
+    <NoDataValue>-3.402823466385289e+38</NoDataValue>
+    <ColorInterp>Gray</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">minfloat.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <NODATA>-3.402823466385289e+38</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>

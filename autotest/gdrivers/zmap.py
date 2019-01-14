@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,20 +36,10 @@ import gdaltest
 # Test CreateCopy() of byte.tif
 
 
-def zmap_1():
+def test_zmap_1():
 
     tst = gdaltest.GDALTest('ZMap', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1, check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 
-gdaltest_list = [
-    zmap_1
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('zmap')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

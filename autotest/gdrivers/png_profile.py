@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,24 +31,17 @@
 # http://sourceforge.net/projects/openicc/files/OpenICC-Profiles/
 
 import os
-import sys
 import base64
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import gdal
-
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
+import pytest
 
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 
-def png_copy_icc():
+def test_png_copy_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -68,53 +61,36 @@ def png_copy_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.png.aux.xml')
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except OSError:
-        pass
+    
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.png.aux.xml')
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with GetMetadataItem()
     ds2 = gdal.Open('tmp/icc_test.png')
     source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds2 = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/icc_test.png.aux.xml')
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    if source_icc_profile != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert source_icc_profile == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
-
-    return 'success'
 
 
 def cvtTuple2String(t):
@@ -124,7 +100,7 @@ def cvtTuple2String(t):
 # Test writing and reading of ICC profile in CreateCopy() options
 
 
-def png_copy_options_icc():
+def test_png_copy_options_icc():
 
     f = open('data/sRGB.icc', 'rb')
     data = f.read()
@@ -144,9 +120,7 @@ def png_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
@@ -154,20 +128,16 @@ def png_copy_options_icc():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE'] != icc:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE'] == icc
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data from options
 
 
-def png_copy_options_colorimetric_data():
+def test_png_copy_options_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -191,9 +161,7 @@ def png_copy_options_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -202,13 +170,9 @@ def png_copy_options_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
-    if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert float(md['PNG_GAMMA']) == 1.5
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
@@ -219,9 +183,7 @@ def png_copy_options_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -230,24 +192,18 @@ def png_copy_options_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
-    if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert float(md['PNG_GAMMA']) == 1.5
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
-
-    return 'success'
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data in the file
 
 
-def png_copy_colorimetric_data():
+def test_png_copy_colorimetric_data():
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -274,9 +230,7 @@ def png_copy_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -285,13 +239,9 @@ def png_copy_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
-    if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert float(md['PNG_GAMMA']) == 1.5
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
@@ -302,9 +252,7 @@ def png_copy_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        if abs(source_whitepoint2[i] - source_whitepoint[i]) > 0.0001:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -313,24 +261,18 @@ def png_copy_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            if abs(source_primaries2[j][i] - source_primaries[j][i]) > 0.0001:
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
 
-    if float(md['PNG_GAMMA']) != 1.5:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert float(md['PNG_GAMMA']) == 1.5
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
-
-    return 'success'
 
 ###############################################################################
 # Test sRGB
 
 
-def png_sRGB():
+def test_png_sRGB():
     # Create dummy file
     options = ['SOURCE_ICC_PROFILE_NAME=sRGB']
 
@@ -344,9 +286,7 @@ def png_sRGB():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE_NAME'] != 'sRGB':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE_NAME'] == 'sRGB'
 
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
@@ -354,28 +294,12 @@ def png_sRGB():
     ds = None
     ds2 = None
 
-    if md['SOURCE_ICC_PROFILE_NAME'] != 'sRGB':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert md['SOURCE_ICC_PROFILE_NAME'] == 'sRGB'
 
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.png')
 
-    return 'success'
-
 ############################################################################
 
 
-gdaltest_list.append((png_copy_icc))
-gdaltest_list.append((png_copy_options_icc))
-gdaltest_list.append((png_copy_options_colorimetric_data))
-gdaltest_list.append((png_copy_colorimetric_data))
-gdaltest_list.append((png_sRGB))
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('png_profile')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

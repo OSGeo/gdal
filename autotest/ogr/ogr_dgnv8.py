@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,39 +30,34 @@
 
 import os
 import shutil
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import gdal, ogr
+import pytest
 
 ###############################################################################
 # Verify we can open the test file.
 
 
-def ogr_dgnv8_1():
+def test_ogr_dgnv8_1():
 
     gdaltest.dgnv8_drv = ogr.GetDriverByName('DGNv8')
     if gdaltest.dgnv8_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/test_dgnv8.dgn')
-    if ds is None:
-        gdaltest.post_reason('failed to open test file.')
-        return 'fail'
-
-    return 'success'
+    assert ds is not None, 'failed to open test file.'
 
 ###############################################################################
 # Compare with a reference CSV dump
 
 
-def ogr_dgnv8_2():
+def test_ogr_dgnv8_2():
 
     if gdaltest.dgnv8_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/test_dgnv8.dgn',
                          options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
@@ -81,41 +76,33 @@ def ogr_dgnv8_2():
 # Run test_ogrsf
 
 
-def ogr_dgnv8_3():
+def test_ogr_dgnv8_3():
 
     if gdaltest.dgnv8_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_dgnv8.dgn')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('fail')
-        print(ret)
-        return 'fail'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     shutil.copy('data/test_dgnv8.dgn', 'tmp/test_dgnv8.dgn')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/test_dgnv8.dgn')
     os.unlink('tmp/test_dgnv8.dgn')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        gdaltest.post_reason('fail')
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Test creation code
 
 
-def ogr_dgnv8_4():
+def test_ogr_dgnv8_4():
 
     if gdaltest.dgnv8_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tmp_dgn = 'tmp/ogr_dgnv8_4.dgn'
     gdal.VectorTranslate(tmp_dgn, 'data/test_dgnv8.dgn', format='DGNv8')
@@ -139,10 +126,10 @@ def ogr_dgnv8_4():
 # Test creation options
 
 
-def ogr_dgnv8_5():
+def test_ogr_dgnv8_5():
 
     if gdaltest.dgnv8_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tmp_dgn = 'tmp/ogr_dgnv8_5.dgn'
     options = ['APPLICATION=application',
@@ -165,28 +152,17 @@ def ogr_dgnv8_5():
     ds = None
     ds = ogr.Open(tmp_dgn)
     got_md = ds.GetMetadata_List('DGN')
-    if got_md != options:
-        gdaltest.post_reason('fail')
-        print(got_md)
-        return 'fail'
+    assert got_md == options
     ds = None
 
     tmp2_dgn = 'tmp/ogr_dgnv8_5_2.dgn'
     gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
     ds = ogr.Open(tmp2_dgn)
-    if ds.GetMetadataItem('TITLE', 'DGN') != 'another_title' or ds.GetMetadataItem('APPLICATION', 'DGN') != 'application':
-        gdaltest.post_reason('fail')
-        print(ds.GetMetadata('DGN'))
-        return 'fail'
+    assert ds.GetMetadataItem('TITLE', 'DGN') == 'another_title' and ds.GetMetadataItem('APPLICATION', 'DGN') == 'application', \
+        ds.GetMetadata('DGN')
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'my_layer':
-        gdaltest.post_reason('fail')
-        print(lyr.GetName())
-        return 'fail'
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetName() == 'my_layer'
+    assert lyr.GetFeatureCount() == 0
     ds = None
 
     ds = gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn])
@@ -197,47 +173,23 @@ def ogr_dgnv8_5():
     ds = None
     ds = ogr.Open(tmp2_dgn, update=1)
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'a_layer':
-        gdaltest.post_reason('fail')
-        print(lyr.GetName())
-        return 'fail'
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetName() == 'a_layer'
+    assert lyr.GetFeatureCount() == 1
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2 3)':
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink(tmp_dgn)
     gdal.Unlink(tmp2_dgn)
 
-    return 'success'
-
 
 ###############################################################################
 #  Cleanup
 
-def ogr_dgnv8_cleanup():
+def test_ogr_dgnv8_cleanup():
 
-    return 'success'
+    pass
 
 
-gdaltest_list = [
-    ogr_dgnv8_1,
-    ogr_dgnv8_2,
-    ogr_dgnv8_3,
-    ogr_dgnv8_4,
-    ogr_dgnv8_5,
-    ogr_dgnv8_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_dgnv8')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

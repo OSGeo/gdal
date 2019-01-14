@@ -32,6 +32,7 @@
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
 
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 
@@ -280,6 +281,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
         /***** add the color to the colors *****/
         oColors.push_back(oColor);
+        assert( !oColors.empty() );
     }
 
     /***** does the number of bands match the number of color values? *****/

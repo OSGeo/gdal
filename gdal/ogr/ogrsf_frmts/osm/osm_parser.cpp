@@ -2724,7 +2724,7 @@ OSMContext* OSM_Open( const char* pszFilename,
         psCtxt->nMembersAllocated = 2000;
         psCtxt->pasMembers = (OSMMember*) VSI_MALLOC_VERBOSE(sizeof(OSMMember) * psCtxt->nMembersAllocated);
 
-        psCtxt->nNodeRefsAllocated = 2000;
+        psCtxt->nNodeRefsAllocated = 10000;
         psCtxt->panNodeRefs = (GIntBig*) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
 
         if( psCtxt->pszStrBuf == nullptr ||

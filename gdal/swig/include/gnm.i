@@ -38,6 +38,8 @@
 %module "Geo::GNM"
 #elif defined(SWIGCSHARP)
 %module Gnm
+#elif defined(SWIGPYTHON)
+%module (package="osgeo") gnm
 #else
 %module gnm
 #endif

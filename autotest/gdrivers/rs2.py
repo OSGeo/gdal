@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -41,19 +39,19 @@ import gdaltest
 # evolves, this might break the test legitimately !
 
 
-def rs2_1():
+def test_rs2_1():
     tst = gdaltest.GDALTest('RS2', 'product.xml', 1, 4672)
     return tst.testOpen()
 
 
-def rs2_2():
+def test_rs2_2():
     tst = gdaltest.GDALTest('RS2', 'RADARSAT_2_CALIB:BETA0:data/product.xml', 1, 4848, filename_absolute=1)
     return tst.testOpen()
 
 # Test reading our dummy RPC
 
 
-def rs2_3():
+def test_rs2_3():
     ds = gdal.Open('data/product.xml')
     got_rpc = ds.GetMetadata('RPC')
     expected_rpc = {'ERR_BIAS': 'biasError',
@@ -72,22 +70,7 @@ def rs2_3():
                     'SAMP_NUM_COEFF': 'pixelNumeratorCoefficients',
                     'SAMP_OFF': 'pixelOffset',
                     'SAMP_SCALE': 'pixelScale'}
-    if got_rpc != expected_rpc:
-        gdaltest.post_reason('fail')
-        print(got_rpc)
-        return 'fail'
-    return 'success'
+    assert got_rpc == expected_rpc
 
 
-gdaltest_list = [
-    rs2_1,
-    rs2_2,
-    rs2_3]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rs2')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

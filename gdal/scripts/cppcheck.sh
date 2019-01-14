@@ -55,6 +55,8 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         ${OVERRIDE} \
         -DOCAD_EXTERN= \
         -DTIFFLIB_VERSION=99999999 \
+        -DHAVE_SSE_AT_COMPILE_TIME \
+        -DHAVE_LIBXML2 \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \
@@ -81,6 +83,10 @@ done
 ret_code=0
 
 grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v -e " yacc.c" -e PublicDecompWT -e "kdu_cache_wrapper.h" > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# I don't want to care about SDE
+grep -v -e "frmts/sde" -e  "ogr/ogrsf_frmts/sde" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 if grep "null pointer" ${LOG_FILE} ; then

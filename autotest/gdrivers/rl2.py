@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,226 +29,151 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal, ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Get the rl2 driver
 
 
-def rl2_1():
+def test_rl2_1():
 
     gdaltest.rl2_drv = gdal.GetDriverByName('SQLite')
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
     if gdaltest.rl2_drv.GetMetadataItem('DCAP_RASTER') is None:
         gdaltest.rl2_drv = None
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test opening a rl2 DB gray level
 
 
-def rl2_2():
+def test_rl2_2():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.rl2')
 
-    if ds.RasterCount != 1:
-        gdaltest.post_reason('expected 1 band')
-        return 'fail'
+    assert ds.RasterCount == 1, 'expected 1 band'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason('did not expect overview')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0, 'did not expect overview'
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 4672:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 4672
 
     gt = ds.GetGeoTransform()
     expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-15
 
     wkt = ds.GetProjectionRef()
-    if wkt.find('26711') < 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert '26711' in wkt
 
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
 
-    if ds.GetRasterBand(1).GetMinimum() != 74:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 74
 
-    if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(-1) is None
 
-    if ds.GetRasterBand(1).GetOverview(0) is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(0) is None
 
     subds = ds.GetSubDatasets()
     expected_subds = []
-    if subds != expected_subds:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert subds == expected_subds
 
     gdal.SetConfigOption('RL2_SHOW_ALL_PYRAMID_LEVELS', 'YES')
     ds = gdal.Open('data/byte.rl2')
     gdal.SetConfigOption('RL2_SHOW_ALL_PYRAMID_LEVELS', None)
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 1087:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 1087
 
 ###############################################################################
 # Test opening a rl2 DB gray level
 
 
-def rl2_3():
+def test_rl2_3():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/small_world.rl2')
 
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
 
     ds.GetRasterBand(1).GetNoDataValue()
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 25550:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 25550
 
     cs = ds.GetRasterBand(2).Checksum()
-    if cs != 28146:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 28146
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
 
     cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs != 51412:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 51412
 
     subds = ds.GetSubDatasets()
     expected_subds = [('RASTERLITE2:data/small_world.rl2:small_world:1:world_west', 'Coverage small_world, section world_west / 1'), ('RASTERLITE2:data/small_world.rl2:small_world:2:world_east', 'Coverage small_world, section world_east / 2')]
-    if subds != expected_subds:
-        gdaltest.post_reason('fail')
-        print(subds)
-        return 'fail'
+    assert subds == expected_subds
 
     ds = gdal.Open('RASTERLITE2:data/small_world.rl2:small_world:1:world_west')
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 3721:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 3721
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 35686:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 35686
 
 ###############################################################################
 # Test opening a rl2 DB paletted
 
 
-def rl2_4():
+def test_rl2_4():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/small_world_pct.rl2')
 
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_PaletteIndex:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 14890:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 14890
 
     pct = ds.GetRasterBand(1).GetColorTable()
-    if pct.GetCount() != 256:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if pct.GetColorEntry(1) != (176, 184, 176, 255):
-        gdaltest.post_reason('fail')
-        print(pct.GetColorEntry(1))
-        return 'fail'
+    assert pct.GetCount() == 256
+    assert pct.GetColorEntry(1) == (176, 184, 176, 255)
 
     pct = ds.GetRasterBand(1).GetColorTable()
-    if pct.GetCount() != 256:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert pct.GetCount() == 256
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 35614:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 35614
 
 ###############################################################################
 # Test opening a rl2 DB with various data types
 
 
-def rl2_5():
+def test_rl2_5():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/multi_type.rl2')
 
     subds = ds.GetSubDatasets()
     expected_subds = [('RASTERLITE2:data/multi_type.rl2:uint8', 'Coverage uint8'), ('RASTERLITE2:data/multi_type.rl2:int8', 'Coverage int8'), ('RASTERLITE2:data/multi_type.rl2:uint16', 'Coverage uint16'), ('RASTERLITE2:data/multi_type.rl2:int16', 'Coverage int16'), ('RASTERLITE2:data/multi_type.rl2:uint32', 'Coverage uint32'), ('RASTERLITE2:data/multi_type.rl2:int32', 'Coverage int32'), ('RASTERLITE2:data/multi_type.rl2:float', 'Coverage float'), ('RASTERLITE2:data/multi_type.rl2:double', 'Coverage double'), ('RASTERLITE2:data/multi_type.rl2:1bit', 'Coverage 1bit'), ('RASTERLITE2:data/multi_type.rl2:2bit', 'Coverage 2bit'), ('RASTERLITE2:data/multi_type.rl2:4bit', 'Coverage 4bit')]
-    if subds != expected_subds:
-        gdaltest.post_reason('fail')
-        print(subds)
-        return 'fail'
+    assert subds == expected_subds
 
     tests = [('RASTERLITE2:data/multi_type.rl2:uint8', gdal.GDT_Byte, 4672),
              ('RASTERLITE2:data/multi_type.rl2:int8', gdal.GDT_Byte, 4575),
@@ -261,31 +186,21 @@ def rl2_5():
              ('RASTERLITE2:data/multi_type.rl2:1bit', gdal.GDT_Byte, 4873)]
     for (subds_name, dt, expected_cs) in tests:
         ds = gdal.Open(subds_name)
-        if ds.GetRasterBand(1).DataType != dt:
-            gdaltest.post_reason('fail')
-            print(subds_name)
-            return 'fail'
+        assert ds.GetRasterBand(1).DataType == dt, subds_name
         cs = ds.GetRasterBand(1).Checksum()
-        if cs != expected_cs:
-            gdaltest.post_reason('fail')
-            print(cs)
-            return 'fail'
+        assert cs == expected_cs
         if subds_name == 'RASTERLITE2:data/multi_type.rl2:int8':
-            if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
-                gdaltest.post_reason('fail')
-                print(ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE'))
-                return 'fail'
+            assert ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateCopy() on a grayscale uint8
 
 
-def rl2_6():
+def test_rl2_6():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
@@ -294,10 +209,10 @@ def rl2_6():
 # Test CreateCopy() on a RGB
 
 
-def rl2_7():
+def test_rl2_7():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', 'small_world.tif', 1, 30111, options=['COMPRESS=PNG'])
     return tst.testCreateCopy(vsimem=1)
@@ -306,10 +221,10 @@ def rl2_7():
 # Test CreateCopy() on a paletted dataset
 
 
-def rl2_8():
+def test_rl2_8():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', 'small_world_pct.tif', 1, 14890, options=['COMPRESS=PNG'])
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
@@ -318,10 +233,10 @@ def rl2_8():
 # Test CreateCopy() on a DATAGRID uint16
 
 
-def rl2_9():
+def test_rl2_9():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/uint16.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -330,10 +245,10 @@ def rl2_9():
 # Test CreateCopy() on a DATAGRID int16
 
 
-def rl2_10():
+def test_rl2_10():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/int16.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -342,10 +257,10 @@ def rl2_10():
 # Test CreateCopy() on a DATAGRID uint32
 
 
-def rl2_11():
+def test_rl2_11():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/uint32.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -354,10 +269,10 @@ def rl2_11():
 # Test CreateCopy() on a DATAGRID int32
 
 
-def rl2_12():
+def test_rl2_12():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/int32.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -366,10 +281,10 @@ def rl2_12():
 # Test CreateCopy() on a DATAGRID float
 
 
-def rl2_13():
+def test_rl2_13():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/float32.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -378,10 +293,10 @@ def rl2_13():
 # Test CreateCopy() on a DATAGRID double
 
 
-def rl2_14():
+def test_rl2_14():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/float64.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1)
@@ -390,10 +305,10 @@ def rl2_14():
 # Test CreateCopy() on a 1 bit paletted
 
 
-def rl2_15():
+def test_rl2_15():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', '../../gcore/data/1bit.bmp', 1, 200)
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
@@ -402,22 +317,22 @@ def rl2_15():
 # Test CreateCopy() on a forced 1 bit
 
 
-def rl2_16():
+def test_rl2_16():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options=['NBITS=1', 'COMPRESS=CCITTFAX4'])
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4873, options=['NBITS=1', 'COMPRESS=CCITTFAX4'])
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
 # Test CreateCopy() on a forced 2 bit
 
 
-def rl2_17():
+def test_rl2_17():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4873, options=['NBITS=2', 'COMPRESS=DEFLATE'])
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
@@ -426,10 +341,10 @@ def rl2_17():
 # Test CreateCopy() on a forced 4 bit
 
 
-def rl2_18():
+def test_rl2_18():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 2541, options=['NBITS=4'])
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
@@ -438,12 +353,12 @@ def rl2_18():
 # Test CreateCopy() with forced monochrome
 
 
-def rl2_19():
+def test_rl2_19():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 400, options=['PIXEL_TYPE=MONOCHROME'])
+    tst = gdaltest.GDALTest('SQLite', 'byte.tif', 1, 4873, options=['PIXEL_TYPE=MONOCHROME'])
     return tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 ###############################################################################
@@ -451,10 +366,10 @@ def rl2_19():
 # Se https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=reference_table
 
 
-def rl2_20():
+def test_rl2_20():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tests = [('MONOCHROME', 2, gdal.GDT_Byte, 'NONE', None, None),
              ('MONOCHROME', 1, gdal.GDT_UInt16, 'NONE', None, None),
@@ -489,22 +404,19 @@ def rl2_20():
         options = ['PIXEL_TYPE=' + pixel_type, 'COMPRESS=' + compress]
         with gdaltest.error_handler():
             out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_20.rl2', src_ds, options=options)
-        if out_ds is not None:
-            gdaltest.post_reason('Expected error for %s, band=%d, dt=%d, %s, nbits=%s' % (pixel_type, band_count, dt, compress, nbits))
-            return 'fail'
+        assert out_ds is None, \
+            ('Expected error for %s, band=%d, dt=%d, %s, nbits=%s' % (pixel_type, band_count, dt, compress, nbits))
 
     gdal.Unlink('/vsimem/rl2_20.rl2')
-
-    return 'success'
 
 ###############################################################################
 # Test compression methods
 
 
-def rl2_21():
+def test_rl2_21():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tests = [('DEFLATE', None),
              ('LZMA', None),
@@ -531,25 +443,21 @@ def rl2_21():
         if quality is not None:
             options += ['QUALITY=' + str(quality)]
         out_ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_21.rl2', src_ds, options=options)
-        if out_ds is None:
-            gdaltest.post_reason('Got error with %s, quality=%d' % (compress, quality))
-            return 'fail'
-        if out_ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE').find(compress) < 0:
-            gdaltest.post_reason('Compression %s does not seem to have been applied' % compress)
-            return 'fail'
+        assert out_ds is not None, \
+            ('Got error with %s, quality=%d' % (compress, quality))
+        assert out_ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE').find(compress) >= 0, \
+            ('Compression %s does not seem to have been applied' % compress)
 
     gdal.Unlink('/vsimem/rl2_21.rl2')
-
-    return 'success'
 
 ###############################################################################
 # Test APPEND_SUBDATASET
 
 
-def rl2_22():
+def test_rl2_22():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -557,131 +465,77 @@ def rl2_22():
     ds.CreateLayer('foo', None, ogr.wkbPoint)
     ds = None
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=byte'])
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
     ds = gdal.OpenEx('/vsimem/rl2_22.rl2')
-    if ds.RasterXSize != 20:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterXSize == 20
+    assert ds.GetLayerCount() == 1
 
     left_ds = gdal.Translate('left', src_ds, srcWin=[0, 0, 10, 20], format='MEM')
     right_ds = gdal.Translate('', src_ds, srcWin=[10, 0, 10, 20], format='MEM')
 
     gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', left_ds, options=['COVERAGE=left_right'])
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', right_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=left_right', 'SECTION=right'])
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_22.rl2', src_ds, options=['APPEND_SUBDATASET=YES', 'COVERAGE=rgbsmall'])
-    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
     ds = None
 
     gdal.Unlink('/vsimem/rl2_22.rl2')
-
-    return 'success'
 
 ###############################################################################
 # Test BuildOverviews
 
 
-def rl2_23():
+def test_rl2_23():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/byte.tif')
     src_ds = gdal.Translate('', src_ds, format='MEM', width=2048, height=2048)
     ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_23.rl2', src_ds)
     ret = ds.BuildOverviews('NEAR', [2])
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetRasterBand(1).GetOverviewCount() != 5:
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ret == 0
+    assert ds.GetRasterBand(1).GetOverviewCount() == 5
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs == 0:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs != 0
     ret = ds.BuildOverviews('NONE', [])
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 0
     ds = gdal.Open('/vsimem/rl2_23.rl2')
-    if ds.GetRasterBand(1).GetOverviewCount() == 5:
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).GetOverviewCount())
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() != 5
     ds = None
 
     gdal.Unlink('/vsimem/rl2_23.rl2')
-
-    return 'success'
 
 ###############################################################################
 # Test opening a .rl2.sql file
 
 
-def rl2_24():
+def test_rl2_24():
 
     if gdaltest.rl2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.rl2.sql')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('validation failed')
-        return 'fail'
-    return 'success'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
+
+###############################################################################
+# Test Create()
 
 
-gdaltest_list = [
-    rl2_1,
-    rl2_2,
-    rl2_3,
-    rl2_4,
-    rl2_5,
-    rl2_6,
-    rl2_7,
-    rl2_8,
-    rl2_9,
-    rl2_10,
-    rl2_11,
-    rl2_12,
-    rl2_13,
-    rl2_14,
-    rl2_15,
-    rl2_16,
-    rl2_17,
-    rl2_18,
-    rl2_19,
-    rl2_20,
-    rl2_21,
-    rl2_22,
-    rl2_23,
-    rl2_24
-]
+def test_rl2_error_create():
 
-if __name__ == '__main__':
+    if gdaltest.rl2_drv is None:
+        pytest.skip()
 
-    gdaltest.setup_run('rl2')
+    with gdaltest.error_handler():
+        assert gdaltest.rl2_drv.Create('/vsimem/out.db', 1, 1) is None
+    
 
-    gdaltest.run_tests(gdaltest_list)
 
-    gdaltest.summarize()

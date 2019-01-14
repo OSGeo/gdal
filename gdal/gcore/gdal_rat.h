@@ -60,7 +60,7 @@ public:
      *
      * @return new copy of the RAT as an in-memory implementation.
      */
-    virtual GDALDefaultRasterAttributeTable *Clone() const = 0;
+    virtual GDALRasterAttributeTable *Clone() const = 0;
 
     /**
      * \brief Fetch table column count.
@@ -238,6 +238,25 @@ public:
      */
     virtual int           ChangesAreWrittenToFile() = 0;
 
+    /**
+     * \brief Set the RAT table type.
+     *
+     * Set whether the RAT is thematic or athematic (continuous).
+     *
+     * @since GDAL 2.4
+     */
+    virtual CPLErr        SetTableType(const GDALRATTableType eInTableType) = 0;
+
+    /**
+     * \brief Get the RAT table type.
+     *
+     * Indicates whether the RAT is thematic or athematic (continuous).
+     *
+     * @since GDAL 2.4
+     * @return table type
+     */
+    virtual GDALRATTableType GetTableType() const = 0;
+
     virtual CPLErr        ValuesIO( GDALRWFlag eRWFlag, int iField,
                                     int iStartRow, int iLength,
                                     double *pdfData);
@@ -285,6 +304,13 @@ public:
      */
     static inline GDALRasterAttributeTable* FromHandle(GDALRasterAttributeTableH hRAT)
         { return static_cast<GDALRasterAttributeTable*>(hRAT); }
+
+    /**
+     * \brief Remove statistics from the RAT.
+     *
+     * @since GDAL 2.4
+     */
+    virtual void          RemoveStatistics() = 0;
 };
 
 /************************************************************************/
@@ -323,6 +349,8 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
     double dfRow0Min = -0.5;
     double dfBinSize = 1.0;
 
+    GDALRATTableType eTableType;
+
     void  AnalyseColumns();
     int   bColumnsAnalysed = false;  // TODO(schwehr): Can this be a bool?
     int   nMinCol = -1;
@@ -333,6 +361,7 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
     CPLString osWorkingResult{};
 
  public:
+    GDALDefaultRasterAttributeTable();
     ~GDALDefaultRasterAttributeTable() override;
 
     GDALDefaultRasterAttributeTable *Clone() const override;
@@ -369,6 +398,11 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
                              double dfBinSize ) override;
     int GetLinearBinning( double *pdfRow0Min,
                           double *pdfBinSize ) const override;
+
+    CPLErr        SetTableType(const GDALRATTableType eInTableType) override;
+    GDALRATTableType GetTableType() const override;
+
+    void          RemoveStatistics() override;
 };
 
 #endif /* ndef GDAL_RAT_H_INCLUDED */

@@ -3,3 +3,13 @@
 *.obj
 *.so
 *~
+
+.vagrant
+
+# IDE ignore
+.project
+.settings
+.pydevproject
+.cproject
+.idea
+.vscode

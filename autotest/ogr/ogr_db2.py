@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
@@ -39,205 +39,163 @@
 # These tests currently only run on Windows
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Test if driver is available
 
 
-def ogr_db2_check_driver():
+def test_ogr_db2_check_driver():
 
     ogrtest.db2_drv = None
 
     ogrtest.db2_drv = ogr.GetDriverByName('DB2ODBC')
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test if environment variable for DB2 connection is set and we can connect
 
 
-def ogr_db2_init():
+def test_ogr_db2_init():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if 'DB2_TEST_SERVER' in os.environ:
         ogrtest.db2_test_server = "DB2ODBC:" + os.environ['DB2_TEST_SERVER']
     else:
-        gdaltest.post_reason('Environment variable DB2_TEST_SERVER not found')
         ogrtest.db2_drv = None
-        return 'skip'
+        pytest.skip('Environment variable DB2_TEST_SERVER not found')
 
-    return 'success'
-###############################################################################
+    ###############################################################################
 # Test GetFeatureCount()
 
 
-def ogr_db2_GetFeatureCount():
+def test_ogr_db2_GetFeatureCount():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     count = lyr.GetFeatureCount()
-    if count != 5:
-        gdaltest.post_reason('did not get expected feature count')
-        return 'fail'
-
-    return 'success'
+    assert count == 5, 'did not get expected feature count'
 
 ###############################################################################
 # Test GetSpatialRef()
 
 
-def ogr_db2_GetSpatialRef():
+def test_ogr_db2_GetSpatialRef():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     sr = lyr.GetSpatialRef()
 
-    if sr is None:
-        gdaltest.post_reason('did not get expected srs')
-        return 'fail'
+    assert sr is not None, 'did not get expected srs'
 
     txt = sr.ExportToWkt()
 
-    if txt.find('GEOGCS[\"GCS_WGS_1984') == -1:
-        gdaltest.post_reason('did not get expected srs')
-        print(txt)
-        return 'fail'
-
-    return 'success'
+    assert txt.find('GEOGCS[\"GCS_WGS_1984') != -1, 'did not get expected srs'
 
 
 ###############################################################################
 # Test GetExtent()
-def ogr_db2_GetExtent():
+def test_ogr_db2_GetExtent():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     extent = lyr.GetExtent()
-    if extent is None:
-        gdaltest.post_reason('did not get extent')
-        return 'fail'
+    assert extent is not None, 'did not get extent'
 
-    if extent != (-122.030745, -121.95672, 37.278665, 37.440885):
-        gdaltest.post_reason('did not get expected extent')
-        print(extent)
-        return 'fail'
-
-    return 'success'
+    assert extent == (-122.030745, -121.95672, 37.278665, 37.440885), \
+        'did not get expected extent'
 
 ###############################################################################
 # Test GetFeature()
 
 
-def ogr_db2_GetFeature():
+def test_ogr_db2_GetFeature():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
     feat = lyr.GetFeature(5)
-    if feat is None:
-        gdaltest.post_reason('did not get a feature')
-        return 'fail'
+    assert feat is not None, 'did not get a feature'
 
     if feat.GetField('ZIP') != '95008':
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test SetSpatialFilter()
 
 
-def ogr_db2_SetSpatialFilter():
+def test_ogr_db2_SetSpatialFilter():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayer(0)
 
-    if lyr is None:
-        return 'fail'
+    assert lyr is not None
 
 # set a query envelope so we only get one feature
     lyr.SetSpatialFilterRect(-122.02, 37.42, -122.01, 37.43)
 
     count = lyr.GetFeatureCount()
 
-    if count != 1:
-        gdaltest.post_reason('did not get expected feature count (1)')
-        print(count)
-        return 'fail'
+    assert count == 1, 'did not get expected feature count (1)'
 
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('did not get a feature')
-        return 'fail'
+    assert feat is not None, 'did not get a feature'
 
     if feat.GetField('ZIP') != '94089':
-        gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected feature')
 
 # start over with a larger envelope to get 3 out of 5 of the points
     lyr.ResetReading()
@@ -245,10 +203,7 @@ def ogr_db2_SetSpatialFilter():
 
     count = lyr.GetFeatureCount()
 
-    if count != 3:
-        gdaltest.post_reason('did not get expected feature count (3)')
-        print(count)
-        return 'fail'
+    assert count == 3, 'did not get expected feature count (3)'
 
 # iterate through the features to make sure we get the same count
     count = 0
@@ -257,27 +212,21 @@ def ogr_db2_SetSpatialFilter():
         count = count + 1
         feat = lyr.GetNextFeature()
 
-    if count != 3:
-        gdaltest.post_reason('did not get expected feature count (3)')
-        print(count)
-        return 'fail'
-
-    return 'success'
+    assert count == 3, 'did not get expected feature count (3)'
 
 #
 # test what capabilities the DB2 driver provides
 #
 
 
-def ogr_db2_capabilities():
+def test_ogr_db2_capabilities():
 
     if ogrtest.db2_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     layer = ds.GetLayer()
     capabilities = [
@@ -301,8 +250,7 @@ def ogr_db2_capabilities():
     print("Layer Capabilities:")
     for cap in capabilities:
         print("  %s = %s" % (cap, layer.TestCapability(cap)))
-    return 'success'
-
+    
 
 def ogr_db2_listdrivers():
     cnt = ogr.GetDriverCount()
@@ -320,26 +268,6 @@ def ogr_db2_listdrivers():
     for i in formatsList:
         print(i)
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    ogr_db2_check_driver,
-    ogr_db2_init,
-    # ogr_db2_listdrivers,
-    ogr_db2_GetSpatialRef,
-    ogr_db2_GetExtent,
-    ogr_db2_GetFeature,
-    ogr_db2_SetSpatialFilter,
-    ogr_db2_capabilities,
-    ogr_db2_GetFeatureCount
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_db2')
-    if os.name == 'nt':
-        gdaltest.run_tests(gdaltest_list)
-    else:
-        print("These tests only run on Windows")
-    gdaltest.summarize()

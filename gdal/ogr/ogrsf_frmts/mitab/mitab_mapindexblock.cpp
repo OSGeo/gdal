@@ -162,8 +162,6 @@ int     TABMAPIndexBlock::InitBlockFromData(GByte *pabyBuf,
  **********************************************************************/
 int     TABMAPIndexBlock::CommitToFile()
 {
-    int nStatus = 0;
-
     if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -194,7 +192,7 @@ int     TABMAPIndexBlock::CommitToFile()
     WriteInt16(TABMAP_INDEX_BLOCK);    // Block type code
     WriteInt16(static_cast<GInt16>(m_numEntries));
 
-    nStatus = CPLGetLastErrorNo();
+    int nStatus = CPLGetLastErrorType() == CE_Failure ? -1 : 0;
 
     /*-----------------------------------------------------------------
      * Loop through all entries, writing each of them, and calling
@@ -262,7 +260,7 @@ int     TABMAPIndexBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
         WriteInt16(0);                      // num. index entries
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -293,7 +291,7 @@ int     TABMAPIndexBlock::ReadNextEntry(TABMAPIndexEntry *psEntry)
     psEntry->YMax = ReadInt32();
     psEntry->nBlockPtr = ReadInt32();
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -342,7 +340,7 @@ int     TABMAPIndexBlock::WriteNextEntry(TABMAPIndexEntry *psEntry)
     WriteInt32(psEntry->YMax);
     WriteInt32(psEntry->nBlockPtr);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;

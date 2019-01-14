@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,16 +29,15 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import gdaltest
 import test_cli_utilities
+import pytest
 
 ###############################################################################
 # Simple test
@@ -46,7 +45,7 @@ import test_cli_utilities
 
 def test_gdaltindex_1():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('tmp/tileindex.shp')
@@ -89,27 +88,18 @@ def test_gdaltindex_1():
     ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
-        gdaltest.post_reason('fail')
         print(ret_stdout)
-        print(ret_stderr)
-        print(ds.GetLayer(0).GetFeatureCount())
-        return 'fail'
+        pytest.fail(ret_stderr)
     tileindex_wkt = ds.GetLayer(0).GetSpatialRef().ExportToWkt()
     if tileindex_wkt.find('WGS_1984') == -1:
-        gdaltest.post_reason('fail')
         print(ret_stdout)
-        print(ret_stderr)
-        print(tileindex_wkt)
-        return 'fail'
+        pytest.fail(ret_stderr)
 
     expected_wkts = ['POLYGON ((49 2,50 2,50 1,49 1,49 2))',
                      'POLYGON ((49 3,50 3,50 2,49 2,49 3))',
@@ -118,14 +108,11 @@ def test_gdaltindex_1():
     i = 0
     feat = ds.GetLayer(0).GetNextFeature()
     while feat is not None:
-        if feat.GetGeometryRef().ExportToWkt() != expected_wkts[i]:
-            print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
-            return 'fail'
+        assert feat.GetGeometryRef().ExportToWkt() == expected_wkts[i], \
+            ('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
         i = i + 1
         feat = ds.GetLayer(0).GetNextFeature()
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Try adding the same rasters again
@@ -133,24 +120,19 @@ def test_gdaltindex_1():
 
 def test_gdaltindex_2():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
-    if ret_stderr.find('File tmp/gdaltindex1.tif is already in tileindex. Skipping it.') == -1 or \
+    assert (not (ret_stderr.find('File tmp/gdaltindex1.tif is already in tileindex. Skipping it.') == -1 or \
        ret_stderr.find('File tmp/gdaltindex2.tif is already in tileindex. Skipping it.') == -1 or \
        ret_stderr.find('File tmp/gdaltindex3.tif is already in tileindex. Skipping it.') == -1 or \
-       ret_stderr.find('File tmp/gdaltindex4.tif is already in tileindex. Skipping it.') == -1:
-        print(ret_stderr)
-        gdaltest.post_reason('got unexpected error messages.')
-        return 'fail'
+       ret_stderr.find('File tmp/gdaltindex4.tif is already in tileindex. Skipping it.') == -1)), \
+        'got unexpected error messages.'
 
     ds = ogr.Open('tmp/tileindex.shp')
-    if ds.GetLayer(0).GetFeatureCount() != 4:
-        return 'fail'
+    assert ds.GetLayer(0).GetFeatureCount() == 4
     ds.Destroy()
-
-    return 'success'
 
 
 ###############################################################################
@@ -159,7 +141,7 @@ def test_gdaltindex_2():
 
 def test_gdaltindex_3():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
@@ -171,18 +153,13 @@ def test_gdaltindex_3():
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
 
-    if ret_stderr.find('Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex.') == -1 or \
-       ret_stderr.find('Use -t_srs option to set target projection system (not supported by MapServer).') == -1:
-        print(ret_stderr)
-        gdaltest.post_reason('got unexpected error message \n[%s]' % (ret_stderr))
-        return 'fail'
+    assert (not (ret_stderr.find('Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex.') == -1 or \
+       ret_stderr.find('Use -t_srs option to set target projection system (not supported by MapServer).') == -1)), \
+        ('got unexpected error message \n[%s]' % (ret_stderr))
 
     ds = ogr.Open('tmp/tileindex.shp')
-    if ds.GetLayer(0).GetFeatureCount() != 4:
-        return 'fail'
+    assert ds.GetLayer(0).GetFeatureCount() == 4
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Try adding a raster in another projection with -t_srs
@@ -191,7 +168,7 @@ def test_gdaltindex_3():
 
 def test_gdaltindex_4():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
     wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
@@ -204,12 +181,9 @@ def test_gdaltindex_4():
     gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif')
 
     ds = ogr.Open('tmp/tileindex.shp')
-    if ds.GetLayer(0).GetFeatureCount() != 5:
-        gdaltest.post_reason('got %d features, expecting 5' % ds.GetLayer(0).GetFeatureCount())
-        return 'fail'
+    assert ds.GetLayer(0).GetFeatureCount() == 5, \
+        ('got %d features, expecting 5' % ds.GetLayer(0).GetFeatureCount())
     ds.Destroy()
-
-    return 'success'
 
 ###############################################################################
 # Test -src_srs_name, -src_srs_format options
@@ -217,7 +191,7 @@ def test_gdaltindex_4():
 
 def test_gdaltindex_5():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -236,37 +210,32 @@ def test_gdaltindex_5():
 
         ds = ogr.Open('tmp/test_gdaltindex_5.shp')
         lyr = ds.GetLayer(0)
-        if lyr.GetFeatureCount() != 2:
-            gdaltest.post_reason('got %d features, expecting 2' % ds.GetLayer(0).GetFeatureCount())
-            return 'fail'
+        assert lyr.GetFeatureCount() == 2, \
+            ('got %d features, expecting 2' % ds.GetLayer(0).GetFeatureCount())
         feat = lyr.GetNextFeature()
         feat = lyr.GetNextFeature()
         if src_srs_format == '-src_srs_format PROJ':
             if feat.GetField('src_srs').find('+proj=longlat +ellps=WGS72') != 0:
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail()
         elif src_srs_format == '-src_srs_format WKT':
             if feat.GetField('src_srs').find('GEOGCS["WGS 72"') != 0:
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail()
         else:
             if feat.GetField('src_srs') != 'EPSG:4322':
-                gdaltest.post_reason('fail')
                 feat.DumpReadable()
-                return 'fail'
+                pytest.fail()
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -f, -lyr_name
 
 
 def test_gdaltindex_6():
     if test_cli_utilities.get_gdaltindex_path() is None:
-        return 'skip'
+        pytest.skip()
 
     for option in ['', '-lyr_name tileindex']:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -275,13 +244,11 @@ def test_gdaltindex_6():
         gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif' % option)
         ds = ogr.Open('tmp/test_gdaltindex_6.mif')
         lyr = ds.GetLayer(0)
-        if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason('got %d features, expecting 1' % lyr.GetFeatureCount())
-            return 'fail'
+        assert lyr.GetFeatureCount() == 1, \
+            ('got %d features, expecting 1' % lyr.GetFeatureCount())
         ds = None
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -301,24 +268,6 @@ def test_gdaltindex_cleanup():
     drv.Delete('tmp/gdaltindex5.tif')
     drv.Delete('tmp/gdaltindex6.tif')
 
-    return 'success'
 
 
-gdaltest_list = [
-    test_gdaltindex_1,
-    test_gdaltindex_2,
-    test_gdaltindex_3,
-    test_gdaltindex_4,
-    test_gdaltindex_5,
-    test_gdaltindex_6,
-    test_gdaltindex_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdaltindex')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

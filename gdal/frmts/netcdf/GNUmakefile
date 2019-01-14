@@ -19,6 +19,12 @@ endif
 
 CPPFLAGS	:=	 $(CPPFLAGS) $(XTRA_OPT)
 
+ifeq ($(ENABLE_UFFD),yes)
+ifeq ($(NETCDF_MEM),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DENABLE_UFFD
+endif
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:

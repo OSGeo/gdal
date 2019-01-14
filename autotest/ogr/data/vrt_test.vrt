@@ -48,4 +48,18 @@
         <Field name="x"/>
     </OGRVRTLayer>
 
+    <OGRVRTLayer name="test8">
+        <SrcDataSource shared="TRUE"><![CDATA[
+            <OGRVRTDataSource>
+                <OGRVRTLayer name="src_layer">
+                    <SrcDataSource shared="TRUE">data/flat.dbf</SrcDataSource>
+                    <SrcLayer>flat</SrcLayer>
+                    <FID name="bar">fid</FID>
+                </OGRVRTLayer>
+            </OGRVRTDataSource>]]>
+        </SrcDataSource>
+        <SrcLayer>src_layer</SrcLayer>
+        <FID/>
+    </OGRVRTLayer>
+
 </OGRVRTDataSource>

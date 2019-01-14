@@ -5,7 +5,7 @@ ret_code=0
 echo "Checking for suspicious comparisons to '0'..."
 
 # Detect comparisons where we'd likely want to check against nul terminating byte in the condition of a for/while loop
-if grep -r --include="*.c*" "!= '0'" alg gnm port ogr gcore frmts apps ; then
+if grep -r --include="*.c*" "!= '0'" alg gnm port ogr gcore frmts apps | grep -v libjson ; then
     ret_code=1
 fi
 if grep -r --include="*.c*" "!='0'" alg gnm port ogr gcore frmts apps | grep -v libjson ; then

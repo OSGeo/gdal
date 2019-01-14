@@ -36,10 +36,10 @@
 std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
                                 std::map<CPLString, CPLString>& oMapCodeToWKT)
 {
-    const int nBandCount = json_object_array_length( poBands );
+    const auto nBandCount = json_object_array_length( poBands );
     std::vector<EEDAIBandDesc> aoBandDesc;
 
-    for(int i = 0; i < nBandCount; i++)
+    for(auto i = decltype(nBandCount){0}; i < nBandCount; i++)
     {
         json_object* poBand = json_object_array_get_idx(poBands, i);
         if( poBand == nullptr || json_object_get_type(poBand) != json_type_object )
@@ -277,6 +277,47 @@ GDALEEDABaseDataset::~GDALEEDABaseDataset()
 }
 
 /************************************************************************/
+/*                          ConvertPathToName()                        */
+/************************************************************************/
+
+CPLString GDALEEDABaseDataset::ConvertPathToName(const CPLString& path) {
+    size_t end = path.find('/');
+    CPLString folder = path.substr(0, end);
+
+    if ( folder == "users" )
+    {
+        return "projects/earthengine-legacy/assets/" + path;
+    }
+    else if ( folder != "projects" )
+    {
+        return "projects/earthengine-public/assets/" + path;
+    }
+
+    // Find the start and end positions of the third segment, if it exists.
+    int segment = 1;
+    size_t start = 0;
+    while ( end != std::string::npos && segment < 3 )
+    {
+        segment++;
+        start = end + 1;
+        end = path.find('/', start);
+    }
+
+    end = (end == std::string::npos) ? path.size() : end;
+    // segment is 3 if path has at least 3 segments.
+    if ( folder == "projects" && segment == 3 )
+    {
+        // If the first segment is "projects" and the third segment is "assets",
+        // path is a name, so return as-is.
+        if ( path.substr(start, end - start) == "assets" )
+        {
+            return path;
+        }
+    }
+    return "projects/earthengine-legacy/assets/" + path;
+}
+
+/************************************************************************/
 /*                          GetBaseHTTPOptions()                        */
 /************************************************************************/
 
@@ -291,6 +332,9 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
     // Strategy to get the Bearer Authorization value:
     // - if it is specified in the EEDA_BEARER config option, use it
     // - otherwise if EEDA_BEARER_FILE is specified, read it and use its content
+    // - otherwise if GOOGLE_APPLICATION_CREDENTIALS is specified, read the
+    //   corresponding file to get the private key and client_email, to get a
+    //   bearer using OAuth2ServiceAccount method
     // - otherwise if EEDA_PRIVATE_KEY and EEDA_CLIENT_EMAIL are set, use them
     //   to get a bearer using OAuth2ServiceAccount method
     // - otherwise if EEDA_PRIVATE_KEY_FILE and EEDA_CLIENT_EMAIL are set, use
@@ -320,6 +364,8 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
         else
         {
             CPLString osPrivateKey(CPLGetConfigOption("EEDA_PRIVATE_KEY", ""));
+            CPLString osClientEmail(CPLGetConfigOption("EEDA_CLIENT_EMAIL", ""));
+
             if( osPrivateKey.empty() )
             {
                 CPLString osPrivateKeyFile(
@@ -342,13 +388,30 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
                     }
                 }
             }
-            CPLString osClientEmail(CPLGetConfigOption("EEDA_CLIENT_EMAIL", ""));
+
+            CPLString osServiceAccountJson(
+                CPLGetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", ""));
+            if( !osServiceAccountJson.empty() )
+            {
+                CPLJSONDocument oDoc;
+                if( !oDoc.Load(osServiceAccountJson) )
+                {
+                    CSLDestroy(papszOptions);
+                    return nullptr;
+                }
+
+                osPrivateKey = oDoc.GetRoot().GetString("private_key");
+                osPrivateKey.replaceAll("\\n", "\n");
+                osClientEmail = oDoc.GetRoot().GetString("client_email");
+            }
+
+            char** papszMD = nullptr;
             if( !osPrivateKey.empty() && !osClientEmail.empty() )
             {
                 CPLDebug("EEDA", "Requesting Bearer token");
                 osPrivateKey.replaceAll("\\n", "\n");
                 //CPLDebug("EEDA", "Private key: %s", osPrivateKey.c_str());
-                char** papszMD =
+                papszMD =
                     GOA2GetAccessTokenFromServiceAccount(
                         osPrivateKey,
                         osClientEmail,
@@ -359,7 +422,18 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
                     CSLDestroy(papszOptions);
                     return nullptr;
                 }
+            }
+            // Some Travis-CI workers are GCE machines, and for some tests, we don't
+            // want this code path to be taken. And on AppVeyor/Window, we would also
+            // attempt a network access
+            else if( !CPLTestBool(CPLGetConfigOption("CPL_GCE_SKIP", "NO")) &&
+                    CPLIsMachinePotentiallyGCEInstance() )
+            {
+                papszMD = GOA2GetAccessTokenFromCloudEngineVM(nullptr);
+            }
 
+            if( papszMD )
+            {
                 osBearer = CSLFetchNameValueDef(papszMD, "access_token", "");
                 m_osBearer = osBearer;
                 m_nExpirationTime = CPLAtoGIntBig(
@@ -372,6 +446,7 @@ char** GDALEEDABaseDataset::GetBaseHTTPOptions()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Missing EEDA_BEARER, EEDA_BEARER_FILE or "
+                    "GOOGLE_APPLICATION_CREDENTIALS or "
                     "EEDA_PRIVATE_KEY/EEDA_PRIVATE_KEY_FILE + "
                     "EEDA_CLIENT_EMAIL config option");
                 CSLDestroy(papszOptions);
@@ -436,7 +511,7 @@ CPLHTTPResult* EEDAHTTPFetch(const char* pszURL, char** papszOptions)
                  (nHTTPStatus >= 502 && nHTTPStatus <= 504)) &&
                  i < RETRY_COUNT )
             {
-                CPLError( CE_Warning, CPLE_FileIO, 
+                CPLError( CE_Warning, CPLE_FileIO,
                           "GET error when downloading %s, HTTP status=%d, retrying in %.2fs : %s",
                           pszURL, nHTTPStatus, dfRetryDelay, pszErrorText);
                 CPLHTTPDestroyResult(psResult);

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,36 +30,31 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 #  Test test_FARSITE_UTM12.LCP
 
 
-def lcp_1():
+def test_lcp_1():
 
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
-    if ds.RasterCount != 8:
-        gdaltest.post_reason('wrong number of bands')
-        return 'fail'
+    assert ds.RasterCount == 8, 'wrong number of bands'
 
-    if ds.GetProjectionRef().find('NAD_1983_UTM_Zone_12N') == -1:
-        gdaltest.post_reason("didn't get expect projection. Got : %s" % (ds.GetProjectionRef()))
-        return 'fail'
+    assert ds.GetProjectionRef().find('NAD_1983_UTM_Zone_12N') != -1, \
+        ("didn't get expect projection. Got : %s" % (ds.GetProjectionRef()))
 
     metadata = [('LATITUDE', '49'),
                 ('LINEAR_UNIT', 'Meters'),
                 ('DESCRIPTION', 'This is a test LCP file created with FARSITE 4.1.054, using data downloaded from the USGS \r\nNational Map for LANDFIRE (2008-05-06). Data were reprojected to UTM zone 12 on NAD83 \r\nusing gdalwarp (GDAL 1.4.2).\r\n')]
     md = ds.GetMetadata()
     for item in metadata:
-        if md[item[0]] != item[1]:
-            gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
-            return 'fail'
+        assert md[item[0]] == item[1], \
+            ('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
 
     check_gt = (285807.932887174887583, 30, 0, 5379230.386217921040952, 0, -30)
     new_gt = ds.GetGeoTransform()
@@ -68,8 +63,7 @@ def lcp_1():
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
-            gdaltest.post_reason('Geotransform differs.')
-            return 'fail'
+            pytest.fail('Geotransform differs.')
 
     dataPerBand = [(18645, [('ELEVATION_UNIT', '0'),
                             ('ELEVATION_UNIT_NAME', 'Meters'),
@@ -124,38 +118,31 @@ def lcp_1():
 
     for i in range(8):
         band = ds.GetRasterBand(i + 1)
-        if band.Checksum() != dataPerBand[i][0]:
-            gdaltest.post_reason('wrong checksum for band %d. Got %d, expected %d' % (i + 1, band.Checksum(), dataPerBand[i][0]))
-            return 'fail'
+        assert band.Checksum() == dataPerBand[i][0], \
+            ('wrong checksum for band %d. Got %d, expected %d' % (i + 1, band.Checksum(), dataPerBand[i][0]))
         md = band.GetMetadata()
         for item in dataPerBand[i][1]:
-            if md[item[0]] != item[1]:
-                gdaltest.post_reason('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i + 1, item[0], md[item[0]], item[1]))
-                return 'fail'
+            assert md[item[0]] == item[1], \
+                ('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i + 1, item[0], md[item[0]], item[1]))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # test test_USGS_LFNM_Alb83.lcp
 
 
-def lcp_2():
+def test_lcp_2():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
-    if ds.RasterCount != 8:
-        gdaltest.post_reason('wrong number of bands')
-        return 'fail'
+    assert ds.RasterCount == 8, 'wrong number of bands'
 
     metadata = [('LATITUDE', '48'),
                 ('LINEAR_UNIT', 'Meters'),
                 ('DESCRIPTION', '')]
     md = ds.GetMetadata()
     for item in metadata:
-        if md[item[0]] != item[1]:
-            gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
-            return 'fail'
+        assert md[item[0]] == item[1], \
+            ('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
 
     check_gt = (-1328145, 30, 0, 2961735, 0, -30)
     new_gt = ds.GetGeoTransform()
@@ -164,8 +151,7 @@ def lcp_2():
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
-            gdaltest.post_reason('Geotransform differs.')
-            return 'fail'
+            pytest.fail('Geotransform differs.')
 
     dataPerBand = [(28381, [('ELEVATION_UNIT', '0'),
                             ('ELEVATION_UNIT_NAME', 'Meters'),
@@ -220,74 +206,57 @@ def lcp_2():
 
     for i in range(8):
         band = ds.GetRasterBand(i + 1)
-        if band.Checksum() != dataPerBand[i][0]:
-            gdaltest.post_reason('wrong checksum for band %d. Got %d, expected %d' % (i + 1, band.Checksum(), dataPerBand[i][0]))
-            return 'fail'
+        assert band.Checksum() == dataPerBand[i][0], \
+            ('wrong checksum for band %d. Got %d, expected %d' % (i + 1, band.Checksum(), dataPerBand[i][0]))
         md = band.GetMetadata()
         for item in dataPerBand[i][1]:
-            if md[item[0]] != item[1]:
-                gdaltest.post_reason('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i + 1, item[0], md[item[0]], item[1]))
-                return 'fail'
+            assert md[item[0]] == item[1], \
+                ('wrong metadataitem for band %d. md[\'%s\']=\'%s\', expected \'%s\'' % (i + 1, item[0], md[item[0]], item[1]))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 #  Test for empty prj
 
 
-def lcp_3():
+def test_lcp_3():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     wkt = ds.GetProjection()
-    if wkt is None:
-        gdaltest.post_reason('Got None from GetProjection()')
-        return 'fail'
-    return 'success'
+    assert wkt is not None, 'Got None from GetProjection()'
 
 ###############################################################################
 #  Test that the prj file isn't added to the sibling list if it isn't there.
 
 
-def lcp_4():
+def test_lcp_4():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     fl = ds.GetFileList()
-    if len(fl) != 1:
-        gdaltest.post_reason('Invalid file list')
-        return 'fail'
-    return 'success'
+    assert len(fl) == 1, 'Invalid file list'
 
 ###############################################################################
 #  Test for valid prj
 
 
-def lcp_5():
+def test_lcp_5():
 
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     wkt = ds.GetProjection()
-    if wkt is None or wkt == '':
-        gdaltest.post_reason('Got invalid wkt from GetProjection()')
-        return 'fail'
-    return 'success'
+    assert not (wkt is None or wkt == ''), 'Got invalid wkt from GetProjection()'
 
 ###############################################################################
 #  Test for valid sibling list
 
 
-def lcp_6():
+def test_lcp_6():
 
     retval = 'success'
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     fl = ds.GetFileList()
     if len(fl) != 2:
         gdaltest.post_reason('Invalid file list')
@@ -304,21 +273,18 @@ def lcp_6():
 #  Test create copy that copies data over
 
 
-def lcp_7():
+def test_lcp_7():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     lcp_drv = gdal.GetDriverByName('LCP')
-    if lcp_drv is None:
-        return 'fail'
+    assert lcp_drv is not None
     # Make sure all available band counts work.
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
     for i in [5, 7, 8, 10]:
         src_ds = mem_drv.Create('/vsimem/lcptest', 10, 20, i, gdal.GDT_Int16)
-        if src_ds is None:
-            return 'fail'
+        assert src_ds is not None
         dst_ds = lcp_drv.CreateCopy('tmp/lcp_7.lcp', src_ds, False, co)
         if dst_ds is None:
             gdaltest.post_reason('Failed to create lcp with %d bands' % i)
@@ -340,14 +306,12 @@ def lcp_7():
 #  Test create copy with invalid bands
 
 
-def lcp_8():
+def test_lcp_8():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     lcp_drv = gdal.GetDriverByName('LCP')
-    if lcp_drv is None:
-        return 'fail'
+    assert lcp_drv is not None
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
@@ -376,22 +340,18 @@ def lcp_8():
 #  Test create copy
 
 
-def lcp_9():
+def test_lcp_9():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     lcp_drv = gdal.GetDriverByName('LCP')
-    if lcp_drv is None:
-        return 'fail'
+    assert lcp_drv is not None
     src_ds = mem_drv.Create('', 10, 20, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
     lcp_ds = lcp_drv.CreateCopy('tmp/lcp_9.lcp', src_ds, False, co)
-    if lcp_ds is None:
-        return 'fail'
+    assert lcp_ds is not None
     lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
@@ -404,17 +364,14 @@ def lcp_9():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_10():
+def test_lcp_10():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     for option in ['METERS', 'FEET']:
@@ -444,17 +401,14 @@ def lcp_10():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_11():
+def test_lcp_11():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     for option in ['DEGREES', 'PERCENT']:
@@ -484,17 +438,14 @@ def lcp_11():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_12():
+def test_lcp_12():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     for option in ['GRASS_CATEGORIES', 'AZIMUTH_DEGREES', 'GRASS_DEGREES']:
@@ -523,17 +474,14 @@ def lcp_12():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_13():
+def test_lcp_13():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     for option in ['PERCENT', 'CATEGORIES']:
@@ -563,17 +511,14 @@ def lcp_13():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_14():
+def test_lcp_14():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
@@ -603,17 +548,14 @@ def lcp_14():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_15():
+def test_lcp_15():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
@@ -643,17 +585,14 @@ def lcp_15():
 #  Test create copy and make sure all unit metadata co work
 
 
-def lcp_16():
+def test_lcp_16():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     answers = ['kg/m^3', 'lb/ft^3', 'kg/m^3 x 100', 'lb/ft^3 x 1000',
@@ -689,17 +628,14 @@ def lcp_16():
 #  documentation.  Docs say mg/ha * 10 and tn/ac * 10, metadata is not * 10.
 
 
-def lcp_17():
+def test_lcp_17():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     answers = ['mg/ha', 't/ac x 10']
@@ -730,17 +666,14 @@ def lcp_17():
 #  Test create copy and make sure creation options work.
 
 
-def lcp_18():
+def test_lcp_18():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     co = ['LATITUDE=45', 'LINEAR_UNIT=METER']
@@ -764,17 +697,14 @@ def lcp_18():
 #  Test create copy and make sure creation options work.
 
 
-def lcp_19():
+def test_lcp_19():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=FOOT']
@@ -799,17 +729,14 @@ def lcp_19():
 #  Test create copy and make sure DESCRIPTION co works
 
 
-def lcp_20():
+def test_lcp_20():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     desc = 'test description'
@@ -834,21 +761,18 @@ def lcp_20():
 #  Test create copy and make data is copied over via checksums
 
 
-def lcp_21():
+def test_lcp_21():
     try:
         import random
         import struct
     except ImportError:
-        return 'skip'
+        pytest.skip()
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 3, 3, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     for i in range(10):
         data = [random.randint(0, 100) for i in range(9)]
@@ -878,22 +802,19 @@ def lcp_21():
 #  Test create copy and make data is copied over via numpy comparison.
 
 
-def lcp_22():
+def test_lcp_22():
     try:
         import random
         import struct
         import numpy
     except ImportError:
-        return 'skip'
+        pytest.skip()
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 3, 3, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     for i in range(10):
         data = [random.randint(0, 100) for i in range(9)]
@@ -902,8 +823,7 @@ def lcp_22():
     retval = 'success'
     co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
     lcp_ds = drv.CreateCopy('tmp/lcp_22.lcp', src_ds, False, co)
-    if lcp_ds is None:
-        return 'fail'
+    assert lcp_ds is not None
     retval = 'success'
     for i in range(10):
         src_data = src_ds.GetRasterBand(i + 1).ReadAsArray()
@@ -925,17 +845,14 @@ def lcp_22():
 ###############################################################################
 #  Test create copy and make sure invalid creation options are caught.
 
-def lcp_23():
+def test_lcp_23():
 
     mem_drv = gdal.GetDriverByName('MEM')
-    if mem_drv is None:
-        return 'fail'
+    assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
-    if drv is None:
-        return 'fail'
+    assert drv is not None
     src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
-    if src_ds is None:
-        return 'fail'
+    assert src_ds is not None
 
     retval = 'success'
     bad = 'NOT_A_REAL_OPTION'
@@ -960,35 +877,4 @@ def lcp_23():
     return retval
 
 
-gdaltest_list = [
-    lcp_1,
-    lcp_2,
-    lcp_3,
-    lcp_4,
-    lcp_5,
-    lcp_6,
-    lcp_7,
-    lcp_8,
-    lcp_9,
-    lcp_10,
-    lcp_11,
-    lcp_12,
-    lcp_13,
-    lcp_14,
-    lcp_15,
-    lcp_16,
-    lcp_17,
-    lcp_18,
-    lcp_19,
-    lcp_20,
-    lcp_21,
-    lcp_22,
-    lcp_23]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('lcp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

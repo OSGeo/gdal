@@ -317,7 +317,10 @@ fields from input layer to copy to the new layer. A field is skipped if
 mentioned previously in the list even if the input layer has duplicate field
 names.  (Defaults to all; any field is skipped if a subsequent field with
 same name is found.) Starting with OGR 1.11, geometry fields can also be specified
-in the list.</dd>
+in the list.
+
+Note this setting cannot be used together with -append. To control the selection
+of fields when appending to a layer, use -fieldmap or -sql.</dd>
 <dt> <b>-progress</b>:</dt><dd> (starting with GDAL 1.7.0) Display progress on terminal. Only works if input layers have the "fast feature count" capability.</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
 The resulting table/layer will be saved to the output. Starting with GDAL 2.1, the \@filename syntax
@@ -451,9 +454,9 @@ available GCPs.</dd>
 <dt> <b>-fieldmap</b>:</dt><dd>(starting with GDAL 1.10.0) Specifies the list of field indexes to be copied
 from the source to the destination. The (n)th value specified in the list is the index of the field in the
 target layer definition in which the n(th) field of the source layer must be copied. Index count starts at
-zero. There must be exactly as many values in the list as the count of the fields in the source layer.
-We can use the 'identity' setting to specify that the fields should be transferred by using the same order.
-This setting should be used along with the -append setting.</dd>
+zero. To omit a field, specify a value of -1. There must be exactly as many values in the list as the count
+of the fields in the source layer.  We can use the 'identity' setting to specify that the fields should be
+transferred by using the same order.  This setting should be used along with the -append setting.</dd>
 <dt> <b>-addfields</b>:</dt><dd>(starting with GDAL 1.11) This is a specialized version of
 -append. Contrary to -append, -addfields has the effect of adding, to existing target layers,
 the new fields found in source layers. This option is useful when merging files that have non-strictly

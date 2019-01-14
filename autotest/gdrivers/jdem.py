@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,19 +36,10 @@ import gdaltest
 # Test reading a - fake - JDEM dataset
 
 
-def jdem_1():
+def test_jdem_1():
 
     tst = gdaltest.GDALTest('JDEM', 'fakejdem.mem', 1, 15)
     return tst.testOpen()
 
 
-gdaltest_list = [
-    jdem_1]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('jdem')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

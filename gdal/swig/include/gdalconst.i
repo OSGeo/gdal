@@ -150,6 +150,13 @@
 %constant CPLE_AssertionFailed            = CPLE_AssertionFailed;
 %constant CPLE_NoWriteAccess              = CPLE_NoWriteAccess;
 %constant CPLE_UserInterrupt              = CPLE_UserInterrupt;
+%constant CPLE_ObjectNull                 = CPLE_ObjectNull;
+%constant CPLE_HttpResponse               = CPLE_HttpResponse;
+%constant CPLE_AWSBucketNotFound          = CPLE_AWSBucketNotFound;
+%constant CPLE_AWSObjectNotFound          = CPLE_AWSObjectNotFound;
+%constant CPLE_AWSAccessDenied            = CPLE_AWSAccessDenied;
+%constant CPLE_AWSInvalidCredentials      = CPLE_AWSInvalidCredentials;
+%constant CPLE_AWSSignatureDoesNotMatch   = CPLE_AWSSignatureDoesNotMatch;
 
 // Open flags
 %constant OF_ALL     = GDAL_OF_ALL;
@@ -240,6 +247,10 @@
 %constant GFU_BlueMax             = GFU_BlueMax;
 %constant GFU_AlphaMax            = GFU_AlphaMax;
 %constant GFU_MaxCount            = GFU_MaxCount;
+
+// GDALRATTableType
+%constant GRTT_THEMATIC           = GRTT_THEMATIC;
+%constant GRTT_ATHEMATIC          = GRTT_ATHEMATIC;
 
 %constant GMF_ALL_VALID           = 0x01;
 %constant GMF_PER_DATASET         = 0x02;

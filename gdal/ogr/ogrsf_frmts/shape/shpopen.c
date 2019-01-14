@@ -985,11 +985,13 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 /*  Establish the byte order on this machine.                           */
 /* -------------------------------------------------------------------- */
 #if !defined(bBigEndian)
-    i = 1;
-    if( *((uchar *) &i) == 1 )
-        bBigEndian = FALSE;
-    else
-        bBigEndian = TRUE;
+    {
+        int i = 1;
+        if( *((uchar *) &i) == 1 )
+            bBigEndian = FALSE;
+        else
+            bBigEndian = TRUE;
+    }
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -1260,11 +1262,13 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /*      Establish the byte order on this system.                        */
 /* -------------------------------------------------------------------- */
 #if !defined(bBigEndian)
-    i = 1;
-    if( *((uchar *) &i) == 1 )
-        bBigEndian = FALSE;
-    else
-        bBigEndian = TRUE;
+    {
+        int i = 1;
+        if( *((uchar *) &i) == 1 )
+            bBigEndian = FALSE;
+        else
+            bBigEndian = TRUE;
+    }
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -2147,33 +2151,35 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         /* Before allocating too much memory, check that the file is big enough */
         /* and do not trust the file size in the header the first time we */
         /* need to allocate more than 10 MB */
-        if( nNewBufSize >= 10 * 1024 * 1024 &&
-            psSHP->nBufSize < 10 * 1024 * 1024 )
+        if( nNewBufSize >= 10 * 1024 * 1024 )
         {
-            SAOffset nFileSize;
-            psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 2 );
-            nFileSize = psSHP->sHooks.FTell(psSHP->fpSHP);
-            if( nFileSize >= UINT_MAX )
-                psSHP->nFileSize = UINT_MAX;
-            else
-                psSHP->nFileSize = STATIC_CAST(unsigned int, nFileSize);
-        }
+            if( psSHP->nBufSize < 10 * 1024 * 1024 )
+            {
+                SAOffset nFileSize;
+                psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 2 );
+                nFileSize = psSHP->sHooks.FTell(psSHP->fpSHP);
+                if( nFileSize >= UINT_MAX )
+                    psSHP->nFileSize = UINT_MAX;
+                else
+                    psSHP->nFileSize = STATIC_CAST(unsigned int, nFileSize);
+            }
 
-        if( psSHP->panRecOffset[hEntity] >= psSHP->nFileSize ||
-            /* We should normally use nEntitySize instead of*/
-            /* psSHP->panRecSize[hEntity] in the below test, but because of */
-            /* the case of non conformant .shx files detailed a bit below, */
-            /* let be more tolerant */
-            psSHP->panRecSize[hEntity] > psSHP->nFileSize - psSHP->panRecOffset[hEntity] )
-        {
-            char str[128];
-            snprintf( str, sizeof(str),
-                        "Error in fread() reading object of size %d at offset %u from .shp file",
-                        nEntitySize, psSHP->panRecOffset[hEntity] );
-            str[sizeof(str)-1] = '\0';
+            if( psSHP->panRecOffset[hEntity] >= psSHP->nFileSize ||
+                /* We should normally use nEntitySize instead of*/
+                /* psSHP->panRecSize[hEntity] in the below test, but because of */
+                /* the case of non conformant .shx files detailed a bit below, */
+                /* let be more tolerant */
+                psSHP->panRecSize[hEntity] > psSHP->nFileSize - psSHP->panRecOffset[hEntity] )
+            {
+                char str[128];
+                snprintf( str, sizeof(str),
+                            "Error in fread() reading object of size %d at offset %u from .shp file",
+                            nEntitySize, psSHP->panRecOffset[hEntity] );
+                str[sizeof(str)-1] = '\0';
 
-            psSHP->sHooks.Error( str );
-            return SHPLIB_NULLPTR;
+                psSHP->sHooks.Error( str );
+                return SHPLIB_NULLPTR;
+            }
         }
 
         pabyRecNew = STATIC_CAST(uchar *, SfRealloc(psSHP->pabyRec,nNewBufSize));

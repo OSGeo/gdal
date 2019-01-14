@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_vrt.h"
 
+#include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -267,6 +268,7 @@ bool OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn,
         if( apoGeomFieldProps.empty() )
         {
             apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
+            assert( !apoGeomFieldProps.empty() );
         }
         apoGeomFieldProps[0]->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
         apoGeomFieldProps[0]->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
@@ -518,7 +520,6 @@ bool OGRVRTLayer::FullInitialize()
 
     const char *pszSharedSetting = nullptr;
     const char *pszSQL = nullptr;
-    const char *pszSrcFIDFieldName = nullptr;
     const char *pszStyleFieldName = nullptr;
     CPLXMLNode *psChild = nullptr;
     bool bFoundGeometryField = false;
@@ -812,27 +813,35 @@ try_again:
         poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
     }
 
-    // Figure out what should be used as an FID.
     bAttrFilterPassThrough = true;
-    pszSrcFIDFieldName = CPLGetXMLValue(psLTree, "FID", nullptr);
 
-    if( pszSrcFIDFieldName != nullptr )
+    // Figure out what should be used as an FID.
     {
-        iFIDField = GetSrcLayerDefn()->GetFieldIndex(pszSrcFIDFieldName);
-        if( iFIDField == -1 )
+        CPLXMLNode* psFIDNode = CPLGetXMLNode(psLTree, "FID");
+        if( psFIDNode != nullptr )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to identify FID field '%s'.", pszSrcFIDFieldName);
-            goto error;
+            const char* pszSrcFIDFieldName = CPLGetXMLValue(psFIDNode, nullptr, "");
+            if( !EQUAL(pszSrcFIDFieldName, "") )
+            {
+                iFIDField = GetSrcLayerDefn()->GetFieldIndex(pszSrcFIDFieldName);
+                if( iFIDField == -1 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Unable to identify FID field '%s'.", pszSrcFIDFieldName);
+                    goto error;
+                }
+            }
+
+            // User facing FID column name.
+            osFIDFieldName = CPLGetXMLValue(psFIDNode, "name", pszSrcFIDFieldName);
+            if( !EQUAL(osFIDFieldName,poSrcLayer->GetFIDColumn()) )
+            {
+                bAttrFilterPassThrough = false;
+            }
         }
-
-        // User facing FID column name. If not defined we will report the
-        // source FID column name only if it is exposed as a field too (#4637).
-        osFIDFieldName = CPLGetXMLValue(psLTree, "FID.name", "");
-
-        if( !EQUAL(pszSrcFIDFieldName, poSrcLayer->GetFIDColumn()) )
+        else
         {
-            bAttrFilterPassThrough = false;
+            osFIDFieldName = poSrcLayer->GetFIDColumn();
         }
     }
 
@@ -2281,30 +2290,7 @@ const char *OGRVRTLayer::GetFIDColumn()
     if( !poSrcLayer || poDS->GetRecursionDetected() )
         return "";
 
-    if( !osFIDFieldName.empty() )
-        return osFIDFieldName;
-
-    const char *pszFIDColumn = nullptr;
-    if( iFIDField == -1 )
-    {
-        // If pass-through, then query the source layer FID column.
-        pszFIDColumn = poSrcLayer->GetFIDColumn();
-        if( pszFIDColumn == nullptr || EQUAL(pszFIDColumn, "") )
-            return "";
-    }
-    else
-    {
-        // Otherwise get the name from the index in the source layer definition.
-        OGRFieldDefn *poFDefn = GetSrcLayerDefn()->GetFieldDefn(iFIDField);
-        pszFIDColumn = poFDefn->GetNameRef();
-    }
-
-    // Check that the FIDColumn is actually reported in the VRT layer
-    // definition.
-    if( GetLayerDefn()->GetFieldIndex(pszFIDColumn) != -1 )
-        return pszFIDColumn;
-    else
-        return "";
+    return osFIDFieldName;
 }
 
 /************************************************************************/

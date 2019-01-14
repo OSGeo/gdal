@@ -45,69 +45,6 @@ static CPLMutex* hMutex = nullptr;
 
 OGRMDBJavaEnv::OGRMDBJavaEnv()
 {
-    nLastPID = 0;
-    jvm = nullptr;
-    env = nullptr;
-    bCalledFromJava = FALSE;
-
-    byteArray_class = nullptr;
-
-    file_class = nullptr;
-    file_constructor = nullptr;
-    database_class = nullptr;
-    database_open = nullptr;
-    database_close = nullptr;
-    database_getTableNames = nullptr;
-    database_getTable = nullptr;
-
-    table_class = nullptr;
-    table_getColumns = nullptr;
-    table_iterator = nullptr;
-    table_getRowCount = nullptr;
-
-    column_class = nullptr;
-    column_getName = nullptr;
-    column_getType = nullptr;
-    column_getLength = nullptr;
-    column_isVariableLength = nullptr;
-
-    datatype_class = nullptr;
-    datatype_getValue = nullptr;
-
-    list_class = nullptr;
-    list_iterator = nullptr;
-
-    set_class = nullptr;
-    set_iterator = nullptr;
-
-    map_class = nullptr;
-    map_get = nullptr;
-
-    iterator_class = nullptr;
-    iterator_hasNext = nullptr;
-    iterator_next = nullptr;
-
-    object_class = nullptr;
-    object_toString = nullptr;
-    object_getClass = nullptr;
-
-    boolean_class = nullptr;
-    boolean_booleanValue = nullptr;
-
-    byte_class = nullptr;
-    byte_byteValue = nullptr;
-
-    short_class = nullptr;
-    short_shortValue = nullptr;
-
-    integer_class = nullptr;
-    integer_intValue = nullptr;
-
-    float_class = nullptr;
-    float_floatValue = nullptr;
-
-    double_class = nullptr;
-    double_doubleValue = nullptr;
 }
 
 /************************************************************************/
@@ -413,8 +350,6 @@ int OGRMDBJavaEnv::ExceptionOccurred()
 
 OGRMDBDatabase::OGRMDBDatabase()
 {
-    env = nullptr;
-    database = nullptr;
 }
 
 /************************************************************************/
@@ -527,13 +462,8 @@ OGRMDBTable* OGRMDBDatabase::GetTable(const char* pszTableName)
 
 OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn,
                          jobject tableIn, const char* pszTableName ) :
-    osTableName( pszTableName )
+    env(envIn), poDB(poDBIn), table(tableIn), osTableName( pszTableName )
 {
-    this->env = envIn;
-    this->poDB = poDBIn;
-    this->table = tableIn;
-    table_iterator_obj = nullptr;
-    row = nullptr;
 }
 
 /************************************************************************/

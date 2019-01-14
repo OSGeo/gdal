@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -26,50 +26,12 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
+import pytest
 
-import gdaltest
 from osgeo import ogr
 
-
-class TestWktEmpty(object):
-    def __init__(self, inString, expectedOutString):
-        self.inString = inString
-        self.expectedOutString = expectedOutString
-
-    def isEmpty(self, geom):
-        try:
-            ogr.Geometry.IsEmpty
-        except AttributeError:
-            return 'skip'
-
-        if not geom.IsEmpty():
-            geom.Destroy()
-            gdaltest.post_reason("IsEmpty returning false for an empty geometry")
-            return 'fail'
-
-        return 'success'
-
-    def CheckIsEmpty(self):
-        geom = ogr.CreateGeometryFromWkt(self.inString)
-        wkt = geom.ExportToWkt()
-
-        if self.expectedOutString != 'POINT EMPTY':
-            if ogr.CreateGeometryFromWkb(geom.ExportToWkb()).ExportToWkt() != wkt:
-                return 'fail'
-
-        if wkt == self.expectedOutString:
-            if self.isEmpty(geom) == 'fail':
-                return 'fail'
-            return 'success'
-        else:
-            gdaltest.post_reason('WKT is wrong: ' + wkt + '. Expected value is: ' + self.expectedOutString)
-            return 'fail'
-
-
-empty_wkt_list = [
+wkt_list = [
     ('GEOMETRYCOLLECTION(EMPTY)', 'GEOMETRYCOLLECTION EMPTY'),
     ('MULTIPOLYGON( EMPTY )', 'MULTIPOLYGON EMPTY'),
     ('MULTILINESTRING(EMPTY)', 'MULTILINESTRING EMPTY'),
@@ -88,49 +50,69 @@ empty_wkt_list = [
 ]
 
 
-def ogr_wktempty_test_partial_empty_geoms():
+@pytest.mark.parametrize(
+    "test_input,expected",
+    wkt_list,
+    ids=[r[0] for r in wkt_list]
+)
+def test_empty_wkt(test_input, expected):
+    geom = ogr.CreateGeometryFromWkt(test_input)
+    wkt = geom.ExportToWkt()
+
+    if expected != 'POINT EMPTY':
+        assert ogr.CreateGeometryFromWkb(geom.ExportToWkb()).ExportToWkt() == wkt
+
+    assert wkt == expected
+
+    try:
+        ogr.Geometry.IsEmpty
+    except AttributeError:
+        pytest.skip()
+
+    try:
+        assert geom.IsEmpty(), "IsEmpty returning false for an empty geometry"
+    finally:
+        geom.Destroy()
+
+
+def test_ogr_wktempty_test_partial_empty_geoms():
 
     # Multipoint with a valid point and an empty point
     wkt = 'MULTIPOINT (1 1)'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPoint))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multipoint with an empty point and a valid point
     geom = ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY')
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPoint))
     geom.AddGeometry(ogr.CreateGeometryFromWkt('POINT (1 1)'))
     wkt = 'MULTIPOINT (1 1)'
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multilinestring with a valid string and an empty linestring
     wkt = 'MULTILINESTRING ((0 1,2 3,4 5,0 1))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLineString))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multilinestring with an empty linestring and a valid linestring
     geom = ogr.CreateGeometryFromWkt('MULTILINESTRING EMPTY')
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLineString))
     geom.AddGeometry(ogr.CreateGeometryFromWkt('LINESTRING (0 1,2 3,4 5,0 1)'))
     wkt = 'MULTILINESTRING ((0 1,2 3,4 5,0 1))'
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Polygon with a valid external ring and an empty internal ring
     wkt = 'POLYGON ((100 0,100 10,110 10,100 0))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbLinearRing))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Polygon with an empty external ring and a valid internal ring
     wkt = 'POLYGON EMPTY'
@@ -143,41 +125,23 @@ def ogr_wktempty_test_partial_empty_geoms():
     ring.AddPoint_2D(0, 10)
     ring.AddPoint_2D(0, 0)
     geom.AddGeometry(ring)
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multipolygon with a valid polygon and an empty polygon
     wkt = 'MULTIPOLYGON (((0 0,0 10,10 10,0 0)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPolygon))
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
     # Multipolygon with an empty polygon and a valid polygon
     geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON EMPTY')
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPolygon))
     geom.AddGeometry(ogr.CreateGeometryFromWkt('POLYGON ((100 0,100 10,110 10,100 0))'))
     wkt = 'MULTIPOLYGON (((100 0,100 10,110 10,100 0)))'
-    if geom.ExportToWkt() != wkt:
-        gdaltest.post_reason('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
-        return 'fail'
-
-    return 'success'
+    assert geom.ExportToWkt() == wkt, \
+        ('WKT is wrong: ' + geom.ExportToWkt() + '. Expected value is: ' + wkt)
 
 
-gdaltest_list = []
 
-for item in empty_wkt_list:
-    ut = TestWktEmpty(item[0], item[1])
-    gdaltest_list.append((ut.CheckIsEmpty, item[0]))
-gdaltest_list.append(ogr_wktempty_test_partial_empty_geoms)
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_wktempty')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -27,19 +27,18 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
 import ogrtest
+import pytest
 
 ###############################################################################
 # Create a MIF file to be our primary table.
 
 
-def ogr_index_1():
+def test_ogr_index_1():
 
     from osgeo import gdal
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -79,13 +78,11 @@ def ogr_index_1():
     gdaltest.p_ds = ogr.OpenShared('index_p.mif', update=0)
     gdaltest.p_lyr = gdaltest.p_ds.GetLayerByName('index_p')
 
-    return 'success'
-
 ###############################################################################
 # Create a dbf file to be our secondary table.  Close it, and reopen shared.
 
 
-def ogr_index_2():
+def test_ogr_index_2():
 
     drv = ogr.GetDriverByName('ESRI Shapefile')
     gdaltest.s_ds = drv.CreateDataSource('join_t.dbf')
@@ -99,9 +96,7 @@ def ogr_index_2():
     for i in range(20):
         ogrtest.quick_create_feature(gdaltest.s_lyr, [i, 'Value ' + str(i)], None)
 
-    if gdaltest.s_lyr.GetFeatureCount() != 20:
-        gdaltest.post_reason('FeatureCount wrong')
-        return 'fail'
+    assert gdaltest.s_lyr.GetFeatureCount() == 20, 'FeatureCount wrong'
 
     gdaltest.s_ds.Release()
     gdaltest.s_lyr = None
@@ -110,13 +105,11 @@ def ogr_index_2():
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName('join_t')
 
-    return 'success'
-
 ###############################################################################
 # Verify a simple join without indexing.
 
 
-def ogr_index_3():
+def test_ogr_index_3():
 
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
               'Value 1']
@@ -129,31 +122,29 @@ def ogr_index_3():
 
     gdaltest.p_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Create an INDEX on the SKEY and VALUE field in the join table.
 
 
-def ogr_index_4():
+def test_ogr_index_4():
 
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
     gdaltest.s_ds.ExecuteSQL('CREATE INDEX ON join_t USING skey')
-
-    return 'success'
 
 ###############################################################################
 # Check that indexable single int lookup works.
 
 
-def ogr_index_5():
+def test_ogr_index_5():
 
     gdaltest.s_lyr.SetAttributeFilter('SKEY = 5')
 
     expect = ['Value 5']
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'VALUE', expect)
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Check that indexable single string lookup works.
@@ -162,7 +153,7 @@ def ogr_index_5():
 # work OK too.
 
 
-def ogr_index_6():
+def test_ogr_index_6():
 
     gdaltest.s_ds.Release()
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
@@ -173,14 +164,14 @@ def ogr_index_6():
     expect = [5]
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'SKEY', expect)
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
 # Check that range query that isn't currently implemented using index works.
 
 
-def ogr_index_7():
+def test_ogr_index_7():
 
     gdaltest.s_lyr.SetAttributeFilter('SKEY < 3')
 
@@ -188,13 +179,13 @@ def ogr_index_7():
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'SKEY', expect)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Try join again.
 
 
-def ogr_index_8():
+def test_ogr_index_8():
 
     expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
               'Value 1']
@@ -207,14 +198,14 @@ def ogr_index_8():
 
     gdaltest.p_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify that dropping both indexes gets rid of them, and that results still
 # work.
 
 
-def ogr_index_9():
+def test_ogr_index_9():
 
     gdaltest.s_ds.ExecuteSQL('DROP INDEX ON join_t USING value')
     gdaltest.s_ds.ExecuteSQL('DROP INDEX ON join_t USING skey')
@@ -224,20 +215,16 @@ def ogr_index_9():
     expect = ['Value 5']
 
     tr = ogrtest.check_features_against_list(gdaltest.s_lyr, 'VALUE', expect)
-    if not tr:
-        return 'fail'
+    assert tr
 
     gdaltest.s_ds.Release()
 
     # After dataset closing, check that the index files do not exist after
     # dropping the index
     for filename in ['join_t.idm', 'join_t.ind']:
-        try:
+        with pytest.raises(OSError, message="%s should not exist" % filename):
             os.stat(filename)
-            gdaltest.post_reason("%s should not exist" % filename)
-            return 'fail'
-        except OSError:
-            pass
+        
 
     # Re-create an index
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
@@ -248,16 +235,12 @@ def ogr_index_9():
         try:
             os.stat(filename)
         except OSError:
-            gdaltest.post_reason("%s should exist" % filename)
-            return 'fail'
+            pytest.fail("%s should exist" % filename)
 
     f = open('join_t.idm', 'rt')
     xml = f.read()
     f.close()
-    if xml.find('VALUE') == -1:
-        gdaltest.post_reason('VALUE column is not indexed (1)')
-        print(xml)
-        return 'fail'
+    assert xml.find('VALUE') != -1, 'VALUE column is not indexed (1)'
 
     # Close the dataset and re-open
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
@@ -270,22 +253,14 @@ def ogr_index_9():
     f = open('join_t.idm', 'rt')
     xml = f.read()
     f.close()
-    if xml.find('VALUE') == -1:
-        gdaltest.post_reason('VALUE column is not indexed (2)')
-        print(xml)
-        return 'fail'
-    if xml.find('SKEY') == -1:
-        gdaltest.post_reason('SKEY column is not indexed (2)')
-        print(xml)
-        return 'fail'
-
-    return 'success'
+    assert xml.find('VALUE') != -1, 'VALUE column is not indexed (2)'
+    assert xml.find('SKEY') != -1, 'SKEY column is not indexed (2)'
 
 ###############################################################################
 # Test fix for #4326
 
 
-def ogr_index_10():
+def test_ogr_index_10():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_index_10.shp')
     lyr = ds.CreateLayer('ogr_index_10')
@@ -304,125 +279,89 @@ def ogr_index_10():
     lyr.SetAttributeFilter('intfield IN (1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield = 1')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield IN (2)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter('intfield IN (1.0)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield = 1.0')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('intfield IN (1.1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter("intfield IN ('1')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield IN (1.0)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield = 1.0')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield IN (1.1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter('realfield IN (1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield = 1')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter('realfield IN (2)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is None
 
     lyr.SetAttributeFilter("realfield IN ('1')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter("strfield IN ('foo')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter("strfield = 'foo'")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is not None
 
     lyr.SetAttributeFilter("strfield IN ('bar')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat is None
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test support for OR and AND expression
@@ -433,17 +372,12 @@ def ogr_index_11_check(lyr, expected_fids):
     lyr.ResetReading()
     for expected_fid in expected_fids:
         feat = lyr.GetNextFeature()
-        if feat is None:
-            gdaltest.post_reason('failed')
-            return 'fail'
-        if feat.GetFID() != expected_fid:
-            gdaltest.post_reason('failed')
-            return 'fail'
+        assert feat is not None
+        assert feat.GetFID() == expected_fid
 
-    return 'success'
+    
 
-
-def ogr_index_11():
+def test_ogr_index_11():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_index_11.dbf')
     lyr = ds.CreateLayer('ogr_index_11', geom_type=ogr.wkbNone)
@@ -460,38 +394,26 @@ def ogr_index_11():
     ds.ExecuteSQL('CREATE INDEX ON ogr_index_11 USING strfield')
 
     lyr.SetAttributeFilter("intfield = 1 OR strfield = 'bar'")
-    ret = ogr_index_11_check(lyr, [0, 1, 3])
-    if ret != 'success':
-        return ret
+    ogr_index_11_check(lyr, [0, 1, 3])
 
     lyr.SetAttributeFilter("intfield = 1 AND strfield = 'bar'")
-    ret = ogr_index_11_check(lyr, [1])
-    if ret != 'success':
-        return ret
+    ogr_index_11_check(lyr, [1])
 
     lyr.SetAttributeFilter("intfield = 1 AND strfield = 'foo'")
-    ret = ogr_index_11_check(lyr, [0])
-    if ret != 'success':
-        return ret
+    ogr_index_11_check(lyr, [0])
 
     lyr.SetAttributeFilter("intfield = 3 AND strfield = 'foo'")
-    ret = ogr_index_11_check(lyr, [])
-    if ret != 'success':
-        return ret
+    ogr_index_11_check(lyr, [])
 
     lyr.SetAttributeFilter("intfield IN (1, 2, 3)")
-    ret = ogr_index_11_check(lyr, [0, 1, 2, 3, 4])
-    if ret != 'success':
-        return ret
+    ogr_index_11_check(lyr, [0, 1, 2, 3, 4])
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
 
-def ogr_index_cleanup():
+def test_ogr_index_cleanup():
     try:
         gdaltest.p_ds.Release()
     except:
@@ -507,39 +429,14 @@ def ogr_index_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('join_t.dbf')
 
     for filename in ['join_t.idm', 'join_t.ind']:
-        try:
+        with pytest.raises(OSError, message="%s should not exist" % filename):
             os.stat(filename)
-            gdaltest.post_reason("%s should not exist" % filename)
-            return 'fail'
-        except OSError:
-            pass
+        
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
         'tmp/ogr_index_10.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
         'tmp/ogr_index_11.dbf')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_index_1,
-    ogr_index_2,
-    ogr_index_3,
-    ogr_index_4,
-    ogr_index_5,
-    ogr_index_6,
-    ogr_index_7,
-    ogr_index_8,
-    ogr_index_9,
-    ogr_index_10,
-    ogr_index_11,
-    ogr_index_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_index_test')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()

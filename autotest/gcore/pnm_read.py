@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,32 +28,24 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = []
-
 init_list = [
-    ('byte.pnm', 1, 4672, None),
-    ('uint16.pnm', 1, 4672, None)]
+    ('byte.pnm', 4672),
+    ('uint16.pnm', 4672)]
 
-for item in init_list:
-    ut = gdaltest.GDALTest('PNM', item[0], item[1], item[2])
-    if ut is None:
-        print('PNM tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('pnm_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    gdaltest.summarize()
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('PNM')
+def test_pnm_open(filename, checksum):
+    ut = gdaltest.GDALTest('PNM', filename, 1, checksum)
+    ut.testOpen()
