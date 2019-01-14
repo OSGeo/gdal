@@ -371,6 +371,7 @@ static void GDALWarpAppOptionsForBinaryFree( GDALWarpAppOptionsForBinary* psOpti
         CPLFree(psOptionsForBinary->pszDstFilename);
         CSLDestroy(psOptionsForBinary->papszOpenOptions);
         CSLDestroy(psOptionsForBinary->papszDestOpenOptions);
+        CSLDestroy(psOptionsForBinary->papszCreateOptions);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -567,19 +568,31 @@ MAIN_START(argc, argv)
         hDstDS = nullptr;
     }
 
+    bool bCheckExistingDstFile =
+        !bOutStreaming && hDstDS == nullptr && !psOptionsForBinary->bOverwrite ;
+
     if( hDstDS != nullptr && psOptionsForBinary->bCreateOutput )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                 "Output dataset %s exists,\n"
-                 "but some command line options were provided indicating a new dataset\n"
-                 "should be created.  Please delete existing dataset and run again.\n",
-                 psOptionsForBinary->pszDstFilename );
-        GDALExit(1);
+        if( CPLFetchBool(psOptionsForBinary->papszCreateOptions, "APPEND_SUBDATASET", false) )
+        {
+            GDALClose(hDstDS);
+            hDstDS = nullptr;
+            bCheckExistingDstFile = false;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Output dataset %s exists,\n"
+                    "but some command line options were provided indicating a new dataset\n"
+                    "should be created.  Please delete existing dataset and run again.\n",
+                    psOptionsForBinary->pszDstFilename );
+            GDALExit(1);
+        }
     }
 
     /* Avoid overwriting an existing destination file that cannot be opened in */
     /* update mode with a new GTiff file */
-    if ( !bOutStreaming && hDstDS == nullptr && !psOptionsForBinary->bOverwrite )
+    if ( bCheckExistingDstFile )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
         hDstDS = GDALOpen( psOptionsForBinary->pszDstFilename, GA_ReadOnly );

@@ -3348,8 +3348,14 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
 
         if( EQUAL(papszArgv[i],"-co") && i+1 < argc )
         {
-            psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, papszArgv[++i] );
+            const char* pszVal = papszArgv[++i];
+            psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, pszVal );
             psOptions->bCreateOutput = true;
+
+            if( psOptionsForBinary )
+                psOptionsForBinary->papszCreateOptions = CSLAddString(
+                                                psOptionsForBinary->papszCreateOptions,
+                                                pszVal );
         }
         else if( EQUAL(papszArgv[i],"-wo") && i+1 < argc )
         {

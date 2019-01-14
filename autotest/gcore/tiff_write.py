@@ -6879,6 +6879,46 @@ def test_tiff_write_182_xmp_delete():
     gdaltest.tiff_drv.Delete('tmp/test_182.tif')
 
 ###############################################################################
+
+
+def test_tiff_write_183_createcopy_append_subdataset():
+
+    tmpfilename = '/vsimem/test_tiff_write_183_createcopy_append_subdataset.tif'
+    gdal.Translate(tmpfilename, 'data/byte.tif')
+    gdal.Translate(tmpfilename, 'data/utmsmall.tif',
+                   creationOptions=['APPEND_SUBDATASET=YES'])
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+    ds = gdal.Open('GTIFF_DIR:2:' + tmpfilename)
+    assert ds.GetRasterBand(1).Checksum() == 50054
+
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+
+def test_tiff_write_184_create_append_subdataset():
+
+    tmpfilename = '/vsimem/test_tiff_write_184_create_append_subdataset.tif'
+    gdal.Translate(tmpfilename, 'data/byte.tif')
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfilename, 1, 1,
+                                              options=['APPEND_SUBDATASET=YES'])
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+    ds = gdal.Open('GTIFF_DIR:2:' + tmpfilename)
+    assert ds.GetRasterBand(1).Checksum() == 3
+
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 

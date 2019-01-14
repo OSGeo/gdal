@@ -1233,6 +1233,23 @@ def test_gdalwarp_46():
 
 
 ###############################################################################
+# Test gdalwarp -co APPEND_SUBDATASET=YES
+
+def test_gdalwarp_47_append_subdataset():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        pytest.skip()
+
+    tmpfilename = 'tmp/test_gdalwarp_47_append_subdataset.tif'
+    gdal.Translate(tmpfilename, '../gcore/data/byte.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -co APPEND_SUBDATASET=YES ../gcore/data/utmsmall.tif ' + tmpfilename)
+
+    ds = gdal.Open('GTIFF_DIR:2:' + tmpfilename)
+    assert ds.GetRasterBand(1).Checksum() == 50054
+
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
