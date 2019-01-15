@@ -1,0 +1,32 @@
+OBJ     =       ogrmongodbv3driver.obj
+EXTRAFLAGS =	-I.. -I..\generic -I..\.. $(MONGOCXXV3_CFLAGS) -I$(BOOST_INC)
+
+GDAL_ROOT	=	..\..\..
+
+PLUGIN_DLL 	=	ogr_MongoDBv3.dll
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+all:	default
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+	-del *.pdb
+	-del *.tlh
+
+plugin: $(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDAL_ROOT)/gdal_i.lib $(MONGOCXXV3_LIBS) wsock32.lib
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

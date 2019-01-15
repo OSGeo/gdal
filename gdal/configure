@@ -798,6 +798,9 @@ HDF5_CFLAGS
 HDF4_HAS_MAXOPENFILES
 HDF4_INCLUDE
 HAVE_HDF4
+MONGOCXXV3_ENABLED
+MONGOCXXV3_LIBS
+MONGOCXXV3_CFLAGS
 MONGODB_INC
 MONGODB_LIB
 MONGODB_ENABLED
@@ -1005,6 +1008,7 @@ with_fme
 with_sosi
 with_mongocxx
 with_boost_lib_path
+with_mongocxxv3
 with_hdf4
 with_hdf5
 with_kea
@@ -1106,6 +1110,8 @@ CXXCPP
 PKG_CONFIG
 OGDI_CFLAGS
 OGDI_LIBS
+MONGOCXXV3_CFLAGS
+MONGOCXXV3_LIBS
 HDF5_CFLAGS
 HDF5_LIBS
 OPENJPEG_CFLAGS
@@ -1797,6 +1803,7 @@ Optional Packages:
   --with-sosi=ARG        Include SOSI support (ARG=SOSI lib Path, yes or no)
   --with-mongocxx=ARG        Include MongoCXX support (ARG=Path, yes or no)
   --with-boost-lib-path=ARG   Path to boost libraries for mongocxx client
+  --with-mongocxxv3=ARG        Include MongoCXXv3 support (ARG=yes or no)
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
   --with-kea=ARG      Include kealib (ARG=path to kea-config) [default=yes]
@@ -1907,6 +1914,10 @@ Some influential environment variables:
   PKG_CONFIG  path to pkg-config utility
   OGDI_CFLAGS C compiler flags for OGDI, overriding pkg-config
   OGDI_LIBS   linker flags for OGDI, overriding pkg-config
+  MONGOCXXV3_CFLAGS
+              C compiler flags for MONGOCXXV3, overriding pkg-config
+  MONGOCXXV3_LIBS
+              linker flags for MONGOCXXV3, overriding pkg-config
   HDF5_CFLAGS C compiler flags for HDF5, overriding pkg-config
   HDF5_LIBS   linker flags for HDF5, overriding pkg-config
   OPENJPEG_CFLAGS
@@ -26105,6 +26116,225 @@ MONGODB_INC=$MONGODB_INC
 
 
 
+
+
+# Check whether --with-mongocxxv3 was given.
+if test "${with_mongocxxv3+set}" = set; then :
+  withval=$with_mongocxxv3;
+fi
+
+
+MONGOCXXV3_ENABLED=no
+
+if test "$with_mongocxxv3" = "no" ; then
+
+  echo "MONGODBv3 support disabled."
+
+elif test "$with_mongocxxv3" = "yes" -o "$with_mongocxxv3" = "" ; then
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.21
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MONGOCXXV3" >&5
+$as_echo_n "checking for MONGOCXXV3... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$MONGOCXXV3_CFLAGS"; then
+        pkg_cv_MONGOCXXV3_CFLAGS="$MONGOCXXV3_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmongocxx >= 3.4.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmongocxx >= 3.4.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MONGOCXXV3_CFLAGS=`$PKG_CONFIG --cflags "libmongocxx >= 3.4.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$MONGOCXXV3_LIBS"; then
+        pkg_cv_MONGOCXXV3_LIBS="$MONGOCXXV3_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmongocxx >= 3.4.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmongocxx >= 3.4.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MONGOCXXV3_LIBS=`$PKG_CONFIG --libs "libmongocxx >= 3.4.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        MONGOCXXV3_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libmongocxx >= 3.4.0"`
+        else
+	        MONGOCXXV3_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libmongocxx >= 3.4.0"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$MONGOCXXV3_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                MONGOCXXV3_ENABLED=no
+elif test $pkg_failed = untried; then
+	MONGOCXXV3_ENABLED=no
+else
+	MONGOCXXV3_CFLAGS=$pkg_cv_MONGOCXXV3_CFLAGS
+	MONGOCXXV3_LIBS=$pkg_cv_MONGOCXXV3_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	MONGOCXXV3_ENABLED=yes
+fi
+
+  if test "$MONGOCXXV3_ENABLED" = "no" -a "$with_mongocxxv3" = "yes" ; then
+    as_fn_error $? "mongocxxv3 requested but no found" "$LINENO" 5
+  fi
+
+fi
+
+MONGOCXXV3_ENABLED=$MONGOCXXV3_ENABLED
+
+MONGOCXXV3_LIBS=$MONGOCXXV3_LIBS
+
+MONGOCXXV3_CFLAGS=$MONGOCXXV3_CFLAGS
+
+
+
+
 HDF4_INCLUDE=""
 
 
@@ -39648,6 +39878,9 @@ echo "  SOSI support:              ${SOSI_ENABLED}"
 
 
 echo "  MongoDB support:           ${MONGODB_ENABLED}"
+
+
+echo "  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}"
 
 
 echo "  HDFS support:              ${HDFS_ENABLED}"

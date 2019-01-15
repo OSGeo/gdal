@@ -291,6 +291,9 @@ void OGRRegisterAllInternal()
 #ifdef CSW_ENABLED
     RegisterOGRCSW();
 #endif
+#ifdef MONGODBV3_ENABLED
+    RegisterOGRMongoDBv3();
+#endif
 #ifdef MONGODB_ENABLED
     RegisterOGRMongoDB();
 #endif
