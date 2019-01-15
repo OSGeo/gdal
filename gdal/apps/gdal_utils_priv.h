@@ -71,6 +71,8 @@ struct GDALWarpAppOptionsForBinary
     /*! output dataset open option (format specific) */
     char **papszDestOpenOptions;
 
+    char **papszCreateOptions;
+
     int bOverwrite;
     int bCreateOutput;
 };

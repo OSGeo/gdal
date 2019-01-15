@@ -9290,7 +9290,8 @@ void GTiffDataset::Crystalize()
     }
     else
     {
-        TIFFSetDirectory( hTIFF, 0 );
+        TIFFSetDirectory( hTIFF,
+                      static_cast<tdir_t>(TIFFNumberOfDirectories(hTIFF) - 1) );
     }
 
     // Now, reset zip and tiff quality and jpegcolormode.
@@ -13003,16 +13004,26 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    if( poOpenInfo->eAccess == GA_Update &&
+        !CPLFetchBool(poOpenInfo->papszOpenOptions, "ALLOW_UPDATE", false) )
+    {
+        CPLError(
+            CE_Warning, CPLE_AppDefined,
+            "Opening a specific TIFF directory is not supported in "
+            "update mode. Switching to read-only" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     if( !GTiffOneTimeInit() )
         return nullptr;
 
-    VSILFILE* l_fpL = VSIFOpenL(pszFilename, "r");
+    const char* pszFlag = poOpenInfo->eAccess == GA_Update ? "r+" : "r";
+    VSILFILE* l_fpL = VSIFOpenL(pszFilename, pszFlag);
     if( l_fpL == nullptr )
         return nullptr;
-    TIFF *l_hTIFF = VSI_TIFFOpen( pszFilename, "r", l_fpL );
+    TIFF *l_hTIFF = VSI_TIFFOpen( pszFilename, pszFlag, l_fpL );
     if( l_hTIFF == nullptr )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
@@ -13054,6 +13065,10 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     poDS->hTIFF = l_hTIFF;
     poDS->bCloseTIFFHandle = true;
 
+    uint16 l_nCompression = 0;
+    TIFFGetFieldDefaulted( l_hTIFF, TIFFTAG_COMPRESSION, &(l_nCompression) );
+    poDS->nCompression = l_nCompression;
+
     if( !EQUAL(pszFilename,poOpenInfo->pszFilename)
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "GTIFF_RAW:") )
     {
@@ -13062,20 +13077,12 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
         poDS->osFilename = pszFilename;
     }
 
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError(
-            CE_Warning, CPLE_AppDefined,
-            "Opening a specific TIFF directory is not supported in "
-            "update mode. Switching to read-only" );
-    }
-
     if( poOpenInfo->AreSiblingFilesLoaded() )
         poDS->oOvManager.TransferSiblingFiles(
             poOpenInfo->StealSiblingFiles() );
 
     if( poDS->OpenOffset( l_hTIFF, &(poDS->poActiveDS),
-                          nOffset, false, GA_ReadOnly,
+                          nOffset, false, poOpenInfo->eAccess,
                           bAllowRGBAInterface, true ) != CE_None )
     {
         delete poDS;
@@ -15551,8 +15558,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
 
+    const bool bAppend = CPLFetchBool(papszParmList, "APPEND_SUBDATASET", false);
+
     char szOpeningFlag[5] = {};
-    strcpy(szOpeningFlag, "w+");
+    strcpy(szOpeningFlag, bAppend ? "r+" : "w+");
     if( bCreateBigTIFF )
         strcat(szOpeningFlag, "8");
     if( eEndianness == ENDIANNESS_BIG )
@@ -15560,7 +15569,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     else if( eEndianness == ENDIANNESS_LITTLE )
         strcat(szOpeningFlag, "l");
 
-    VSILFILE* l_fpL = VSIFOpenL( pszFilename, "w+b" );
+    VSILFILE* l_fpL = VSIFOpenL( pszFilename, bAppend ? "r+b" : "w+b" );
     if( l_fpL == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -15578,6 +15587,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                       pszFilename );
         CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
         return nullptr;
+    }
+
+    if( bAppend )
+    {
+        TIFFCreateDirectory( l_hTIFF );
     }
 
 /* -------------------------------------------------------------------- */
@@ -17347,6 +17361,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GTiffFillStreamableOffsetAndCount( l_hTIFF, nSize );
         TIFFWriteDirectory( l_hTIFF );
     }
+    TIFFSetDirectory( l_hTIFF,
+                    static_cast<tdir_t>(TIFFNumberOfDirectories(l_hTIFF) - 1) );
+    const toff_t l_nDirOffset = TIFFCurrentDirOffset( l_hTIFF );
     TIFFFlush( l_hTIFF );
     XTIFFClose( l_hTIFF );
     l_hTIFF = nullptr;
@@ -17392,10 +17409,21 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      PAM facilities.                                                 */
 /* -------------------------------------------------------------------- */
     CPLString osFileName("GTIFF_RAW:");
+    const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
+    if( bAppend )
+    {
+        osFileName += CPLSPrintf("GTIFF_DIR:off:" CPL_FRMT_GUIB ":",
+                                 static_cast<GUIntBig>(l_nDirOffset));
+    }
 
     osFileName += bStreaming ? l_osTmpFilename.c_str() : pszFilename;
 
     GDALOpenInfo oOpenInfo( osFileName, GA_Update );
+    if( bAppend )
+    {
+        static const char* const apszOpenOptions[] = { "ALLOW_UPDATE=YES", nullptr };
+        oOpenInfo.papszOpenOptions = const_cast<char**>(apszOpenOptions);
+    }
     if( bStreaming )
     {
         // In case of single strip file, there's a libtiff check that would
@@ -17416,6 +17444,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIUnlink( bStreaming ? l_osTmpFilename.c_str() : pszFilename );
         return nullptr;
     }
+    poDS->eAccess = GA_Update;
     poDS->osFilename = pszFilename;
 
     if( bStreaming )
