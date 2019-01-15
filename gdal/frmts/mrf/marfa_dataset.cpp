@@ -2096,10 +2096,11 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     if (l_ifp == nullptr || l_dfp == nullptr)
         return CE_Failure;
 
+    // Flag that versioned access requires a write even if empty
+    int new_tile = false;
     // If it has versions, might need to start a new one
     if (hasVersions) {
         int new_version = false; // Assume no need to build new version
-        int new_tile = false;
 
         // Read the current tile info
         VSIFSeekL(l_ifp, infooffset, SEEK_SET);
@@ -2204,7 +2205,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     // At this point, the data is in the datafile
 
     // Do nothing if the tile is empty and the file record is also empty
-    if (0 == size && nullptr == buff) {
+    if (!new_tile && 0 == size && nullptr == buff) {
         VSIFSeekL(l_ifp, infooffset, SEEK_SET);
         VSIFReadL(&tinfo, 1, sizeof(ILIdx), l_ifp);
         if (0 == tinfo.offset && 0 == tinfo.size)
