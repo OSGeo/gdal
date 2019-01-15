@@ -1043,6 +1043,10 @@ bool GDALMRFRasterBand::TestBlock(int xblk, int yblk)
     if (poDS->bypass_cache && !poDS->source.empty())
         return true;
 
+    // Blocks outside of image have no data by default
+    if (xblk < 0 || yblk < 0 || xblk >= img.pagecount.x || yblk >= img.pagecount.y)
+        return false;
+
     ILIdx tinfo;
     GInt32 cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
