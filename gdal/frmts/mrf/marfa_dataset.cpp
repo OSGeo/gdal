@@ -377,7 +377,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             // Generate the overview using the previous level as the source
 
             // Use "avg" flag to trigger the internal average sampling
-            if (EQUALN("Avg", pszResampling, 3) || EQUALN("NearNb", pszResampling, 4)) {
+            if (EQUALN("Avg", pszResampling, 3) || EQUALN("NearNb", pszResampling, 6)) {
 
                 int sampling = EQUALN("Avg", pszResampling, 3) ? SAMPLING_Avg : SAMPLING_Near;
                 // Internal, using PatchOverview
