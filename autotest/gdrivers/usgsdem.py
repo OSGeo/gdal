@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,19 +29,18 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/022gdeme
 
 
-def usgsdem_1():
+def test_usgsdem_1():
 
     tst = gdaltest.GDALTest('USGSDEM', '022gdeme_truncated', 1, 1583)
     srs = osr.SpatialReference()
@@ -53,7 +52,7 @@ def usgsdem_1():
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/114p01_0100_deme.dem
 
 
-def usgsdem_2():
+def test_usgsdem_2():
 
     tst = gdaltest.GDALTest('USGSDEM', '114p01_0100_deme_truncated.dem', 1, 53864)
     srs = osr.SpatialReference()
@@ -65,7 +64,7 @@ def usgsdem_2():
 # Test truncated version of file that triggered bug #2348
 
 
-def usgsdem_3():
+def test_usgsdem_3():
 
     tst = gdaltest.GDALTest('USGSDEM', '39079G6_truncated.dem', 1, 61424)
     srs = osr.SpatialReference()
@@ -78,7 +77,7 @@ def usgsdem_3():
 # Test CreateCopy()
 
 
-def usgsdem_4():
+def test_usgsdem_4():
 
     tst = gdaltest.GDALTest('USGSDEM', '39079G6_truncated.dem', 1, 61424,
                             options=['RESAMPLE=Nearest'])
@@ -88,19 +87,18 @@ def usgsdem_4():
 ###############################################################################
 # Test CreateCopy() without any creation options
 
-def usgsdem_5():
+def test_usgsdem_5():
 
     ds = gdal.Open('data/n43.dt0')
     ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/n43.dem', ds,
                                                      options=['RESAMPLE=Nearest'])
 
     if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('Bad checksum.')
         print(ds2.GetRasterBand(1).Checksum())
         print(ds.GetRasterBand(1).Checksum())
         ds2 = None
         print(open('tmp/n43.dem', 'rb').read())
-        return 'fail'
+        pytest.fail('Bad checksum.')
 
     gt1 = ds.GetGeoTransform()
     gt2 = ds2.GetGeoTransform()
@@ -109,25 +107,20 @@ def usgsdem_5():
             print('')
             print('old = ', gt1)
             print('new = ', gt2)
-            gdaltest.post_reason('Geotransform differs.')
-            return 'fail'
+            pytest.fail('Geotransform differs.')
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS84')
-    if ds2.GetProjectionRef() != srs.ExportToWkt():
-        gdaltest.post_reason('Bad SRS.')
-        return 'fail'
+    assert ds2.GetProjectionRef() == srs.ExportToWkt(), 'Bad SRS.'
 
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy() without a few creation options. Then create a new copy with TEMPLATE
 # creation option and check that both files are binary identical.
 
 
-def usgsdem_6():
+def test_usgsdem_6():
 
     ds = gdal.Open('data/n43.dt0')
     ds2 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_1.dem', ds,
@@ -150,19 +143,16 @@ def usgsdem_6():
     data1 = f1.read()
     data2 = f2.read()
 
-    if data1 != data2:
-        return 'fail'
+    assert data1 == data2
 
     f1.close()
     f2.close()
-
-    return 'success'
 
 ###############################################################################
 # Test CreateCopy() with CDED50K profile
 
 
-def usgsdem_7():
+def test_usgsdem_7():
 
     ds = gdal.Open('data/n43.dt0')
 
@@ -172,11 +162,7 @@ def usgsdem_7():
                                                      options=['PRODUCT=CDED50K', 'TOPLEFT=80w,44n', 'RESAMPLE=Nearest', 'ZRESOLUTION=1.1', 'INTERNALNAME=GDAL'])
     gdal.PopErrorHandler()
 
-    if ds2.RasterXSize != 1201 or ds2.RasterYSize != 1201:
-        gdaltest.post_reason('Bad image dimensions.')
-        print(ds2.RasterXSize)
-        print(ds2.RasterYSize)
-        return 'fail'
+    assert ds2.RasterXSize == 1201 and ds2.RasterYSize == 1201, 'Bad image dimensions.'
 
     expected_gt = (-80.000104166666674, 0.000208333333333, 0, 44.000104166666667, 0, -0.000208333333333)
     got_gt = ds2.GetGeoTransform()
@@ -185,25 +171,20 @@ def usgsdem_7():
             print('')
             print('expected = ', expected_gt)
             print('got = ', got_gt)
-            gdaltest.post_reason('Geotransform differs.')
-            return 'fail'
+            pytest.fail('Geotransform differs.')
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD83')
-    if ds2.GetProjectionRef() != srs.ExportToWkt():
-        gdaltest.post_reason('Bad SRS.')
-        return 'fail'
+    assert ds2.GetProjectionRef() == srs.ExportToWkt(), 'Bad SRS.'
 
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/various.zip/39109h1.dem
 # Undocumented format
 
 
-def usgsdem_8():
+def test_usgsdem_8():
 
     tst = gdaltest.GDALTest('USGSDEM', '39109h1_truncated.dem', 1, 39443)
     srs = osr.SpatialReference()
@@ -217,7 +198,7 @@ def usgsdem_8():
 # Old format
 
 
-def usgsdem_9():
+def test_usgsdem_9():
 
     tst = gdaltest.GDALTest('USGSDEM', '4619old_truncated.dem', 1, 10659)
     srs = osr.SpatialReference()
@@ -229,7 +210,7 @@ def usgsdem_9():
 # https://github.com/OSGeo/gdal/issues/583
 
 
-def usgsdem_with_extra_values_at_end_of_profile():
+def test_usgsdem_with_extra_values_at_end_of_profile():
 
     tst = gdaltest.GDALTest('USGSDEM', 'usgsdem_with_extra_values_at_end_of_profile.dem', 1, 56679)
     return tst.testOpen()
@@ -238,7 +219,7 @@ def usgsdem_with_extra_values_at_end_of_profile():
 # Like Novato.dem of https://trac.osgeo.org/gdal/ticket/4901
 
 
-def usgsdem_with_spaces_after_byte_864():
+def test_usgsdem_with_spaces_after_byte_864():
 
     tst = gdaltest.GDALTest('USGSDEM', 'usgsdem_with_spaces_after_byte_864.dem', 1, 61078)
     return tst.testOpen()
@@ -247,7 +228,7 @@ def usgsdem_with_spaces_after_byte_864():
 # Cleanup
 
 
-def usgsdem_cleanup():
+def test_usgsdem_cleanup():
 
     try:
         os.remove('tmp/n43.dem')
@@ -263,27 +244,6 @@ def usgsdem_cleanup():
     except OSError:
         pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    usgsdem_1,
-    usgsdem_2,
-    usgsdem_3,
-    usgsdem_4,
-    usgsdem_5,
-    usgsdem_6,
-    usgsdem_7,
-    usgsdem_8,
-    usgsdem_9,
-    usgsdem_with_extra_values_at_end_of_profile,
-    usgsdem_with_spaces_after_byte_864,
-    usgsdem_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('usgsdem')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

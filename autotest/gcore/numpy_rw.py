@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,159 +29,120 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # verify that we can load Numeric python, and find the Numpy driver.
 
 
-def numpy_rw_1():
+def test_numpy_rw_1():
 
     gdaltest.numpy_drv = None
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     gdal.AllRegister()
 
     gdaltest.numpy_drv = gdal.GetDriverByName('NUMPY')
-    if gdaltest.numpy_drv is None:
-        gdaltest.post_reason('NUMPY driver not found!')
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.numpy_drv is not None, 'NUMPY driver not found!'
 
 ###############################################################################
 # Load a test file into a memory Numpy array, and verify the checksum.
 
 
-def numpy_rw_2():
+def test_numpy_rw_2():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     from osgeo import gdalnumeric
 
     array = gdalnumeric.LoadFile('data/utmsmall.tif')
-    if array is None:
-        gdaltest.post_reason('Failed to load utmsmall.tif into array')
-        return 'fail'
+    assert array is not None, 'Failed to load utmsmall.tif into array'
 
     ds = gdalnumeric.OpenArray(array)
-    if ds is None:
-        gdaltest.post_reason('Failed to open memory array as dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open memory array as dataset.'
 
     bnd = ds.GetRasterBand(1)
-    if bnd.Checksum() != 50054:
-        gdaltest.post_reason('Didnt get expected checksum on reopened file')
-        return 'fail'
+    assert bnd.Checksum() == 50054, 'Didnt get expected checksum on reopened file'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test loading complex data.
 
 
-def numpy_rw_3():
+def test_numpy_rw_3():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/cint_sar.tif')
     array = ds.ReadAsArray()
 
-    if array[2][3] != 116 - 16j:
-        print(array[0][2][3])
-        gdaltest.post_reason('complex value read improperly.')
-        return 'fail'
-
-    return 'success'
+    assert array[2][3] == 116 - 16j, 'complex value read improperly.'
 
 ###############################################################################
 # Test a band read with downsampling.
 
 
-def numpy_rw_4():
+def test_numpy_rw_4():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.tif')
     array = ds.GetRasterBand(1).ReadAsArray(0, 0, 20, 20, 5, 5)
 
-    if array[2][3] != 123:
-        print(array[2][3])
-        gdaltest.post_reason('Read wrong value - perhaps downsampling algorithm has changed subtly?')
-        return 'fail'
-
-    return 'success'
+    assert array[2][3] == 123, \
+        'Read wrong value - perhaps downsampling algorithm has changed subtly?'
 
 ###############################################################################
 # Test reading a multi-band file.
 
 
-def numpy_rw_5():
+def test_numpy_rw_5():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     from osgeo import gdalnumeric
 
     array = gdalnumeric.LoadFile('data/rgbsmall.tif', 35, 21, 1, 1)
 
-    if array[0][0][0] != 78:
-        print(array)
-        gdaltest.post_reason('value read improperly.')
-        return 'fail'
+    assert array[0][0][0] == 78, 'value read improperly.'
 
-    if array[1][0][0] != 117:
-        print(array)
-        gdaltest.post_reason('value read improperly.')
-        return 'fail'
+    assert array[1][0][0] == 117, 'value read improperly.'
 
-    if array[2][0][0] != 24:
-        print(array)
-        gdaltest.post_reason('value read improperly.')
-        return 'fail'
+    assert array[2][0][0] == 24, 'value read improperly.'
 
     array = gdalnumeric.LoadFile('data/rgbsmall.tif', buf_xsize=1, buf_ysize=1, resample_alg=gdal.GRIORA_Bilinear)
-    if array.shape[0] != 3 or array.shape[1] != 1 or array.shape[2] != 1:
-        print(array.shape)
-        gdaltest.post_reason('wrong array shape.')
-        return 'fail'
-    if array[0][0][0] != 70 or array[1][0][0] != 97 or array[2][0][0] != 29:
-        print(array)
-        gdaltest.post_reason('value read improperly.')
-        return 'fail'
+    assert array.shape[0] == 3 and array.shape[1] == 1 and array.shape[2] == 1, \
+        'wrong array shape.'
+    assert array[0][0][0] == 70 and array[1][0][0] == 97 and array[2][0][0] == 29, \
+        'value read improperly.'
 
     import numpy
     array = numpy.zeros([3, 1, 1], dtype=numpy.uint8)
     ds = gdal.Open('data/rgbsmall.tif')
     ds.ReadAsArray(buf_obj=array, resample_alg=gdal.GRIORA_Bilinear)
-    if array[0][0][0] != 70 or array[1][0][0] != 97 or array[2][0][0] != 29:
-        print(array)
-        gdaltest.post_reason('value read improperly.')
-        return 'fail'
-
-    return 'success'
+    assert array[0][0][0] == 70 and array[1][0][0] == 97 and array[2][0][0] == 29, \
+        'value read improperly.'
 
 ###############################################################################
 # Check that Band.ReadAsArray() can accept an already allocated array (#2658, #3028)
 
 
-def numpy_rw_6():
+def test_numpy_rw_6():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdalnumeric
@@ -190,23 +151,19 @@ def numpy_rw_6():
     array = numpy.zeros([ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.GetRasterBand(1).ReadAsArray(buf_obj=array)
 
-    if array is not array_res:
-        return 'fail'
+    assert array is array_res
 
     ds2 = gdalnumeric.OpenArray(array)
-    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
-        return 'fail'
-
-    return 'success'
+    assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
 ###############################################################################
 # Check that Dataset.ReadAsArray() can accept an already allocated array (#2658, #3028)
 
 
-def numpy_rw_7():
+def test_numpy_rw_7():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdalnumeric
@@ -215,46 +172,38 @@ def numpy_rw_7():
     array = numpy.zeros([1, ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.ReadAsArray(buf_obj=array)
 
-    if array is not array_res:
-        return 'fail'
+    assert array is array_res
 
     ds2 = gdalnumeric.OpenArray(array)
-    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
-        return 'fail'
+    assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     # Try again with a 2D array
     array = numpy.zeros([ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.ReadAsArray(buf_obj=array)
 
-    if array is not array_res:
-        return 'fail'
+    assert array is array_res
 
     ds2 = gdalnumeric.OpenArray(array)
-    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
-        return 'fail'
+    assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     # With a multi band file
     ds = gdal.Open('data/rgbsmall.tif')
     array = numpy.zeros([ds.RasterCount, ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.ReadAsArray(buf_obj=array)
 
-    if array is not array_res:
-        return 'fail'
+    assert array is array_res
 
     ds2 = gdalnumeric.OpenArray(array)
-    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
-        return 'fail'
-
-    return 'success'
+    assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
 ###############################################################################
 # Check that Dataset.ReadAsArray() with multi-band data
 
 
-def numpy_rw_8():
+def test_numpy_rw_8():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdalnumeric
@@ -265,19 +214,17 @@ def numpy_rw_8():
 
     ds2 = gdalnumeric.OpenArray(array)
     for i in range(1, ds.RasterCount):
-        if ds2.GetRasterBand(i).Checksum() != ds.GetRasterBand(i).Checksum():
-            return 'fail'
+        assert ds2.GetRasterBand(i).Checksum() == ds.GetRasterBand(i).Checksum()
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Band.WriteArray()
 
 
-def numpy_rw_9():
+def test_numpy_rw_9():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte.tif')
     array = ds.ReadAsArray()
@@ -288,21 +235,16 @@ def numpy_rw_9():
     out_ds = None
     ds = None
 
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 4672, 'did not get expected checksum'
 
 ###############################################################################
 # Test signed byte handling
 
 
-def numpy_rw_10():
+def test_numpy_rw_10():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -321,26 +263,18 @@ def numpy_rw_10():
 
     gdal.Unlink('/vsimem/signed8.tif')
 
-    if ar2[0][0] != -128 or ar2[0][1] != 127:
-        gdaltest.post_reason('did not get expected result (1)')
-        print(ar2)
-        return 'fail'
+    assert ar2[0][0] == -128 and ar2[0][1] == 127, 'did not get expected result (1)'
 
-    if ar3[0][0] != -128 or ar3[0][1] != 127:
-        gdaltest.post_reason('did not get expected result (2)')
-        print(ar3)
-        return 'fail'
-
-    return 'success'
+    assert ar3[0][0] == -128 and ar3[0][1] == 127, 'did not get expected result (2)'
 
 ###############################################################################
 # Test all datatypes
 
 
-def numpy_rw_11():
+def test_numpy_rw_11():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -360,10 +294,7 @@ def numpy_rw_11():
     for type_tuple in type_tuples:
         ds = gdal.GetDriverByName('GTiff').Create('/vsimem/' + type_tuple[0], 1, 1, 1, type_tuple[1])
         tmp = ds.ReadAsArray()
-        if tmp.dtype != type_tuple[2]:
-            gdaltest.post_reason('did not get expected numpy type')
-            print(type_tuple)
-            return 'fail'
+        assert tmp.dtype == type_tuple[2], 'did not get expected numpy type'
 
         ar = numpy.empty([1, 1], dtype=type_tuple[2])
 
@@ -374,11 +305,8 @@ def numpy_rw_11():
         if expected_dt == gdal.GDT_CInt16 or expected_dt == gdal.GDT_CInt32:
             expected_dt = gdal.GDT_CFloat32
         if got_dt != expected_dt:
-            gdaltest.post_reason('did not get expected result (0)')
             print(type_tuple[1])
-            print(got_dt)
-            print(expected_dt)
-            return 'fail'
+            pytest.fail('did not get expected result (0)')
 
         ar[0][0] = type_tuple[3]
         ds.GetRasterBand(1).WriteArray(ar)
@@ -392,30 +320,23 @@ def numpy_rw_11():
 
         gdal.Unlink('/vsimem/' + type_tuple[0])
 
-        if (type_tuple[0] == 'float32' and abs(ar2[0][0] - type_tuple[3]) > 1e-6) or \
-           (type_tuple[0] != 'float32' and ar2[0][0] != type_tuple[3]):
-            gdaltest.post_reason('did not get expected result (1)')
-            print(ar2)
-            print(type_tuple)
-            return 'fail'
+        assert (not (type_tuple[0] == 'float32' and abs(ar2[0][0] - type_tuple[3]) > 1e-6) or \
+           (type_tuple[0] != 'float32' and ar2[0][0] != type_tuple[3])), \
+            'did not get expected result (1)'
 
-        if (type_tuple[0] == 'float32' and abs(ar3[0][0] - type_tuple[3]) > 1e-6) or \
-           (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3]):
-            gdaltest.post_reason('did not get expected result (2)')
-            print(ar3)
-            print(type_tuple)
-            return 'fail'
+        assert (not (type_tuple[0] == 'float32' and abs(ar3[0][0] - type_tuple[3]) > 1e-6) or \
+           (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3])), \
+            'did not get expected result (2)'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test array with slices (#3542)
 
 
-def numpy_rw_12():
+def test_numpy_rw_12():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -435,20 +356,16 @@ def numpy_rw_12():
     ds.GetRasterBand(1).ReadAsArray(buf_obj=slice_read)
     ds = None
 
-    if slice_read[0][0] != 1 or slice_read[1][0] != 3:
-        print(slice_read)
-        return 'fail'
-
-    return 'success'
+    assert slice_read[0][0] == 1 and slice_read[1][0] == 3
 
 ###############################################################################
 # Test expected errors
 
 
-def numpy_rw_13():
+def test_numpy_rw_13():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -461,88 +378,61 @@ def numpy_rw_13():
 
     # Try reading into unsupported array type
     ar = numpy.empty([1, 2], dtype=numpy.int64)
-    try:
+    with pytest.raises(Exception, message='expected "ValueError: array does not have '
+                             'corresponding GDAL data type"'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "ValueError: array does not have '
-                             'corresponding GDAL data type"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
+                             'with buffer shape"'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-        gdaltest.post_reason('expected "Specified buf_ysize not consistent '
-                             'with buffer shape"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Same with 3 dimensions
     ar = numpy.empty([1, 1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
+                             'with buffer shape"'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-        gdaltest.post_reason('expected "Specified buf_ysize not consistent '
-                             'with buffer shape"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Specified buf_xsize not consistent '
+                             'with buffer shape"'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=1,
                                         buf_ysize=1)
-        gdaltest.post_reason('expected "Specified buf_xsize not consistent '
-                             'with buffer shape"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Inconsistent data type
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Specified buf_type not consistent '
+                             'with array type"'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar,
                                         buf_type=gdal.GDT_Int16)
-        gdaltest.post_reason('expected "Specified buf_type not consistent '
-                             'with array type"')
-        return 'fail'
-    except:
-        pass
+    
 
     # This one should be OK !
     ar = numpy.zeros([1, 2], dtype=numpy.uint8)
     ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=1)
-    if ar[0][0] != 100 or ar[0][1] != 200:
-        gdaltest.post_reason('did not get expected values')
-        print(ar)
-        return 'fail'
+    assert ar[0][0] == 100 and ar[0][1] == 200, 'did not get expected values'
 
     # This one too
     ar = numpy.zeros([1, 1, 2], dtype=numpy.uint8)
     ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
-    if ar[0][0][0] != 100 or ar[0][0][1] != 200:
-        gdaltest.post_reason('did not get expected values')
-        print(ar)
-        return 'fail'
+    assert ar[0][0][0] == 100 and ar[0][0][1] == 200, 'did not get expected values'
 
     # This one too
     ar = numpy.zeros([1, 1, 2], dtype=numpy.uint8)
     ds.ReadAsArray(buf_obj=ar)
-    if ar[0][0][0] != 100 or ar[0][0][1] != 200:
-        gdaltest.post_reason('did not get expected values')
-        print(ar)
-        return 'fail'
+    assert ar[0][0][0] == 100 and ar[0][0][1] == 200, 'did not get expected values'
 
     # This one too
     ar = ds.ReadAsArray()
-    if ar[0][0] != 100 or ar[0][1] != 200:
-        gdaltest.post_reason('did not get expected values')
-        print(ar)
-        return 'fail'
+    assert ar[0][0] == 100 and ar[0][1] == 200, 'did not get expected values'
 
     ds = None
 
@@ -560,88 +450,62 @@ def numpy_rw_13():
         ds.GetRasterBand(i + 1).WriteArray(ar[i])
 
     ar = numpy.empty([3, 1, 2], dtype=numpy.int64)
-    try:
+    with pytest.raises(Exception, message='expected "ValueError: array does not have '
+                             'corresponding GDAL data type"'):
         ds.ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "ValueError: array does not have '
-                             'corresponding GDAL data type"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
+                             'with buffer shape"'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=2)
-        gdaltest.post_reason('expected "Specified buf_ysize not consistent '
-                             'with buffer shape"')
-        return 'fail'
-    except:
-        pass
+    
 
     # With 2 dimensions
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "ValueError: Array should have 3 '
+                             'dimensions"'):
         ds.ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "ValueError: Array should have 3 '
-                             'dimensions"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Try call with inconsistent parameters
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Specified buf_xsize not consistent '
+                             'with buffer shape"'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1)
-        gdaltest.post_reason('expected "Specified buf_xsize not consistent '
-                             'with buffer shape"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Inconsistent data type
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Specified buf_type not consistent with array type"'):
         ds.ReadAsArray(buf_obj=ar, buf_type=gdal.GDT_Int16)
-        gdaltest.post_reason('expected "Specified buf_type not consistent with array type"')
-        return 'fail'
-    except:
-        pass
+    
 
     # Not enough space in first dimension
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
-    try:
+    with pytest.raises(Exception, message='expected "Array should have space for 3 bands"'):
         ds.ReadAsArray(buf_obj=ar)
-        gdaltest.post_reason('expected "Array should have space for 3 bands"')
-        return 'fail'
-    except:
-        pass
+    
 
     # This one should be OK !
     ar = numpy.zeros([3, 1, 2], dtype=numpy.uint8)
     ds.ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=1, buf_type=gdal.GDT_Byte)
-    if ar[0][0][0] != 100 or ar[0][0][1] != 200 or ar[1][0][0] != 101 or ar[1][0][1] != 201 or ar[2][0][0] != 102 or ar[2][0][1] != 202:
-        gdaltest.post_reason('did not get expected values')
-        print(ar)
-        return 'fail'
+    assert ar[0][0][0] == 100 and ar[0][0][1] == 200 and ar[1][0][0] == 101 and ar[1][0][1] == 201 and ar[2][0][0] == 102 and ar[2][0][1] == 202, \
+        'did not get expected values'
 
     # This one too
     ar = numpy.zeros([3, 1, 2], dtype=numpy.uint8)
     ds.ReadAsArray(buf_obj=ar)
-    if ar[0][0][0] != 100 or ar[0][0][1] != 200 or ar[1][0][0] != 101 or ar[1][0][1] != 201 or ar[2][0][0] != 102 or ar[2][0][1] != 202:
-        gdaltest.post_reason('did not get expected values')
-        print(ar)
-        return 'fail'
+    assert ar[0][0][0] == 100 and ar[0][0][1] == 200 and ar[1][0][0] == 101 and ar[1][0][1] == 201 and ar[2][0][0] == 102 and ar[2][0][1] == 202, \
+        'did not get expected values'
 
     # This one too
     ar = ds.ReadAsArray()
-    if ar[0][0][0] != 100 or ar[0][0][1] != 200 or ar[1][0][0] != 101 or ar[1][0][1] != 201 or ar[2][0][0] != 102 or ar[2][0][1] != 202:
-        gdaltest.post_reason('did not get expected values')
-        print(ar)
-        return 'fail'
+    assert ar[0][0][0] == 100 and ar[0][0][1] == 200 and ar[1][0][0] == 101 and ar[1][0][1] == 201 and ar[2][0][0] == 102 and ar[2][0][1] == 202, \
+        'did not get expected values'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test callback of ReadAsArray()
@@ -673,15 +537,15 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def numpy_rw_14():
+def test_numpy_rw_14():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # Progress not implemented yet
     if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
-        return 'skip'
+        pytest.skip()
 
     import numpy
 
@@ -692,43 +556,29 @@ def numpy_rw_14():
     data = ds.GetRasterBand(1).ReadAsArray(resample_alg=gdal.GRIORA_NearestNeighbour,
                                            callback=numpy_rw_14_progress_callback,
                                            callback_data=tab)
-    if data is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if abs(tab[0] - 1.05) > 1e-5 or not tab[1]:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert data is not None
+    assert abs(tab[0] - 1.05) <= 1e-5 and tab[1]
 
     # Test interruption
     tab = [0]
     data = ds.GetRasterBand(1).ReadAsArray(callback=numpy_rw_14_progress_interrupt_callback,
                                            callback_data=tab)
-    if data is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if tab[0] < 0.50:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert data is None
+    assert tab[0] >= 0.50
 
     # Test Dataset.ReadAsArray
     tab = [0.05, True]
     data = ds.ReadAsArray(resample_alg=gdal.GRIORA_NearestNeighbour,
                           callback=numpy_rw_14_progress_callback,
                           callback_data=tab)
-    if data is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if abs(tab[0] - 1.05) > 1e-5 or not tab[1]:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert data is not None
+    assert abs(tab[0] - 1.05) <= 1e-5 and tab[1]
 
     # Same with interruption
     tab = [0]
     data = ds.ReadAsArray(callback=numpy_rw_14_progress_interrupt_callback,
                           callback_data=tab)
-    if data is not None or tab[0] < 0.50:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert data is None and tab[0] >= 0.50
 
     # Test Dataset.ReadAsArray on a multi band file
     ds = None
@@ -736,9 +586,7 @@ def numpy_rw_14():
     last_pct = [0]
     data = ds.ReadAsArray(callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
-    if data is None or abs(last_pct[0] - 1.0) > 1e-5:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
 
     last_pct = [0]
 
@@ -747,20 +595,16 @@ def numpy_rw_14():
     data = ds.ReadAsArray(buf_obj=array,
                           callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
-    if data is None or abs(last_pct[0] - 1.0) > 1e-5:
-        gdaltest.post_reason('failure')
-        return 'fail'
-
-    return 'success'
+    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
 
 ###############################################################################
 # Test NumPy GetGeoTransform/SetGeoTransform
 
 
-def numpy_rw_15():
+def test_numpy_rw_15():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -768,25 +612,19 @@ def numpy_rw_15():
     array = numpy.empty([1, 1, 1], numpy.uint8)
     ds = gdal_array.OpenArray(array)
     gt = ds.GetGeoTransform(can_return_null=True)
-    if gt is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert gt is None
     ds.SetGeoTransform([1, 2, 3, 4, 5, -6])
     gt = ds.GetGeoTransform()
-    if gt != (1, 2, 3, 4, 5, -6):
-        gdaltest.post_reason('failure')
-        return 'fail'
-
-    return 'success'
+    assert gt == (1, 2, 3, 4, 5, -6)
 
 ###############################################################################
 # Test errors of OpenArray()
 
 
-def numpy_rw_16():
+def test_numpy_rw_16():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -795,36 +633,28 @@ def numpy_rw_16():
     array = numpy.empty([1], numpy.uint8)
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
-    if ds is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is None
 
     # 4D
     array = numpy.empty([1, 1, 1, 1], numpy.uint8)
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
-    if ds is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is None
 
     # Unsupported data type
     array = numpy.empty([1, 1], numpy.float16)
     with gdaltest.error_handler():
         ds = gdal_array.OpenArray(array)
-    if ds is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 # Test old deprecated way with gdal_array.GetArrayFilename()
 
 
-def numpy_rw_17():
+def test_numpy_rw_17():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -833,34 +663,26 @@ def numpy_rw_17():
     array = numpy.empty([1, 1], numpy.uint8)
     with gdaltest.error_handler():
         ds = gdal.Open(gdal_array.GetArrayFilename(array))
-    if ds is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is None
 
     gdal.SetConfigOption('GDAL_ARRAY_OPEN_BY_FILENAME', 'TRUE')
     ds = gdal.Open(gdal_array.GetArrayFilename(array))
     gdal.SetConfigOption('GDAL_ARRAY_OPEN_BY_FILENAME', None)
-    if ds is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is not None
 
     # Invalid value
     with gdaltest.error_handler():
         ds = gdal.Open('NUMPY:::invalid')
-    if ds is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 # Test the pixel interleave options
 
 
-def numpy_rw_18():
+def test_numpy_rw_18():
 
     if gdaltest.numpy_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import numpy
     import numpy.random
@@ -868,56 +690,21 @@ def numpy_rw_18():
 
     img = numpy.random.randint(0, 255, size=(256, 200, 3)).astype('uint8')
     ds = gdal_array.OpenArray(img, interleave='pixel')
-    if ds is None:
-        gdaltest.post_reason('Failed to open memory array as dataset.')
-        return 'fail'
+    assert ds is not None, 'Failed to open memory array as dataset.'
 
     bnd1 = ds.GetRasterBand(1).ReadAsArray()
     bnd2 = ds.GetRasterBand(2).ReadAsArray()
     bnd3 = ds.GetRasterBand(3).ReadAsArray()
 
     res = numpy.dstack((bnd1, bnd2, bnd3))
-    if not numpy.all(img == res):
-        return 'fail'
+    assert numpy.all(img == res)
 
     res = ds.ReadAsArray(interleave='pixel')
-    if not numpy.all(img == res):
-        return 'fail'
-
-    return 'success'
+    assert numpy.all(img == res)
 
 
-def numpy_rw_cleanup():
+def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    numpy_rw_1,
-    numpy_rw_2,
-    numpy_rw_3,
-    numpy_rw_4,
-    numpy_rw_5,
-    numpy_rw_6,
-    numpy_rw_7,
-    numpy_rw_8,
-    numpy_rw_9,
-    numpy_rw_10,
-    numpy_rw_11,
-    numpy_rw_12,
-    numpy_rw_13,
-    numpy_rw_14,
-    numpy_rw_15,
-    numpy_rw_16,
-    numpy_rw_17,
-    numpy_rw_18,
-    numpy_rw_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('numpy_rw')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

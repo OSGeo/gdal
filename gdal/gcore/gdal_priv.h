@@ -1819,6 +1819,8 @@ template<class T> inline bool ARE_REAL_EQUAL(T fVal1, T fVal2, int ulp = 2)
            std::abs(fVal1 - fVal2) < std::numeric_limits<float>::epsilon() * std::abs(fVal1+fVal2) * ulp;
 }
 
+double GDALAdjustNoDataCloseToFloatMax(double dfVal);
+
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 
 // Number of data samples that will be used to compute approximate statistics

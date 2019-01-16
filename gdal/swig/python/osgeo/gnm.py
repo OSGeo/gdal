@@ -102,8 +102,8 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
     """DontUseExceptions()"""
     return _gnm.DontUseExceptions(*args)
-import osgeo.ogr
-import osgeo.osr
+from . import ogr
+from . import osr
 
 _gnm.GATDijkstraShortestPath_swigconstant(_gnm)
 GATDijkstraShortestPath = _gnm.GATDijkstraShortestPath
@@ -130,15 +130,15 @@ def CastToNetwork(*args):
 def CastToGenericNetwork(*args):
     """CastToGenericNetwork(MajorObject base) -> GenericNetwork"""
     return _gnm.CastToGenericNetwork(*args)
-class Network(osgeo.ogr.MajorObject):
+class Network(ogr.MajorObject):
     """Proxy of C++ GNMNetworkShadow class."""
 
     __swig_setmethods__ = {}
-    for _s in [osgeo.ogr.MajorObject]:
+    for _s in [ogr.MajorObject]:
         __swig_setmethods__.update(getattr(_s, '__swig_setmethods__', {}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, Network, name, value)
     __swig_getmethods__ = {}
-    for _s in [osgeo.ogr.MajorObject]:
+    for _s in [ogr.MajorObject]:
         __swig_getmethods__.update(getattr(_s, '__swig_getmethods__', {}))
     __getattr__ = lambda self, name: _swig_getattr(self, Network, name)
 

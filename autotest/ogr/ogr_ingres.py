@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,40 +28,38 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Open INGRES test datasource.
 
 
-def ogr_ingres_1():
+def test_ogr_ingres_1():
 
     gdaltest.ingres_ds = None
 
     drv = ogr.GetDriverByName('Ingres')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.ingres_ds = ogr.Open('@driver=ingres,dbname=test', update=1)
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Create table from data/poly.shp
 
 
-def ogr_ingres_2():
+def test_ogr_ingres_2():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     #######################################################
     # Create Layer
@@ -97,15 +95,14 @@ def ogr_ingres_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    return 'success'
-
+    
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_ingres_3():
+def test_ogr_ingres_3():
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -118,14 +115,12 @@ def ogr_ingres_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
-                                          max_error=0.000000001) != 0:
-            return 'fail'
+        assert (ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
+                                          max_error=0.000000001) == 0)
 
         for fld in range(3):
-            if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason('Attribute %d does not match' % fld)
-                return 'fail'
+            assert orig_feat.GetField(fld) == read_feat.GetField(fld), \
+                ('Attribute %d does not match' % fld)
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
@@ -134,16 +129,16 @@ def ogr_ingres_3():
     # automating this in the driver.
     read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
 
-def ogr_ingres_4():
+def test_ogr_ingres_4():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
@@ -153,7 +148,7 @@ def ogr_ingres_4():
 
     gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -163,12 +158,12 @@ def ogr_ingres_4():
 # so we disable this test.
 
 
-def ogr_ingres_5():
+def test_ogr_ingres_5():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'skip'
+    pytest.skip()
 
     # pylint: disable=unreachable
     sql_lyr = gdaltest.ingres_ds.ExecuteSQL(
@@ -185,16 +180,16 @@ def ogr_ingres_5():
 
     gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test spatial filtering.
 
 
-def ogr_ingres_6():
+def test_ogr_ingres_6():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
@@ -208,16 +203,16 @@ def ogr_ingres_6():
 
     gdaltest.ingres_lyr.SetSpatialFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test adding a new field.
 
 
-def ogr_ingres_7():
+def test_ogr_ingres_7():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ####################################################################
     # Add new string field.
@@ -225,18 +220,14 @@ def ogr_ingres_7():
     result = gdaltest.ingres_lyr.CreateField(field_defn)
     field_defn.Destroy()
 
-    if result is not 0:
-        gdaltest.post_reason('CreateField failed!')
-        return 'fail'
+    assert result is 0, 'CreateField failed!'
 
     ####################################################################
     # Apply a value to this field in one feature.
 
     gdaltest.ingres_lyr.SetAttributeFilter("prfedea = '35043423'")
     feat_read = gdaltest.ingres_lyr.GetNextFeature()
-    if feat_read is None:
-        gdaltest.post_reason('failed to read target feature!')
-        return 'fail'
+    assert feat_read is not None, 'failed to read target feature!'
 
     gdaltest.ingres_fid = feat_read.GetFID()
 
@@ -255,20 +246,19 @@ def ogr_ingres_7():
 
     gdaltest.ingres_lyr.SetAttributeFilter(None)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test deleting a feature.
 
 
-def ogr_ingres_8():
+def test_ogr_ingres_8():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
-    if not gdaltest.ingres_lyr.TestCapability('DeleteFeature'):
-        gdaltest.post_reason('DeleteFeature capability test failed.')
-        return 'fail'
+    assert gdaltest.ingres_lyr.TestCapability('DeleteFeature'), \
+        'DeleteFeature capability test failed.'
 
     old_count = gdaltest.ingres_lyr.GetFeatureCount()
 
@@ -276,9 +266,8 @@ def ogr_ingres_8():
     # Delete target feature.
 
     target_fid = gdaltest.ingres_fid
-    if gdaltest.ingres_lyr.DeleteFeature(target_fid) != 0:
-        gdaltest.post_reason('DeleteFeature returned error code.')
-        return 'fail'
+    assert gdaltest.ingres_lyr.DeleteFeature(target_fid) == 0, \
+        'DeleteFeature returned error code.'
 
     ####################################################################
     # Verify that count has dropped by one, and that the feature in question
@@ -288,42 +277,19 @@ def ogr_ingres_8():
         gdaltest.post_reason('got feature count of %d, not expected %d.'
                              % (new_count, old_count - 1))
 
-    if gdaltest.ingres_lyr.GetFeature(target_fid) is not None:
-        gdaltest.post_reason('Got deleted feature!')
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.ingres_lyr.GetFeature(target_fid) is None, 'Got deleted feature!'
 
 ###############################################################################
 #
 
 
-def ogr_ingres_cleanup():
+def test_ogr_ingres_cleanup():
 
     if gdaltest.ingres_ds is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.ingres_ds.Destroy()
     gdaltest.ingres_ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_ingres_1,
-    ogr_ingres_2,
-    ogr_ingres_3,
-    ogr_ingres_4,
-    ogr_ingres_5,
-    ogr_ingres_6,
-    ogr_ingres_7,
-    ogr_ingres_8,
-    ogr_ingres_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_ingres')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

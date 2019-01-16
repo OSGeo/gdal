@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -26,49 +26,56 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
+import pytest
 
 import gdaltest
 from osgeo import gdal
 
-###############################################################################
-# When imported build a list of units based on the files available.
-
-gdaltest_list = []
 
 init_list = [
-    ('byte_3.hdf', 1, 4672, None),
-    ('int16_3.hdf', 1, 4672, None),
-    ('uint16_3.hdf', 1, 4672, None),
-    ('int32_3.hdf', 1, 4672, None),
-    ('uint32_3.hdf', 1, 4672, None),
-    ('float32_3.hdf', 1, 4672, None),
-    ('float64_3.hdf', 1, 4672, None),
-    ('utmsmall_3.hdf', 1, 50054, None),
-    ('byte_2.hdf', 1, 4672, None),
-    ('int16_2.hdf', 1, 4672, None),
-    ('uint16_2.hdf', 1, 4672, None),
-    ('int32_2.hdf', 1, 4672, None),
-    ('uint32_2.hdf', 1, 4672, None),
-    ('float32_2.hdf', 1, 4672, None),
-    ('float64_2.hdf', 1, 4672, None),
-    ('utmsmall_2.hdf', 1, 50054, None)]
+    ('byte_3.hdf', 4672),
+    ('int16_3.hdf', 4672),
+    ('uint16_3.hdf', 4672),
+    ('int32_3.hdf', 4672),
+    ('uint32_3.hdf', 4672),
+    ('float32_3.hdf', 4672),
+    ('float64_3.hdf', 4672),
+    ('utmsmall_3.hdf', 50054),
+    ('byte_2.hdf', 4672),
+    ('int16_2.hdf', 4672),
+    ('uint16_2.hdf', 4672),
+    ('int32_2.hdf', 4672),
+    ('uint32_2.hdf', 4672),
+    ('float32_2.hdf', 4672),
+    ('float64_2.hdf', 4672),
+    ('utmsmall_2.hdf', 50054)]
+
+
+@pytest.mark.parametrize(
+    'filename,checksum',
+    init_list,
+    ids=[tup[0].split('.')[0] for tup in init_list],
+)
+@pytest.mark.require_driver('HDF4Image')
+def test_hdf4_open(filename, checksum):
+    ut = gdaltest.GDALTest('HDF4Image', filename, 1, checksum)
+    ut.testOpen()
+
 
 ###############################################################################
 # Test HDF4_SDS with single subdataset
 
 
-def hdf4_read_online_1():
+def test_hdf4_read_online_1():
 
     gdaltest.hdf4_drv = gdal.GetDriverByName('HDF4')
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/A2004259075000.L2_LAC_SST.hdf', 'A2004259075000.L2_LAC_SST.hdf'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('HDF4Image', 'tmp/cache/A2004259075000.L2_LAC_SST.hdf', 1, 28189, filename_absolute=1)
 
@@ -78,242 +85,192 @@ def hdf4_read_online_1():
 # Test HDF4_SDS with GEOLOCATION info
 
 
-def hdf4_read_online_2():
+def test_hdf4_read_online_2():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/A2006005182000.L2_LAC_SST.x.hdf', 'A2006005182000.L2_LAC_SST.x.hdf'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('HDF4Image', 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":13', 1, 13209, filename_absolute=1)
 
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
+    tst.testOpen()
 
     ds = gdal.Open('HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":13')
     md = ds.GetMetadata('GEOLOCATION')
     ds = None
 
-    if md['X_DATASET'] != 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":11':
-        gdaltest.post_reason('Did not get expected X_DATASET')
-        return 'fail'
-
-    return 'success'
+    assert md['X_DATASET'] == 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":11', \
+        'Did not get expected X_DATASET'
 
 
 ###############################################################################
 # Test HDF4_EOS:EOS_GRID
 
-def hdf4_read_online_3():
+def test_hdf4_read_online_3():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf', 'MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('HDF4Image', 'tmp/cache/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf', 1, 34723, filename_absolute=1)
 
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf')
     gt = ds.GetGeoTransform()
     expected_gt = [-180.0, 0.3515625, 0.0, 90.0, 0.0, -0.3515625]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-8:
-            print(gt)
-            gdaltest.post_reason('did not get expected gt')
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
 
     srs = ds.GetProjectionRef()
-    if srs.find('Clarke') == -1:
-        gdaltest.post_reason('did not get expected projection')
-        return 'fail'
+    assert srs.find('Clarke') != -1, 'did not get expected projection'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test HDF4_SDS:SEAWIFS_L1A
 
 
-def hdf4_read_online_4():
+def test_hdf4_read_online_4():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf', 'S2002196124536.L1A_HDUN.BartonBendish.extract.hdf'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('HDF4Image', 'tmp/cache/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf', 1, 33112, filename_absolute=1)
 
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf')
-    if ds.RasterCount != 8:
-        gdaltest.post_reason('did not get expected band number')
-        return 'fail'
+    assert ds.RasterCount == 8, 'did not get expected band number'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #2208
 
 
-def hdf4_read_online_5():
+def test_hdf4_read_online_5():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # 13 MB
     if not gdaltest.download_file('ftp://data.nodc.noaa.gov/pub/data.nodc/pathfinder/Version5.0/Monthly/1991/199101.s04m1pfv50-sst-16b.hdf', '199101.s04m1pfv50-sst-16b.hdf'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('HDF4Image', 'tmp/cache/199101.s04m1pfv50-sst-16b.hdf', 1, 41173, filename_absolute=1)
 
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
-
-    return 'success'
+    tst.testOpen()
 
 ###############################################################################
 # Test fix for #3386 where block size is dataset size
 
 
-def hdf4_read_online_6():
+def test_hdf4_read_online_6():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # 1 MB
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf', 'MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf'):
-        return 'skip'
+        pytest.skip()
 
     # Test with quoting of components
     tst = gdaltest.GDALTest('HDF4Image', 'HDF4_EOS:EOS_GRID:"tmp/cache/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf":"MODIS_NACP_EVI":"MODIS_EVI"', 1, 12197, filename_absolute=1)
 
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
+    tst.testOpen()
 
     ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf:MODIS_NACP_EVI:MODIS_EVI')
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
-        if blockx != 4800 or blocky != 4800:
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+        assert blockx == 4800 and blocky == 4800, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 12197:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 12197, 'did not get expected checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test fix for #3386 where block size is smaller than dataset size
 
 
-def hdf4_read_online_7():
+def test_hdf4_read_online_7():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # 4 MB
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MOD09A1.A2010041.h06v03.005.2010051001103.hdf', 'MOD09A1.A2010041.h06v03.005.2010051001103.hdf'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('HDF4Image', 'HDF4_EOS:EOS_GRID:tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf:MOD_Grid_500m_Surface_Reflectance:sur_refl_b01', 1, 54894, filename_absolute=1)
 
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
+    tst.testOpen()
 
     ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf:MOD_Grid_500m_Surface_Reflectance:sur_refl_b01')
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
-        if blockx != 2400 or blocky != 32:
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+        assert blockx == 2400 and blocky == 32, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 54894:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 54894, 'did not get expected checksum'
 
     ds = None
-
-    return 'success'
 
 
 ###############################################################################
 # Test reading a HDF4_EOS:EOS_GRID where preferred block height reported would be 1
 # but that will lead to very poor performance (#3386)
 
-def hdf4_read_online_8():
+def test_hdf4_read_online_8():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     # 5 MB
     if not gdaltest.download_file('ftp://e4ftl01u.ecs.nasa.gov/MODIS_Composites/MOLT/MOD13Q1.005/2006.06.10/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf', 'MOD13Q1.A2006161.h21v13.005.2008234103220.hdf'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('HDF4Image', 'HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI', 1, 53837, filename_absolute=1)
 
-    ret = tst.testOpen()
-    if ret != 'success':
-        return ret
+    tst.testOpen()
 
     ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI')
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 53837:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 53837, 'did not get expected checksum'
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 4800 or blocky == 1:
             print('blockx=%d, blocky=%d' % (blockx, blocky))
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+            pytest.fail("Did not get expected block size")
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading L1G MTL metadata metadata
 
 
-def hdf4_read_online_9():
+def test_hdf4_read_online_9():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.geogratis.cgdi.gc.ca/download/landsat_7/hdf/L71002025_02520010722/L71002025_02520010722_MTL.L1G', 'L71002025_02520010722_MTL.L1G'):
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.geogratis.cgdi.gc.ca/download/landsat_7/hdf/L71002025_02520010722/L71002025_02520010722_HDF.L1G', 'L71002025_02520010722_HDF.L1G'):
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/cache/L71002025_02520010722_B10.L1G', 'wb')
     f.close()
@@ -322,66 +279,30 @@ def hdf4_read_online_9():
     gcp_count = ds.GetGCPCount()
     ds = None
 
-    if gcp_count != 4:
-        gdaltest.post_reason('did not get expected gcp count')
-        print(gcp_count)
-        return 'fail'
-
-    return 'success'
+    assert gcp_count == 4, 'did not get expected gcp count'
 
 ###############################################################################
 # Test that non-tiled access works (#4672)
 
 
-def hdf4_read_online_10():
+def test_hdf4_read_online_10():
 
     if gdaltest.hdf4_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/4672/MOD16A2.A2000M01.h14v02.105.2010357183410.hdf', 'MOD16A2.A2000M01.h14v02.105.2010357183410.hdf'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('HDF4_EOS:EOS_GRID:"tmp/cache/MOD16A2.A2000M01.h14v02.105.2010357183410.hdf":MOD_Grid_MOD16A2:ET_1km')
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
-        if blockx != 1200 or blocky != 833:
-            gdaltest.post_reason("Did not get expected block size")
-            return 'fail'
+        assert blockx == 1200 and blocky == 833, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 20976:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 20976, 'did not get expected checksum'
 
     ds = None
 
-    return 'success'
 
 
-for item in init_list:
-    ut = gdaltest.GDALTest('HDF4Image', item[0], item[1], item[2])
-    if ut is None:
-        print('HDF4 tests skipped')
-        sys.exit()
-    gdaltest_list.append((ut.testOpen, item[0]))
-
-gdaltest_list.append(hdf4_read_online_1)
-gdaltest_list.append(hdf4_read_online_2)
-gdaltest_list.append(hdf4_read_online_3)
-gdaltest_list.append(hdf4_read_online_4)
-gdaltest_list.append(hdf4_read_online_5)
-gdaltest_list.append(hdf4_read_online_6)
-gdaltest_list.append(hdf4_read_online_7)
-gdaltest_list.append(hdf4_read_online_8)
-gdaltest_list.append(hdf4_read_online_9)
-gdaltest_list.append(hdf4_read_online_10)
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hdf4_read')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

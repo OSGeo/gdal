@@ -2408,8 +2408,6 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
     sqlite3 *hDB = poDS->GetDB();
     int            bNeedComma = FALSE;
 
-    ResetReading();
-
 /* -------------------------------------------------------------------- */
 /*      Form the UPDATE command.                                        */
 /* -------------------------------------------------------------------- */
@@ -2468,7 +2466,7 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Prepare the statement.                                          */
 /* -------------------------------------------------------------------- */
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
     CPLDebug( "OGR_SQLITE", "prepare_v2(%s)", osCommand.c_str() );
 #endif
 

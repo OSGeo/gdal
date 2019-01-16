@@ -37,7 +37,7 @@
 #define __has_builtin(x) 0
 #endif
 
-#if __GNUC__ >= 5 || __has_builtin(__builtin_sadd_overflow)
+#if (__GNUC__ >= 5 && !defined( __INTEL_COMPILER)) || __has_builtin(__builtin_sadd_overflow)
 #  define BUILTIN_OVERFLOW_CHECK_AVAILABLE
 
 #elif defined(_MSC_VER)

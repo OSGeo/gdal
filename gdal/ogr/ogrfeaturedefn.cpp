@@ -1229,6 +1229,37 @@ int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName ) const
 }
 
 /************************************************************************/
+/*                      GetFieldIndexCaseSensitive()                    */
+/************************************************************************/
+
+/**
+ * \brief Find field by name, in a case sensitive way.
+ *
+ * The field index of the first field matching the passed field name is returned.
+ *
+ * @param pszFieldName the field name to search for.
+ *
+ * @return the field index, or -1 if no match found.
+ */
+
+int OGRFeatureDefn::GetFieldIndexCaseSensitive( const char * pszFieldName ) const
+
+{
+    GetFieldCount();
+    for( int i = 0; i < nFieldCount; i++ )
+    {
+        const OGRFieldDefn* poFDefn = GetFieldDefn(i);
+        if( poFDefn != nullptr &&
+            strcmp(pszFieldName, poFDefn->GetNameRef() ) == 0 )
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+/************************************************************************/
 /*                        OGR_FD_GetFieldIndex()                        */
 /************************************************************************/
 /**

@@ -258,7 +258,7 @@ of a factor of two.</p>
 datasets. For regular tiled rasters, the alpha band must rather be used.</p>
 
 <p>For Float32 datasets with TIFF tiles, the concepts of nodata in GDAL
-and null_value in the GeoPackage internasl perfectly match.</p>
+and null_value in the GeoPackage internals perfectly match.</p>
 
 <p>For Int16, UInt16 or Float32 with PNG tiles, GDAL will generally remap the
 input nodata value to another value.</p>
@@ -318,7 +318,12 @@ Defaults to 256. Maximum supported is 4096.</li>
 <li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
 Defaults to NO.</li>
 <li><b>TILING_SCHEME</b>=CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/InspireCRS84Quad/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator.
-See <a href="#tiling_schemes">Tiling schemes</a> section. Defaults to CUSTOM.</li>
+See <a href="#tiling_schemes">Tiling schemes</a> section. Defaults to CUSTOM.
+Note: the TILING_SCHEME option with a non-CUSTOM value is best used with the
+gdal_translate utility / CreateCopy() API operation. If used with gdalwarp,
+it requires setting the -tr switch to the exact value expected by one zoom level
+of the tiling scheme.
+</li>
 <li><b>ZOOM_LEVEL_STRATEGY</b>=AUTO/LOWER/UPPER. Strategy to determine zoom level.
 Only used by CreateCopy() for TILING_SCHEME different from CUSTOM. LOWER will select the
 zoom level immediately below the theoretical computed non-integral zoom level,

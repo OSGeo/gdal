@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,13 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from sys import version_info
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
-import gdaltest
+import pytest
 
 ###############################################################################
 # Try ogr.Open(), Driver.CreateDataSource(), Driver.DeleteDataSource()
@@ -47,21 +45,15 @@ def ogr_rfc30_1_internal(filename, layer_name):
     ds = None
 
     ds = ogr.Open(filename)
-    if ds is None:
-        gdaltest.post_reason('cannot reopen datasource')
-        return 'fail'
+    assert ds is not None, 'cannot reopen datasource'
     lyr = ds.GetLayerByName(layer_name)
-    if lyr is None:
-        gdaltest.post_reason('cannot find layer')
-        return 'fail'
+    assert lyr is not None, 'cannot find layer'
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
 
-    return 'success'
 
-
-def ogr_rfc30_1():
+def test_ogr_rfc30_1():
 
     if version_info >= (3, 0, 0):
         filename = '/vsimem/\u00e9.shp'
@@ -74,10 +66,10 @@ def ogr_rfc30_1():
     return ogr_rfc30_1_internal(filename, layer_name)
 
 
-def ogr_rfc30_1_bis():
+def test_ogr_rfc30_1_bis():
 
     if version_info >= (3, 0, 0):
-        return 'skip'
+        pytest.skip()
 
     filename = None
     layer_name = None
@@ -88,12 +80,4 @@ def ogr_rfc30_1_bis():
     return ogr_rfc30_1_internal(filename, layer_name)
 
 
-gdaltest_list = [ogr_rfc30_1, ogr_rfc30_1_bis]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_rfc30')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

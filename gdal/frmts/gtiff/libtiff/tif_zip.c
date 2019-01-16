@@ -179,8 +179,8 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 			TIFFErrorExt(tif->tif_clientdata, module,
 			    "Decoding error at scanline %lu, %s",
 			     (unsigned long) tif->tif_row, SAFE_MSG(sp));
-			if (inflateSync(&sp->stream) != Z_OK)
-				return (0);
+			/* if (inflateSync(&sp->stream) != Z_OK) */
+			return (0);
 			continue;
 		}
 		if (state != Z_OK) {

@@ -55,7 +55,12 @@ static bool inline CPLHaveRuntimeSSSE3()
     return true;
 }
 #else
+#if defined(__GNUC__) && !defined(DEBUG)
+extern bool bCPLHasSSE3;
+static bool inline CPLHaveRuntimeSSSE3() { return bCPLHasSSE3; }
+#else
 bool CPLHaveRuntimeSSSE3();
+#endif
 #endif
 #endif
 
@@ -63,6 +68,9 @@ bool CPLHaveRuntimeSSSE3();
 #if __AVX__
 #define HAVE_INLINE_AVX
 static bool inline CPLHaveRuntimeAVX() { return true; }
+#elif defined(__GNUC__)
+extern bool bCPLHasAVX;
+static bool inline CPLHaveRuntimeAVX() { return bCPLHasAVX; }
 #else
 bool CPLHaveRuntimeAVX();
 #endif

@@ -34,7 +34,6 @@
 #include "myassert.h"
 #include "inventory.h"
 #include "metaname.h"
-#include "filedatasource.h"
 
 #include "cpl_port.h"
 
@@ -135,13 +134,13 @@ void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv)
       delta = (Inv[i].validTime - Inv[i].refTime) / 3600.;
       delta = myRound (delta, 2);
       if (Inv[i].comment == nullptr) {
-         printf ("%u.%u, %d, %d, %s, %s, %s, %s, %.2f\n",
+         printf ("%u.%u, " CPL_FRMT_GUIB ", %d, %s, %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].shortFstLevel,
                  refTime, validTime, delta);
          fflush (stdout);
       } else {
-         printf ("%u.%u, %d, %d, %s=\"%s\", %s, %s, %s, %.2f\n",
+         printf ("%u.%u, " CPL_FRMT_GUIB ", %d, %s=\"%s\", %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].comment,
                  Inv[i].shortFstLevel, refTime, validTime, delta);
@@ -256,7 +255,7 @@ static int InventoryParseTime (char *is, double *AnsTime)
  *   May want to put this in degrib2.c
  *****************************************************************************
  */
-static int GRIB2SectToBuffer (DataSource &fp,
+static int GRIB2SectToBuffer (VSILFILE *fp,
                               uInt4 gribLen,
                               sChar *sect,
                               uInt4 *secLen, uInt4 *buffLen, char **buff)
@@ -279,11 +278,11 @@ static int GRIB2SectToBuffer (DataSource &fp,
    if (*buffLen < *secLen) {
       if( *secLen > 100 * 1024 * 1024 )
       {
-          long curPos = fp.DataSourceFtell();
-          fp.DataSourceFseek(0, SEEK_END);
-          long fileSize = fp.DataSourceFtell();
-          fp.DataSourceFseek(curPos, SEEK_SET);
-          if( *secLen > (uInt4)fileSize )
+          vsi_l_offset curPos = VSIFTellL(fp);
+          VSIFSeekL(fp, 0, SEEK_END);
+          vsi_l_offset fileSize = VSIFTellL(fp);
+          VSIFSeekL(fp, curPos, SEEK_SET);
+          if( *secLen > fileSize )
           {
             errSprintf ("ERROR: File too short\n");
             return -1;
@@ -300,7 +299,7 @@ static int GRIB2SectToBuffer (DataSource &fp,
       buffer = *buff;
    }
 
-   if (fp.DataSourceFread (buffer, sizeof (char), *secLen - sizeof (sInt4)) !=
+   if (VSIFReadL(buffer, sizeof (char), *secLen - sizeof (sInt4), fp) !=
        *secLen - sizeof (sInt4)) {
       if (*sect != -1) {
          errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
@@ -353,11 +352,10 @@ static int GRIB2SectToBuffer (DataSource &fp,
  *   May want to put this in degrib2.c
  *****************************************************************************
  */
-static int GRIB2SectJump (DataSource &fp,
+static int GRIB2SectJump (VSILFILE *fp,
                           CPL_UNUSED sInt4 gribLen, sChar *sect, uInt4 *secLen)
 {
    char sectNum;        /* Validates that we are on the correct section. */
-   int c;               /* Check that the fseek is still inside the file. */
 
    if (FREAD_BIG (secLen, sizeof (sInt4), 1, fp) != 1) {
       if (*sect != -1) {
@@ -367,7 +365,7 @@ static int GRIB2SectJump (DataSource &fp,
       }
       return -1;
    }
-   if (fp.DataSourceFread (&sectNum, sizeof (char), 1) != 1) {
+   if (VSIFReadL (&sectNum, sizeof (char), 1, fp) != 1) {
       if (*sect != -1) {
          errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
       } else {
@@ -383,12 +381,12 @@ static int GRIB2SectJump (DataSource &fp,
    }
    /* Since fseek does not give an error if we jump outside the file, we test
     * it by using fgetc / ungetc. */
-   fp.DataSourceFseek (*secLen - 5, SEEK_CUR);
-   if ((c = fp.DataSourceFgetc()) == EOF) {
+   VSIFSeekL(fp, *secLen - 5, SEEK_CUR);
+   if (VSIFReadL (&sectNum, sizeof (char), 1, fp) != 1) {
       errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
       return -1;
    } else {
-      fp.DataSourceUngetc(c);
+      VSIFSeekL(fp, VSIFTellL(fp) - sizeof(char), SEEK_SET);
    }
    return 0;
 }
@@ -436,7 +434,7 @@ static int GRIB2SectJump (DataSource &fp,
  * NOTES
  *****************************************************************************
  */
-static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
+static int GRIB2Inventory2to7 (sChar sectNum, VSILFILE *fp, sInt4 gribLen,
                                uInt4 *buffLen, char **buffer,
                                inventoryType *inv, uChar prodType,
                                unsigned short int center,
@@ -955,11 +953,10 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
  * NOTES
  *****************************************************************************
  */
-int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
+int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
                     int numMsg, int *MsgNum)
 {
-   //FileDataSource fp (filename);            /* The opened GRIB2 file. */
-   sInt4 offset = 0;    /* Where we are in the file. */
+   vsi_l_offset offset = 0; /* Where we are in the file. */
    sInt4 msgNum;        /* Which GRIB2 message we are on. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    uInt4 secLen;        /* Length of current section. */
@@ -981,9 +978,9 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
                          */
    int grib_limit;      /* How many bytes to look for before the first "GRIB"
                          * in the file.  If not found, is not a GRIB file. */
-   int c;               /* Determine if end of the file without fileLen. */
+   char c;               /* Determine if end of the file without fileLen. */
 #ifdef DEBUG
-   sInt4 fileLen;       /* Length of the GRIB2 file. */
+   vsi_l_offset fileLen; /* Length of the GRIB2 file. */
 #endif
    unsigned short int center, subcenter; /* Who produced it. */
    uChar mstrVersion;   /* The master table version (is it 255?) */
@@ -1011,8 +1008,9 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
 
    buff = nullptr;
    buffLen = 0;
-   while ((c = fp.DataSourceFgetc()) != EOF) {
-		 fp.DataSourceUngetc(c);
+
+   while (VSIFReadL(&c, sizeof(char), 1, fp) == 1) {
+      VSIFSeekL(fp, VSIFTellL(fp) - sizeof(char), SEEK_SET);
       // ungetc (c, fp);
       /* msgNum++ done first so any error messages range from 1..n, instead
        * of 0.. n-1. Note msgNum should end up as n not (n-1) */
@@ -1049,10 +1047,10 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             free (msg);
 #ifdef DEBUG
             /* find out how big the file is. */
-            fp.DataSourceFseek (0L, SEEK_END);
-            fileLen = static_cast<int>(fp.DataSourceFtell());
+            VSIFSeekL (fp, 0L, SEEK_END);
+            fileLen = VSIFTellL(fp);
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were %d trailing bytes in the file.\n",
+            printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);
@@ -1157,7 +1155,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             if (secLen == 926365495L) {
                sectNum = 8;
             } else {
-               if (fp.DataSourceFread (&sectNum, sizeof (char), 1) != 1) {
+               if (VSIFReadL (&sectNum, sizeof (char), 1, fp) != 1) {
                   errSprintf ("ERROR: Ran out of file looking for "
                               "subMessage.\n");
                   free (buffer);
@@ -1175,7 +1173,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
                   //fclose (fp);
                   return -4;
                }
-               fp.DataSourceFseek (-5, SEEK_CUR);
+               VSIFSeekL(fp, VSIFTellL(fp) - 5, SEEK_SET);
                /* Make room for the next part of this GRIB message in the
                 * inventory list.  This is for when we have sub-grids. */
                *LenInv = *LenInv + 1;
@@ -1223,11 +1221,11 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       {
          increment = buffLen + gribLen;
       }
-      if( increment < buffLen || increment > (uInt4)(INT_MAX - offset) )
+      if( increment < buffLen || increment > (VSI_L_OFFSET_MAX - offset) )
           break;
       offset += increment;
       }
-      fp.DataSourceFseek (offset, SEEK_SET);
+      VSIFSeekL(fp, offset, SEEK_SET);
    }
    free (buffer);
    free (buff);
@@ -1238,8 +1236,8 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
 
 int GRIB2RefTime (const char *filename, double *refTime)
 {
-   FileDataSource fp (filename);            /* The opened GRIB2 file. */
-   sInt4 offset = 0;    /* Where we are in the file. */
+   VSILFILE * fp = nullptr;
+   vsi_l_offset offset = 0; /* Where we are in the file. */
    sInt4 msgNum;        /* Which GRIB2 message we are on. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    uInt4 secLen;        /* Length of current section. */
@@ -1258,20 +1256,18 @@ int GRIB2RefTime (const char *filename, double *refTime)
                          */
    int grib_limit;      /* How many bytes to look for before the first "GRIB"
                          * in the file.  If not found, is not a GRIB file. */
-   int c;               /* Determine if end of the file without fileLen. */
+   char c;               /* Determine if end of the file without fileLen. */
 #ifdef DEBUG
-   sInt4 fileLen;       /* Length of the GRIB2 file. */
+   vsi_l_offset fileLen; /* Length of the GRIB2 file. */
 #endif
    const char *ptr;           /* used to find the file extension. */
    double refTime1;
 
    grib_limit = GRIB_LIMIT;
    /*if (filename != NULL)*/ {
-      //if ((fp = fopen (filename, "rb")) == NULL) {
-      //   errSprintf ("ERROR: Problems opening %s for read.", filename);
-      //   return -1;
-      //}
-		  //fp = DataSource(filename);
+      if ((fp = VSIFOpenL(filename, "rb")) == nullptr) {
+         return -1;
+      }
       ptr = strrchr (filename, '.');
       if (ptr != nullptr) {
          if (strcmp (ptr, ".tar") == 0) {
@@ -1285,8 +1281,9 @@ int GRIB2RefTime (const char *filename, double *refTime)
 
    buff = nullptr;
    buffLen = 0;
-   while ((c = fp.DataSourceFgetc()) != EOF) {
-		 fp.DataSourceUngetc(c);
+   while (VSIFReadL(&c, sizeof(char), 1, fp) == 1) {
+      VSIFSeekL(fp, VSIFTellL(fp) - sizeof(char), SEEK_SET);
+
       /* msgNum++ done first so any error messages range from 1..n, instead
        * of 0.. n-1. Note msgNum should end up as n not (n-1) */
       msgNum++;
@@ -1313,10 +1310,10 @@ int GRIB2RefTime (const char *filename, double *refTime)
             free (msg);
 #ifdef DEBUG
             /* find out how big the file is. */
-            fp.DataSourceFseek (0L, SEEK_END);
-            fileLen = static_cast<int>(fp.DataSourceFtell());
+            VSIFSeekL(fp, 0L, SEEK_END);
+            fileLen = VSIFTellL(fp);
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were %d trailing bytes in the file.\n",
+            printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);
@@ -1371,7 +1368,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
 
       /* Continue on to the next GRIB2 message. */
       offset += gribLen + buffLen;
-      fp.DataSourceFseek (offset, SEEK_SET);
+      VSIFSeekL (fp, offset, SEEK_SET);
    }
    free (buffer);
    free (buff);

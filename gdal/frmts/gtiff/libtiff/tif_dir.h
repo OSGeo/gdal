@@ -24,6 +24,10 @@
 
 #ifndef _TIFFDIR_
 #define	_TIFFDIR_
+
+#include "tiff.h"
+#include "tiffio.h"
+
 /*
  * ``Library-private'' Directory-related Definitions.
  */

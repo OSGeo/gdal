@@ -303,6 +303,19 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry ) const
 }
 
 /************************************************************************/
+/*                       SetEntryTypeUnknown()                          */
+/************************************************************************/
+
+void SDTS_CATD::SetEntryTypeUnknown(int iEntry)
+{
+    if( iEntry >= 0 && iEntry < nEntries )
+    {
+        CPLFree(papoEntries[iEntry]->pszType);
+        papoEntries[iEntry]->pszType = CPLStrdup("Unknown");
+    }
+}
+
+/************************************************************************/
 /*                          GetEntryFilePath()                          */
 /************************************************************************/
 

@@ -186,7 +186,7 @@ CXXFLAGS :=	$(CXXFLAGS) -DCLOUDANT_ENABLED
 endif
 
 ifeq ($(HAVE_FREEXL),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DFREEXL_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DXLS_ENABLED
 endif
 
 ifeq ($(HAVE_EXPAT),yes)
@@ -225,8 +225,16 @@ ifeq ($(HAVE_MONGODB),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
 endif
 
+ifeq ($(HAVE_MONGOCXXV3),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DMONGODBV3_ENABLED
+endif
+
 ifeq ($(HAVE_CAD),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DCAD_ENABLED
+endif
+
+ifeq ($(CURL_SETTING),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DNGW_ENABLED
 endif
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
@@ -237,4 +245,3 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 $(O_OBJ):	../../../GDALmake.opt ../../swq.h
-

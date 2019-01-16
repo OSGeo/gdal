@@ -3228,10 +3228,10 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
   }
 
   /*
-  ** We do not want to interfere with warnings or debug messages since
+  ** We do not want to interfere with non-failure messages since
   ** they won't be translated into exceptions.
   */
-  else if (eclass == CE_Warning || eclass == CE_Debug ) {
+  else if (eclass != CE_Failure ) {
     pfnPreviousHandler(eclass, code, msg );
   }
   else {
@@ -3259,8 +3259,9 @@ void UseExceptions() {
                    CPLGetConfigOption("__chain_python_error_handlers", "")));
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
+    // if the previous logger was custom, we need the user data available
     pfnPreviousHandler =
-        CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
+        CPLSetErrorHandlerEx( (CPLErrorHandler) PythonBindingErrorHandler, CPLGetErrorHandlerUserData() );
   }
 }
 
@@ -3284,7 +3285,8 @@ void DontUseExceptions() {
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
     bUseExceptions = 0;
-    CPLSetErrorHandler( pfnPreviousHandler );
+    // if the previous logger was custom, we need the user data available. Preserve it.
+    CPLSetErrorHandlerEx( pfnPreviousHandler, CPLGetErrorHandlerUserData());
   }
 }
 

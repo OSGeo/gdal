@@ -16,7 +16,7 @@ as a vector layer, using Google Earth Engine REST API.<p>
 
 The minimal syntax to open a datasource is : <pre>EEDA:[collection]</pre><p>
 
-where collection is something like COPERNICUS/S2.
+where collection is something like projects/earthengine-public/assets/COPERNICUS/S2.
 
 <h2>Open options</h2>
 
@@ -85,8 +85,10 @@ will not done.</p>
 <th>Server-side filter compatible</th>
 </tr>
 
-<tr><td>path</td><td>String</td><td>Image path (e.g. COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)</td><td>No</td></tr>
-<tr><td>gdal_dataset</td><td>String</td><td>GDAL dataset name (e.g. EEDAI:COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)<br/>hat can be opened with the <a href="frmt_eedai.html">Google Earth Engine Data API Image driver</a></td><td>No</td></tr>
+<tr><td>name</td><td>String</td><td>Image name (e.g. projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)</td><td>No</td></tr>
+<tr><td>id</td><td>String</td><td>Image ID; equivalent to name without the "projects/*/assets/" prefix (e.g. users/USER/ASSET)</td><td>No</td></tr>
+<tr><td>path</td><td>String</td><td>(Deprecated) Image path; equivalent to id</td><td>No</td></tr>
+<tr><td>gdal_dataset</td><td>String</td><td>GDAL dataset name (e.g. EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)<br/>that can be opened with the <a href="frmt_eedai.html">Google Earth Engine Data API Image driver</a></td><td>No</td></tr>
 <tr><td>time</td><td>DateTime</td><td>Acquisition date</td><td><b>Yes</b></td></tr>
 <tr><td>updateTime</td><td>DateTime</td><td>Update date</td><td>No</td></tr>
 <tr><td>sizeBytes</td><td>Integer64</td><td>File size in bytes</td><td>No</td></tr>
@@ -134,25 +136,25 @@ server.
 <li>
 Listing all images available:
 <pre>
-ogrinfo -ro -al "EEDA:" -oo COLLECTION=COPERNICUS/S2 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:" -oo COLLECTION=projects/earthengine-public/assets/COPERNICUS/S2 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 or
 <pre>
-ogrinfo -ro -al "EEDA:COPERNICUS/S2" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 
 <li>
 Listing all images under a point of (lat,lon)=(40,-100) :
 <pre>
-ogrinfo -ro -al "EEDA:COPERNICUS/S2" -spat -100 40 -100 40 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -spat -100 40 -100 40 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 
 <li>
 Listing all images available matching criteria :
 <pre>
-ogrinfo -ro -al "EEDA:COPERNICUS/S2" -where "time &gt;= '2015/03/26 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE &lt; 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -where "time &gt;= '2015/03/26 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE &lt; 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 

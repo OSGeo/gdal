@@ -2593,18 +2593,25 @@ static void PDFDatasetErrorFunctionCommon(const CPLString& osError)
 }
 
 #ifdef POPPLER_0_20_OR_LATER
-static void PDFDatasetErrorFunction(CPL_UNUSED void* userData, CPL_UNUSED ErrorCategory eErrCategory,
+
+static void PDFDatasetErrorFunction(void* /* userData*/,
+                                    ErrorCategory /* eErrCategory */,
 #ifdef POPPLER_0_23_OR_LATER
                                     Goffset nPos,
 #else
                                     int nPos,
 #endif
-                                    char *pszMsg)
+#ifdef POPPLER_0_71_OR_LATER
+                                    const char *pszMsg
+#else
+                                    char *pszMsg
+#endif
+                                   )
 {
     CPLString osError;
 
     if (nPos >= 0)
-        osError.Printf("Pos = %d, ", (int)nPos);
+        osError.Printf("Pos = " CPL_FRMT_GUIB ", ", static_cast<GUIntBig>(nPos));
     osError += pszMsg;
     PDFDatasetErrorFunctionCommon(osError);
 }
@@ -3440,10 +3447,16 @@ void PDFDataset::FindLayersPoppler()
     }
     else
     {
+#ifdef POPPLER_0_69_OR_LATER
+        for( const auto& refOCGPair: optContentConfig->getOCGs() )
+        {
+            auto ocg = refOCGPair.second.get();
+#else
         GooList* ocgList = optContentConfig->getOCGs();
         for(int i=0;i<ocgList->getLength();i++)
         {
             OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
+#endif
             if( ocg != nullptr && ocg->getName() != nullptr )
             {
                 const char* pszLayerName = (const char*)ocg->getName()->getCString();
@@ -3472,10 +3485,16 @@ void PDFDataset::TurnLayersOnOffPoppler()
     {
         int i;
         int bAll = EQUAL(pszLayers, "ALL");
+#ifdef POPPLER_0_69_OR_LATER
+        for( const auto& refOCGPair: optContentConfig->getOCGs() )
+        {
+            auto ocg = refOCGPair.second.get();
+#else
         GooList* ocgList = optContentConfig->getOCGs();
         for(i=0;i<ocgList->getLength();i++)
         {
             OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
+#endif
             ocg->setState( (bAll) ? OptionalContentGroup::On : OptionalContentGroup::Off );
         }
 
@@ -4430,7 +4449,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_POPPLER
     if (bUseLib.test(PDFLIB_POPPLER))
     {
-        PDFRectangle* psMediaBox = poPagePoppler->getMediaBox();
+        const auto* psMediaBox = poPagePoppler->getMediaBox();
         dfX1 = psMediaBox->x1;
         dfY1 = psMediaBox->y1;
         dfX2 = psMediaBox->x2;
@@ -4768,14 +4787,12 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     GooString* poMetadata = poCatalogPoppler->readMetadata();
     if (poMetadata)
     {
-        char* pszContent = poMetadata->getCString();
+        const char* pszContent = poMetadata->getCString();
         if (pszContent != nullptr &&
             STARTS_WITH(pszContent, "<?xpacket begin="))
         {
-            char *apszMDList[2];
-            apszMDList[0] = pszContent;
-            apszMDList[1] = nullptr;
-            poDS->SetMetadata(apszMDList, "xml:XMP");
+            const char * const apszMDList[2] = { pszContent, nullptr };
+            poDS->SetMetadata(const_cast<char**>(apszMDList), "xml:XMP");
         }
         delete poMetadata;
     }

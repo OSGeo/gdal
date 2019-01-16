@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,23 +30,22 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read a simple byte file, checking projections and geotransform.
 
 
-def mrsid_1():
+def test_mrsid_1():
 
     gdaltest.mrsid_drv = gdal.GetDriverByName('MrSID')
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('MrSID', 'mercator.sid', 1, None)
 
@@ -112,12 +111,9 @@ def mrsid_1():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen(check_gt=gt,
+    tst.testOpen(check_gt=gt,
                        check_stat=(0.0, 255.0, 103.319, 55.153),
                        check_approx_stat=(2.0, 243.0, 103.131, 43.978))
-
-    if ret != 'success':
-        return ret
 
     ds = gdal.Open('data/mercator.sid')
     got_prj = ds.GetProjectionRef()
@@ -125,33 +121,30 @@ def mrsid_1():
 
     if prj.find('North_American_Datum_1927') == -1 or \
        prj.find('Mercator_1SP') == -1:
-        gdaltest.post_reason('did not get expected projection')
         print(got_prj)
-        return 'fail'
+        pytest.fail('did not get expected projection')
 
     if got_prj != prj:
         print('Warning: did not get exactly expected projection. Got %s' % got_prj)
 
-    return 'success'
-
+    
 ###############################################################################
 # Do a direct IO to read the image at a resolution for which there is no
 # builtin overview.  Checks for the bug Steve L found in the optimized
 # RasterIO implementation.
 
 
-def mrsid_2():
+def test_mrsid_2():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/mercator.sid')
 
     try:
         data = ds.ReadRaster(0, 0, 515, 515, buf_xsize=10, buf_ysize=10)
     except:
-        gdaltest.post_reason('Small overview read failed: ' + gdal.GetLastErrorMsg())
-        return 'fail'
+        pytest.fail('Small overview read failed: ' + gdal.GetLastErrorMsg())
 
     ds = None
 
@@ -167,27 +160,21 @@ def mrsid_2():
 
     mean = float(total) / len(data)
 
-    if mean < 95 or mean > 105:
-        gdaltest.post_reason('image mean out of range.')
-        return 'fail'
-
-    return 'success'
+    assert mean >= 95 and mean <= 105, 'image mean out of range.'
 
 ###############################################################################
 # Test overview reading.
 
 
-def mrsid_3():
+def test_mrsid_3():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/mercator.sid')
 
     band = ds.GetRasterBand(1)
-    if band.GetOverviewCount() != 4:
-        gdaltest.post_reason('did not get expected overview count')
-        return 'fail'
+    assert band.GetOverviewCount() == 4, 'did not get expected overview count'
 
     new_stat = band.GetOverview(3).GetStatistics(0, 1)
 
@@ -199,19 +186,17 @@ def mrsid_3():
             print('')
             print('old = ', check_stat)
             print('new = ', new_stat)
-            gdaltest.post_reason('Statistics differ.')
-            return 'fail'
+            pytest.fail('Statistics differ.')
 
-    return 'success'
-
+    
 ###############################################################################
 # Check a new (V3) file which uses a different form for coordinate sys.
 
 
-def mrsid_4():
+def test_mrsid_4():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         os.remove('data/mercator_new.sid.aux.xml')
@@ -254,23 +239,21 @@ def mrsid_4():
 # Test JP2MrSID driver
 
 
-def mrsid_5():
+def test_mrsid_5():
     gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
-
-    return 'success'
 
 ###############################################################################
 # Open byte.jp2
 
 
-def mrsid_6():
+def test_mrsid_6():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -300,10 +283,10 @@ def mrsid_6():
 ###############################################################################
 # Open int16.jp2
 
-def mrsid_7():
+def test_mrsid_7():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
@@ -311,27 +294,24 @@ def mrsid_7():
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
 
     if maxdiff > 5:
-        gdaltest.post_reason('Image too different from reference')
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
 
         ds = None
         ds_ref = None
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
     ds_ref = None
-
-    return 'success'
 
 ###############################################################################
 # Test PAM override for nodata, coordsys, and geotransform.
 
 
-def mrsid_8():
+def test_mrsid_8():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     new_gt = (10000, 50, 0, 20000, 0, -50)
     new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],AUTHORITY["EPSG","27700"],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
@@ -351,33 +331,24 @@ def mrsid_8():
 
     ds = gdal.Open('tmp/mercator.sid')
 
-    if new_srs != ds.GetProjectionRef():
-        print(ds.GetProjectionRef())
-        gdaltest.post_reason('SRS Override failed.')
-        return 'fail'
+    assert new_srs == ds.GetProjectionRef(), 'SRS Override failed.'
 
-    if new_gt != ds.GetGeoTransform():
-        gdaltest.post_reason('Geotransform Override failed.')
-        return 'fail'
+    assert new_gt == ds.GetGeoTransform(), 'Geotransform Override failed.'
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 255:
-        gdaltest.post_reason('Nodata override failed.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255, 'Nodata override failed.'
 
     ds = None
 
     gdal.GetDriverByName('MrSID').Delete('tmp/mercator.sid')
 
-    return 'success'
-
 ###############################################################################
 # Test VSI*L IO with .sid
 
 
-def mrsid_9():
+def test_mrsid_9():
 
     if gdaltest.mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('data/mercator.sid', 'rb')
     data = f.read()
@@ -388,21 +359,19 @@ def mrsid_9():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open('/vsimem/mrsid_9.sid')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     gdal.Unlink('/vsimem/mrsid_9.sid')
-    return 'success'
 
 ###############################################################################
 # Test VSI*L IO with .jp2
 
 
-def mrsid_10():
+def test_mrsid_10():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('data/int16.jp2', 'rb')
     data = f.read()
@@ -413,78 +382,63 @@ def mrsid_10():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open('/vsimem/mrsid_10.jp2')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
     ds = None
 
     gdal.Unlink('/vsimem/mrsid_10.jp2')
-    return 'success'
 
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
 
-def mrsid_11():
+def test_mrsid_11():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    if abs(geotransform[0] - 440720) > 0.1 \
-            or abs(geotransform[1] - 60) > 0.001 \
-            or abs(geotransform[2] - 0) > 0.001 \
-            or abs(geotransform[3] - 3751320) > 0.1 \
-            or abs(geotransform[4] - 0) > 0.001 \
-            or abs(geotransform[5] - -60) > 0.001:
-        print(geotransform)
-        gdaltest.post_reason('geotransform differs from expected')
-        return 'fail'
+    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+        'geotransform differs from expected'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 
 
-def mrsid_online_1():
+def test_mrsid_online_1():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 29473 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/7sisters200.j2k')
     ds.GetRasterBand(1).Checksum()
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
-def mrsid_online_2():
+def test_mrsid_online_2():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 209 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/gcp.jp2', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     # The JP2MrSID driver doesn't handle GCPs
     ds = gdal.Open('tmp/cache/gcp.jp2')
@@ -500,26 +454,23 @@ def mrsid_online_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 
 
-def mrsid_online_3():
+def test_mrsid_online_3():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
-        return 'skip'
+        pytest.skip()
 
     # checksum = 14443 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne1.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne1.bmp')
@@ -534,29 +485,26 @@ def mrsid_online_3():
         print(ds_ref.GetRasterBand(1).Checksum())
 
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
-    return 'success'
-
+    
 ###############################################################################
 
 
-def mrsid_online_4():
+def test_mrsid_online_4():
 
     if gdaltest.jp2mrsid_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
-        return 'skip'
+        pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
-        return 'skip'
+        pytest.skip()
 
     # Checksum = 53186 on my PC
     tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute=1)
 
-    if tst.testOpen() != 'success':
-        return 'fail'
+    tst.testOpen()
 
     ds = gdal.Open('tmp/cache/Bretagne2.j2k')
     ds_ref = gdal.Open('tmp/cache/Bretagne2.bmp')
@@ -569,16 +517,14 @@ def mrsid_online_4():
     if maxdiff > 1:
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup.
 
 
-def mrsid_cleanup():
+def test_mrsid_cleanup():
 
     try:
         os.remove('data/mercator.sid.aux.xml')
@@ -588,31 +534,5 @@ def mrsid_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
-    return 'success'
 
 
-gdaltest_list = [
-    mrsid_1,
-    mrsid_2,
-    mrsid_3,
-    mrsid_4,
-    mrsid_5,
-    mrsid_6,
-    mrsid_7,
-    mrsid_8,
-    mrsid_9,
-    mrsid_10,
-    mrsid_11,
-    mrsid_online_1,
-    mrsid_online_2,
-    mrsid_online_3,
-    mrsid_online_4,
-    mrsid_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('mrsid')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

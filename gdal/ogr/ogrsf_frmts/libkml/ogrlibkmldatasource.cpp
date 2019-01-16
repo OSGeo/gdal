@@ -71,16 +71,25 @@ static const char OGRLIBKMLSRSWKT[] =
 /*                           OGRLIBKMLParse()                           */
 /************************************************************************/
 
-static ElementPtr OGRLIBKMLParse(std::string oKml, std::string *posError)
+static ElementPtr OGRLIBKMLParse(const std::string& oKml, std::string *posError)
 {
-    // To allow reading files using an explicit namespace prefix like <kml:kml>
-    // we need to use ParseNS (see #6981). But if we use ParseNS, we have
-    // issues reading gx: elements. So use ParseNS only when we have errors
-    // with Parse. This is not completely satisfactory...
-    ElementPtr element = kmldom::Parse(oKml, posError);
-    if( !element )
-        element = kmldom::ParseNS(oKml, posError);
-    return element;
+    try
+    {
+        // To allow reading files using an explicit namespace prefix like <kml:kml>
+        // we need to use ParseNS (see #6981). But if we use ParseNS, we have
+        // issues reading gx: elements. So use ParseNS only when we have errors
+        // with Parse. This is not completely satisfactory...
+        ElementPtr element = kmldom::Parse(oKml, posError);
+        if( !element )
+            element = kmldom::ParseNS(oKml, posError);
+        return element;
+    }
+    catch(const std::exception& ex)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LIBKML: libstdc++ exception during Parse() : %s", ex.what());
+        return nullptr;
+    }
 }
 
 /******************************************************************************
@@ -163,9 +172,10 @@ static void OGRLIBKMLPreProcessInput( std::string& oKml )
         bool bDigitFound = false;
         for( ; nPos < nPosEnd; nPos++ )
         {
-            if( oKml[nPos] >= '0' && oKml[nPos] <= '9' )
+            char ch = oKml[nPos];
+            if( ch >= '0' && ch <= '9' )
                 bDigitFound = true;
-            else if( oKml[nPos] == '\t' )
+            else if( ch == '\t' || ch == '\n' )
                 oKml[nPos] = ' ';
         }
         if( !bDigitFound )
@@ -1011,7 +1021,8 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable(
 int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
 {
     std::string oKmlKml;
-    char szBuffer[1024+1] = {};
+    std::string osBuffer;
+    osBuffer.resize(4096);
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if( fp == nullptr )
@@ -1021,14 +1032,17 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
         return FALSE;
     }
     int nRead = 0;
-    while( (nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 1024, fp))) != 0 )
+    while( (nRead = static_cast<int>(VSIFReadL(&osBuffer[0], 1,
+                                               osBuffer.size(), fp))) != 0 )
     {
         try
         {
-            oKmlKml.append(szBuffer, nRead);
+            oKmlKml.append(osBuffer.c_str(), nRead);
         }
-        catch( const std::bad_alloc& )
+        catch(const std::exception& ex)
         {
+            CPLDebug("LIBKML",
+                 "libstdc++ exception during ingestion: %s", ex.what());
             VSIFCloseL(fp);
             return FALSE;
         }

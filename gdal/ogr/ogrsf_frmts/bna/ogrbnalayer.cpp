@@ -601,10 +601,7 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
         int isFirstPolygon = 1;
         double secondaryFirstX = 0.0;
         double secondaryFirstY = 0.0;
-
-        OGRLinearRing* ring = new OGRLinearRing ();
-        ring->setCoordinateDimension(2);
-        ring->addPoint(record->tabCoords[0][0], record->tabCoords[0][1] );
+        int iStartIndex = 0;
 
         /* record->nCoords is really a safe upper bound */
         int nbPolygons = 0;
@@ -615,14 +612,21 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
         int i = 1;
         for( ; i < record->nCoords; i++ )
         {
-            ring->addPoint(record->tabCoords[i][0], record->tabCoords[i][1] );
             if (isFirstPolygon == 1 &&
                 record->tabCoords[i][0] == firstX &&
                 record->tabCoords[i][1] == firstY)
             {
                 OGRPolygon* polygon = new OGRPolygon ();
+                OGRLinearRing* ring = new OGRLinearRing ();
+                ring->setCoordinateDimension(2);
+                ring->setNumPoints(i - iStartIndex + 1, false);
+                for( int j = iStartIndex; j <= i ; ++j )
+                {
+                    ring->setPoint( j - iStartIndex,
+                                    record->tabCoords[j][0],
+                                    record->tabCoords[j][1] );
+                }
                 polygon->addRingDirectly(ring);
-                ring = nullptr;
                 tabPolygons[nbPolygons] = polygon;
                 nbPolygons++;
 
@@ -636,10 +640,7 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
                 i++;
                 secondaryFirstX = record->tabCoords[i][0];
                 secondaryFirstY = record->tabCoords[i][1];
-                ring = new OGRLinearRing ();
-                ring->setCoordinateDimension(2);
-                ring->addPoint( record->tabCoords[i][0],
-                                record->tabCoords[i][1] );
+                iStartIndex = i;
             }
             else if (isFirstPolygon == 0 &&
                     record->tabCoords[i][0] == secondaryFirstX &&
@@ -647,8 +648,17 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
             {
 
                 OGRPolygon* polygon = new OGRPolygon ();
+                OGRLinearRing* ring = new OGRLinearRing ();
+                ring->setCoordinateDimension(2);
+                ring->setNumPoints(i - iStartIndex + 1, false);
+                for( int j = iStartIndex; j <= i ; ++j )
+                {
+                    ring->setPoint( j - iStartIndex,
+                                    record->tabCoords[j][0],
+                                    record->tabCoords[j][1] );
+                }
                 polygon->addRingDirectly(ring);
-                ring = nullptr;
+
                 for( int j = 0; j < nbPolygons; j++ )
                 {
                     if( polygon->Equals(tabPolygons[j]) )
@@ -691,10 +701,7 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
                     i ++;
                     secondaryFirstX = record->tabCoords[i][0];
                     secondaryFirstY = record->tabCoords[i][1];
-                    ring = new OGRLinearRing ();
-                    ring->setCoordinateDimension(2);
-                    ring->addPoint( record->tabCoords[i][0],
-                                    record->tabCoords[i][1] );
+                    iStartIndex = i;
                 }
                 else
                 {
@@ -714,17 +721,28 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
             /* Let's be a bit tolerant about non-closing polygons. */
             if (isFirstPolygon)
             {
-                ring->addPoint( record->tabCoords[0][0],
+                CPLAssert( iStartIndex == 0 );
+                OGRLinearRing* ring = new OGRLinearRing ();
+                ring->setCoordinateDimension(2);
+                ring->setNumPoints(record->nCoords + 1, false);
+                for( int j = 0; j < record->nCoords ; ++j )
+                {
+                    ring->setPoint( j,
+                                    record->tabCoords[j][0],
+                                    record->tabCoords[j][1] );
+                }
+
+                ring->setPoint( record->nCoords,
+                                record->tabCoords[0][0],
                                 record->tabCoords[0][1] );
 
                 OGRPolygon* polygon = new OGRPolygon ();
                 polygon->addRingDirectly(ring);
-                ring = nullptr;
+
                 tabPolygons[nbPolygons] = polygon;
                 nbPolygons++;
             }
         }
-        delete ring;
 
         if (nbPolygons == 1)
         {

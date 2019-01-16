@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,15 +29,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
+import pytest
 
 
 def has_read_support():
@@ -57,10 +56,10 @@ def has_read_support():
 # Test write support
 
 
-def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
+def test_ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
     if ogr.GetDriverByName('PDF') is None:
-        return 'skip'
+        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -120,45 +119,31 @@ def ogr_pdf_1(name='tmp/ogr_pdf_1.pdf', write_attributes='YES'):
 
     with open(name, 'rb') as f:
         data = f.read(8192)
-        if wantedstream.encode('utf-8') not in data:
-            gdaltest.post_reason('Wrong text data in written PDF stream')
-            return 'fail'
+        assert wantedstream.encode('utf-8') in data, \
+            'Wrong text data in written PDF stream'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test read support
 
 
-def ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
+def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(name)
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
     lyr = ds.GetLayerByName('first_layer')
-    if lyr is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr is not None
 
     if has_attributes:
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('strfield')).GetType() != ogr.OFTString:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('intfield')).GetType() != ogr.OFTInteger:
-            gdaltest.post_reason('fail')
-            return 'fail'
-        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('realfield')).GetType() != ogr.OFTReal:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('strfield')).GetType() == ogr.OFTString
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('intfield')).GetType() == ogr.OFTInteger
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('realfield')).GetType() == ogr.OFTReal
     else:
-        if lyr.GetLayerDefn().GetFieldCount() != 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldCount() == 0
 
     if has_attributes:
         feat = lyr.GetNextFeature()
@@ -172,119 +157,103 @@ def ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING(2 48,3 50)')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
-        return 'fail'
+        pytest.fail()
 
     if has_attributes:
         if feat.GetField('strfield') != 'str':
             feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+            pytest.fail()
         if feat.GetField('intfield') != 1:
             feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+            pytest.fail()
         if abs(feat.GetFieldAsDouble('realfield') - 2.34) > 1e-10:
             feat.DumpReadable()
-            gdaltest.post_reason('fail')
-            return 'fail'
+            pytest.fail()
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48),(2.25 48.25,2.25 48.75,2.75 48.75,2.75 48.25,2.25 48.25))')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail')
-        return 'fail'
+        pytest.fail()
 
     for i in range(10):
         feat = lyr.GetNextFeature()
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(%f 49.1)' % (2 + i * 0.05))) != 0:
             feat.DumpReadable()
-            gdaltest.post_reason('fail with ogr-sym-%d' % i)
-            return 'fail'
+            pytest.fail('fail with ogr-sym-%d' % i)
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(2.5 49.1)')) != 0:
         feat.DumpReadable()
-        gdaltest.post_reason('fail with raster icon')
-        return 'fail'
+        pytest.fail('fail with raster icon')
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test write support without writing attributes
 
 
-def ogr_pdf_3():
-    return ogr_pdf_1('tmp/ogr_pdf_2.pdf', 'NO')
+def test_ogr_pdf_3():
+    return test_ogr_pdf_1('tmp/ogr_pdf_2.pdf', 'NO')
 
 ###############################################################################
 # Check read support without writing attributes
 
 
-def ogr_pdf_4():
-    return ogr_pdf_2('tmp/ogr_pdf_2.pdf', False)
+def test_ogr_pdf_4():
+    return test_ogr_pdf_2('tmp/ogr_pdf_2.pdf', False)
 
 
 ###############################################################################
 # Switch from poppler to podofo if both are available
 
-def ogr_pdf_4_podofo():
+def test_ogr_pdf_4_podofo():
 
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
     if gdal_pdf_drv is None:
-        return 'skip'
+        pytest.skip()
 
     md = gdal_pdf_drv.GetMetadata()
     if 'HAVE_POPPLER' in md and 'HAVE_PODOFO' in md:
         gdal.SetConfigOption("GDAL_PDF_LIB", "PODOFO")
         print('Using podofo now')
-        ret = ogr_pdf_4()
+        ret = test_ogr_pdf_4()
         gdal.SetConfigOption("GDAL_PDF_LIB", None)
         return ret
-    return 'skip'
+    pytest.skip()
 
 ###############################################################################
 # Test read support with OGR_PDF_READ_NON_STRUCTURED=YES
 
 
-def ogr_pdf_5():
+def test_ogr_pdf_5():
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
         ds = ogr.Open('data/drawing.pdf')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
     # Note: the circle is wrongly drawned as a diamond
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 8:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert lyr.GetFeatureCount() == 8
 
 ###############################################################################
 # Test read support with a non-OGR datasource
 
 
-def ogr_pdf_online_1():
+def test_ogr_pdf_online_1():
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.terragotech.com/images/pdf/webmap_urbansample.pdf', 'webmap_urbansample.pdf'):
-        return 'skip'
+        pytest.skip()
 
     expected_layers = [
         ["Cadastral Boundaries", ogr.wkbPolygon],
@@ -301,48 +270,35 @@ def ogr_pdf_online_1():
     ]
 
     ds = ogr.Open('tmp/cache/webmap_urbansample.pdf')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetLayerCount() != len(expected_layers):
-        gdaltest.post_reason('fail')
-        print(ds.GetLayerCount())
-        return 'fail'
+    assert ds.GetLayerCount() == len(expected_layers)
 
     for i in range(ds.GetLayerCount()):
-        if ds.GetLayer(i).GetName() != expected_layers[i][0]:
-            gdaltest.post_reason('fail')
-            print('%d : %s' % (i, ds.GetLayer(i).GetName()))
-            return 'fail'
+        assert ds.GetLayer(i).GetName() == expected_layers[i][0], \
+            ('%d : %s' % (i, ds.GetLayer(i).GetName()))
 
-        if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
-            gdaltest.post_reason('fail')
-            print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
-            return 'fail'
+        assert ds.GetLayer(i).GetGeomType() == expected_layers[i][1], \
+            ('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
 
     lyr = ds.GetLayerByName('Water Points')
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (724431.316665166523308 7672947.212302438914776)')) != 0:
         feat.DumpReadable()
-        return 'fail'
-    if feat.GetField('ID') != 'VL46':
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+        pytest.fail()
+    assert feat.GetField('ID') == 'VL46'
 
 ###############################################################################
 # Test read support of non-structured content
 
 
-def ogr_pdf_online_2():
+def test_ogr_pdf_online_2():
 
     if not has_read_support():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('https://download.osgeo.org/gdal/data/pdf/340711752_Azusa_FSTopo.pdf', '340711752_Azusa_FSTopo.pdf'):
-        return 'skip'
+        pytest.skip()
 
     expected_layers = [
         ['Other_5', 0],
@@ -382,61 +338,32 @@ def ogr_pdf_online_2():
     ]
 
     ds = ogr.Open('tmp/cache/340711752_Azusa_FSTopo.pdf')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
     if ds.GetLayerCount() != len(expected_layers):
-        gdaltest.post_reason('fail')
-        print(ds.GetLayerCount())
         for lyr in ds:
             print(lyr.GetName(), lyr.GetGeomType())
-        return 'fail'
+        pytest.fail(ds.GetLayerCount())
 
     for i in range(ds.GetLayerCount()):
-        if ds.GetLayer(i).GetName() != expected_layers[i][0]:
-            gdaltest.post_reason('fail')
-            print('%d : %s' % (i, ds.GetLayer(i).GetName()))
-            return 'fail'
+        assert ds.GetLayer(i).GetName() == expected_layers[i][0], \
+            ('%d : %s' % (i, ds.GetLayer(i).GetName()))
 
-        if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
-            gdaltest.post_reason('fail')
-            print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
-            return 'fail'
+        assert ds.GetLayer(i).GetGeomType() == expected_layers[i][1], \
+            ('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
 
-def ogr_pdf_cleanup():
+def test_ogr_pdf_cleanup():
 
     if ogr.GetDriverByName('PDF') is None:
-        return 'skip'
+        pytest.skip()
 
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_1.pdf')
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_2.pdf')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_pdf_1,
-    ogr_pdf_2,
-    ogr_pdf_3,
-    ogr_pdf_4,
-    ogr_pdf_4_podofo,
-    ogr_pdf_5,
-    ogr_pdf_online_1,
-    ogr_pdf_online_2,
-    ogr_pdf_cleanup
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_pdf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

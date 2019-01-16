@@ -261,8 +261,8 @@ non-standard (regarding to the intrinsics TIFF capabilities) band color
 interpretation, such as BGR ordering, will be handled in creation and reading,
 by storing them in the GDAL internal metadata TIFF tag.</p>
 
-<p>Note that the GeoTIFF format does not support parametric description of datums,
-so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.</p>
+<p>The TIFF format only supports R,G,B components for palettes / color tables.
+Thus on writing the alpha information will be silently discarded.</p>
 
 <p>You may want to read hints to <a href="https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF">
 generate and read cloud optimized GeoTIFF files</a></p>
@@ -302,7 +302,7 @@ a value from 1 to 7.  The apparent pixel type should be Byte.
 From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted.
 From GDAL 2.2, n=16 is accepted for Float32 type to generate half-precision floating point values.</p></li>
 
-<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/NONE]</b>:
+<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
 But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
@@ -355,6 +355,10 @@ This is generally the optimal choice for smallest file size, and consequently is
 <li><p><b>ZSTD_LEVEL=[1-22]</b>:  Set the level of compression when using ZSTD compression (or LERC_ZSTD). A value of 22 is best (very slow), and 1 is least compression. The default is 9.</p></li>
 
 <li><p><b>MAX_Z_ERROR=threshold</b>:  Set the maximum error threshold on values for LERC/LERC_DEFLATE/LERC_ZSTD compression. The default is 0 (lossless).</p></li>
+
+<li><p><b>WEBP_LEVEL=[1-100]</b>:  Set the WEBP quality level when using WEBP compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.</p></li>
+
+<li><p><b>WEBP_LOSSLESS=True/False</b>: (GDAL >= 2.4.0 and libwebp >= 0.1.4): By default, lossy compression is used. If set to True, lossless compression will be used.</p></li>
 
 <li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>:
 Set the photometric interpretation tag. Default is MINISBLACK, but if the
@@ -421,6 +425,15 @@ SRS. For other SRS, the standard way will be used, with the addition of a ESRI_P
 string as the value of PCSCitationGeoKey.</p></li>
 
 </ul>
+
+<h3>Sudatasets</h3>
+
+<p>Multi-page TIFF files are exposed as subdatasets. A subdataset name is
+GTIFF_DIR:{index}:filename.tif, where {index} starts at 1.</p>
+
+<p>Starting with GDAL 2.5.0, subdataset creation is possible by using the
+APPEND_SUBDATASET=YES creation option. Creating overviews on a multi-page
+TIFF is not supported.</p>
 
 <h3>About JPEG compression of RGB images </h3>
 

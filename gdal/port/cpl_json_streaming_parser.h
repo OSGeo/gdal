@@ -60,7 +60,13 @@ class CPL_DLL CPLJSonStreamingParser
         int m_nCharCounter = 1;
         std::vector<State> m_aState{};
         std::string m_osToken{};
-        std::vector<bool> m_abFirstElement{};
+        enum class ArrayState
+        {
+            INIT,
+            AFTER_COMMA,
+            AFTER_VALUE
+        };
+        std::vector<ArrayState> m_abArrayState{};
         bool m_bInStringEscape = false;
         bool m_bInUnicode = false;
         std::string m_osUnicodeHex{};
@@ -80,7 +86,7 @@ class CPL_DLL CPLJSonStreamingParser
         void SkipSpace(const char*& pStr, size_t& nLength);
         void AdvanceChar(const char*& pStr, size_t& nLength);
         bool EmitException(const char* pszMessage);
-        bool EmitUnexpectedChar(char ch);
+        bool EmitUnexpectedChar(char ch, const char* pszExpecting = nullptr);
         bool StartNewToken(const char*& pStr, size_t& nLength);
         bool CheckAndEmitTrueFalseOrNull(char ch);
         bool CheckStackEmpty();

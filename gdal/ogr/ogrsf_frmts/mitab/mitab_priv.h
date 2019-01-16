@@ -1422,13 +1422,16 @@ class TABMAPFile
     // Stuff related to traversing spatial index.
     TABMAPIndexBlock *m_poSpIndexLeaf;
 
+    //Strings encoding
+    CPLString   m_osEncoding;
+
     int         LoadNextMatchingObjectBlock(int bFirstObject);
     TABRawBinBlock *PushBlock( int nFileOffset );
 
     int         ReOpenReadWrite();
 
   public:
-    TABMAPFile();
+    explicit TABMAPFile(const char* pszEncoding);
     ~TABMAPFile();
 
     int         Open(const char *pszFname, const char* pszAccess,
@@ -1489,6 +1492,9 @@ class TABMAPFile
     int         WriteSymbolDef(TABSymbolDef *psDef);
 
     int         GetMinTABFileVersion();
+
+    const CPLString& GetEncoding() const;
+    void SetEncoding( const CPLString& );
 
 #ifdef DEBUG
     void Dump(FILE *fpOut = nullptr);

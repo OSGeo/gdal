@@ -1466,7 +1466,13 @@ GIntBig CPLGetUsablePhysicalRAM( void )
 #endif
 #if HAVE_GETRLIMIT
     struct rlimit sLimit;
-    if( getrlimit( RLIMIT_AS, &sLimit) == 0 &&
+#   if HAVE_RLIMIT_AS
+    const int res = RLIMIT_AS;
+#   else
+    // OpenBSD currently doesn't support RLIMIT_AS (mandated by Posix though)
+    const int res = RLIMIT_DATA;
+#   endif
+    if( getrlimit( res, &sLimit) == 0 &&
         sLimit.rlim_cur != RLIM_INFINITY &&
         static_cast<GIntBig>(sLimit.rlim_cur) < nRAM )
     {

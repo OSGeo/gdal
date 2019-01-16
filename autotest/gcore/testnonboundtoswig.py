@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,11 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from sys import version_info
 from osgeo import gdal
+import pytest
 
-sys.path.append('../pymod')
 
 try:
     import ctypes
@@ -57,26 +56,25 @@ def find_libgdal():
 # Init
 
 
-def testnonboundtoswig_init():
-
+@pytest.fixture(scope='module', autouse=True)
+def setup():
     global gdal_handle_init, gdal_handle, gdal_handle_stdcall
 
     if gdal_handle_init:
         if gdal_handle is None:
-            return 'skip'
-        return 'success'
+            pytest.skip()
+        return gdal_handle
 
     gdal_handle_init = True
 
     try:
         ctypes.cdll
     except ImportError:
-        print('cannot find ctypes')
-        return 'skip'
+        pytest.skip('cannot find ctypes')
 
     name = find_libgdal()
     if name is None:
-        return 'skip'
+        pytest.skip()
 
     print('Found libgdal we are running against : %s' % name)
 
@@ -98,81 +96,53 @@ def testnonboundtoswig_init():
             dynamic_version = str(dynamic_version, 'utf-8')
 
         if dynamic_version != static_version:
-            gdaltest.post_reason('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
             gdal_handle = None
             gdal_handle_stdcall = None
-            return 'skip'
+            pytest.skip('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
 
-        return 'success'
-    except:
+        return gdal_handle
+    except Exception:
         print('cannot find gdal shared object')
-        return 'skip'
+        pytest.skip()
 
 ###############################################################################
 # Call GDALDestroyDriverManager()
 
 
 def GDALDestroyDriverManager():
+    if gdal_handle_stdcall:
+        gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = []
+        gdal_handle_stdcall.GDALDestroyDriverManager.restype = None
 
-    if gdal_handle is None:
-        testnonboundtoswig_init()
-
-    if gdal_handle is None:
-        return 'skip'
-
-    gdal_handle_stdcall.GDALDestroyDriverManager.argtypes = []
-    gdal_handle_stdcall.GDALDestroyDriverManager.restype = None
-
-    gdal_handle_stdcall.GDALDestroyDriverManager()
-
-    return 'success'
+        gdal_handle_stdcall.GDALDestroyDriverManager()
 
 ###############################################################################
 # Call OGRCleanupAll()
 
 
 def OGRCleanupAll():
+    if gdal_handle_stdcall:
+        gdal_handle_stdcall.OGRCleanupAll.argtypes = []
+        gdal_handle_stdcall.OGRCleanupAll.restype = None
 
-    if gdal_handle is None:
-        testnonboundtoswig_init()
-
-    if gdal_handle is None:
-        return 'skip'
-
-    gdal_handle_stdcall.OGRCleanupAll.argtypes = []
-    gdal_handle_stdcall.OGRCleanupAll.restype = None
-
-    gdal_handle_stdcall.OGRCleanupAll()
-
-    return 'success'
+        gdal_handle_stdcall.OGRCleanupAll()
 
 ###############################################################################
 # Call OSRCleanup()
 
 
 def OSRCleanup():
+    if gdal_handle:
+        gdal_handle.OSRCleanup.argtypes = []
+        gdal_handle.OSRCleanup.restype = None
 
-    if gdal_handle is None:
-        testnonboundtoswig_init()
-
-    if gdal_handle is None:
-        return 'skip'
-
-    gdal_handle.OSRCleanup.argtypes = []
-    gdal_handle.OSRCleanup.restype = None
-
-    gdal_handle.OSRCleanup()
-
-    return 'success'
+        gdal_handle.OSRCleanup()
 
 ###############################################################################
 # Test GDALSimpleImageWarp
 
 
-def testnonboundtoswig_GDALSimpleImageWarp():
-
-    if gdal_handle is None:
-        return 'skip'
+def test_testnonboundtoswig_GDALSimpleImageWarp():
 
     src_ds = gdal.Open('data/byte.tif')
     gt = src_ds.GetGeoTransform()
@@ -204,29 +174,20 @@ def testnonboundtoswig_GDALSimpleImageWarp():
         filename = bytes(filename, 'utf-8')
 
     native_in_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_ReadOnly)
-    if native_in_ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert native_in_ds is not None
 
     filename = '/vsimem/out.tif'
     if version_info >= (3, 0, 0):
         filename = bytes(filename, 'utf-8')
 
     native_out_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_Update)
-    if native_out_ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert native_out_ds is not None
 
     pTransformerArg = gdal_handle.GDALCreateGenImgProjTransformer2(native_in_ds, native_out_ds, None)
-    if pTransformerArg is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert pTransformerArg is not None
 
     ret = gdal_handle_stdcall.GDALSimpleImageWarp(native_in_ds, native_out_ds, 0, None, gdal_handle_stdcall.GDALGenImgProjTransform, pTransformerArg, None, None, None)
-    if ret != 1:
-        gdaltest.post_reason('fail')
-        print(ret)
-        return 'fail'
+    assert ret == 1
 
     gdal_handle.GDALDestroyGenImgProjTransformer(pTransformerArg)
 
@@ -239,12 +200,7 @@ def testnonboundtoswig_GDALSimpleImageWarp():
 
     gdal.Unlink('/vsimem/out.tif')
 
-    if cs != 4672:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 4672
 
 ###############################################################################
 # Test VRT derived bands with callback functions implemented in Python!
@@ -272,29 +228,29 @@ def GDALTypeToCTypes(gdaltype):
 def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eSrcType, eBufType, nPixelSpace, nLineSpace):
     if nSources != 1:
         print(nSources)
-        gdaltest.post_reason('did not get expected nSources')
+        print('did not get expected nSources')
         return 1
 
     srcctype = GDALTypeToCTypes(eSrcType)
     if srcctype is None:
         print(eSrcType)
-        gdaltest.post_reason('did not get expected eSrcType')
+        print('did not get expected eSrcType')
         return 1
 
     dstctype = GDALTypeToCTypes(eBufType)
     if dstctype is None:
         print(eBufType)
-        gdaltest.post_reason('did not get expected eBufType')
+        print('did not get expected eBufType')
         return 1
 
     if nPixelSpace != gdal.GetDataTypeSize(eBufType) / 8:
         print(nPixelSpace)
-        gdaltest.post_reason('did not get expected nPixelSpace')
+        print('did not get expected nPixelSpace')
         return 1
 
     if (nLineSpace % nPixelSpace) != 0:
         print(nLineSpace)
-        gdaltest.post_reason('did not get expected nLineSpace')
+        print('did not get expected nLineSpace')
         return 1
 
     nLineStride = (int)(nLineSpace / nPixelSpace)
@@ -308,10 +264,7 @@ def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eS
     return 0
 
 
-def testnonboundtoswig_VRTDerivedBands():
-
-    if gdal_handle is None:
-        return 'skip'
+def test_testnonboundtoswig_VRTDerivedBands():
 
     DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int,  # ret CPLErr
                                             ctypes.POINTER(ctypes.c_void_p),  # void **papoSources
@@ -336,9 +289,7 @@ def testnonboundtoswig_VRTDerivedBands():
     if version_info >= (3, 0, 0):
         funcName = bytes(funcName, 'utf-8')
     ret = gdal_handle_stdcall.GDALAddDerivedBandPixelFunc(funcName, my_cDerivedPixelFunc)
-    if ret != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret == 0
 
     vrt_xml = """<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -363,28 +314,6 @@ def testnonboundtoswig_VRTDerivedBands():
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20)
     ds = None
 
-    if ref_cs != got_cs:
-        gdaltest.post_reason('wrong checksum')
-        print(got_cs)
-        return 'fail'
+    assert ref_cs == got_cs, 'wrong checksum'
 
-    if ref_data != got_data:
-        gdaltest.post_reason('wrong data')
-        print(ref_data)
-        print(got_data)
-        return 'fail'
-
-    return 'success'
-
-
-gdaltest_list = [testnonboundtoswig_init,
-                 testnonboundtoswig_GDALSimpleImageWarp,
-                 testnonboundtoswig_VRTDerivedBands]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('testnonboundtoswig')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())
+    assert ref_data == got_data

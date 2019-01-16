@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -33,24 +33,24 @@ import json
 import struct
 import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 
 import gdaltest
 import webserver
+import pytest
 
 
 ###############################################################################
 # Find EEDAI driver
 
 
-def eedai_1():
+def test_eedai_1():
 
     gdaltest.eedai_drv = gdal.GetDriverByName('EEDAI')
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
@@ -61,18 +61,16 @@ def eedai_1():
     gdaltest.GOOGLE_APPLICATION_CREDENTIALS = gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS')
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
 
-    return 'success'
-
 ###############################################################################
 # Nominal case
 
 
-def eedai_2():
+def test_eedai_2():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets/image', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'properties':
         {
@@ -286,8 +284,6 @@ def eedai_2():
     info = gdal.Info(ds, format='json')
     for key in expected_info:
         if not (key in info and info[key] == expected_info[key]):
-            gdaltest.post_reason('fail')
-            print('Got difference for key %s' % key)
             if key in info:
                 print('Got: ' + str(info[key]))
             else:
@@ -295,20 +291,13 @@ def eedai_2():
             print('Expected: ' + str(expected_info[key]))
             print('Whole info:')
             print(json.dumps(info, indent=4))
-            return 'fail'
+            pytest.fail('Got difference for key %s' % key)
 
-    if ds.GetProjectionRef().find('32610') < 0:
-        gdaltest.post_reason('fail')
-        print(ds.GetProjectionRef())
-        return 'fail'
+    assert ds.GetProjectionRef().find('32610') >= 0
 
-    if ds.GetRasterBand(1).GetOverview(-1) is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(-1) is None
 
-    if ds.GetRasterBand(1).GetOverview(3) is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverview(3) is None
 
     npy_serialized = struct.pack(
         'B' * 8, 0x93, ord('N'), ord('U'), ord('M'), ord('P'), ord('Y'), 1, 0)
@@ -320,60 +309,43 @@ def eedai_2():
     npy_serialized += ''.encode('ascii').join(val for i in range(38 * 39))
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "NPY", "bandIds": [ "B1", "B9" ], "grid": { "affineTransform": { "translateX": 607500.0, "translateY": 4092480.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 38, "height": 39 } } }', npy_serialized)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "NPY", "bandIds": [ "B1", "B9" ], "grid": { "affineTransform": { "translateX": 607500.0, "translateY": 4092480.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 38, "height": 39 } } }', npy_serialized)
     got_data = ds.GetRasterBand(1).ReadRaster(1800, 1810, 1, 1)
     got_data = struct.unpack('h', got_data)[0]
-    if got_data != 12345:
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == 12345
     got_data = ds.GetRasterBand(2).ReadRaster(1800, 1810, 1, 1)
     got_data = struct.unpack('h', got_data)[0]
-    if got_data != 23456:
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == 23456
 
     ds = None
 
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
     sub_ds = gdal.Open('EEDAI:image:B1,B9')
     gdal.SetConfigOption('EEDA_URL', None)
-    if sub_ds.RasterCount != 2:
-        gdaltest.post_reason('fail')
-        print(sub_ds.RasterCount)
-        return 'fail'
+    assert sub_ds.RasterCount == 2
 
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
     sub_ds = gdal.Open('EEDAI:image:B2')
     gdal.SetConfigOption('EEDA_URL', None)
-    if sub_ds.RasterCount != 1:
-        gdaltest.post_reason('fail')
-        print(sub_ds.RasterCount)
-        return 'fail'
+    assert sub_ds.RasterCount == 1
 
     got_md = sub_ds.GetRasterBand(1).GetMetadata()
     expected_md = {'prop': 'the_prop_B2'}
-    if got_md != expected_md:
-        gdaltest.post_reason('fail')
-        print(got_md)
-        return 'fail'
+    assert got_md == expected_md
 
     gdal.SetConfigOption('EEDA_BEARER', None)
-
-    return 'success'
 
 ###############################################################################
 # Test OAuth2 with ServiceAccount
 
 
-def eedai_3():
+def test_eedai_3():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.is_travis_branch('gcc52_stdcpp14_sanitize'):
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
     # Generated with 'openssl genrsa -out rsa-openssl.pem 1024' and
@@ -409,24 +381,21 @@ gwE6fxOLyJDxuWRf
     gdal.SetConfigOption('EEDA_CLIENT_EMAIL', None)
 
     if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
-        return 'skip'
+        pytest.skip()
 
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # Test OAuth2 with GOOGLE_APPLICATION_CREDENTIALS
 
 
-def eedai_GOOGLE_APPLICATION_CREDENTIALS():
+def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if gdaltest.is_travis_branch('gcc52_stdcpp14_sanitize'):
-        return 'skip'
+        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/my.json', """{
 "private_key":"-----BEGIN PRIVATE KEY-----
@@ -467,34 +436,31 @@ gwE6fxOLyJDxuWRf\n
     gdal.SetConfigOption('EEDA_CLIENT_EMAIL', None)
 
     if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
-        return 'skip'
+        pytest.skip()
 
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # Read credentials from simulated GCE instance
 
 
-def eedai_gce_credentials():
+def test_eedai_gce_credentials():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     if sys.platform not in ('linux', 'linux2', 'win32'):
-        return 'skip'
+        pytest.skip()
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL',
                          'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % gdaltest.webserver_port)
@@ -538,21 +504,18 @@ def eedai_gce_credentials():
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # Request in PNG mode
 
 
-def eedai_4():
+def test_eedai_4():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets/image', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'bands':
         [
@@ -641,67 +604,50 @@ def eedai_4():
     gdal.Unlink('/vsimem/out.png')
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('B', got_data)[0]
-    if got_data != 127:
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == 127
 
     # Same with dataset RasterIO
     got_data = ds.ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('B' * 3, got_data)
-    if got_data != (127, 128, 129):
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == (127, 128, 129)
 
     # Same after flushing cache
     ds.FlushCache()
     got_data = ds.ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('B' * 3, got_data)
-    if got_data != (127, 128, 129):
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == (127, 128, 129)
 
     # Sub-sampled query
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 120.0, "scaleY": -120.06557377049181, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "PNG", "bandIds": [ "B1", "B2", "B3" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 120.0, "scaleY": -120.06557377049181, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', png_data)
     got_data = ds.GetRasterBand(1).ReadRaster(
         0, 0, 2, 2, buf_xsize=1, buf_ysize=1)
     got_data = struct.unpack('B', got_data)[0]
-    if got_data != 127:
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == 127
 
     # Same after flushing cache with dataset RasterIO
     ds.FlushCache()
     got_data = ds.ReadRaster(0, 0, 2, 2, buf_xsize=1, buf_ysize=1)
     got_data = struct.unpack('B' * 3, got_data)
-    if got_data != (127, 128, 129):
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == (127, 128, 129)
 
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-    return 'success'
-
 ###############################################################################
 # Request in AUTO GTIFF mode
 
 
-def eedai_geotiff():
+def test_eedai_geotiff():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/ee/assets/image', json.dumps({
+    gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'bands':
         [
@@ -744,77 +690,23 @@ def eedai_geotiff():
     gdal.Unlink('/vsimem/out.tif')
 
     gdal.FileFromMemBuffer(
-        '/vsimem/ee/assets:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "path": "image", "fileFormat": "GEO_TIFF", "bandIds": [ "B1" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
+        '/vsimem/ee/projects/earthengine-public/assets/image:getPixels&CUSTOMREQUEST=POST&POSTFIELDS={ "fileFormat": "GEO_TIFF", "bandIds": [ "B1" ], "grid": { "affineTransform": { "translateX": 499980.0, "translateY": 4200000.0, "scaleX": 60.0, "scaleY": -60.0, "shearX": 0.0, "shearY": 0.0 }, "dimensions": { "width": 256, "height": 256 } } }', data)
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
     got_data = struct.unpack('H', got_data)[0]
-    if got_data != 12345:
-        gdaltest.post_reason('fail')
-        print(got_data)
-        return 'fail'
+    assert got_data == 12345
 
     ds = None
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-    return 'success'
-
 ###############################################################################
 #
 
 
-def eedai_real_service():
+def test_eedai_cleanup():
 
     if gdaltest.eedai_drv is None:
-        return 'skip'
-
-    if gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS') is None:
-
-        if gdal.GetConfigOption('EEDA_PRIVATE_KEY_FILE') is None and gdal.GetConfigOption('EEDA_PRIVATE_KEY') is None:
-            print('Missing EEDA_PRIVATE_KEY_FILE/EEDA_PRIVATE_KEY or GOOGLE_APPLICATION_CREDENTIALS')
-            return 'skip'
-
-        if gdal.GetConfigOption('EEDA_CLIENT_EMAIL') is None:
-            print('Missing EEDA_CLIENT_EMAIL')
-            return 'skip'
-
-    ds = gdal.Open('EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    res = gdal.Info(ds, format='json')
-    expected = {'files': [], 'cornerCoordinates': {'upperRight': [415016.0, 4435536.0], 'lowerLeft': [408970.0, 4427936.0], 'lowerRight': [415016.0, 4427936.0], 'upperLeft': [408970.0, 4435536.0], 'center': [411993.0, 4431736.0]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[[-100.067433, 40.0651671], [-100.0663662, 39.9967049], [-99.9955511, 39.9973349], [-99.9965471, 40.0657986], [-100.067433, 40.0651671]]]}, 'description': 'EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'R', 'band': 1, 'colorInterpretation': 'Red', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'G', 'band': 2, 'colorInterpretation': 'Green', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'B', 'band': 3, 'colorInterpretation': 'Blue', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 14N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-99],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26914"]]'}, 'geoTransform': [408970.0, 2.0, 0.0, 4435536.0, 0.0, -2.0], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}}, 'size': [3023, 3800]}
-    if expected != res:
-        gdaltest.post_reason('fail')
-        print(res)
-        return 'fail'
-    if ds.ReadRaster(0, 0, 1, 1) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    ds = gdal.Open('EEDAI:MODIS/006/MYD09GA/2017_05_24')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    res = gdal.Info(ds, format='json')
-    expected = {'files': [], 'cornerCoordinates': {'upperRight': [20015109.354, 10007554.677], 'lowerLeft': [-20015109.354, -10007554.677], 'lowerRight': [20015109.354, -10007554.677], 'upperLeft': [-20015109.354, 10007554.677], 'center': [9.6e-06, 6e-06]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[]]}, 'description': 'EEDAI:MODIS/006/MYD09GA/2017_05_24', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'num_observations_1km', 'band': 1, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {'IMAGE_STRUCTURE': {'PIXELTYPE': 'SIGNEDBYTE'}}}, {'description': 'state_1km', 'band': 2, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'UInt16', 'block': [256, 256], 'metadata': {}}, {'description': 'SensorZenith', 'band': 3, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'SensorAzimuth', 'band': 4, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'Range', 'band': 5, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'UInt16', 'block': [256, 256], 'metadata': {}}, {'description': 'SolarZenith', 'band': 6, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'SolarAzimuth', 'band': 7, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'gflags', 'band': 8, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'orbit_pnt', 'band': 9, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {'IMAGE_STRUCTURE': {'PIXELTYPE': 'SIGNEDBYTE'}}}, {'description': 'granule_pnt', 'band': 10, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["MODIS Sinusoidal",\n    GEOGCS["WGS 84",\n        DATUM["WGS_1984",\n            SPHEROID["WGS 84",6378137,298.257223563,\n                AUTHORITY["EPSG","7030"]],\n            AUTHORITY["EPSG","6326"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.01745329251994328,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4326"]],\n    PROJECTION["Sinusoidal"],\n    PARAMETER["false_easting",0.0],\n    PARAMETER["false_northing",0.0],\n    PARAMETER["central_meridian",0.0],\n    PARAMETER["semi_major",6371007.181],\n    PARAMETER["semi_minor",6371007.181],\n    UNIT["m",1.0],\n    AUTHORITY["SR-ORG","6974"]]'}, 'geoTransform': [-20015109.354, 926.625433056, 0.0, 10007554.677, 0.0, -926.625433055], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}, 'SUBDATASETS': {'SUBDATASET_2_NAME': 'EEDAI:MODIS/006/MYD09GA/2017_05_24:num_observations_500m,sur_refl_b01,sur_refl_b02,sur_refl_b03,sur_refl_b04,sur_refl_b05,sur_refl_b06,sur_refl_b07,QC_500m,obscov_500m,iobs_res,q_scan', 'SUBDATASET_2_DESC': 'Bands num_observations_500m,sur_refl_b01,sur_refl_b02,sur_refl_b03,sur_refl_b04,sur_refl_b05,sur_refl_b06,sur_refl_b07,QC_500m,obscov_500m,iobs_res,q_scan of MODIS/006/MYD09GA/2017_05_24', 'SUBDATASET_1_NAME': 'EEDAI:MODIS/006/MYD09GA/2017_05_24:num_observations_1km,state_1km,SensorZenith,SensorAzimuth,Range,SolarZenith,SolarAzimuth,gflags,orbit_pnt,granule_pnt', 'SUBDATASET_1_DESC': 'Bands num_observations_1km,state_1km,SensorZenith,SensorAzimuth,Range,SolarZenith,SolarAzimuth,gflags,orbit_pnt,granule_pnt of MODIS/006/MYD09GA/2017_05_24'}}, 'size': [43200, 21600]}
-    if expected != res:
-        gdaltest.post_reason('fail')
-        print(res)
-        return 'fail'
-    if ds.ReadRaster(0, 0, 1, 1) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-#
-
-
-def eedai_cleanup():
-
-    if gdaltest.eedai_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
     gdal.SetConfigOption('EEDA_BEARER', gdaltest.EEDA_BEARER)
@@ -825,28 +717,36 @@ def eedai_cleanup():
     gdal.SetConfigOption('GOA2_NOW', None)
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', gdaltest.GOOGLE_APPLICATION_CREDENTIALS)
 
-    gdal.Unlink('/vsimem/ee/assets/image')
+    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/image')
     gdal.RmdirRecursive('/vsimem/ee/')
 
-    return 'success'
+###############################################################################
+#
 
 
-gdaltest_list = [
-    eedai_1,
-    eedai_2,
-    eedai_3,
-    eedai_GOOGLE_APPLICATION_CREDENTIALS,
-    eedai_gce_credentials,
-    eedai_4,
-    eedai_geotiff,
-    eedai_cleanup,
-    eedai_real_service,
-]
+def test_eedai_real_service():
 
-if __name__ == '__main__':
+    if gdaltest.eedai_drv is None:
+        pytest.skip()
 
-    gdaltest.setup_run('eedai')
+    if gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS') is None:
 
-    gdaltest.run_tests(gdaltest_list)
+        if gdal.GetConfigOption('EEDA_PRIVATE_KEY_FILE') is None and gdal.GetConfigOption('EEDA_PRIVATE_KEY') is None:
+            pytest.skip('Missing EEDA_PRIVATE_KEY_FILE/EEDA_PRIVATE_KEY or GOOGLE_APPLICATION_CREDENTIALS')
 
-    sys.exit(gdaltest.summarize())
+        if gdal.GetConfigOption('EEDA_CLIENT_EMAIL') is None:
+            pytest.skip('Missing EEDA_CLIENT_EMAIL')
+
+    ds = gdal.Open('EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725')
+    assert ds is not None
+    res = gdal.Info(ds, format='json')
+    expected = {'files': [], 'cornerCoordinates': {'upperRight': [415016.0, 4435536.0], 'lowerLeft': [408970.0, 4427936.0], 'lowerRight': [415016.0, 4427936.0], 'upperLeft': [408970.0, 4435536.0], 'center': [411993.0, 4431736.0]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[]]}, 'description': 'EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'R', 'band': 1, 'colorInterpretation': 'Red', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'G', 'band': 2, 'colorInterpretation': 'Green', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'B', 'band': 3, 'colorInterpretation': 'Blue', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 14N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-99],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26914"]]'}, 'geoTransform': [408970.0, 2.0, 0.0, 4435536.0, 0.0, -2.0], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}}, 'size': [3023, 3800]}
+    assert expected == res
+    assert ds.ReadRaster(0, 0, 1, 1) is not None
+
+    ds = gdal.Open('EEDAI:MODIS/006/MYD09GA/2017_05_24')
+    assert ds is not None
+    res = gdal.Info(ds, format='json')
+    expected = {'files': [], 'cornerCoordinates': {'upperRight': [20015109.354, 10007554.677], 'lowerLeft': [-20015109.354, -10007554.677], 'lowerRight': [20015109.354, -10007554.677], 'upperLeft': [-20015109.354, 10007554.677], 'center': [9.6e-06, 6e-06]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[]]}, 'description': 'EEDAI:MODIS/006/MYD09GA/2017_05_24', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'num_observations_1km', 'band': 1, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {'IMAGE_STRUCTURE': {'PIXELTYPE': 'SIGNEDBYTE'}}}, {'description': 'state_1km', 'band': 2, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'UInt16', 'block': [256, 256], 'metadata': {}}, {'description': 'SensorZenith', 'band': 3, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'SensorAzimuth', 'band': 4, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'Range', 'band': 5, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'UInt16', 'block': [256, 256], 'metadata': {}}, {'description': 'SolarZenith', 'band': 6, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'SolarAzimuth', 'band': 7, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Int16', 'block': [256, 256], 'metadata': {}}, {'description': 'gflags', 'band': 8, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'orbit_pnt', 'band': 9, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {'IMAGE_STRUCTURE': {'PIXELTYPE': 'SIGNEDBYTE'}}}, {'description': 'granule_pnt', 'band': 10, 'colorInterpretation': 'Undefined', 'overviews': [{'size': [21600, 10800]}, {'size': [10800, 5400]}, {'size': [5400, 2700]}, {'size': [2700, 1350]}, {'size': [1350, 675]}, {'size': [675, 337]}, {'size': [337, 168]}, {'size': [168, 84]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["MODIS Sinusoidal",\n    GEOGCS["WGS 84",\n        DATUM["WGS_1984",\n            SPHEROID["WGS 84",6378137,298.257223563,\n                AUTHORITY["EPSG","7030"]],\n            AUTHORITY["EPSG","6326"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.01745329251994328,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4326"]],\n    PROJECTION["Sinusoidal"],\n    PARAMETER["false_easting",0.0],\n    PARAMETER["false_northing",0.0],\n    PARAMETER["central_meridian",0.0],\n    PARAMETER["semi_major",6371007.181],\n    PARAMETER["semi_minor",6371007.181],\n    UNIT["m",1.0],\n    AUTHORITY["SR-ORG","6974"]]'}, 'geoTransform': [-20015109.354, 926.625433056, 0.0, 10007554.677, 0.0, -926.625433055], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}, 'SUBDATASETS': {'SUBDATASET_2_NAME': 'EEDAI:MODIS/006/MYD09GA/2017_05_24:num_observations_500m,sur_refl_b01,sur_refl_b02,sur_refl_b03,sur_refl_b04,sur_refl_b05,sur_refl_b06,sur_refl_b07,QC_500m,obscov_500m,iobs_res,q_scan', 'SUBDATASET_2_DESC': 'Bands num_observations_500m,sur_refl_b01,sur_refl_b02,sur_refl_b03,sur_refl_b04,sur_refl_b05,sur_refl_b06,sur_refl_b07,QC_500m,obscov_500m,iobs_res,q_scan of MODIS/006/MYD09GA/2017_05_24', 'SUBDATASET_1_NAME': 'EEDAI:MODIS/006/MYD09GA/2017_05_24:num_observations_1km,state_1km,SensorZenith,SensorAzimuth,Range,SolarZenith,SolarAzimuth,gflags,orbit_pnt,granule_pnt', 'SUBDATASET_1_DESC': 'Bands num_observations_1km,state_1km,SensorZenith,SensorAzimuth,Range,SolarZenith,SolarAzimuth,gflags,orbit_pnt,granule_pnt of MODIS/006/MYD09GA/2017_05_24'}}, 'size': [43200, 21600]}
+    assert expected == res
+    assert ds.ReadRaster(0, 0, 1, 1) is not None

@@ -2584,6 +2584,32 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     poGC->addGeometryDirectly( poGeom );
                 }
             }
+            else if( psChild->eType == CXT_Element
+                     && EQUAL(BareGMLElement(psChild->pszValue), "geometryMembers") )
+            {
+                for( const CPLXMLNode *psChild2 = psChild->psChild;
+                     psChild2 != nullptr;
+                     psChild2 = psChild2->psNext )
+                {
+                    if( psChild2->eType == CXT_Element )
+                    {
+                        OGRGeometry* poGeom = GML2OGRGeometry_XMLNode_Internal(
+                            psChild2, nPseudoBoolGetSecondaryGeometryOption,
+                            nRecLevel + 1, nSRSDimension, pszSRSName );
+                        if( poGeom == nullptr )
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                    "GeometryCollection: Failed to get geometry "
+                                    "in geometryMember" );
+                            delete poGeom;
+                            delete poGC;
+                            return nullptr;
+                        }
+
+                        poGC->addGeometryDirectly( poGeom );
+                    }
+                }
+            }
         }
 
         return poGC;

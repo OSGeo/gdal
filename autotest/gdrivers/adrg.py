@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -30,11 +30,9 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +40,7 @@ import gdaltest
 # Read test of simple byte reference data.
 
 
-def adrg_read_gen():
+def test_adrg_read_gen():
 
     tst = gdaltest.GDALTest('ADRG', 'SMALL_ADRG/ABCDEF01.GEN', 1, 62833)
     return tst.testOpen()
@@ -51,7 +49,7 @@ def adrg_read_gen():
 # Read test of simple byte reference data by the TRANSH01.THF file .
 
 
-def adrg_read_transh():
+def test_adrg_read_transh():
 
     tst = gdaltest.GDALTest('ADRG', 'SMALL_ADRG/TRANSH01.THF', 1, 62833)
     return tst.testOpen()
@@ -60,7 +58,7 @@ def adrg_read_transh():
 # Read test of simple byte reference data by a subdataset file
 
 
-def adrg_read_subdataset_img():
+def test_adrg_read_subdataset_img():
 
     tst = gdaltest.GDALTest('ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute=1)
     return tst.testOpen()
@@ -69,7 +67,7 @@ def adrg_read_subdataset_img():
 # Test copying.
 
 
-def adrg_copy():
+def test_adrg_copy():
 
     drv = gdal.GetDriverByName('ADRG')
     srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
@@ -78,21 +76,17 @@ def adrg_copy():
 
     chksum = dstds.GetRasterBand(1).Checksum()
 
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     dstds = None
 
     drv.Delete('tmp/ABCDEF01.GEN')
 
-    return 'success'
-
 ###############################################################################
 # Test creating a fake 2 subdataset image and reading it.
 
 
-def adrg_2subdatasets():
+def test_adrg_2subdatasets():
 
     drv = gdal.GetDriverByName('ADRG')
     srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
@@ -105,22 +99,16 @@ def adrg_2subdatasets():
     shutil.copy('tmp/XXXXXX01.IMG', 'tmp/XXXXXX02.IMG')
 
     ds = gdal.Open('tmp/TRANSH01.THF')
-    if ds.RasterCount != 0:
-        gdaltest.post_reason('did not expected non 0 RasterCount')
-        return 'fail'
+    assert ds.RasterCount == 0, 'did not expected non 0 RasterCount'
     ds = None
 
     ds = gdal.Open('ADRG:tmp/XXXXXX01.GEN,tmp/XXXXXX02.IMG')
     chksum = ds.GetRasterBand(1).Checksum()
 
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     md = ds.GetMetadata('')
-    if md['ADRG_NAM'] != 'XXXXXX02':
-        gdaltest.post_reason('metadata wrong.')
-        return 'fail'
+    assert md['ADRG_NAM'] == 'XXXXXX02', 'metadata wrong.'
 
     ds = None
 
@@ -130,13 +118,11 @@ def adrg_2subdatasets():
     os.remove('tmp/XXXXXX02.IMG')
     os.remove('tmp/TRANSH01.THF')
 
-    return 'success'
-
 ###############################################################################
 # Test creating an in memory copy.
 
 
-def adrg_copy_vsimem():
+def test_adrg_copy_vsimem():
 
     drv = gdal.GetDriverByName('ADRG')
     srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
@@ -145,9 +131,7 @@ def adrg_copy_vsimem():
 
     chksum = dstds.GetRasterBand(1).Checksum()
 
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     dstds = None
 
@@ -155,75 +139,43 @@ def adrg_copy_vsimem():
     ds = gdal.Open('/vsimem/ABCDEF01.GEN')
 
     chksum = ds.GetRasterBand(1).Checksum()
-    if chksum != 62833:
-        gdaltest.post_reason('Wrong checksum')
-        return 'fail'
+    assert chksum == 62833, 'Wrong checksum'
 
     ds = None
 
     drv.Delete('/vsimem/ABCDEF01.GEN')
     gdal.Unlink('/vsimem/TRANSH01.THF')
 
-    return 'success'
-
 ###############################################################################
 # Test reading a fake North Polar dataset (#6560)
 
 
-def adrg_zna_9():
+def test_adrg_zna_9():
 
     ds = gdal.Open('data/SMALL_ADRG_ZNA9/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, -179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
-    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-5:
-        gdaltest.post_reason('Wrong geotransfsorm')
-        print(gt)
-        return 'fail'
+    assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \
+        'Wrong geotransfsorm'
     wkt = ds.GetProjectionRef()
-    if wkt != """PROJCS["ARC_System_Zone_09",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""":
-        gdaltest.post_reason('Wrong WKT')
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt == """PROJCS["ARC_System_Zone_09",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
+        'Wrong WKT'
 
 ###############################################################################
 # Test reading a fake South Polar dataset (#6560)
 
 
-def adrg_zna_18():
+def test_adrg_zna_18():
 
     ds = gdal.Open('data/SMALL_ADRG_ZNA18/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, 179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
-    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-5:
-        gdaltest.post_reason('Wrong geotransfsorm')
-        print(gt)
-        return 'fail'
+    assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \
+        'Wrong geotransfsorm'
     wkt = ds.GetProjectionRef()
-    if wkt != """PROJCS["ARC_System_Zone_18",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""":
-        gdaltest.post_reason('Wrong WKT')
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt == """PROJCS["ARC_System_Zone_18",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
+        'Wrong WKT'
 
 
 ###############################################################################
-gdaltest_list = [
-    adrg_read_gen,
-    adrg_read_transh,
-    adrg_read_subdataset_img,
-    adrg_copy,
-    adrg_2subdatasets,
-    adrg_copy_vsimem,
-    adrg_zna_9,
-    adrg_zna_18]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('adrg')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

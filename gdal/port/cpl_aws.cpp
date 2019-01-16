@@ -600,35 +600,63 @@ static bool Iso8601ToUnixTime(const char* pszDT, GIntBig* pnUnixTime)
 static bool IsMachinePotentiallyEC2Instance()
 {
 #ifdef __linux
-    // Small optimization on Linux. If the kernel is recent
-    // enough, a /sys/hypervisor/uuid file should exist on EC2 instances
-    // and contain a string beginning with ec2.
+    // Optimization on Linux to avoid the network request
     // See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
-    // If /sys/hypervisor exists, but /sys/hypervisor/uuid does not
-    // exist or doesn't start with ec2, then do not attempt any network
-    // access
-    bool bAttemptNetworkAccess = true;
-    if( CPLTestBool(CPLGetConfigOption(
-                        "CPL_AWS_CHECK_HYPERVISOR_UUID", "YES")) )
+    // Skip if either:
+    // - CPL_AWS_AUTODETECT_EC2=NO
+    // - CPL_AWS_CHECK_HYPERVISOR_UUID=NO (deprecated)
+
+    // On the newer Nitro Hypervisor (C5, M5, H1, T3), use 
+    // /sys/devices/virtual/dmi/id/sys_vendor = 'Amazon EC2' instead.
+
+    // On older Xen hypervisor EC2 instances, a /sys/hypervisor/uuid file will
+    // exist with a string beginning with 'ec2'.
+
+    // If the files exist but don't contain the correct content, then we're not EC2 and
+    // do not attempt any network access
+
+    if( ! CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")) )
     {
-        VSIStatBufL sStat;
-        if( VSIStatL("/sys/hypervisor", &sStat) == 0 )
+        return true;
+    }
+    else
+    {
+        CPLString opt = CPLGetConfigOption("CPL_AWS_CHECK_HYPERVISOR_UUID", "");
+        if ( ! opt.empty() )
         {
-            char uuid[36+1] = { 0 };
-            VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
-            if( fp != nullptr )
+            CPLDebug("AWS", "CPL_AWS_CHECK_HYPERVISOR_UUID is deprecated. Use CPL_AWS_AUTODETECT_EC2 instead");
+            if ( ! CPLTestBool(opt) )
             {
-                VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
-                bAttemptNetworkAccess = EQUALN( uuid, "ec2", 3 );
-                VSIFCloseL(fp);
-            }
-            else
-            {
-                bAttemptNetworkAccess = false;
+                return true;
             }
         }
     }
-    return bAttemptNetworkAccess;
+
+    // Check for Xen Hypervisor instances
+    // This file doesn't exist on Nitro instances
+    VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
+    if( fp != nullptr )
+    {
+        char uuid[36+1] = { 0 };
+        VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
+        VSIFCloseL(fp);
+        return EQUALN( uuid, "ec2", 3 );
+    }
+
+    // Check for Nitro Hypervisor instances
+    // This file may exist on Xen instances with a value of 'Xen'
+    // (but that doesn't mean we're on EC2)
+    fp = VSIFOpenL("/sys/devices/virtual/dmi/id/sys_vendor", "rb");
+    if( fp != nullptr )
+    {
+        char buf[10+1] = { 0 };
+        VSIFReadL( buf, 1, sizeof(buf)-1, fp );
+        VSIFCloseL(fp);
+        return EQUALN( buf, "Amazon EC2", 10 );
+    }
+
+    // Fallback: Check via the network
+    return true;
 #elif defined(WIN32)
     // We might add later a way of detecting if we run on EC2 using WMI
     // See http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/identify_ec2_instances.html

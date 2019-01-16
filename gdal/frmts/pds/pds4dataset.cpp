@@ -1302,6 +1302,11 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                  "Planar.Map_Projection not found");
     }
 
+    if( oSRS.IsProjected() )
+    {
+        oSRS.SetLinearUnits("Metre", 1.0);
+    }
+
     CPLXMLNode* psGeodeticModel = CPLGetXMLNode(psSR, "Geodetic_Model");
     if( psGeodeticModel != nullptr )
     {

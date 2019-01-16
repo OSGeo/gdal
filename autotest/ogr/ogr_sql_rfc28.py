@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,240 +30,216 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Test an expression with a left side value and right side column and an \
 # expression for the value.
 
 
-def ogr_rfc28_1():
+def test_ogr_rfc28_1():
     gdaltest.ds = ogr.Open('data')
     gdaltest.lyr = gdaltest.ds.GetLayerByName('poly')
 
     gdaltest.lyr.SetAttributeFilter('160+7 > eas_id')
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 3:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 3' % count)
-        return 'fail'
-
-    return 'success'
+    assert count == 3, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 3' % count)
 
 ###############################################################################
 # Test CONCAT operator in the context of a WHERE clause.
 
 
-def ogr_rfc28_2():
+def test_ogr_rfc28_2():
     gdaltest.lyr.SetAttributeFilter("CONCAT('x',PRFEDEA) = 'x35043423'")
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test '+' operator on strings.
 
 
-def ogr_rfc28_3():
+def test_ogr_rfc28_3():
     gdaltest.lyr.SetAttributeFilter("'x'+PRFEDEA = 'x35043423'")
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test '%' operator.
 
 
-def ogr_rfc28_4():
+def test_ogr_rfc28_4():
     gdaltest.lyr.SetAttributeFilter("EAS_ID % 5 = 1")
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 2:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 2' % count)
-        return 'fail'
+    assert count == 2, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 2' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test '%' operator.
 
 
-def ogr_rfc28_5():
+def test_ogr_rfc28_5():
     gdaltest.lyr.SetAttributeFilter("EAS_ID % 5 = 1")
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 2:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 2' % count)
-        return 'fail'
+    assert count == 2, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 2' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # Test support for a quoted field name.
 
 
-def ogr_rfc28_6():
+def test_ogr_rfc28_6():
     gdaltest.lyr.SetAttributeFilter("\"EAS_ID\" = 166")
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # test with distinguished name for field in where clause.
 
 
-def ogr_rfc28_7_wrong_quoting():
+def test_ogr_rfc28_7_wrong_quoting():
     with gdaltest.error_handler():
         ql = gdaltest.ds.ExecuteSQL("select eas_id from idlink where \"idlink.eas_id\" = 166")
 
     count = ql.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.ds.ReleaseResultSet(ql)
-    return 'success'
 
 
-def ogr_rfc28_7_good_quoting():
+def test_ogr_rfc28_7_good_quoting():
     ql = gdaltest.ds.ExecuteSQL("select eas_id from idlink where idlink.eas_id = 166")
 
     count = ql.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.ds.ReleaseResultSet(ql)
-    return 'success'
 
 ###############################################################################
 # test with distinguished name for field in target columns.
 
 
-def ogr_rfc28_8_wrong_quoting():
+def test_ogr_rfc28_8_wrong_quoting():
     with gdaltest.error_handler():
         ql = gdaltest.ds.ExecuteSQL("select \"idlink.eas_id\" from idlink where \"idlink.eas_id\" = 166")
 
     count = ql.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     expect = [166]
     tr = ogrtest.check_features_against_list(ql, 'idlink.eas_id', expect)
 
     gdaltest.ds.ReleaseResultSet(ql)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
-def ogr_rfc28_8_good_quoting():
+def test_ogr_rfc28_8_good_quoting():
     ql = gdaltest.ds.ExecuteSQL("select idlink.eas_id from idlink where idlink.eas_id = 166")
 
     count = ql.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     expect = [166]
     tr = ogrtest.check_features_against_list(ql, 'idlink.eas_id', expect)
 
     gdaltest.ds.ReleaseResultSet(ql)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test with quoted funky (non-identifier) name.
 
 
-def ogr_rfc28_9():
+def test_ogr_rfc28_9():
     ds = ogr.Open('data/oddname.csv')
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("\"Funky @Name\" = '32'")
 
     count = lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     expect = ['8902']
     tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
-    return 'success' if tr else 'fail'
+    assert tr
 
 # TODO: unparse quoting?
 ###############################################################################
 # test quoted names for funky columns in SELECT WHERE (confirm unparse quoting)
 
 
-def ogr_rfc28_10():
+def test_ogr_rfc28_10():
     ds = ogr.Open('data/oddname.csv')
     lyr = ds.ExecuteSQL("SELECT * from oddname where \"Funky @Name\" = '32'")
 
     count = lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     expect = ['8902']
     tr = ogrtest.check_features_against_list(lyr, 'PRIME_MERIDIAN_CODE', expect)
     ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # test quoted funky names in output columns list.
 
 
-def ogr_rfc28_11():
+def test_ogr_rfc28_11():
     ds = ogr.Open('data/oddname.csv')
     lyr = ds.ExecuteSQL("SELECT \"Funky @Name\" from oddname where prime_meridian_code = '8902'")
 
     count = lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     expect = ['32']
     tr = ogrtest.check_features_against_list(lyr, 'Funky @Name', expect)
     ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # test selecting fixed string fields.
 
 
-def ogr_rfc28_12():
+def test_ogr_rfc28_12():
     lyr = gdaltest.ds.ExecuteSQL("SELECT 'constant string', 'other' as abc, eas_id from idlink where eas_id = 165")
 
     count = lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     expect = ['other']
     tr = ogrtest.check_features_against_list(lyr, 'abc', expect)
@@ -280,28 +256,26 @@ def ogr_rfc28_12():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test SUBSTR operator in the context of a WHERE clause.
 
 
-def ogr_rfc28_13():
+def test_ogr_rfc28_13():
     gdaltest.lyr.SetAttributeFilter("SUBSTR(PRFEDEA,5,4) = '3423'")
 
     count = gdaltest.lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.lyr.SetAttributeFilter('')
-    return 'success'
 
 ###############################################################################
 # test selecting fixed string fields.
 
 
-def ogr_rfc28_14():
+def test_ogr_rfc28_14():
     lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA,4,5) from poly where eas_id in (168,179)")
 
     expect = ['43411', '43423']
@@ -309,13 +283,13 @@ def ogr_rfc28_14():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test CONCAT with more than two arguments.
 
 
-def ogr_rfc28_15():
+def test_ogr_rfc28_15():
     lyr = gdaltest.ds.ExecuteSQL("SELECT CONCAT(PRFEDEA,' ',CAST(EAS_ID AS CHARACTER(3))) from poly where eas_id in (168,179)")
 
     expect = ['35043411 168', '35043423 179']
@@ -323,13 +297,13 @@ def ogr_rfc28_15():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test parse support for negative numbers (#3724)
 
 
-def ogr_rfc28_16():
+def test_ogr_rfc28_16():
     lyr = gdaltest.ds.ExecuteSQL("SELECT -1, 3--1,3*-1,2e-1,3-1 from poly where eas_id = 168")
 
     expect = [-1]
@@ -353,13 +327,13 @@ def ogr_rfc28_16():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test evaluation of division - had a problem with type conversion.
 
 
-def ogr_rfc28_17():
+def test_ogr_rfc28_17():
     lyr = gdaltest.ds.ExecuteSQL("SELECT 5/2, 5.0/2.0, 5/2.0, 5.0/2 from poly where eas_id = 168")
 
     expect = [2]
@@ -379,13 +353,13 @@ def ogr_rfc28_17():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
 # Test some special distinct cases.
 
-def ogr_rfc28_18():
+def test_ogr_rfc28_18():
     lyr = gdaltest.ds.ExecuteSQL("SELECT COUNT(distinct id), COUNT(distinct id) as \"xx\" from departs")
 
     expect = [1]
@@ -397,13 +371,13 @@ def ogr_rfc28_18():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 
 ###############################################################################
 # Verify that NOT IN ( list ) works
 
-def ogr_rfc28_19():
+def test_ogr_rfc28_19():
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select * from poly where eas_id not in (158,165)')
 
@@ -411,17 +385,14 @@ def ogr_rfc28_19():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if count != 8:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 8' % count)
-        return 'fail'
-
-    return 'success'
+    assert count == 8, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 8' % count)
 
 
 ###############################################################################
 # Verify arithmetic operator precedence and unary minus
 
-def ogr_rfc28_20():
+def test_ogr_rfc28_20():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -433,19 +404,16 @@ def ogr_rfc28_20():
 
     sql_lyr = ds.ExecuteSQL('select -intfield + 1 + 2 * 3 + 5 - 3 * 2 from my_layer')
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField('FIELD_1') != 4:
-        return 'fail'
+    assert feat.GetField('FIELD_1') == 4
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Verify that BETWEEN works
 
 
-def ogr_rfc28_21():
+def test_ogr_rfc28_21():
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select * from poly where eas_id between 165 and 169')
 
@@ -459,17 +427,14 @@ def ogr_rfc28_21():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if count_between != count_ge_and_le:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_between, count_ge_and_le))
-        return 'fail'
-
-    return 'success'
+    assert count_between == count_ge_and_le, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_between, count_ge_and_le))
 
 ###############################################################################
 # Verify that NOT BETWEEN works
 
 
-def ogr_rfc28_22():
+def test_ogr_rfc28_22():
 
     sql_lyr = gdaltest.ds.ExecuteSQL('select * from poly where eas_id not between 165 and 169')
 
@@ -483,17 +448,14 @@ def ogr_rfc28_22():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if count_not_between != count_not_ge_and_le:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_between, count_not_ge_and_le))
-        return 'fail'
-
-    return 'success'
+    assert count_not_between == count_not_ge_and_le, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_between, count_not_ge_and_le))
 
 ###############################################################################
 # Verify that NOT LIKE works
 
 
-def ogr_rfc28_23():
+def test_ogr_rfc28_23():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select * from poly where PRFEDEA NOT LIKE '35043413'")
 
@@ -507,17 +469,14 @@ def ogr_rfc28_23():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if count_not_like1 != count_not_like2:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_like1, count_not_like2))
-        return 'fail'
-
-    return 'success'
+    assert count_not_like1 == count_not_like2, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count_not_like1, count_not_like2))
 
 ###############################################################################
 # Verify that NULL works
 
 
-def ogr_rfc28_24():
+def test_ogr_rfc28_24():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select *, NULL, NULL as nullstrfield, CAST(null as integer) as nullintfield from poly where NULL IS NULL")
 
@@ -526,33 +485,30 @@ def ogr_rfc28_24():
     if feat.IsFieldSet('FIELD_4'):
         feat.DumpReadable()
         gdaltest.ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     if feat.IsFieldSet('nullstrfield'):
         feat.DumpReadable()
         gdaltest.ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     if feat.IsFieldSet('nullintfield'):
         feat.DumpReadable()
         gdaltest.ds.ReleaseResultSet(sql_lyr)
-        return 'fail'
+        pytest.fail()
 
     count = sql_lyr.GetFeatureCount()
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if count != 10:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count, 10))
-        return 'fail'
-
-    return 'success'
+    assert count == 10, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting %d' % (count, 10))
 
 ###############################################################################
 # Verify that LIKE pattern ESCAPE escape_char works
 
 
-def ogr_rfc28_25():
+def test_ogr_rfc28_25():
 
     sql_lyr = gdaltest.ds.ExecuteSQL("select * from poly where prfedea LIKE 'x35043408' ESCAPE 'x'")
 
@@ -560,17 +516,14 @@ def ogr_rfc28_25():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
-
-    return 'success'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
 ###############################################################################
 # Test SUBSTR with negative offsets
 
 
-def ogr_rfc28_26():
+def test_ogr_rfc28_26():
     lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA,-2) from poly where eas_id in (168,179)")
 
     expect = ['11', '23']
@@ -578,13 +531,13 @@ def ogr_rfc28_26():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test that we correctly let floating point values as floating point, and not as integer (#4634)"
 
 
-def ogr_rfc28_27():
+def test_ogr_rfc28_27():
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE 4000000000. > 2000000000.")
 
@@ -592,7 +545,7 @@ def ogr_rfc28_27():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count == 10 else 'fail'
+    assert count == 10
 
 ###############################################################################
 # Extensive test of the evaluation of arithmetic and logical operators
@@ -604,14 +557,11 @@ def ogr_rfc28_28_test(formula, expected_val):
     got = f.GetField(0)
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if got != expected_val:
-        gdaltest.post_reason('bad result for %s : %s' % (formula, str(expected_val)))
-        return 'fail'
-
-    return 'success'
+    assert got == expected_val, \
+        ('bad result for %s : %s' % (formula, str(expected_val)))
 
 
-def ogr_rfc28_28():
+def test_ogr_rfc28_28():
 
     operators = ['+', '-', '*', '/', '%']
     formulas = []
@@ -690,13 +640,12 @@ def ogr_rfc28_28():
         if ret == 'fail':
             return ret
 
-    return 'success'
-
+    
 ###############################################################################
 # Test behaviour of binary operations when one operand is a NULL value
 
 
-def ogr_rfc28_29():
+def test_ogr_rfc28_29():
 
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink where (eas_id + cast(null as integer)) is not null or eas_id = 170 + cast(null as integer) or (eas_id + cast(null as float)) is not null or eas_id = 170.0 + cast(null as float)")
 
@@ -704,13 +653,13 @@ def ogr_rfc28_29():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count == 0 else 'fail'
+    assert count == 0
 
 ###############################################################################
 # Test behaviour of binary operations on strings when one operand is a NULL value
 
 
-def ogr_rfc28_30():
+def test_ogr_rfc28_30():
 
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink2 where F1 <> 'foo' or concat(F1,cast(null as character(32))) is not null")
 
@@ -718,13 +667,13 @@ def ogr_rfc28_30():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count == 0 else 'fail'
+    assert count == 0
 
 ###############################################################################
 # Test UNION ALL
 
 
-def ogr_rfc28_31():
+def test_ogr_rfc28_31():
 
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink union all select * from idlink2")
 
@@ -732,13 +681,13 @@ def ogr_rfc28_31():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count != 6 + 7 else 'fail'
+    assert count != 6 + 7
 
 ###############################################################################
 # Test UNION ALL with parenthesis
 
 
-def ogr_rfc28_32():
+def test_ogr_rfc28_32():
 
     lyr = gdaltest.ds.ExecuteSQL("(select * from idlink) union all (select * from idlink2 order by eas_id)")
 
@@ -746,86 +695,78 @@ def ogr_rfc28_32():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if count != 6 + 7 else 'fail'
+    assert count != 6 + 7
 
 ###############################################################################
 # Test lack of end-of-string character
 
 
-def ogr_rfc28_33():
+def test_ogr_rfc28_33():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select * from idlink where name='foo")
     gdal.PopErrorHandler()
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test wildcard expansion of an unknown table.
 
 
-def ogr_rfc28_34():
+def test_ogr_rfc28_34():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select foo.* from idlink")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find(
-            'Table foo not recognised from foo.* definition') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert (gdal.GetLastErrorMsg().find(
+            'Table foo not recognised from foo.* definition') == 0)
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test selecting more than one distinct
 
 
-def ogr_rfc28_35():
+def test_ogr_rfc28_35():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id, distinct name from idlink")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') == 0
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test selecting more than one distinct
 
 
-def ogr_rfc28_35_bis():
+def test_ogr_rfc28_35_bis():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id, name from idlink")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') == 0
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test selecting more than one distinct
 
 
-def ogr_rfc28_35_ter():
+def test_ogr_rfc28_35_ter():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("select distinct * from idlink")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') == 0
 
-    return 'success' if lyr is None else 'fail'
+    assert lyr is None
 
 ###############################################################################
 # Test ORDER BY a DISTINCT list by more than one key
 
 
-def ogr_rfc28_36():
+def test_ogr_rfc28_36():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -833,17 +774,14 @@ def ogr_rfc28_36():
     if lyr is not None:
         lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find("Can't ORDER BY a DISTINCT list by more than one key") != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find("Can't ORDER BY a DISTINCT list by more than one key") == 0
     gdaltest.ds.ReleaseResultSet(lyr)
-    return 'success'
 
 ###############################################################################
 # Test different fields for ORDER BY and DISTINCT
 
 
-def ogr_rfc28_37():
+def test_ogr_rfc28_37():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -851,45 +789,34 @@ def ogr_rfc28_37():
     if lyr is not None:
         lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find("Only selected DISTINCT field can be used for ORDER BY") != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find("Only selected DISTINCT field can be used for ORDER BY") == 0
     gdaltest.ds.ReleaseResultSet(lyr)
-    return 'success'
 
 ###############################################################################
 # Test invalid SUBSTR
 
 
-def ogr_rfc28_38():
+def test_ogr_rfc28_38():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA) from poly")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find("Expected 2 or 3 arguments to SUBSTR(), but got 1") != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-    if lyr is not None:
-        return 'fail'
+    assert gdal.GetLastErrorMsg().find("Expected 2 or 3 arguments to SUBSTR(), but got 1") == 0
+    assert lyr is None
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(1,2) from poly")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find("Wrong argument type for SUBSTR()") != 0:
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-    if lyr is not None:
-        return 'fail'
-
-    return 'success'
+    assert gdal.GetLastErrorMsg().find("Wrong argument type for SUBSTR()") == 0
+    assert lyr is None
 
 ###############################################################################
 # Test COUNT() on a 0-row result
 
 
-def ogr_rfc28_39():
+def test_ogr_rfc28_39():
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT COUNT(*) from poly where 0 = 1")
 
@@ -897,13 +824,13 @@ def ogr_rfc28_39():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Test MIN(), MAX() and AVG() on a date (#5333)
 
 
-def ogr_rfc28_40():
+def test_ogr_rfc28_40():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -924,21 +851,17 @@ def ogr_rfc28_40():
 
     gdaltest.ds.ReleaseResultSet(lyr)
 
-    if not tr:
-        return 'fail'
+    assert tr
 
-    if not tr2:
-        return 'fail'
+    assert tr2
 
-    if not tr3:
-        return 'fail'
-    return 'success'
+    assert tr3
 
 
 ###############################################################################
 # Verify that SELECT * works on a layer with a field that has a dot character (#5379)
 
-def ogr_rfc28_41():
+def test_ogr_rfc28_41():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -950,27 +873,21 @@ def ogr_rfc28_41():
 
     sql_lyr = ds.ExecuteSQL('select * from my_layer')
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField('a.b') != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert feat.GetField('a.b') == 2
     ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = ds.ExecuteSQL('select l.* from my_layer l')
     feat = sql_lyr.GetNextFeature()
-    if feat.GetField('l.a.b') != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert feat.GetField('l.a.b') == 2
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test boolean and int16 support
 
 
-def ogr_rfc28_42():
+def test_ogr_rfc28_42():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -990,73 +907,41 @@ def ogr_rfc28_42():
 
     # To b OR NOT to b... that's the question
     lyr = ds.ExecuteSQL("SELECT b, NOT b, 1 + b, CAST(1 AS BOOLEAN), b IS NOT NULL, short, 1 + short, CAST(1 + short as SMALLINT) FROM test WHERE b OR NOT b")
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() != ogr.OFSTNone:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(3).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(4).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(5).GetSubType() != ogr.OFSTInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() != ogr.OFSTNone:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(7).GetSubType() != ogr.OFSTInt16:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTBoolean
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTBoolean
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() == ogr.OFSTNone
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetSubType() == ogr.OFSTBoolean
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetSubType() == ogr.OFSTBoolean
+    assert lyr.GetLayerDefn().GetFieldDefn(5).GetSubType() == ogr.OFSTInt16
+    assert lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() == ogr.OFSTNone
+    assert lyr.GetLayerDefn().GetFieldDefn(7).GetSubType() == ogr.OFSTInt16
     f = lyr.GetNextFeature()
     if f.GetField('b') != 0 or f.GetField(1) != 1 or f.GetField(2) != 1 or \
        f.GetField(3) != 1 or f.GetField(4) != 1 or \
        f.GetField(5) != 32000 or f.GetField(6) != 32001 or f.GetField(7) != 32001:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetField('b') != 1 or f.GetField(1) != 0 or f.GetField(2) != 2 or f.GetField(3) != 1 or f.GetField(4) != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = ds.ExecuteSQL("SELECT MIN(b), MAX(b), SUM(b) FROM test")
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() != ogr.OFSTNone:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTBoolean
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTBoolean
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() == ogr.OFSTNone
     f = lyr.GetNextFeature()
-    if f.GetField('MIN_b') != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if f.GetField('MAX_b') != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if f.GetField('SUM_b') != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f.GetField('MIN_b') == 0
+    assert f.GetField('MAX_b') == 1
+    assert f.GetField('SUM_b') == 1
     gdaltest.ds.ReleaseResultSet(lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test integer64 support
 
 
-def ogr_rfc28_43():
+def test_ogr_rfc28_43():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('test')
@@ -1071,53 +956,42 @@ def ogr_rfc28_43():
 
     lyr = ds.ExecuteSQL("SELECT 1000000000000, myint64, CAST(1 AS bigint), CAST(100000000000 AS bigint), CAST(1 AS numeric(15,0)) FROM test WHERE myint64 < -9999999999 or myint64 > 9999999999")
     f = lyr.GetNextFeature()
-    if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(3).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTInteger64
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTInteger64
     if f.GetField(0) != 1000000000000 or f.GetField(1) != -1000000000000 or f.GetField(2) != 1 or f.GetField(3) != 100000000000 or f.GetField(4) != 1.0:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = ds.ExecuteSQL("SELECT MIN(myint64), MAX(myint64), SUM(myint64) FROM test")
     f = lyr.GetNextFeature()
     if f.GetField('MIN_myint64') != -1000000000000:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if f.GetField('MAX_myint64') != 100000000000:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if f.GetField('SUM_myint64') != -1000000000000 + 100000000000:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = ds.ExecuteSQL("SELECT DISTINCT myint64 FROM test ORDER BY myint64")
     f = lyr.GetNextFeature()
     if f.GetField('myint64') != -1000000000000:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetField('myint64') != 100000000000:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     gdaltest.ds.ReleaseResultSet(lyr)
-    return 'success'
 
 ###############################################################################
 # Test crazy quoting of table and fields
 
 
-def ogr_rfc28_44():
+def test_ogr_rfc28_44():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr.withpoint')
@@ -1135,24 +1009,16 @@ def ogr_rfc28_44():
 
     gdal.ErrorReset()
     lyr = ds.ExecuteSQL("SELECT * FROM \"lyr.withpoint\" WHERE \"field.withpoint\" = 1")
-    if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
     f = lyr.GetNextFeature()
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f is not None
     gdaltest.ds.ReleaseResultSet(lyr)
 
     gdal.ErrorReset()
     lyr = ds.ExecuteSQL("SELECT \"lyr.withpoint\".\"field.withpoint\", \"field.withpoint\" FROM \"lyr.withpoint\" WHERE \"lyr.withpoint\".\"field.withpoint\" = 1")
-    if gdal.GetLastErrorMsg() != '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == ''
     f = lyr.GetNextFeature()
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f is not None
     gdaltest.ds.ReleaseResultSet(lyr)
 
     # Test our tolerance against lack of necessary quoting
@@ -1160,13 +1026,9 @@ def ogr_rfc28_44():
     gdal.PushErrorHandler()
     lyr = ds.ExecuteSQL("SELECT * FROM \"lyr.withpoint\" WHERE field.withpoint = 1")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() != 'Passed field name field.withpoint should have been surrounded by double quotes. Accepted since there is no ambiguity...':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == 'Passed field name field.withpoint should have been surrounded by double quotes. Accepted since there is no ambiguity...'
     f = lyr.GetNextFeature()
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f is not None
     gdaltest.ds.ReleaseResultSet(lyr)
 
     # Againg, but in a situation where there IS ambiguity
@@ -1178,50 +1040,38 @@ def ogr_rfc28_44():
     gdal.PushErrorHandler()
     lyr = ds.ExecuteSQL("SELECT * FROM \"lyr.withpoint\" JOIN field ON \"lyr.withpoint\".foo = field.id WHERE field.withpoint = 1")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() != '"field"."withpoint" not recognised as an available field.':
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == '"field"."withpoint" not recognised as an available field.'
+    assert lyr is None
 
     # Test our tolerance against unnecessary quoting
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     lyr = ds.ExecuteSQL("SELECT * FROM \"lyr.withpoint\" f WHERE \"f.foo\" = 2")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() != 'Passed field name f.foo should NOT have been surrounded by double quotes. Accepted since there is no ambiguity...':
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.GetLastErrorMsg() == 'Passed field name f.foo should NOT have been surrounded by double quotes. Accepted since there is no ambiguity...'
     f = lyr.GetNextFeature()
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f is not None
     gdaltest.ds.ReleaseResultSet(lyr)
-
-    return 'success'
 
 ###############################################################################
 # Test 'FROM table_name AS alias'
 
 
-def ogr_rfc28_45():
+def test_ogr_rfc28_45():
 
     ql = gdaltest.ds.ExecuteSQL("select eas_id from idlink as il where il.eas_id = 166")
 
     count = ql.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
-        return 'fail'
+    assert count == 1, \
+        ('Got wrong count with GetFeatureCount() - %d, expecting 1' % count)
 
     gdaltest.ds.ReleaseResultSet(ql)
-    return 'success'
 
 ###############################################################################
 # Test fid special column and 64 bit
 
 
-def ogr_rfc28_46():
+def test_ogr_rfc28_46():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr')
@@ -1241,29 +1091,23 @@ def ogr_rfc28_46():
     lyr.CreateFeature(feat)
 
     lyr.SetAttributeFilter('fid >= 2500000000')
-    if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
     lyr.SetAttributeFilter(None)
 
     # Explicit cast of fid to bigint needed in SELECT columns
     sql_lyr = ds.ExecuteSQL('SELECT CAST(fid AS bigint) AS outfid, val FROM lyr WHERE fid >= 2500000000 ORDER BY fid')
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2500000000 or f['outfid'] != 2500000000 or f['val'] != 2:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 3000000000 or f['outfid'] != 3000000000 or f['val'] != 1:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     f = sql_lyr.GetNextFeature()
     if f is not None:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     # Explicit cast of fid to bigint no longer needed if the layer is declared OLMD_FID64=YES
@@ -1271,161 +1115,108 @@ def ogr_rfc28_46():
     sql_lyr = ds.ExecuteSQL('SELECT fid AS outfid, val FROM lyr WHERE fid >= 2500000000 ORDER BY fid')
     f = sql_lyr.GetNextFeature()
     if f.GetFID() != 2500000000 or f['outfid'] != 2500000000 or f['val'] != 2:
-        gdaltest.post_reason('fail')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test LIMIT and OFFSET
 
 
-def ogr_rfc28_47():
+def test_ogr_rfc28_47():
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 0")
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [168])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY EAS_ID LIMIT 1")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [158])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY PRFEDEA LIMIT 1")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     tr = ogrtest.check_features_against_list(lyr, 'PRFEDEA', ['35043369'])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE 0 ORDER BY EAS_ID LIMIT 1")
-    if lyr.GetNextFeature() is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetNextFeature() is None
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE EAS_ID = 168 LIMIT 11")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [168])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 0")
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [168])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 1")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY OFFSET 10")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY OFFSET 8")
-    if lyr.GetFeatureCount() != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 2
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [165, 170])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1 OFFSET 8")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [165])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 2 OFFSET 8")
     lyr.SetNextByIndex(1)
     f = lyr.GetNextFeature()
-    if f['EAS_ID'] != 170:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f['EAS_ID'] == 170
     f = lyr.GetNextFeature()
-    if f is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f is None
     gdaltest.ds.ReleaseResultSet(lyr)
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 2")
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [179, 173])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 1 OFFSET 1")
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [173])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tr
 
     lyr = gdaltest.ds.ExecuteSQL("SELECT DISTINCT EAS_ID FROM POLY ORDER BY EAS_ID DESC LIMIT 2 OFFSET 3")
     tr = ogrtest.check_features_against_list(lyr, 'EAS_ID', [171, 170])
     gdaltest.ds.ReleaseResultSet(lyr)
-    if not tr:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert tr
 
 ###############################################################################
 # Test date/datetime comparisons (#6810)
 
 
-def ogr_rfc28_48():
+def test_ogr_rfc28_48():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr')
@@ -1436,108 +1227,68 @@ def ogr_rfc28_48():
     lyr.CreateFeature(feat)
 
     with gdaltest.error_handler():
-        if lyr.SetAttributeFilter('dt >= 2500000000') == 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert lyr.SetAttributeFilter('dt >= 2500000000') != 0
 
     lyr.SetAttributeFilter("dt >= 'a'")
     with gdaltest.error_handler():
-        if lyr.GetFeatureCount() != 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("'a' <= dt")
     with gdaltest.error_handler():
-        if lyr.GetFeatureCount() != 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt BETWEEN dt AND 'a'")
     with gdaltest.error_handler():
-        if lyr.GetFeatureCount() != 0:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt >= '2017/02/17 11:06:34'")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt >= '2017/02/17'")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt >= '2017/02/17 11:06:35'")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt > '2017/02/17 11:06:33'")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt > '2017/02/17 11:06:34'")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt <= '2017/02/17 11:06:34'")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt <= '2017/02/17 11:06:33'")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt < '2017/02/17 11:06:35'")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt < '2017/02/17 11:06:34'")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt = '2017/02/17 11:06:34'")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt = '2017/02/17 11:06:34.001'")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt BETWEEN dt AND dt")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt BETWEEN '2017/02/17 11:06:33.999' AND '2017/02/17 11:06:34.001'")
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.SetAttributeFilter("dt BETWEEN '2017/02/17 11:06:34.001' AND dt")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt BETWEEN dt AND '2017/02/17 11:06:33.999'")
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert lyr.GetFeatureCount() == 0
 
 
 ###############################################################################
-def ogr_rfc28_int_overflows():
+def test_ogr_rfc28_int_overflows():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('lyr')
@@ -1579,85 +1330,17 @@ def ogr_rfc28_int_overflows():
                 f = sql_lyr.GetNextFeature()
         else:
             f = sql_lyr.GetNextFeature()
-        if f.GetField(0) != res:
-            gdaltest.post_reason('fail')
-            print(sql, res, f.GetField(0))
-            return 'fail'
+        assert f.GetField(0) == res, (sql, res, f.GetField(0))
         ds.ReleaseResultSet(sql_lyr)
 
-    return 'success'
-
+    
 
 ###############################################################################
 
 
-def ogr_rfc28_cleanup():
+def test_ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_rfc28_1,
-    ogr_rfc28_2,
-    ogr_rfc28_3,
-    ogr_rfc28_4,
-    ogr_rfc28_5,
-    ogr_rfc28_6,
-    ogr_rfc28_7_wrong_quoting,
-    ogr_rfc28_7_good_quoting,
-    ogr_rfc28_8_wrong_quoting,
-    ogr_rfc28_8_good_quoting,
-    ogr_rfc28_9,
-    ogr_rfc28_10,
-    ogr_rfc28_11,
-    ogr_rfc28_12,
-    ogr_rfc28_13,
-    ogr_rfc28_14,
-    ogr_rfc28_15,
-    ogr_rfc28_16,
-    ogr_rfc28_17,
-    ogr_rfc28_18,
-    ogr_rfc28_19,
-    ogr_rfc28_20,
-    ogr_rfc28_21,
-    ogr_rfc28_22,
-    ogr_rfc28_23,
-    ogr_rfc28_24,
-    ogr_rfc28_25,
-    ogr_rfc28_26,
-    ogr_rfc28_27,
-    ogr_rfc28_28,
-    ogr_rfc28_29,
-    ogr_rfc28_30,
-    ogr_rfc28_31,
-    ogr_rfc28_32,
-    ogr_rfc28_33,
-    ogr_rfc28_34,
-    ogr_rfc28_35,
-    ogr_rfc28_35_bis,
-    ogr_rfc28_35_ter,
-    ogr_rfc28_36,
-    ogr_rfc28_37,
-    ogr_rfc28_38,
-    ogr_rfc28_39,
-    ogr_rfc28_40,
-    ogr_rfc28_41,
-    ogr_rfc28_42,
-    ogr_rfc28_43,
-    ogr_rfc28_44,
-    ogr_rfc28_45,
-    ogr_rfc28_46,
-    ogr_rfc28_47,
-    ogr_rfc28_48,
-    ogr_rfc28_int_overflows,
-    ogr_rfc28_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_sql_rfc28')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

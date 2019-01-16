@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -32,21 +32,19 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 
-sys.path.append('../pymod')
 
-import gdaltest
 
 from osgeo import gdal
 from osgeo import gnm
+import pytest
 
 ###############################################################################
 # Create file base network
 
 
-def gnm_filenetwork_create():
+def test_gnm_filenetwork_create():
 
     try:
         shutil.rmtree('tmp/test_gnm')
@@ -59,64 +57,48 @@ def gnm_filenetwork_create():
     ogrtest.drv = gdal.GetDriverByName('GNMFile')
 
     if ogrtest.drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogrtest.drv.Create('tmp/', 0, 0, 0, gdal.GDT_Unknown, options=['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'])
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if dn.GetVersion() != 100:
-        gdaltest.post_reason('GNM: Check GNM version failed')
-        return 'fail'
-    if dn.GetName() != 'test_gnm':
-        gdaltest.post_reason('GNM: Check GNM name failed')
-        return 'fail'
-    if dn.GetDescription() != 'Test file based GNM':
-        gdaltest.post_reason('GNM: Check GNM description failed')
-        return 'fail'
+    assert dn is not None
+    assert dn.GetVersion() == 100, 'GNM: Check GNM version failed'
+    assert dn.GetName() == 'test_gnm', 'GNM: Check GNM name failed'
+    assert dn.GetDescription() == 'Test file based GNM', \
+        'GNM: Check GNM description failed'
 
     dn = None
     ogrtest.have_gnm = 1
-    return 'success'
 
 ###############################################################################
 # Open file base network
 
 
-def gnm_filenetwork_open():
+def test_gnm_filenetwork_open():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if dn.GetVersion() != 100:
-        gdaltest.post_reason('GNM: Check GNM version failed')
-        return 'fail'
-    if dn.GetName() != 'test_gnm':
-        gdaltest.post_reason('GNM: Check GNM name failed')
-        return 'fail'
-    if dn.GetDescription() != 'Test file based GNM':
-        gdaltest.post_reason('GNM: Check GNM description failed')
-        return 'fail'
+    assert dn is not None
+    assert dn.GetVersion() == 100, 'GNM: Check GNM version failed'
+    assert dn.GetName() == 'test_gnm', 'GNM: Check GNM name failed'
+    assert dn.GetDescription() == 'Test file based GNM', \
+        'GNM: Check GNM description failed'
 
     dn = None
-    return 'success'
 
 ###############################################################################
 # Import layers into file base network
 
 
-def gnm_import():
+def test_gnm_import():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
 
@@ -124,9 +106,7 @@ def gnm_import():
     dspipes = gdal.OpenEx('data/pipes.shp', gdal.OF_VECTOR)
     lyrpipes = dspipes.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrpipes, 'pipes')
-    if new_lyr is None:
-        gdaltest.post_reason('failed to import pipes')
-        return 'fail'
+    assert new_lyr is not None, 'failed to import pipes'
     dspipes = None
     new_lyr = None
 
@@ -134,70 +114,54 @@ def gnm_import():
     dswells = gdal.OpenEx('data/wells.shp', gdal.OF_VECTOR)
     lyrwells = dswells.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrwells, 'wells')
-    if new_lyr is None:
-        gdaltest.post_reason('failed to import wells')
-        return 'fail'
+    assert new_lyr is not None, 'failed to import wells'
     dswells = None
     new_lyr = None
 
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('expected 2 layers')
-        return 'fail'
+    assert ds.GetLayerCount() == 2, 'expected 2 layers'
 
     ds = None
-    return 'success'
 
 ###############################################################################
 # autoconnect
 
 
-def gnm_autoconnect():
+def test_gnm_autoconnect():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dgn = gnm.CastToGenericNetwork(ds)
-    if dgn is None:
-        gdaltest.post_reason('cast to GNMGenericNetwork failed')
-        return 'fail'
+    assert dgn is not None, 'cast to GNMGenericNetwork failed'
 
     ret = dgn.ConnectPointsByLines(['pipes', 'wells'], 0.000001, 1, 1, gnm.GNM_EDGE_DIR_BOTH)
-    if ret != 0:
-        gdaltest.post_reason('failed to connect')
-        return 'fail'
+    assert ret == 0, 'failed to connect'
 
     dgn = None
-    return 'success'
 
 ###############################################################################
 # Dijkstra shortest path
 
 
-def gnm_graph_dijkstra():
+def test_gnm_graph_dijkstra():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('cast to GNMNetwork failed')
-        return 'fail'
+    assert dn is not None, 'cast to GNMNetwork failed'
 
     lyr = dn.GetPath(61, 50, gnm.GATDijkstraShortestPath)
-    if lyr is None:
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+    assert lyr is not None, 'failed to get path'
 
     if lyr.GetFeatureCount() == 0:
         dn.ReleaseResultSet(lyr)
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+        pytest.fail('failed to get path')
 
     dn.ReleaseResultSet(lyr)
     dn = None
-    return 'success'
 
 
 import ogrtest
@@ -205,96 +169,63 @@ import ogrtest
 # KShortest Paths
 
 
-def gnm_graph_kshortest():
+def test_gnm_graph_kshortest():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('cast to GNMNetwork failed')
-        return 'fail'
+    assert dn is not None, 'cast to GNMNetwork failed'
 
     lyr = dn.GetPath(61, 50, gnm.GATKShortestPath, options=['num_paths=3'])
-    if lyr is None:
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+    assert lyr is not None, 'failed to get path'
 
     if lyr.GetFeatureCount() < 20:
         dn.ReleaseResultSet(lyr)
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+        pytest.fail('failed to get path')
 
     dn.ReleaseResultSet(lyr)
     dn = None
-    return 'success'
 
 ###############################################################################
 # ConnectedComponents
 
 
-def gnm_graph_connectedcomponents():
+def test_gnm_graph_connectedcomponents():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
-    if dn is None:
-        gdaltest.post_reason('cast to GNMNetwork failed')
-        return 'fail'
+    assert dn is not None, 'cast to GNMNetwork failed'
 
     lyr = dn.GetPath(61, 50, gnm.GATConnectedComponents)
-    if lyr is None:
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+    assert lyr is not None, 'failed to get path'
 
     if lyr.GetFeatureCount() == 0:
         dn.ReleaseResultSet(lyr)
-        gdaltest.post_reason('failed to get path')
-        return 'fail'
+        pytest.fail('failed to get path')
 
     dn.ReleaseResultSet(lyr)
     dn = None
-    return 'success'
 
 ###############################################################################
 # Network deleting
 
 
-def gnm_delete():
+def test_gnm_delete():
 
     if not ogrtest.have_gnm:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GNMFile').Delete('tmp/test_gnm')
 
-    try:
+    with pytest.raises(OSError, message='Expected delete tmp/test_gnm'):
         os.stat('tmp/test_gnm')
-        gdaltest.post_reason('Expected delete tmp/test_gnm')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    gnm_filenetwork_create,
-    gnm_filenetwork_open,
-    gnm_import,
-    gnm_autoconnect,
-    gnm_graph_dijkstra,
-    gnm_graph_kshortest,
-    gnm_graph_connectedcomponents,
-    gnm_delete
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gnm_test')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

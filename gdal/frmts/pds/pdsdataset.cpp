@@ -668,11 +668,12 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     // ^IMAGE = 3
     // ^IMAGE             = "GLOBAL_ALBEDO_8PPD.IMG"
     // ^IMAGE             = "MEGT90N000CB.IMG"
-    // ^IMAGE             = ("BLAH.IMG",1)       -- start at record 1 (1 based)
-    // ^IMAGE             = ("BLAH.IMG")         -- still start at record 1 (equiv of "BLAH.IMG")
-    // ^IMAGE             = ("BLAH.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
+    // ^IMAGE             = ("FOO.IMG",1)       -- start at record 1 (1 based)
+    // ^IMAGE             = ("FOO.IMG")         -- start at record 1 equiv of ("FOO.IMG",1)
+    // ^IMAGE             = ("FOO.IMG", 5 <BYTES>) -- start at byte 5 (the fifth byte in the file)
     // ^IMAGE             = 10851 <BYTES>
     // ^SPECTRAL_QUBE = 5  for multi-band images
+    // ^QUBE = 5  for multi-band images
 
     CPLString osImageKeyword = "IMAGE";
     CPLString osQube = GetKeyword( osPrefix + "^" + osImageKeyword, "" );
@@ -680,6 +681,11 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     if (EQUAL(osQube,"")) {
         osImageKeyword = "SPECTRAL_QUBE";
+        osQube = GetKeyword( osPrefix + "^" + osImageKeyword );
+    }
+
+    if (EQUAL(osQube,"")) {
+        osImageKeyword = "QUBE";
         osQube = GetKeyword( osPrefix + "^" + osImageKeyword );
     }
 
@@ -777,6 +783,25 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         return FALSE;
     }
 
+    CPLString osBAND_STORAGE_TYPE = GetKeyword(osPrefix+"IMAGE.BAND_STORAGE_TYPE","");
+    if( EQUAL(osBAND_STORAGE_TYPE, "BAND_SEQUENTIAL") )
+    {
+        eLayout = PDS_BSQ;
+    }
+    else if( EQUAL(osBAND_STORAGE_TYPE, "PIXEL_INTERLEAVED") )
+    {
+        eLayout = PDS_BIP;
+    }
+    else if( EQUAL(osBAND_STORAGE_TYPE, "LINE_INTERLEAVED") )
+    {
+        eLayout = PDS_BIL;
+    }
+    else if( !osBAND_STORAGE_TYPE.empty() )
+    {
+        CPLDebug("PDS", "Unhandled BAND_STORAGE_TYPE = %s",
+                 osBAND_STORAGE_TYPE.c_str());
+    }
+
     /***********   Grab Qube record bytes  **********/
     int record_bytes = atoi(GetKeyword(osPrefix+"IMAGE.RECORD_BYTES"));
     if (record_bytes == 0)
@@ -814,7 +839,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         return FALSE;
     }
 
-    nSkipBytes += atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
+    const int nLinePrefixBytes
+        = atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
+    nSkipBytes += nLinePrefixBytes;
 
     /***********   Grab SAMPLE_TYPE *****************/
     /** if keyword not found leave as "M" or "MSB" **/
@@ -1014,7 +1041,11 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int nLineOffset;
+
+    // Needed for N1349177584_2.LBL from
+    // https://trac.osgeo.org/gdal/attachment/ticket/3355/PDS-TestFiles.zip
+    int nLineOffset = nLinePrefixBytes;
+
     int nPixelOffset;
     int nBandOffset;
 
@@ -1024,16 +1055,12 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         {
             nPixelOffset = (CPLSM(nItemSize) * CPLSM(l_nBands)).v();
             nBandOffset = nItemSize;
-            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes ))
-                * CPLSM(record_bytes)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nPixelOffset) * CPLSM(nCols)).v();
         }
         else if( eLayout == PDS_BSQ )
         {
             nPixelOffset = nItemSize;
-            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes ))
-                * CPLSM(record_bytes)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nPixelOffset) * CPLSM(nCols)).v();
             nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows)
                 + CPLSM(nSuffixLines) * (CPLSM(nCols) + CPLSM(nSuffixItems)) * CPLSM(nSuffixBytes)).v();
         }
@@ -1041,9 +1068,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         {
             nPixelOffset = nItemSize;
             nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(nBandOffset) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes))
-                * CPLSM(record_bytes)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nBandOffset) * CPLSM(nCols)).v();
         }
     }
     catch( const CPLSafeIntOverflow& )
@@ -1261,6 +1286,12 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         if( osUncompressedFilename != "" )
             osPrefix = "UNCOMPRESSED_FILE.";
 
+        //Added ability to see into OBJECT = FILE section to support
+        //CRISM. Example file: hsp00017ba0_01_ra218s_trr3.lbl and *.img
+        if( strlen(poDS->GetKeyword( "IMAGE.LINE_SAMPLES")) == 0 &&
+            strlen(poDS->GetKeyword( "FILE.IMAGE.LINE_SAMPLES")) != 0 )
+            osPrefix = "FILE.";
+
         if( !poDS->ParseImage(osPrefix, osFilenamePrefix) )
         {
             delete poDS;
@@ -1281,7 +1312,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
           "PRODUCER_INSTITUTION_NAME", "PRODUCT_TYPE", "MISSION_NAME",
           "SPACECRAFT_NAME", "INSTRUMENT_NAME", "INSTRUMENT_ID",
           "TARGET_NAME", "CENTER_FILTER_WAVELENGTH", "BANDWIDTH",
-          "PRODUCT_CREATION_TIME", "NOTE",
+          "PRODUCT_CREATION_TIME", "START_TIME", "STOP_TIME", "NOTE",
           nullptr };
 
     for( int i = 0; apszKeywords[i] != nullptr; i++ )

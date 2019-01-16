@@ -85,6 +85,7 @@ class GDALEEDABaseDataset: public GDALDataset
             GIntBig     m_nExpirationTime;
 
             char      **GetBaseHTTPOptions();
+            static CPLString ConvertPathToName(const CPLString& path);
 
     public:
                 GDALEEDABaseDataset();

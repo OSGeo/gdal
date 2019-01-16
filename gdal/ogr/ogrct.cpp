@@ -856,6 +856,51 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
                    "+x_0=0.0 +y_0=0 +k=1.0 +units=m +no_defs") == 0;
     }
 
+    // Remove towgs84/nadgrids if it is present only on one side.
+    // Only really needed for PROJ 5, but doesn't hurt for PROJ 4
+    {
+        const bool bSrcHasToWGS84Transform =
+            strstr(pszSrcProj4Defn, "+towgs84") != nullptr ||
+            strstr(pszSrcProj4Defn, "+nadgrids") != nullptr;
+        const bool bSrcHasDatum = strstr(pszSrcProj4Defn, "+datum") != nullptr;
+        const bool bDstHasToWGS84Transform =
+            strstr(pszDstProj4Defn, "+towgs84") != nullptr ||
+            strstr(pszDstProj4Defn, "+nadgrids") != nullptr;
+        const bool bDstHasDatum = strstr(pszDstProj4Defn, "+datum") != nullptr;
+
+        const auto removeToken = [](const CPLString& osStr, const char* token) {
+            CPLString osRet(osStr);
+            auto pos = osStr.find(token);
+            if( pos == std::string::npos )
+                return osRet;
+            auto posNextOpt = osStr.find(" +", pos);
+            if( posNextOpt == std::string::npos )
+            {
+                osRet.resize(pos);
+                return osRet;
+            }
+            osRet = osRet.substr(0, pos) + osRet.substr(posNextOpt + 1);
+            return osRet;
+        };
+
+        if( bSrcHasToWGS84Transform && !(bDstHasToWGS84Transform || bDstHasDatum) )
+        {
+            CPLString osSrcProj4Defn(pszSrcProj4Defn);
+            osSrcProj4Defn = removeToken(osSrcProj4Defn, "+towgs84");
+            osSrcProj4Defn = removeToken(osSrcProj4Defn, "+nadgrids");
+            CPLFree(pszSrcProj4Defn);
+            pszSrcProj4Defn = CPLStrdup(osSrcProj4Defn);
+        }
+        else if( bDstHasToWGS84Transform && !(bSrcHasToWGS84Transform || bSrcHasDatum) )
+        {
+            CPLString osDstProj4Defn(pszDstProj4Defn);
+            osDstProj4Defn = removeToken(osDstProj4Defn, "+towgs84");
+            osDstProj4Defn = removeToken(osDstProj4Defn, "+nadgrids");
+            CPLFree(pszDstProj4Defn);
+            pszDstProj4Defn = CPLStrdup(osDstProj4Defn);
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */
 /* -------------------------------------------------------------------- */

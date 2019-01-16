@@ -74,7 +74,7 @@ constexpr float fDEFAULT_NODATA = 1000000.0f;
 /************************************************************************/
 
 #ifdef DEBUG
-static int h5check(int ret, const char* filename, int line)
+template<class T> static T h5check(T ret, const char* filename, int line)
 {
     if( ret < 0 )
     {
@@ -173,6 +173,8 @@ class BAGDataset final: public GDALPamDataset
 
     double       m_dfResFilterMin = 0;
     double       m_dfResFilterMax = std::numeric_limits<double>::infinity();
+
+    void         InitOverviewDS(BAGDataset* poParentDS, int nOvrFactor);
 
 public:
     BAGDataset();
@@ -1764,6 +1766,11 @@ CPLErr BAGInterpolatedBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 BAGDataset::BAGDataset() = default;
 
 BAGDataset::BAGDataset(BAGDataset* poParentDS, int nOvrFactor)
+{
+    InitOverviewDS(poParentDS, nOvrFactor);
+}
+
+void BAGDataset::InitOverviewDS(BAGDataset* poParentDS, int nOvrFactor)
 {
     m_ePopulation = poParentDS->m_ePopulation;
     m_bMask = poParentDS->m_bMask;

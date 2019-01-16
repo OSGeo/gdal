@@ -282,6 +282,10 @@ int CPL_DLL CPL_STDCALL VSIToCPLError( CPLErr eErrClass,
         case VSIE_HttpError:
             CPLError(eErrClass, CPLE_HttpResponse, "%s", VSIGetLastErrorMsg());
             break;
+        case VSIE_AWSError:
+            CPLError(eErrClass, CPLE_AWSError,
+                     "%s", VSIGetLastErrorMsg());
+            break;
         case VSIE_AWSAccessDenied:
             CPLError(eErrClass, CPLE_AWSAccessDenied,
                      "%s", VSIGetLastErrorMsg());

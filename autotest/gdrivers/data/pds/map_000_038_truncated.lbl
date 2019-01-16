@@ -1,0 +1,79 @@
+PDS_VERSION_ID             = PDS3                                             
+                                                                              
+/***      FILE CHARACTERISTICS DATA ELEMENTS                              ***/
+                                                                              
+FILE_NAME                  = "MAP_000_038_TRUNCATED.LBL"                                
+RECORD_TYPE                = FIXED_LENGTH                                     
+RECORD_BYTES               = 2880                                             
+FILE_RECORDS               = 6251                                             
+DATA_FORMAT                = FITS                                             
+                                                                              
+/***      DATA OBJECT POINTERS IDENTIFICATION DATA ELEMENTS               ***/
+                                                                              
+^HEADER                    = ("MAP_000_038_TRUNCATED.FIT",1)                            
+^IMAGE                     = ("MAP_000_038_TRUNCATED.FIT",2)                            
+^RPC_SCIENCE_USAGE_DESC    = "RPC_USER_GUIDE.PDF"                             
+^RPC_ILLUMINATION_MAP_DESC = "ILLUMINATION_UG.PDF"                            
+                                                                              
+/***      IDENTIFICATION DATA ELEMENTS                                    ***/
+                                                                              
+DATA_SET_ID                = "RO-C-NAVCAM-5-ILLUM-V1.0"                       
+DATA_SET_NAME              = "ROSETTA-ORBITER 67P NAVCAM 5 ILLUM V1.0"        
+PRODUCT_TYPE               = "RDR"                                            
+PRODUCT_ID                 = "MAP_000_038"                                    
+PRODUCT_CREATION_TIME      = 2018-08-29T14:32:01.000                          
+SOURCE_PRODUCT_ID          = "ASCII_000_038"                                  
+                                                                              
+PROCESSING_LEVEL_ID        = "5"                                              
+MISSION_NAME               = "INTERNATIONAL ROSETTA MISSION"                  
+MISSION_ID                 = "ROSETTA"                                        
+MISSION_PHASE_NAME         = "N/A"                                            
+TARGET_NAME                = "67P/CHURYUMOV-GERASIMENKO 1 (1969 R1)"          
+TARGET_TYPE                = "COMET"                                          
+OBSERVATION_TYPE           = "NAVIGATION IMAGE"                               
+                                                                              
+PRODUCER_ID                = "IMPERIAL COLLEGE LON"                           
+PRODUCER_FULL_NAME         = "ARNAUD BETH"                                    
+PRODUCER_INSTITUTION_NAME  = "IMPERIAL COLLEGE LONDON"                        
+                                                                              
+/***      INSTRUMENT RELATED PARAMETERS                                   ***/
+                                                                              
+INSTRUMENT_HOST_NAME       = "ROSETTA-ORBITER"                                
+INSTRUMENT_HOST_ID         = "RO"                                             
+INSTRUMENT_NAME            = "NAVIGATION CAMERA"                              
+INSTRUMENT_ID              = "NAVCAM"                                         
+INSTRUMENT_TYPE            = "CCD CAMERA"                                     
+INSTRUMENT_MODE_ID         = "N/A"                                            
+                                                                              
+/***      OBSERVATION AND EXPOSURE DATA ELEMENTS                          ***/
+                                                                              
+NOTE                       = "NO NOTE TO ADD"                                 
+                                                                              
+SUB_SOLAR_LONGITUDE        = 000.0 <DEG>                                      
+SUB_SOLAR_LATITUDE         = +52.0 <DEG>                                      
+                                                                              
+START_TIME                 = "N/A"                                            
+STOP_TIME                  = "N/A"                                            
+                                                                              
+/***      HEADER AND IMAGE DESCRIPTION                                    ***/
+                                                                              
+OBJECT                     = HEADER                                           
+  BYTES                    = 2880                                             
+  HEADER_TYPE              = FITS                                             
+  INTERCHANGE_FORMAT       = ASCII                                            
+  RECORDS                  = 1                                                
+  DESCRIPTION              = "                                                
+   FITS header for Rosetta-NavCam uncalibrated images (CODMAC Data Level 2)." 
+END_OBJECT                 = HEADER                                           
+                                                                              
+OBJECT                     = IMAGE                                            
+  /*** LINES                    = 3000                                              ***/
+  LINES                    = 2                                                
+  LINE_SAMPLES             = 6000                                             
+  SAMPLE_TYPE              = UNSIGNED_INTEGER                                 
+  SAMPLE_BITS              = 8                                                
+  SAMPLE_DISPLAY_DIRECTION = "RIGHT"                                          
+  LINE_DISPLAY_DIRECTION   = "UP"                                             
+END_OBJECT                 = IMAGE                                            
+                                                                              
+END                                                                           

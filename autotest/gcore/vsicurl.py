@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,33 +28,29 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from sys import version_info
 import time
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
 import webserver
+import pytest
 
 
 ###############################################################################
 #
 
-def vsicurl_1():
+def test_vsicurl_1():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('/vsizip/vsicurl/http://publicfiles.dep.state.fl.us/dear/BWR_GIS/2007NWFLULC/NWFWMD2007LULC.zip')
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 #
@@ -62,16 +58,13 @@ def vsicurl_1():
 
 def vsicurl_2():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('/vsizip//vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil')
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # This server doesn't support range downloading
@@ -79,84 +72,69 @@ def vsicurl_2():
 
 def vsicurl_3():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('/vsizip/vsicurl/http://www.iucnredlist.org/spatial-data/MAMMALS_TERRESTRIAL.zip')
-    if ds is not None:
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 # This server doesn't support range downloading
 
 
-def vsicurl_4():
+def test_vsicurl_4():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('/vsizip/vsicurl/http://lelserver.env.duke.edu:8080/LandscapeTools/export/49/Downloads/1_Habitats.zip')
-    if ds is not None:
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 # Test URL unescaping when reading HTTP file list
 
 
-def vsicurl_5():
+def test_vsicurl_5():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('/vsicurl/http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/N34W119_DEM.tif')
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # Test with FTP server that doesn't support EPSV command
 
 
-def vsicurl_6():
+def vsicurl_6_disabled():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     fl = gdal.ReadDir('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif')
-    if not fl:
-        return 'fail'
-
-    return 'success'
+    assert fl
 
 
 ###############################################################################
 # Test Microsoft-IIS/6.0 listing
 
-def vsicurl_7():
+def test_vsicurl_7():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
-    if not fl:
-        return 'fail'
-
-    return 'success'
+    assert fl
 
 ###############################################################################
 # Test interleaved reading between 2 datasets
@@ -164,30 +142,27 @@ def vsicurl_7():
 
 def vsicurl_8():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     ds1 = gdal.Open('/vsigzip//vsicurl/http://dds.cr.usgs.gov/pub/data/DEM/250/notavail/C/chipicoten-w.gz')
     gdal.Open('/vsizip//vsicurl/http://edcftp.cr.usgs.gov/pub/data/landcover/files/2009/biso/gokn09b_dnbr.zip/nps-serotnbsp-9001-20090321_rd.tif')
     cs = ds1.GetRasterBand(1).Checksum()
-    if cs != 61342:
-        return 'fail'
-
-    return 'success'
+    assert cs == 61342
 
 ###############################################################################
 # Test reading a file with Chinese characters, but the HTTP file listing
 # returns escaped sequences instead of the Chinese characters.
 
 
-def vsicurl_9():
+def test_vsicurl_9():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     if version_info >= (3, 0, 0):
         filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
@@ -196,80 +171,69 @@ def vsicurl_9():
         filename = filename.encode('utf-8')
 
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/' + filename)
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # Test reading a file with escaped Chinese characters.
 
 
-def vsicurl_10():
+def test_vsicurl_10():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/xx%E4%B8%AD%E6%96%87.%E4%B8%AD%E6%96%87')
-    if ds is None:
-        return 'fail'
-
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 # Test ReadDir() after reading a file on the same server
 
 
-def vsicurl_11():
+def test_vsicurl_11():
     if not gdaltest.run_slow_tests():
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     f = gdal.VSIFOpenL('/vsicurl/http://download.osgeo.org/gdal/data/bmp/Bug2236.bmp', 'rb')
     if f is None:
-        return 'skip'
+        pytest.skip()
     gdal.VSIFSeekL(f, 1000000, 0)
     gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
 
     filelist = gdal.ReadDir('/vsicurl/http://download.osgeo.org/gdal/data/gtiff')
-    if filelist is None or not filelist:
-        return 'fail'
-
-    return 'success'
+    assert filelist is not None and filelist
 
 ###############################################################################
 
 
-def vsicurl_start_webserver():
+def test_vsicurl_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
     if not gdaltest.built_against_curl():
-        return 'skip'
+        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 
 
-def vsicurl_test_redirect():
+def test_vsicurl_test_redirect():
 
     if gdaltest.is_travis_branch('trusty'):
-        print('Skipped on trusty branch, but should be investigated')
-        return 'skip'
+        pytest.skip('Skipped on trusty branch, but should be investigated')
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -326,16 +290,12 @@ def vsicurl_test_redirect():
 
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_redirect/test.bin' % gdaltest.webserver_port, 'rb')
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert f is not None
 
     gdal.VSIFSeekL(f, 0, 2)
     if gdal.VSIFTellL(f) != 1000000:
-        gdaltest.post_reason('fail')
-        print(gdal.VSIFTellL(f))
         gdal.VSIFCloseL(f)
-        return 'fail'
+        pytest.fail(gdal.VSIFTellL(f))
     gdal.VSIFSeekL(f, 0, 0)
 
     handler = webserver.SequentialHandler()
@@ -375,39 +335,31 @@ def vsicurl_test_redirect():
     with webserver.install_http_handler(handler):
         content = gdal.VSIFReadL(1, 16383, f).decode('ascii')
         if len(content) != 16383 or content[0] != 'x':
-            gdaltest.post_reason('fail')
-            print(content)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(content)
         content = gdal.VSIFReadL(1, 2, f).decode('ascii')
         if content != 'xy':
-            gdaltest.post_reason('fail')
-            print(content)
             gdal.VSIFCloseL(f)
-            return 'fail'
+            pytest.fail(content)
 
     gdal.VSIFCloseL(f)
-
-    return 'success'
 
 ###############################################################################
 # TODO: better testing
 
 
-def vsicurl_test_clear_cache():
+def test_vsicurl_test_clear_cache():
 
     gdal.VSICurlClearCache()
     gdal.VSICurlClearCache()
-
-    return 'success'
 
 ###############################################################################
 
 
-def vsicurl_test_retry():
+def test_vsicurl_test_retry():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/test_retry/', 404)
@@ -419,10 +371,7 @@ def vsicurl_test_retry():
         if f:
             data_len = len(gdal.VSIFReadL(1, 1, f))
             gdal.VSIFCloseL(f)
-        if data_len != 0:
-            gdaltest.post_reason('fail')
-            print(data_len)
-            return 'fail'
+        assert data_len == 0
 
     gdal.VSICurlClearCache()
 
@@ -434,32 +383,23 @@ def vsicurl_test_retry():
     handler.add('GET', '/test_retry/test.txt', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl?max_retry=2&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
-        if f is None:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert f is not None
         gdal.ErrorReset()
         with gdaltest.error_handler():
             data = gdal.VSIFReadL(1, 3, f).decode('ascii')
         error_msg = gdal.GetLastErrorMsg()
         gdal.VSIFCloseL(f)
-        if data != 'foo':
-            gdaltest.post_reason('fail')
-            print(data)
-            return 'fail'
-        if error_msg.find('429') < 0:
-            gdaltest.post_reason('fail')
-            print(error_msg)
-            return 'fail'
+        assert data == 'foo'
+        assert '429' in error_msg
 
-    return 'success'
-
+    
 ###############################################################################
 
 
-def vsicurl_test_fallback_from_head_to_get():
+def test_vsicurl_test_fallback_from_head_to_get():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -468,20 +408,52 @@ def vsicurl_test_fallback_from_head_to_get():
     handler.add('GET', '/test_fallback_from_head_to_get', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         statres = gdal.VSIStatL('/vsicurl/http://localhost:%d/test_fallback_from_head_to_get' % gdaltest.webserver_port)
-    if statres.size != 3:
-        return 'fail'
+    assert statres.size == 3
 
     gdal.VSICurlClearCache()
-
-    return 'success'
 
 ###############################################################################
 
 
-def vsicurl_stop_webserver():
+def test_vsicurl_test_parse_html_filelist_apache():
 
     if gdaltest.webserver_port == 0:
-        return 'skip'
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/mydir/', 200, {}, """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+ <head>
+  <title>Index of /mydir</title>
+ </head>
+ <body>
+<h1>Index of /mydir</h1>
+<table><tr><th><img src="/icons/blank.gif" alt="[ICO]"></th><th><a href="?C=N;O=D">Name</a></th><th><a href="?C=M;O=A">Last modified</a></th><th><a href="?C=S;O=A">Size</a></th><th><a href="?C=D;O=A">Description</a></th></tr><tr><th colspan="5"><hr></th></tr>
+<tr><td valign="top"><img src="/icons/back.gif" alt="[DIR]"></td><td><a href="/gdal/data/">Parent Directory</a></td><td>&nbsp;</td><td align="right">  - </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/image2.gif" alt="[IMG]"></td><td><a href="foo.tif">foo.tif</a></td><td align="right">17-May-2010 12:26  </td><td align="right"> 90K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/image2.gif" alt="[IMG]"></td><td><a href="foo%20with%20space.tif">foo with space.tif</a></td><td align="right">15-Jan-2007 11:02  </td><td align="right">736 </td><td>&nbsp;</td></tr>
+<tr><th colspan="5"><hr></th></tr>
+</table>
+</body></html>""")
+    with webserver.install_http_handler(handler):
+        fl = gdal.ReadDir('/vsicurl/http://localhost:%d/mydir' % gdaltest.webserver_port)
+    assert fl == ['foo.tif', 'foo%20with%20space.tif']
+
+    assert gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/foo%%20with%%20space.tif' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is not None
+
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/mydir/i_dont_exist', 404, {})
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/i_dont_exist' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is None
+
+    
+###############################################################################
+
+
+def test_vsicurl_stop_webserver():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
@@ -489,35 +461,5 @@ def vsicurl_stop_webserver():
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
-    return 'success'
 
 
-gdaltest_list = [vsicurl_1,
-                 # vsicurl_2,
-                 # vsicurl_3,
-                 vsicurl_4,
-                 vsicurl_5,
-                 vsicurl_6,
-                 vsicurl_7,
-                 # vsicurl_8,
-                 vsicurl_9,
-                 vsicurl_10,
-                 vsicurl_11,
-                 vsicurl_start_webserver,
-                 vsicurl_test_redirect,
-                 vsicurl_test_clear_cache,
-                 vsicurl_test_retry,
-                 vsicurl_test_fallback_from_head_to_get,
-                 vsicurl_stop_webserver]
-
-if __name__ == '__main__':
-
-    if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', '').upper() != 'NO':
-        print('Enabling slow tests as GDAL_RUN_SLOW_TESTS is not defined')
-        gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
-
-    gdaltest.setup_run('vsicurl')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

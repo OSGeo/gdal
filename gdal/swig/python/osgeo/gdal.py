@@ -156,6 +156,23 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
 
   return 0
 
+def listdir(path, recursionLevel = -1, options = []):
+  """ Iterate over a directory.
+
+      recursionLevel = -1 means unlimited level of recursion.
+  """
+  dir = OpenDir(path, recursionLevel, options)
+  if not dir:
+      raise OSError(path + ' does not exist')
+  try:
+      while True:
+          entry = GetNextDirEntry(dir)
+          if not entry:
+              break
+          yield entry
+  finally:
+      CloseDir(dir)
+
 
 def GetUseExceptions(*args):
     """GetUseExceptions() -> int"""
@@ -1247,13 +1264,50 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
         return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
 
 
+# Logging Helpers
+def _pylog_handler(err_level, err_no, err_msg):
+    if err_no != gdalconst.CPLE_None:
+        typ = _pylog_handler.errcode_map.get(err_no, str(err_no))
+        message = "%s: %s" % (typ, err_msg)
+    else:
+        message = err_msg
+
+    level = _pylog_handler.level_map.get(err_level, 20)  # default level is INFO
+    _pylog_handler.logger.log(level, message)
+
+def ConfigurePythonLogging(logger_name='gdal', enable_debug=False):
+    """ Configure GDAL to use Python's logging framework """
+    import logging
+
+    _pylog_handler.logger = logging.getLogger(logger_name)
+
+# map CPLE_* constants to names
+    _pylog_handler.errcode_map = {_num: _name[5:] for _name, _num in gdalconst.__dict__.items() if _name.startswith('CPLE_')}
+
+# Map GDAL log levels to Python's
+    _pylog_handler.level_map = {
+        CE_None: logging.INFO,
+        CE_Debug: logging.DEBUG,
+        CE_Warning: logging.WARN,
+        CE_Failure: logging.ERROR,
+        CE_Fatal: logging.CRITICAL,
+    }
+
+# Set CPL_DEBUG so debug messages are passed through the logger
+    if enable_debug:
+        SetConfigOption("CPL_DEBUG", "ON")
+
+# Install as the default GDAL log handler
+    SetErrorHandler(_pylog_handler)
+
+
 
 def Debug(*args):
     """Debug(char const * msg_class, char const * message)"""
     return _gdal.Debug(*args)
 
 def SetErrorHandler(*args):
-    """SetErrorHandler(char const * pszCallbackName=None) -> CPLErr"""
+    """SetErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"""
     return _gdal.SetErrorHandler(*args)
 
 def PushErrorHandler(*args):
@@ -1340,6 +1394,68 @@ def ReadDirRecursive(*args):
     """ReadDirRecursive(char const * utf8_path) -> char **"""
     return _gdal.ReadDirRecursive(*args)
 
+def OpenDir(*args):
+    """OpenDir(char const * utf8_path, int nRecurseDepth=-1, char ** options=None) -> VSIDIR *"""
+    return _gdal.OpenDir(*args)
+class DirEntry(_object):
+    """Proxy of C++ DirEntry class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, DirEntry, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, DirEntry, name)
+    __repr__ = _swig_repr
+    __swig_getmethods__["name"] = _gdal.DirEntry_name_get
+    if _newclass:
+        name = _swig_property(_gdal.DirEntry_name_get)
+    __swig_getmethods__["mode"] = _gdal.DirEntry_mode_get
+    if _newclass:
+        mode = _swig_property(_gdal.DirEntry_mode_get)
+    __swig_getmethods__["size"] = _gdal.DirEntry_size_get
+    if _newclass:
+        size = _swig_property(_gdal.DirEntry_size_get)
+    __swig_getmethods__["mtime"] = _gdal.DirEntry_mtime_get
+    if _newclass:
+        mtime = _swig_property(_gdal.DirEntry_mtime_get)
+    __swig_getmethods__["modeKnown"] = _gdal.DirEntry_modeKnown_get
+    if _newclass:
+        modeKnown = _swig_property(_gdal.DirEntry_modeKnown_get)
+    __swig_getmethods__["sizeKnown"] = _gdal.DirEntry_sizeKnown_get
+    if _newclass:
+        sizeKnown = _swig_property(_gdal.DirEntry_sizeKnown_get)
+    __swig_getmethods__["mtimeKnown"] = _gdal.DirEntry_mtimeKnown_get
+    if _newclass:
+        mtimeKnown = _swig_property(_gdal.DirEntry_mtimeKnown_get)
+    __swig_getmethods__["extra"] = _gdal.DirEntry_extra_get
+    if _newclass:
+        extra = _swig_property(_gdal.DirEntry_extra_get)
+
+    def __init__(self, *args):
+        """__init__(DirEntry self, DirEntry entryIn) -> DirEntry"""
+        this = _gdal.new_DirEntry(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+    __swig_destroy__ = _gdal.delete_DirEntry
+    __del__ = lambda self: None
+
+    def IsDirectory(self, *args):
+        """IsDirectory(DirEntry self) -> bool"""
+        return _gdal.DirEntry_IsDirectory(self, *args)
+
+DirEntry_swigregister = _gdal.DirEntry_swigregister
+DirEntry_swigregister(DirEntry)
+
+
+def GetNextDirEntry(*args):
+    """GetNextDirEntry(VSIDIR * dir) -> DirEntry"""
+    return _gdal.GetNextDirEntry(*args)
+
+def CloseDir(*args):
+    """CloseDir(VSIDIR * dir)"""
+    return _gdal.CloseDir(*args)
+
 def SetConfigOption(*args):
     """SetConfigOption(char const * pszKey, char const * pszValue)"""
     return _gdal.SetConfigOption(*args)
@@ -1387,6 +1503,10 @@ def RmdirRecursive(*args):
 def Rename(*args):
     """Rename(char const * pszOld, char const * pszNew) -> VSI_RETVAL"""
     return _gdal.Rename(*args)
+
+def Sync(*args, **kwargs):
+    """Sync(char const * pszSource, char const * pszTarget, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> bool"""
+    return _gdal.Sync(*args, **kwargs)
 
 def GetActualURL(*args):
     """GetActualURL(char const * utf8_path) -> char const *"""
@@ -1655,8 +1775,8 @@ class Driver(MajorObject):
 Driver_swigregister = _gdal.Driver_swigregister
 Driver_swigregister(Driver)
 
-import osgeo.ogr
-import osgeo.osr
+from . import ogr
+from . import osr
 class ColorEntry(_object):
     """Proxy of C++ GDALColorEntry class."""
 

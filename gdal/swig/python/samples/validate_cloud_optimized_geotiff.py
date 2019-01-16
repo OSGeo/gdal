@@ -78,6 +78,7 @@ def validate(ds, check_tiled=True):
 
     details = {}
     errors = []
+    warnings = []
     filename = ds.GetDescription()
     main_band = ds.GetRasterBand(1)
     ovr_count = main_band.GetOverviewCount()
@@ -94,8 +95,9 @@ def validate(ds, check_tiled=True):
                     'The file is greater than 512xH or Wx512, but is not tiled']
 
         if ovr_count == 0:
-            errors += [
-                'The file is greater than 512xH or Wx512, but has no overviews']
+            warnings += [
+                'The file is greater than 512xH or Wx512, it is recommended '
+                'to include internal overviews']
 
     ifd_offset = int(main_band.GetMetadataItem('IFD_OFFSET', 'TIFF'))
     ifd_offsets = [ifd_offset]
@@ -183,7 +185,7 @@ def validate(ds, check_tiled=True):
             'should be after the one of the overview of index %d' %
             (ovr_count - 1)]
 
-    return errors, details
+    return warnings, errors, details
 
 
 def main():
@@ -208,16 +210,23 @@ def main():
         return Usage()
 
     try:
-        errors, _ = validate(filename)
+        ret = 0
+        warnings, errors, _ = validate(filename)
+        if warnings:
+            if not quiet:
+                print('The following warnings were found:')
+                for warning in warnings:
+                    print(' - ' + warning)
+                print('')
         if errors:
             if not quiet:
                 print('%s is NOT a valid cloud optimized GeoTIFF.' % filename)
                 print('The following errors were found:')
                 for error in errors:
                     print(' - ' + error)
+                print('')
             ret = 1
         else:
-            ret = 0
             if not quiet:
                 print('%s is a valid cloud optimized GeoTIFF' % filename)
     except ValidateCloudOptimizedGeoTIFFException as e:

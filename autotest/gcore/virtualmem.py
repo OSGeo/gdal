@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,25 +31,24 @@
 
 import sys
 
-sys.path.append('../pymod')
 
-import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test linear and tiled virtual mem interfaces in read-only mode
 
 
-def virtualmem_1():
+def test_virtualmem_1():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
 
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('../gdrivers/data/small_world.tif')
     bufxsize = 400
@@ -68,7 +67,7 @@ def virtualmem_1():
                 ar_tiled_band1 = ds.GetRasterBand(1).GetTiledVirtualMemArray(gdal.GF_Read, 0, 0, bufxsize, bufysize, tilexsize, tileysize, gdal.GDT_Int16, 1024 * 1024)
             except:
                 pass
-            return 'skip'
+            pytest.skip()
 
     ar_flat_band1 = ds.GetRasterBand(1).GetVirtualMemArray(gdal.GF_Read, 0, 0, bufxsize, bufysize, bufxsize, bufysize, gdal.GDT_Int16, 1024 * 1024, 0)
     ar_flat_bip = ds.GetVirtualMemArray(gdal.GF_Read, 0, 0, bufxsize, bufysize, bufxsize, bufysize, gdal.GDT_Int16, [1, 2, 3], 0, 1024 * 1024, 0)
@@ -90,28 +89,14 @@ def virtualmem_1():
             for y in range(reqysize):
                 for x in range(reqxsize):
                     for band in range(3):
-                        if ar_tip[tiley][tilex][y][x][band] != ar[band][tiley * tileysize + y][tilex * tilexsize + x]:
-                            gdaltest.post_reason('fail')
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_flat_bsq[band][tiley * tileysize + y][tilex * tilexsize + x]:
-                            gdaltest.post_reason('fail')
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][band]:
-                            gdaltest.post_reason('fail')
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_bsq[band][tiley][tilex][y][x]:
-                            gdaltest.post_reason('fail')
-                            return 'fail'
-                        if ar_tip[tiley][tilex][y][x][band] != ar_bit[tiley][tilex][band][y][x]:
-                            gdaltest.post_reason('fail')
-                            return 'fail'
+                        assert ar_tip[tiley][tilex][y][x][band] == ar[band][tiley * tileysize + y][tilex * tilexsize + x]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_flat_bsq[band][tiley * tileysize + y][tilex * tilexsize + x]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][band]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_bsq[band][tiley][tilex][y][x]
+                        assert ar_tip[tiley][tilex][y][x][band] == ar_bit[tiley][tilex][band][y][x]
                         if band == 0:
-                            if ar_flat_band1[tiley * tileysize + y][tilex * tilexsize + x] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]:
-                                gdaltest.post_reason('fail')
-                                return 'fail'
-                            if ar_tiled_band1[tiley][tilex][y][x] != ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]:
-                                gdaltest.post_reason('fail')
-                                return 'fail'
+                            assert ar_flat_band1[tiley * tileysize + y][tilex * tilexsize + x] == ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]
+                            assert ar_tiled_band1[tiley][tilex][y][x] == ar_flat_bip[tiley * tileysize + y][tilex * tilexsize + x][0]
 
     # We need to destroy the array before dataset destruction
     ar_flat_band1 = None
@@ -122,24 +107,22 @@ def virtualmem_1():
     ar_bsq = None
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Test write mode
 
 
-def virtualmem_2():
+def test_virtualmem_2():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
     ar = ds.GetVirtualMemArray(gdal.GF_Write)
@@ -150,27 +133,23 @@ def virtualmem_2():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 57182:
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 57182
 
 ###############################################################################
 # Test virtual mem auto with a raw driver
 
 
-def virtualmem_3():
+def test_virtualmem_3():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
     try:
         from osgeo import gdalnumeric
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     for tmpfile in ['tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img']:
         ds = gdal.GetDriverByName('EHdr').Create(tmpfile, 400, 300, 2)
@@ -192,12 +171,8 @@ def virtualmem_3():
         ar_255 = gdalnumeric.empty(ds.RasterXSize)
         ar_255.fill(255)
         for y in range(ds.RasterYSize):
-            if not gdalnumeric.array_equal(ar1[y], ar_127):
-                gdaltest.post_reason('fail')
-                return 'fail'
-            if not gdalnumeric.array_equal(ar2[y], ar_255):
-                gdaltest.post_reason('fail')
-                return 'fail'
+            assert gdalnumeric.array_equal(ar1[y], ar_127)
+            assert gdalnumeric.array_equal(ar2[y], ar_255)
         # We need to destroy the array before dataset destruction
         ar1 = None
         ar2 = None
@@ -205,23 +180,22 @@ def virtualmem_3():
 
         gdal.GetDriverByName('EHdr').Delete(tmpfile)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test virtual mem auto with GTiff
 
 
-def virtualmem_4():
+def test_virtualmem_4():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        return 'skip'
+        pytest.skip()
     try:
         from osgeo import gdalnumeric
     except ImportError:
-        return 'skip'
+        pytest.skip()
 
     if not sys.platform.startswith('linux'):
-        return 'skip'
+        pytest.skip()
 
     tmpfile = 'tmp/virtualmem_4.tif'
     for option in ['INTERLEAVE=PIXEL', 'INTERLEAVE=BAND']:
@@ -231,7 +205,7 @@ def virtualmem_4():
         if gdal.GetLastErrorMsg().find('mmap() failed') >= 0:
             ar1 = None
             ds = None
-            return 'skip'
+            pytest.skip()
         ar1 = None
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
         ar1_bis = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
@@ -246,10 +220,7 @@ def virtualmem_4():
         ar1_bis = None
         ar2 = None
         ds = None
-        if val != 127:
-            gdaltest.post_reason('fail')
-            print(val)
-            return 'fail'
+        assert val == 127
 
         ds = gdal.Open(tmpfile)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Read)
@@ -260,17 +231,15 @@ def virtualmem_4():
         ar_255.fill(255)
         for y in range(ds.RasterYSize):
             if not gdalnumeric.array_equal(ar1[y], ar_127):
-                gdaltest.post_reason('fail')
                 ar1 = None
                 ar2 = None
                 ds = None
-                return 'fail'
+                pytest.fail()
             if not gdalnumeric.array_equal(ar2[y], ar_255):
-                gdaltest.post_reason('fail')
                 ar1 = None
                 ar2 = None
                 ds = None
-                return 'fail'
+                pytest.fail()
         # We need to destroy the array before dataset destruction
         ar1 = None
         ar2 = None
@@ -278,19 +247,7 @@ def virtualmem_4():
 
         gdal.GetDriverByName('GTiff').Delete(tmpfile)
 
-    return 'success'
+    
 
 
-gdaltest_list = [virtualmem_1,
-                 virtualmem_2,
-                 virtualmem_3,
-                 virtualmem_4]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('virtualmem')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

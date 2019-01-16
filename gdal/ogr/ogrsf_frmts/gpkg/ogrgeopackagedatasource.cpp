@@ -669,11 +669,11 @@ void GDALGeoPackageDataset::RemoveTableFromSQLiteMasterCache(
 }
 
 /************************************************************************/
-/*                          GetExtensions()                             */
+/*                  GetUnknownExtensionsTableSpecific()                 */
 /************************************************************************/
 
 const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
-                        GDALGeoPackageDataset::GetExtensions()
+                    GDALGeoPackageDataset::GetUnknownExtensionsTableSpecific()
 {
     if( m_bMapTableToExtensionsBuilt )
         return m_oMapTableToExtensions;
@@ -693,7 +693,7 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
             "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
             "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
             "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger', "
-            "'gpkg_crs_wkt')");
+            "'gpkg_crs_wkt', 'gpkg_schema')");
     const int nTableLimit =
                 atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
     if( nTableLimit > 0 )
@@ -2746,6 +2746,30 @@ bool GDALGeoPackageDataset::HasMetadataTables()
 }
 
 /************************************************************************/
+/*                         HasDataColumnsTable()                        */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasDataColumnsTable()
+{
+    const int nCount = SQLGetInteger(hDB,
+                "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_data_columns'"
+                "AND type IN ('table', 'view')", nullptr);
+    return nCount == 1;
+}
+
+/************************************************************************/
+/*                    HasDataColumnConstraintsTable()                   */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasDataColumnConstraintsTable()
+{
+    const int nCount = SQLGetInteger(hDB,
+    "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_data_column_constraints'"
+    "AND type IN ('table', 'view')", nullptr);
+    return nCount == 1;
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -4120,17 +4144,8 @@ void GDALGeoPackageDataset::RemoveOGREmptyTable()
 
 bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
 {
-    // Check if gpkg_2d_gridded_coverage_ancillary has been created
-    SQLResult oResultTable;
-    OGRErr eErr = SQLQuery(hDB,
-        "SELECT * FROM sqlite_master WHERE type IN ('table', 'view') AND "
-        "name = 'gpkg_2d_gridded_coverage_ancillary'"
-        , &oResultTable);
-    bool bHasTable = ( eErr == OGRERR_NONE && oResultTable.nRowCount == 1 );
-    SQLResultFree(&oResultTable);
-
     CPLString osSQL;
-    if( !bHasTable )
+    if( !HasGriddedCoverageAncillaryTable() )
     {
         // It doesn't exist. So create gpkg_extensions table if necessary, and
         // gpkg_2d_gridded_coverage_ancillary & gpkg_2d_gridded_tile_ancillary,
@@ -4232,7 +4247,8 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
     sqlite3_free(pszSQL);
 
     // Requirement 3 /gpkg-spatial-ref-sys-row
-    eErr = SQLQuery(hDB,
+    SQLResult oResultTable;
+    OGRErr eErr = SQLQuery(hDB,
         "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id = 4979 LIMIT 2"
         , &oResultTable);
     bool bHasEPSG4979 = ( eErr == OGRERR_NONE && oResultTable.nRowCount == 1 );
@@ -4271,6 +4287,22 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
     }
 
     return SQLCommand(hDB, osSQL) == OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                    HasGriddedCoverageAncillaryTable()                */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasGriddedCoverageAncillaryTable()
+{
+    SQLResult oResultTable;
+    OGRErr eErr = SQLQuery(hDB,
+        "SELECT * FROM sqlite_master WHERE type IN ('table', 'view') AND "
+        "name = 'gpkg_2d_gridded_coverage_ancillary'"
+        , &oResultTable);
+    bool bHasTable = ( eErr == OGRERR_NONE && oResultTable.nRowCount == 1 );
+    SQLResultFree(&oResultTable);
+    return bHasTable;
 }
 
 /************************************************************************/
@@ -5156,6 +5188,24 @@ OGRErr GDALGeoPackageDataset::DeleteRasterLayer( const char* pszLayerName )
         sqlite3_free(pszSQL);
     }
 
+    if( eErr == OGRERR_NONE && HasGriddedCoverageAncillaryTable() )
+    {
+        char* pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_2d_gridded_coverage_ancillary WHERE lower(tile_matrix_set_name) = lower('%q')",
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+
+        if( eErr == OGRERR_NONE )
+        {
+            pszSQL = sqlite3_mprintf(
+                    "DELETE FROM gpkg_2d_gridded_tile_ancillary WHERE lower(tpudt_name) = lower('%q')",
+                    pszLayerName);
+            eErr = SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+    }
+
     if( eErr == OGRERR_NONE )
     {
         eErr = DeleteLayerCommon(pszLayerName);
@@ -5191,7 +5241,7 @@ bool GDALGeoPackageDataset::DeleteVectorOrRasterLayer(
     char* pszSQL = sqlite3_mprintf(
             "SELECT 1 FROM gpkg_contents WHERE "
             "lower(table_name) = lower('%q') "
-            "AND data_type IN ('tiles')",
+            "AND data_type IN ('tiles', '2d-gridded-coverage')",
             pszLayerName);
     bool bIsRasterTable = SQLGetInteger(hDB, pszSQL, nullptr) == 1;
     sqlite3_free(pszSQL);
@@ -5748,21 +5798,6 @@ OGRErr GDALGeoPackageDataset::CreateExtensionsTableIfNecessary()
         ")";
 
     return SQLCommand(hDB, pszCreateGpkgExtensions);
-}
-
-/************************************************************************/
-/*                         HasDataColumnsTable()                        */
-/************************************************************************/
-
-bool GDALGeoPackageDataset::HasDataColumnsTable()
-{
-    SQLResult oResultTable;
-    OGRErr err = SQLQuery(hDB,
-        "SELECT * FROM sqlite_master WHERE name = 'gpkg_data_columns' "
-        "AND type IN ('table', 'view')", &oResultTable);
-    bool bHasExtensionsTable = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
-    SQLResultFree(&oResultTable);
-    return bHasExtensionsTable;
 }
 
 /************************************************************************/

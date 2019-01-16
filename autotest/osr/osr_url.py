@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,13 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import socket
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
+import pytest
 
 expected_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
@@ -44,7 +43,7 @@ def osr_url_test(url, expected_wkt):
     timeout = 10
     socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen(url) is None:
-        return 'skip'
+        pytest.skip()
 
     # Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org
     srs = osr.SpatialReference()
@@ -53,44 +52,29 @@ def osr_url_test(url, expected_wkt):
     try:
         srs.ImportFromUrl(url)
     except AttributeError:  # old-gen bindings don't have this method yet
-        return 'skip'
+        pytest.skip()
     except Exception:
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported." or \
            gdal.GetLastErrorMsg().find("timed out") != -1:
-            return 'skip'
-        gdaltest.post_reason('exception: ' + gdal.GetLastErrorMsg())
-        return 'fail'
+            pytest.skip()
+        pytest.fail('exception: ' + gdal.GetLastErrorMsg())
 
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported." or \
        gdal.GetLastErrorMsg().find("timed out") != -1:
-        return 'skip'
+        pytest.skip()
 
-    if not gdaltest.equal_srs_from_wkt(expected_wkt,
-                                       srs.ExportToWkt()):
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.equal_srs_from_wkt(expected_wkt,
+                                       srs.ExportToWkt())
 
 
-def osr_url_1():
+def test_osr_url_1():
     return osr_url_test('http://spatialreference.org/ref/epsg/4326/', expected_wkt)
 
 
-def osr_url_2():
+def test_osr_url_2():
     return osr_url_test('http://spatialreference.org/ref/epsg/4326/ogcwkt/', expected_wkt)
 
 
-gdaltest_list = [
-    osr_url_1,
-    osr_url_2,
-    None]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_url')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

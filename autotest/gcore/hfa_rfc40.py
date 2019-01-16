@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,25 +30,32 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-import numpy
 from osgeo import gdal
 
-sys.path.append('../pymod')
+import pytest
 
-import gdaltest
 
-INT_DATA = numpy.array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
-DOUBLE_DATA = numpy.array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
-STRING_DATA = numpy.array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw",
-                           "gbfgbf", "wwqw3", "e", ""])
-STRING_DATA_INTS = numpy.array(["197", "83", "46", "29", "1", "78",
-                                "23", "90", "12", "45"])
-STRING_DATA_DOUBLES = numpy.array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92",
-                                   "82.5", "0.0", "1.0", "99.0"])
-LONG_STRING_DATA = numpy.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd",
-                                "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
-                                "dedwedew", "wdedefrfrfrf"])
+try:
+    import numpy
+    array = numpy.array
+except ImportError:
+    numpy = None
+    array = list
+
+pytestmark = pytest.mark.skipif(numpy is None, reason="numpy not available")
+
+
+INT_DATA = array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
+DOUBLE_DATA = array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
+STRING_DATA = array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw",
+                     "gbfgbf", "wwqw3", "e", ""])
+STRING_DATA_INTS = array(["197", "83", "46", "29", "1", "78",
+                          "23", "90", "12", "45"])
+STRING_DATA_DOUBLES = array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92",
+                             "82.5", "0.0", "1.0", "99.0"])
+LONG_STRING_DATA = array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd",
+                          "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
+                          "dedwedew", "wdedefrfrfrf"])
 
 
 class HFATestError(Exception):
@@ -162,8 +169,6 @@ def CreateAndWriteRAT(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def ReadAndCheckValues(fname, numrows):
     ds = gdal.Open(fname)
@@ -215,8 +220,6 @@ def ReadAndCheckValues(fname, numrows):
     # print('succeeded reading')
     ds = None
 
-    return 'success'
-
 
 def CheckSetGetValues(fname):
     # check the 'legacy' get and set value calls
@@ -258,8 +261,6 @@ def CheckSetGetValues(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def ExtendAndWrite(fname):
     # write more data to the end of the RAT - will extend it
@@ -285,8 +286,6 @@ def ExtendAndWrite(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def CheckExtension(fname):
     ds = gdal.Open(fname)
@@ -308,8 +307,6 @@ def CheckExtension(fname):
     # print('extension data ok')
     ds = None
 
-    return 'success'
-
 
 def WriteLongStrings(fname):
     # this will force the string column to be re-written to accommodate
@@ -325,8 +322,6 @@ def WriteLongStrings(fname):
     # ds.FlushCache()
     ds = None
 
-    return 'success'
-
 
 def CheckLongStrings(fname):
     ds = gdal.Open(fname)
@@ -340,8 +335,6 @@ def CheckLongStrings(fname):
     # print("checked long strings ok")
     ds = None
 
-    return 'success'
-
 
 def SetLinearBinning(fname):
     ds = gdal.Open(fname, gdal.GA_Update)
@@ -354,8 +347,6 @@ def SetLinearBinning(fname):
     # print("set linear binning ok")
     # ds.FlushCache()
     ds = None
-
-    return 'success'
 
 
 def CheckLinearBinning(fname):
@@ -375,8 +366,6 @@ def CheckLinearBinning(fname):
 
     # print('linear binning ok')
     ds = None
-
-    return 'success'
 
 
 def CheckClone(fname):
@@ -398,114 +387,88 @@ def CheckClone(fname):
     # print("cloned ok")
     ds = None
 
-    return 'success'
-
 # basic tests
 
 
-def hfa_rfc40_1():
+def test_hfa_rfc40_1():
     return CreateAndWriteRAT("tmp/test.img")
 
 
-def hfa_rfc40_2():
+def test_hfa_rfc40_2():
     return ReadAndCheckValues("tmp/test.img", 10)
 
 # the older interface
 
 
-def hfa_rfc40_3():
+def test_hfa_rfc40_3():
     return CheckSetGetValues("tmp/test.img")
 
 # make sure original data not changed
 
 
-def hfa_rfc40_4():
+def test_hfa_rfc40_4():
     return ReadAndCheckValues("tmp/test.img", 10)
 
 # make it longer - data will be re-written
 
 
-def hfa_rfc40_5():
+def test_hfa_rfc40_5():
     return ExtendAndWrite("tmp/test.img")
 
 # make sure old data not changed
 
 
-def hfa_rfc40_6():
+def test_hfa_rfc40_6():
     return ReadAndCheckValues("tmp/test.img", 20)
 
 # new data at the end ok?
 
 
-def hfa_rfc40_7():
+def test_hfa_rfc40_7():
     return CheckExtension("tmp/test.img")
 
 # write some longer strings - string column will
 # have to be re-written
 
 
-def hfa_rfc40_8():
+def test_hfa_rfc40_8():
     return WriteLongStrings("tmp/test.img")
 
 # make sure old data not changed
 
 
-def hfa_rfc40_9():
+def test_hfa_rfc40_9():
     return ReadAndCheckValues("tmp/test.img", 20)
 
 # check new data ok
 
 
-def hfa_rfc40_10():
+def test_hfa_rfc40_10():
     return CheckLongStrings("tmp/test.img")
 
 # linear binning
 
 
-def hfa_rfc40_11():
+def test_hfa_rfc40_11():
     return SetLinearBinning("tmp/test.img")
 
 # linear binning
 
 
-def hfa_rfc40_12():
+def test_hfa_rfc40_12():
     return CheckLinearBinning("tmp/test.img")
 
 # clone
 
 
-def hfa_rfc40_13():
+def test_hfa_rfc40_13():
     return CheckClone("tmp/test.img")
 
 # serialize not available from Python...
 
 
-def hfa_rfc40_cleanup():
+def test_hfa_rfc40_cleanup():
     gdal.GetDriverByName('HFA').Delete("tmp/test.img")
-    return 'success'
 
 
-gdaltest_list = [
-    hfa_rfc40_1,
-    hfa_rfc40_2,
-    hfa_rfc40_3,
-    hfa_rfc40_4,
-    hfa_rfc40_5,
-    hfa_rfc40_6,
-    hfa_rfc40_7,
-    hfa_rfc40_8,
-    hfa_rfc40_9,
-    hfa_rfc40_10,
-    hfa_rfc40_11,
-    hfa_rfc40_12,
-    hfa_rfc40_13,
-    hfa_rfc40_cleanup,
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('hfa_rfc40')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

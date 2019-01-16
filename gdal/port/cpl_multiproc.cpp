@@ -83,6 +83,7 @@ struct _CPLLock
     } u;
 
 #ifdef DEBUG_CONTENTION
+    bool     bDebugPerfAsked;
     bool     bDebugPerf;
     volatile int nCurrentHolders;
     GUIntBig nStartTime;
@@ -2396,6 +2397,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->u.hMutex = hMutex;
 #ifdef DEBUG_CONTENTION
             psLock->bDebugPerf = false;
+            psLock->bDebugPerfAsked = false;
             psLock->nCurrentHolders = 0;
             psLock->nStartTime = 0;
 #endif
@@ -2417,6 +2419,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->u.hSpinLock = hSpinLock;
 #ifdef DEBUG_CONTENTION
             psLock->bDebugPerf = false;
+            psLock->bDebugPerfAsked = false;
             psLock->nCurrentHolders = 0;
             psLock->nStartTime = 0;
 #endif
@@ -2436,7 +2439,7 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 {
 #ifdef DEBUG_CONTENTION
     GUIntBig nStartTime = 0;
-    if( (*ppsLock) && (*ppsLock)->bDebugPerf )
+    if( (*ppsLock) && (*ppsLock)->bDebugPerfAsked )
         nStartTime = CPLrdtsc();
 #endif
     int ret = 0;
@@ -2459,12 +2462,11 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
             return FALSE;
     }
 #ifdef DEBUG_CONTENTION
-    if( ret && CPLAtomicInc(&((*ppsLock)->nCurrentHolders)) == 1 )
+    if( ret && (*ppsLock)->bDebugPerfAsked &&
+        CPLAtomicInc(&((*ppsLock)->nCurrentHolders)) == 1 )
     {
-        if( (*ppsLock)->bDebugPerf )
-        {
-            (*ppsLock)->nStartTime = nStartTime;
-        }
+        (*ppsLock)->bDebugPerf = true;
+        (*ppsLock)->nStartTime = nStartTime;
     }
 #endif
     return ret;
@@ -2478,7 +2480,7 @@ int CPLAcquireLock( CPLLock* psLock )
 {
 #ifdef DEBUG_CONTENTION
     GUIntBig nStartTime = 0;
-    if( psLock->bDebugPerf )
+    if( psLock->bDebugPerfAsked )
         nStartTime = CPLrdtsc();
 #endif
     int ret;
@@ -2487,12 +2489,11 @@ int CPLAcquireLock( CPLLock* psLock )
     else
         ret =  CPLAcquireMutex( psLock->u.hMutex, 1000 );
 #ifdef DEBUG_CONTENTION
-    if( ret && CPLAtomicInc(&(psLock->nCurrentHolders)) == 1 )
+    if( ret && psLock->bDebugPerfAsked &&
+        CPLAtomicInc(&(psLock->nCurrentHolders)) == 1 )
     {
-        if( psLock->bDebugPerf )
-        {
-            psLock->nStartTime = nStartTime;
-        }
+        psLock->bDebugPerf = true;
+        psLock->nStartTime = nStartTime;
     }
 #endif
     return ret;
@@ -2509,9 +2510,8 @@ void CPLReleaseLock( CPLLock* psLock )
     GIntBig nMaxDiff = 0;
     double dfAvgDiff = 0;
     GUIntBig nIters = 0;
-    if( CPLAtomicDec(&(psLock->nCurrentHolders)) == 0 &&
-        psLock->bDebugPerf &&
-        psLock->nStartTime )
+    if( psLock->bDebugPerf &&
+        CPLAtomicDec(&(psLock->nCurrentHolders)) == 0 )
     {
         const GUIntBig nStopTime = CPLrdtscp();
         const GIntBig nDiffTime =
@@ -2562,7 +2562,7 @@ void CPLDestroyLock( CPLLock* psLock )
 #ifdef DEBUG_CONTENTION
 void CPLLockSetDebugPerf(CPLLock* psLock, int bEnableIn)
 {
-    psLock->bDebugPerf = CPL_TO_BOOL(bEnableIn);
+    psLock->bDebugPerfAsked = CPL_TO_BOOL(bEnableIn);
 }
 #else
 void CPLLockSetDebugPerf(CPLLock* /* psLock */, int bEnableIn)

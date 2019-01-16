@@ -1547,17 +1547,17 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                 if( !psJob->bInCRCComputation_ )
                 {
                     psJob->bInCRCComputation_ = true;
+                    sMutex_.unlock();
                     if( poPool_ )
                     {
-                        sMutex_.unlock();
                         poPool_->SubmitJob( VSIGZipWriteHandleMT::CRCCompute,
                                             psJob );
-                        sMutex_.lock();
                     }
                     else
                     {
                         CRCCompute(psJob);
                     }
+                    sMutex_.lock();
                 }
             }
         }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,20 +28,19 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Check that dependencies are met
 
 
-def ogr_gpsbabel_init():
+def test_ogr_gpsbabel_init():
 
     # Test if the gpsbabel is accessible
     ogrtest.have_gpsbabel = False
@@ -51,8 +50,7 @@ def ogr_gpsbabel_init():
     except OSError:
         ret = ''
     if ret.find('GPSBabel') == -1:
-        print('Cannot access GPSBabel utility')
-        return 'skip'
+        pytest.skip('Cannot access GPSBabel utility')
 
     ds = ogr.Open('data/test.gpx')
 
@@ -63,52 +61,42 @@ def ogr_gpsbabel_init():
 
     ogrtest.have_gpsbabel = True
 
-    return 'success'
-
 ###############################################################################
 # Test reading with explicit subdriver
 
 
-def ogr_gpsbabel_1():
+def test_ogr_gpsbabel_1():
 
     if not ogrtest.have_read_gpsbabel:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('GPSBabel:nmea:data/nmea.txt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetLayerCount() != 2:
-        return 'fail'
-
-    return 'success'
+    assert ds.GetLayerCount() == 2
 
 ###############################################################################
 # Test reading with implicit subdriver
 
 
-def ogr_gpsbabel_2():
+def test_ogr_gpsbabel_2():
 
     if not ogrtest.have_read_gpsbabel:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/nmea.txt')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetLayerCount() != 2:
-        return 'fail'
-
-    return 'success'
+    assert ds.GetLayerCount() == 2
 
 ###############################################################################
 # Test writing
 
 
-def ogr_gpsbabel_3():
+def test_ogr_gpsbabel_3():
 
     if not ogrtest.have_gpsbabel:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('GPSBabel').CreateDataSource('GPSBabel:nmea:tmp/nmea.txt')
     lyr = ds.CreateLayer('track_points', geom_type=ogr.wkbPoint)
@@ -138,27 +126,10 @@ def ogr_gpsbabel_3():
 
     gdal.Unlink('tmp/nmea.txt')
 
-    if res.find('$GPRMC') == -1 or \
+    assert (not (res.find('$GPRMC') == -1 or \
        res.find('$GPGGA') == -1 or \
-       res.find('$GPGSA') == -1:
-        gdaltest.post_reason('did not get expected result')
-        print(res)
-        return 'fail'
-
-    return 'success'
+       res.find('$GPGSA') == -1)), 'did not get expected result'
 
 
-gdaltest_list = [
-    ogr_gpsbabel_init,
-    ogr_gpsbabel_1,
-    ogr_gpsbabel_2,
-    ogr_gpsbabel_3]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gpsbabel')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

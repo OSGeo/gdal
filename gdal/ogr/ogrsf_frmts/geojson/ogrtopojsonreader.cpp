@@ -117,11 +117,11 @@ static void ParseArc( OGRLineString* poLS, json_object* poArcsDB, int nArcID,
     json_object* poArcDB = json_object_array_get_idx(poArcsDB, nArcID);
     if( poArcDB == nullptr || json_type_array != json_object_get_type(poArcDB) )
         return;
-    int nPoints = json_object_array_length(poArcDB);
+    auto nPoints = json_object_array_length(poArcDB);
     double dfAccX = 0.0;
     double dfAccY = 0.0;
     int nBaseIndice = poLS->getNumPoints();
-    for( int i = 0; i < nPoints; i++ )
+    for( auto i = decltype(nPoints){0}; i < nPoints; i++ )
     {
         json_object* poPoint = json_object_array_get_idx(poArcDB, i);
         double dfX = 0.0;
@@ -144,25 +144,29 @@ static void ParseArc( OGRLineString* poLS, json_object* poArcsDB, int nArcID,
             {
                 if( !bReverse && poLS->getNumPoints() > 0 )
                 {
-                    poLS->setNumPoints( nBaseIndice + nPoints - 1 );
+                    poLS->setNumPoints( nBaseIndice +
+                                        static_cast<int>(nPoints) - 1 );
                     nBaseIndice --;
                     continue;
                 }
                 else if( bReverse && poLS->getNumPoints() > 0 )
                 {
-                    poLS->setNumPoints( nBaseIndice + nPoints - 1 );
+                    poLS->setNumPoints( nBaseIndice +
+                                        static_cast<int>(nPoints) - 1 );
                     nPoints --;
                     if( nPoints == 0 )
                         break;
                 }
                 else
-                    poLS->setNumPoints( nBaseIndice + nPoints );
+                    poLS->setNumPoints( nBaseIndice +
+                                        static_cast<int>(nPoints) );
             }
 
             if( !bReverse )
-                poLS->setPoint(nBaseIndice + i, dfX, dfY);
+                poLS->setPoint(nBaseIndice + static_cast<int>(i), dfX, dfY);
             else
-                poLS->setPoint(nBaseIndice + nPoints - 1 - i, dfX, dfY);
+                poLS->setPoint(nBaseIndice + static_cast<int>(nPoints) - 1 -
+                               static_cast<int>(i), dfX, dfY);
         }
     }
 }
@@ -174,10 +178,10 @@ static void ParseArc( OGRLineString* poLS, json_object* poArcsDB, int nArcID,
 static void ParseLineString( OGRLineString* poLS, json_object* poRing,
                              json_object* poArcsDB, ScalingParams* psParams )
 {
-    const int nArcsDB = json_object_array_length(poArcsDB);
+    const auto nArcsDB = json_object_array_length(poArcsDB);
 
-    const int nArcsRing = json_object_array_length(poRing);
-    for( int j = 0; j < nArcsRing; j++ )
+    const auto nArcsRing = json_object_array_length(poRing);
+    for( auto j = decltype(nArcsRing){0}; j < nArcsRing; j++ )
     {
         json_object* poArcId = json_object_array_get_idx(poRing, j);
         if( poArcId != nullptr && json_type_int == json_object_get_type(poArcId) )
@@ -189,7 +193,7 @@ static void ParseLineString( OGRLineString* poLS, json_object* poRing,
                 nArcId = -(nArcId + 1);
                 bReverse = true;
             }
-            if( nArcId < nArcsDB )
+            if( nArcId < static_cast<int>(nArcsDB) )
             {
                 ParseArc(poLS, poArcsDB, nArcId, bReverse, psParams);
             }
@@ -204,8 +208,8 @@ static void ParseLineString( OGRLineString* poLS, json_object* poRing,
 static void ParsePolygon( OGRPolygon* poPoly, json_object* poArcsObj,
                           json_object* poArcsDB, ScalingParams* psParams )
 {
-    const int nRings = json_object_array_length(poArcsObj);
-    for( int i = 0; i < nRings; i++ )
+    const auto nRings = json_object_array_length(poArcsObj);
+    for( auto i = decltype(nRings){0}; i < nRings; i++ )
     {
         OGRLinearRing* poLR = new OGRLinearRing();
 
@@ -237,8 +241,8 @@ static void ParseMultiLineString( OGRMultiLineString* poMLS,
                                   json_object* poArcsDB,
                                   ScalingParams* psParams )
 {
-    const int nRings = json_object_array_length(poArcsObj);
-    for( int i = 0; i < nRings; i++ )
+    const auto nRings = json_object_array_length(poArcsObj);
+    for( auto i = decltype(nRings){0}; i < nRings; i++ )
     {
         OGRLineString* poLS = new OGRLineString();
         poMLS->addGeometryDirectly(poLS);
@@ -259,8 +263,8 @@ static void ParseMultiPolygon( OGRMultiPolygon* poMultiPoly,
                                json_object* poArcsObj,
                                json_object* poArcsDB, ScalingParams* psParams )
 {
-    const int nPolys = json_object_array_length(poArcsObj);
-    for( int i = 0; i < nPolys; i++ )
+    const auto nPolys = json_object_array_length(poArcsObj);
+    for( auto i = decltype(nPolys){0}; i < nPolys; i++ )
     {
         OGRPolygon* poPoly = new OGRPolygon();
 
@@ -362,8 +366,8 @@ static void ParseObject( const char* pszId,
     {
         OGRMultiPoint* poMP = new OGRMultiPoint();
         poGeom = poMP;
-        int nTuples = json_object_array_length(poCoordinatesObj);
-        for( int i = 0; i < nTuples; i++ )
+        const auto nTuples = json_object_array_length(poCoordinatesObj);
+        for( auto i = decltype(nTuples){0}; i < nTuples; i++ )
         {
             json_object* poPair =
                 json_object_array_get_idx(poCoordinatesObj, i);
@@ -483,10 +487,11 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                         poDefn->AddFieldDefn( &fldDefn );
                     }
 
-                    const int nGeometries =
+                    const auto nGeometries =
                         json_object_array_length(poGeometries);
                     // First pass to establish schema.
-                    for( int i = 0; i < nGeometries; i++ )
+                    for( auto i = decltype(nGeometries){0}; i < nGeometries;
+                         i++ )
                     {
                         json_object* poGeom =
                             json_object_array_get_idx(poGeometries, i);
@@ -499,7 +504,8 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                     }
 
                     // Second pass to build objects.
-                    for( int i = 0; i < nGeometries; i++ )
+                    for( auto i = decltype(nGeometries){0}; i < nGeometries;
+                         i++ )
                     {
                         json_object* poGeom =
                             json_object_array_get_idx(poGeometries, i);
@@ -657,9 +663,9 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     }
     else if( json_type_array == json_object_get_type( poObjects ) )
     {
-        const int nObjects = json_object_array_length(poObjects);
+        const auto nObjects = json_object_array_length(poObjects);
         bool bNeedSecondPass = false;
-        for( int i = 0; i < nObjects; i++ )
+        for( auto i = decltype(nObjects){0}; i < nObjects; i++ )
         {
             json_object* poObj = json_object_array_get_idx(poObjects, i);
             bNeedSecondPass |= ParseObjectMain(nullptr, poObj, poDS, &poMainLayer,
@@ -668,7 +674,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         }
         if( bNeedSecondPass )
         {
-            for( int i = 0; i < nObjects; i++ )
+            for( auto i = decltype(nObjects){0}; i < nObjects; i++ )
             {
                 json_object* poObj = json_object_array_get_idx(poObjects, i);
                 ParseObjectMain(nullptr, poObj, poDS, &poMainLayer, poArcs,

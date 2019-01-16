@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,26 +29,25 @@
 ###############################################################################
 
 import os
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test reading a MG4Lidar file
 #
 
 
-def mg4lidar_1():
+def test_mg4lidar_1():
 
     drv = gdal.GetDriverByName('MG4Lidar')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://home.gdal.org/tmp/GDAL_MG4Lidar_Src.zip', 'GDAL_MG4Lidar_Src.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/GDAL_MG4Lidar_Src')
@@ -58,53 +57,37 @@ def mg4lidar_1():
             try:
                 os.stat('tmp/cache/GDAL_MG4Lidar_Src')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = gdal.Open('tmp/cache/GDAL_MG4Lidar_Src/Tetons_200k.view')
-    if ds is None:
-        gdaltest.post_reason('could not open dataset')
-        return 'fail'
+    assert ds is not None, 'could not open dataset'
 
     prj = ds.GetProjectionRef()
     if prj.find('NAD83 / UTM zone 12N') == -1:
         gdaltest.post_reason('did not get expected projection')
         print(prj)
-        return 'success'
+        return
 
     gt = ds.GetGeoTransform()
     ref_gt = (504489.919999999983702, 3.078227571115974, 0, 4795848.389999999664724, 0, -3.078259860787739)
     for i in range(6):
-        if abs(gt[i] - ref_gt[i]) > 1e-6:
-            gdaltest.post_reason('did not get expected geotransform')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - ref_gt[i]) <= 1e-6, 'did not get expected geotransform'
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 13216:
         gdaltest.post_reason('did not get expected checksum')
         print(cs)
-        return 'success'
+        return
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 64099:
         gdaltest.post_reason('did not get expected overview checksum')
         print(cs)
-        return 'success'
+        return
 
     ds = None
 
-    return 'success'
 
 
-gdaltest_list = [
-    mg4lidar_1]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('mg4lidar')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,23 +30,21 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 from difflib import unified_diff
 
-sys.path.append('../pymod')
 
-import gdaltest
 import ogrtest
 import test_py_scripts
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Basic test without snapshoting
 
 
-def ograpispy_1():
+def test_ograpispy_1():
 
     gdal.SetConfigOption('OGR_API_SPY_FILE', 'tmp/ograpispy_1.py')
     test_py_scripts.run_py_script('data', 'testograpispy', '')
@@ -57,30 +55,28 @@ def ograpispy_1():
         ogrtest.has_apispy = True
     except OSError:
         ogrtest.has_apispy = False
-        return 'skip'
+        pytest.skip()
 
     ref_data = open('data/testograpispy.py', 'rt').read()
     got_data = open('tmp/ograpispy_1.py', 'rt').read()
 
     if ref_data != got_data:
-        gdaltest.post_reason('did not get expected script')
         print()
         for line in unified_diff(ref_data.splitlines(), got_data.splitlines(),
                                  fromfile='expected', tofile='got',
                                  lineterm=""):
             print(line)
-        return 'fail'
+        pytest.fail('did not get expected script')
 
-    return 'success'
-
+    
 ###############################################################################
 # With snapshoting
 
 
-def ograpispy_2():
+def test_ograpispy_2():
 
     if not ogrtest.has_apispy:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree('tmp/snapshot_1')
@@ -103,16 +99,12 @@ def ograpispy_2():
 
     ds = ogr.Open('tmp/snapshot_1/source/ograpispy_2.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 0
     ds = None
 
     ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp', update=1)
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     # Add a feature to check that running the script will work
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
@@ -123,21 +115,16 @@ def ograpispy_2():
 
     ds = ogr.Open('tmp/snapshot_1/working/ograpispy_2.shp')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 1:
-        print(lyr.GetFeatureCount())
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
     ds = None
 
     shutil.rmtree('tmp/snapshot_1/working')
-
-    return 'success'
 
 ###############################################################################
 #
 
 
-def ograpispy_cleanup():
+def test_ograpispy_cleanup():
     gdal.Unlink('tmp/ograpispy_1.py')
     gdal.Unlink('tmp/ograpispy_2.py')
     gdal.Unlink('tmp/ograpispy_2.pyc')
@@ -152,19 +139,5 @@ def ograpispy_cleanup():
         pass
     gdal.Unlink('/vsimem/test2.csv')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ograpispy_1,
-    ograpispy_2,
-    ograpispy_cleanup
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ograpispy')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

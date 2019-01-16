@@ -343,15 +343,18 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
-    m_poDATFile = new TABDATFile( "" );
+    CPLString   oEncoding;
+
     if(eAccess == TABRead || eAccess == TABReadWrite)
     {
-        m_poDATFile->SetEncoding( CharsetToEncoding(GetCharset()) );
+        oEncoding = CharsetToEncoding(GetCharset());
     }
     else if(eAccess == TABWrite)
     {
-        m_poDATFile->SetEncoding( CharsetToEncoding(pszCharset) );
+        oEncoding = CharsetToEncoding(pszCharset);
     }
+
+    m_poDATFile = new TABDATFile( oEncoding );
 
     if ( m_poDATFile->Open(pszTmpFname, eAccess, m_eTableType) != 0)
     {
@@ -399,7 +402,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
-    m_poMAPFile = new TABMAPFile;
+    m_poMAPFile = new TABMAPFile( oEncoding );
     if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite)
     {
         /*-------------------------------------------------------------
@@ -1605,6 +1608,10 @@ int TABFile::SetCharset(const char* pszCharset)
     if(m_poDATFile != nullptr)
     {
         m_poDATFile->SetEncoding( CharsetToEncoding( pszCharset ) );
+    }
+    if(m_poMAPFile != nullptr)
+    {
+        m_poMAPFile->SetEncoding( CharsetToEncoding( pszCharset ) );
     }
     return 0;
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -41,21 +39,18 @@ from osgeo import ogr
 # Open Memory datasource.
 
 
-def ogr_gmt_1():
+def test_ogr_gmt_1():
 
     gmt_drv = ogr.GetDriverByName('GMT')
     gdaltest.gmt_ds = gmt_drv.CreateDataSource('tmp/tpoly.gmt')
 
-    if gdaltest.gmt_ds is None:
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.gmt_ds is not None
 
 ###############################################################################
 # Create table from data/poly.shp
 
 
-def ogr_gmt_2():
+def test_ogr_gmt_2():
 
     #######################################################
     # Create gmtory Layer
@@ -92,13 +87,11 @@ def ogr_gmt_2():
     gdaltest.gmt_lyr = None
     gdaltest.gmt_ds = None
 
-    return 'success'
-
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
 
-def ogr_gmt_3():
+def test_ogr_gmt_3():
 
     gdaltest.gmt_ds = ogr.Open('tmp/tpoly.gmt')
     gdaltest.gmt_lyr = gdaltest.gmt_ds.GetLayer(0)
@@ -114,66 +107,53 @@ def ogr_gmt_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.gmt_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
-                                          max_error=0.000000001) != 0:
-            return 'fail'
+        assert (ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
+                                          max_error=0.000000001) == 0)
 
         for fld in range(3):
-            if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason('Attribute %d does not match' % fld)
-                return 'fail'
+            assert orig_feat.GetField(fld) == read_feat.GetField(fld), \
+                ('Attribute %d does not match' % fld)
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
     gdaltest.gmt_lyr = None
     gdaltest.gmt_ds = None
 
-    return 'success' if tr else 'fail'
+    assert tr
 
 ###############################################################################
 # Verify reading of multilinestring file. (#3802)
 
 
-def ogr_gmt_4():
+def test_ogr_gmt_4():
 
     ds = ogr.Open('data/test_multi.gmt')
     lyr = ds.GetLayer(0)
 
-    if lyr.GetLayerDefn().GetGeomType() != ogr.wkbMultiLineString:
-        gdaltest.post_reason('did not get expected multilinestring type.')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiLineString, \
+        'did not get expected multilinestring type.'
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((175 -45,176 -45),(180.0 -45.3,179.0 -45.4))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((175 -45,176 -45),(180.0 -45.3,179.0 -45.4))')
 
-    if feat.GetField('name') != 'feature 1':
-        gdaltest.post_reason('got wrong name, feature 1')
-        return 'fail'
+    assert feat.GetField('name') == 'feature 1', 'got wrong name, feature 1'
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((175.1 -45.0,175.2 -45.1),(180.1 -45.3,180.0 -45.2))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((175.1 -45.0,175.2 -45.1),(180.1 -45.3,180.0 -45.2))')
 
-    if feat.GetField('name') != 'feature 2':
-        gdaltest.post_reason('got wrong name, feature 2')
-        return 'fail'
+    assert feat.GetField('name') == 'feature 2', 'got wrong name, feature 2'
 
     feat = lyr.GetNextFeature()
 
-    if feat is not None:
-        gdaltest.post_reason('did not get null feature when expected.')
-        return 'fail'
-
-    return 'success'
+    assert feat is None, 'did not get null feature when expected.'
 
 ###############################################################################
 # Write a multipolygon file and verify it.
 
 
-def ogr_gmt_5():
+def test_ogr_gmt_5():
 
     #######################################################
     # Create gmtory Layer
@@ -211,41 +191,30 @@ def ogr_gmt_5():
     ds = ogr.Open('tmp/mpoly.gmt')
     lyr = ds.GetLayer(0)
 
-    if lyr.GetLayerDefn().GetGeomType() != ogr.wkbMultiPolygon:
-        gdaltest.post_reason('did not get expected multipolygon type.')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiPolygon, \
+        'did not get expected multipolygon type.'
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))')
 
-    if feat.GetField('ID') != 15:
-        gdaltest.post_reason('got wrong id, first feature')
-        return 'fail'
+    assert feat.GetField('ID') == 15, 'got wrong id, first feature'
 
     feat = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON(((30 20,40 20,30 30,30 20)))'):
-        return 'fail'
+    assert not ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON(((30 20,40 20,30 30,30 20)))')
 
-    if feat.GetField('ID') != 16:
-        gdaltest.post_reason('got wrong ID, second feature')
-        return 'fail'
+    assert feat.GetField('ID') == 16, 'got wrong ID, second feature'
 
     feat = lyr.GetNextFeature()
 
-    if feat is not None:
-        gdaltest.post_reason('did not get null feature when expected.')
-        return 'fail'
-
-    return 'success'
+    assert feat is None, 'did not get null feature when expected.'
 
 
 ###############################################################################
 #
 
-def ogr_gmt_cleanup():
+def test_ogr_gmt_cleanup():
 
     if gdaltest.gmt_ds is not None:
         gdaltest.gmt_lyr = None
@@ -253,21 +222,5 @@ def ogr_gmt_cleanup():
 
     gdaltest.clean_tmp()
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_gmt_1,
-    ogr_gmt_2,
-    ogr_gmt_3,
-    ogr_gmt_4,
-    ogr_gmt_5,
-    ogr_gmt_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_gmt')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

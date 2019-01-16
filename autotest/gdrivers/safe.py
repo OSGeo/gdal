@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,7 +37,7 @@ import gdaltest
 # reduced to 1% of their initial size and metadata stripped
 
 
-def safe_1():
+def test_safe_1():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -47,14 +45,14 @@ def safe_1():
     return tst.testOpen()
 
 
-def safe_2():
+def test_safe_2():
 
     tst = gdaltest.GDALTest(
         'SAFE', 'SAFE_FAKE/test.SAFE/manifest.safe', 2, 3732)
     return tst.testOpen()
 
 
-def safe_3():
+def test_safe_3():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -62,7 +60,7 @@ def safe_3():
     return tst.testOpen()
 
 
-def safe_4():
+def test_safe_4():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -70,7 +68,7 @@ def safe_4():
     return tst.testOpen()
 
 
-def safe_5():
+def test_safe_5():
 
     tst = gdaltest.GDALTest(
         'SAFE',
@@ -78,17 +76,4 @@ def safe_5():
     return tst.testOpen()
 
 
-gdaltest_list = [
-    safe_1,
-    safe_2,
-    safe_3,
-    safe_4,
-    safe_5]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('safe')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

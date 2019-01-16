@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id: misc.py 26369 2013-08-25 19:48:28Z goatbar $
@@ -29,10 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -55,24 +53,21 @@ def _list2gcps(src_list):
 ###############################################################################
 # Test simple exact case of turning GCPs into a GeoTransform.
 
-def gcps2gt_1():
+def test_gcps2gt_1():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
         (100.0, 0.0, 410000, 370000),
         (100.0, 200.0, 410000, 368000)
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001):
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.geotransform_equals(
+            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001)
 
 ###############################################################################
 # Similar but non-exact.
 
 
-def gcps2gt_2():
+def test_gcps2gt_2():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
@@ -80,17 +75,14 @@ def gcps2gt_2():
         (100.0, 200.0, 410000, 368000),
         (0.0, 200.0, 400000, 368000.01)
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001):
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.geotransform_equals(
+            gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001)
 
 ###############################################################################
 # bApproxOK false, and no good solution.
 
 
-def gcps2gt_3():
+def test_gcps2gt_3():
 
     approx_ok = 0
     gt = gdal.GCPsToGeoTransform(_list2gcps([
@@ -99,48 +91,37 @@ def gcps2gt_3():
         (100.0, 200.0, 410000, 368000),
         (0.0, 200.0, 400000, 360000)
     ]), approx_ok)
-    if gt is not None:
-        gdaltest.post_reason('Expected failure when no good solution.')
-        return 'fail'
-
-    return 'success'
+    assert gt is None, 'Expected failure when no good solution.'
 
 ###############################################################################
 # Single point - Should return None.
 
 
-def gcps2gt_4():
+def test_gcps2gt_4():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
     ]))
-    if gt is not None:
-        gdaltest.post_reason('Expected failure for single GCP.')
-        return 'fail'
-
-    return 'success'
+    assert gt is None, 'Expected failure for single GCP.'
 
 ###############################################################################
 # Two points - simple offset and scale, no rotation.
 
 
-def gcps2gt_5():
+def test_gcps2gt_5():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.0, 0.0, 400000, 370000),
         (100.0, 200.0, 410000, 368000),
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001):
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.geotransform_equals(
+            gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001)
 
 ###############################################################################
 # Special case for four points in a particular order.  Exact result.
 
 
-def gcps2gt_6():
+def test_gcps2gt_6():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (400000, 370000, 400000, 370000),
@@ -148,17 +129,14 @@ def gcps2gt_6():
         (410000, 368000, 410000, 368000),
         (400000, 368000, 400000, 368000),
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001):
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.geotransform_equals(
+            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
 ###############################################################################
 # Try a case that is hard to do without normalization.
 
 
-def gcps2gt_7():
+def test_gcps2gt_7():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (400000, 370000, 400000, 370000),
@@ -166,17 +144,14 @@ def gcps2gt_7():
         (410000, 370000, 410000, 370000),
         (400000, 368000, 400000, 368000),
     ]))
-    if not gdaltest.geotransform_equals(
-            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001):
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.geotransform_equals(
+            gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
 ###############################################################################
 # A fairly messy real world case without a easy to predict result.
 
 
-def gcps2gt_8():
+def test_gcps2gt_8():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
         (0.01, 0.04, -87.05528672907, 39.22759504228),
@@ -188,27 +163,7 @@ def gcps2gt_8():
     ]))
     gt_expected = (-87.056612873288, -2.232795668658e-05, 3.178617809303e-05,
                    39.227856615716, 2.6091510188921e-05, 1.596921026218e-05)
-    if not gdaltest.geotransform_equals(gt, gt_expected, 0.00001):
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.geotransform_equals(gt, gt_expected, 0.00001)
 
 
-gdaltest_list = [
-    gcps2gt_1,
-    gcps2gt_2,
-    gcps2gt_3,
-    gcps2gt_4,
-    gcps2gt_5,
-    gcps2gt_6,
-    gcps2gt_7,
-    gcps2gt_8,
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gcps2geotransform')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

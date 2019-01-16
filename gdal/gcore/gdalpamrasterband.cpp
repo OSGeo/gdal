@@ -662,7 +662,8 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
     {
         const GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
 
-        if( poRAT != nullptr )
+        if( poRAT != nullptr &&
+            (poRAT->GetRowCount() != 0 || poRAT->GetColumnCount() != 0) )
         {
             if( !bOnlyIfMissing || GetDefaultRAT() == nullptr )
             {

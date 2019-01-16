@@ -255,7 +255,7 @@ void OGRRegisterAllInternal()
 #ifdef SEGY_ENABLED
     RegisterOGRSEGY();
 #endif
-#ifdef FREEXL_ENABLED
+#ifdef XLS_ENABLED
     RegisterOGRXLS();
 #endif
 #ifdef ODS_ENABLED
@@ -291,6 +291,9 @@ void OGRRegisterAllInternal()
 #ifdef CSW_ENABLED
     RegisterOGRCSW();
 #endif
+#ifdef MONGODBV3_ENABLED
+    RegisterOGRMongoDBv3();
+#endif
 #ifdef MONGODB_ENABLED
     RegisterOGRMongoDB();
 #endif
@@ -312,5 +315,9 @@ void OGRRegisterAllInternal()
     RegisterOGRAVCBin();
     RegisterOGRAVCE00();
 #endif
+
+#ifdef NGW_ENABLED
+    RegisterOGRNGW();
+#endif // NGW_ENABLED
 
 } /* OGRRegisterAll */

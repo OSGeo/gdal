@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -77,20 +77,19 @@
 
 
 import os
-import sys
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 
 
-def ogr_ntf_1():
+def test_ogr_ntf_1():
 
     if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/strategi/sampledata/stratntf.exe', 'stratntf.exe'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/SS.ntf')
@@ -100,13 +99,12 @@ def ogr_ntf_1():
             try:
                 os.stat('tmp/cache/SS.ntf')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = ogr.Open('tmp/cache/SS.ntf')
-    if ds.GetLayerCount() != 5:
-        return 'fail'
+    assert ds.GetLayerCount() == 5
 
     layers = [('STRATEGI_POINT', ogr.wkbPoint, 9193),
               ('STRATEGI_LINE', ogr.wkbLineString, 8369),
@@ -116,31 +114,23 @@ def ogr_ntf_1():
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
-        if lyr.GetLayerDefn().GetGeomType() != l[1]:
-            return 'fail'
-        if lyr.GetFeatureCount() != l[2]:
-            print(lyr.GetFeatureCount())
-            return 'fail'
+        assert lyr.GetLayerDefn().GetGeomType() == l[1]
+        assert lyr.GetFeatureCount() == l[2]
         if l[1] != ogr.wkbNone:
-            if lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') == -1:
-                return 'fail'
+            assert lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') != -1
 
     lyr = ds.GetLayerByName('STRATEGI_POINT')
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (222904 127850)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (222904 127850)'
 
     ds.Destroy()
 
-    return 'success'
-
 
 ###############################################################################
-def ogr_ntf_2():
+def test_ogr_ntf_2():
 
     if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/meridian2/sampledata/meridian2ntf.exe', 'meridian2ntf.exe'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
@@ -150,13 +140,12 @@ def ogr_ntf_2():
             try:
                 os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = ogr.Open('tmp/cache/Port_Talbot_NTF/SS78.ntf')
-    if ds.GetLayerCount() != 5:
-        return 'fail'
+    assert ds.GetLayerCount() == 5
 
     layers = [('MERIDIAN2_POINT', ogr.wkbPoint, 408),
               ('MERIDIAN2_LINE', ogr.wkbLineString, 513),
@@ -166,40 +155,20 @@ def ogr_ntf_2():
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
-        if lyr.GetLayerDefn().GetGeomType() != l[1]:
-            return 'fail'
-        if lyr.GetFeatureCount() != l[2]:
-            print(lyr.GetFeatureCount())
-            return 'fail'
+        assert lyr.GetLayerDefn().GetGeomType() == l[1]
+        assert lyr.GetFeatureCount() == l[2]
         if l[1] != ogr.wkbNone:
-            if lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') == -1:
-                return 'fail'
+            assert lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') != -1
 
     lyr = ds.GetLayerByName('MERIDIAN2_POINT')
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (275324 189274)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (275324 189274)'
 
     lyr = ds.GetLayerByName('MERIDIAN2_LINE')
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (275324 189274,275233 189114,275153 189048)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        return 'fail'
+    assert feat.GetGeometryRef().ExportToWkt() == 'LINESTRING (275324 189274,275233 189114,275153 189048)'
 
     ds.Destroy()
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_ntf_1,
-    ogr_ntf_2]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_ntf')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -605,14 +605,18 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         }
 
         if( abDemMetadataOk[0] && abDemMetadataOk[1] &&
-            abDemMetadataOk[2] && abDemMetadataOk[3] )
+            abDemMetadataOk[2] && abDemMetadataOk[3] &&
+            nSizeX > 1 && nSizeY > 1)
         {
             adfGeoTrans[0] = adfDemMetadata[0];
-            adfGeoTrans[1] = (adfDemMetadata[1] - adfDemMetadata[0])/nSizeX;
+            adfGeoTrans[1] = (adfDemMetadata[1] - adfDemMetadata[0])/(nSizeX - 1);
             adfGeoTrans[2] = 0;
             adfGeoTrans[3] = adfDemMetadata[3];
             adfGeoTrans[4] = 0;
-            adfGeoTrans[5] = (adfDemMetadata[2] - adfDemMetadata[3])/nSizeY;
+            adfGeoTrans[5] = (adfDemMetadata[2] - adfDemMetadata[3])/(nSizeY - 1);
+
+            adfGeoTrans[0] -= 0.5 * adfGeoTrans[1];
+            adfGeoTrans[3] -= 0.5 * adfGeoTrans[5];
 
             if( bDemShiftOk )
             {

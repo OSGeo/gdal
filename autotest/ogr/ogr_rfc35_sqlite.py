@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -28,25 +28,24 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Initiate the test file
 
 
-def ogr_rfc35_sqlite_1():
+def test_ogr_rfc35_sqlite_1():
 
     gdaltest.rfc35_sqlite_ds = None
     gdaltest.rfc35_sqlite_ds_name = None
     sqlite_dr = ogr.GetDriverByName('SQLite')
     if sqlite_dr is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/rfc35_test.sqlite')
 
@@ -100,8 +99,6 @@ def ogr_rfc35_sqlite_1():
     fd.SetWidth(20)
     lyr.CreateField(fd)
 
-    return 'success'
-
 ###############################################################################
 # Test ReorderField()
 
@@ -132,46 +129,32 @@ def CheckFeatures(lyr, field1='foo5', field2='bar10', field3='baz15', field4='ba
            (field3 is not None and feat.GetField(field3) != Truncate(expected_values[i][2], lyr_defn, field3)) or \
            (field4 is not None and feat.GetField(field4) != Truncate(expected_values[i][3], lyr_defn, field4)):
             feat.DumpReadable()
-            return 'fail'
+            pytest.fail()
         feat = lyr.GetNextFeature()
         i = i + 1
 
-    return 'success'
-
+    
 
 def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
     for i, exp_order in enumerate(expected_order):
-        if lyr_defn.GetFieldDefn(i).GetName() != exp_order:
-            return 'fail'
-
-    return 'success'
+        assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
 
 def Check(lyr, expected_order):
-
-    ret = CheckColumnOrder(lyr, expected_order)
-    if ret != 'success':
-        return ret
-
-    ret = CheckFeatures(lyr)
-    if ret != 'success':
-        return ret
-
-    return 'success'
+    CheckColumnOrder(lyr, expected_order)
+    CheckFeatures(lyr)
 
 
-def ogr_rfc35_sqlite_2():
+def test_ogr_rfc35_sqlite_2():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
 
-    if lyr.TestCapability(ogr.OLCReorderFields) != 1:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCReorderFields) == 1
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 'foo3')
@@ -181,74 +164,44 @@ def ogr_rfc35_sqlite_2():
     lyr.CreateFeature(feat)
     feat = None
 
-    if lyr.ReorderField(1, 3) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.ReorderField(1, 3) == 0
 
-    ret = Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
 
     lyr.ReorderField(3, 1)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 2)
-    ret = Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
 
     lyr.ReorderField(2, 0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderField(0, 1)
-    ret = Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
 
     lyr.ReorderField(1, 0)
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.ReorderFields([0, 0, 0, 0])
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
-
-    return 'success'
+    assert ret != 0
 
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
 
-def ogr_rfc35_sqlite_3():
+def test_ogr_rfc35_sqlite_3():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
 
@@ -260,23 +213,16 @@ def ogr_rfc35_sqlite_3():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ret != 0
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz25')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz25')
 
     fd = ogr.FieldDefn("baz5", ogr.OFTString)
     fd.SetWidth(5)
@@ -284,39 +230,27 @@ def ogr_rfc35_sqlite_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('baz5'))
-    if fld_defn.GetWidth() != 5:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert fld_defn.GetWidth() == 5
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
 
 
-def ogr_rfc35_sqlite_4():
+def test_ogr_rfc35_sqlite_4():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 1:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
 
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
     lyr.CreateField(fd)
@@ -334,30 +268,20 @@ def ogr_rfc35_sqlite_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 12345:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     fd.SetWidth(5)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("intfield") != 12345:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     fd.SetWidth(4)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
@@ -365,15 +289,10 @@ def ogr_rfc35_sqlite_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     # if feat.GetField("intfield") != 1234:
-    if feat.GetField("intfield") != 12345:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat.GetField("intfield") == 12345
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
     fd.SetWidth(15)
@@ -382,34 +301,23 @@ def ogr_rfc35_sqlite_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     # if feat.GetField("oldintfld") != '1234':
-    if feat.GetField("oldintfld") != '12345':
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat.GetField("oldintfld") == '12345'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
     lyr.DeleteField(lyr_defn.GetFieldIndex("oldintfld"))
 
     fd = ogr.FieldDefn("intfield", ogr.OFTInteger)
     fd.SetWidth(10)
-    if lyr.CreateField(fd) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.CreateField(fd) == 0
 
-    if lyr.ReorderField(lyr_defn.GetFieldIndex("intfield"), 0) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.ReorderField(lyr_defn.GetFieldIndex("intfield"), 0) == 0
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     feat.SetField("intfield", 98765)
-    if lyr.SetFeature(feat) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.SetFeature(feat) == 0
     feat = None
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
@@ -418,118 +326,65 @@ def ogr_rfc35_sqlite_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.GetField("oldintfld") != '98765':
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert feat.GetField("oldintfld") == '98765'
     feat = None
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr, field3='baz5')
 
 ###############################################################################
 # Test DeleteField()
 
 
-def ogr_rfc35_sqlite_5():
+def test_ogr_rfc35_sqlite_5():
 
     if gdaltest.rfc35_sqlite_ds is None:
-        return 'skip'
+        pytest.skip()
 
     lyr = gdaltest.rfc35_sqlite_ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    if lyr.TestCapability(ogr.OLCDeleteField) != 1:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.TestCapability(ogr.OLCDeleteField) == 1
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(-1)
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ret != 0
 
-    if lyr.DeleteField(0) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.DeleteField(0) == 0
 
-    ret = CheckFeatures(lyr, field3='baz5')
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz5')
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('baw20')) == 0
 
-    ret = CheckFeatures(lyr, field3='baz5', field4=None)
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3='baz5', field4=None)
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('baz5')) == 0
 
-    ret = CheckFeatures(lyr, field3=None, field4=None)
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
+    CheckFeatures(lyr, field3=None, field4=None)
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('foo5')) == 0
 
-    if lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) != 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex('bar10')) == 0
 
-    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
-    if ret != 'success':
-        gdaltest.post_reason('failed')
-        return ret
-
-    return 'success'
+    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
 ###############################################################################
 # Initiate the test file
 
 
-def ogr_rfc35_sqlite_cleanup():
+def test_ogr_rfc35_sqlite_cleanup():
 
     if gdaltest.rfc35_sqlite_ds_name is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.rfc35_sqlite_ds = None
     ogr.GetDriverByName('SQLite').DeleteDataSource(gdaltest.rfc35_sqlite_ds_name)
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_rfc35_sqlite_1,
-    ogr_rfc35_sqlite_2,
-    ogr_rfc35_sqlite_3,
-    ogr_rfc35_sqlite_4,
-    ogr_rfc35_sqlite_5,
-    ogr_rfc35_sqlite_cleanup]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_rfc35_sqlite')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

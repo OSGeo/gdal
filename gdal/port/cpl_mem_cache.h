@@ -172,6 +172,16 @@ class Cache {
     return cache_.find(k) != cache_.end();
   }
 
+  bool getOldestEntry(Key& kOut, Value& vOut) {
+    Guard g(lock_);
+    if( keys_.empty() ) {
+        return false;
+    }
+    kOut = keys_.back().key;
+    vOut = keys_.back().value;
+    return true;
+  }
+
   size_t getMaxSize() const { return maxSize_; }
   size_t getElasticity() const { return elasticity_; }
   size_t getMaxAllowedSize() const { return maxSize_ + elasticity_; }

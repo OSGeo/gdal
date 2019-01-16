@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -28,24 +28,23 @@
 ###############################################################################
 
 import os
-import sys
 import struct
 import shutil
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test handling NaN with GDT_Float32 data
 
 
-def stats_nan_1():
+def test_stats_nan_1():
 
     gdaltest.gtiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.gtiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
@@ -62,10 +61,10 @@ def stats_nan_1():
 # Test handling NaN with GDT_Float64 data
 
 
-def stats_nan_2():
+def test_stats_nan_2():
 
     if gdaltest.gtiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
@@ -82,10 +81,10 @@ def stats_nan_2():
 # Test stats on signed byte (#3151)
 
 
-def stats_signedbyte():
+def test_stats_signedbyte():
 
     if gdaltest.gtiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     stats = (-128.0, 127.0, -0.2, 80.64)
 
@@ -103,24 +102,19 @@ def stats_signedbyte():
 # Test return of GetStatistics() when we don't have stats and don't
 # force their computation (#3572)
 
-def stats_dont_force():
+def test_stats_dont_force():
 
     gdal.Unlink('data/byte.tif.aux.xml')
     ds = gdal.Open('data/byte.tif')
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
-    if stats != [0, 0, 0, -1]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
-
-    return 'success'
+    assert stats == [0, 0, 0, -1], 'did not get expected stats'
 
 
 ###############################################################################
 # Test statistics when stored nodata value doesn't accurately match the nodata
 # value used in the imagery (#3573)
 
-def stats_approx_nodata():
+def test_stats_approx_nodata():
 
     shutil.copyfile('data/minfloat.tif', 'tmp/minfloat.tif')
     try:
@@ -143,38 +137,25 @@ def stats_approx_nodata():
     os.remove('tmp/minfloat.tif')
 
     if nodata != -3.4028234663852886e+38:
-        gdaltest.post_reason('did not get expected nodata')
         print("%.18g" % nodata)
-        return 'fail'
+        pytest.fail('did not get expected nodata')
 
-    if stats != [-3.0, 5.0, 1.0, 4.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [-3.0, 5.0, 1.0, 4.0], 'did not get expected stats'
 
-    if md != {'STATISTICS_MEAN': '1', 'STATISTICS_MAXIMUM': '5', 'STATISTICS_MINIMUM': '-3', 'STATISTICS_STDDEV': '4', 'STATISTICS_VALID_PERCENT': '50'}:
-        gdaltest.post_reason('did not get expected metadata')
-        print(md)
-        return 'fail'
+    assert md == {'STATISTICS_MEAN': '1', 'STATISTICS_MAXIMUM': '5', 'STATISTICS_MINIMUM': '-3', 'STATISTICS_STDDEV': '4', 'STATISTICS_VALID_PERCENT': '50'}, \
+        'did not get expected metadata'
 
-    if minmax != (-3.0, 5.0):
-        gdaltest.post_reason('did not get expected minmax')
-        print(minmax)
-        return 'fail'
-
-    return 'success'
+    assert minmax == (-3.0, 5.0), 'did not get expected minmax'
 
 
 ###############################################################################
 # Test read and copy of dataset with nan as nodata value (#3576)
 
-def stats_nan_3():
+def test_stats_nan_3():
 
     src_ds = gdal.Open('data/nan32_nodata.tif')
     nodata = src_ds.GetRasterBand(1).GetNoDataValue()
-    if not gdaltest.isnan(nodata):
-        gdaltest.post_reason('expected nan, got %f' % nodata)
-        return 'fail'
+    assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
 
     out_ds = gdaltest.gtiff_drv.CreateCopy('tmp/nan32_nodata.tif', src_ds)
     del out_ds
@@ -191,123 +172,84 @@ def stats_nan_3():
     ds = None
 
     gdaltest.gtiff_drv.Delete('tmp/nan32_nodata.tif')
-    if not gdaltest.isnan(nodata):
-        gdaltest.post_reason('expected nan, got %f' % nodata)
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
 
 ###############################################################################
 # Test reading a VRT with a complex source that define nan as band nodata
 # and complex source nodata (#3576)
 
 
-def stats_nan_4():
+def test_stats_nan_4():
 
     ds = gdal.Open('data/nan32_nodata.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    if cs != 874:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 874, 'did not get expected checksum'
 
-    if not gdaltest.isnan(nodata):
-        gdaltest.post_reason('expected nan, got %f' % nodata)
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
 
 ###############################################################################
 # Test reading a VRT with a complex source that define 0 as band nodata
 # and complex source nodata (nan must be translated to 0 then) (#3576)
 
 
-def stats_nan_5():
+def test_stats_nan_5():
 
     ds = gdal.Open('data/nan32_nodata_nan_to_zero.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    if cs != 978:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 978, 'did not get expected checksum'
 
-    if nodata != 0:
-        gdaltest.post_reason('expected nan, got %f' % nodata)
-        return 'fail'
-
-    return 'success'
+    assert nodata == 0, ('expected nan, got %f' % nodata)
 
 
 ###############################################################################
 # Test reading a warped VRT with nan as src nodata and dest nodata (#3576)
 
-def stats_nan_6():
+def test_stats_nan_6():
 
     ds = gdal.Open('data/nan32_nodata_warp.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    if cs != 874:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 874, 'did not get expected checksum'
 
-    if not gdaltest.isnan(nodata):
-        gdaltest.post_reason('expected nan, got %f' % nodata)
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
 
 ###############################################################################
 # Test reading a warped VRT with nan as src nodata and 0 as dest nodata (#3576)
 
 
-def stats_nan_7():
+def test_stats_nan_7():
 
     ds = gdal.Open('data/nan32_nodata_warp_nan_to_zero.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    if cs != 978:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 978, 'did not get expected checksum'
 
-    if nodata != 0:
-        gdaltest.post_reason('expected nan, got %f' % nodata)
-        return 'fail'
-
-    return 'success'
+    assert nodata == 0, ('expected nan, got %f' % nodata)
 
 
 ###############################################################################
 # Test reading a warped VRT with zero as src nodata and nan as dest nodata (#3576)
 
-def stats_nan_8():
+def test_stats_nan_8():
 
     ds = gdal.Open('data/nan32_nodata_warp_zero_to_nan.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    if cs != 874:
-        gdaltest.post_reason('did not get expected checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 874, 'did not get expected checksum'
 
-    if not gdaltest.isnan(nodata):
-        gdaltest.post_reason('expected nan, got %f' % nodata)
-        return 'fail'
-
-    return 'success'
+    assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
 
 ###############################################################################
 # Test statistics computation when nodata = +/- inf
@@ -318,7 +260,7 @@ def stats_nodata_inf_progress_cbk(value, string, extra):
     extra[0] = value
 
 
-def stats_nodata_inf():
+def test_stats_nodata_inf():
 
     ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1, 1, gdal.GDT_Float32)
     ds.GetRasterBand(1).SetNoDataValue(gdaltest.neginf())
@@ -329,20 +271,12 @@ def stats_nodata_inf():
     ds.GetRasterBand(1).Checksum()
     user_data = [0]
     stats = ds.GetRasterBand(1).ComputeStatistics(False, stats_nodata_inf_progress_cbk, user_data)
-    if user_data[0] != 1.0:
-        gdaltest.post_reason('did not get expected pct')
-        print(user_data[0])
-        return 'fail'
+    assert user_data[0] == 1.0, 'did not get expected pct'
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('/vsimem/stats_nodata_inf.img')
 
-    if stats != [-2.0, 1.0, -0.5, 1.5]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
-
-    return 'success'
+    assert stats == [-2.0, 1.0, -0.5, 1.5], 'did not get expected stats'
 
 
 ###############################################################################
@@ -353,34 +287,29 @@ def stats_nodata_check(filename, expected_nodata):
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    if nodata != expected_nodata:
-        gdaltest.post_reason('did not get expected nodata value')
-        print(nodata)
-        return 'fail'
-
-    return 'success'
+    assert nodata == expected_nodata, 'did not get expected nodata value'
 
 
-def stats_nodata_neginf_linux():
+def test_stats_nodata_neginf_linux():
     return stats_nodata_check('data/stats_nodata_neginf.tif', gdaltest.neginf())
 
 
-def stats_nodata_neginf_msvc():
+def test_stats_nodata_neginf_msvc():
     return stats_nodata_check('data/stats_nodata_neginf_msvc.tif', gdaltest.neginf())
 
 
-def stats_nodata_posinf_linux():
+def test_stats_nodata_posinf_linux():
     return stats_nodata_check('data/stats_nodata_posinf.tif', gdaltest.posinf())
 
 
-def stats_nodata_posinf_msvc():
+def test_stats_nodata_posinf_msvc():
     return stats_nodata_check('data/stats_nodata_posinf_msvc.tif', gdaltest.posinf())
 
 ###############################################################################
 # Test standard deviation computation on huge values
 
 
-def stats_stddev_huge_values():
+def test_stats_stddev_huge_values():
 
     gdal.FileFromMemBuffer('/vsimem/stats_stddev_huge_values.asc',
                            """ncols        4
@@ -394,21 +323,17 @@ cellsize     1
  100000000 100000002 100000000 100000002""")
     ds = gdal.Open('/vsimem/stats_stddev_huge_values.asc')
     stats = ds.GetRasterBand(1).ComputeStatistics(0)
-    if stats != [100000000.0, 100000002.0, 100000001.0, 1.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [100000000.0, 100000002.0, 100000001.0, 1.0], \
+        'did not get expected stats'
     ds = None
     gdal.GetDriverByName('AAIGRID').Delete('/vsimem/stats_stddev_huge_values.asc')
-
-    return 'success'
 
 ###############################################################################
 # Test approximate statistics computation on a square shaped raster whose first column
 # of blocks is nodata only
 
 
-def stats_square_shape():
+def test_stats_square_shape():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_square_shape.tif', 32, 32, options=['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16'])
     ds.GetRasterBand(1).SetNoDataValue(0)
@@ -420,26 +345,18 @@ def stats_square_shape():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_square_shape.tif')
 
-    if stats != [255, 255, 255, 0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
-    if hist[255] != 16 * 16:
-        gdaltest.post_reason('did not get expected histogram')
-        print(hist)
-        return 'fail'
+    assert stats == [255, 255, 255, 0], 'did not get expected stats'
+    assert hist[255] == 16 * 16, 'did not get expected histogram'
     if minmax != (255, 255):
-        gdaltest.post_reason('did not get expected minmax')
         print(hist)
-        return 'fail'
+        pytest.fail('did not get expected minmax')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test when nodata = FLT_MIN (#6578)
 
 
-def stats_flt_min():
+def test_stats_flt_min():
 
     shutil.copyfile('data/flt_min.tif', 'tmp/flt_min.tif')
     try:
@@ -461,28 +378,20 @@ def stats_flt_min():
     os.remove('tmp/flt_min.tif')
 
     if nodata != 1.17549435082228751e-38:
-        gdaltest.post_reason('did not get expected nodata')
         print("%.18g" % nodata)
-        return 'fail'
+        pytest.fail('did not get expected nodata')
 
-    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
-       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]:  # 32 bit
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert (stats == [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] or \
+       stats == [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]), \
+        'did not get expected stats'
 
-    if minmax != (0.0, 1.0):
-        gdaltest.post_reason('did not get expected minmax')
-        print(minmax)
-        return 'fail'
-
-    return 'success'
+    assert minmax == (0.0, 1.0), 'did not get expected minmax'
 
 ###############################################################################
 # Test when nodata = DBL_MIN (#6578)
 
 
-def stats_dbl_min():
+def test_stats_dbl_min():
 
     shutil.copyfile('data/dbl_min.tif', 'tmp/dbl_min.tif')
     try:
@@ -504,28 +413,20 @@ def stats_dbl_min():
     os.remove('tmp/dbl_min.tif')
 
     if nodata != 2.22507385850720138e-308:
-        gdaltest.post_reason('did not get expected nodata')
         print("%.18g" % nodata)
-        return 'fail'
+        pytest.fail('did not get expected nodata')
 
-    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] and \
-       stats != [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]:  # 32 bit
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert (stats == [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] or \
+       stats == [0.0, 1.0, 0.33333333333333331, 0.47140452079103168]), \
+        'did not get expected stats'
 
-    if minmax != (0.0, 1.0):
-        gdaltest.post_reason('did not get expected minmax')
-        print(minmax)
-        return 'fail'
-
-    return 'success'
+    assert minmax == (0.0, 1.0), 'did not get expected minmax'
 
 ###############################################################################
 # Test stats on a tiled Byte with partial tiles
 
 
-def stats_byte_partial_tiles():
+def test_stats_byte_partial_tiles():
 
     ds = gdal.Translate('/vsimem/stats_byte_tiled.tif', '../gdrivers/data/small_world.tif',
                         creationOptions=['TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
@@ -535,11 +436,7 @@ def stats_byte_partial_tiles():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
 
     expected_stats = [0.0, 255.0, 50.22115, 67.119029288849973]
-    if stats != expected_stats:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert stats == expected_stats, 'did not get expected stats'
 
     # Same but with nodata set
     ds = gdal.Translate('/vsimem/stats_byte_tiled.tif', '../gdrivers/data/small_world.tif',
@@ -552,11 +449,8 @@ def stats_byte_partial_tiles():
 
     expected_stats = [1.0, 255.0, 50.311081057390084, 67.14541389488096]
     expected_stats_32bit = [1.0, 255.0, 50.311081057390084, 67.145413894880946]
-    if stats != expected_stats and stats != expected_stats_32bit:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert stats == expected_stats or stats == expected_stats_32bit, \
+        'did not get expected stats'
 
     # Same but with nodata set but untiled and with non power of 16 block size
     ds = gdal.Translate('/vsimem/stats_byte_untiled.tif', '../gdrivers/data/small_world.tif',
@@ -568,11 +462,7 @@ def stats_byte_partial_tiles():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_untiled.tif')
 
     expected_stats = [1.0, 255.0, 50.378183963744554, 67.184793517649453]
-    if stats != expected_stats:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert stats == expected_stats, 'did not get expected stats'
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_byte_tiled.tif', 1000, 512,
                                               options=['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
@@ -582,11 +472,8 @@ def stats_byte_partial_tiles():
     gdal.Unlink('/vsimem/stats_byte_tiled.tif')
 
     expected_stats = [255.0, 255.0, 255.0, 0.0]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
     # Non optimized code path
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
@@ -595,11 +482,8 @@ def stats_byte_partial_tiles():
     ds = None
 
     expected_stats = [1.0, 1.0, 1.0, 0.0]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
     ds = gdal.GetDriverByName('MEM').Create('', 3, 5)
     ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, struct.pack('B' * 3, 20, 30, 50))
@@ -611,11 +495,8 @@ def stats_byte_partial_tiles():
     ds = None
 
     expected_stats = [0.0, 255.0, 35.333333333333336, 60.785597709398971]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
     ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 2)
     ds.GetRasterBand(1).Fill(1)
@@ -624,11 +505,8 @@ def stats_byte_partial_tiles():
     ds = None
 
     expected_stats = [0.0, 255.0, 4.7205882352941178, 30.576733555893391]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
     ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 2)
     ds.GetRasterBand(1).Fill(1)
@@ -638,19 +516,14 @@ def stats_byte_partial_tiles():
     ds = None
 
     expected_stats = [0.0, 255.0, 4.7205882352941178, 30.576733555893391]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
-
-    return 'success'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
 ###############################################################################
 # Test stats on uint16
 
 
-def stats_uint16():
+def test_stats_uint16():
 
     ds = gdal.Translate('/vsimem/stats_uint16_tiled.tif', '../gdrivers/data/small_world.tif',
                         outputType=gdal.GDT_UInt16,
@@ -662,11 +535,7 @@ def stats_uint16():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_uint16_tiled.tif')
 
     expected_stats = [0.0, 65535.0, 50.22115 * 65535 / 255, 67.119029288849973 * 65535 / 255]
-    if stats != expected_stats:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert stats == expected_stats, 'did not get expected stats'
 
     ds = gdal.Translate('/vsimem/stats_uint16_untiled.tif', '../gdrivers/data/small_world.tif',
                         options='-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16')
@@ -676,11 +545,7 @@ def stats_uint16():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_uint16_untiled.tif')
 
     expected_stats = [0.0, 65535.0, 12923.9921679198, 17259.703026841547]
-    if stats != expected_stats:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert stats == expected_stats, 'did not get expected stats'
 
     # Same but with nodata set but untiled and with non power of 16 block size
     ds = gdal.Translate('/vsimem/stats_uint16_untiled.tif', '../gdrivers/data/small_world.tif',
@@ -692,11 +557,7 @@ def stats_uint16():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_uint16_untiled.tif')
 
     expected_stats = [257.0, 65535.0, 50.378183963744554 * 65535 / 255, 67.184793517649453 * 65535 / 255]
-    if stats != expected_stats:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert stats == expected_stats, 'did not get expected stats'
 
     for fill_val in [0, 1, 32767, 32768, 65535]:
         ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_uint16_tiled.tif', 1000, 512, 1, gdal.GDT_UInt16,
@@ -708,11 +569,8 @@ def stats_uint16():
 
         expected_stats = [fill_val, fill_val, fill_val, 0.0]
         if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-            gdaltest.post_reason('did not get expected stats')
-            print(stats)
             print(fill_val)
-            print(expected_stats)
-            return 'fail'
+            pytest.fail('did not get expected stats')
 
     # Test remaining pixels after multiple of 32
     ds = gdal.GetDriverByName('MEM').Create('', 32 + 2, 1, 1, gdal.GDT_UInt16)
@@ -722,11 +580,8 @@ def stats_uint16():
     ds = None
 
     expected_stats = [0.0, 65535.0, 1928.4411764705883, 11072.48066469611]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
     # Non optimized code path
     for fill_val in [0, 1, 32767, 32768, 65535]:
@@ -737,11 +592,8 @@ def stats_uint16():
 
         expected_stats = [fill_val, fill_val, fill_val, 0.0]
         if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-            gdaltest.post_reason('did not get expected stats')
-            print(stats)
             print(fill_val)
-            print(expected_stats)
-            return 'fail'
+            pytest.fail('did not get expected stats')
 
     ds = gdal.GetDriverByName('MEM').Create('', 3, 5, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, struct.pack('H' * 3, 20, 30, 50))
@@ -753,11 +605,8 @@ def stats_uint16():
     ds = None
 
     expected_stats = [0.0, 65535.0, 4387.333333333333, 16342.408927558861]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        print(expected_stats)
-        return 'fail'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
     ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack('H' * 2, 0, 65535))
@@ -766,50 +615,35 @@ def stats_uint16():
     ds = None
 
     expected_stats = [0.0, 65535.0, 32767.5, 32767.000003814814]
-    if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
-
-    return 'success'
+    assert max([abs(stats[i] - expected_stats[i]) for i in range(4)]) <= 1e-15, \
+        'did not get expected stats'
 
 ###############################################################################
 # Test a case where the nodata value is almost the maximum value of float32
 
 
-def stats_nodata_almost_max_float32():
+def test_stats_nodata_almost_max_float32():
 
     gdal.FileFromMemBuffer('/vsimem/float32_almost_nodata_max_float32.tif',
                            open('data/float32_almost_nodata_max_float32.tif', 'rb').read())
 
     ds = gdal.Open('/vsimem/float32_almost_nodata_max_float32.tif')
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
-    if minmax != (0, 0):
-        gdaltest.post_reason('did not get expected minmax')
-        print(minmax)
-        return 'fail'
+    assert minmax == (0, 0), 'did not get expected minmax'
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
-    if stats != [0, 0, 0, 0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [0, 0, 0, 0], 'did not get expected stats'
     hist = ds.GetRasterBand(1).GetHistogram(approx_ok=0)
-    if hist[0] != 3:
-        gdaltest.post_reason('did not get expected hist')
-        print(hist)
-        return 'fail'
+    assert hist[0] == 3, 'did not get expected hist'
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/float32_almost_nodata_max_float32.tif')
-
-    return 'success'
 
 
 ###############################################################################
 # Test STATISTICS_APPROXIMATE
 
 
-def stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
+def test_stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
 
     ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000, 1, dt)
     ds.GetRasterBand(1).WriteRaster(1000, 1000, 1, 1, struct.pack(struct_frmt * 1, 20))
@@ -817,45 +651,29 @@ def stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt='B'):
     approx_ok = 1
     force = 1
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats != [0.0, 0.0, 0.0, 0.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [0.0, 0.0, 0.0, 0.0], 'did not get expected stats'
     md = ds.GetRasterBand(1).GetMetadata()
-    if md != {'STATISTICS_MEAN': '0', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_MINIMUM': '0', 'STATISTICS_APPROXIMATE': 'YES', 'STATISTICS_STDDEV': '0', 'STATISTICS_VALID_PERCENT': '100'}:
-        gdaltest.post_reason('did not get expected metadata')
-        print(md)
-        return 'fail'
+    assert md == {'STATISTICS_MEAN': '0', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_MINIMUM': '0', 'STATISTICS_APPROXIMATE': 'YES', 'STATISTICS_STDDEV': '0', 'STATISTICS_VALID_PERCENT': '100'}, \
+        'did not get expected metadata'
 
     approx_ok = 0
     force = 0
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats != [0.0, 0.0, 0.0, -1.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [0.0, 0.0, 0.0, -1.0], 'did not get expected stats'
 
     approx_ok = 0
     force = 1
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats[1] != 20.0:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats[1] == 20.0, 'did not get expected stats'
     md = ds.GetRasterBand(1).GetMetadata()
-    if 'STATISTICS_APPROXIMATE' in md:
-        gdaltest.post_reason('did not get expected metadata')
-        print(md)
-        return 'fail'
-
-    return 'success'
+    assert 'STATISTICS_APPROXIMATE' not in md, 'did not get expected metadata'
 
 
-def stats_approx_stats_flag_float():
-    return stats_approx_stats_flag(dt=gdal.GDT_Float32, struct_frmt='f')
+def test_stats_approx_stats_flag_float():
+    return test_stats_approx_stats_flag(dt=gdal.GDT_Float32, struct_frmt='f')
 
 
-def stats_all_nodata():
+def test_stats_all_nodata():
 
     ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
     ds.GetRasterBand(1).SetNoDataValue(0)
@@ -863,10 +681,7 @@ def stats_all_nodata():
     force = 1
     with gdaltest.error_handler():
         stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats != [0.0, 0.0, 0.0, 0.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
+    assert stats == [0.0, 0.0, 0.0, 0.0], 'did not get expected stats'
 
     ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000, 1,
                                             gdal.GDT_Float32)
@@ -875,64 +690,19 @@ def stats_all_nodata():
     force = 1
     with gdaltest.error_handler():
         stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    if stats != [0.0, 0.0, 0.0, 0.0]:
-        gdaltest.post_reason('did not get expected stats')
-        print(stats)
-        return 'fail'
-
-    return 'success'
+    assert stats == [0.0, 0.0, 0.0, 0.0], 'did not get expected stats'
 
 
-def stats_float32_with_nodata_slightly_above_float_max():
+def test_stats_float32_with_nodata_slightly_above_float_max():
 
     ds = gdal.Open('data/float32_with_nodata_slightly_above_float_max.tif')
     my_min, my_max = ds.GetRasterBand(1).ComputeRasterMinMax()
-    if (my_min, my_max) != (-1.0989999771118164, 0.703338623046875):
-        gdaltest.post_reason('did not get expected stats')
-        print(my_min, my_max)
-        return 'fail'
-
-    return 'success'
+    assert (my_min, my_max) == (-1.0989999771118164, 0.703338623046875), \
+        'did not get expected stats'
 
 
 ###############################################################################
 # Run tests
 
 
-gdaltest_list = [
-    stats_nan_1,
-    stats_nan_2,
-    stats_signedbyte,
-    stats_dont_force,
-    stats_approx_nodata,
-    stats_nan_3,
-    stats_nan_4,
-    stats_nan_5,
-    stats_nan_6,
-    stats_nan_7,
-    stats_nan_8,
-    stats_nodata_inf,
-    stats_nodata_neginf_linux,
-    stats_nodata_neginf_msvc,
-    stats_nodata_posinf_linux,
-    stats_nodata_posinf_msvc,
-    stats_stddev_huge_values,
-    stats_square_shape,
-    stats_flt_min,
-    stats_dbl_min,
-    stats_byte_partial_tiles,
-    stats_uint16,
-    stats_nodata_almost_max_float32,
-    stats_approx_stats_flag,
-    stats_approx_stats_flag_float,
-    stats_all_nodata,
-    stats_float32_with_nodata_slightly_above_float_max,
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('gdal_stats')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

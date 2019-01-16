@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id: test_gdal_calc.py 25549 2013-01-26 11:17:10Z rouault $
@@ -34,11 +34,10 @@ import sys
 import os
 import shutil
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
-import gdaltest
 import test_py_scripts
+import pytest
 
 # test that gdalnumeric is available, if not skip all tests
 gdalnumeric_not_available = False
@@ -57,12 +56,11 @@ except (ImportError, AttributeError):
 def test_gdal_calc_py_1():
 
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/stefan_full_rgba.tif', 'tmp/test_gdal_calc_py.tif')
 
@@ -74,31 +72,17 @@ def test_gdal_calc_py_1():
     ds2 = gdal.Open('tmp/test_gdal_calc_py_1_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_1_3.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
 
-    if ds1.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
+    assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 58561, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 58561, 'ds3 wrong checksum'
 
     ds1 = None
     ds2 = None
     ds3 = None
-
-    return 'success'
 
 ###############################################################################
 # test simple formulas
@@ -107,11 +91,11 @@ def test_gdal_calc_py_1():
 def test_gdal_calc_py_2():
 
     if gdalnumeric_not_available:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A+B --overwrite --outfile tmp/test_gdal_calc_py_2_1.tif')
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A*B --overwrite --outfile tmp/test_gdal_calc_py_2_2.tif')
@@ -121,29 +105,15 @@ def test_gdal_calc_py_2():
     ds2 = gdal.Open('tmp/test_gdal_calc_py_2_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_2_3.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
-    if ds1.GetRasterBand(1).Checksum() != 12368:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 62785:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 47132:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
+    assert ds1.GetRasterBand(1).Checksum() == 12368, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 62785, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 47132, 'ds3 wrong checksum'
     ds1 = None
     ds2 = None
     ds3 = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -152,35 +122,23 @@ def test_gdal_calc_py_2():
 def test_gdal_calc_py_3():
 
     if gdalnumeric_not_available:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --allBands A --calc=A --overwrite --outfile tmp/test_gdal_calc_py_3.tif')
 
     ds = gdal.Open('tmp/test_gdal_calc_py_3.tif')
 
-    if ds is None:
-        gdaltest.post_reason('ds not found')
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('band 1 wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(2).Checksum() != 58561:
-        gdaltest.post_reason('band 2 wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(3).Checksum() != 36064:
-        gdaltest.post_reason('band 3 wrong checksum')
-        return 'fail'
-    if ds.GetRasterBand(4).Checksum() != 10807:
-        gdaltest.post_reason('band 4 wrong checksum')
-        return 'fail'
+    assert ds is not None, 'ds not found'
+    assert ds.GetRasterBand(1).Checksum() == 12603, 'band 1 wrong checksum'
+    assert ds.GetRasterBand(2).Checksum() == 58561, 'band 2 wrong checksum'
+    assert ds.GetRasterBand(3).Checksum() == 36064, 'band 3 wrong checksum'
+    assert ds.GetRasterBand(4).Checksum() == 10807, 'band 4 wrong checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # test --allBands option (simple calc)
@@ -189,11 +147,11 @@ def test_gdal_calc_py_3():
 def test_gdal_calc_py_4():
 
     if gdalnumeric_not_available:
-        return 'skip'
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     # some values are clipped to 255, but this doesn't matter... small values were visually checked
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --calc=1 --overwrite --outfile tmp/test_gdal_calc_py_4_1.tif')
@@ -201,18 +159,10 @@ def test_gdal_calc_py_4():
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_4_2.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds1.GetRasterBand(1).Checksum() != 29935:
-        gdaltest.post_reason('ds1 band 1 wrong checksum')
-        return 'fail'
-    if ds1.GetRasterBand(2).Checksum() != 13128:
-        gdaltest.post_reason('ds1 band 2 wrong checksum')
-        return 'fail'
-    if ds1.GetRasterBand(3).Checksum() != 59092:
-        gdaltest.post_reason('ds1 band 3 wrong checksum')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds1.GetRasterBand(1).Checksum() == 29935, 'ds1 band 1 wrong checksum'
+    assert ds1.GetRasterBand(2).Checksum() == 13128, 'ds1 band 2 wrong checksum'
+    assert ds1.GetRasterBand(3).Checksum() == 59092, 'ds1 band 3 wrong checksum'
 
     ds1 = None
 
@@ -221,22 +171,12 @@ def test_gdal_calc_py_4():
 
     ds2 = gdal.Open('tmp/test_gdal_calc_py_4_3.tif')
 
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 10025:
-        gdaltest.post_reason('ds2 band 1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(2).Checksum() != 62785:
-        gdaltest.post_reason('ds2 band 2 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(3).Checksum() != 10621:
-        gdaltest.post_reason('ds2 band 3 wrong checksum')
-        return 'fail'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds2.GetRasterBand(1).Checksum() == 10025, 'ds2 band 1 wrong checksum'
+    assert ds2.GetRasterBand(2).Checksum() == 62785, 'ds2 band 2 wrong checksum'
+    assert ds2.GetRasterBand(3).Checksum() == 10621, 'ds2 band 3 wrong checksum'
 
     ds2 = None
-
-    return 'success'
 
 ###############################################################################
 # test python interface, basic copy
@@ -245,12 +185,11 @@ def test_gdal_calc_py_4():
 def test_gdal_calc_py_5():
 
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     backup_sys_path = sys.path
     sys.path.insert(0, script_path)
@@ -268,31 +207,17 @@ def test_gdal_calc_py_5():
     ds2 = gdal.Open('tmp/test_gdal_calc_py_5_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_5_3.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
 
-    if ds1.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
+    assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 58561, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 58561, 'ds3 wrong checksum'
 
     ds1 = None
     ds2 = None
     ds3 = None
-
-    return 'success'
 
 ###############################################################################
 # test nodata
@@ -301,12 +226,11 @@ def test_gdal_calc_py_5():
 def test_gdal_calc_py_6():
 
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     backup_sys_path = sys.path
     sys.path.insert(0, script_path)
@@ -320,29 +244,20 @@ def test_gdal_calc_py_6():
 
     ds = gdal.Open('tmp/test_gdal_calc_py_6.tif')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 4673:
-        gdaltest.post_reason('failure')
-        print(cs)
-        return 'fail'
+    assert cs == 4673
     result = ds.GetRasterBand(1).ComputeRasterMinMax()
-    if result != (90, 255):
-        gdaltest.post_reason('failure')
-        print(result)
-        return 'fail'
-
-    return 'success'
+    assert result == (90, 255)
 
 ###############################################################################
 # test --optfile
 
 def test_gdal_calc_py_7():
     if gdalnumeric_not_available:
-        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
-        return 'skip'
+        pytest.skip('gdalnumeric is not available, skipping all tests')
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/stefan_full_rgba.tif', 'tmp/test_gdal_calc_py.tif')
 
@@ -376,38 +291,20 @@ def test_gdal_calc_py_7():
     ds3 = gdal.Open('tmp/test_gdal_calc_py_7_3.tif')
     ds4 = gdal.Open('tmp/test_gdal_calc_py_7_4.tif')
 
-    if ds1 is None:
-        gdaltest.post_reason('ds1 not found')
-        return 'fail'
-    if ds2 is None:
-        gdaltest.post_reason('ds2 not found')
-        return 'fail'
-    if ds3 is None:
-        gdaltest.post_reason('ds3 not found')
-        return 'fail'
-    if ds4 is None:
-        gdaltest.post_reason('ds4 not found')
-        return 'fail'
+    assert ds1 is not None, 'ds1 not found'
+    assert ds2 is not None, 'ds2 not found'
+    assert ds3 is not None, 'ds3 not found'
+    assert ds4 is not None, 'ds4 not found'
 
-    if ds1.GetRasterBand(1).Checksum() != 12603:
-        gdaltest.post_reason('ds1 wrong checksum')
-        return 'fail'
-    if ds2.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds2 wrong checksum')
-        return 'fail'
-    if ds3.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds3 wrong checksum')
-        return 'fail'
-    if ds4.GetRasterBand(1).Checksum() != 58561:
-        gdaltest.post_reason('ds4 wrong checksum')
-        return 'fail'
+    assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1 wrong checksum'
+    assert ds2.GetRasterBand(1).Checksum() == 58561, 'ds2 wrong checksum'
+    assert ds3.GetRasterBand(1).Checksum() == 58561, 'ds3 wrong checksum'
+    assert ds4.GetRasterBand(1).Checksum() == 58561, 'ds4 wrong checksum'
 
     ds1 = None
     ds2 = None
     ds3 = None
     ds4 = None
-
-    return 'success'
 
 def test_gdal_calc_py_cleanup():
 
@@ -440,25 +337,7 @@ def test_gdal_calc_py_cleanup():
         except OSError:
             pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_gdal_calc_py_1,
-    test_gdal_calc_py_2,
-    test_gdal_calc_py_3,
-    test_gdal_calc_py_4,
-    test_gdal_calc_py_5,
-    test_gdal_calc_py_6,
-    test_gdal_calc_py_7,
-    test_gdal_calc_py_cleanup
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_calc_py')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

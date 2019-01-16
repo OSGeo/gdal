@@ -43,7 +43,7 @@
 #include "ogr_srs_api.h"
 #include "ogr_geometry.h"
 
-static CPLErr OGRPolygonContourWriter( double dfLevel,
+static CPLErr OGRPolygonContourWriter( double dfLevelMin, double dfLevelMax,
                                 const OGRMultiPolygon& multipoly,
                                 void *pInfo )
 
@@ -58,8 +58,11 @@ static CPLErr OGRPolygonContourWriter( double dfLevel,
     if( poInfo->nIDField != -1 )
         OGR_F_SetFieldInteger( hFeat, poInfo->nIDField, poInfo->nNextID++ );
 
-    if( poInfo->nElevField != -1 )
-        OGR_F_SetFieldDouble( hFeat, poInfo->nElevField, dfLevel );
+    if( poInfo->nElevFieldMin != -1 )
+        OGR_F_SetFieldDouble( hFeat, poInfo->nElevFieldMin, dfLevelMin );
+
+    if( poInfo->nElevFieldMax != -1 )
+        OGR_F_SetFieldDouble( hFeat, poInfo->nElevFieldMax, dfLevelMax );
 
     const bool bHasZ = wkbHasZ(OGR_FD_GetGeomType(hFDefn));
     OGRGeometryH hGeom = OGR_G_CreateGeometry(
@@ -86,7 +89,7 @@ static CPLErr OGRPolygonContourWriter( double dfLevel,
                     + poInfo->adfGeoTransform[4] * poRing->getX(iPoint)
                     + poInfo->adfGeoTransform[5] * poRing->getY(iPoint);
                 if( bHasZ )
-                    OGR_G_SetPoint( OGRGeometry::ToHandle( poNewRing ), iPoint, dfX, dfY, dfLevel );
+                    OGR_G_SetPoint( OGRGeometry::ToHandle( poNewRing ), iPoint, dfX, dfY, dfLevelMax );
                 else
                     OGR_G_SetPoint_2D( OGRGeometry::ToHandle( poNewRing ), iPoint, dfX, dfY );
             }
@@ -108,10 +111,11 @@ struct PolygonContourWriter
 {
     CPL_DISALLOW_COPY_ASSIGN(PolygonContourWriter)
 
-    explicit PolygonContourWriter( OGRContourWriterInfo* poInfo ) : poInfo_( poInfo ) {}
+    explicit PolygonContourWriter( OGRContourWriterInfo* poInfo, double minLevel ) : poInfo_( poInfo ), previousLevel_( minLevel ) {}
 
     void startPolygon( double level )
     {
+        previousLevel_ = currentLevel_;
         currentGeometry_.reset( new OGRMultiPolygon() );
         currentLevel_ = level;
     }
@@ -122,7 +126,7 @@ struct PolygonContourWriter
             currentGeometry_->addGeometryDirectly(currentPart_);
         }
 
-        OGRPolygonContourWriter( currentLevel_, *currentGeometry_, poInfo_ );
+        OGRPolygonContourWriter( previousLevel_, currentLevel_, *currentGeometry_, poInfo_ );
 
         currentGeometry_.reset( nullptr );
         currentPart_ = nullptr;
@@ -158,8 +162,9 @@ struct PolygonContourWriter
 
     std::unique_ptr<OGRMultiPolygon> currentGeometry_ = {};
     OGRPolygon* currentPart_ = nullptr;
-    double currentLevel_ = 0.0;
     OGRContourWriterInfo* poInfo_ = nullptr;
+    double currentLevel_ = 0;
+    double previousLevel_; 
 };
 
 struct GDALRingAppender
@@ -498,6 +503,16 @@ an averaged value from the two nearby points (in this case (12+3+5)/3).
  * This will be used as a field index to indicate where the elevation value
  * of the contour should be written.
  *
+ *   ELEV_FIELD_MIN=d
+ *
+ * This will be used as a field index to indicate where the minimum elevation value
+ * of the polygon contour should be written.
+ *
+ *   ELEV_FIELD_MAX=d
+ *
+ * This will be used as a field index to indicate where the maximum elevation value
+ * of the polygon contour should be written.
+ *
  *   POLYGONIZE=YES|NO
  *
  * If YES, contour polygons will be created, rather than polygon lines.
@@ -514,10 +529,8 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
-    const char* opt = nullptr;
-
     double contourInterval = 0.0;
-    opt = CSLFetchNameValue( options, "LEVEL_INTERVAL" );
+    const char* opt = CSLFetchNameValue( options, "LEVEL_INTERVAL" );
     if ( opt ) {
         contourInterval = CPLAtof( opt );
     }
@@ -540,7 +553,7 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
         char** values = CSLTokenizeStringComplex( opt, ",", FALSE, FALSE );
         fixedLevels.resize( CSLCount( values ) );
         for ( size_t i = 0; i < fixedLevels.size(); i++ ) {
-            fixedLevels[i] = atoi(values[i]);
+            fixedLevels[i] = CPLAtof(values[i]);
         }
         CSLDestroy( values );
     }
@@ -565,6 +578,18 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
         elevField = atoi( opt );
     }
 
+    int elevFieldMin = -1;
+    opt = CSLFetchNameValue( options, "ELEV_FIELD_MIN" );
+    if ( opt ) {
+        elevFieldMin = atoi( opt );
+    }
+
+    int elevFieldMax = -1;
+    opt = CSLFetchNameValue( options, "ELEV_FIELD_MAX" );
+    if ( opt ) {
+        elevFieldMax = atoi( opt );
+    }
+
     bool polygonize = CPLFetchBool( options, "POLYGONIZE", false );
 
     using namespace marching_squares;
@@ -572,6 +597,8 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
     OGRContourWriterInfo oCWI;
     oCWI.hLayer = static_cast<OGRLayerH>(hLayer);
     oCWI.nElevField = elevField;
+    oCWI.nElevFieldMin = elevFieldMin;
+    oCWI.nElevFieldMax = elevFieldMax;
     oCWI.nIDField = idField;
     oCWI.adfGeoTransform[0] = 0.0;
     oCWI.adfGeoTransform[1] = 1.0;
@@ -588,11 +615,12 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
     {
         if ( polygonize )
         {
-            PolygonContourWriter w( &oCWI );
+            int bSuccess; 
+            PolygonContourWriter w( &oCWI, GDALGetRasterMinimum( hBand, &bSuccess ) );
             typedef PolygonRingAppender<PolygonContourWriter> RingAppender;
             RingAppender appender( w );
             if ( ! fixedLevels.empty() ) {
-                FixedLevelRangeIterator levels( &fixedLevels[0], fixedLevels.size() );
+                FixedLevelRangeIterator levels( &fixedLevels[0], fixedLevels.size(), GDALGetRasterMaximum( hBand, &bSuccess ) );
                 SegmentMerger<RingAppender, FixedLevelRangeIterator> writer(appender, levels, /* polygonize */ true);
                 ContourGeneratorFromRaster<decltype(writer), FixedLevelRangeIterator> cg( hBand, useNoData, noDataValue, writer, levels );
                 cg.process( pfnProgress, pProgressArg );

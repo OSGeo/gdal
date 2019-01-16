@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,164 +30,124 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 # Read test
-def vsihdfs_1():
+def test_vsihdfs_1():
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
     if fp is None:
         gdaltest.have_vsihdfs = False
-        return 'skip'
+        pytest.skip()
 
     gdaltest.have_vsihdfs = True
 
     data = gdal.VSIFReadL(5, 1, fp)
-    if not data or data.decode('ascii') != 'Lorem':
-        return 'fail'
+    assert data and data.decode('ascii') == 'Lorem'
 
     data = gdal.VSIFReadL(1, 6, fp)
-    if not data or data.decode('ascii') != ' ipsum':
-        return 'fail'
+    assert data and data.decode('ascii') == ' ipsum'
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Seek test
-def vsihdfs_2():
+def test_vsihdfs_2():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
 
     gdal.VSIFSeekL(fp, 2, 0) # From beginning
     gdal.VSIFSeekL(fp, 5, 0)
     data = gdal.VSIFReadL(6, 1, fp)
-    if not data or data.decode('ascii') != ' ipsum':
-        return 'fail'
+    assert data and data.decode('ascii') == ' ipsum'
 
     gdal.VSIFSeekL(fp, 7, 1) # From current
     data = gdal.VSIFReadL(3, 1, fp)
-    if not data or data.decode('ascii') != 'sit':
-        return 'fail'
+    assert data and data.decode('ascii') == 'sit'
 
     gdal.VSIFSeekL(fp, 9, 2) # From end
     data = gdal.VSIFReadL(7, 1, fp)
-    if not data or data.decode('ascii') != 'laborum':
-        return 'fail'
+    assert data and data.decode('ascii') == 'laborum'
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Tell test
-def vsihdfs_3():
+def test_vsihdfs_3():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
 
     data = gdal.VSIFReadL(5, 1, fp)
-    if not data or data.decode('ascii') != 'Lorem':
-        return 'fail'
+    assert data and data.decode('ascii') == 'Lorem'
 
     offset = gdal.VSIFTellL(fp)
-    if offset != 5:
-        return 'fail'
+    assert offset == 5
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Write test
-def vsihdfs_4():
-    return 'skip'
+def test_vsihdfs_4():
+    pytest.skip()
 
 # EOF test
-def vsihdfs_5():
+def test_vsihdfs_5():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     fp = gdal.VSIFOpenL(filename, 'rb')
-    if fp is None:
-        return 'fail'
+    assert fp is not None
 
     gdal.VSIFReadL(5, 1, fp)
     eof = gdal.VSIFEofL(fp)
-    if eof != 0:
-        return 'fail'
+    assert eof == 0
 
     gdal.VSIFReadL(1000000, 1, fp)
     eof = gdal.VSIFEofL(fp)
-    if eof != 0:
-        return 'fail'
+    assert eof == 0
 
     gdal.VSIFReadL(1, 1, fp)
     eof = gdal.VSIFEofL(fp)
-    if eof != 1:
-        return 'fail'
+    assert eof == 1
 
     gdal.VSIFSeekL(fp, 0, 0)
     eof = gdal.VSIFEofL(fp)
-    if eof != 0:
-        return 'fail'
+    assert eof == 0
 
     gdal.VSIFCloseL(fp)
-    return 'success'
 
 # Stat test
-def vsihdfs_6():
+def test_vsihdfs_6():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/text.txt'
     statBuf = gdal.VSIStatL(filename, 0)
-    if not statBuf:
-        return 'fail'
+    assert statBuf
 
     filename = '/vsihdfs/file:' + os.getcwd() + '/data/no-such-file.txt'
     statBuf = gdal.VSIStatL(filename, 0)
-    if statBuf:
-        return 'fail'
-
-    return 'success'
+    assert not statBuf
 
 # ReadDir test
-def vsihdfs_7():
+def test_vsihdfs_7():
     if gdaltest.have_vsihdfs == False:
-        return 'skip'
+        pytest.skip()
 
     dirname = '/vsihdfs/file:' + os.getcwd() + '/data/'
     lst = gdal.ReadDir(dirname)
-    if len(lst) < 360:
-        return 'fail'
-
-    return 'success'
+    assert len(lst) >= 360
 
 
-gdaltest_list = [vsihdfs_1,
-                 vsihdfs_2,
-                 vsihdfs_3,
-                 vsihdfs_4,
-                 vsihdfs_5,
-                 vsihdfs_6,
-                 vsihdfs_7]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('vsihdfs')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

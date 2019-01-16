@@ -129,8 +129,8 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
   // Calculate offsets and read in the data. Note that FITS array offsets
   // start at 1...
-  long offset = (nBand - 1) * nRasterXSize * nRasterYSize +
-    nBlockYOff * nRasterXSize + 1;
+  LONGLONG offset = static_cast<LONGLONG>(nBand - 1) * nRasterXSize * nRasterYSize +
+    static_cast<LONGLONG>(nBlockYOff) * nRasterXSize + 1;
   long nElements = nRasterXSize;
 
   // If we haven't written this block to the file yet, then attempting
@@ -171,8 +171,8 @@ CPLErr FITSRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
   // Calculate offsets and read in the data. Note that FITS array offsets
   // start at 1...
-  long offset = (nBand - 1) * nRasterXSize * nRasterYSize +
-    nBlockYOff * nRasterXSize + 1;
+  LONGLONG offset = static_cast<LONGLONG>(nBand - 1) * nRasterXSize * nRasterYSize +
+    static_cast<LONGLONG>(nBlockYOff) * nRasterXSize + 1;
   long nElements = nRasterXSize;
   fits_write_img(hFITS, dataset->fitsDataType, offset, nElements,
                  pImage, &status);

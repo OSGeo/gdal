@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -30,9 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +38,7 @@ import gdaltest
 # Read test of byte file.
 
 
-def byn_1():
+def test_byn_1():
 
     tst = gdaltest.GDALTest('BYN', 'cgg2013ai08_reduced.byn', 1, 64764)
     return tst.testOpen()
@@ -48,7 +46,7 @@ def byn_1():
 ###############################################################################
 #
 
-def byn_2():
+def test_byn_2():
 
     tst = gdaltest.GDALTest('BYN', 'cgg2013ai08_reduced.byn', 1, 64764)
     return tst.testCreateCopy(new_filename='tmp/byn_test_2.byn')
@@ -56,14 +54,4 @@ def byn_2():
 ###############################################################################
 #
 
-gdaltest_list = [
-    byn_1,
-    byn_2]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('byn')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

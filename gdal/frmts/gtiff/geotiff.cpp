@@ -96,6 +96,9 @@
 #ifdef INTERNAL_LIBTIFF
 #  include "tiffiop.h"
 #  include "tif_lerc.h"
+#    ifdef WEBP_SUPPORT
+#      include "webp/encode.h"
+#    endif
 #endif
 #include "tiffvers.h"
 #include "tifvsi.h"
@@ -423,6 +426,8 @@ class GTiffDataset final : public GDALPamDataset
     int           nZLevel;
     int           nLZMAPreset;
     int           nZSTDLevel;
+    int           nWebPLevel;
+    bool          bWebPLossless;
     int           nJpegQuality;
     int           nJpegTablesMode;
 #if HAVE_LERC
@@ -4038,10 +4043,10 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
     const double dfSrcXInc = dfXSize / static_cast<double>( nBufXSize );
     const double dfSrcYInc = dfYSize / static_cast<double>( nBufYSize );
     const double EPS = 1e-10;
-    const int nBlockX1 = static_cast<int>((0+0.5) * dfSrcXInc + dfXOff + EPS) / nBlockXSize;
-    const int nBlockY1 = static_cast<int>((0+0.5) * dfSrcYInc + dfYOff + EPS) / nBlockYSize;
-    const int nBlockX2 = static_cast<int>((nBufXSize-1+0.5) * dfSrcXInc + dfXOff + EPS) / nBlockXSize;
-    const int nBlockY2 = static_cast<int>((nBufYSize-1+0.5) * dfSrcYInc + dfYOff + EPS) / nBlockYSize;
+    const int nBlockX1 = static_cast<int>(std::max(0.0, (0+0.5) * dfSrcXInc + dfXOff + EPS)) / nBlockXSize;
+    const int nBlockY1 = static_cast<int>(std::max(0.0, (0+0.5) * dfSrcYInc + dfYOff + EPS)) / nBlockYSize;
+    const int nBlockX2 = static_cast<int>(std::min(static_cast<double>(nRasterXSize - 1), (nBufXSize-1+0.5) * dfSrcXInc + dfXOff + EPS)) / nBlockXSize;
+    const int nBlockY2 = static_cast<int>(std::min(static_cast<double>(nRasterYSize - 1), (nBufYSize-1+0.5) * dfSrcYInc + dfYOff + EPS)) / nBlockYSize;
 
     thandle_t th = TIFFClientdata( poGDS->hTIFF );
     if( poGDS->SetDirectory() && !VSI_TIFFHasCachedRanges(th) )
@@ -7382,6 +7387,8 @@ GTiffDataset::GTiffDataset() :
     nZLevel(-1),
     nLZMAPreset(-1),
     nZSTDLevel(-1),
+    nWebPLevel(-1),
+    bWebPLossless(false),
     nJpegQuality(-1),
     nJpegTablesMode(-1),
     bPromoteTo8Bits(false),
@@ -8635,6 +8642,10 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
                      poDS->anLercAddCompressionAndVersion);
     }
 #endif
+    if( poDS->nWebPLevel > 0 && poDS->nCompression == COMPRESSION_WEBP)
+        TIFFSetField(hTIFFTmp, TIFFTAG_WEBP_LEVEL, poDS->nWebPLevel);
+    if( poDS->bWebPLossless && poDS->nCompression == COMPRESSION_WEBP)
+        TIFFSetField(hTIFFTmp, TIFFTAG_WEBP_LOSSLESS, 1);
     TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->nPhotometric);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->nSampleFormat);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLESPERPIXEL, poDS->nSamplesPerPixel);
@@ -8784,7 +8795,8 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             nCompression == COMPRESSION_PACKBITS ||
             nCompression == COMPRESSION_LZMA ||
             nCompression == COMPRESSION_ZSTD ||
-            nCompression == COMPRESSION_LERC) ) )
+            nCompression == COMPRESSION_LERC ||
+            nCompression == COMPRESSION_WEBP) ) )
         return false;
 
     int nNextCompressionJobAvail = -1;
@@ -9278,7 +9290,8 @@ void GTiffDataset::Crystalize()
     }
     else
     {
-        TIFFSetDirectory( hTIFF, 0 );
+        TIFFSetDirectory( hTIFF,
+                      static_cast<tdir_t>(TIFFNumberOfDirectories(hTIFF) - 1) );
     }
 
     // Now, reset zip and tiff quality and jpegcolormode.
@@ -10042,6 +10055,8 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->nZLevel = nZLevel;
     poODS->nLZMAPreset = nLZMAPreset;
     poODS->nZSTDLevel = nZSTDLevel;
+    poODS->nWebPLevel = nWebPLevel;
+    poODS->bWebPLossless = bWebPLossless;
     poODS->nJpegTablesMode = nJpegTablesMode;
 #if HAVE_LERC
     poODS->dfMaxZError = dfMaxZError;
@@ -12051,6 +12066,10 @@ bool GTiffDataset::SetDirectory( toff_t nNewOffset )
             TIFFSetField(hTIFF, TIFFTAG_LERC_MAXZERROR, dfMaxZError);
         }
 #endif
+        if( nWebPLevel > 0 && nCompression == COMPRESSION_WEBP)
+            TIFFSetField(hTIFF, TIFFTAG_WEBP_LEVEL, nWebPLevel);
+        if( bWebPLossless && nCompression == COMPRESSION_WEBP)
+            TIFFSetField(hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
     }
 
     return true;
@@ -12985,16 +13004,26 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    if( poOpenInfo->eAccess == GA_Update &&
+        !CPLFetchBool(poOpenInfo->papszOpenOptions, "ALLOW_UPDATE", false) )
+    {
+        CPLError(
+            CE_Warning, CPLE_AppDefined,
+            "Opening a specific TIFF directory is not supported in "
+            "update mode. Switching to read-only" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     if( !GTiffOneTimeInit() )
         return nullptr;
 
-    VSILFILE* l_fpL = VSIFOpenL(pszFilename, "r");
+    const char* pszFlag = poOpenInfo->eAccess == GA_Update ? "r+" : "r";
+    VSILFILE* l_fpL = VSIFOpenL(pszFilename, pszFlag);
     if( l_fpL == nullptr )
         return nullptr;
-    TIFF *l_hTIFF = VSI_TIFFOpen( pszFilename, "r", l_fpL );
+    TIFF *l_hTIFF = VSI_TIFFOpen( pszFilename, pszFlag, l_fpL );
     if( l_hTIFF == nullptr )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
@@ -13036,6 +13065,10 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     poDS->hTIFF = l_hTIFF;
     poDS->bCloseTIFFHandle = true;
 
+    uint16 l_nCompression = 0;
+    TIFFGetFieldDefaulted( l_hTIFF, TIFFTAG_COMPRESSION, &(l_nCompression) );
+    poDS->nCompression = l_nCompression;
+
     if( !EQUAL(pszFilename,poOpenInfo->pszFilename)
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "GTIFF_RAW:") )
     {
@@ -13044,20 +13077,12 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
         poDS->osFilename = pszFilename;
     }
 
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError(
-            CE_Warning, CPLE_AppDefined,
-            "Opening a specific TIFF directory is not supported in "
-            "update mode. Switching to read-only" );
-    }
-
     if( poOpenInfo->AreSiblingFilesLoaded() )
         poDS->oOvManager.TransferSiblingFiles(
             poOpenInfo->StealSiblingFiles() );
 
     if( poDS->OpenOffset( l_hTIFF, &(poDS->poActiveDS),
-                          nOffset, false, GA_ReadOnly,
+                          nOffset, false, poOpenInfo->eAccess,
                           bAllowRGBAInterface, true ) != CE_None )
     {
         delete poDS;
@@ -13871,16 +13896,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         dfNoDataValue = CPLAtofM( pszText );
         if( nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_IEEEFP )
         {
-            if( fabs(dfNoDataValue - std::numeric_limits<float>::max()) <
-                         1e-10 * std::numeric_limits<float>::max() )
-            {
-                dfNoDataValue = std::numeric_limits<float>::max();
-            }
-            else if( fabs(dfNoDataValue - (-std::numeric_limits<float>::max())) <
-                            1e-10 * std::numeric_limits<float>::max() )
-            {
-                dfNoDataValue = -std::numeric_limits<float>::max();
-            }
+            dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(dfNoDataValue);
         }
     }
 
@@ -14237,6 +14253,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             }
         }
 #endif
+    }
+    else if( nCompression == COMPRESSION_WEBP )
+    {
+        oGTiffMDMD.SetMetadataItem( "COMPRESSION", "WEBP", "IMAGE_STRUCTURE" );
     }
     else
     {
@@ -15121,6 +15141,29 @@ static double GTiffGetLERCMaxZError(char** papszOptions)
 }
 #endif
 
+static int GTiffGetWebPLevel(char** papszOptions)
+{
+    int nWebPLevel = -1;
+    const char* pszValue = CSLFetchNameValue( papszOptions, "WEBP_LEVEL" );
+    if( pszValue != nullptr )
+    {
+        nWebPLevel = atoi( pszValue );
+        if( !(nWebPLevel >= 1 && nWebPLevel <= 100) )
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg,
+                      "WEBP_LEVEL=%s value not recognised, ignoring.",
+                      pszValue );
+            nWebPLevel = -1;
+        }
+    }
+    return nWebPLevel;
+}
+
+static bool GTiffGetWebPLossless(char** papszOptions)
+{
+    return CPLFetchBool( papszOptions, "WEBP_LOSSLESS", false);
+}
+
 static int GTiffGetZLevel(char** papszOptions)
 {
     int nZLevel = -1;
@@ -15325,6 +15368,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     const int l_nZLevel = GTiffGetZLevel(papszParmList);
     const int l_nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     const int l_nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
+    const int l_nWebPLevel = GTiffGetWebPLevel(papszParmList);
+    const bool l_bWebPLossless = GTiffGetWebPLossless(papszParmList);
     const int l_nJpegQuality = GTiffGetJpegQuality(papszParmList);
     const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 #if HAVE_LERC
@@ -15513,8 +15558,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
 
+    const bool bAppend = CPLFetchBool(papszParmList, "APPEND_SUBDATASET", false);
+
     char szOpeningFlag[5] = {};
-    strcpy(szOpeningFlag, "w+");
+    strcpy(szOpeningFlag, bAppend ? "r+" : "w+");
     if( bCreateBigTIFF )
         strcat(szOpeningFlag, "8");
     if( eEndianness == ENDIANNESS_BIG )
@@ -15522,7 +15569,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     else if( eEndianness == ENDIANNESS_LITTLE )
         strcat(szOpeningFlag, "l");
 
-    VSILFILE* l_fpL = VSIFOpenL( pszFilename, "w+b" );
+    VSILFILE* l_fpL = VSIFOpenL( pszFilename, bAppend ? "r+b" : "w+b" );
     if( l_fpL == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -15540,6 +15587,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                       pszFilename );
         CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
         return nullptr;
+    }
+
+    if( bAppend )
+    {
+        TIFFCreateDirectory( l_hTIFF );
     }
 
 /* -------------------------------------------------------------------- */
@@ -15896,6 +15948,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, l_dfMaxZError );
     }
 #endif
+    if( l_nCompression == COMPRESSION_WEBP && l_nWebPLevel != -1)
+        TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LEVEL, l_nWebPLevel);
+    if( l_nCompression == COMPRESSION_WEBP && l_bWebPLossless)
+        TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
 
     if( l_nCompression == COMPRESSION_JPEG )
         TIFFSetField( l_hTIFF, TIFFTAG_JPEGTABLESMODE, l_nJpegTablesMode );
@@ -16515,6 +16571,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nZLevel = GTiffGetZLevel(papszParmList);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
+    poDS->nWebPLevel = GTiffGetWebPLevel(papszParmList);
+    poDS->bWebPLossless = GTiffGetWebPLossless(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 #if HAVE_LERC
@@ -17303,6 +17361,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GTiffFillStreamableOffsetAndCount( l_hTIFF, nSize );
         TIFFWriteDirectory( l_hTIFF );
     }
+    TIFFSetDirectory( l_hTIFF,
+                    static_cast<tdir_t>(TIFFNumberOfDirectories(l_hTIFF) - 1) );
+    const toff_t l_nDirOffset = TIFFCurrentDirOffset( l_hTIFF );
     TIFFFlush( l_hTIFF );
     XTIFFClose( l_hTIFF );
     l_hTIFF = nullptr;
@@ -17348,10 +17409,21 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      PAM facilities.                                                 */
 /* -------------------------------------------------------------------- */
     CPLString osFileName("GTIFF_RAW:");
+    const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
+    if( bAppend )
+    {
+        osFileName += CPLSPrintf("GTIFF_DIR:off:" CPL_FRMT_GUIB ":",
+                                 static_cast<GUIntBig>(l_nDirOffset));
+    }
 
     osFileName += bStreaming ? l_osTmpFilename.c_str() : pszFilename;
 
     GDALOpenInfo oOpenInfo( osFileName, GA_Update );
+    if( bAppend )
+    {
+        static const char* const apszOpenOptions[] = { "ALLOW_UPDATE=YES", nullptr };
+        oOpenInfo.papszOpenOptions = const_cast<char**>(apszOpenOptions);
+    }
     if( bStreaming )
     {
         // In case of single strip file, there's a libtiff check that would
@@ -17372,6 +17444,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIUnlink( bStreaming ? l_osTmpFilename.c_str() : pszFilename );
         return nullptr;
     }
+    poDS->eAccess = GA_Update;
     poDS->osFilename = pszFilename;
 
     if( bStreaming )
@@ -17518,6 +17591,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->nZLevel = GTiffGetZLevel(papszOptions);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszOptions);
     poDS->nZSTDLevel = GTiffGetZSTDPreset(papszOptions);
+    poDS->nWebPLevel = GTiffGetWebPLevel(papszOptions);
+    poDS->bWebPLossless = GTiffGetWebPLossless(papszOptions);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
@@ -17563,6 +17638,18 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, poDS->dfMaxZError );
     }
 #endif
+    if( l_nCompression == COMPRESSION_WEBP )
+    {
+        if( poDS->nWebPLevel != -1 )
+        {
+            TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LEVEL, poDS->nWebPLevel );
+        }
+
+        if( poDS->bWebPLossless)
+        {
+          TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LOSSLESS, poDS->bWebPLossless );
+        }
+    }
 
     // Precreate (internal) mask, so that the IBuildOverviews() below
     // has a chance to create also the overviews of the mask.
@@ -18995,6 +19082,8 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
         nCompression = COMPRESSION_LERC;
     }
 #endif
+    else if( EQUAL( pszValue, "WEBP" ) )
+        nCompression = COMPRESSION_WEBP;
     else
         CPLError( CE_Warning, CPLE_IllegalArg,
                   "%s=%s value not recognised, ignoring.",
@@ -19029,6 +19118,7 @@ void GDALRegister_GTiff()
     bool bHasJPEG = false;
     bool bHasLZMA = false;
     bool bHasZSTD = false;
+    bool bHasWebP = false;
 
     GDALDriver *poDriver = new GDALDriver();
 
@@ -19104,6 +19194,12 @@ void GDALRegister_GTiff()
             osCompressValues +=
                     "       <Value>ZSTD</Value>";
         }
+        else if( c->scheme == COMPRESSION_WEBP )
+        {
+            bHasWebP = true;
+            osCompressValues +=
+                    "       <Value>WEBP</Value>";
+        }
     }
 #ifdef HAVE_LERC
     osCompressValues +=
@@ -19154,6 +19250,14 @@ void GDALRegister_GTiff()
     osOptions += ""
 "   <Option name='MAX_Z_ERROR' type='float' description='Maximum error for LERC compression' default='0'/>";
 #endif
+    if ( bHasWebP )
+    {
+      osOptions += ""
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
+"   <Option name='WEBP_LOSSLESS' type='boolean' description='Whether lossless compression should be used' default='FALSE'/>"
+#endif
+"   <Option name='WEBP_LEVEL' type='int' description='WEBP quality level. Low values result in higher compression ratios' default='75'/>";
+    }
     osOptions += ""
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31), or float32 (16)'/>"

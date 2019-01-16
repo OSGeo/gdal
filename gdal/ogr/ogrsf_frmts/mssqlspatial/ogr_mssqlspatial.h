@@ -34,6 +34,13 @@
 #include "cpl_odbc.h"
 #include "cpl_error.h"
 
+#ifdef SQLNCLI_VERSION
+#include <sqlncli.h>
+#endif
+#ifdef MSODBCSQL_VERSION
+#include <msodbcsql.h>
+#endif
+
 class OGRMSSQLSpatialDataSource;
 
 /* layer status */
@@ -449,6 +456,7 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
     int                 nGeometryFormat;
 
     int                 bUseGeometryColumns;
+    bool                bAlwaysOutputFid;
 
     int                 bListAllTables;
 
@@ -487,6 +495,7 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
 
     int                 GetGeometryFormat() { return nGeometryFormat; }
     int                 UseGeometryColumns() { return bUseGeometryColumns; }
+    bool                AlwaysOutputFid() { return bAlwaysOutputFid; }
 
     virtual OGRErr       DeleteLayer( int iLayer ) override;
     virtual OGRLayer    *ICreateLayer( const char *,

@@ -374,7 +374,8 @@ now).
 entire file. It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Starting with GDAL 2.3, creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 
@@ -439,6 +440,10 @@ storage. You'll have to abort yourself with other means such "ghost" uploads
 files smaller than the chunk size, a simple PUT request is used instead of
 the multipart upload API.
 
+Since GDAL 2.4, when listing a directory, files with GLACIER storage class are
+ignored unless the CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE configuration option
+is set to NO.
+
 @since GDAL 2.1
 
 \subsection gdal_virtual_file_systems_vsis3_streaming /vsis3_streaming/ (AWS S3 files: streaming)
@@ -465,7 +470,8 @@ without prior download of the
 entire file. It requires GDAL to be built against libcurl.
 
 Starting with GDAL 2.3, it also allows sequential writing of files (no seeks
-or read operations are then allowed). Deletion of files with VSIUnlink(),
+or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink(),
 creation of directories with VSIMkdir() and deletion of (empty) directories with
 VSIRmdir() are also possible.
 
@@ -558,7 +564,8 @@ without prior download of the entire file.
 It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks
-or read operations are then allowed). A block blob will be created if the
+or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). A block blob will be created if the
 file size is below 4 MB. Beyond, an append blob will be created (with a
 maximum file size of 195 GB).
 
@@ -617,7 +624,8 @@ Authentication options, and read-only features, are identical to
 It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 
@@ -672,7 +680,8 @@ Authentication options, and read-only features, are identical to
 It requires GDAL to be built against libcurl.
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 
@@ -754,7 +763,8 @@ Examples:
 </pre>
 
 It also allows sequential writing of files (no seeks or read operations are
-then allowed). Deletion of files with VSIUnlink() is also supported.
+then allowed, so in particular direct writing of GeoTIFF files with the GTiff
+driver is not supported). Deletion of files with VSIUnlink() is also supported.
 Creation of directories with VSIMkdir() and deletion
 of (empty) directories with VSIRmdir() are also possible.
 

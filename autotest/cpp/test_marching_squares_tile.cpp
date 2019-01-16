@@ -150,7 +150,7 @@ namespace tut
         ContourGenerator<Writer, FixedLevelRangeIterator> cg( 1, 1, /* hasNoData */ false, NaN, writer, levelGenerator );
         cg.feedLine( &data[0] );
 
-        ensure_equals( "Ther is 1 border", writer.borders.size(), size_t(1) );
+        ensure_equals( "There is 1 border", writer.borders.size(), size_t(1) );
         ensure( "Level = inf", levelGenerator.level(1) == Inf );
         ensure_equals( "It has 8 segments", writer.borders[1].size(), size_t(8) );
         ensure( "Check border segment #1", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.5, 0.0 )) ) );

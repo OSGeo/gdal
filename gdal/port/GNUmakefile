@@ -110,7 +110,8 @@ INST_H_FILES = \
 	cpl_vsi.h \
 	cpl_vsi_error.h \
 	cpl_vsi_virtual.h \
-	gdal_csv.h
+	gdal_csv.h \
+	cpl_auto_close.h
 
 install:
 	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done

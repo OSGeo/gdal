@@ -526,7 +526,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     //  Clean up
     //  -------------------------------------------------------------------
 
-    OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+    poStmt->FreeLob(phLocator);
     CPLFree( pszXML );
     delete poStmt;
 
@@ -966,7 +966,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         sDataTable = szBindRDT;
         nRasterId  = nBindRID;
 
-        OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+        poStmt->FreeLob(phLocator);
 
         delete poStmt;
 
@@ -3185,13 +3185,13 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
 
     if( ! poStmt->Execute() )
     {
-        OCIDescriptorFree( phLocatorR, OCI_DTYPE_LOB );
-        OCIDescriptorFree( phLocatorW, OCI_DTYPE_LOB );
+        poStmt->FreeLob(phLocatorR);
+        poStmt->FreeLob(phLocatorW);
         delete poStmt;
         return false;
     }
 
-    OCIDescriptorFree( phLocatorW, OCI_DTYPE_LOB );
+    poStmt->FreeLob(phLocatorW);
 
     // ------------------------------------------------------------
     //  Read the XML metadata from db to memory with nodata updates
@@ -3206,7 +3206,7 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
         CPLFree( pszXML );
     }
 
-    OCIDescriptorFree( phLocatorR, OCI_DTYPE_LOB );
+    poStmt->FreeLob(phLocatorR);
 
     bFlushMetadata = true;
     delete poStmt;
@@ -3596,12 +3596,12 @@ bool GeoRasterWrapper::FlushMetadata()
 
     if( ! poStmt->Execute() )
     {
-        OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+        poStmt->FreeLob(phLocator);
         delete poStmt;
         return false;
     }
 
-    OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
+    poStmt->FreeLob(phLocator);
 
     delete poStmt;
 

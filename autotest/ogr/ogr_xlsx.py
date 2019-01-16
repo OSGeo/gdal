@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,14 +29,13 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 # Check
@@ -44,45 +43,25 @@ from osgeo import ogr
 
 def ogr_xlsx_check(ds):
 
-    if ds.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.TestCapability("foo") == 0
 
-    if ds.GetLayerCount() != 8:
-        gdaltest.post_reason('bad layer count')
-        return 'fail'
+    assert ds.GetLayerCount() == 8, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'Feuille1':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Feuille1', 'bad layer name'
 
-    if lyr.GetGeomType() != ogr.wkbNone:
-        gdaltest.post_reason('bad layer geometry type')
-        return 'fail'
+    assert lyr.GetGeomType() == ogr.wkbNone, 'bad layer geometry type'
 
-    if lyr.GetSpatialRef() is not None:
-        gdaltest.post_reason('bad spatial ref')
-        return 'fail'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
 
-    if lyr.GetFeatureCount() != 26:
-        gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 26
 
-    if lyr.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.TestCapability("foo") == 0
 
     lyr = ds.GetLayer(6)
-    if lyr.GetName() != 'Feuille7':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Feuille7', 'bad layer name'
 
-    if lyr.GetLayerDefn().GetFieldCount() != 12:
-        gdaltest.post_reason('fail')
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 12
 
     type_array = [ogr.OFTString,
                   ogr.OFTInteger,
@@ -98,10 +77,7 @@ def ogr_xlsx_check(ds):
                   ogr.OFTDateTime]
 
     for i, typ in enumerate(type_array):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            gdaltest.post_reason('fail')
-            print(i)
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString(0) != 'val' or \
@@ -110,36 +86,29 @@ def ogr_xlsx_check(ds):
        feat.GetFieldAsDouble(3) != 0.52 or \
        feat.GetFieldAsString(4) != '2012/01/22' or \
        feat.GetFieldAsString(5) != '2012/01/22 18:49:00':
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     feat = lyr.GetNextFeature()
     if feat.IsFieldSet(2):
-        gdaltest.post_reason('fail')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
+    
 ###############################################################################
 # Basic tests
 
 
-def ogr_xlsx_1():
+def test_ogr_xlsx_1():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
-    if drv.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert drv.TestCapability("foo") == 0
 
     ds = ogr.Open('data/test.xlsx')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+    assert ds is not None, 'cannot open dataset'
 
     return ogr_xlsx_check(ds)
 
@@ -147,84 +116,71 @@ def ogr_xlsx_1():
 # Test OGR_XLSX_HEADERS = DISABLE
 
 
-def ogr_xlsx_2():
+def test_ogr_xlsx_2():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', 'DISABLE')
     ds = ogr.Open('data/test.xlsx')
 
     lyr = ds.GetLayerByName('Feuille7')
 
-    if lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 3
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', None)
-
-    return 'success'
 
 ###############################################################################
 # Test OGR_XLSX_FIELD_TYPES = STRING
 
 
-def ogr_xlsx_3():
+def test_ogr_xlsx_3():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', 'STRING')
     ds = ogr.Open('data/test.xlsx')
 
     lyr = ds.GetLayerByName('Feuille7')
 
-    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTString:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
 
 
-def ogr_xlsx_4():
+def test_ogr_xlsx_4():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.xlsx')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Test write support
 
 
-def ogr_xlsx_5():
+def test_ogr_xlsx_5():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f XLSX tmp/test.xlsx data/test.xlsx')
 
@@ -240,11 +196,11 @@ def ogr_xlsx_5():
 # Test reading a file using inlineStr representation.
 
 
-def ogr_xlsx_6():
+def test_ogr_xlsx_6():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     # In this dataset the column titles are not recognised by default.
     gdal.SetConfigOption('OGR_XLSX_HEADERS', 'FORCE')
@@ -252,34 +208,26 @@ def ogr_xlsx_6():
 
     lyr = ds.GetLayerByName('inlineStr')
 
-    if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
-        return 'fail'
+    assert lyr.GetFeatureCount() == 1
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.Bl_District_t != 'text6':
-        gdaltest.post_reason('Did not get expected value(1)')
-        return 'fail'
+    assert feat.Bl_District_t == 'text6', 'Did not get expected value(1)'
 
-    if abs(float(feat.GetField('Lat')) - 23.6247122) > 0.00001:
-        gdaltest.post_reason('Did not get expected value(2)')
-        return 'fail'
+    assert abs(float(feat.GetField('Lat')) - 23.6247122) <= 0.00001, \
+        'Did not get expected value(2)'
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', None)
-
-    return 'success'
 
 ###############################################################################
 # Test update support
 
 
-def ogr_xlsx_7():
+def test_ogr_xlsx_7():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/ogr_xlsx_7.xlsx')
     shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
@@ -288,9 +236,8 @@ def ogr_xlsx_7():
     lyr = ds.GetLayerByName('Feuille7')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
-        gdaltest.post_reason('did not get expected FID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected FID')
     feat.SetField(0, 'modified_value')
     lyr.SetFeature(feat)
     feat = None
@@ -300,29 +247,25 @@ def ogr_xlsx_7():
     lyr = ds.GetLayerByName('Feuille7')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
-        gdaltest.post_reason('did not get expected FID')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected FID')
     if feat.GetField(0) != 'modified_value':
-        gdaltest.post_reason('did not get expected value')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail('did not get expected value')
     feat = None
     ds = None
 
     os.unlink('tmp/ogr_xlsx_7.xlsx')
 
-    return 'success'
-
 ###############################################################################
 # Test number of columns > 26 (#5774)
 
 
-def ogr_xlsx_8():
+def test_ogr_xlsx_8():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = drv.CreateDataSource('/vsimem/ogr_xlsx_8.xlsx')
     lyr = ds.CreateLayer('foo')
@@ -339,23 +282,19 @@ def ogr_xlsx_8():
     content = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
 
-    if str(content).find('<c r="AA1" t="s">') < 0:
-        print(content)
-        return 'fail'
+    assert str(content).find('<c r="AA1" t="s">') >= 0
 
     gdal.Unlink('/vsimem/ogr_xlsx_8.xlsx')
-
-    return 'success'
 
 ###############################################################################
 # Test Integer64
 
 
-def ogr_xlsx_9():
+def test_ogr_xlsx_9():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = drv.CreateDataSource('/vsimem/ogr_xlsx_9.xlsx')
     lyr = ds.CreateLayer('foo')
@@ -374,29 +313,23 @@ def ogr_xlsx_9():
 
     ds = ogr.Open('/vsimem/ogr_xlsx_9.xlsx')
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger64
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
-    if f.GetField(0) != 12345678901234:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert f.GetField(0) == 12345678901234
     ds = None
 
     gdal.Unlink('/vsimem/ogr_xlsx_9.xlsx')
-
-    return 'success'
 
 ###############################################################################
 # Test DateTime with milliseconds
 
 
-def ogr_xlsx_10():
+def test_ogr_xlsx_10():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = drv.CreateDataSource('/vsimem/ogr_xlsx_10.xlsx')
     lyr = ds.CreateLayer('foo')
@@ -414,37 +347,30 @@ def ogr_xlsx_10():
     ds = ogr.Open('/vsimem/ogr_xlsx_10.xlsx')
     lyr = ds.GetLayer(0)
     for i in range(3):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
-            gdaltest.post_reason('failure')
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTDateTime
     f = lyr.GetNextFeature()
     if f.GetField(0) != '2015/12/23 12:34:56.789':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if f.GetField(1) != '2015/12/23 12:34:56':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     if f.GetField(2) != '2015/12/23 12:34:56':
-        gdaltest.post_reason('failure')
         f.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds = None
 
     gdal.Unlink('/vsimem/ogr_xlsx_10.xlsx')
-
-    return 'success'
 
 ###############################################################################
 # Test reading sheet with more than 26 columns with holes (#6363)"
 
 
-def ogr_xlsx_11():
+def test_ogr_xlsx_11():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/not_all_columns_present.xlsx')
     lyr = ds.GetLayer(0)
@@ -452,56 +378,47 @@ def ogr_xlsx_11():
     for i in (0, 27, 28, 29):
         if f['Field%d' % (i + 1)] != 'val%d' % (i + 1):
             f.DumpReadable()
-            return 'fail'
+            pytest.fail()
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test reading a sheet whose file is stored as "absolute" in
 # workbook.xml.rels (#6733)
 
 
-def ogr_xlsx_12():
+def test_ogr_xlsx_12():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open('data/absolute_sheet_filename.xlsx')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f is None:
-        return 'fail'
+    assert f is not None
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test that data types are correctly picked up even if first row is missing data
 
 
-def ogr_xlsx_13():
+def test_ogr_xlsx_13():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
     ds = ogr.Open('data/test_missing_row1_data.xlsx')
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'Sheet1':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Sheet1', 'bad layer name'
 
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
-        gdaltest.post_reason('invalid field name')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == 'Asset Reference', \
+        'invalid field name'
 
-    if lyr.GetLayerDefn().GetFieldCount() != 18:
-        gdaltest.post_reason('invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount()))
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 18, \
+        'invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount())
 
     type_array = [ogr.OFTInteger,
                   ogr.OFTString,
@@ -523,37 +440,31 @@ def ogr_xlsx_13():
                   ogr.OFTString]
 
     for i, typ in enumerate(type_array):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            gdaltest.post_reason('invalid type for field {}'.format(i + 1))
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ, \
+            'invalid type for field {}'.format(i + 1)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test that field names are picked up even if last field has no data
 
 
-def ogr_xlsx_14():
+def test_ogr_xlsx_14():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
     ds = ogr.Open('data/test_empty_last_field.xlsx')
 
     lyr = ds.GetLayer(0)
-    if lyr.GetName() != 'Sheet1':
-        gdaltest.post_reason('bad layer name')
-        return 'fail'
+    assert lyr.GetName() == 'Sheet1', 'bad layer name'
 
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
-        gdaltest.post_reason('invalid field name')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == 'Asset Reference', \
+        'invalid field name'
 
-    if lyr.GetLayerDefn().GetFieldCount() != 18:
-        gdaltest.post_reason('invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount()))
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldCount() == 18, \
+        'invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount())
 
     type_array = [ogr.OFTInteger,
                   ogr.OFTString,
@@ -575,47 +486,40 @@ def ogr_xlsx_14():
                   ogr.OFTString]
 
     for i, typ in enumerate(type_array):
-        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != typ:
-            gdaltest.post_reason('invalid type for field {}'.format(i + 1))
-            return 'fail'
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ, \
+            'invalid type for field {}'.format(i + 1)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test appending a layer to an existing document
 
 
-def ogr_xlsx_15():
+def test_ogr_xlsx_15():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     out_filename = '/vsimem/ogr_xlsx_15.xlsx'
     gdal.VectorTranslate(out_filename, 'data/poly.shp', options='-f XLSX -nln first')
     gdal.VectorTranslate(out_filename, 'data/poly.shp', options='-update -nln second')
 
     ds = ogr.Open(out_filename)
-    if ds.GetLayerByName('first').GetFeatureCount() == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetLayerByName('second').GetFeatureCount() == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetLayerByName('first').GetFeatureCount() != 0
+    assert ds.GetLayerByName('second').GetFeatureCount() != 0
     ds = None
 
     gdal.Unlink(out_filename)
-    return 'success'
 
 ###############################################################################
 # Test Boolean
 
 
-def ogr_xlsx_boolean():
+def test_ogr_xlsx_boolean():
 
     drv = ogr.GetDriverByName('XLSX')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     out_filename = '/vsimem/ogr_xlsx_boolean.xlsx'
     ds = drv.CreateDataSource(out_filename)
@@ -631,46 +535,13 @@ def ogr_xlsx_boolean():
 
     ds = ogr.Open(out_filename)
     lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTBoolean
     f = lyr.GetNextFeature()
-    if f.GetField(0) != 1:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert f.GetField(0) == 1
     ds = None
 
     gdal.Unlink(out_filename)
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_xlsx_1,
-    ogr_xlsx_2,
-    ogr_xlsx_3,
-    ogr_xlsx_4,
-    ogr_xlsx_5,
-    ogr_xlsx_6,
-    ogr_xlsx_7,
-    ogr_xlsx_8,
-    ogr_xlsx_9,
-    ogr_xlsx_10,
-    ogr_xlsx_11,
-    ogr_xlsx_12,
-    ogr_xlsx_13,
-    ogr_xlsx_14,
-    ogr_xlsx_15,
-    ogr_xlsx_boolean,
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_xlsx')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

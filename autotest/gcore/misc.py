@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,52 +29,47 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 import shutil
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 
 ###############################################################################
 # Test that the constructor of GDALDataset() behaves well with a big number of
 # opened/created datasets
 
-def misc_1():
+def test_misc_1():
 
     tab_ds = [None] * 5000
     drv = gdal.GetDriverByName('MEM')
     for i, _ in enumerate(tab_ds):
         name = 'mem_%d' % i
         tab_ds[i] = drv.Create(name, 1, 1, 1)
-        if tab_ds[i] is None:
-            return 'fail'
-    return 'success'
-
+        assert tab_ds[i] is not None
+    
 ###############################################################################
 # Test that OpenShared() works as expected by opening a big number of times
 # the same dataset with it. If it did not work, that would exhaust the system
 # limit of maximum file descriptors opened at the same time
 
 
-def misc_2():
+def test_misc_2():
 
     tab_ds = [None for i in range(5000)]
     for i, _ in enumerate(tab_ds):
         tab_ds[i] = gdal.OpenShared('data/byte.tif')
-        if tab_ds[i] is None:
-            return 'fail'
+        assert tab_ds[i] is not None
 
-    return 'success'
-
+    
 ###############################################################################
 # Test OpenShared() with a dataset whose filename != description (#2797)
 
 
-def misc_3():
+def test_misc_3():
 
     with gdaltest.error_handler():
         ds = gdal.OpenShared('../gdrivers/data/small16.aux')
@@ -92,13 +87,11 @@ def misc_3():
     ds = None
     ds2 = None
 
-    return 'success'
-
 ###############################################################################
 # Test Create() with invalid arguments
 
 
-def misc_4():
+def test_misc_4():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -110,8 +103,6 @@ def misc_4():
     drv.Delete('tmp/foo')
 
     gdal.PopErrorHandler()
-
-    return 'success'
 
 
 ###############################################################################
@@ -196,7 +187,7 @@ def misc_5_internal(drv, datatype, nBands):
     return 1
 
 
-def misc_5():
+def test_misc_5():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -212,8 +203,7 @@ def misc_5():
             os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
         except OSError:
-            gdaltest.post_reason('Cannot create tmp/tmp')
-            return 'fail'
+            pytest.fail('Cannot create tmp/tmp')
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
@@ -302,8 +292,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                         # Hum the directory already exists... Not expected, but let's try to go on
                     except OSError:
                         reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                        gdaltest.post_reason(reason)
-                        return 'fail'
+                        pytest.fail(reason)
 
                 filename = get_filename(drv, dirname)
 
@@ -320,8 +309,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     shutil.rmtree(dirname)
                 except OSError:
                     reason = 'Cannot remove %s after drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                    gdaltest.post_reason(reason)
-                    return 'fail'
+                    pytest.fail(reason)
 
                 if has_succeeded and drv.ShortName not in setDriversDone and nBands > 0:
                     setDriversDone.add(drv.ShortName)
@@ -361,7 +349,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     if drv.ShortName not in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
                         dst_ds = drv.CreateCopy(filename, ds, callback=misc_6_interrupt_callback_class().cbk)
                         if dst_ds is not None:
-                            gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
                             dst_ds = None
 
                             try:
@@ -369,7 +356,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                             except OSError:
                                 pass
 
-                            return 'fail'
+                            pytest.fail('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
                         dst_ds = None
 
@@ -381,14 +368,11 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                             os.mkdir(dirname)
                         except OSError:
                             reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                            gdaltest.post_reason(reason)
-                            return 'fail'
+                            pytest.fail(reason)
     ds = None
 
-    return 'success'
 
-
-def misc_6():
+def test_misc_6():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -404,8 +388,7 @@ def misc_6():
             os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
         except OSError:
-            gdaltest.post_reason('Cannot create tmp/tmp')
-            return 'fail'
+            pytest.fail('Cannot create tmp/tmp')
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
@@ -438,70 +421,57 @@ def misc_6():
 
     gdal.PopErrorHandler()
 
-    return 'success'
-
 ###############################################################################
 # Test gdal.InvGeoTransform()
 
 
-def misc_7():
+def test_misc_7():
 
     try:
         gdal.InvGeoTransform
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.InvGeoTransform(gt)
     expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
     for i in range(6):
-        if abs(res[i] - expected_inv_gt[i]) > 1e-6:
-            print(res)
-            return 'fail'
+        assert abs(res[i] - expected_inv_gt[i]) <= 1e-6
 
-    return 'success'
-
+    
 ###############################################################################
 # Test gdal.ApplyGeoTransform()
 
 
-def misc_8():
+def test_misc_8():
 
     try:
         gdal.ApplyGeoTransform
     except AttributeError:
-        return 'skip'
+        pytest.skip()
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.ApplyGeoTransform(gt, 10, 1)
-    if res != [11.0, 19.0]:
-        return 'fail'
-
-    return 'success'
+    assert res == [11.0, 19.0]
 
 ###############################################################################
 # Test setting and retrieving > 2 GB values for GDAL max cache (#3689)
 
 
-def misc_9():
+def test_misc_9():
 
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(3000000000)
     ret_val = gdal.GetCacheMax()
     gdal.SetCacheMax(old_val)
 
-    if ret_val != 3000000000:
-        gdaltest.post_reason('did not get expected value')
-        print(ret_val)
-        return 'fail'
-
-    return 'success'
+    assert ret_val == 3000000000, 'did not get expected value'
 
 
 ###############################################################################
 # Test VSIBufferedReaderHandle (fix done in r21358)
 
-def misc_10():
+def test_misc_10():
 
     try:
         os.remove('data/byte.tif.gz.properties')
@@ -517,25 +487,23 @@ def misc_10():
 
     import struct
     ar = struct.unpack('B' * 4, data)
-    if ar != (73, 73, 42, 0):
-        return 'fail'
+    assert ar == (73, 73, 42, 0)
 
     try:
         os.remove('data/byte.tif.gz.properties')
     except OSError:
         pass
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test that we can open a symlink whose pointed filename isn't a real
 # file, but a filename that GDAL recognizes
 
-def misc_11():
+def test_misc_11():
 
     if not gdaltest.support_symlink():
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/symlink.tif')
     os.symlink('GTIFF_DIR:1:data/byte.tif', 'tmp/symlink.tif')
@@ -543,28 +511,22 @@ def misc_11():
     ds = gdal.Open('tmp/symlink.tif')
     if ds is None:
         os.remove('tmp/symlink.tif')
-        return 'fail'
+        pytest.fail()
     desc = ds.GetDescription()
     ds = None
 
     os.remove('tmp/symlink.tif')
 
-    if desc != 'GTIFF_DIR:1:data/byte.tif':
-        gdaltest.post_reason('did not get expected description')
-        print(desc)
-        return 'fail'
-
-    return 'success'
+    assert desc == 'GTIFF_DIR:1:data/byte.tif', 'did not get expected description'
 
 ###############################################################################
 # Test CreateCopy() with a target filename in a non-existing dir
 
 
-def misc_12():
+def test_misc_12():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        gdaltest.post_reason('would crash')
-        return 'skip'
+        pytest.skip('would crash')
 
     import test_cli_utilities
     gdal_translate_path = test_cli_utilities.get_gdal_translate_path()
@@ -598,10 +560,8 @@ def misc_12():
             ds = drv.CreateCopy('/nonexistingpath' + get_filename(drv, ''), src_ds)
             gdal.PopErrorHandler()
             if ds is None and gdal.GetLastErrorMsg() == '':
-                gdaltest.post_reason('failure')
-                print('CreateCopy() into non existing dir fails without error message for driver %s' % drv.ShortName)
                 gdal.Unlink('/vsimem/misc_12_src.tif')
-                return 'fail'
+                pytest.fail('CreateCopy() into non existing dir fails without error message for driver %s' % drv.ShortName)
             ds = None
 
             if gdal_translate_path is not None:
@@ -624,68 +584,159 @@ def misc_12():
 
             gdal.Unlink('/vsimem/misc_12_src.tif')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test CreateCopy() with incompatible driver types (#5912)
 
 
-def misc_13():
+def test_misc_13():
 
     # Raster-only -> vector-only
     ds = gdal.Open('data/byte.tif')
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('ESRI Shapefile').CreateCopy('/vsimem/out.shp', ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert out_ds is None
 
     # Raster-only -> vector-only
     ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
     gdal.PushErrorHandler()
     out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', ds)
     gdal.PopErrorHandler()
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert out_ds is None
 
-    return 'success'
+###############################################################################
+# Test ConfigureLogging()
 
+def test_misc_14():
+    import collections
+    import logging
+
+    class MockLoggingHandler(logging.Handler):
+        def __init__(self, *args, **kwargs):
+            super(MockLoggingHandler, self).__init__(*args, **kwargs)
+            self.messages = collections.defaultdict(list)
+
+        def emit(self, record):
+            self.messages[record.levelname].append(record.getMessage())
+
+
+    logger = logging.getLogger('gdal_logging_test')
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    handler = MockLoggingHandler(level=logging.DEBUG)
+    logger.addHandler(handler)
+
+    prev_debug = gdal.GetConfigOption("CPL_DEBUG")
+    try:
+        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test', enable_debug=True)
+
+        assert gdal.GetConfigOption("CPL_DEBUG") == "ON", "should have enabled debug"
+
+        gdal.Debug("test1", "debug1")
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        expected = {
+            'DEBUG': ["test1: debug1", "FileIO: debug2"],
+            'INFO': ["AppDefined: info1"],
+            'WARNING': ["AssertionFailed: warning1"],
+            'ERROR': ["99999: error1"],
+        }
+
+        assert handler.messages == expected, "missing log messages"
+
+        gdal.SetErrorHandler('CPLDefaultErrorHandler')
+        handler.messages.clear()
+        gdal.SetConfigOption('CPL_DEBUG', "OFF")
+
+        gdal.ConfigurePythonLogging(logger_name='gdal_logging_test')
+
+        assert gdal.GetConfigOption("CPL_DEBUG") == "OFF", \
+            "shouldn't have enabled debug"
+
+        # these get suppressed by CPL_DEBUG
+        gdal.Debug("test1", "debug3")
+        # these don't
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_None, "debug4")
+
+        assert handler.messages['DEBUG'] == ['debug4'], "unexpected log messages"
+
+    finally:
+        gdal.SetErrorHandler('CPLDefaultErrorHandler')
+        gdal.SetConfigOption('CPL_DEBUG', prev_debug)
+        logger.removeHandler(handler)
+
+    
+
+###############################################################################
+# Test SetErrorHandler
+
+def test_misc_15():
+    messages0 = []
+    def handle0(ecls, ecode, emsg):
+        messages0.append((ecls, ecode, emsg))
+
+    messages1 = []
+    def handle1(ecls, ecode, emsg):
+        messages1.append((ecls, ecode, emsg))
+
+    prev_debug = gdal.GetConfigOption("CPL_DEBUG")
+    try:
+        gdal.SetErrorHandler(handle0)
+        gdal.SetConfigOption('CPL_DEBUG', "ON")
+
+        gdal.Debug('foo', 'bar')
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        expected0 = [
+            (gdal.CE_Debug, 0, 'foo: bar'),
+            (gdal.CE_Debug, gdal.CPLE_FileIO, "debug2"),
+            (gdal.CE_None, gdal.CPLE_AppDefined, "info1"),
+            (gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1"),
+            (gdal.CE_Failure, 99999, "error1"),
+        ]
+        assert expected0 == messages0, "SetErrorHandler: mismatched log messages"
+        messages0[:] = []
+
+        # Check Push
+        gdal.PushErrorHandler(handle1)
+        gdal.SetConfigOption("CPL_DEBUG", "OFF")
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        assert len(messages0) == 0, "PushErrorHandler: unexpected log messages"
+        assert len(messages1) == 4, "PushErrorHandler: missing log messages"
+
+        # and pop restores original behaviour
+        gdal.PopErrorHandler()
+        messages1[:] = []
+        gdal.Error(gdal.CE_Debug, gdal.CPLE_FileIO, "debug2")
+        gdal.Error(gdal.CE_None, gdal.CPLE_AppDefined, "info1")
+        gdal.Error(gdal.CE_Warning, gdal.CPLE_AssertionFailed, "warning1")
+        gdal.Error(gdal.CE_Failure, 99999, "error1")
+
+        assert len(messages0) == 4, "PopErrorHandler: missing log messages"
+        assert len(messages1) == 0, "PopErrorHandler: unexpected log messages"
+
+    finally:
+        gdal.SetErrorHandler('CPLDefaultErrorHandler')
+        gdal.SetConfigOption('CPL_DEBUG', prev_debug)
+
+    
 ###############################################################################
 
 
-def misc_cleanup():
+def test_misc_cleanup():
 
     try:
         shutil.rmtree('tmp/tmp')
     except OSError:
         pass
-
-    return 'success'
-
-
-gdaltest_list = [misc_1,
-                 misc_2,
-                 misc_3,
-                 misc_4,
-                 misc_5,
-                 misc_6,
-                 misc_7,
-                 misc_8,
-                 misc_9,
-                 misc_10,
-                 misc_11,
-                 misc_12,
-                 misc_13,
-                 misc_cleanup]
-
-# gdaltest_list = [ misc_6 ]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('misc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

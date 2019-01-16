@@ -145,14 +145,14 @@ typedef struct
     struct dirent ent;
     struct dirent64 ent64;
     int    fd;
-} VSIDIR;
+} VSIDIRPreload;
 
 std::set<VSILFILE*> oSetFiles;
 std::map<int, VSILFILE*> oMapfdToVSI;
 std::map<VSILFILE*, int> oMapVSITofd;
 std::map<VSILFILE*, std::string> oMapVSIToString;
-std::set<VSIDIR*> oSetVSIDIR;
-std::map<int, VSIDIR*> oMapfdToVSIDIR;
+std::set<VSIDIRPreload*> oSetVSIDIRPreload;
+std::map<int, VSIDIRPreload*> oMapfdToVSIDIRPreload;
 std::map<int, std::string> oMapDirFdToName;
 std::string osCurDir;
 
@@ -366,13 +366,13 @@ static bool GET_DEBUG_VSIPRELOAD_COND(VSILFILE* fpVSIL)
     return DEBUG_VSIPRELOAD && (!DEBUG_VSIPRELOAD_ONLY_VSIL || fpVSIL != nullptr);
 }
 
-static bool GET_DEBUG_VSIPRELOAD_COND(VSIDIR* dirP)
+static bool GET_DEBUG_VSIPRELOAD_COND(VSIDIRPreload* dirP)
 {
     return
         DEBUG_VSIPRELOAD &&
     // cppcheck-suppress knownConditionTrueFalse
         (!DEBUG_VSIPRELOAD_ONLY_VSIL ||
-         oSetVSIDIR.find(dirP) != oSetVSIDIR.end());
+         oSetVSIDIRPreload.find(dirP) != oSetVSIDIRPreload.end());
 }
 
 /************************************************************************/
@@ -1081,7 +1081,7 @@ int CPL_DLL close( int fd )
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     {
         CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
-        assert( oMapfdToVSIDIR.find(fd) == oMapfdToVSIDIR.end() );
+        assert( oMapfdToVSIDIRPreload.find(fd) == oMapfdToVSIDIRPreload.end() );
 
         // cppcheck-suppress redundantIfRemove
         if( oMapDirFdToName.find(fd) != oMapDirFdToName.end())
@@ -1456,14 +1456,14 @@ DIR CPL_DLL *opendir( const char *name )
             ret = nullptr;
         else
         {
-            VSIDIR* mydir = static_cast<VSIDIR *>(malloc(sizeof(VSIDIR)));
+            VSIDIRPreload* mydir = static_cast<VSIDIRPreload *>(malloc(sizeof(VSIDIRPreload)));
             mydir->pszDirname = CPLStrdup(name);
             mydir->papszDir = papszDir;
             mydir->nIter = 0;
             mydir->fd = -1;
             ret = (DIR*)mydir;
             CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
-            oSetVSIDIR.insert(mydir);
+            oSetVSIDIRPreload.insert(mydir);
         }
     }
     else
@@ -1479,7 +1479,7 @@ DIR CPL_DLL *opendir( const char *name )
 /*                             filldir()                                */
 /************************************************************************/
 
-static bool filldir( VSIDIR* mydir )
+static bool filldir( VSIDIRPreload* mydir )
 {
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(mydir);
     char* pszName = mydir->papszDir[mydir->nIter++];
@@ -1515,11 +1515,11 @@ static bool filldir( VSIDIR* mydir )
 struct dirent CPL_DLL *readdir( DIR *dirp )
 {
     myinit();
-    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIR*)dirp);
+    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIRPreload*)dirp);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "readdir(%p)\n", dirp);
-    if( oSetVSIDIR.find((VSIDIR*)dirp) != oSetVSIDIR.end() )
+    if( oSetVSIDIRPreload.find((VSIDIRPreload*)dirp) != oSetVSIDIRPreload.end() )
     {
-        VSIDIR* mydir = (VSIDIR*)dirp;
+        VSIDIRPreload* mydir = (VSIDIRPreload*)dirp;
         if( !filldir(mydir) )
             return nullptr;
 
@@ -1536,11 +1536,11 @@ struct dirent CPL_DLL *readdir( DIR *dirp )
 struct dirent64 CPL_DLL *readdir64( DIR *dirp )
 {
     myinit();
-    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIR*)dirp);
+    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIRPreload*)dirp);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "readdir64(%p)\n", dirp);
-    if( oSetVSIDIR.find((VSIDIR*)dirp) != oSetVSIDIR.end() )
+    if( oSetVSIDIRPreload.find((VSIDIRPreload*)dirp) != oSetVSIDIRPreload.end() )
     {
-        VSIDIR* mydir = (VSIDIR*)dirp;
+        VSIDIRPreload* mydir = (VSIDIRPreload*)dirp;
         if( !filldir(mydir) )
             return nullptr;
 
@@ -1557,20 +1557,20 @@ struct dirent64 CPL_DLL *readdir64( DIR *dirp )
 int CPL_DLL closedir( DIR *dirp )
 {
     myinit();
-    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIR*)dirp);
+    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIRPreload*)dirp);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "closedir(%p)\n", dirp);
-    if( oSetVSIDIR.find((VSIDIR*)dirp) != oSetVSIDIR.end() )
+    if( oSetVSIDIRPreload.find((VSIDIRPreload*)dirp) != oSetVSIDIRPreload.end() )
     {
-        VSIDIR* mydir = (VSIDIR*)dirp;
+        VSIDIRPreload* mydir = (VSIDIRPreload*)dirp;
         CPLFree(mydir->pszDirname);
         CSLDestroy(mydir->papszDir);
         CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
         if( mydir->fd >= 0 )
         {
-            oMapfdToVSIDIR.erase(mydir->fd);
+            oMapfdToVSIDIRPreload.erase(mydir->fd);
             close(mydir->fd);
         }
-        oSetVSIDIR.erase(mydir);
+        oSetVSIDIRPreload.erase(mydir);
         free(mydir);
         return 0;
     }
@@ -1585,17 +1585,17 @@ int CPL_DLL closedir( DIR *dirp )
 int CPL_DLL dirfd( DIR *dirp )
 {
     myinit();
-    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIR*)dirp);
+    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND((VSIDIRPreload*)dirp);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "dirfd(%p)\n", dirp);
     int ret = 0;
-    if( oSetVSIDIR.find((VSIDIR*)dirp) != oSetVSIDIR.end() )
+    if( oSetVSIDIRPreload.find((VSIDIRPreload*)dirp) != oSetVSIDIRPreload.end() )
     {
-        VSIDIR* mydir = (VSIDIR*)dirp;
+        VSIDIRPreload* mydir = (VSIDIRPreload*)dirp;
         if( mydir->fd < 0 )
         {
             mydir->fd = open("/dev/zero", O_RDONLY);
             CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
-            oMapfdToVSIDIR[mydir->fd] = mydir;
+            oMapfdToVSIDIRPreload[mydir->fd] = mydir;
         }
         ret = mydir->fd;
     }
@@ -1611,11 +1611,11 @@ int CPL_DLL dirfd( DIR *dirp )
 
 int CPL_DLL fchdir( int fd )
 {
-    VSIDIR* mydir = nullptr;
+    VSIDIRPreload* mydir = nullptr;
     {
         CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
-        if( oMapfdToVSIDIR.find(fd) != oMapfdToVSIDIR.end() )
-            mydir = oMapfdToVSIDIR[fd];
+        if( oMapfdToVSIDIRPreload.find(fd) != oMapfdToVSIDIRPreload.end() )
+            mydir = oMapfdToVSIDIRPreload[fd];
     }
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(mydir);
     std::string name;

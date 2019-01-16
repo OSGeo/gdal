@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,13 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
+import pytest
 
 ###############################################################################
 #
@@ -67,9 +66,7 @@ def search_all_features(lyr):
                 found_geom = True
             else:
                 feat = lyr.GetNextFeature()
-        if not found_geom:
-            gdaltest.post_reason('did not find geometry for %s' % (geom.ExportToWkt()))
-            return 'fail'
+        assert found_geom, ('did not find geometry for %s' % (geom.ExportToWkt()))
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
@@ -98,20 +95,16 @@ def search_all_features(lyr):
         lyr.ResetReading()
         fc = fc + lyr.GetFeatureCount()
 
-    if fc != fc_ref:
-        gdaltest.post_reason('layer %s: expected %d. got %d' % (lyr.GetName(), fc_ref, fc))
-        return 'fail'
-
-    return 'success'
+    assert fc == fc_ref, ('layer %s: expected %d. got %d' % (lyr.GetName(), fc_ref, fc))
 
 ###############################################################################
 # Test
 
 
-def ogr_shape_sbn_1():
+def test_ogr_shape_sbn_1():
 
     if not gdaltest.download_file('http://pubs.usgs.gov/sim/3194/contents/Cochiti_shapefiles.zip', 'Cochiti_shapefiles.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
@@ -121,39 +114,25 @@ def ogr_shape_sbn_1():
             try:
                 os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     ds = ogr.Open('tmp/cache/CochitiDamShapeFiles')
     for i in range(ds.GetLayerCount()):
         lyr = ds.GetLayer(i)
-        ret = search_all_features(lyr)
-        if ret != 'success':
-            return ret
+        search_all_features(lyr)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test
 
 
-def ogr_shape_sbn_2():
+def test_ogr_shape_sbn_2():
 
     ds = ogr.Open('data/CoHI_GCS12.shp')
     lyr = ds.GetLayer(0)
     return search_all_features(lyr)
 
 
-gdaltest_list = [
-    ogr_shape_sbn_1,
-    ogr_shape_sbn_2,
-]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_shape_sbn')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

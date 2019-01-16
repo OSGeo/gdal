@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,25 +29,24 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 
 
-def ogr_tiger_1():
+def test_ogr_tiger_1():
 
     ogrtest.tiger_ds = None
 
     if not gdaltest.download_file('http://www2.census.gov/geo/tiger/tiger2006se/AL/TGR01001.ZIP', 'TGR01001.ZIP'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/TGR01001/TGR01001.MET')
@@ -61,79 +60,64 @@ def ogr_tiger_1():
             try:
                 os.stat('tmp/cache/TGR01001/TGR01001.MET')
             except OSError:
-                return 'skip'
+                pytest.skip()
         except:
-            return 'skip'
+            pytest.skip()
 
     ogrtest.tiger_ds = ogr.Open('tmp/cache/TGR01001')
-    if ogrtest.tiger_ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ogrtest.tiger_ds is not None
 
     ogrtest.tiger_ds = None
     # also test opening with a filename (#4443)
     ogrtest.tiger_ds = ogr.Open('tmp/cache/TGR01001/TGR01001.RT1')
-    if ogrtest.tiger_ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ogrtest.tiger_ds is not None
 
     # Check a few features.
     cc_layer = ogrtest.tiger_ds.GetLayerByName('CompleteChain')
-    if cc_layer.GetFeatureCount() != 19289:
-        gdaltest.post_reason('wrong cc feature count')
-        return 'fail'
+    assert cc_layer.GetFeatureCount() == 19289, 'wrong cc feature count'
 
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
 
-    if feat.TLID != 2833200 or feat.FRIADDL is not None or feat.BLOCKL != 5000:
-        gdaltest.post_reason('wrong attribute on cc feature.')
-        return 'fail'
+    assert feat.TLID == 2833200 and feat.FRIADDL is None and feat.BLOCKL == 5000, \
+        'wrong attribute on cc feature.'
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)', max_error=0.000001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)', max_error=0.000001) == 0
 
     feat = ogrtest.tiger_ds.GetLayerByName('TLIDRange').GetNextFeature()
-    if feat.MODULE != 'TGR01001' or feat.TLMINID != 2822718:
-        gdaltest.post_reason('got wrong TLIDRange attributes')
-        return 'fail'
-
-    return 'success'
+    assert feat.MODULE == 'TGR01001' and feat.TLMINID == 2822718, \
+        'got wrong TLIDRange attributes'
 
 ###############################################################################
 # Run test_ogrsf
 
 
-def ogr_tiger_2():
+def test_ogr_tiger_2():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/cache/TGR01001')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Test TIGER writing
 
 
-def ogr_tiger_3():
+def test_ogr_tiger_3():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree('tmp/outtiger')
@@ -176,10 +160,10 @@ def ogr_tiger_3():
 # Load into a /vsimem instance to test virtualization.
 
 
-def ogr_tiger_4():
+def test_ogr_tiger_4():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     # load all the files into memory.
     for filename in gdal.ReadDir('tmp/cache/TGR01001'):
@@ -195,38 +179,29 @@ def ogr_tiger_4():
 
     # Try reading.
     ogrtest.tiger_ds = ogr.Open('/vsimem/tigertest/TGR01001.RT1')
-    if ogrtest.tiger_ds is None:
-        gdaltest.post_reason('fail to open.')
-        return 'fail'
+    assert ogrtest.tiger_ds is not None, 'fail to open.'
 
     ogrtest.tiger_ds = None
     # also test opening with a filename (#4443)
     ogrtest.tiger_ds = ogr.Open('tmp/cache/TGR01001/TGR01001.RT1')
-    if ogrtest.tiger_ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ogrtest.tiger_ds is not None
 
     # Check a few features.
     cc_layer = ogrtest.tiger_ds.GetLayerByName('CompleteChain')
-    if cc_layer.GetFeatureCount() != 19289:
-        gdaltest.post_reason('wrong cc feature count')
-        return 'fail'
+    assert cc_layer.GetFeatureCount() == 19289, 'wrong cc feature count'
 
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
 
-    if feat.TLID != 2833200 or feat.FRIADDL is not None or feat.BLOCKL != 5000:
-        gdaltest.post_reason('wrong attribute on cc feature.')
-        return 'fail'
+    assert feat.TLID == 2833200 and feat.FRIADDL is None and feat.BLOCKL == 5000, \
+        'wrong attribute on cc feature.'
 
-    if ogrtest.check_feature_geometry(feat, 'LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)', max_error=0.000001) != 0:
-        return 'fail'
+    assert ogrtest.check_feature_geometry(feat, 'LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)', max_error=0.000001) == 0
 
     feat = ogrtest.tiger_ds.GetLayerByName('TLIDRange').GetNextFeature()
-    if feat.MODULE != 'TGR01001' or feat.TLMINID != 2822718:
-        gdaltest.post_reason('got wrong TLIDRange attributes')
-        return 'fail'
+    assert feat.MODULE == 'TGR01001' and feat.TLMINID == 2822718, \
+        'got wrong TLIDRange attributes'
 
     # Try to recover memory from /vsimem.
     for filename in gdal.ReadDir('tmp/cache/TGR01001'):
@@ -236,31 +211,16 @@ def ogr_tiger_4():
 
         gdal.Unlink('/vsimem/tigertest/' + filename)
 
-    return 'success'
-
+    
 ###############################################################################
 
 
-def ogr_tiger_cleanup():
+def test_ogr_tiger_cleanup():
 
     if ogrtest.tiger_ds is None:
-        return 'skip'
+        pytest.skip()
 
     ogrtest.tiger_ds = None
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_tiger_1,
-    ogr_tiger_2,
-    ogr_tiger_3,
-    ogr_tiger_4,
-    ogr_tiger_cleanup]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_tiger')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -32,8 +32,8 @@
 
 import sys
 import os
+import pytest
 
-sys.path.append('../pymod')
 sys.path.append('../gcore')
 
 from osgeo import gdal
@@ -49,7 +49,7 @@ import test_cli_utilities
 def test_gdal_rasterize_1():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Setup working spatial reference
     # sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -105,25 +105,16 @@ def test_gdal_rasterize_1():
 
     # Run the algorithm.
     (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_rasterize_path() + ' -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 tmp/rast1.tab tmp/rast1.tif')
-    if not (err is None or err == ''):
-        gdaltest.post_reason('got error/warning')
-        print(err)
-        return 'fail'
+    assert (err is None or err == ''), 'got error/warning'
 
     # Check results.
 
     target_ds = gdal.Open('tmp/rast1.tif')
     expected = 6452
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
-        return 'fail'
+    assert checksum == expected, 'Did not get expected image checksum'
 
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test rasterization with ALL_TOUCHED (adapted from alg/rasterize.py).
@@ -132,7 +123,7 @@ def test_gdal_rasterize_1():
 def test_gdal_rasterize_2():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     # Create a raster to rasterize into.
 
@@ -151,15 +142,9 @@ def test_gdal_rasterize_2():
     target_ds = gdal.Open('tmp/rast2.tif')
     expected = 121
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdaltest.post_reason('Did not get expected image checksum')
-
-        return 'fail'
+    assert checksum == expected, 'Did not get expected image checksum'
 
     target_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test creating an output file
@@ -168,10 +153,10 @@ def test_gdal_rasterize_2():
 def test_gdal_rasterize_3():
 
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
 
@@ -180,30 +165,19 @@ def test_gdal_rasterize_3():
     ds_ref = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43dt0.tif')
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0.0:
-        gdaltest.post_reason('did not get expected nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0.0, \
+        'did not get expected nodata value'
 
-    if ds.RasterXSize != 121 or ds.RasterYSize != 121:
-        gdaltest.post_reason('did not get expected dimensions')
-        return 'fail'
+    assert ds.RasterXSize == 121 and ds.RasterYSize == 121, \
+        'did not get expected dimensions'
 
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(gt[i] - gt_ref[i]) > 1e-6:
-            gdaltest.post_reason('did not get expected geotransform')
-            print(gt)
-            print(gt_ref)
-            return 'fail'
+        assert abs(gt[i] - gt_ref[i]) <= 1e-6, 'did not get expected geotransform'
 
     wkt = ds.GetProjectionRef()
-    if wkt.find("WGS_1984") == -1:
-        gdaltest.post_reason('did not get expected SRS')
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'
 
 ###############################################################################
 # Same but with -tr argument
@@ -212,10 +186,10 @@ def test_gdal_rasterize_3():
 def test_gdal_rasterize_4():
 
     if test_cli_utilities.get_gdal_contour_path() is None:
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GTiff').Delete('tmp/n43dt0.tif')
 
@@ -224,38 +198,25 @@ def test_gdal_rasterize_4():
     ds_ref = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43dt0.tif')
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 0.0:
-        gdaltest.post_reason('did not get expected nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0.0, \
+        'did not get expected nodata value'
 
     # Allow output to grow by 1/2 cell, as per #6058
-    if ds.RasterXSize != 122 or ds.RasterYSize != 122:
-        gdaltest.post_reason('did not get expected dimensions')
-        return 'fail'
+    assert ds.RasterXSize == 122 and ds.RasterYSize == 122, \
+        'did not get expected dimensions'
 
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
-    if abs(gt[1] - gt_ref[1]) > 1e-6 or abs(gt[5] - gt_ref[5]) > 1e-6:
-        gdaltest.post_reason('did not get expected geotransform(dx/dy)')
-        print(gt)
-        print(gt_ref)
-        return 'fail'
+    assert abs(gt[1] - gt_ref[1]) <= 1e-6 and abs(gt[5] - gt_ref[5]) <= 1e-6, \
+        'did not get expected geotransform(dx/dy)'
 
     # Allow output to grow by 1/2 cell, as per #6058
-    if abs(gt[0] + (gt[1] / 2) - gt_ref[0]) > 1e-6 or \
-       abs(gt[3] + (gt[5] / 2) - gt_ref[3]) > 1e-6:
-        gdaltest.post_reason('did not get expected geotransform')
-        print(gt)
-        print(gt_ref)
-        return 'fail'
+    assert (abs(gt[0] + (gt[1] / 2) - gt_ref[0]) <= 1e-6 and \
+       abs(gt[3] + (gt[5] / 2) - gt_ref[3]) <= 1e-6), \
+        'did not get expected geotransform'
 
     wkt = ds.GetProjectionRef()
-    if wkt.find("WGS_1984") == -1:
-        gdaltest.post_reason('did not get expected SRS')
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'
 
 ###############################################################################
 # Test point rasterization (#3774)
@@ -264,7 +225,7 @@ def test_gdal_rasterize_4():
 def test_gdal_rasterize_5():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_rasterize_5.csv', 'wb')
     f.write("""x,y,Value
@@ -289,29 +250,19 @@ def test_gdal_rasterize_5():
     gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -l test tmp/test_gdal_rasterize_5.vrt tmp/test_gdal_rasterize_5.tif -a Value -tr 1 1 -ot Byte')
 
     ds = gdal.Open('tmp/test_gdal_rasterize_5.tif')
-    if ds.RasterXSize != 3 or ds.RasterYSize != 3:
-        gdaltest.post_reason('did not get expected dimensions')
-        print(ds.RasterXSize)
-        print(ds.RasterYSize)
-        return 'fail'
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 3, \
+        'did not get expected dimensions'
 
     gt_ref = [0, 1, 0, 3, 0, -1]
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(gt[i] - gt_ref[i]) > 1e-6:
-            gdaltest.post_reason('did not get expected geotransform')
-            print(gt)
-            print(gt_ref)
-            return 'fail'
+        assert abs(gt[i] - gt_ref[i]) <= 1e-6, 'did not get expected geotransform'
 
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3)
-    if data.decode('iso-8859-1') != '\x02\x00\x03\x00\x05\x00\x01\x00\x04':
-        gdaltest.post_reason('did not get expected values')
-        return 'fail'
+    assert data.decode('iso-8859-1') == '\x02\x00\x03\x00\x05\x00\x01\x00\x04', \
+        'did not get expected values'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test on the fly reprojection of input data
@@ -320,7 +271,7 @@ def test_gdal_rasterize_5():
 def test_gdal_rasterize_6():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_rasterize_6.csv', 'wb')
     f.write("""WKT,Value
@@ -342,14 +293,9 @@ def test_gdal_rasterize_6():
     gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -l test_gdal_rasterize_6 tmp/test_gdal_rasterize_6.csv tmp/test_gdal_rasterize_6.tif -a Value')
 
     ds = gdal.Open('tmp/test_gdal_rasterize_6.tif')
-    if ds.GetRasterBand(1).Checksum() != 39190:
-        gdaltest.post_reason('did not get expected checksum')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 39190, 'did not get expected checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test SQLITE dialect in SQL
@@ -361,18 +307,18 @@ def test_gdal_rasterize_7():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     drv = ogr.GetDriverByName('SQLite')
     if drv is None:
-        return 'skip'
+        pytest.skip()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = drv.CreateDataSource('/vsimem/foo.db', options=['SPATIALITE=YES'])
     if ds is None:
-        return 'skip'
+        pytest.skip()
     ds = None
     gdal.Unlink('/vsimem/foo.db')
     gdal.PopErrorHandler()
@@ -397,13 +343,9 @@ def test_gdal_rasterize_7():
 
     ds = gdal.Open('tmp/test_gdal_rasterize_7.tif')
     data = ds.GetRasterBand(1).ReadAsArray()
-    if data.sum() <= 5:
-        gdaltest.post_reason('Only rasterized 5 pixels or less.')
-        return 'fail'
+    assert data.sum() > 5, 'Only rasterized 5 pixels or less.'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Make sure we create output that encompasses all the input points on a point
@@ -413,7 +355,7 @@ def test_gdal_rasterize_7():
 def test_gdal_rasterize_8():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     f = open('tmp/test_gdal_rasterize_8.csv', 'wb')
     f.write('WKT,Value\n'.encode('ascii'))
@@ -426,21 +368,16 @@ def test_gdal_rasterize_8():
 
     ds = gdal.Open('tmp/test_gdal_rasterize_8.tif')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 21:
-        gdaltest.post_reason('Did not rasterize line data properly')
-        print(cs)
-        return 'fail'
+    assert cs == 21, 'Did not rasterize line data properly'
 
     ds = None
-
-    return 'success'
 
 
 ###########################################
 def test_gdal_rasterize_cleanup():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.GetDriverByName('GTiff').Delete('tmp/rast1.tif')
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/rast1.tab')
@@ -466,25 +403,5 @@ def test_gdal_rasterize_cleanup():
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_rasterize_8.tif')
     os.unlink('tmp/test_gdal_rasterize_8.csv')
 
-    return 'success'
 
 
-gdaltest_list = [
-    test_gdal_rasterize_1,
-    test_gdal_rasterize_2,
-    test_gdal_rasterize_3,
-    test_gdal_rasterize_4,
-    test_gdal_rasterize_5,
-    test_gdal_rasterize_6,
-    test_gdal_rasterize_7,
-    test_gdal_rasterize_8,
-    test_gdal_rasterize_cleanup
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_rasterize')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

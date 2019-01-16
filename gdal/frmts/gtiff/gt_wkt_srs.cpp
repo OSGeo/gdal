@@ -2333,7 +2333,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     {
         // Anything we can't map, store as an ESRI PE string with a citation key.
         char *pszPEString = nullptr;
-        // We shit a bit, but if we have a custom_proj4, do not morph to ESRI
+        // We cheat a bit, but if we have a custom_proj4, do not morph to ESRI
         // so as to keep the EXTENSION PROJ4 node
         if( !(bUnknownProjection &&
               poSRS->GetExtension("PROJCS", "PROJ4", nullptr) != nullptr) )

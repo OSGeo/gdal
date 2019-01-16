@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,25 +29,24 @@
 ###############################################################################
 
 import os
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test a RIK map
 # Data downloaded from : http://www.lantmateriet.se/upload/filer/kartor/programvaror/sverige500_swe99.zip
 
 
-def rik_online_1():
+def test_rik_online_1():
 
     if gdal.GetDriverByName('RIK') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://www.lantmateriet.se/upload/filer/kartor/programvaror/sverige500_swe99.zip', 'sverige500_swe99.zip'):
-        return 'skip'
+        pytest.skip()
 
     try:
         os.stat('tmp/cache/sverige500_swe99.rik')
@@ -62,7 +61,7 @@ def rik_online_1():
             outfile.close()
             file_to_test = 'tmp/cache/sverige500_swe99.rik'
         except OSError:
-            return 'skip'
+            pytest.skip()
 
     tst = gdaltest.GDALTest('RIK', file_to_test, 1, 17162, filename_absolute=1)
     return tst.testOpen()
@@ -71,28 +70,17 @@ def rik_online_1():
 # Test a LZW compressed RIK dataset
 
 
-def rik_online_2():
+def test_rik_online_2():
 
     if gdal.GetDriverByName('RIK') is None:
-        return 'skip'
+        pytest.skip()
 
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/3674/ab-del.rik', 'ab-del.rik'):
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('RIK', 'tmp/cache/ab-del.rik', 1, 44974, filename_absolute=1)
     return tst.testOpen()
 
 
-gdaltest_list = [
-    rik_online_1,
-    rik_online_2
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('RIK')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

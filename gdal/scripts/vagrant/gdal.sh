@@ -13,9 +13,9 @@ fi
 export NUMTHREADS
 
 rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8
-rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest
+rsync -a --exclude='__pycache__' /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest
 echo rsync -a /vagrant/gdal/ /home/vagrant/gnumake-build-gcc4.8/ > /home/vagrant/gnumake-build-gcc4.8/resync.sh
-echo rsync -a /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest >> /home/vagrant/gnumake-build-gcc4.8/resync.sh
+echo rsync -a --exclude='__pycache__'  /vagrant/autotest/ /home/vagrant/gnumake-build-gcc4.8/autotest >> /home/vagrant/gnumake-build-gcc4.8/resync.sh
 
 chmod +x /home/vagrant/gnumake-build-gcc4.8/resync.sh
 cd /home/vagrant/gnumake-build-gcc4.8
@@ -69,5 +69,16 @@ cd ../..
 cd swig/csharp
 make generate
 make
-make test
+make vagrant_safe_test
 cd ../..
+
+# Install pytest.
+# First install pip 9, which is the last version which can upgrade the system's `six`
+# 10+ throws an error :/
+curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+sudo -H python /tmp/get-pip.py 'pip<10'
+
+sudo -H pip install -Ur /vagrant/autotest/requirements.txt
+
+# Add python symbols so gdb is friendlier
+sudo apt-get install -y python2.7-dbg

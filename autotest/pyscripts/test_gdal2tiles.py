@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -33,17 +33,16 @@ import os
 import sys
 import shutil
 
-sys.path.append('../pymod')
 
 from osgeo import gdal      # noqa
-import gdaltest             # noqa  # pylint: disable=E0401
 import test_py_scripts      # noqa  # pylint: disable=E0401
+import pytest
 
 
 def test_gdal2tiles_py_simple():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld.tif')
 
@@ -61,26 +60,23 @@ def test_gdal2tiles_py_simple():
     expected_cs = [25314, 28114, 6148, 59026]
     for i in range(4):
         if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
-            gdaltest.post_reason('wrong checksum for band %d' % (i + 1))
             for j in range(4):
                 print(ds.GetRasterBand(j + 1).Checksum())
-            return 'fail'
+            pytest.fail('wrong checksum for band %d' % (i + 1))
 
     ds = None
 
     for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
-        if not os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename):
-            gdaltest.post_reason('%s missing' % filename)
-            return 'fail'
+        assert os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename), \
+            ('%s missing' % filename)
 
-    return 'success'
-
+    
 
 def test_gdal2tiles_py_zoom_option():
 
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
 
@@ -97,19 +93,14 @@ def test_gdal2tiles_py_zoom_option():
     expected_cs = [8130, 10496, 65274, 63715]
     for i in range(4):
         if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
-            gdaltest.post_reason('wrong checksum for band %d' % (i + 1))
             for j in range(4):
                 print(ds.GetRasterBand(j + 1).Checksum())
-            return 'fail'
+            pytest.fail('wrong checksum for band %d' % (i + 1))
 
     ds = None
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
-    if ds is None:
-        gdaltest.post_reason('did not get kml')
-        return 'fail'
-
-    return 'success'
+    assert ds is not None, 'did not get kml'
 
 
 def test_does_not_error_when_source_bounds_close_to_tiles_bound():
@@ -128,7 +119,7 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
 
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         for in_file in in_files:
@@ -137,13 +128,11 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
                 'gdal2tiles',
                 '-q -z 21-21 %s %s' % (in_file, out_folder))
     except TypeError:
-        gdaltest.post_reason(
+        pytest.fail(
             'Case of tile not getting any data not handled properly '
             '(tiles at the border of the image)')
-        return 'fail'
 
-    return 'success'
-
+    
 
 def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
     """
@@ -159,7 +148,7 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
 
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         test_py_scripts.run_py_script(
@@ -167,24 +156,23 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
             'gdal2tiles',
             '-q -z 10 %s %s' % (in_file, out_folder))
     except TypeError:
-        gdaltest.post_reason(
+        pytest.fail(
             'Case of low level tile not getting any data not handled properly '
             '(tile at a zoom level too low)')
-        return 'fail'
 
-    return 'success'
-
+    
 
 def test_python2_handles_utf8_by_default():
     if sys.version_info[0] >= 3:
-        return 'skip'
+        pytest.skip()
 
     return _test_utf8(should_raise_unicode=False)
 
 
+@pytest.mark.skip("This behaviour doesn't actually work as expected")
 def test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars():
     if sys.version_info[0] >= 3:
-        return 'skip'
+        pytest.skip()
 
     lc_ctype = os.environ.get("LC_CTYPE", "")
     os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
@@ -198,7 +186,7 @@ def test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars():
 
 def test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars():
     if sys.version_info[0] >= 3:
-        return 'skip'
+        pytest.skip()
 
     lc_ctype = os.environ.get("LC_CTYPE", "")
     os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
@@ -214,7 +202,7 @@ def test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars():
 
 def test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder():
     if sys.version_info[0] >= 3:
-        return 'skip'
+        pytest.skip()
 
     lc_ctype = os.environ.get("LC_CTYPE", "")
     os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
@@ -230,7 +218,7 @@ def test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_fo
 
 def test_python3_handle_utf8_by_default():
     if sys.version_info[0] < 3:
-        return 'skip'
+        pytest.skip()
 
     return _test_utf8(should_raise_unicode=False)
 
@@ -241,7 +229,7 @@ def _test_utf8(should_raise_unicode=False,
                input_file="data/test_utf8_漢字.vrt"):
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     out_folder = 'tmp/utf8_test'
 
@@ -259,32 +247,23 @@ def _test_utf8(should_raise_unicode=False,
         print(ret)
     except UnicodeEncodeError:
         if should_raise_unicode:
-            return 'success'
-        gdaltest.post_reason('Should be handling filenames with utf8 characters in this context')
-        return 'fail'
+            return
+        pytest.fail('Should be handling filenames with utf8 characters in this context')
 
-    if should_raise_unicode:
-        gdaltest.post_reason(
-            'Should not be handling filenames with utf8 characters in this context')
-        return 'fail'
+    assert not should_raise_unicode, \
+        'Should not be handling filenames with utf8 characters in this context'
 
     if should_display_warning:
-        if "WARNING" not in ret or "LC_CTYPE" not in ret:
-            gdaltest.post_reason(
-                'Should display a warning message about LC_CTYPE variable')
-            return 'fail'
+        assert "WARNING" in ret and "LC_CTYPE" in ret, \
+            'Should display a warning message about LC_CTYPE variable'
     else:
-        if "WARNING" in ret and "LC_CTYPE" in ret:
-            gdaltest.post_reason(
-                'Should not display a warning message about LC_CTYPE variable')
-            return 'fail'
+        assert not ("WARNING" in ret and "LC_CTYPE" in ret), \
+            'Should not display a warning message about LC_CTYPE variable'
 
     try:
         shutil.rmtree(out_folder)
     except OSError:
         pass
-
-    return 'success'
 
 
 def test_gdal2tiles_py_cleanup():
@@ -296,13 +275,12 @@ def test_gdal2tiles_py_cleanup():
         except Exception:
             pass
 
-    return 'success'
-
+    
 
 def test_exclude_transparent_tiles():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     output_folder = 'tmp/test_exclude_transparent_tiles'
     os.makedirs(output_folder)
@@ -316,47 +294,25 @@ def test_exclude_transparent_tiles():
         # First row totally transparent - no tiles
         tiles_folder = os.path.join(output_folder, '15', '21898')
         dir_files = os.listdir(tiles_folder)
-        if dir_files:
-            gdaltest.post_reason('Generated empty tiles for row 21898: %s' % dir_files)
-            return 'fail'
+        assert not dir_files, ('Generated empty tiles for row 21898: %s' % dir_files)
 
         # Second row - only 2 non-transparent tiles
         tiles_folder = os.path.join(output_folder, '15', '21899')
         dir_files = sorted(os.listdir(tiles_folder))
-        if ['22704.png', '22705.png'] != dir_files:
-            gdaltest.post_reason('Generated empty tiles for row 21899: %s' % dir_files)
-            return 'fail'
+        assert ['22704.png', '22705.png'] == dir_files, \
+            ('Generated empty tiles for row 21899: %s' % dir_files)
 
         # Third row - only 1 non-transparent tile
         tiles_folder = os.path.join(output_folder, '15', '21900')
         dir_files = os.listdir(tiles_folder)
-        if ['22705.png'] != dir_files:
-            gdaltest.post_reason('Generated empty tiles for row 21900: %s' % dir_files)
-            return 'fail'
+        assert ['22705.png'] == dir_files, \
+            ('Generated empty tiles for row 21900: %s' % dir_files)
 
-        return 'success'
+        return
 
     finally:
         shutil.rmtree(output_folder)
 
 
-gdaltest_list = [
-    test_gdal2tiles_py_simple,
-    test_gdal2tiles_py_zoom_option,
-    test_does_not_error_when_source_bounds_close_to_tiles_bound,
-    test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile,
-    test_python3_handle_utf8_by_default,
-    test_python2_handles_utf8_by_default,
-    test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars,
-    test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars,
-    test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder,
-    test_gdal2tiles_py_cleanup,
-    test_exclude_transparent_tiles,
-]
 
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal2tiles_py')
-    gdaltest.run_tests(gdaltest_list)
-    sys.exit(gdaltest.summarize())

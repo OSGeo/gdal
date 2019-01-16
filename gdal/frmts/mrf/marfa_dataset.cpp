@@ -1676,7 +1676,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 
 // Prepares the data so it is suitable for Zen JPEG encoding, based on input mask
 // If bFBO is set, only the values of the first band are set non-zero when needed
-template<typename T> void ZenFilter(T* buffer, GByte *mask, int nPixels, int nBands, bool bFBO) {
+template<typename T> static void ZenFilter(T* buffer, GByte *mask, int nPixels, int nBands, bool bFBO) {
     for (int i = 0; i < nPixels; i++) {
         if (mask[i] == 0) { // enforce zero values
             for (int b = 0; b < nBands; b++)

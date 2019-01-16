@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,20 +31,19 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 import stat
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
 
 
-def pam_1():
+def test_pam_1():
 
     gdaltest.pam_setting = gdal.GetConfigOption('GDAL_PAM_ENABLED', "NULL")
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
@@ -52,37 +51,26 @@ def pam_1():
     ds = gdal.Open("data/byte.pnm")
 
     base_md = ds.GetMetadata()
-    if len(base_md) != 2 or base_md['other'] != 'red' \
-       or base_md['key'] != 'value':
-        gdaltest.post_reason('Default domain metadata missing')
-        return 'fail'
+    assert len(base_md) == 2 and base_md['other'] == 'red' and base_md['key'] == 'value', \
+        'Default domain metadata missing'
 
     xml_md = ds.GetMetadata('xml:test')
 
-    if len(xml_md) != 1:
-        gdaltest.post_reason('xml:test metadata missing')
-        return 'fail'
+    assert len(xml_md) == 1, 'xml:test metadata missing'
 
-    if not isinstance(xml_md, list):
-        gdaltest.post_reason('xml:test metadata not returned as list.')
-        return 'fail'
+    assert isinstance(xml_md, list), 'xml:test metadata not returned as list.'
 
     expected_xml = """<?xml version="2.0"?>
 <TestXML>Value</TestXML>
 """
 
-    if xml_md[0] != expected_xml:
-        gdaltest.post_reason('xml does not match')
-        print(xml_md)
-        return 'fail'
-
-    return 'success'
+    assert xml_md[0] == expected_xml, 'xml does not match'
 
 ###############################################################################
 # Verify that we can write XML to a new file.
 
 
-def pam_2():
+def test_pam_2():
 
     driver = gdal.GetDriverByName('PNM')
     ds = driver.Create('tmp/pam.pnm', 10, 10)
@@ -100,66 +88,48 @@ def pam_2():
 
     ds = None
 
-    return 'success'
-
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
 
 
-def pam_3():
+def test_pam_3():
 
     ds = gdal.Open("tmp/pam.pnm")
 
     band = ds.GetRasterBand(1)
     base_md = band.GetMetadata()
-    if len(base_md) != 2 or base_md['other'] != 'red' \
-       or base_md['key'] != 'value':
-        gdaltest.post_reason('Default domain metadata missing')
-        return 'fail'
+    assert len(base_md) == 2 and base_md['other'] == 'red' and base_md['key'] == 'value', \
+        'Default domain metadata missing'
 
     xml_md = band.GetMetadata('xml:test')
 
-    if len(xml_md) != 1:
-        gdaltest.post_reason('xml:test metadata missing')
-        return 'fail'
+    assert len(xml_md) == 1, 'xml:test metadata missing'
 
-    if not isinstance(xml_md, list):
-        gdaltest.post_reason('xml:test metadata not returned as list.')
-        return 'fail'
+    assert isinstance(xml_md, list), 'xml:test metadata not returned as list.'
 
     expected_xml = """<?xml version="2.0"?>
 <TestXML>Value</TestXML>
 """
 
-    if xml_md[0] != expected_xml:
-        gdaltest.post_reason('xml does not match')
-        print(xml_md)
-        return 'fail'
+    assert xml_md[0] == expected_xml, 'xml does not match'
 
-    if band.GetNoDataValue() != 100:
-        gdaltest.post_reason('nodata not saved via pam')
-        return 'fail'
+    assert band.GetNoDataValue() == 100, 'nodata not saved via pam'
 
     ds = None
     ds = gdal.Open('tmp/pam.pnm', gdal.GA_Update)
-    if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
     ds = None
 
     ds = gdal.Open('tmp/pam.pnm')
-    if ds.GetRasterBand(1).GetNoDataValue() is not None:
-        gdaltest.post_reason('got nodata value whereas none was expected')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetNoDataValue() is None, \
+        'got nodata value whereas none was expected'
 
 ###############################################################################
 # Check that PAM binary encoded nodata values work properly.
 #
 
 
-def pam_4():
+def test_pam_4():
 
     # Copy test dataset to tmp directory so that the .aux.xml file
     # won't be rewritten with the statistics in the master dataset.
@@ -170,12 +140,8 @@ def pam_4():
     ds = gdal.Open('tmp/mfftest.hdr')
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
 
-    if stats[0] != 0 or stats[1] != 4:
-        gdaltest.post_reason('Got wrong min/max, likely nodata not working?')
-        print(stats)
-        return 'fail'
-
-    return 'success'
+    assert stats[0] == 0 and stats[1] == 4, \
+        'Got wrong min/max, likely nodata not working?'
 
 ###############################################################################
 # Verify that .aux files that don't match the configuration of the
@@ -183,45 +149,35 @@ def pam_4():
 #
 
 
-def pam_5():
+def test_pam_5():
 
     ds = gdal.Open('data/sasha.tif')
     filelist = ds.GetFileList()
     ds = None
 
-    if len(filelist) != 1:
-        print(filelist)
-
-        gdaltest.post_reason('did not get expected file list.')
-        return 'fail'
-
-    return 'success'
+    assert len(filelist) == 1, 'did not get expected file list.'
 
 ###############################################################################
 # Verify we can read nodata values from .aux files (#2505)
 #
 
 
-def pam_6():
+def test_pam_6():
 
     ds = gdal.Open('data/f2r23.tif')
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('did not get expected .aux sourced nodata.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0, \
+        'did not get expected .aux sourced nodata.'
     ds = None
 
-    if os.path.exists('data/f2r23.tif.aux.xml'):
-        gdaltest.post_reason('did not expect .aux.xml to be created.')
-        return 'fail'
-
-    return 'success'
+    assert not os.path.exists('data/f2r23.tif.aux.xml'), \
+        'did not expect .aux.xml to be created.'
 
 ###############################################################################
 # Verify we can create overviews on PNG with PAM disabled (#3693)
 #
 
 
-def pam_7():
+def test_pam_7():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
 
@@ -237,17 +193,14 @@ def pam_7():
     os.remove('tmp/stefan_full_rgba.png')
     os.remove('tmp/stefan_full_rgba.png.ovr')
 
-    if ovr_count != 1:
-        return 'fail'
-
-    return 'success'
+    assert ovr_count == 1
 
 ###############################################################################
 # Test that Band.SetDescription() goes through PAM (#3780)
 #
 
 
-def pam_8():
+def test_pam_8():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
 
@@ -261,18 +214,14 @@ def pam_8():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/pam_8.tif')
 
-    if desc != 'foo':
-        print(desc)
-        return 'fail'
-
-    return 'success'
+    assert desc == 'foo'
 
 ###############################################################################
 # Test that we can retrieve projection from xml:ESRI domain
 #
 
 
-def pam_9():
+def test_pam_9():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pam_9.tif', 1, 1, 1)
     ds = None
@@ -299,17 +248,13 @@ def pam_9():
 
     expected_wkt = """PROJCS["NAD_1983_UTM_Zone_14N",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["false_easting",500000.0],PARAMETER["false_northing",0.0],PARAMETER["central_meridian",-99.0],PARAMETER["scale_factor",0.9996],PARAMETER["latitude_of_origin",0.0],UNIT["Meter",1.0]]"""
 
-    if wkt != expected_wkt:
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt == expected_wkt
 
 ###############################################################################
 # Test serializing and deserializing of various band metadata
 
 
-def pam_10():
+def test_pam_10():
 
     src_ds = gdal.Open('data/testserialization.asc')
     ds = gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/pam_10.asc', src_ds)
@@ -319,80 +264,49 @@ def pam_10():
     ds = gdal.Open('/vsimem/pam_10.asc')
 
     gcps = ds.GetGCPs()
-    if len(gcps) != 2 or ds.GetGCPCount() != 2:
-        return 'fail'
+    assert len(gcps) == 2 and ds.GetGCPCount() == 2
 
-    if ds.GetGCPProjection().find("WGS 84") == -1:
-        print(ds.GetGCPProjection())
-        return 'fail'
+    assert ds.GetGCPProjection().find("WGS 84") != -1
 
-    if gcps[0].GCPPixel != 0 or gcps[0].GCPLine != 1 or \
-       gcps[0].GCPX != 2 or gcps[0].GCPY != 3 or gcps[0].GCPZ != 4:
-        print(gcps[0])
-        return 'fail'
+    assert (gcps[0].GCPPixel == 0 and gcps[0].GCPLine == 1 and \
+       gcps[0].GCPX == 2 and gcps[0].GCPY == 3 and gcps[0].GCPZ == 4)
 
-    if gcps[1].GCPPixel != 1 or gcps[1].GCPLine != 2 or \
-       gcps[1].GCPX != 3 or gcps[1].GCPY != 4 or gcps[1].GCPZ != 5:
-        print(gcps[1])
-        return 'fail'
+    assert (gcps[1].GCPPixel == 1 and gcps[1].GCPLine == 2 and \
+       gcps[1].GCPX == 3 and gcps[1].GCPY == 4 and gcps[1].GCPZ == 5)
 
     band = ds.GetRasterBand(1)
-    if band.GetDescription() != 'MyDescription':
-        print(band.GetDescription())
-        return 'fail'
+    assert band.GetDescription() == 'MyDescription'
 
-    if band.GetUnitType() != 'MyUnit':
-        print(band.GetUnitType())
-        return 'fail'
+    assert band.GetUnitType() == 'MyUnit'
 
-    if band.GetOffset() != 1:
-        print(band.GetOffset())
-        return 'fail'
+    assert band.GetOffset() == 1
 
-    if band.GetScale() != 2:
-        print(band.GetScale())
-        return 'fail'
+    assert band.GetScale() == 2
 
-    if band.GetRasterColorInterpretation() != gdal.GCI_PaletteIndex:
-        print(band.GetRasterColorInterpretation())
-        return 'fail'
+    assert band.GetRasterColorInterpretation() == gdal.GCI_PaletteIndex
 
-    if band.GetCategoryNames() != ['Cat1', 'Cat2']:
-        print(band.GetCategoryNames())
-        return 'fail'
+    assert band.GetCategoryNames() == ['Cat1', 'Cat2']
 
     ct = band.GetColorTable()
-    if ct.GetColorEntry(0) != (0, 0, 0, 255):
-        print(ct.GetColorEntry(0))
-        return 'fail'
-    if ct.GetColorEntry(1) != (1, 1, 1, 255):
-        print(ct.GetColorEntry(1))
-        return 'fail'
+    assert ct.GetColorEntry(0) == (0, 0, 0, 255)
+    assert ct.GetColorEntry(1) == (1, 1, 1, 255)
 
-    if band.GetMaximum() != 0:
-        print(band.GetMaximum())
-        return 'fail'
+    assert band.GetMaximum() == 0
 
-    if band.GetMinimum() != 2:
-        print(band.GetMinimum())
-        return 'fail'
+    assert band.GetMinimum() == 2
 
-    if band.GetMetadata() != {'STATISTICS_MEAN': '1', 'STATISTICS_MINIMUM': '2', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_STDDEV': '3'}:
-        print(band.GetMetadata())
-        return 'fail'
+    assert band.GetMetadata() == {'STATISTICS_MEAN': '1', 'STATISTICS_MINIMUM': '2', 'STATISTICS_MAXIMUM': '0', 'STATISTICS_STDDEV': '3'}
 
     ds = None
 
     gdal.Unlink('/vsimem/pam_10.asc')
     gdal.Unlink('/vsimem/pam_10.asc.aux.xml')
 
-    return 'success'
-
 ###############################################################################
 # Test PamProxyDb mechanism
 
 
-def pam_11():
+def test_pam_11():
 
     # Create a read-only directory
     try:
@@ -412,52 +326,41 @@ def pam_11():
         f = open('tmpdirreadonly/test', 'w')
         if f is not None:
             f.close()
-            return 'skip'
+            pytest.skip()
     except IOError:
         pass
 
     # Compute statistics --> the saving as .aux.xml should fail
     ds = gdal.Open('tmpdirreadonly/byte.tif')
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
-    if stats[0] != 74:
-        gdaltest.post_reason('did not get expected minimum')
-        return 'fail'
+    assert stats[0] == 74, 'did not get expected minimum'
     gdal.ErrorReset()
     ds = None
     error_msg = gdal.GetLastErrorMsg()
-    if error_msg.find('Unable to save auxiliary information') != 0:
-        gdaltest.post_reason('warning was expected at that point')
-        return 'fail'
+    assert error_msg.startswith('Unable to save auxiliary information'), \
+        'warning was expected at that point'
 
     # Check that we actually have no saved statistics
     ds = gdal.Open('tmpdirreadonly/byte.tif')
     stats = ds.GetRasterBand(1).GetStatistics(False, False)
-    if stats[3] != -1:
-        gdaltest.post_reason('did not expected to have stats at that point')
-        return 'fail'
+    assert stats[3] == -1, 'did not expected to have stats at that point'
     ds = None
 
     # This must be run as an external process so we can override GDAL_PAM_PROXY_DIR
     # at the beginning of the process
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test1')
-    if ret.find('success') == -1:
-        gdaltest.post_reason('pamproxydb.py -test1 failed %s' % ret)
-        return 'fail'
+    assert ret.find('success') != -1, ('pamproxydb.py -test1 failed %s' % ret)
 
     # Test loading an existing proxydb
     ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test2')
-    if ret.find('success') == -1:
-        gdaltest.post_reason('pamproxydb.py -test2 failed %s' % ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('success') != -1, ('pamproxydb.py -test2 failed %s' % ret)
 
 ###############################################################################
 # Test histogram with 64bit counts
 
 
-def pam_12():
+def test_pam_12():
 
     shutil.copy('data/byte.tif', 'tmp')
     open('tmp/byte.tif.aux.xml', 'wt').write("""<PAMDataset>
@@ -485,28 +388,16 @@ def pam_12():
     gdal.Unlink('tmp/byte.tif')
     gdal.Unlink('tmp/byte.tif.aux.xml')
 
-    if hist1 != hist2:
-        gdaltest.post_reason('fail')
-        print(hist1)
-        print(hist2)
-        return 'fail'
-    if hist1[0] != 6000000000:
-        gdaltest.post_reason('fail')
-        print(hist1)
-        return 'fail'
-    if aux_xml.find('<HistCounts>6000000000|') < 0:
-        gdaltest.post_reason('fail')
-        print(aux_xml)
-        return 'fail'
-
-    return 'success'
+    assert hist1 == hist2
+    assert hist1[0] == 6000000000
+    assert '<HistCounts>6000000000|' in aux_xml
 
 ###############################################################################
 # Test various stuff with PAM disabled
 #
 
 
-def pam_13():
+def test_pam_13():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
 
@@ -517,34 +408,26 @@ def pam_13():
     gdal.PushErrorHandler()
     ret = ds.GetRasterBand(1).SetNoDataValue(0)
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
 
     gdal.PushErrorHandler()
     ret = ds.GetRasterBand(1).DeleteNoDataValue()
     gdal.PopErrorHandler()
-    if ret == 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ret != 0
 
     ds = None
 
-    if gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is None
 
     gdal.Unlink('/vsimem/tmp.pnm')
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
 
-    return 'success'
-
 
 ###############################################################################
 # Cleanup.
 
-def pam_cleanup():
+def test_pam_cleanup():
     gdaltest.clean_tmp()
     if gdaltest.pam_setting != 'NULL':
         gdal.SetConfigOption('GDAL_PAM_ENABLED', gdaltest.pam_setting)
@@ -561,29 +444,6 @@ def pam_cleanup():
     except OSError:
         pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    pam_1,
-    pam_2,
-    pam_3,
-    pam_4,
-    pam_5,
-    pam_6,
-    pam_7,
-    pam_8,
-    pam_9,
-    pam_10,
-    pam_11,
-    pam_12,
-    pam_13,
-    pam_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('pam')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

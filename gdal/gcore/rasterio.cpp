@@ -470,10 +470,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
 /* -------------------------------------------------------------------- */
@@ -657,7 +653,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             // Add small epsilon to avoid some numeric precision issues.
             dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff + EPS;
             dfSrcX = 0.5 * dfSrcXInc + dfXOff + EPS;
-            iSrcY = static_cast<int>(dfSrcY);
+            iSrcY = static_cast<int>(std::min(std::max(0.0, dfSrcY),
+                                        static_cast<double>(nRasterYSize - 1)));
 
             GPtrDiff_t iBufOffset =
                 static_cast<GPtrDiff_t>(iBufYOff)
@@ -690,7 +687,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                  iBufXOff < nBufXSize;
                  iBufXOff++, dfSrcX += dfSrcXInc )
             {
-                iSrcX = static_cast<int>( dfSrcX );
+                // TODO?: try to avoid the clamping for most iterations
+                iSrcX = static_cast<int>(std::min(std::max(0.0, dfSrcX),
+                                        static_cast<double>(nRasterXSize - 1)));
 
     /* -------------------------------------------------------------------- */
     /*      Ensure we have the appropriate block loaded.                    */
@@ -842,10 +841,6 @@ CPLErr GDALRasterBand::RasterIOResampled(
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
     const double dfXRatioDstToSrc = dfXSize / nBufXSize;
@@ -928,6 +923,9 @@ CPLErr GDALRasterBand::RasterIOResampled(
     // Do the resampling.
     if( bUseWarp )
     {
+        int bHasNoData = FALSE;
+        double dfNoDataValue = GetNoDataValue(&bHasNoData) ;
+
         VRTDatasetH hVRTDS = nullptr;
         GDALRasterBandH hVRTBand = nullptr;
         if( GetDataset() == nullptr )
@@ -993,6 +991,23 @@ CPLErr GDALRasterBand::RasterIOResampled(
                     psExtraArg->pfnProgress : GDALDummyProgress;
         psWarpOptions->pProgressArg = psExtraArg->pProgressData;
         psWarpOptions->pfnTransformer = GDALRasterIOTransformer;
+        if (bHasNoData)
+        {
+            psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions,
+                                                    "INIT_DEST", "NO_DATA");
+            if (psWarpOptions->padfSrcNoDataReal == nullptr)
+            {
+                psWarpOptions->padfSrcNoDataReal = static_cast<double*>(CPLMalloc(sizeof(double)));
+                psWarpOptions->padfSrcNoDataReal[0] = dfNoDataValue;
+            }
+
+            if (psWarpOptions->padfDstNoDataReal == nullptr)
+            {
+                psWarpOptions->padfDstNoDataReal = static_cast<double*>(CPLMalloc(sizeof(double)));
+                psWarpOptions->padfDstNoDataReal[0] = dfNoDataValue;
+            }
+        }
+
         GDALRasterIOTransformerStruct sTransformer;
         sTransformer.dfXOff = bHasXOffVirtual ? 0 : dfXOff;
         sTransformer.dfYOff = bHasYOffVirtual ? 0 : dfYOff;
@@ -1318,10 +1333,6 @@ CPLErr GDALDataset::RasterIOResampled(
         dfYOff = psExtraArg->dfYOff;
         dfXSize = psExtraArg->dfXSize;
         dfYSize = psExtraArg->dfYSize;
-        CPLAssert(dfXOff - nXOff < 1.0);
-        CPLAssert(dfYOff - nYOff < 1.0);
-        CPLAssert(nXSize - dfXSize < 1.0);
-        CPLAssert(nYSize - dfYSize < 1.0);
     }
 
     const double dfXRatioDstToSrc = dfXSize / nBufXSize;

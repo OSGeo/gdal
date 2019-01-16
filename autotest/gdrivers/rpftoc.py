@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,11 +29,9 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +40,7 @@ import gdaltest
 # whose content is fully empty.
 
 
-def rpftoc_1():
+def test_rpftoc_1():
     tst = gdaltest.GDALTest('RPFTOC', 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', 1, 53599, filename_absolute=1)
     gt = (1.9999416000000001, 0.0017833876302083334, 0.0, 36.000117500000002, 0.0, -0.0013461816406249993)
     return tst.testOpen(check_gt=gt)
@@ -51,7 +49,7 @@ def rpftoc_1():
 # Same test as rpftoc_1, but the dataset is forced to be opened in RGBA mode
 
 
-def rpftoc_2():
+def test_rpftoc_2():
     gdal.SetConfigOption('RPFTOC_FORCE_RGBA', 'YES')
     tst = gdaltest.GDALTest('RPFTOC', 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', 1, 0, filename_absolute=1)
     res = tst.testOpen()
@@ -62,26 +60,22 @@ def rpftoc_2():
 # Test reading the metadata
 
 
-def rpftoc_3():
+def test_rpftoc_3():
     ds = gdal.Open('data/A.TOC')
     md = ds.GetMetadata('SUBDATASETS')
-    if 'SUBDATASET_1_NAME' not in md or md['SUBDATASET_1_NAME'] != 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC':
-        gdaltest.post_reason('missing SUBDATASET_1_NAME metadata')
-        return 'fail'
+    assert 'SUBDATASET_1_NAME' in md and md['SUBDATASET_1_NAME'] == 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', \
+        'missing SUBDATASET_1_NAME metadata'
 
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC')
     md = ds.GetMetadata()
-    if 'FILENAME_0' not in md or (md['FILENAME_0'] != 'data/RPFTOC01.ON2' and md['FILENAME_0'] != 'data\\RPFTOC01.ON2'):
-        gdaltest.post_reason('missing SUBDATASET_1_NAME metadata')
-        return 'fail'
-
-    return 'success'
+    assert 'FILENAME_0' in md and not (md['FILENAME_0'] != 'data/RPFTOC01.ON2' and md['FILENAME_0'] != 'data\\RPFTOC01.ON2'), \
+        'missing SUBDATASET_1_NAME metadata'
 
 ###############################################################################
 # Add an overview
 
 
-def rpftoc_4():
+def test_rpftoc_4():
     gdal.SetConfigOption('RPFTOC_FORCE_RGBA', 'YES')
 
     shutil.copyfile('data/A.TOC', 'tmp/A.TOC')
@@ -90,19 +84,15 @@ def rpftoc_4():
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
     err = ds.BuildOverviews(overviewlist=[2, 4])
 
-    if err != 0:
-        gdaltest.post_reason('BuildOverviews reports an error')
-        return 'fail'
+    assert err == 0, 'BuildOverviews reports an error'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('Overview missing on target file.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2, \
+        'Overview missing on target file.'
 
     ds = None
     ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('Overview missing on target file after re-open.')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2, \
+        'Overview missing on target file after re-open.'
 
     ds = None
 
@@ -112,19 +102,5 @@ def rpftoc_4():
     os.unlink('tmp/A.TOC.1.ovr')
     os.unlink('tmp/RPFTOC01.ON2')
 
-    return 'success'
 
 
-gdaltest_list = [
-    rpftoc_1,
-    rpftoc_2,
-    rpftoc_3,
-    rpftoc_4]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('rpftoc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

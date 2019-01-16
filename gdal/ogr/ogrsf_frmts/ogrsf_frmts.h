@@ -514,10 +514,12 @@ void CPL_DLL RegisterOGRSelafin();
 void CPL_DLL RegisterOGRJML();
 void CPL_DLL RegisterOGRPLSCENES();
 void CPL_DLL RegisterOGRCSW();
+void CPL_DLL RegisterOGRMongoDBv3();
 void CPL_DLL RegisterOGRMongoDB();
 void CPL_DLL RegisterOGRVDV();
 void CPL_DLL RegisterOGRGMLAS();
 void CPL_DLL RegisterOGRMVT();
+void CPL_DLL RegisterOGRNGW();
 // @endcond
 
 CPL_C_END

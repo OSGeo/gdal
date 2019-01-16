@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -33,15 +33,14 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import osr
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Verify that we always getting the same image when warping.
@@ -50,11 +49,11 @@ import gdaltest
 # Upsampling
 
 
-def warp_1():
+def test_warp_1():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_near.vrt')
     ref_ds = gdal.Open('data/utmsmall_near.tiff')
@@ -62,18 +61,14 @@ def warp_1():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_1_short():
+def test_warp_1_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_near_short.vrt')
     ref_ds = gdal.Open('data/utmsmall_near.tiff')
@@ -81,18 +76,14 @@ def warp_1_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_1_ushort():
+def test_warp_1_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_near_ushort.vrt')
     ref_ds = gdal.Open('data/utmsmall_near.tiff')
@@ -100,18 +91,14 @@ def warp_1_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_1_float():
+def test_warp_1_float():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_near_float.vrt')
     ref_ds = gdal.Open('data/utmsmall_near.tiff')
@@ -119,18 +106,14 @@ def warp_1_float():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_2():
+def test_warp_2():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_blinear.vrt')
     ref_ds = gdal.Open('data/utmsmall_blinear.tiff')
@@ -138,18 +121,14 @@ def warp_2():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_2_short():
+def test_warp_2_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_blinear_short.vrt')
     ref_ds = gdal.Open('data/utmsmall_blinear.tiff')
@@ -157,18 +136,14 @@ def warp_2_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_2_ushort():
+def test_warp_2_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_blinear_ushort.vrt')
     ref_ds = gdal.Open('data/utmsmall_blinear.tiff')
@@ -176,18 +151,14 @@ def warp_2_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_2_downsize():
+def test_warp_2_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_bilinear_2.vrt')
     ref_ds = gdal.Open('data/utmsmall_bilinear_2.tif')
@@ -195,18 +166,14 @@ def warp_2_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_3():
+def test_warp_3():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubic.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubic.tiff')
@@ -214,18 +181,14 @@ def warp_3():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_3_short():
+def test_warp_3_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubic_short.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubic.tiff')
@@ -233,18 +196,14 @@ def warp_3_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_3_ushort():
+def test_warp_3_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubic_ushort.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubic.tiff')
@@ -252,18 +211,14 @@ def warp_3_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_3_downsize():
+def test_warp_3_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubic_2.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubic_2.tif')
@@ -271,18 +226,14 @@ def warp_3_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_3_float_downsize():
+def test_warp_3_float_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubic_2_float.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubic_2.tif')
@@ -290,18 +241,14 @@ def warp_3_float_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_4():
+def test_warp_4():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubicspline.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubicspline.tiff')
@@ -309,18 +256,14 @@ def warp_4():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_4_short():
+def test_warp_4_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubicspline_short.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubicspline.tiff')
@@ -328,18 +271,14 @@ def warp_4_short():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_4_ushort():
+def test_warp_4_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubicspline_ushort.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubicspline.tiff')
@@ -347,18 +286,14 @@ def warp_4_ushort():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_4_downsize():
+def test_warp_4_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubicspline_2.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubicspline_2.tif')
@@ -366,18 +301,14 @@ def warp_4_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_4_short_downsize():
+def test_warp_4_short_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubicspline_wt_short.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubicspline_2.tif')
@@ -385,18 +316,14 @@ def warp_4_short_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_4_float_downsize():
+def test_warp_4_float_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_cubicspline_wt_float32.vrt')
     ref_ds = gdal.Open('data/utmsmall_cubicspline_2.tif')
@@ -404,18 +331,14 @@ def warp_4_float_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_5():
+def test_warp_5():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_lanczos.vrt')
     ref_ds = gdal.Open('data/utmsmall_lanczos.tiff')
@@ -423,18 +346,14 @@ def warp_5():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_5_downsize():
+def test_warp_5_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_lanczos_2.vrt')
     ref_ds = gdal.Open('data/utmsmall_lanczos_2.tif')
@@ -442,53 +361,49 @@ def warp_5_downsize():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Downsampling
 
 
-def warp_6():
+def test_warp_6():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'utmsmall_ds_near.vrt', 1, 4770)
 
     return tst.testOpen()
 
 
-def warp_7():
+def test_warp_7():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'utmsmall_ds_blinear.vrt', 1, 4755)
 
     return tst.testOpen()
 
 
-def warp_8():
+def test_warp_8():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'utmsmall_ds_cubic.vrt', 1, 4833)
 
     return tst.testOpen()
 
 
-def warp_9():
+def test_warp_9():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_ds_cubicspline.vrt')
     ref_ds = gdal.Open('data/utmsmall_ds_cubicspline.tiff')
@@ -496,18 +411,14 @@ def warp_9():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_10():
+def test_warp_10():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_ds_lanczos.vrt')
     ref_ds = gdal.Open('data/utmsmall_ds_lanczos.tiff')
@@ -515,18 +426,14 @@ def warp_10():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 
-def warp_11():
+def test_warp_11():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'rgbsmall_dstalpha.vrt', 4, 30658)
 
@@ -535,11 +442,11 @@ def warp_11():
 # Test warping an empty RGBA with bilinear resampling
 
 
-def warp_12():
+def test_warp_12():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/empty.tif', 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
@@ -560,11 +467,11 @@ def warp_12():
 # Test warping an empty RGBA with cubic resampling
 
 
-def warp_13():
+def test_warp_13():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/empty.tif', 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
@@ -585,11 +492,11 @@ def warp_13():
 # Test warping an empty RGBA with cubic spline resampling
 
 
-def warp_14():
+def test_warp_14():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/empty.tif', 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
@@ -610,11 +517,11 @@ def warp_14():
 # Test GWKNearestFloat with transparent source alpha band
 
 
-def warp_15():
+def test_warp_15():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
@@ -635,11 +542,11 @@ def warp_15():
 # Test GWKNearestFloat with opaque source alpha band
 
 
-def warp_16():
+def test_warp_16():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
     ds.GetRasterBand(1).Fill(255)
@@ -660,11 +567,11 @@ def warp_16():
 # Test GWKNearestShort with transparent source alpha band
 
 
-def warp_17():
+def test_warp_17():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
@@ -685,11 +592,11 @@ def warp_17():
 # Test GWKNearestShort with opaque source alpha band
 
 
-def warp_18():
+def test_warp_18():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/test.tif', 20, 20, 4)
     ds.GetRasterBand(1).Fill(255)
@@ -727,23 +634,18 @@ def warp_19_internal(size, datatype, resampling_string):
 
     gdaltest.tiff_drv.Delete('tmp/testwarp.tif')
 
-    if checksum != checksum_ref:
-        print('got %d, expected %d' % (checksum, checksum_ref))
-        gdaltest.post_reason('Result different from source')
-        return 'fail'
+    assert checksum == checksum_ref
 
     gdaltest.tiff_drv.Delete('tmp/test.tif')
-
-    return 'success'
 
 
 # Test all data types and resampling methods for very small images
 # to test edge behaviour
-def warp_19():
+def test_warp_19():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     datatypes = [gdal.GDT_Byte,
                  gdal.GDT_Int16,
@@ -757,7 +659,7 @@ def warp_19():
                  gdal.GDT_Float64,
                  gdal.GDT_CFloat64]
 
-    methods = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos']
+    methods = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'average']
 
     sizes = [1, 2, 3, 7]
 
@@ -765,19 +667,15 @@ def warp_19():
         print('Testing size = %d ...' % size)
         for method in methods:
             for datatype in datatypes:
-                if warp_19_internal(size, datatype, method) != 'success':
-                    print('fail with size = %d, data type = %d and method %s' % (size, datatype, method))
-                    return 'fail'
-
-    return 'success'
+                warp_19_internal(size, datatype, method)
 
 
 # Test fix for #2724 (initialization of destination area to nodata in warped VRT)
-def warp_20():
+def test_warp_20():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     tst = gdaltest.GDALTest('VRT', 'white_nodata.vrt', 1, 1705)
 
@@ -787,7 +685,7 @@ def warp_20():
 # Test overviews on warped VRT files
 
 
-def warp_21():
+def test_warp_21():
 
     shutil.copy('data/utmsmall_near.vrt', 'tmp/warp_21.vrt')
 
@@ -797,7 +695,7 @@ def warp_21():
 
     ds = gdal.Open('tmp/warp_21.vrt')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        return 'skip'
+        pytest.skip()
 
     ds.GetRasterBand(1).GetOverview(0).Checksum()
 
@@ -805,14 +703,12 @@ def warp_21():
 
     os.remove('tmp/warp_21.vrt')
 
-    return 'success'
-
 ###############################################################################
 # Test warping with datasets which are "bigger" than the wm parameter.
 # Would have detected issue of #3458
 
 
-def warp_22():
+def test_warp_22():
 
     # Generate source image with non uniform data
     w = 1001
@@ -866,7 +762,7 @@ def warp_22():
 # Test warping with datasets where some RasterIO() requests involve nBufXSize == 0 (#3582)
 
 
-def warp_23():
+def test_warp_23():
 
     gcp1 = gdal.GCP()
     gcp1.GCPPixel = 3213
@@ -943,40 +839,32 @@ def warp_23():
 # left pixel being not set in GWKBilinearResample() case)
 
 
-def warp_24():
+def test_warp_24():
 
     ds_ref = gdal.Open('data/test3658.tif')
     cs_ref = ds_ref.GetRasterBand(1).Checksum()
     ds = gdal.Warp('', ds_ref, options='-of MEM -r bilinear')
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != cs_ref:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
-
-    return 'success'
+    assert cs == cs_ref, 'did not get expected checksum'
 
 ###############################################################################
 # Test -refine_gcps (#4143)
 
 
-def warp_25():
+def test_warp_25():
 
     ds = gdal.Open('data/refine_gcps.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
-
-    return 'success'
+    assert cs == 4672, 'did not get expected checksum'
 
 ###############################################################################
 # Test serializing and deserializing TPS transformer
 
 
-def warp_26():
+def test_warp_26():
 
     gdal.Translate('tmp/warp_25_gcp.vrt', '../gcore/data/byte.tif',
                    options='-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 '
@@ -988,14 +876,10 @@ def warp_26():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4672:
-        gdaltest.post_reason('did not get expected checksum')
-        return 'fail'
+    assert cs == 4672, 'did not get expected checksum'
 
     os.unlink('tmp/warp_25_gcp.vrt')
     os.unlink('tmp/warp_25_warp.vrt')
-
-    return 'success'
 
 ###############################################################################
 # Pure Python reprojection example. Nothing particular, just make use of existing
@@ -1007,7 +891,7 @@ def warp_27_progress_callback(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def warp_27():
+def test_warp_27():
 
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1064,38 +948,29 @@ def warp_27():
     ref_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != ref_cs:
-        return 'fail'
+    assert cs == ref_cs
 
     gdal.Unlink('tmp/warp_27.tif')
     gdal.Unlink('tmp/warp_27_ref.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test reading a VRT with a destination alpha band, but no explicit
 # INIT_DEST setting
 
 
-def warp_28():
+def test_warp_28():
 
     ds = gdal.Open('data/utm_alpha_noinit.vrt')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
-    if cs1 == 0 or cs2 == 0:
-        gdaltest.post_reason('bad checksum')
-        print(cs1)
-        print(cs2)
-        return 'fail'
+    assert not (cs1 == 0 or cs2 == 0), 'bad checksum'
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test multi-thread computations
 
 
-def warp_29():
+def test_warp_29():
 
     ds = gdal.Open('data/white_nodata.vrt')
     cs_monothread = ds.GetRasterBand(1).Checksum()
@@ -1110,9 +985,7 @@ def warp_29():
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
-    if cs_monothread != cs_multithread:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert cs_monothread == cs_multithread
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
@@ -1123,9 +996,7 @@ def warp_29():
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
-    if cs_monothread != cs_multithread:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert cs_monothread == cs_multithread
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
 
@@ -1138,9 +1009,7 @@ def warp_29():
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
-    if got_cs != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert got_cs == src_ds.GetRasterBand(1).Checksum()
 
     ds = gdal.Open('data/byte_tps.vrt')
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
@@ -1151,13 +1020,9 @@ def warp_29():
     gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
-    if got_cs != src_ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert got_cs == src_ds.GetRasterBand(1).Checksum()
 
     src_ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping interruption
@@ -1168,7 +1033,7 @@ def warp_30_progress_callback(pct, message, user_data):
     return bool(pct <= 0.2)
 
 
-def warp_30():
+def test_warp_30():
 
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1215,9 +1080,7 @@ def warp_30():
                               cbk_user_data)  # Progress callback user data
     gdal.PopErrorHandler()
 
-    if ret == 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ret != 0
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
@@ -1234,22 +1097,18 @@ def warp_30():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
 
-    if ret == 0:
-        gdaltest.post_reason('failed')
-        return 'fail'
+    assert ret != 0
 
     gdal.Unlink('/vsimem/warp_30.tif')
-
-    return 'success'
 
 # Average (Byte)
 
 
-def warp_31():
+def test_warp_31():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_average.vrt')
     ref_ds = gdal.Open('data/utmsmall_average.tiff')
@@ -1257,20 +1116,16 @@ def warp_31():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Average (Float)
 
 
-def warp_32():
+def test_warp_32():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_average_float.vrt')
     ref_ds = gdal.Open('data/utmsmall_average_float.tiff')
@@ -1278,20 +1133,16 @@ def warp_32():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Mode (Byte)
 
 
-def warp_33():
+def test_warp_33():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_mode.vrt')
     ref_ds = gdal.Open('data/utmsmall_mode.tiff')
@@ -1299,20 +1150,16 @@ def warp_33():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Mode (Int16)
 
 
-def warp_34():
+def test_warp_34():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_mode_int16.vrt')
     ref_ds = gdal.Open('data/utmsmall_mode_int16.tiff')
@@ -1320,20 +1167,16 @@ def warp_34():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Mode (Int16 - signed with negative values)
 
 
-def warp_35():
+def test_warp_35():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall-int16-neg_mode.vrt')
     ref_ds = gdal.Open('data/utmsmall-int16-neg_mode.tiff')
@@ -1341,20 +1184,16 @@ def warp_35():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Mode (Int32) - this uses algorithm 2 (inefficient)
 
 
-def warp_36():
+def test_warp_36():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_mode_int32.vrt')
     ref_ds = gdal.Open('data/utmsmall_mode_int32.tiff')
@@ -1362,17 +1201,13 @@ def warp_36():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 ###############################################################################
 # Test a few error cases
 
 
-def warp_37():
+def test_warp_37():
 
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1386,9 +1221,7 @@ def warp_37():
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, None, dst_wkt)
     gdal.PopErrorHandler()
     gdal.ErrorReset()
-    if tmp_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert tmp_ds is None
 
     # Incompatible projection (UTM 40 is on the other side of the earth w.r.t UTM 11)
     sr = osr.SpatialReference()
@@ -1400,17 +1233,13 @@ def warp_37():
     tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, None, dst_wkt)
     gdal.PopErrorHandler()
     gdal.ErrorReset()
-    if tmp_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert tmp_ds is None
 
 ###############################################################################
 # Test a warp with GCPs on the *destination* image.
 
 
-def warp_38():
+def test_warp_38():
 
     # Create an output file with GCPs.
     out_file = 'tmp/warp_38.tif'
@@ -1434,19 +1263,15 @@ def warp_38():
 
     # Should exactly match the source file.
     exp_cs = 30546
-    if cs != exp_cs:
-        gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
-            cs, exp_cs))
-        return 'fail'
+    assert cs == exp_cs
 
     os.unlink(out_file)
-    return 'success'
 
 ###############################################################################
 # Test a warp with GCPs for TPS on the *destination* image.
 
 
-def warp_39():
+def test_warp_39():
 
     # Create an output file with GCPs.
     out_file = 'tmp/warp_39.tif'
@@ -1470,23 +1295,19 @@ def warp_39():
 
     # Should exactly match the source file.
     exp_cs = 30546
-    if cs != exp_cs:
-        gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
-            cs, exp_cs))
-        return 'fail'
+    assert cs == exp_cs
 
     os.unlink(out_file)
-    return 'success'
 
 ###############################################################################
 # test average (#5311)
 
 
-def warp_40():
+def test_warp_40():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/2by2.vrt')
     ref_ds = gdal.Open('data/2by2.tif')
@@ -1494,17 +1315,13 @@ def warp_40():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 ###############################################################################
 # test GDALSuggestedWarpOutput (#5693)
 
 
-def warp_41():
+def test_warp_41():
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="67108864" rasterYSize="67108864">
   <GeoTransform> -2.0037508340000000e+07,  5.9716428339481353e-01,  0.0000000000000000e+00,  2.0037508340000000e+07,  0.0000000000000000e+00, -5.9716428339481353e-01</GeoTransform>
@@ -1520,31 +1337,24 @@ def warp_41():
 </VRTDataset>""")
 
     vrt_ds = gdal.AutoCreateWarpedVRT(src_ds, None, None, gdal.GRA_NearestNeighbour, 0.3)
-    if vrt_ds.RasterXSize != src_ds.RasterXSize:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if vrt_ds.RasterYSize != src_ds.RasterYSize:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert vrt_ds.RasterXSize == src_ds.RasterXSize
+    assert vrt_ds.RasterYSize == src_ds.RasterYSize
     src_gt = src_ds.GetGeoTransform()
     vrt_gt = vrt_ds.GetGeoTransform()
     for i in range(6):
-        if abs(src_gt[i] - vrt_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert abs(src_gt[i] - vrt_gt[i]) <= 1e-5
 
-    return 'success'
-
+    
 ###############################################################################
 
 # Maximum
 
 
-def warp_42():
+def test_warp_42():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_max.vrt')
     ref_ds = gdal.Open('data/utmsmall_max.tif')
@@ -1552,20 +1362,16 @@ def warp_42():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Minimum
 
 
-def warp_43():
+def test_warp_43():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_min.vrt')
     ref_ds = gdal.Open('data/utmsmall_min.tif')
@@ -1573,20 +1379,16 @@ def warp_43():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Median
 
 
-def warp_44():
+def test_warp_44():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_med.vrt')
     ref_ds = gdal.Open('data/utmsmall_med.tif')
@@ -1594,20 +1396,16 @@ def warp_44():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Quartile 1
 
 
-def warp_45():
+def test_warp_45():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_Q1.vrt')
     ref_ds = gdal.Open('data/utmsmall_Q1.tif')
@@ -1615,20 +1413,16 @@ def warp_45():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Quartile 3
 
 
-def warp_46():
+def test_warp_46():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall_Q3.vrt')
     ref_ds = gdal.Open('data/utmsmall_Q3.tif')
@@ -1636,20 +1430,16 @@ def warp_46():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Maximum (Int16 - signed with negative values)
 
 
-def warp_47():
+def test_warp_47():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall-int16-neg_max.vrt')
     ref_ds = gdal.Open('data/utmsmall-int16-neg_max.tif')
@@ -1657,20 +1447,16 @@ def warp_47():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Minimum (Int16 - signed with negative values)
 
 
-def warp_48():
+def test_warp_48():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall-int16-neg_min.vrt')
     ref_ds = gdal.Open('data/utmsmall-int16-neg_min.tif')
@@ -1678,20 +1464,16 @@ def warp_48():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Median (Int16 - signed with negative values)
 
 
-def warp_49():
+def test_warp_49():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall-int16-neg_med.vrt')
     ref_ds = gdal.Open('data/utmsmall-int16-neg_med.tif')
@@ -1699,20 +1481,16 @@ def warp_49():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Quartile 1 (Int16 - signed with negative values)
 
 
-def warp_50():
+def test_warp_50():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall-int16-neg_Q1.vrt')
     ref_ds = gdal.Open('data/utmsmall-int16-neg_Q1.tif')
@@ -1720,20 +1498,16 @@ def warp_50():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 # Quartile 3 (Int16 - signed with negative values)
 
 
-def warp_51():
+def test_warp_51():
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/utmsmall-int16-neg_Q3.vrt')
     ref_ds = gdal.Open('data/utmsmall-int16-neg_Q3.tif')
@@ -1741,17 +1515,13 @@ def warp_51():
     ds = None
     ref_ds = None
 
-    if maxdiff > 1:
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
-
-    return 'success'
+    assert maxdiff <= 1, 'Image too different from reference'
 
 ###############################################################################
 # Test fix for #6182
 
 
-def warp_52():
+def test_warp_52():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 4096, 4096, 3, gdal.GDT_UInt16)
     rpc = [
@@ -1787,23 +1557,16 @@ def warp_52():
                        resampleAlg=gdal.GRA_Cubic)
 
     end = time.time()
-    if end - start > 5:
-        gdaltest.post_reason('processing time was way too long')
-        return 'fail'
+    assert end - start <= 5, 'processing time was way too long'
 
     cs = out_ds.GetRasterBand(4).Checksum()
-    if cs != 3188:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 3188
 
 ###############################################################################
 # Test Grey+Alpha
 
 
-def warp_53():
+def test_warp_53():
 
     for typestr in ('Byte', 'UInt16', 'Int16'):
         src_ds = gdal.Translate('', '../gcore/data/byte.tif',
@@ -1830,21 +1593,16 @@ def warp_53():
                 cs1 = dst_ds.GetRasterBand(1).Checksum()
                 cs2 = dst_ds.GetRasterBand(2).Checksum()
                 if cs1 not in expected_cs or cs2 not in [3903, 4138]:
-                    gdaltest.post_reason('fail')
                     print(typestr)
                     print(option)
-                    print(alg_name)
-                    print(cs1)
-                    print(cs2)
-                    return 'fail'
+                    pytest.fail(alg_name)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test Alpha on UInt16/Int16
 
 
-def warp_54():
+def test_warp_54():
 
     # UInt16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
@@ -1853,12 +1611,7 @@ def warp_54():
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
-        if expected_cs != got_cs:
-            gdaltest.post_reason('fail')
-            print(i)
-            print(got_cs)
-            print(expected_cs)
-            return 'fail'
+        assert expected_cs == got_cs, i
 
     # Int16
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
@@ -1867,12 +1620,7 @@ def warp_54():
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
-        if expected_cs != got_cs:
-            gdaltest.post_reason('fail')
-            print(i)
-            print(got_cs)
-            print(expected_cs)
-            return 'fail'
+        assert expected_cs == got_cs, i
 
     # Test NBITS
     src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
@@ -1883,48 +1631,36 @@ def warp_54():
     for i in range(4):
         expected_cs = src_ds.GetRasterBand(i + 1).Checksum()
         got_cs = dst_ds.GetRasterBand(i + 1).Checksum()
-        if expected_cs != got_cs:
-            gdaltest.post_reason('fail')
-            print(i)
-            print(got_cs)
-            print(expected_cs)
-            return 'fail'
+        assert expected_cs == got_cs, i
     dst_ds = None
 
     gdal.Unlink('/vsimem/warp_54.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test warped VRT with source overview, target GT != GenImgProjetion target GT
 # and subsampling (#6972)
 
 
-def warp_55():
+def test_warp_55():
 
     ds = gdal.Open('data/warpedvrt_with_ovr.vrt')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 25128:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+    assert cs == 25128
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test bilinear interpolation when warping into same coordinate system (and
 # same size). This test crops a single pixel out of a 3-by-3 image.
 
 
-def warp_56():
+def test_warp_56():
 
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
-        return 'skip'
+        pytest.skip()
 
     pix_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3)
@@ -1941,94 +1677,5 @@ def warp_56():
 
         exp = 0 if off < 1 else 100 * (off - 1)**2
         warped = pix_ds.GetRasterBand(1).ReadAsArray()[0, 0]
-        if abs(warped - exp) > 0.6:
-            gdaltest.post_reason('offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped))
-            return 'fail'
-
-    return 'success'
-
-
-gdaltest_list = [
-    warp_1,
-    warp_1_short,
-    warp_1_ushort,
-    warp_1_float,
-    warp_2,
-    warp_2_short,
-    warp_2_ushort,
-    warp_2_downsize,
-    warp_3,
-    warp_3_short,
-    warp_3_ushort,
-    warp_3_downsize,
-    warp_3_float_downsize,
-    warp_4,
-    warp_4_short,
-    warp_4_ushort,
-    warp_4_downsize,
-    warp_4_short_downsize,
-    warp_4_float_downsize,
-    warp_5,
-    warp_5_downsize,
-    warp_6,
-    warp_7,
-    warp_8,
-    warp_9,
-    warp_10,
-    warp_11,
-    warp_12,
-    warp_13,
-    warp_14,
-    warp_15,
-    warp_16,
-    warp_17,
-    warp_18,
-    warp_19,
-    warp_20,
-    warp_21,
-    warp_22,
-    warp_23,
-    warp_24,
-    warp_25,
-    warp_26,
-    warp_27,
-    warp_28,
-    warp_29,
-    warp_30,
-    warp_31,
-    warp_32,
-    warp_33,
-    warp_34,
-    warp_35,
-    warp_36,
-    warp_37,
-    warp_38,
-    warp_39,
-    warp_39,
-    warp_40,
-    warp_41,
-    warp_42,
-    warp_43,
-    warp_44,
-    warp_45,
-    warp_46,
-    warp_47,
-    warp_48,
-    warp_49,
-    warp_50,
-    warp_51,
-    warp_52,
-    warp_53,
-    warp_54,
-    warp_55,
-    warp_56
-]
-# gdaltest_list = [ warp_55 ]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('warp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())
+        assert abs(warped - exp) <= 0.6, \
+            'offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped)

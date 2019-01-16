@@ -152,7 +152,7 @@ def getCompletionScript(name, optList):
     # adapt format parsing command : GDAL type of OGR type
 
     isGdal = True
-    if name.find("ogr") == 0:
+    if name.startswith("ogr"):
         isGdal = False
 
     # gdal type

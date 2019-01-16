@@ -63,6 +63,7 @@ static int bStaticFIPSMode = FALSE;
 
 class OGRMongoDBDataSource;
 
+namespace {
 typedef struct _IntOrMap IntOrMap;
 
 struct _IntOrMap
@@ -74,6 +75,7 @@ struct _IntOrMap
         std::map< CPLString, IntOrMap*>* poMap;
     } u;
 };
+} // namespace
 
 class OGRMongoDBLayer final: public OGRLayer
 {
@@ -1093,7 +1095,7 @@ static void OGRMongoDBReaderSetField( OGRLayer* poLayer,
                     else if( dfVal > static_cast<double>(std::numeric_limits<GIntBig>::max()) )
                         panValues[i] = std::numeric_limits<GIntBig>::max();
                     else
-                        panValues[i] = (int)dfVal;
+                        panValues[i] = static_cast<GIntBig>(dfVal);
                 }
                 else if( eBSONType == MinKey )
                     panValues[i] = std::numeric_limits<GIntBig>::min();
@@ -1234,7 +1236,10 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
 
     if( m_osFID.empty() )
     {
-        BSONObj oQueryAttrBak(m_oQueryAttr), oQuerySpatBak(m_oQuerySpat);
+        BSONObj oQueryAttrBak(m_oQueryAttr);
+        BSONObj oQuerySpatBak(m_oQuerySpat);
+        m_oQueryAttr = BSONObj();
+        m_oQuerySpat = BSONObj();
         OGRFeature* poFeature = OGRLayer::GetFeature(nFID);
         m_oQueryAttr = oQueryAttrBak;
         m_oQuerySpat = oQuerySpatBak;
@@ -1815,10 +1820,12 @@ OGRErr OGRMongoDBLayer::ISetFeature( OGRFeature *poFeature )
     try
     {
         BSONObj obj( BuildBSONObjFromFeature(poFeature, TRUE) );
+        auto query = !m_osFID.empty() ?
+            MONGO_QUERY("_id" << obj.getField("_id") << m_osFID << poFeature->GetFID()) :
+            MONGO_QUERY("_id" << obj.getField("_id"));
         // TODO? we should theoretically detect if the provided _id doesn't exist
         m_poDS->GetConn()->update( m_osQualifiedCollection,
-                                 MONGO_QUERY("_id" << obj.getField("_id")),
-                                 obj, false, false );
+                                   query, obj, false, false );
         return OGRERR_NONE;
     }
     catch( const DBException &e )

@@ -356,6 +356,23 @@ AC_CHECK_FUNCS(statvfs)
 AC_CHECK_FUNCS(statvfs64)
 AC_CHECK_FUNCS(getrlimit)
 
+AC_MSG_CHECKING([for RLIMIT_AS])
+AC_TRY_COMPILE(
+  [
+#include <sys/time.h>
+#include <sys/resource.h>
+  ], [
+    return RLIMIT_AS;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_RLIMIT_AS, 1,
+          [Define to 1 if you have the `RLIMIT_AS' constant.])
+  ], [
+    AC_MSG_RESULT([no])
+])
+
+
 dnl Make sure at least these are checked under C++.  Prototypes missing on
 dnl some platforms.
 
@@ -2233,6 +2250,35 @@ fi
 AC_SUBST(MONGODB_ENABLED, $MONGODB_ENABLED)
 AC_SUBST(MONGODB_LIB, $MONGODB_LIB)
 AC_SUBST(MONGODB_INC, $MONGODB_INC)
+
+
+dnl ---------------------------------------------------------------------------
+dnl MongoCXXv3 driver
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(mongocxxv3,[  --with-mongocxxv3[=ARG]        Include MongoCXXv3 support (ARG=yes or no)],,)
+
+MONGOCXXV3_ENABLED=no
+
+if test "$with_mongocxxv3" = "no" ; then
+
+  echo "MONGODBv3 support disabled."
+
+elif test "$with_mongocxxv3" = "yes" -o "$with_mongocxxv3" = "" ; then
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([MONGOCXXV3], [libmongocxx >= 3.4.0], [MONGOCXXV3_ENABLED=yes], [MONGOCXXV3_ENABLED=no])
+
+  if test "$MONGOCXXV3_ENABLED" = "no" -a "$with_mongocxxv3" = "yes" ; then
+    AC_MSG_ERROR([mongocxxv3 requested but no found])
+  fi
+
+fi
+
+AC_SUBST(MONGOCXXV3_ENABLED, $MONGOCXXV3_ENABLED)
+AC_SUBST(MONGOCXXV3_LIBS, $MONGOCXXV3_LIBS)
+AC_SUBST(MONGOCXXV3_CFLAGS, $MONGOCXXV3_CFLAGS)
+
 
 dnl ---------------------------------------------------------------------------
 dnl Select an HDF4 Library to use, or disable driver.
@@ -4157,6 +4203,8 @@ elif test "$with_webp" != "no" -a "$with_webp" != ""; then
 
 fi
 
+AC_SUBST(WEBP_SETTING,$WEBP_SETTING)
+
 if test "$WEBP_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="webp $OPT_GDAL_FORMATS"
 fi
@@ -4496,6 +4544,7 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 POPPLER_0_20_OR_LATER=no
 POPPLER_0_23_OR_LATER=no
 POPPLER_0_58_OR_LATER=no
+POPPLER_0_69_OR_LATER=no
 
 AC_MSG_CHECKING([for poppler])
 
@@ -4536,21 +4585,45 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
 
         CHECK_OTHER_POPPLER_VERSION=yes
 
-        # And now we check if we have Poppler >= 0.58.0
-        AC_MSG_CHECKING([if Object does have new API (>= 0.58.0)])
-        rm -f testpoppler.*
-        echo '#include <poppler/Object.h>' > testpoppler.cpp
-        echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-            POPPLER_0_58_OR_LATER=yes
-            POPPLER_0_23_OR_LATER=yes
-            POPPLER_0_20_OR_LATER=yes
-            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-            POPPLER_HAS_OPTCONTENT=yes
-            CHECK_OTHER_POPPLER_VERSION=no
-            AC_MSG_RESULT([yes])
-        else
-            AC_MSG_RESULT([no])
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            AC_MSG_CHECKING([if OptionalContent has API >= 0.69.0])
+            rm -f testpoppler.*
+            echo '#include <poppler/OptionalContent.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) {' >> testpoppler.cpp
+            echo 'OCGs ocg(nullptr, nullptr);' >> testpoppler.cpp
+            echo 'ocg.getOCGs().size();' >> testpoppler.cpp
+            echo 'return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_69_OR_LATER=yes
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
+        fi
+
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
+            # And now we check if we have Poppler >= 0.58.0
+            AC_MSG_CHECKING([if Object does have new API (>= 0.58.0)])
+            rm -f testpoppler.*
+            echo '#include <poppler/Object.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_58_OR_LATER=yes
+                POPPLER_0_23_OR_LATER=yes
+                POPPLER_0_20_OR_LATER=yes
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                CHECK_OTHER_POPPLER_VERSION=no
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
         fi
 
         if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
@@ -4635,6 +4708,7 @@ AC_SUBST(POPPLER_BASE_STREAM_HAS_TWO_ARGS, $POPPLER_BASE_STREAM_HAS_TWO_ARGS)
 AC_SUBST(POPPLER_0_20_OR_LATER, $POPPLER_0_20_OR_LATER)
 AC_SUBST(POPPLER_0_23_OR_LATER, $POPPLER_0_23_OR_LATER)
 AC_SUBST(POPPLER_0_58_OR_LATER, $POPPLER_0_58_OR_LATER)
+AC_SUBST(POPPLER_0_69_OR_LATER, $POPPLER_0_69_OR_LATER)
 AC_SUBST(POPPLER_INC, $POPPLER_INC)
 AC_SUBST(POPPLER_PLUGIN_LIB, $POPPLER_PLUGIN_LIB)
 
@@ -5896,6 +5970,7 @@ LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
+LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 

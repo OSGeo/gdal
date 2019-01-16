@@ -3559,7 +3559,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // so as to be able to set the not null constraint (if the driver supports it)
         // Same if the source geometry column has a non empty name that is not
         // overridden
-        else if( anRequestedGeomFields.empty() &&
+        else if( eGType != wkbNone &&
+                 anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  ((!poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
@@ -3582,7 +3583,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // If the source feature first geometry column is not nullable
         // and that GEOMETRY_NULLABLE creation option is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
-        if( anRequestedGeomFields.empty() &&
+        if( eGType != wkbNone &&
+            anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount >= 1 &&
             !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
             m_poDstDS->GetDriver()->GetMetadataItem(
@@ -3597,7 +3599,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         }
 
         // Use source geometry field name as much as possible
-        if( m_poDstDS->GetDriver()->GetMetadataItem(
+        if( eGType != wkbNone &&
+            m_poDstDS->GetDriver()->GetMetadataItem(
                 GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
             strstr(m_poDstDS->GetDriver()->GetMetadataItem(
                 GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NAME") != nullptr &&
@@ -3930,6 +3933,16 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     {
         int nDstFieldCount = poDstFDefn ? poDstFDefn->GetFieldCount() : 0;
 
+        const bool caseInsensitive =
+            !EQUAL(m_poDstDS->GetDriver()->GetDescription(), "GeoJSON");
+        auto formatName = [caseInsensitive](const char* name) {
+            if( caseInsensitive ) {
+                return CPLString(name).toupper();
+            } else {
+                return CPLString(name);
+            }
+        };
+
         /* Save the map of existing fields, before creating new ones */
         /* This helps when converting a source layer that has duplicated field names */
         /* which is a bad idea */
@@ -3938,7 +3951,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         for( int iField = 0; iField < nDstFieldCount; iField++ )
         {
             const char* pszFieldName = poDstFDefn->GetFieldDefn(iField)->GetNameRef();
-            CPLString osUpperFieldName(CPLString(pszFieldName).toupper());
+            CPLString osUpperFieldName(formatName(pszFieldName));
             oSetDstFieldNames.insert(osUpperFieldName);
             if( oMapPreExistingFields.find(osUpperFieldName) ==
                                             oMapPreExistingFields.end() )
@@ -3976,7 +3989,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         for( int i = 0; i < poSrcFDefn->GetFieldCount(); i++ )
         {
             oSetSrcFieldNames.insert(
-                CPLString(poSrcFDefn->GetFieldDefn(i)->GetNameRef()).toupper());
+                formatName(poSrcFDefn->GetFieldDefn(i)->GetNameRef()));
         }
 
         for( size_t i = 0; i < anSrcFieldIndices.size(); i++ )
@@ -4003,7 +4016,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 
             /* The field may have been already created at layer creation */
             std::map<CPLString, int>::iterator oIter =
-                oMapPreExistingFields.find(CPLString(oFieldDefn.GetNameRef()).toupper());
+                oMapPreExistingFields.find(formatName(oFieldDefn.GetNameRef()));
             if( oIter != oMapPreExistingFields.end() )
             {
                 panMap[iField] = oIter->second;
@@ -4014,12 +4027,12 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             /* In case the field name already exists in the target layer, */
             /* build a unique field name */
             if( oSetDstFieldNames.find(
-                    CPLString(oFieldDefn.GetNameRef()).toupper()) !=
+                    formatName(oFieldDefn.GetNameRef())) !=
                                                     oSetDstFieldNames.end() )
             {
                 int nTry = 1;
                 CPLString osTmpNameRaddixUC(oFieldDefn.GetNameRef());
-                osTmpNameRaddixUC.toupper();
+                osTmpNameRaddixUC = formatName(osTmpNameRaddixUC);
                 CPLString osTmpNameUC = osTmpNameRaddixUC;
                 osTmpNameUC.reserve(osTmpNameUC.size() + 10);
                 while( true )
@@ -4069,7 +4082,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                                     "Field '%s' already exists. Renaming it as '%s'",
                                     poSrcFieldDefn->GetNameRef(), pszNewFieldName);
                         }
-                        oSetDstFieldNames.insert(CPLString(pszNewFieldName).toupper());
+                        oSetDstFieldNames.insert(formatName(pszNewFieldName));
                     }
 
                     panMap[iField] = nDstFieldCount;

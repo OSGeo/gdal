@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -31,14 +31,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 #
 # To initialize the required PostGISRaster DB instance, run data/load_postgisraster_test_data.sh
@@ -49,14 +48,14 @@ import gdaltest
 #
 
 
-def postgisraster_init():
+def test_postgisraster_init():
     gdaltest.postgisrasterDriver = gdal.GetDriverByName('PostGISRaster')
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     if gdal.GetConfigOption('APPVEYOR'):
         gdaltest.postgisrasterDriver = None
-        return 'skip'
+        pytest.skip()
 
     val = gdal.GetConfigOption('GDAL_PG_CONNECTION_STRING', None)
     if val is not None:
@@ -72,7 +71,7 @@ def postgisraster_init():
         ds = ogr.Open(gdaltest.postgisraster_connection_string, update=1)
     if ds is None:
         gdaltest.postgisrasterDriver = None
-        return 'skip'
+        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(26711)
@@ -101,47 +100,44 @@ def postgisraster_init():
         gdaltest.postgisrasterDriver = None
 
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 #
 
 
-def postgisraster_test_open_error1():
+def test_postgisraster_test_open_error1():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string +
                        "table='nonexistent'")
     if ds is None:
-        return 'success'
-    return 'fail'
+        return
+    pytest.fail()
 
 ###############################################################################
 #
 
 
-def postgisraster_test_open_error2():
+def test_postgisraster_test_open_error2():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # removed mode, as it defaults to one raster per row
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
-    if ds is None:
-        return 'fail'
-    return 'success'
+    assert ds is not None
 
 ###############################################################################
 #
 
 
-def postgisraster_compare_utm():
+def test_postgisraster_compare_utm():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/utm.tif')
     with gdaltest.error_handler():
@@ -151,15 +147,15 @@ def postgisraster_compare_utm():
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose=1)
-    return 'success' if diff == 0 else 'fail'
+    assert diff == 0
 
 ###############################################################################
 #
 
 
-def postgisraster_compare_small_world():
+def test_postgisraster_compare_small_world():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/small_world.tif')
     with gdaltest.error_handler():
@@ -169,15 +165,15 @@ def postgisraster_compare_small_world():
     dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose=1)
-    return 'success' if diff == 0 else 'fail'
+    assert diff == 0
 
 ###############################################################################
 #
 
 
-def postgisraster_test_utm_open():
+def test_postgisraster_test_utm_open():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # First open tif file
     src_ds = gdal.Open('data/utm.tif')
@@ -200,9 +196,9 @@ def postgisraster_test_utm_open():
 #
 
 
-def postgisraster_test_small_world_open_b1():
+def test_postgisraster_test_small_world_open_b1():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # First open tif file
     src_ds = gdal.Open('data/small_world.tif')
@@ -225,9 +221,9 @@ def postgisraster_test_small_world_open_b1():
 #
 
 
-def postgisraster_test_small_world_open_b2():
+def test_postgisraster_test_small_world_open_b2():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # First open tif file
     src_ds = gdal.Open('data/small_world.tif')
@@ -250,9 +246,9 @@ def postgisraster_test_small_world_open_b2():
 #
 
 
-def postgisraster_test_small_world_open_b3():
+def test_postgisraster_test_small_world_open_b3():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # First open tif file
     src_ds = gdal.Open('data/small_world.tif')
@@ -273,21 +269,21 @@ def postgisraster_test_small_world_open_b3():
         return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 
-def postgisraster_test_create_copy_bad_conn_string():
+def test_postgisraster_test_create_copy_bad_conn_string():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy("bogus connection string", src_ds, strict=True)
 
-        return 'success' if new_ds is None else 'fail'
+        assert new_ds is None
 
 
-def postgisraster_test_create_copy_no_dbname():
+def test_postgisraster_test_create_copy_no_dbname():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
@@ -298,12 +294,12 @@ def postgisraster_test_create_copy_no_dbname():
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy("PG: no database name", src_ds, strict=True, options=options)
 
-        return 'success' if new_ds is None else 'fail'
+        assert new_ds is None
 
 
-def postgisraster_test_create_copy_no_tablename():
+def test_postgisraster_test_create_copy_no_tablename():
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
@@ -314,36 +310,35 @@ def postgisraster_test_create_copy_no_tablename():
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string, src_ds, strict=True, options=options)
 
-        return 'success' if new_ds is None else 'fail'
+        assert new_ds is None
 
 
-def postgisraster_test_create_copy_and_delete():
+def test_postgisraster_test_create_copy_and_delete():
     """
     Test the "CreateCopy" implementation. What to do when we're done?
     Why, test "Delete", of course!
     """
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
         new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict=True)
 
-        if new_ds is None:
-            return 'fail'
+        assert new_ds is not None
 
     deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
-    return 'fail' if deleted else 'success'
+    assert not deleted
 
 
-def postgisraster_test_create_copy_and_delete_phases():
+def test_postgisraster_test_create_copy_and_delete_phases():
     """
     Create a copy of the dataset, then delete it in phases.
     """
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
@@ -358,83 +353,67 @@ def postgisraster_test_create_copy_and_delete_phases():
         src_ds = None
 
         if new_ds is None:
-            gdaltest.post_reason('No new dataset was created during copy.')
-            return 'fail'
+            pytest.fail('No new dataset was created during copy.')
         elif len(src_md) != len(new_md):
-            gdaltest.post_reason('Metadata differs between new and old rasters.')
-            return 'fail'
+            pytest.fail('Metadata differs between new and old rasters.')
 
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy' mode=2")
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-        if cs != [30111, 32302, 40026]:
-            gdaltest.post_reason('fail')
-            print(cs)
-            return 'fail'
+        assert cs == [30111, 32302, 40026]
         ds = None
 
         # should delete all raster parts over 50
         deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid>50'")
 
-        if deleted:
-            gdaltest.post_reason('Delete returned an error.')
-            return 'fail'
+        assert not deleted, 'Delete returned an error.'
 
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
         src_md = src_ds.GetMetadata('SUBDATASETS').keys()
 
         if src_ds is None:
-            gdaltest.post_reason('Could not open reduced dataset (1).')
-            return 'fail'
+            pytest.fail('Could not open reduced dataset (1).')
         elif len(src_md) != 100:
             # The length of the metadata contains two pcs of
             # information per raster, so 50 rasters remaining = 100 keys
-            gdaltest.post_reason(
-                'Expected 100 keys of metadata for 50 subdataset rasters.')
             print(len(src_md))
-            return 'fail'
+            pytest.fail(
+                'Expected 100 keys of metadata for 50 subdataset rasters.')
 
         # done with src
         src_ds = None
 
         deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid<=25'")
 
-        if deleted:
-            gdaltest.post_reason('Delete returned an error.')
-            return 'fail'
+        assert not deleted, 'Delete returned an error.'
 
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
         src_md = src_ds.GetMetadata('SUBDATASETS').keys()
 
         if src_ds is None:
-            gdaltest.post_reason('Could not open reduced dataset (2).')
-            return 'fail'
+            pytest.fail('Could not open reduced dataset (2).')
         elif len(src_md) != 50:
             # The length of the metadata contains two pcs of
             # information per raster, so 25 rasters remaining = 50 keys
-            gdaltest.post_reason('Expected 50 keys of metadata for 25 subdataset rasters.')
             print(len(src_md))
-            return 'fail'
+            pytest.fail('Expected 50 keys of metadata for 25 subdataset rasters.')
 
         # done with src
         src_ds = None
 
         deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
-        if deleted:
-            gdaltest.post_reason('Delete returned an error.')
-            return 'fail'
+        assert not deleted, 'Delete returned an error.'
 
-    return 'success'
+    
 
-
-def postgisraster_test_norid():
+def test_postgisraster_test_norid():
     """
     Test the ability to connect to a data source if it has no 'rid' column.
     """
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_noid'")
@@ -446,28 +425,21 @@ def postgisraster_test_norid():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if src_md[k].find('ST_UpperLeftX') < 0 or src_md[k].find('ST_UpperLeftY') < 0:
-                print(src_md[k])
-                return 'fail'
+            assert src_md[k].find('ST_UpperLeftX') >= 0 and src_md[k].find('ST_UpperLeftY') >= 0
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_noid' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_test_serial():
+def test_postgisraster_test_serial():
     """
     Test the ability to connect to a data source if it has no primary key,
     but uses a sequence instead.
     """
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_serial'")
@@ -481,28 +453,21 @@ def postgisraster_test_serial():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if not re.search("where='\"serialid\" = \d+'", src_md[k]):
-                print(k, ':', src_md[k])
-                return 'fail'
+            assert re.search("where='\"serialid\" = \d+'", src_md[k]), (k, ':', src_md[k])
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_serial' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_test_unique():
+def test_postgisraster_test_unique():
     """
     Test the ability to connect to a data source if it has no primary key,
     but uses a unique constraint instead.
     """
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     with gdaltest.error_handler():
         src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique'")
@@ -516,59 +481,42 @@ def postgisraster_test_unique():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            if not re.search("where='\"uniq\" = \d+'", src_md[k]):
-                print(k, ':', src_md[k])
-                return 'fail'
+            assert re.search("where='\"uniq\" = \d+'", src_md[k]), (k, ':', src_md[k])
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_test_constraint():
+def test_postgisraster_test_constraint():
 
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_test_constraint_with_spi():
+def test_postgisraster_test_constraint_with_spi():
 
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_constraint_with_spi' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_test_outdb():
+def test_postgisraster_test_outdb():
 
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
 
     # For some reason fails with
     # ERROR 1: PostGISRasterRasterBand::IRasterIO(): ERROR:  rt_band_load_offline_data: Cannot open offline raster: /home/travis/build/rouault/gdal/autotest/gdrivers/data/small_world.tif
     # See https://api.travis-ci.org/v3/job/428972866/log.txt
     if gdaltest.is_travis_branch('ubuntu_1804'):
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.Open(gdaltest.postgisraster_connection_string_without_schema)
     sql_lyr = ds.ExecuteSQL('SHOW postgis.enable_outdb_rasters')
@@ -579,95 +527,41 @@ def postgisraster_test_outdb():
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     expected_cs = [30111, 32302, 40026] if has_guc else [0, 0, 0]
-    if cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == expected_cs
 
 
-def postgisraster_test_outdb_client_side():
+def test_postgisraster_test_outdb_client_side():
 
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_test_outdb_client_side_force_ireadblock():
+def test_postgisraster_test_outdb_client_side_force_ireadblock():
 
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side")
     with gdaltest.SetCacheMax(0):
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_test_outdb_client_side_if_possible():
+def test_postgisraster_test_outdb_client_side_if_possible():
 
     if gdaltest.postgisrasterDriver is None:
-        return 'skip'
+        pytest.skip()
     ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_outdb_constraint' mode=2 outdb_resolution=client_side_if_possible")
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    if cs != [30111, 32302, 40026]:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == [30111, 32302, 40026]
 
 
-def postgisraster_cleanup():
+def test_postgisraster_cleanup():
 
     gdal.Unlink('data/small_world.tif.aux.xml')
     gdal.Unlink('data/utm.tif.aux.xml')
 
-    return 'success'
 
 
-gdaltest_list = [
-    postgisraster_init,
-    postgisraster_test_open_error1,
-    postgisraster_test_open_error2,
-    postgisraster_compare_utm,
-    postgisraster_compare_small_world,
-    postgisraster_test_utm_open,
-    postgisraster_test_small_world_open_b1,
-    postgisraster_test_small_world_open_b2,
-    postgisraster_test_small_world_open_b3,
-    postgisraster_test_create_copy_bad_conn_string,
-    postgisraster_test_create_copy_no_dbname,
-    postgisraster_test_create_copy_no_tablename,
-    postgisraster_test_create_copy_and_delete,
-    postgisraster_test_create_copy_and_delete_phases,
-    postgisraster_test_norid,
-    postgisraster_test_serial,
-    postgisraster_test_unique,
-    postgisraster_test_constraint,
-    postgisraster_test_constraint_with_spi,
-    postgisraster_test_outdb,
-    postgisraster_test_outdb_client_side,
-    postgisraster_test_outdb_client_side_force_ireadblock,
-    postgisraster_test_outdb_client_side_if_possible,
-    postgisraster_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('WKTRASTER')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

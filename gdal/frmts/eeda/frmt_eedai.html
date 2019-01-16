@@ -16,7 +16,8 @@ using Google Earth Engine REST API.<p>
 
 The minimal syntax to open a datasource is : <pre>EEDAI:[asset][:band_names]</pre><p>
 
-where asset is something like COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG,
+where asset is something like
+projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG,
 and band_names a comma separated list of band names (typically indicated by
 subdatasets on the main image)
 
@@ -101,11 +102,11 @@ AUTO_PNG_JPEG can only be used with bands of type Byte.
 <li>
 Get metadata on an image:
 <pre>
-gdalinfo "EEDAI:" -oo ASSET=COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+gdalinfo "EEDAI:" -oo ASSET=projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 or
 <pre>
-gdalinfo "EEDAI:COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+gdalinfo "EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 

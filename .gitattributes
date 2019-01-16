@@ -1,0 +1,24 @@
+# Do NOT set the default behavior, in case people don't have core.autocrlf set.
+# This may lead to implicit modification of certain files (eg. test data) during git clone.
+#* text=auto
+
+# Declare files that will always have LF line endings on checkout.
+*.m4            text eol=lf
+*.sh            text eol=lf
+config.guess    text eol=lf
+cpl_config.h.in text eol=lf
+config.sub      text eol=lf
+configure       text eol=lf
+configure.ac    text eol=lf
+gdal.pc.in      text eol=lf
+install-sh      text eol=lf
+GNUmakefile     text eol=lf
+GNUmake.opt*    text eol=lf
+VERSION         text eol=lf
+
+# Declare files that will always have CRLF line endings on checkout.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.ps1           text eol=crlf
+cpl_config.h.vc.* text eol=crlf
+makefile.vc     text eol=crlf

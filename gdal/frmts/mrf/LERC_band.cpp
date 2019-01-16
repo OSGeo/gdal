@@ -30,6 +30,14 @@ USING_NAMESPACE_LERC
 
 NAMESPACE_MRF_START
 
+// Read an unaligned 4 byte little endian int from location p, advances pointer
+static void READ_GINT32(int& X, const char*& p)
+{
+    memcpy(&X, p, sizeof(GInt32));
+    SWAP_4(X);
+    p+= sizeof(GInt32);
+}
+
 //
 // Check that a buffer contains a supported Lerc1 blob, the type supported by MRF
 // Can't really check everything without decoding, this just checks the main structure
@@ -42,12 +50,6 @@ NAMESPACE_MRF_START
 static int checkV1(const char *s, size_t sz)
 {
     GInt32 nBytesMask, nBytesData;
-
-// Read an unaligned 4 byte little endian int from location p, advances pointer
-#define READ_GINT32(X, p) \
-            memcpy(&X, p, sizeof(GInt32));\
-            SWAP_4(X); \
-            p+= sizeof(GInt32)
 
     // Header is 34 bytes
     // band header is 16, first mask band then data band
@@ -119,8 +121,6 @@ static int checkV1(const char *s, size_t sz)
 
     READ_GINT32(nBytesData, s);
     if (nBytesData < 0) return 0;
-
-#undef READ_GINT32
 
     // Actual LERC blob size
     if( 66 + nBytesMask > INT_MAX - nBytesData )

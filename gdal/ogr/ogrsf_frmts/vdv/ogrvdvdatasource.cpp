@@ -135,10 +135,11 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
 /*                           OGRIDFDataSource()                         */
 /************************************************************************/
 
-OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) :
+OGRIDFDataSource::OGRIDFDataSource(const char* pszFilename, VSILFILE* fpLIn) :
+    m_osFilename(pszFilename),
     m_fpL(fpLIn),
     m_bHasParsed(false),
-    m_poMemDS(nullptr)
+    m_poTmpDS(nullptr)
 {}
 
 /************************************************************************/
@@ -147,9 +148,20 @@ OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) :
 
 OGRIDFDataSource::~OGRIDFDataSource()
 {
-    delete m_poMemDS;
+    CPLString osTmpFilename;
+    if( m_bDestroyTmpDS && m_poTmpDS )
+    {
+        osTmpFilename = m_poTmpDS->GetDescription();
+    }
+    delete m_poTmpDS;
+    if( m_bDestroyTmpDS )
+    {
+        VSIUnlink(osTmpFilename);
+    }
     if( m_fpL )
+    {
         VSIFCloseL(m_fpL);
+    }
 }
 
 /************************************************************************/
@@ -159,15 +171,83 @@ OGRIDFDataSource::~OGRIDFDataSource()
 void OGRIDFDataSource::Parse()
 {
     m_bHasParsed = true;
-    GDALDriver* poMemDRV = (GDALDriver*)GDALGetDriverByName("MEMORY");
-    if( poMemDRV == nullptr )
+
+    GDALDriver* poMEMDriver = reinterpret_cast<GDALDriver*>(
+        GDALGetDriverByName("MEMORY"));
+    if( poMEMDriver == nullptr )
         return;
-    m_poMemDS = poMemDRV->Create("", 0, 0, 0, GDT_Unknown, nullptr);
+
+    VSIStatBufL sStatBuf;
+    bool bGPKG = false;
+    vsi_l_offset nFileSize = 0;
+    bool bSpatialIndex = false;
+    if( VSIStatL(m_osFilename, &sStatBuf) == 0 &&
+        sStatBuf.st_size > CPLAtoGIntBig(
+            CPLGetConfigOption("OGR_IDF_TEMP_DB_THRESHOLD", "100000000")) )
+    {
+        nFileSize = sStatBuf.st_size;
+
+        GDALDriver* poGPKGDriver = reinterpret_cast<GDALDriver*>(
+            GDALGetDriverByName("GPKG"));
+        if( poGPKGDriver )
+        {
+            CPLString osTmpFilename(m_osFilename + "_tmp.gpkg");
+            VSILFILE* fp = VSIFOpenL(osTmpFilename, "wb");
+            if( fp )
+            {
+                VSIFCloseL(fp);
+            }
+            else
+            {
+                osTmpFilename =
+                    CPLGenerateTempFilename(CPLGetBasename(m_osFilename));
+                osTmpFilename += ".gpkg";
+            }
+            VSIUnlink(osTmpFilename);
+            CPLString osOldVal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
+            CPLSetThreadLocalConfigOption("OGR_SQLITE_JOURNAL", "OFF");
+            m_poTmpDS = poGPKGDriver->Create(
+                osTmpFilename, 0, 0, 0, GDT_Unknown, nullptr);
+            CPLSetThreadLocalConfigOption("OGR_SQLITE_JOURNAL",
+                !osOldVal.empty() ? osOldVal.c_str() : nullptr);
+            bGPKG = m_poTmpDS != nullptr;
+            m_bDestroyTmpDS =
+                CPLTestBool(
+                    CPLGetConfigOption("OGR_IDF_DELETE_TEMP_DB", "YES")) &&
+                m_poTmpDS != nullptr;
+            if( m_bDestroyTmpDS )
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                m_bDestroyTmpDS = VSIUnlink(osTmpFilename) != 0;
+                CPLPopErrorHandler();
+            }
+            else
+            {
+                bSpatialIndex = true;
+            }
+        }
+    }
+
+    if( m_poTmpDS == nullptr )
+    {
+        m_poTmpDS = poMEMDriver->Create("", 0, 0, 0, GDT_Unknown, nullptr);
+    }
+
+    m_poTmpDS->StartTransaction();
+
     OGRLayer* poCurLayer = nullptr;
-    std::map<GIntBig, std::pair<double,double> > oMapNode; // map from NODE_ID to (X,Y)
+    struct Point
+    {
+        double x;
+        double y;
+        double z;
+        Point(double xIn = 0, double yIn = 0, double zIn = 0):
+            x(xIn), y(yIn), z(zIn) {}
+    };
+    std::map<GIntBig, Point > oMapNode; // map from NODE_ID to Point
     std::map<GIntBig, OGRLineString*> oMapLinkCoordinate; // map from LINK_ID to OGRLineString*
     CPLString osTablename, osAtr, osFrm;
-    int iX = -1, iY = -1;
+    int iX = -1, iY = -1, iZ = -1;
     bool bAdvertizeUTF8 = false;
     bool bRecodeFromLatin1 = false;
     int iNodeID = -1;
@@ -178,8 +258,20 @@ void OGRIDFDataSource::Parse()
 
     // We assume that layers are in the order Node, Link, LinkCoordinate
 
+    GUIntBig nLineCount = 0;
     while( true )
     {
+        if( nFileSize )
+        {
+            ++ nLineCount;
+            if( (nLineCount % 32768) == 0 )
+            {
+                const vsi_l_offset nPos = VSIFTellL(m_fpL);
+                CPLDebug("IDF", "Reading progress: %.2f %%",
+                         100.0 * nPos / nFileSize);
+            }
+        }
+
         const char* pszLine = CPLReadLineL(m_fpL);
         if( pszLine == nullptr )
             break;
@@ -217,17 +309,21 @@ void OGRIDFDataSource::Parse()
                 char** papszFrm = CSLTokenizeString2(osFrm,";",
                         CSLT_ALLOWEMPTYTOKENS|CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
                 char* apszOptions[2] = { nullptr, nullptr };
-                if( bAdvertizeUTF8 )
+                if( bAdvertizeUTF8 && !bGPKG )
                     apszOptions[0] = (char*)"ADVERTIZE_UTF8=YES";
+                else if( bGPKG && !bSpatialIndex )
+                    apszOptions[0] = (char*)"SPATIAL_INDEX=NO";
 
                 if( EQUAL(osTablename, "Node") &&
                     (iX = CSLFindString(papszAtr, "X")) >= 0 &&
                     (iY = CSLFindString(papszAtr, "Y")) >= 0 )
                 {
+                    iZ = CSLFindString(papszAtr, "Z");
                     eLayerType = LAYER_NODE;
                     iNodeID = CSLFindString(papszAtr, "NODE_ID");
                     OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
-                    poCurLayer = m_poMemDS->CreateLayer(osTablename, poSRS, wkbPoint, apszOptions);
+                    poCurLayer = m_poTmpDS->CreateLayer(osTablename, poSRS,
+                            iZ < 0 ? wkbPoint : wkbPoint25D, apszOptions);
                     poSRS->Release();
                 }
                 else if( EQUAL(osTablename, "Link") &&
@@ -237,7 +333,8 @@ void OGRIDFDataSource::Parse()
                 {
                     eLayerType = LAYER_LINK;
                     OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
-                    poCurLayer = m_poMemDS->CreateLayer(osTablename, poSRS, wkbLineString, apszOptions);
+                    poCurLayer = m_poTmpDS->CreateLayer(osTablename, poSRS,
+                        iZ < 0 ? wkbLineString : wkbLineString25D, apszOptions);
                     poSRS->Release();
                 }
                 else if( EQUAL(osTablename, "LinkCoordinate") &&
@@ -246,14 +343,22 @@ void OGRIDFDataSource::Parse()
                         (iX = CSLFindString(papszAtr, "X")) >= 0 &&
                         (iY = CSLFindString(papszAtr, "Y")) >= 0 )
                 {
+                    iZ = CSLFindString(papszAtr, "Z");
                     eLayerType = LAYER_LINKCOORDINATE;
                     OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
-                    poCurLayer = m_poMemDS->CreateLayer(osTablename, poSRS, wkbPoint, apszOptions);
+                    poCurLayer = m_poTmpDS->CreateLayer(osTablename, poSRS,
+                            iZ < 0 ? wkbPoint : wkbPoint25D, apszOptions);
                     poSRS->Release();
                 }
                 else
                 {
-                    poCurLayer = m_poMemDS->CreateLayer(osTablename, nullptr, wkbNone, apszOptions);
+                    poCurLayer = m_poTmpDS->CreateLayer(osTablename, nullptr, wkbNone, apszOptions);
+                }
+                if( poCurLayer == nullptr )
+                {
+                    CSLDestroy(papszAtr);
+                    CSLDestroy(papszFrm);
+                    break;
                 }
 
                 if( !osAtr.empty() && CSLCount(papszAtr) == CSLCount(papszFrm) )
@@ -294,9 +399,18 @@ void OGRIDFDataSource::Parse()
             {
                 double dfX = poFeature->GetFieldAsDouble(iX);
                 double dfY = poFeature->GetFieldAsDouble(iY);
-                oMapNode[ poFeature->GetFieldAsInteger64(iNodeID) ] =
-                                        std::pair<double,double>(dfX, dfY);
-                OGRGeometry* poGeom = new OGRPoint( dfX, dfY );
+                OGRGeometry* poGeom;
+                if( iZ >= 0 )
+                {
+                    double dfZ = poFeature->GetFieldAsDouble(iZ);
+                    oMapNode[ poFeature->GetFieldAsInteger64(iNodeID) ] = Point(dfX, dfY, dfZ);
+                    poGeom = new OGRPoint( dfX, dfY, dfZ );
+                }
+                else
+                {
+                    oMapNode[ poFeature->GetFieldAsInteger64(iNodeID) ] = Point(dfX, dfY);
+                    poGeom = new OGRPoint( dfX, dfY );
+                }
                 poGeom->assignSpatialReference(poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
                 poFeature->SetGeometryDirectly(poGeom);
             }
@@ -305,15 +419,29 @@ void OGRIDFDataSource::Parse()
             {
                 GIntBig nFromNode = poFeature->GetFieldAsInteger64(iFromNode);
                 GIntBig nToNode = poFeature->GetFieldAsInteger64(iToNode);
-                std::map<GIntBig, std::pair<double,double> >::iterator
+                std::map<GIntBig, Point >::iterator
                                         oIterFrom = oMapNode.find(nFromNode);
-                std::map<GIntBig, std::pair<double,double> >::iterator
+                std::map<GIntBig, Point >::iterator
                                         oIterTo = oMapNode.find(nToNode);
                 if( oIterFrom != oMapNode.end() && oIterTo != oMapNode.end() )
                 {
                     OGRLineString* poLS = new OGRLineString();
-                    poLS->addPoint( oIterFrom->second.first, oIterFrom->second.second );
-                    poLS->addPoint( oIterTo->second.first, oIterTo->second.second );
+                    if( iZ >= 0 )
+                    {
+                        poLS->addPoint( oIterFrom->second.x,
+                                        oIterFrom->second.y,
+                                        oIterFrom->second.z );
+                        poLS->addPoint( oIterTo->second.x,
+                                        oIterTo->second.y,
+                                        oIterTo->second.z );
+                    }
+                    else
+                    {
+                        poLS->addPoint( oIterFrom->second.x,
+                                        oIterFrom->second.y );
+                        poLS->addPoint( oIterTo->second.x,
+                                        oIterTo->second.y );
+                    }
                     poLS->assignSpatialReference(poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
                     poFeature->SetGeometryDirectly(poLS);
                 }
@@ -323,7 +451,17 @@ void OGRIDFDataSource::Parse()
             {
                 double dfX = poFeature->GetFieldAsDouble(iX);
                 double dfY = poFeature->GetFieldAsDouble(iY);
-                OGRGeometry* poGeom = new OGRPoint( dfX, dfY );
+                double dfZ = 0.0;
+                OGRGeometry* poGeom;
+                if( iZ >= 0 )
+                {
+                    dfZ = poFeature->GetFieldAsDouble(iZ);
+                    poGeom = new OGRPoint( dfX, dfY, dfZ );
+                }
+                else
+                {
+                    poGeom = new OGRPoint( dfX, dfY );
+                }
                 poGeom->assignSpatialReference(poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
                 poFeature->SetGeometryDirectly(poGeom);
 
@@ -333,12 +471,22 @@ void OGRIDFDataSource::Parse()
                 if( oMapLinkCoordinateIter == oMapLinkCoordinate.end() )
                 {
                     OGRLineString* poLS = new OGRLineString();
-                    poLS->addPoint(dfX, dfY);
+                    if( iZ >= 0 )
+                        poLS->addPoint(dfX, dfY, dfZ);
+                    else
+                        poLS->addPoint(dfX, dfY);
                     oMapLinkCoordinate[nCurLinkID] = poLS;
                 }
                 else
                 {
-                    oMapLinkCoordinateIter->second->addPoint(dfX, dfY);
+                    if( iZ >= 0 )
+                    {
+                        oMapLinkCoordinateIter->second->addPoint(dfX, dfY, dfZ);
+                    }
+                    else
+                    {
+                        oMapLinkCoordinateIter->second->addPoint(dfX, dfY);
+                    }
                 }
             }
             eErr = poCurLayer->CreateFeature(poFeature);
@@ -351,8 +499,10 @@ void OGRIDFDataSource::Parse()
         }
     }
 
+    oMapNode.clear();
+
     // Patch Link geometries with the intermediate points of LinkCoordinate
-    OGRLayer* poLinkLyr = m_poMemDS->GetLayerByName("Link");
+    OGRLayer* poLinkLyr = m_poTmpDS->GetLayerByName("Link");
     if( poLinkLyr && poLinkLyr->GetLayerDefn()->GetGeomFieldCount() )
     {
         iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
@@ -374,13 +524,29 @@ void OGRIDFDataSource::Parse()
                     {
                         OGRLineString* poLSIntermediate = oMapLinkCoordinateIter->second;
                         OGRLineString* poLSNew = new OGRLineString();
-                        poLSNew->addPoint(poLS->getX(0), poLS->getY(0));
-                        for(int i=0;i<poLSIntermediate->getNumPoints();i++)
+                        if( poLS->getGeometryType() == wkbLineString25D )
                         {
-                            poLSNew->addPoint(poLSIntermediate->getX(i),
-                                            poLSIntermediate->getY(i));
+                            poLSNew->addPoint(poLS->getX(0), poLS->getY(0),
+                                              poLS->getZ(0));
+                            for(int i=0;i<poLSIntermediate->getNumPoints();i++)
+                            {
+                                poLSNew->addPoint(poLSIntermediate->getX(i),
+                                                  poLSIntermediate->getY(i),
+                                                  poLSIntermediate->getZ(i));
+                            }
+                            poLSNew->addPoint(poLS->getX(1), poLS->getY(1),
+                                              poLS->getZ(1));
                         }
-                        poLSNew->addPoint(poLS->getX(1), poLS->getY(1));
+                        else
+                        {
+                            poLSNew->addPoint(poLS->getX(0), poLS->getY(0));
+                            for(int i=0;i<poLSIntermediate->getNumPoints();i++)
+                            {
+                                poLSNew->addPoint(poLSIntermediate->getX(i),
+                                                  poLSIntermediate->getY(i));
+                            }
+                            poLSNew->addPoint(poLS->getX(1), poLS->getY(1));
+                        }
                         poLSNew->assignSpatialReference(poSRS);
                         poFeat->SetGeometryDirectly(poLSNew);
                         CPL_IGNORE_RET_VAL(poLinkLyr->SetFeature(poFeat.get()));
@@ -390,6 +556,8 @@ void OGRIDFDataSource::Parse()
             poLinkLyr->ResetReading();
         }
     }
+
+    m_poTmpDS->CommitTransaction();
 
     std::map<GIntBig, OGRLineString*>::iterator oMapLinkCoordinateIter =
                                                     oMapLinkCoordinate.begin();
@@ -405,9 +573,9 @@ int OGRIDFDataSource::GetLayerCount()
 {
     if( !m_bHasParsed )
         Parse();
-    if( m_poMemDS == nullptr )
+    if( m_poTmpDS == nullptr )
         return 0;
-    return m_poMemDS->GetLayerCount();
+    return m_poTmpDS->GetLayerCount();
 }
 
 /************************************************************************/
@@ -418,9 +586,9 @@ OGRLayer* OGRIDFDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
-    if( m_poMemDS == nullptr )
+    if( m_poTmpDS == nullptr )
         return nullptr;
-    return m_poMemDS->GetLayer(iLayer);
+    return m_poTmpDS->GetLayer(iLayer);
 }
 
 /************************************************************************/
@@ -1057,7 +1225,7 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
         strstr(pszHeader, "tbl;LinkCoordinate\r\natr;LINK_ID;") != nullptr ||
         strstr(pszHeader, "tbl;LinkCoordinate\natr;LINK_ID;") != nullptr )
     {
-        return new OGRIDFDataSource(fpL);
+        return new OGRIDFDataSource(poOpenInfo->pszFilename, fpL);
     }
     else
     {

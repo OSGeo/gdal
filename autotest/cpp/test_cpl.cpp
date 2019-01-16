@@ -39,6 +39,8 @@
 #include "cpl_json_streaming_parser.h"
 #include "cpl_mem_cache.h"
 #include "cpl_http.h"
+#include "cpl_auto_close.h"
+#include "cpl_minixml.h"
 
 #include <fstream>
 #include <string>
@@ -1634,6 +1636,39 @@ namespace tut
                 ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
             ensure_equals( oParser.GetSerialized(), sExpected );
         }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "infinity";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "-infinity";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nan";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
 
         // errors
         {
@@ -1693,6 +1728,42 @@ namespace tut
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "nullx";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "na";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nanx";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "infinit";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "infinityx";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "-infinit";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "-infinityx";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
@@ -1882,6 +1953,30 @@ namespace tut
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\": {} }";
             oParser.SetMaxDepth(1);
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[,]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[true,]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[true,,true]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[true true]";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
@@ -2449,6 +2544,53 @@ namespace tut
                      "%a, %d %b %Y %H:%M:%S GMT", &tm, "C");
         szDate[nRet] = 0;
         ensure_equals( std::string(szDate), std::string("Wed, 20 Jun 2018 12:34:56 GMT") );
+    }
+
+    // Test CPLAutoClose
+    template<>
+    template<>
+    void object::test<36>()
+    {
+        static int counter = 0;
+        class AutoCloseTest{
+        public:
+            AutoCloseTest() {
+                counter += 222;
+            }
+            virtual ~AutoCloseTest() { 
+                counter -= 22;
+            }
+            static AutoCloseTest* Create() {
+                return new AutoCloseTest;
+            }
+            static void Destroy(AutoCloseTest* p) {
+                delete p;
+            }
+        };
+        {
+            AutoCloseTest* p1 = AutoCloseTest::Create();
+            CPL_AUTO_CLOSE_WARP(p1,AutoCloseTest::Destroy);
+
+            AutoCloseTest* p2 = AutoCloseTest::Create();
+            CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destroy);
+
+        }
+        ensure_equals(counter,400);
+    }
+
+    // Test cpl_minixml
+    template<>
+    template<>
+    void object::test<37>()
+    {
+        CPLXMLNode* psRoot = CPLCreateXMLNode(nullptr, CXT_Element, "Root");
+        CPLXMLNode* psElt = CPLCreateXMLElementAndValue(psRoot, "Elt", "value");
+        CPLAddXMLAttributeAndValue(psElt, "attr1", "val1");
+        CPLAddXMLAttributeAndValue(psElt, "attr2", "val2");
+        char* str = CPLSerializeXMLTree(psRoot);
+        CPLDestroyXMLNode(psRoot);
+        ensure_equals( std::string(str), std::string("<Root>\n  <Elt attr1=\"val1\" attr2=\"val2\">value</Elt>\n</Root>\n") );
+        CPLFree(str);
     }
 
 } // namespace tut

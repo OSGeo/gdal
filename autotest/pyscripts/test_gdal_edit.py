@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -33,11 +33,10 @@ import sys
 import os
 import shutil
 
-sys.path.append('../pymod')
 
 from osgeo import gdal
-import gdaltest
 import test_py_scripts
+import pytest
 
 # Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
 #                 [-tr xres yres] [-a_nodata value]
@@ -53,7 +52,7 @@ def test_gdal_edit_py_1():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -77,39 +76,19 @@ def test_gdal_edit_py_1():
     md = ds.GetMetadata()
     ds = None
 
-    if wkt.find('4326') == -1:
-        gdaltest.post_reason('fail')
-        print(wkt)
-        return 'fail'
+    assert wkt.find('4326') != -1
 
     expected_gt = (2.0, 0.050000000000000003, 0.0, 50.0, 0.0, -0.050000000000000003)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-10:
-            gdaltest.post_reason('fail')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-10
 
-    if nd != 123:
-        gdaltest.post_reason('fail')
-        print(nd)
-        return 'fail'
+    assert nd == 123
 
-    if md['FOO'] != 'BAR':
-        gdaltest.post_reason('fail')
-        print(md)
-        return 'fail'
+    assert md['FOO'] == 'BAR'
 
-    if md['UTF8'] != val:
-        gdaltest.post_reason('fail')
-        print(md)
-        return 'fail'
+    assert md['UTF8'] == val
 
-    if md[val] != 'UTF8':
-        gdaltest.post_reason('fail')
-        print(md)
-        return 'fail'
-
-    return 'success'
+    assert md[val] == 'UTF8'
 
 ###############################################################################
 # Test -unsetgt
@@ -119,7 +98,7 @@ def test_gdal_edit_py_2():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -130,17 +109,9 @@ def test_gdal_edit_py_2():
     gt = ds.GetGeoTransform(can_return_null=True)
     ds = None
 
-    if gt is not None:
-        gdaltest.post_reason('fail')
-        print(gt)
-        return 'fail'
+    assert gt is None
 
-    if wkt == '':
-        gdaltest.post_reason('fail')
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt != ''
 
 ###############################################################################
 # Test -a_srs ''
@@ -150,7 +121,7 @@ def test_gdal_edit_py_3():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -161,17 +132,9 @@ def test_gdal_edit_py_3():
     gt = ds.GetGeoTransform()
     ds = None
 
-    if gt == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
-        gdaltest.post_reason('fail')
-        print(gt)
-        return 'fail'
+    assert gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 
-    if wkt != '':
-        gdaltest.post_reason('fail')
-        print(wkt)
-        return 'fail'
-
-    return 'success'
+    assert wkt == ''
 
 ###############################################################################
 # Test -unsetstats
@@ -181,7 +144,7 @@ def test_gdal_edit_py_4():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
@@ -192,31 +155,23 @@ def test_gdal_edit_py_4():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if (band.GetMetadataItem('STATISTICS_MINIMUM') is None or
-            band.GetMetadataItem('FOO') is None):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert (not (band.GetMetadataItem('STATISTICS_MINIMUM') is None or
+            band.GetMetadataItem('FOO') is None))
     ds = band = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -unsetstats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     band = ds.GetRasterBand(1)
-    if (band.GetMetadataItem('STATISTICS_MINIMUM') is not None or
-            band.GetMetadataItem('FOO') is None):
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert (not (band.GetMetadataItem('STATISTICS_MINIMUM') is not None or
+            band.GetMetadataItem('FOO') is None))
     ds = band = None
 
-    try:
+    with pytest.raises(OSError):
         os.stat('tmp/test_gdal_edit_py.tif.aux.xml')
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except OSError:
-        pass
+    
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -stats
 
@@ -225,13 +180,13 @@ def test_gdal_edit_py_5():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         from osgeo import gdalnumeric
         gdalnumeric.BandRasterIONumPy
     except:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
@@ -243,18 +198,14 @@ def test_gdal_edit_py_5():
     ds = band = None
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.ReadAsArray()[15, 12] != 22:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.ReadAsArray()[15, 12] == 22
     ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -stats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 22:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 22
     ds = None
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
@@ -265,21 +216,15 @@ def test_gdal_edit_py_5():
     ds = band = None
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.ReadAsArray()[15, 12] != 26:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.ReadAsArray()[15, 12] == 26
     ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -stats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 26:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 26
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -setstats
@@ -289,7 +234,7 @@ def test_gdal_edit_py_6():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
@@ -298,46 +243,28 @@ def test_gdal_edit_py_6():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 74:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 74
     stat_max = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MAXIMUM')
-    if stat_max is None or float(stat_max) != 255:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_max is not None and float(stat_max) == 255
     stat_mean = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MEAN')
-    if stat_mean is None or abs(float(stat_mean) - 126.765)>0.001:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert not (stat_mean is None or abs(float(stat_mean) - 126.765)>0.001)
     stat_stddev = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_STDDEV')
-    if stat_stddev is None or abs(float(stat_stddev) - 22.928)>0.001:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    
+    assert not (stat_stddev is None or abs(float(stat_stddev) - 22.928)>0.001)
+
     ds = None
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -setstats 22 217 100 30")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
-    if stat_min is None or float(stat_min) != 22:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_min is not None and float(stat_min) == 22
     stat_max = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MAXIMUM')
-    if stat_max is None or float(stat_max) != 217:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_max is not None and float(stat_max) == 217
     stat_mean = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MEAN')
-    if stat_mean is None or float(stat_mean) != 100:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_mean is not None and float(stat_mean) == 100
     stat_stddev = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_STDDEV')
-    if stat_stddev is None or float(stat_stddev) != 30:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert stat_stddev is not None and float(stat_stddev) == 30
     ds = None
-    
-    return 'success'
 
 ###############################################################################
 # Test -scale and -offset
@@ -346,21 +273,15 @@ def test_gdal_edit_py_7():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 -offset 3")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(1).GetScale() != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetRasterBand(1).GetOffset() != 3:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetScale() == 2
+    assert ds.GetRasterBand(1).GetOffset() == 3
 
 ###############################################################################
 # Test -colorinterp_X
@@ -370,7 +291,7 @@ def test_gdal_edit_py_8():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/test_gdal_edit_py.tif',
                    '../gcore/data/byte.tif',
@@ -379,18 +300,12 @@ def test_gdal_edit_py_8():
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 alpha")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 undefined")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_Undefined
 
 ###############################################################################
 
@@ -399,7 +314,7 @@ def test_gdal_edit_py_unsetrpc():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
     if script_path is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Translate('tmp/test_gdal_edit_py.tif', '../gcore/data/byte_rpc.tif')
 
@@ -407,11 +322,7 @@ def test_gdal_edit_py_unsetrpc():
                                   "tmp/test_gdal_edit_py.tif -unsetrpc")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetMetadata('RPC'):
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert not ds.GetMetadata('RPC')
 
 ###############################################################################
 # Cleanup
@@ -421,27 +332,6 @@ def test_gdal_edit_py_cleanup():
 
     gdal.Unlink('tmp/test_gdal_edit_py.tif')
 
-    return 'success'
 
 
-gdaltest_list = [
-    test_gdal_edit_py_1,
-    test_gdal_edit_py_2,
-    test_gdal_edit_py_3,
-    test_gdal_edit_py_4,
-    test_gdal_edit_py_5,
-    test_gdal_edit_py_6,
-    test_gdal_edit_py_7,
-    test_gdal_edit_py_8,
-    test_gdal_edit_py_unsetrpc,
-    test_gdal_edit_py_cleanup,
-]
 
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdal_edit_py')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

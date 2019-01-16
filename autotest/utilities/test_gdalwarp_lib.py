@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -31,14 +31,13 @@
 ###############################################################################
 
 import struct
-import sys
 import os
 
-sys.path.append('../pymod')
 
 from osgeo import gdal, ogr, osr
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Simple test
@@ -49,13 +48,9 @@ def test_gdalwarp_lib_1():
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('tmp/testgdalwarp1.tif', ds1)
 
-    if dstDS.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert dstDS.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     dstDS = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -66,13 +61,9 @@ def test_gdalwarp_lib_2():
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('tmp/testgdalwarp2.tif'.encode('ascii').decode('ascii'), [ds1], format='GTiff')
 
-    if dstDS.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert dstDS.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     dstDS = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -83,17 +74,11 @@ def test_gdalwarp_lib_3():
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('', ds1, format='MEM', outputType=gdal.GDT_Int16)
 
-    if dstDS.GetRasterBand(1).DataType != gdal.GDT_Int16:
-        gdaltest.post_reason('Bad data type')
-        return 'fail'
+    assert dstDS.GetRasterBand(1).DataType == gdal.GDT_Int16, 'Bad data type'
 
-    if dstDS.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert dstDS.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     dstDS = None
-
-    return 'success'
 
 ###############################################################################
 # Test -t_srs option
@@ -104,13 +89,9 @@ def test_gdalwarp_lib_4():
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('', ds1, format='MEM', dstSRS='EPSG:32611')
 
-    if dstDS.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert dstDS.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     dstDS = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping from GCPs without any explicit option
@@ -123,17 +104,12 @@ def test_gdalwarp_lib_5():
     ds1 = gdal.Translate('tmp/testgdalwarp_gcp.tif', ds, outputSRS='EPSG:26711', GCPs=gcpList)
     dstDS = gdal.Warp('', ds1, format='MEM', tps=True)
 
-    if dstDS.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert dstDS.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    if not gdaltest.geotransform_equals(ds.GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(ds.GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9), \
+        'Bad geotransform'
 
     dstDS = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -144,17 +120,12 @@ def test_gdalwarp_lib_6():
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('', ds1, format='MEM', tps=True)
 
-    if dstDS.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert dstDS.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9), \
+        'Bad geotransform'
 
     dstDS = None
-
-    return 'success'
 
 
 ###############################################################################
@@ -164,17 +135,13 @@ def test_gdalwarp_lib_7():
 
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('', [ds1], format='MEM', xRes=120, yRes=120)
-    if dstDS is None:
-        return 'fail'
+    assert dstDS is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    if not gdaltest.geotransform_equals(expected_gt, dstDS.GetGeoTransform(), 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(expected_gt, dstDS.GetGeoTransform(), 1e-9), \
+        'Bad geotransform'
 
     dstDS = None
-
-    return 'success'
 
 ###############################################################################
 # Test -ts
@@ -184,17 +151,13 @@ def test_gdalwarp_lib_8():
 
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('', [ds1], format='MEM', width=10, height=10)
-    if dstDS is None:
-        return 'fail'
+    assert dstDS is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    if not gdaltest.geotransform_equals(expected_gt, dstDS.GetGeoTransform(), 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(expected_gt, dstDS.GetGeoTransform(), 1e-9), \
+        'Bad geotransform'
 
     dstDS = None
-
-    return 'success'
 
 ###############################################################################
 # Test -te
@@ -204,13 +167,10 @@ def test_gdalwarp_lib_9():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', outputBounds=[440720.000, 3750120.000, 441920.000, 3751320.000])
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        return 'fail'
+    assert gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9), \
+        'Bad geotransform'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -rn
@@ -220,14 +180,9 @@ def test_gdalwarp_lib_10():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=40, height=40, resampleAlg=gdal.GRIORA_NearestNeighbour)
 
-    if ds.GetRasterBand(1).Checksum() != 18784:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 18784, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -rb
@@ -243,12 +198,9 @@ def test_gdalwarp_lib_11():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -rc
@@ -264,12 +216,9 @@ def test_gdalwarp_lib_12():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -rcs
@@ -285,12 +234,9 @@ def test_gdalwarp_lib_13():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -r lanczos
@@ -306,12 +252,9 @@ def test_gdalwarp_lib_14():
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
-        gdaltest.post_reason('Image too different from reference')
-        return 'fail'
+        pytest.fail('Image too different from reference')
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -dstnodata
@@ -321,19 +264,11 @@ def test_gdalwarp_lib_15():
 
     ds = gdal.Warp('', 'tmp/testgdalwarp_gcp.tif', format='MEM', dstSRS='EPSG:32610', dstNodata=1)
 
-    if ds.GetRasterBand(1).GetNoDataValue() != 1:
-        print(ds.GetRasterBand(1).GetNoDataValue())
-        gdaltest.post_reason('Bad nodata value')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1, 'Bad nodata value'
 
-    if ds.GetRasterBand(1).Checksum() != 4523:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4523, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -of VRT which is a special case
@@ -342,14 +277,9 @@ def test_gdalwarp_lib_15():
 def test_gdalwarp_lib_16():
 
     ds = gdal.Warp('/vsimem/test_gdalwarp_lib_16.vrt', 'tmp/testgdalwarp_gcp.tif', format='VRT')
-    if ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
 
@@ -358,11 +288,7 @@ def test_gdalwarp_lib_16():
     # Cannot write file
     with gdaltest.error_handler():
         ds = gdal.Warp('/i_dont/exist/test_gdalwarp_lib_16.vrt', 'tmp/testgdalwarp_gcp.tif', format='VRT')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 # Test -dstalpha
@@ -371,16 +297,11 @@ def test_gdalwarp_lib_16():
 def test_gdalwarp_lib_17():
 
     ds = gdal.Warp('', '../gcore/data/rgbsmall.tif', format='MEM', dstAlpha=True)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(4) is None:
-        gdaltest.post_reason('No alpha band generated')
-        return 'fail'
+    assert ds.GetRasterBand(4) is not None, 'No alpha band generated'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -et 0 which is a special case
@@ -389,17 +310,11 @@ def test_gdalwarp_lib_17():
 def test_gdalwarp_lib_19():
 
     ds = gdal.Warp('', 'tmp/testgdalwarp_gcp.tif', format='MEM', errorThreshold=0)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test cutline from OGR datasource.
@@ -408,17 +323,11 @@ def test_gdalwarp_lib_19():
 def test_gdalwarp_lib_21():
 
     ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='data/cutline.vrt', cutlineLayer='cutline')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 19139:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 19139, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test cutline with ALL_TOUCHED enabled.
@@ -427,17 +336,11 @@ def test_gdalwarp_lib_21():
 def test_gdalwarp_lib_23():
 
     ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', warpOptions=['CUTLINE_ALL_TOUCHED=TRUE'], cutlineDSName='data/cutline.vrt', cutlineLayer='cutline')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 20123:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 20123, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -tap
@@ -446,23 +349,16 @@ def test_gdalwarp_lib_23():
 def test_gdalwarp_lib_32():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', targetAlignedPixels=True, xRes=100, yRes=50)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
     expected_gt = (440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0)
     got_gt = ds.GetGeoTransform()
-    if not gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9):
-        gdaltest.post_reason('Bad geotransform')
-        print(got_gt)
-        return 'fail'
+    assert gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9), 'Bad geotransform'
 
-    if ds.RasterXSize != 13 or ds.RasterYSize != 25:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
-        return 'fail'
+    assert ds.RasterXSize == 13 and ds.RasterYSize == 25, \
+        ('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test warping multiple sources
@@ -480,26 +376,15 @@ def test_gdalwarp_lib_34():
     ysize = ds.RasterYSize
     ds = None
 
-    if xsize != 20 or ysize != 20:
-        gdaltest.post_reason('bad dimensions')
-        print(xsize)
-        print(ysize)
-        return 'fail'
+    assert xsize == 20 and ysize == 20, 'bad dimensions'
 
-    if cs != 4672:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4672, 'bad checksum'
 
     expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('bad gt')
-            print(gt)
-            return 'fail'
+        assert abs(gt[i] - expected_gt[i]) <= 1e-5, 'bad gt'
 
-    return 'success'
-
+    
 ###############################################################################
 # Test -te_srs
 
@@ -507,14 +392,9 @@ def test_gdalwarp_lib_34():
 def test_gdalwarp_lib_45():
 
     ds = gdal.Warp('', ['../gcore/data/byte.tif'], format='MEM', outputBounds=[-117.641087629972, 33.8915301685897, -117.628190189534, 33.9024195619201], outputBoundsSRS='EPSG:4267')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('fail')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test -crop_to_cutline
@@ -523,10 +403,7 @@ def test_gdalwarp_lib_45():
 def test_gdalwarp_lib_46():
 
     ds = gdal.Warp('', ['../gcore/data/utmsmall.tif'], format='MEM', cutlineDSName='data/cutline.vrt', cropToCutline=True)
-    if ds.GetRasterBand(1).Checksum() != 18837:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 18837, 'Bad checksum'
 
     ds = None
 
@@ -550,14 +427,8 @@ def test_gdalwarp_lib_46():
                    cropToCutline=True)
     got_gt = ds.GetGeoTransform()
     expected_gt = (2.15, 0.05, 0.0, 48.8, 0.0, -0.05)
-    if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
-    if ds.RasterXSize != 13 or ds.RasterYSize != 13:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize, ds.RasterYSize)
-        return 'fail'
+    assert max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) <= 1e-8
+    assert ds.RasterXSize == 13 and ds.RasterYSize == 13
 
     # Same but with CUTLINE_ALL_TOUCHED=YES: the extent should be larger
     # than the cutline
@@ -566,14 +437,8 @@ def test_gdalwarp_lib_46():
                    warpOptions=['CUTLINE_ALL_TOUCHED=YES'])
     got_gt = ds.GetGeoTransform()
     expected_gt = (2.1, 0.05, 0.0, 48.85, 0.0, -0.05)
-    if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
-        gdaltest.post_reason('fail')
-        print(got_gt)
-        return 'fail'
-    if ds.RasterXSize != 15 or ds.RasterYSize != 15:
-        gdaltest.post_reason('fail')
-        print(ds.RasterXSize, ds.RasterYSize)
-        return 'fail'
+    assert max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) <= 1e-8
+    assert ds.RasterXSize == 15 and ds.RasterYSize == 15
 
     # Test numeric stability when the cutline is exactly on pixel boundaries
     cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
@@ -590,18 +455,10 @@ def test_gdalwarp_lib_46():
                        cropToCutline=True, warpOptions=warpOptions)
         got_gt = ds.GetGeoTransform()
         expected_gt = (2.15, 0.05, 0.0, 48.85, 0.0, -0.05)
-        if max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) > 1e-8:
-            gdaltest.post_reason('fail')
-            print(got_gt)
-            return 'fail'
-        if ds.RasterXSize != 14 or ds.RasterYSize != 14:
-            gdaltest.post_reason('fail')
-            print(ds.RasterXSize, ds.RasterYSize)
-            return 'fail'
+        assert max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) <= 1e-8
+        assert ds.RasterXSize == 14 and ds.RasterYSize == 14
 
     gdal.Unlink(cutlineDSName)
-
-    return 'success'
 
 ###############################################################################
 # Test callback
@@ -617,20 +474,13 @@ def test_gdalwarp_lib_100():
 
     tab = [0]
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', callback=mycallback, callback_data=tab)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
-    if tab[0] != 1.0:
-        gdaltest.post_reason('Bad percentage')
-        return 'fail'
+    assert tab[0] == 1.0, 'Bad percentage'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test with color table
@@ -639,11 +489,7 @@ def test_gdalwarp_lib_100():
 def test_gdalwarp_lib_101():
 
     ds = gdal.Warp('', '../gdrivers/data/small_world_pct.tif', format='MEM')
-    if ds.GetRasterBand(1).GetColorTable() is None:
-        gdaltest.post_reason('Did not get color table')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetColorTable() is not None, 'Did not get color table'
 
 ###############################################################################
 # Test with a dataset with no bands
@@ -654,10 +500,7 @@ def test_gdalwarp_lib_102():
     no_band_ds = gdal.GetDriverByName('MEM').Create('no band', 1, 1, 0)
     with gdaltest.error_handler():
         ds = gdal.Warp('', ['../gdrivers/data/small_world_pct.tif', no_band_ds], format='MEM')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test failed transformer
@@ -667,10 +510,7 @@ def test_gdalwarp_lib_103():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', ['../gdrivers/data/small_world_pct.tif', '../gcore/data/stefan_full_rgba.tif'], format='MEM')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test no usable source image
@@ -680,10 +520,7 @@ def test_gdalwarp_lib_104():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', [], format='MEM')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test failure in GDALSuggestedWarpOutput2
@@ -697,8 +534,7 @@ def test_gdalwarp_lib_105():
     with gdaltest.error_handler():
         gdal.Warp('', ['../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif'], format='MEM', dstSRS='EPSG:32645', width=100, height=100)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test failure in creation
 
@@ -707,10 +543,7 @@ def test_gdalwarp_lib_106():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('/not_existing_dir/not_existing_file', ['../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif'])
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test forced width only
@@ -719,12 +552,7 @@ def test_gdalwarp_lib_106():
 def test_gdalwarp_lib_107():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', width=20)
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
 ###############################################################################
 # Test forced height only
@@ -733,12 +561,7 @@ def test_gdalwarp_lib_107():
 def test_gdalwarp_lib_108():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', height=20)
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
 ###############################################################################
 # Test wrong cutline name
@@ -748,10 +571,7 @@ def test_gdalwarp_lib_109():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', cutlineDSName='/does/not/exist')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test wrong cutline layer name
@@ -761,10 +581,7 @@ def test_gdalwarp_lib_110():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', cutlineDSName='data/cutline.vrt', cutlineLayer='wrong_name')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test cutline SQL
@@ -773,17 +590,11 @@ def test_gdalwarp_lib_110():
 def test_gdalwarp_lib_111():
 
     ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='data/cutline.vrt', cutlineSQL='SELECT * FROM cutline', cutlineWhere='1 = 1')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 19139:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 19139, 'Bad checksum'
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Test cutline without geometry
@@ -799,12 +610,8 @@ def test_gdalwarp_lib_112():
     ds = None
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='/vsimem/cutline.shp', cutlineSQL='SELECT * FROM cutline')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
+    assert ds is None, 'Did not expected dataset'
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test cutline with non polygon geometry
@@ -821,12 +628,8 @@ def test_gdalwarp_lib_113():
     ds = None
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='/vsimem/cutline.shp')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
+    assert ds is None, 'Did not expected dataset'
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test cutline without feature
@@ -839,12 +642,8 @@ def test_gdalwarp_lib_114():
     ds = None
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='/vsimem/cutline.shp')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
+    assert ds is None, 'Did not expected dataset'
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test source dataset without band
@@ -857,11 +656,7 @@ def test_gdalwarp_lib_115():
 
     with gdaltest.error_handler():
         ret = gdal.Warp(out_ds, no_band_ds, cutlineDSName='data/cutline.vrt', cutlineLayer='cutline')
-    if ret != 0:
-        gdaltest.post_reason('Expected failure')
-        return 'fail'
-
-    return 'success'
+    assert ret == 0, 'Expected failure'
 
 ###############################################################################
 # Test failed cropToCutline due to invalid SRC_SRS
@@ -871,11 +666,7 @@ def test_gdalwarp_lib_116():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='data/cutline.vrt', cutlineLayer='cutline', cropToCutline=True, transformerOptions=['SRC_SRS=invalid'])
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test failed cropToCutline due to invalid DST_SRS
@@ -885,11 +676,7 @@ def test_gdalwarp_lib_117():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='data/cutline.vrt', cutlineLayer='cutline', cropToCutline=True, transformerOptions=['DST_SRS=invalid'])
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test failed cropToCutline due to no source raster
@@ -899,11 +686,7 @@ def test_gdalwarp_lib_118():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', [], format='MEM', cutlineDSName='data/cutline.vrt', cutlineLayer='cutline', cropToCutline=True)
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test failed cropToCutline due to source raster without projection
@@ -914,11 +697,7 @@ def test_gdalwarp_lib_119():
     no_proj_ds = gdal.GetDriverByName('MEM').Create('no_proj_ds', 1, 1)
     with gdaltest.error_handler():
         ds = gdal.Warp('', no_proj_ds, format='MEM', cutlineDSName='data/cutline.vrt', cutlineLayer='cutline', cropToCutline=True)
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test failed cropToCutline due to source raster with dummy projection
@@ -930,11 +709,7 @@ def test_gdalwarp_lib_120():
     dummy_proj_ds.SetProjection('dummy')
     with gdaltest.error_handler():
         ds = gdal.Warp('', dummy_proj_ds, format='MEM', cutlineDSName='data/cutline.vrt', cutlineLayer='cutline', cropToCutline=True)
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
-
-    return 'success'
+    assert ds is None, 'Did not expected dataset'
 
 ###############################################################################
 # Test internal wrappers
@@ -964,8 +739,7 @@ def test_gdalwarp_lib_121():
     with gdaltest.error_handler():
         gdal.wrapper_GDALWarpDestDS(gdal.GetDriverByName('MEM').Create('', 1, 1), [], None, gdal.TermProgress)
 
-    return 'success'
-
+    
 ###############################################################################
 # Test unnamed output VRT
 
@@ -973,10 +747,7 @@ def test_gdalwarp_lib_121():
 def test_gdalwarp_lib_122():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='VRT')
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
-    return 'success'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
 
 ###############################################################################
 # Test failure during warping
@@ -986,10 +757,7 @@ def test_gdalwarp_lib_123():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/byte_truncated.tif', format='MEM')
-    if ds is not None:
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 # Test warping to dataset with existing nodata
@@ -1011,13 +779,7 @@ def test_gdalwarp_lib_124():
     gdal.Warp(out_ds, src_ds)
 
     cs = out_ds.GetRasterBand(1).Checksum()
-    if cs != expected_cs:
-        gdaltest.post_reason('Bad checksum')
-        print(cs)
-        print(expected_cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == expected_cs, 'Bad checksum'
 
 ###############################################################################
 # Test that statistics are not propagated
@@ -1039,12 +801,9 @@ def test_gdalwarp_lib_125():
 
         out_ds = gdal.Warp('', [src_ds_1, src_ds_2], format='MEM')
 
-        if out_ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIUM') is not None:
-            print(i)
-            return 'fail'
+        assert out_ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIUM') is None, i
 
-    return 'success'
-
+    
 ###############################################################################
 # Test cutline with invalid geometry
 
@@ -1052,7 +811,7 @@ def test_gdalwarp_lib_125():
 def test_gdalwarp_lib_126():
 
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
     lyr = ds.CreateLayer('cutline')
@@ -1063,12 +822,8 @@ def test_gdalwarp_lib_126():
     ds = None
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', cutlineDSName='/vsimem/cutline.shp')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
+    assert ds is None, 'Did not expected dataset'
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test -srcnodata (#6315)
@@ -1077,16 +832,8 @@ def test_gdalwarp_lib_126():
 def test_gdalwarp_lib_127():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format='MEM', srcNodata=1)
-    if ds.GetRasterBand(1).GetNoDataValue() != 1:
-        gdaltest.post_reason('bad nodata value')
-        print(ds.GetRasterBand(1).GetNoDataValue())
-        return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 4672:
-        gdaltest.post_reason('bad checksum')
-        print(ds.GetRasterBand(1).Checksum())
-        return 'fail'
-
-    return 'success'
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1, 'bad nodata value'
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'bad checksum'
 
 ###############################################################################
 # Test automatic densification of cutline (#6375)
@@ -1130,15 +877,12 @@ def test_gdalwarp_lib_128():
                    transformerOptions=['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 4248:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4248, 'bad checksum'
 
     # Below steps depend on GEOS
     if not ogrtest.have_geos():
         gdal.Unlink(cutlineDSName)
-        return 'success'
+        return
 
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'ONLY_IF_INVALID')
     ds = gdal.Warp('', mem_ds, format='MEM', cutlineDSName=cutlineDSName,
@@ -1149,10 +893,7 @@ def test_gdalwarp_lib_128():
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 4248:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 4248, 'bad checksum'
 
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'NO')
     with gdaltest.error_handler():
@@ -1162,13 +903,9 @@ def test_gdalwarp_lib_128():
                        xRes=0.000226555, yRes=0.000226555,
                        transformerOptions=['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
-    if ds is not None:
-        gdaltest.post_reason('expected none return')
-        return 'fail'
+    assert ds is None, 'expected none return'
 
     gdal.Unlink(cutlineDSName)
-
-    return 'success'
 
 ###############################################################################
 # Test automatic densification of cutline, but with initial guess leading
@@ -1177,7 +914,7 @@ def test_gdalwarp_lib_128():
 
 def test_gdalwarp_lib_129():
     if not ogrtest.have_geos():
-        return 'skip'
+        pytest.skip()
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1000, 2000)
     rpc = ["HEIGHT_OFF=1767",
@@ -1215,14 +952,9 @@ def test_gdalwarp_lib_129():
                    transformerOptions=['RPC_DEM=data/test_gdalwarp_lib_129_dem.vrt'])
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 399:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    assert cs == 399, 'bad checksum'
 
     gdal.Unlink(cutlineDSName)
-
-    return 'success'
 
 ###############################################################################
 # Test automatic detection and setting of alpha channel, and setting RGB on
@@ -1242,20 +974,14 @@ def test_gdalwarp_lib_130():
     src_ds.GetRasterBand(5).Fill(255)
 
     ds = gdal.Warp('/vsimem/test_gdalwarp_lib_130_dst.tif', src_ds)
-    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
-        gdaltest.post_reason('bad color interpretation')
-        return 'fail'
-    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
-        gdaltest.post_reason('bad color interpretation')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand, \
+        'bad color interpretation'
+    assert ds.GetRasterBand(5).GetColorInterpretation() == gdal.GCI_AlphaBand, \
+        'bad color interpretation'
     expected_val = [1, 2, 3, 4, 255]
     for i in range(5):
         data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
-        if data != expected_val[i]:
-            gdaltest.post_reason('bad checksum')
-            print(i)
-            print(data)
-            return 'fail'
+        assert data == expected_val[i], 'bad checksum'
 
     # Wrap onto existing file
     for i in range(5):
@@ -1263,23 +989,16 @@ def test_gdalwarp_lib_130():
     gdal.Warp(ds, src_ds)
     for i in range(5):
         data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
-        if data != expected_val[i]:
-            gdaltest.post_reason('bad checksum')
-            print(i)
-            print(data)
-            return 'fail'
+        assert data == expected_val[i], 'bad checksum'
 
     src_ds = None
     ds = None
 
-    if gdal.VSIStatL('/vsimem/test_gdalwarp_lib_130_dst.tif.aux.xml') is not None:
-        gdaltest.post_reason('got PAM file')
-        return 'fail'
+    assert gdal.VSIStatL('/vsimem/test_gdalwarp_lib_130_dst.tif.aux.xml') is None, \
+        'got PAM file'
 
     gdal.Unlink('/vsimem/test_gdalwarp_lib_130.tif')
     gdal.Unlink('/vsimem/test_gdalwarp_lib_130_dst.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test -nosrcalpha
@@ -1298,18 +1017,12 @@ def test_gdalwarp_lib_131():
     expected_val = [1, 0]
     for i in range(2):
         data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster())[0]
-        if data != expected_val[i]:
-            gdaltest.post_reason('bad checksum')
-            print(i)
-            print(data)
-            return 'fail'
+        assert data == expected_val[i], 'bad checksum'
     src_ds = None
     ds = None
     gdal.Unlink('/vsimem/test_gdalwarp_lib_131.tif')
     gdal.Unlink('/vsimem/test_gdalwarp_lib_131_dst.tif')
     gdal.Unlink('/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml')
-
-    return 'success'
 
 ###############################################################################
 # Test that alpha blending works by warping onto an existing dataset
@@ -1342,13 +1055,9 @@ def test_gdalwarp_lib_132():
             for x in range(33):
                 data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_Byte))[0]
                 if abs(data - expected_val[i]) > 1:
-                    gdaltest.post_reason('bad checksum')
                     print(dt)
-                    print(i)
                     print(x)
-                    print(data)
-                    print(expected_val[i])
-                    return 'fail'
+                    pytest.fail('bad checksum')
         ds = None
 
         src_ds = None
@@ -1357,8 +1066,7 @@ def test_gdalwarp_lib_132():
         gdal.Unlink('/vsimem/test_gdalwarp_lib_132_dst.tif')
         gdal.Unlink('/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test cutline with multiple touching polygons
 
@@ -1380,19 +1088,13 @@ def test_gdalwarp_lib_133():
     src_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.Warp('', src_ds, format='MEM', cutlineDSName='/vsimem/test_gdalwarp_lib_133.shp')
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).Checksum() != 5:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).Checksum() == 5, 'Bad checksum'
 
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_gdalwarp_lib_133.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test SRC_METHOD=NO_GEOTRANSFORM and DST_METHOD=NO_GEOTRANSFORM (#6721)
@@ -1412,28 +1114,22 @@ def test_gdalwarp_lib_134():
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     src_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, src_src_ds.GetRasterBand(1).ReadRaster())
     ds = gdal.Warp('', src_ds, format='MEM', transformerOptions=['SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], outputBounds=[1, 2, 4, 6])
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(1, 2, 4 - 1, 6 - 2):
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).ReadRaster() == src_src_ds.GetRasterBand(1).ReadRaster(1, 2, 4 - 1, 6 - 2), \
+        'Bad checksum'
 
     ds = None
 
     ds = gdal.Warp('', src_ds, format='MEM', transformerOptions=['SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], cutlineDSName='/vsimem/test_gdalwarp_lib_134.shp', cropToCutline=True)
-    if ds is None:
-        return 'fail'
+    assert ds is not None
 
-    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(2, 2, 16, 16):
-        gdaltest.post_reason('Bad checksum')
-        return 'fail'
+    assert ds.GetRasterBand(1).ReadRaster() == src_src_ds.GetRasterBand(1).ReadRaster(2, 2, 16, 16), \
+        'Bad checksum'
 
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_gdalwarp_lib_134.shp')
-
-    return 'success'
 
 ###############################################################################
 # Test vertical datum shift
@@ -1468,50 +1164,35 @@ def test_gdalwarp_lib_135():
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 120:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 120, 'Bad value'
 
     # Inverse transform
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 80:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 80, 'Bad value'
 
     # Both transforms
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 115:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 115, 'Bad value'
 
     # Both transforms, but none of them have geoidgrids
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='EPSG:32631+5730',
                    dstSRS='EPSG:4326+5621')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 100:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 100, 'Bad value'
 
     # Both transforms being a no-op
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 100:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 100, 'Bad value'
 
     # Both transforms to anonymous VRT
     ds = gdal.Warp('', src_ds, format='VRT',
@@ -1519,10 +1200,7 @@ def test_gdalwarp_lib_135():
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
     src_ds = None  # drop the ref to src_ds before for fun
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 115:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 115, 'Bad value'
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
@@ -1538,19 +1216,14 @@ def test_gdalwarp_lib_135():
     ds = None
     gdal.Unlink('/vsimem/dem.tif')
     gdal.Unlink('/vsimem/tmp.vrt')
-    if data != 115:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 115, 'Bad value'
 
     # Missing grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Missing grid in forward path with PROJ_LIB
     old_proj_lib = os.environ.get('PROJ_LIB', None)
@@ -1563,74 +1236,56 @@ def test_gdalwarp_lib_135():
         os.environ['PROJ_LIB'] = old_proj_lib
     else:
         del os.environ['PROJ_LIB']
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Missing grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=~/i_dont_exist.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Missing grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/i_dont/exist.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Ungeoref grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Missing grid in inverse path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                        dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=i_dont_exist.tif +vunits=m +no_defs')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Ungeoref grid in inverse path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format='MEM',
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                        dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs')
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     # Missing grid in forward path, but this is OK
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 100:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 100, 'Bad value'
 
     # Missing grid in inverse path but this is OK
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 100:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 100, 'Bad value'
 
     # Forward transform with explicit m unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
@@ -1644,10 +1299,7 @@ def test_gdalwarp_lib_135():
     ds = gdal.Warp('', src_ds, format='MEM',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 120:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 120, 'Bad value'
 
     # Forward transform with explicit ft unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_Float32)
@@ -1661,10 +1313,7 @@ def test_gdalwarp_lib_135():
     ds = gdal.Warp('', src_ds, format='MEM',
                    dstSRS='EPSG:4979', outputType=gdal.GDT_Byte)
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 120:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 120, 'Bad value'
 
     # Forward transform with explicit unhandled unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
@@ -1679,10 +1328,7 @@ def test_gdalwarp_lib_135():
         ds = gdal.Warp('', src_ds, format='MEM',
                        dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 120:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 120, 'Bad value'
 
     grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/empty_grid.tif', 1, 1)
     sr = osr.SpatialReference()
@@ -1702,10 +1348,7 @@ def test_gdalwarp_lib_135():
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif +vunits=m +no_defs',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 100:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 100, 'Bad value'
 
     # Same, but make it an error
     with gdaltest.error_handler():
@@ -1714,29 +1357,22 @@ def test_gdalwarp_lib_135():
                        dstSRS='EPSG:4979',
                        transformerOptions=['ERROR_ON_MISSING_VERT_SHIFT=YES'])
     if ds is not None:
-        gdaltest.post_reason('Bad value')
         print(data)
-        return 'fail'
+        pytest.fail('Bad value')
 
     # Test several grids
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,/vsimem/empty_grid.tif +vunits=m +no_defs',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 120:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 120, 'Bad value'
 
     # Same, but different order
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif,/vsimem/grid.tif +vunits=m +no_defs',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 120:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 120, 'Bad value'
 
     # Test several grids, with some missing
     with gdaltest.error_handler():
@@ -1744,36 +1380,27 @@ def test_gdalwarp_lib_135():
                        srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,i_dont_exist.tif +vunits=m +no_defs',
                        dstSRS='EPSG:4979')
     if ds is not None:
-        gdaltest.post_reason('Bad value')
         print(data)
-        return 'fail'
+        pytest.fail('Bad value')
 
     # Test several grids, with some missing, but that's OK
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,@i_dont_exist.tif +vunits=m +no_defs',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 120:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 120, 'Bad value'
 
     # Test several grids, with all missing, but that's OK
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=@i_dont_exist.tif,@i_dont_exist_either.tif +vunits=m +no_defs',
                    dstSRS='EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
-    if data != 100:
-        gdaltest.post_reason('Bad value')
-        print(data)
-        return 'fail'
+    assert data == 100, 'Bad value'
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/grid.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/grid2.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/ungeoref_grid.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/empty_grid.tif')
-
-    return 'success'
 
 ###############################################################################
 # Test error code path linked with failed warper initialization
@@ -1783,17 +1410,11 @@ def test_gdalwarp_lib_136():
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='MEM', warpOptions=['CUTLINE=invalid'])
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds is None
 
     with gdaltest.error_handler():
         ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format='VRT', warpOptions=['CUTLINE=invalid'])
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    return 'success'
+    assert ds is None
 
 ###############################################################################
 # Test warping two input datasets with different SRS, with no explicit target SRS
@@ -1810,20 +1431,10 @@ def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs(
     src_ds_4326_right = gdal.Warp('', src_ds_32611_right, format='MEM',
                                   dstSRS='EPSG:4326')
     out_ds = gdal.Warp('', [src_ds_4326_right, src_ds_32611_left], format='MEM')
-    if out_ds is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if out_ds.RasterXSize != 23:
-        gdaltest.post_reason('fail')
-        print(out_ds.RasterXSize)
-        return 'fail'
+    assert out_ds is not None
+    assert out_ds.RasterXSize == 23
     cs = out_ds.GetRasterBand(1).Checksum()
-    if cs != 5048:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 5048
 
 ###############################################################################
 # Test fix for https://trac.osgeo.org/gdal/ticket/7243
@@ -1837,12 +1448,7 @@ def test_gdalwarp_lib_touching_dateline():
     sr.ImportFromEPSG(3411)
     src_ds.SetProjection(sr.ExportToWkt())
     out_ds = gdal.Warp('', src_ds, dstSRS='EPSG:4326', format='MEM')
-    if out_ds.RasterXSize != 319:
-        gdaltest.post_reason('fail')
-        print(out_ds.RasterXSize)
-        return 'fail'
-
-    return 'success'
+    assert out_ds.RasterXSize == 319
 
 ###############################################################################
 # Test fix for https://trac.osgeo.org/gdal/ticket/7245
@@ -1852,33 +1458,25 @@ def test_gdalwarp_lib_override_default_output_nodata():
 
     drv = gdal.GetDriverByName('netCDF')
     if drv is None:
-        return 'skip'
+        pytest.skip()
 
     creationoptionlist = drv.GetMetadataItem('DMD_CREATIONOPTIONLIST')
     formats = ['NC']
-    if creationoptionlist.find('<Value>NC2</Value>') >= 0:
+    if '<Value>NC2</Value>' in creationoptionlist:
         formats += ['NC2']
-    if creationoptionlist.find('<Value>NC4</Value>') >= 0:
+    if '<Value>NC4</Value>' in creationoptionlist:
         formats += ['NC4', 'NC4C']
 
     for frmt in formats:
         gdal.Warp('tmp/out.nc', '../gcore/data/byte.tif', srcNodata=255,
                   format='netCDF', creationOptions=['FORMAT=' + frmt])
         ds = gdal.Open('tmp/out.nc')
-        if ds.GetRasterBand(1).GetNoDataValue() != 255:
-            gdaltest.post_reason('fail')
-            print(frmt)
-            print(ds.GetRasterBand(1).GetNoDataValue())
-            return 'fail'
-        if ds.GetProjection() == '':
-            gdaltest.post_reason('fail')
-            print(frmt)
-            return 'fail'
+        assert ds.GetRasterBand(1).GetNoDataValue() == 255, frmt
+        assert ds.GetProjection() != '', frmt
         ds = None
         os.unlink('tmp/out.nc')
 
-    return 'success'
-
+    
 ###############################################################################
 # Test automatting setting (or not) of SKIP_NOSOURCE=YES
 
@@ -1905,10 +1503,7 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
-        if cs != 41500:
-            gdaltest.post_reason('fail')
-            print(options, cs)
-            return 'fail'
+        assert cs == 41500, (options, cs)
 
     # Same with MEM
     for options in ['',
@@ -1919,10 +1514,7 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
                            '-of MEM ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
-        if cs != 41500:
-            gdaltest.post_reason('fail')
-            print(options, cs)
-            return 'fail'
+        assert cs == 41500, (options, cs)
 
     # Use fill/nodata at 1
     for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1',
@@ -1934,10 +1526,7 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
-        if cs != 51132:
-            gdaltest.post_reason('fail')
-            print(options, cs)
-            return 'fail'
+        assert cs == 51132, (options, cs)
 
     # Same with MEM
     for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1',
@@ -1949,10 +1538,7 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
                            '-of MEM ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
-        if cs != 51132:
-            gdaltest.post_reason('fail')
-            print(options, cs)
-            return 'fail'
+        assert cs == 51132, (options, cs)
 
     # Rather dummy: use a INIT_DEST different of the target dstnodata
     for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1 -wo INIT_DEST=0',
@@ -1962,10 +1548,7 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
-        if cs != 41500:
-            gdaltest.post_reason('fail')
-            print(options, cs)
-            return 'fail'
+        assert cs == 41500, (options, cs)
 
     # Test with 2 input datasets
     src_ds1 = gdal.GetDriverByName('MEM').Create('', 500, 500)
@@ -1984,14 +1567,9 @@ def test_gdalwarp_lib_auto_skip_nosource():
                            options='-te 1.5 48 3.5 49.5 -wm 100000 ' +
                            '-of GTiff ' + options)
         cs = out_ds.GetRasterBand(1).Checksum()
-        if cs != 41500:
-            gdaltest.post_reason('fail')
-            print(options, cs)
-            return 'fail'
+        assert cs == 41500, (options, cs)
 
     gdal.Unlink(tmpfilename)
-
-    return 'success'
 
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=ortho
@@ -2006,19 +1584,13 @@ def test_gdalwarp_lib_to_ortho():
     line = out_ds.GetRasterBand(1).ReadRaster(0, 0, out_ds.RasterXSize, 1)
     line = struct.unpack('B' * out_ds.RasterXSize, line)
     # Fail if the first line is completely black
-    if line.count(0) == out_ds.RasterXSize:
-        gdaltest.post_reason('first line is completely black')
-        return 'fail'
+    assert line.count(0) != out_ds.RasterXSize, 'first line is completely black'
 
     line = out_ds.GetRasterBand(1).ReadRaster(0, out_ds.RasterYSize - 1,
                                               out_ds.RasterXSize, 1)
     line = struct.unpack('B' * out_ds.RasterXSize, line)
     # Fail if the last line is completely black
-    if line.count(0) == out_ds.RasterXSize:
-        gdaltest.post_reason('last line is completely black')
-        return 'fail'
-
-    return 'success'
+    assert line.count(0) != out_ds.RasterXSize, 'last line is completely black'
 
 
 ###############################################################################
@@ -2027,11 +1599,9 @@ def test_gdalwarp_lib_insufficient_dst_band_count():
     src_ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of MEM -b 1 -b 1')
     dst_ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of MEM')
     with gdaltest.error_handler():
-        if gdal.Warp(dst_ds, src_ds) != 0:
-            return 'fail'
+        assert gdal.Warp(dst_ds, src_ds) == 0
 
-    return 'success'
-
+    
 ###############################################################################
 # Cleanup
 
@@ -2040,7 +1610,7 @@ def test_gdalwarp_lib_cleanup():
 
     # We don't clean up when run in debug mode.
     if gdal.GetConfigOption('CPL_DEBUG', 'OFF') == 'ON':
-        return 'success'
+        return
 
     for i in range(2):
         try:
@@ -2052,85 +1622,6 @@ def test_gdalwarp_lib_cleanup():
     except OSError:
         pass
 
-    return 'success'
+    
 
 
-gdaltest_list = [
-    test_gdalwarp_lib_cleanup,
-    test_gdalwarp_lib_1,
-    test_gdalwarp_lib_2,
-    test_gdalwarp_lib_3,
-    test_gdalwarp_lib_4,
-    test_gdalwarp_lib_5,
-    test_gdalwarp_lib_6,
-    test_gdalwarp_lib_7,
-    test_gdalwarp_lib_8,
-    test_gdalwarp_lib_9,
-    test_gdalwarp_lib_10,
-    test_gdalwarp_lib_11,
-    test_gdalwarp_lib_12,
-    test_gdalwarp_lib_13,
-    test_gdalwarp_lib_14,
-    test_gdalwarp_lib_15,
-    test_gdalwarp_lib_16,
-    test_gdalwarp_lib_17,
-    test_gdalwarp_lib_19,
-    test_gdalwarp_lib_21,
-    test_gdalwarp_lib_23,
-    test_gdalwarp_lib_32,
-    test_gdalwarp_lib_34,
-    test_gdalwarp_lib_45,
-    test_gdalwarp_lib_46,
-    test_gdalwarp_lib_100,
-    test_gdalwarp_lib_101,
-    test_gdalwarp_lib_102,
-    test_gdalwarp_lib_103,
-    test_gdalwarp_lib_104,
-    test_gdalwarp_lib_105,
-    test_gdalwarp_lib_106,
-    test_gdalwarp_lib_107,
-    test_gdalwarp_lib_108,
-    test_gdalwarp_lib_109,
-    test_gdalwarp_lib_110,
-    test_gdalwarp_lib_111,
-    test_gdalwarp_lib_112,
-    test_gdalwarp_lib_113,
-    test_gdalwarp_lib_114,
-    test_gdalwarp_lib_115,
-    test_gdalwarp_lib_116,
-    test_gdalwarp_lib_117,
-    test_gdalwarp_lib_118,
-    test_gdalwarp_lib_119,
-    test_gdalwarp_lib_120,
-    test_gdalwarp_lib_121,
-    test_gdalwarp_lib_122,
-    test_gdalwarp_lib_123,
-    test_gdalwarp_lib_124,
-    test_gdalwarp_lib_125,
-    test_gdalwarp_lib_126,
-    test_gdalwarp_lib_127,
-    test_gdalwarp_lib_128,
-    test_gdalwarp_lib_129,
-    test_gdalwarp_lib_130,
-    test_gdalwarp_lib_131,
-    test_gdalwarp_lib_132,
-    test_gdalwarp_lib_133,
-    test_gdalwarp_lib_134,
-    test_gdalwarp_lib_135,
-    test_gdalwarp_lib_136,
-    test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs,
-    test_gdalwarp_lib_touching_dateline,
-    test_gdalwarp_lib_override_default_output_nodata,
-    test_gdalwarp_lib_auto_skip_nosource,
-    test_gdalwarp_lib_to_ortho,
-    test_gdalwarp_lib_insufficient_dst_band_count,
-    test_gdalwarp_lib_cleanup,
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('test_gdalwarp_lib')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

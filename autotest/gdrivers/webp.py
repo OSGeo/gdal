@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,51 +29,45 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test if WEBP driver is present
 
 
-def webp_1():
+def test_webp_1():
 
     gdaltest.webp_drv = gdal.GetDriverByName('WEBP')
     if gdaltest.webp_drv is None:
-        return 'skip'
+        pytest.skip()
 
-    return 'success'
-
+    
 ###############################################################################
 # Open() test
 
 
-def webp_2():
+def test_webp_2():
 
     if gdaltest.webp_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = gdal.Open('data/rgbsmall.webp')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 21464 and cs != 21450 and cs != 21459:
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 21464 or cs == 21450 or cs == 21459, \
+        'did not get expected checksum on band 1'
 
 ###############################################################################
 # CreateCopy() test
 
 
-def webp_3():
+def test_webp_3():
 
     if gdaltest.webp_drv is None:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_3.webp', src_ds, options=['QUALITY=80'])
@@ -84,25 +78,21 @@ def webp_3():
     gdal.Unlink('/vsimem/webp_3.webp.aux.xml')
 
     # 21502 is for libwebp 0.3.0
-    if cs1 != 21464 and cs1 != 21502 and cs1 != 21695 and cs1 != 21700:
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs1)
-        return 'fail'
-
-    return 'success'
+    assert cs1 == 21464 or cs1 == 21502 or cs1 == 21695 or cs1 == 21700, \
+        'did not get expected checksum on band 1'
 
 ###############################################################################
 # CreateCopy() on RGBA
 
 
-def webp_4():
+def test_webp_4():
 
     if gdaltest.webp_drv is None:
-        return 'skip'
+        pytest.skip()
 
     md = gdaltest.webp_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_4.webp', src_ds)
@@ -113,30 +103,23 @@ def webp_4():
     gdal.Unlink('/vsimem/webp_4.webp')
 
     # 22849 is for libwebp 0.3.0
-    if cs1 not in (22001, 22849, 34422, 36652, 36658, 45319):
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs1)
-        return 'fail'
+    assert cs1 in (22001, 22849, 34422, 36652, 36658, 45319), \
+        'did not get expected checksum on band 1'
 
-    if cs4 != 10807:  # lossless alpha
-        gdaltest.post_reason('did not get expected checksum on band 4')
-        print(cs4)
-        return 'fail'
-
-    return 'success'
+    assert cs4 == 10807, 'did not get expected checksum on band 4'
 
 ###############################################################################
 # CreateCopy() on RGBA with lossless compression
 
 
-def webp_5():
+def test_webp_5():
 
     if gdaltest.webp_drv is None:
-        return 'skip'
+        pytest.skip()
 
     md = gdaltest.webp_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
-        return 'skip'
+        pytest.skip()
 
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_5.webp', src_ds, options=['LOSSLESS=YES'])
@@ -146,30 +129,10 @@ def webp_5():
     out_ds = None
     gdal.Unlink('/vsimem/webp_5.webp')
 
-    if cs1 != 12603 and cs1 != 18536 and cs1 != 14800:
-        gdaltest.post_reason('did not get expected checksum on band 1')
-        print(cs1)
-        return 'fail'
+    assert cs1 == 12603 or cs1 == 18536 or cs1 == 14800, \
+        'did not get expected checksum on band 1'
 
-    if cs4 != 10807:
-        gdaltest.post_reason('did not get expected checksum on band 4')
-        print(cs4)
-        return 'fail'
-
-    return 'success'
+    assert cs4 == 10807, 'did not get expected checksum on band 4'
 
 
-gdaltest_list = [
-    webp_1,
-    webp_2,
-    webp_3,
-    webp_4,
-    webp_5]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('webp')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

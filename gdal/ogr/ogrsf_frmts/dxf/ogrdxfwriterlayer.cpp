@@ -1307,7 +1307,10 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
             OGRErr eErr = CreateFeature( poFeature );
 
             if( eErr != OGRERR_NONE )
+            {
+                delete poGC;
                 return eErr;
+            }
         }
 
         poFeature->SetGeometryDirectly( poGC );

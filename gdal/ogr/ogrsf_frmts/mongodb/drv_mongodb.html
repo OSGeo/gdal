@@ -14,6 +14,12 @@ The driver supports read, creation, update and delete operations of documents/fe
 and collections/layers. The MongoDB database must exist before operating on it
 with OGR.<p>
 
+<p>This driver uses the legacy MongoDB C++ driver client library. To connect
+to MongoDB 3.0 or later servers, starting with GDAL 2.5.0, use the new
+<a href="drv_mongodbv3.html">MongoDBv3</a>
+driver which uses the MongoDB C++ v3.4.0 client library. This driver will be
+eventually in favor of MongoDBv3</p>
+
 <h2>MongoDB vs OGR concepts</h2>
 
 A MongoDB collection within a database is considered as a OGR layer. A MongoDB document is considered as a OGR feature.<p>
@@ -24,7 +30,7 @@ There are two main possible syntaxes:
 <ul>
 <li>One using <a href="http://docs.mongodb.org/v2.6/reference/connection-string/">MongoDB URI</a>,
 such as mongodb://[usr:pwd@]host1[:port1]...[,hostN[:portN]]][/[db][?options]]</a>
-<li>On using just MongoDB: as the name and open options to specify host, port, user, password, database, etc...</li>
+<li>One using just MongoDB: as the name and open options to specify host, port, user, password, database, etc...</li>
 </ul>
 
 The open options available are :

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -33,29 +33,29 @@ import shutil
 from osgeo import ogr
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
+import pytest
 
 ###############################################################################
 # Basic testing
 
 
-def ogr_odbc_1():
+def test_ogr_odbc_1():
 
     ogrtest.odbc_drv = None
     if sys.platform != 'win32':
-        return 'skip'
+        pytest.skip()
 
     ogrtest.odbc_drv = ogr.GetDriverByName('ODBC')
     if ogrtest.odbc_drv is None:
-        return 'skip'
+        pytest.skip()
 
     ds = ogrtest.odbc_drv.Open('data/empty.mdb')
     if ds is None:
         ogrtest.odbc_drv = None
-        return 'skip'
+        pytest.skip()
 
     ds = None
 
@@ -76,118 +76,82 @@ def ogr_odbc_1():
 
     # Test with ODBC:user/pwd@dsn syntax
     ds = ogrtest.odbc_drv.Open('ODBC:user/pwd@DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
-    if ds is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is not None
     ds = None
 
     # Test with ODBC:dsn syntax
     ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
-    if ds is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is not None
     ds = None
 
     # Test with ODBC:dsn,table_list syntax
     ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb,test')
-    if ds is None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
     ds = None
 
     # Reopen and check
     ds = ogrtest.odbc_drv.Open('tmp/odbc.mdb')
-    if ds.GetLayerCount() != 2:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert ds.GetLayerCount() == 2
 
     lyr = ds.GetLayerByName('test')
     feat = lyr.GetNextFeature()
     if feat.GetField('intfield') != 1 or feat.GetField('doublefield') != 2.34 or feat.GetField('stringfield') != 'foo':
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     lyr = ds.GetLayerByName('test_with_pk')
     # Test GetFeatureCount()
-    if lyr.GetFeatureCount() != 5:
-        gdaltest.post_reason('failure')
-        return 'fail'
+    assert lyr.GetFeatureCount() == 5
 
     # Test GetFeature()
     feat = lyr.GetFeature(4)
     if feat.GetField('intfield') != 5:
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test SetAttributeFilter()
     lyr.SetAttributeFilter('intfield = 6')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 5:
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
 
     # Test ExecuteSQL()
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('intfield') != 1 or feat.GetField('doublefield') != 2.34 or feat.GetField('stringfield') != 'foo':
-        gdaltest.post_reason('failure')
         feat.DumpReadable()
-        return 'fail'
+        pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
-
-    return 'success'
 
 ###############################################################################
 # Run test_ogrsf
 
 
-def ogr_odbc_2():
+def test_ogr_odbc_2():
     if ogrtest.odbc_drv is None:
-        return 'skip'
+        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
+        pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/odbc.mdb')
 
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
 # Cleanup
 
 
-def ogr_odbc_cleanup():
+def test_ogr_odbc_cleanup():
     if ogrtest.odbc_drv is None:
-        return 'skip'
+        pytest.skip()
 
     gdal.Unlink('tmp/odbc.mdb')
 
-    return 'success'
 
 
-gdaltest_list = [
-    ogr_odbc_1,
-    ogr_odbc_2,
-    ogr_odbc_cleanup
-]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('ogr_odbc')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

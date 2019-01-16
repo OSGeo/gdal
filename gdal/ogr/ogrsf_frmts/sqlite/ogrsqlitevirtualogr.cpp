@@ -1038,7 +1038,17 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
         }
         else
         {
-            osAttributeFilter += "FID";
+            const char* pszSrcFIDColumn = pMyCursor->poLayer->GetFIDColumn();
+            if( pszSrcFIDColumn && *pszSrcFIDColumn != '\0' )
+            {
+                osAttributeFilter += '"';
+                osAttributeFilter += SQLEscapeName(pszSrcFIDColumn);
+                osAttributeFilter += '"';
+            }
+            else
+            {
+                osAttributeFilter += "FID";
+            }
         }
 
         bool bExpectRightOperator = true;
@@ -1544,11 +1554,9 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
                     case OFTDate:
                     case OFTTime:
                     case OFTDateTime:
-                    {
-                        if( !OGRSQLITEStringToDateTimeField( poFeature, i, pszValue ) )
+                        if( !OGRParseDate( pszValue, poFeature->GetRawFieldRef(i), 0 ) )
                             poFeature->SetField(i, pszValue);
                         break;
-                    }
 
                     default:
                         poFeature->SetField(i, pszValue);
@@ -1705,6 +1713,9 @@ static const struct sqlite3_module sOGR2SQLITEModule =
     nullptr,  // xSavepoint
     nullptr,  // xRelease
     nullptr,  // xRollbackTo
+#if SQLITE_VERSION_NUMBER >= 3025003L /* should be the first version with the below symbols */
+    nullptr,  // xShadowName
+#endif
 #endif
 };
 

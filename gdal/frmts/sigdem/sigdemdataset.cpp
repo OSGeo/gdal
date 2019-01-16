@@ -520,14 +520,14 @@ CPLErr SIGDEMRasterBand::IReadBlock(
     const int32_t* pnSourceValues = pBlockBuffer;
     double* padfDestValues = static_cast<double*>(pImage);
     double dfOffset = this->dfOffsetZ;
-    double dfScaleFactor = this->dfScaleFactorZ;
+    const double dfInvScaleFactor = dfScaleFactorZ != 0.0 ? 1.0 / dfScaleFactorZ : 0.0;
     int nCellCount = this->nRasterXSize;
     for (int i = 0; i < nCellCount; i++) {
         int32_t nValue = CPL_MSBWORD32(*pnSourceValues);
         if (nValue == NO_DATA) {
             *padfDestValues = -9999;
         } else {
-            *padfDestValues = dfOffset + nValue / dfScaleFactor;
+            *padfDestValues = dfOffset + nValue * dfInvScaleFactor;
         }
 
         pnSourceValues++;

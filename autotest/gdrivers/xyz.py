@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -29,11 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import struct
 from osgeo import gdal
 
-sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,7 +39,7 @@ import gdaltest
 # Test CreateCopy() of byte.tif
 
 
-def xyz_1():
+def test_xyz_1():
 
     tst = gdaltest.GDALTest('XYZ', 'byte.tif', 1, 4672)
     return tst.testCreateCopy(vsimem=1, check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
@@ -50,7 +48,7 @@ def xyz_1():
 # Test CreateCopy() of float.img
 
 
-def xyz_2():
+def test_xyz_2():
 
     src_ds = gdal.Open('data/float.img')
     ds = gdal.GetDriverByName('XYZ').CreateCopy('tmp/float.xyz', src_ds, options=['COLUMN_SEPARATOR=,', 'ADD_HEADER_LINE=YES'])
@@ -58,16 +56,13 @@ def xyz_2():
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.GetDriverByName('XYZ').Delete('tmp/float.xyz')
-    if got_cs != expected_cs and got_cs != 24387:
-        print(got_cs)
-        return 'fail'
-    return 'success'
+    assert got_cs == expected_cs or got_cs == 24387
 
 ###############################################################################
 # Test random access to lines of imagery
 
 
-def xyz_3():
+def test_xyz_3():
 
     content = """Y X Z
 0 0 65
@@ -86,24 +81,15 @@ def xyz_3():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
     ds = gdal.Open('/vsimem/grid.xyz')
     buf = ds.ReadRaster(0, 2, 2, 1)
-    if struct.unpack('B' * 2, buf) != (69, 70):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (69, 70)
     buf = ds.ReadRaster(0, 1, 2, 1)
-    if struct.unpack('B' * 2, buf) != (67, 68):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (67, 68)
     buf = ds.ReadRaster(0, 0, 2, 1)
-    if struct.unpack('B' * 2, buf) != (65, 66):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (65, 66)
     buf = ds.ReadRaster(0, 2, 2, 1)
-    if struct.unpack('B' * 2, buf) != (69, 70):
-        print(buf)
-        return 'fail'
+    assert struct.unpack('B' * 2, buf) == (69, 70)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
-    return 'success'
 
 
 ###############################################################################
@@ -115,7 +101,7 @@ def xyz_4_checkline(ds, i, expected_bytes):
     return struct.unpack('B' * ds.RasterXSize, buf) == expected_bytes
 
 
-def xyz_4():
+def test_xyz_4():
 
     content = """
 440750.001 3751290 1
@@ -134,34 +120,21 @@ def xyz_4():
     got_gt = ds.GetGeoTransform()
     expected_gt = (440660.0, 60.0, 0.0, 3751350.0, 0.0, -120.0)
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
-    if ds.GetRasterBand(1).GetMinimum() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetRasterBand(1).GetMaximum() != 7:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.GetRasterBand(1).GetMinimum() == 1
+    assert ds.GetRasterBand(1).GetMaximum() == 7
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
     for i in [0, 1, 2, 1, 0, 2, 0, 2, 0, 1, 2]:
-        if not xyz_4_checkline(ds, i, expected[i]):
-            gdaltest.post_reason('fail')
-            return 'fail'
+        assert xyz_4_checkline(ds, i, expected[i])
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
-    return 'success'
 
 
 ###############################################################################
 # Test XYZ with only integral values and comma field separator
 
-def xyz_5():
+def test_xyz_5():
 
     content = """0,1,100
 0.5,1,100
@@ -173,28 +146,21 @@ def xyz_5():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 3 or ds.RasterYSize != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 2
     got_gt = ds.GetGeoTransform()
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test XYZ with comma decimal separator and semi-colon field separator
 
-def xyz_6():
+def test_xyz_6():
 
     content = """0;1;100
 0,5;1;100
@@ -206,28 +172,21 @@ def xyz_6():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 3 or ds.RasterYSize != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 2
     got_gt = ds.GetGeoTransform()
     expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            gdaltest.post_reason('fail')
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
 
-    return 'success'
-
+    
 
 ###############################################################################
 # Test XYZ with not completely equal stepX and stepY
 
-def xyz_7():
+def test_xyz_7():
 
     content = """y x z
    51.500000  354.483333     54.721
@@ -249,9 +208,7 @@ def xyz_7():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 3 or ds.RasterYSize != 5:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 5
     got_gt = ds.GetGeoTransform()
     expected_gt = (354.46666625, 0.0333335, 0.0, 51.5125, 0.0, -0.025)
     cs = ds.GetRasterBand(1).Checksum()
@@ -259,24 +216,15 @@ def xyz_7():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
-            gdaltest.post_reason('fail')
-            print(got_gt)
-            print(expected_gt)
-            return 'fail'
+        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
 
-    if cs != 146:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 146
 
 ###############################################################################
 # Test particular case of XYZ file with missed samples (#6934)
 
 
-def xyz_8():
+def test_xyz_8():
 
     content = """0 500 50
 750 500 100
@@ -287,44 +235,19 @@ def xyz_8():
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
 
     ds = gdal.Open('/vsimem/grid.xyz')
-    if ds.RasterXSize != 4 or ds.RasterYSize != 2:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    assert ds.RasterXSize == 4 and ds.RasterYSize == 2
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.Unlink('/vsimem/grid.xyz')
 
-    if cs != 35:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
-
-    return 'success'
+    assert cs == 35
 
 
 ###############################################################################
 # Cleanup
 
-def xyz_cleanup():
+def test_xyz_cleanup():
 
-    return 'success'
+    pass
 
 
-gdaltest_list = [
-    xyz_1,
-    xyz_2,
-    xyz_3,
-    xyz_4,
-    xyz_5,
-    xyz_6,
-    xyz_7,
-    xyz_8,
-    xyz_cleanup]
-
-if __name__ == '__main__':
-
-    gdaltest.setup_run('xyz')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())

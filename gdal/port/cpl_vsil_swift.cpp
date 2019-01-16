@@ -82,7 +82,7 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
     if( !oDoc.LoadMemory(reinterpret_cast<const GByte*>(pszJson)) )
         return;
 
-    std::vector< std::pair<CPLString, CachedFileProp> > aoProps;
+    std::vector< std::pair<CPLString, FileProp> > aoProps;
     // Count the number of occurrences of a path. Can be 1 or 2. 2 in the case
     // that both a filename and directory exist
     std::map<CPLString, int> aoNameCount;
@@ -104,7 +104,7 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
                 if( bHasCount )
                 {
                     // Case when listing /vsiswift/
-                    CachedFileProp prop;
+                    FileProp prop;
                     prop.eExists = EXIST_YES;
                     prop.bIsDirectory = true;
                     prop.bHasComputedFileSize = true;
@@ -112,13 +112,13 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
                     prop.mTime = 0;
 
                     aoProps.push_back(
-                        std::pair<CPLString, CachedFileProp>
+                        std::pair<CPLString, FileProp>
                             (osName, prop));
                     aoNameCount[ osName ] ++;
                 }
                 else
                 {
-                    CachedFileProp prop;
+                    FileProp prop;
                     prop.eExists = EXIST_YES;
                     prop.bHasComputedFileSize = true;
                     prop.fileSize = static_cast<GUIntBig>(nSize);
@@ -143,7 +143,7 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
                     }
 
                     aoProps.push_back(
-                        std::pair<CPLString, CachedFileProp>
+                        std::pair<CPLString, FileProp>
                             (osName.substr(osPrefix.size()), prop));
                     aoNameCount[ osName.substr(osPrefix.size()) ] ++;
                 }
@@ -157,7 +157,7 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
             if( osSubdir.find(osPrefix) == 0 )
             {
 
-                CachedFileProp prop;
+                FileProp prop;
                 prop.eExists = EXIST_YES;
                 prop.bIsDirectory = true;
                 prop.bHasComputedFileSize = true;
@@ -165,7 +165,7 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
                 prop.mTime = 0;
 
                 aoProps.push_back(
-                    std::pair<CPLString, CachedFileProp>
+                    std::pair<CPLString, FileProp>
                         (osSubdir.substr(osPrefix.size()), prop));
                 aoNameCount[ osSubdir.substr(osPrefix.size()) ] ++;
             }
@@ -201,15 +201,9 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
 #if DEBUG_VERBOSE
             CPLDebug("SWIFT", "Cache %s", osCachedFilename.c_str());
 #endif
-            *GetCachedFileProp(osCachedFilename) = aoProps[i].second;
+            SetCachedFileProp(osCachedFilename, aoProps[i].second);
         }
         osFileList.AddString( (aoProps[i].first + osSuffix).c_str() );
-    }
-
-    if( osFileList.size() == 0 )
-    {
-        // To avoid an error to be reported
-        osFileList.AddString(".");
     }
 }
 
@@ -248,6 +242,13 @@ public:
 
         int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                 int nFlags ) override;
+
+        VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
+                                const char* const *papszOptions) override
+        {
+            return VSICurlFilesystemHandler::OpenDir(pszPath, nRecurseDepth,
+                                                     papszOptions);
+        }
 
         const char* GetOptions() override;
 };
@@ -438,13 +439,13 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
             CPLString osURL(poS3HandleHelper->GetURL());
             delete poS3HandleHelper;
 
-            CPLMutexHolder oHolder( &hMutex );
-            CachedFileProp* cachedFileProp = GetCachedFileProp(osURL);
-            cachedFileProp->eExists = EXIST_YES;
-            cachedFileProp->bHasComputedFileSize = false;
-            cachedFileProp->fileSize = 0;
-            cachedFileProp->bIsDirectory = true;
-            cachedFileProp->mTime = 0;
+            FileProp cachedFileProp;
+            cachedFileProp.eExists = EXIST_YES;
+            cachedFileProp.bHasComputedFileSize = false;
+            cachedFileProp.fileSize = 0;
+            cachedFileProp.bIsDirectory = true;
+            cachedFileProp.mTime = 0;
+            SetCachedFileProp(osURL, cachedFileProp);
 
             pStatBuf->st_size = 0;
             pStatBuf->st_mode = S_IFDIR;
@@ -510,7 +511,7 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
 
     CPLString osMaxKeys = CPLGetConfigOption("SWIFT_MAX_KEYS", "10000");
     int nMaxFilesThisQuery = atoi(osMaxKeys);
-    if( nMaxFiles > 0 && nMaxFiles < 100 && nMaxFiles < nMaxFilesThisQuery )
+    if( nMaxFiles > 0 && nMaxFiles <= 100 && nMaxFiles < nMaxFilesThisQuery )
     {
         nMaxFilesThisQuery = nMaxFiles+1;
     }

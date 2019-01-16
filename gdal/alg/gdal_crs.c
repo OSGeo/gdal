@@ -320,12 +320,14 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
  * are otherwise "ill conditioned".
  *
  * Note that 2nd order requires at least 6 GCPs, and 3rd order requires at
- * least 10 gcps.  If nReqOrder is 0 the highest order possible with the
- * provided gcp count will be used.
+ * least 10 gcps.  If nReqOrder is 0 the highest order possible (limited to 2)
+ * with the provided gcp count will be used.
  *
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
  * @param nReqOrder the requested polynomial order.  It should be 1, 2 or 3.
+ * Using 3 is not recommended due to potential numeric instabilities issues.
+ * @param bReversed set it to TRUE to compute the reversed transformation.
  *
  * @return the transform argument or NULL if creation fails.
  */

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pytest
 ###############################################################################
 # $Id$
 #
@@ -29,9 +29,7 @@
 ###############################################################################
 
 import re
-import sys
 
-sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -42,7 +40,7 @@ from osgeo import osr
 #
 
 
-def osr_xml_1():
+def test_osr_xml_1():
 
     gdaltest.srs_xml = """<gml:ProjectedCRS>
   <gml:srsName>WGS 84 / UTM zone 31N</gml:srsName>
@@ -181,18 +179,14 @@ def osr_xml_1():
     got = srs.ExportToWkt()
     expected = gdaltest.srs_wkt
 
-    if got != expected:
-        print(got)
-        return 'fail'
-
-    return 'success'
+    assert got == expected
 
 ###############################################################################
 # Test the osr.SpatialReference.ExportToXML() function.
 #
 
 
-def osr_xml_2():
+def test_osr_xml_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(gdaltest.srs_wkt)
@@ -205,21 +199,7 @@ def osr_xml_2():
     got = re.sub(r' gml:id="[^"]*"', '', got, 0)
     expected = re.sub(r' gml:id="[^"]*"', '', expected, 0)
 
-    if got != expected:
-        print(got)
-        return 'fail'
-
-    return 'success'
+    assert got == expected
 
 
-gdaltest_list = [
-    osr_xml_1,
-    osr_xml_2]
 
-if __name__ == '__main__':
-
-    gdaltest.setup_run('osr_xml')
-
-    gdaltest.run_tests(gdaltest_list)
-
-    sys.exit(gdaltest.summarize())
