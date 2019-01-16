@@ -318,6 +318,8 @@ std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
         wkt += tempWkt.substr(pos);
     }
 
+    if (err)
+        *err = OGRERR_NONE;
     std::string leader = baseGeom->getGeometryName() +
         baseGeom->wktTypeString(opts.variant);
     if (wkt.empty())

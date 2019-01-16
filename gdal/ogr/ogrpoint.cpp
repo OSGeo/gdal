@@ -562,17 +562,19 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
 
 std::string OGRPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
 {
-    std::string wkt = "POINT " + wktTypeString(opts.variant);
+    std::string wkt = getGeometryName() + wktTypeString(opts.variant);
     if( IsEmpty() )
     {
         wkt += "EMPTY";
     }
     else
     {
-        char szCoordinate[80] = {};
-        bool measured = (opts.variant == wkbVariantIso) ? IsMeasured() : FALSE;
-        OGRMakeWktCoordinateM(szCoordinate, x, y, z, m, Is3D(), measured);
-        wkt += std::string("(") + szCoordinate + ")"; 
+        wkt += "(";
+
+        bool measured = ((opts.variant == wkbVariantIso) && IsMeasured());
+        wkt += OGRMakeWktCoordinateM(x, y, z, m, Is3D(), measured, opts);
+
+        wkt += ")";
     }
 
     if (err)

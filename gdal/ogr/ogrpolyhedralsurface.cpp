@@ -478,6 +478,8 @@ std::string OGRPolyhedralSurface::exportToWktInternal(OGRWktOptions opts,
         wkt += tempWkt.substr(pos);
     }
 
+    if (err)
+        *err = OGRERR_NONE;
     std::string leader = getGeometryName() + wktTypeString(opts.variant);
     if (wkt.empty())
         return leader + "EMPTY";

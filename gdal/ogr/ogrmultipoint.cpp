@@ -151,8 +151,6 @@ OGRMultiPoint::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 
 std::string OGRMultiPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
 {
-    if (err)
-        *err = OGRERR_NONE;
     if( IsEmpty() )
         return getGeometryName() + wktTypeString(opts.variant) + "EMPTY";
 
@@ -164,26 +162,23 @@ std::string OGRMultiPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
         if( poPoint->IsEmpty() )
             continue;
 
-        if(!first)
+        if( !first )
             wkt += ",";
         first = false;
 
         if( opts.variant == wkbVariantIso )
             wkt += "(";
 
-        char buf[80];
-        OGRMakeWktCoordinateM(buf,
-            poPoint->getX(),
-            poPoint->getY(),
-            poPoint->getZ(),
-            poPoint->getM(),
-            poPoint->Is3D(),
-            poPoint->IsMeasured() && (opts.variant == wkbVariantIso));
-        wkt += buf;
+        wkt += OGRMakeWktCoordinateM(poPoint->getX(), poPoint->getY(),
+            poPoint->getZ(), poPoint->getM(), poPoint->Is3D(),
+            poPoint->IsMeasured() && (opts.variant == wkbVariantIso), opts);
 
         if( opts.variant == wkbVariantIso )
             wkt += ")";
     }
+
+    if (err)
+        *err = OGRERR_NONE;
     return getGeometryName() + wktTypeString(opts.variant) + "(" + wkt + ")";
 }
 

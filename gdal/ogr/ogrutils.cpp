@@ -217,6 +217,8 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
 }
 
 
+/// Simplified OGRFormatDouble that can be made to adhere to provided
+/// options.
 std::string OGRFormatDouble(double val, OGRWktOptions opts)
 {
     // So to have identical cross platform representation.
@@ -231,14 +233,17 @@ std::string OGRFormatDouble(double val, OGRWktOptions opts)
         oss << std::fixed;
     else
     {
-        oss << std::defaultfloat;
+        // Uppercase because OGC spec says capital 'E'.
+        oss << std::defaultfloat << std::uppercase;
         opts.round = false;
     }
     oss << std::setprecision(opts.precision);
     oss << val;
 
     std::string sval = oss.str();
-    //
+
+    // Round off 0's if the round option is set, but leave one '0' after the
+    // decimal point.  I'm not sure why we do that.
     if (opts.round)
     {
         auto pos = sval.find('.');

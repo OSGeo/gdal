@@ -33,8 +33,6 @@
 #include <cstring>
 #include <cstddef>
 
-#include <iostream>
-
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
@@ -454,7 +452,6 @@ OGRErr OGRPolygon::importFromWkt( const char ** ppszInput )
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;
-    std::cerr << "No error!\n";
     if( bHasZ ) flags |= OGR_G_3D;
     if( bHasM ) flags |= OGR_G_MEASURED;
     if( bIsEmpty )
@@ -467,7 +464,6 @@ OGRErr OGRPolygon::importFromWkt( const char ** ppszInput )
     eErr = importFromWKTListOnly( ppszInput, bHasZ, bHasM,
                                   paoPoints, nMaxPoints, padfZ );
 
-    std::cerr << "eErr = " << eErr << "!\n";
     CPLFree( paoPoints );
     CPLFree( padfZ );
 
@@ -548,11 +544,9 @@ OGRErr OGRPolygon::importFromWKTListOnly( const char ** ppszInput,
                 flagsFromInput |= OGR_G_3D;
         }
 
-        std::cerr << "Input = " << pszInput << "!\n";
         pszInput = OGRWktReadPointsM( pszInput, &paoPoints, &padfZ, &padfM,
                                       &flagsFromInput,
                                       &nMaxPoints, &nPoints );
-        std::cerr << "nPoints = " << nPoints << "!\n";
         if( pszInput == nullptr || nPoints == 0 )
         {
             CPLFree(padfM);
@@ -655,6 +649,9 @@ std::string OGRPolygon::exportToWkt(OGRWktOptions opts,
         }
     }
     wkt += ')';
+
+    if (err)
+        *err = OGRERR_NONE;
     return wkt;
 }
 

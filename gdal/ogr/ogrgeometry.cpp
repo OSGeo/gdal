@@ -359,7 +359,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
     }
     else if( pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "WKT") )
     {
-        OGRErr err;
+        OGRErr err(OGRERR_NONE);
         std::string wkt = exportToWkt(OGRWktOptions(), &err);
         if( err == OGRERR_NONE )
         {
@@ -370,7 +370,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
              CPLTestBool(pszDisplayGeometry) ||
              EQUAL(pszDisplayGeometry, "ISO_WKT") )
     {
-        OGRErr err;
+        OGRErr err(OGRERR_NONE);
         OGRWktOptions opts;
         
         opts.variant = wkbVariantIso;
@@ -1780,7 +1780,7 @@ OGRErr OGRGeometry::exportToWkt(char ** ppszDstText,
 {
     OGRWktOptions opts;
     opts.variant = variant;
-    OGRErr err;
+    OGRErr err(OGRERR_NONE);
 
     std::string wkt = exportToWkt(opts, &err);
     *ppszDstText = CPLStrdup(wkt.data());
