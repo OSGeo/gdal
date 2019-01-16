@@ -594,7 +594,7 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     }
 
     // Do we already have this layer?  If so, should we blow it away?
-    bool bOverwrite = CPLFetchBool(papszOptions, "OVERWRITE", "NO");
+    bool bOverwrite = CPLFetchBool(papszOptions, "OVERWRITE", false);
     for( int iLayer = 0; iLayer < nLayers; ++iLayer )
     {
         if( EQUAL(pszNameIn, papoLayers[iLayer]->GetName()) )
