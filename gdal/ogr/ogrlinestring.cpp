@@ -1856,12 +1856,10 @@ std::string OGRSimpleCurve::exportToWkt(OGRWktOptions opts, OGRErr *err) const
                 wkt += ",";
 
             char buf[80];
-            OGRMakeWktCoordinateM(buf,
-                    paoPoints[i].x,
-                    paoPoints[i].y,
-                    padfZ ? padfZ[i] : 0.0,
-                    padfM ? padfM[i] : 0.0,
-                    hasZ, hasM );
+            wkt += OGRMakeWktCoordinateM(paoPoints[i].x, paoPoints[i].y,
+                                         padfZ ? padfZ[i] : 0.0,
+                                         padfM ? padfM[i] : 0.0,
+                                         hasZ, hasM, opts );
             wkt += buf;
         }
         wkt += ")";

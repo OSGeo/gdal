@@ -38,6 +38,8 @@
 #include <cstring>
 #include <cctype>
 #include <limits>
+#include <sstream>
+#include <iomanip>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -214,6 +216,42 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
     }
 }
 
+
+std::string OGRFormatDouble(double val, OGRWktOptions opts)
+{
+    // So to have identical cross platform representation.
+    if( CPLIsInf(val) )
+        return (val > 0) ? "inf" : "-inf";
+    if( CPLIsNan(val) )
+        return "nan";
+
+    std::ostringstream oss;
+    if (opts.format == OGRWktFormat::F ||
+        (opts.format == OGRWktFormat::Default && fabs(val) < 1))
+        oss << std::fixed;
+    else
+    {
+        oss << std::defaultfloat;
+        opts.round = false;
+    }
+    oss << std::setprecision(opts.precision);
+    oss << val;
+
+    std::string sval = oss.str();
+    //
+    if (opts.round)
+    {
+        auto pos = sval.find('.');
+        // Should always be a '.' in fixed output.
+        assert(pos != std::string::npos);
+        auto nzpos = sval.find_last_not_of('0');
+        if (pos == nzpos)
+            nzpos++;
+        sval = sval.substr(0, nzpos);
+    }
+    return sval;
+}
+
 /************************************************************************/
 /*                        OGRMakeWktCoordinate()                        */
 /*                                                                      */
@@ -238,55 +276,44 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
     OGRWktOptions opts)
 {
-    auto format = [&opts](double val)
-    {
-        if (opts.format == OGRWktFormat::F)
-            return 'f';
-        else if (opts.format == OGRWktFormat::G)
-            return 'g';
-        return (fabs(val) < 1 ? 'f' : 'g');
-    };
-
     auto isInteger = [](const std::string s)
     {
         return s.find_first_not_of("'0123456789") == std::string::npos;
     };
 
-    std::string wkt;
+    std::string xval;
+    std::string yval;
 
     // Why do we do this?  Seems especially strange since we're ADDING
     // ".0" onto values in the case below.  The "&&" here also seems strange.
     if( opts.format == OGRWktFormat::Default &&
         CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
     {
-        wkt = std::to_string(static_cast<int>(x)) + " " +
-            std::to_string(static_cast<int>(y));
+        xval = std::to_string(static_cast<int>(x));
+        yval = std::to_string(static_cast<int>(y));
     }
     else
     {
-        char buf[80];
-        OGRFormatDouble(buf, 80, x, '.', opts.precision, format(x));
-        wkt += buf;
+        xval = OGRFormatDouble(x, opts);
         //ABELL - Why do we do special formatting?
-        if (isInteger(buf))
-            wkt += ".0";
+        if (isInteger(xval))
+            xval += ".0";
 
-        OGRFormatDouble(buf, 80, y, '.', opts.precision, format(y));
-        wkt += std::string(" ") + buf;
-        if (isInteger(buf))
-            wkt += ".0";
+        yval = OGRFormatDouble(y, opts);
+        if (isInteger(yval))
+            yval += ".0";
     }
+    std::string wkt = xval + " " + yval;
 
-    // Why do we always format Z with type 'g'?
+    // Why do we always format Z with type G.
     if( nDimension == 3 )
     {
         if(opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
-            wkt += ' ' + std::to_string(static_cast<int>(z));
+            wkt += " " + std::to_string(static_cast<int>(z));
         else
         {
-            char buf[80];
-            OGRFormatDouble(buf, 80, '.', opts.precision, 'g' );
-            wkt += std::string(" ") + buf;
+            opts.format = OGRWktFormat::G;
+            wkt += " " + OGRFormatDouble(z, opts);
         }
     }
     return wkt;
@@ -317,66 +344,46 @@ std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
                                   OGRBoolean hasZ, OGRBoolean hasM,
                                   OGRWktOptions opts)
 {
-    auto format = [&opts](double val)
-    {
-        if (opts.format == OGRWktFormat::F)
-            return 'f';
-        else if (opts.format == OGRWktFormat::G)
-            return 'g';
-        return (fabs(val) < 1 ? 'f' : 'g');
-    };
-
     auto isInteger = [](const std::string s)
     {
         return s.find_first_not_of("'0123456789") == std::string::npos;
     };
 
-    std::string wkt;
-
+    std::string xval, yval;
     if( opts.format == OGRWktFormat::Default &&
         CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
     {
-        wkt = std::to_string(static_cast<int>(x)) + " " +
-            std::to_string(static_cast<int>(y));
+        xval = std::to_string(static_cast<int>(x));
+        yval = std::to_string(static_cast<int>(y));
     }
     else
     {
-        char buf[80];
-        OGRFormatDouble(buf, 80, x, '.', opts.precision, format(x));
-        wkt += buf;
-        if (isInteger(buf))
-            wkt += ".0";
+        xval = OGRFormatDouble(x, opts);
+        if (isInteger(xval))
+            xval += ".0";
 
-        OGRFormatDouble(buf, 80, y, '.', opts.precision, format(y));
-        wkt += std::string(" ") + buf;
-        if (isInteger(buf))
-            wkt += ".0";
+        yval = OGRFormatDouble(y, opts);
+        if (isInteger(yval))
+            yval += ".0";
     }
+    std::string wkt = xval + " " + yval;
 
+    // For some reason we always format Z and M as G-type
+    opts.format = OGRWktFormat::G;
     if( hasZ )
     {
         if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
-            wkt += ' ' + std::to_string(static_cast<int>(z));
+            wkt += " " + std::to_string(static_cast<int>(z));
         else
-        {
-            char buf[80];
-            OGRFormatDouble(buf, 80, z, '.', opts.precision, 'g' );
-            wkt += std::string(" ") + buf;
-        }
+            wkt += " " + OGRFormatDouble(z, opts);
     }
 
     if( hasM )
     {
         if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(m) )
-        {
-            wkt += ' ' + std::to_string(static_cast<int>(m));
-        }
+            wkt += " " + std::to_string(static_cast<int>(m));
         else
-        {
-            char buf[80];
-            OGRFormatDouble(buf, 80, m, '.', opts.precision, 'g' );
-            wkt += std::string(" ") + buf;
-        }
+            wkt += " " + OGRFormatDouble(m, opts);
     }
     return wkt;
 }
