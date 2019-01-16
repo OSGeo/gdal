@@ -1647,7 +1647,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         // dubious now. We could probably remove it
         return ReadMultiRangeSingleGet(nRanges, ppData, panOffsets, panSizes);
     }
-    else if( EQUAL(pszMultiRangeStrategy, "SERIAL") )
+    else if( nRanges == 1 || EQUAL(pszMultiRangeStrategy, "SERIAL") )
     {
         return VSIVirtualHandle::ReadMultiRange(
                                     nRanges, ppData, panOffsets, panSizes);
