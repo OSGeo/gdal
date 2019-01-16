@@ -170,6 +170,13 @@ def test_mrf_overview_near_fact_2():
 
 def test_mrf_overview_near_with_nodata_fact_2():
 
+    ref_ds = gdal.Translate('/vismem/out.tif', 'data/byte.tif',
+                            noData=107)
+    ref_ds.BuildOverviews('NEAR', [2])
+    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ref_ds = None
+    gdal.Unlink('/vsimem/out.tif')
+
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
                gdal.GDT_Float32, gdal.GDT_Float64]:
@@ -184,7 +191,6 @@ def test_mrf_overview_near_with_nodata_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        expected_cs = 1117
         assert cs == expected_cs, dt
         ds = None
 
@@ -255,6 +261,12 @@ def test_mrf_overview_avg_with_nodata_fact_2():
 
 def test_mrf_overview_near_fact_3():
 
+    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/byte.tif')
+    ref_ds.BuildOverviews('NEAR', [3])
+    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ref_ds = None
+    gdal.Unlink('/vsimem/out.tif')
+
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                             format='MRF',
                             creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'])
@@ -263,7 +275,6 @@ def test_mrf_overview_near_fact_3():
 
     ds = gdal.Open('/vsimem/out.mrf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 478
     assert cs == expected_cs
     ds = None
 
