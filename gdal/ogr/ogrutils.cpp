@@ -229,90 +229,67 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
                            int nDimension )
 
 {
-    const size_t bufSize = 75;
-    // Assumed max length of the target buffer.
-    const size_t maxTargetSize = 75;
-    const char chDecimalSep = '.';
-    static int nPrecision = -1;
-    if( nPrecision < 0 )
-        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
+    std::string wkt = OGRMakeWktCoordinate(x, y, z, nDimension,
+        OGRWktOptions());
+    memcpy(pszTarget, wkt.data(), wkt.size() + 1);
+}
 
-    char szX[bufSize] = {};
-    char szY[bufSize] = {};
-    char szZ[bufSize] = {};
 
-    szZ[0] = '\0';
-
-    size_t nLenX = 0;
-    size_t nLenY = 0;
-
-    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
+    OGRWktOptions opts)
+{
+    auto format = [&opts](double val)
     {
-        snprintf( szX, bufSize, "%d", static_cast<int>(x) );
-        snprintf( szY, bufSize, "%d", static_cast<int>(y) );
+        if (opts.format == OGRWktFormat::F)
+            return 'f';
+        else if (opts.format == OGRWktFormat::G)
+            return 'g';
+        return (fabs(val) < 1 ? 'f' : 'g');
+    };
+
+    auto isInteger = [](const std::string s)
+    {
+        return s.find_first_not_of("'0123456789") == std::string::npos;
+    };
+
+    std::string wkt;
+
+    // Why do we do this?  Seems especially strange since we're ADDING
+    // ".0" onto values in the case below.  The "&&" here also seems strange.
+    if( opts.format == OGRWktFormat::Default &&
+        CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+    {
+        wkt = std::to_string(static_cast<int>(x)) + " " +
+            std::to_string(static_cast<int>(y));
     }
     else
     {
-        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision,
-                         fabs(x) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(x) && strchr(szX, '.') == nullptr &&
-            strchr(szX, 'e') == nullptr && strlen(szX) < bufSize - 2 )
-        {
-            strcat(szX, ".0");
-        }
-        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision,
-                         fabs(y) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(y) && strchr(szY, '.') == nullptr &&
-            strchr(szY, 'e') == nullptr && strlen(szY) < bufSize - 2 )
-        {
-            strcat(szY, ".0");
-        }
+        char buf[80];
+        OGRFormatDouble(buf, 80, x, '.', opts.precision, format(x));
+        wkt += buf;
+        //ABELL - Why do we do special formatting?
+        if (isInteger(buf))
+            wkt += ".0";
+
+        OGRFormatDouble(buf, 80, y, '.', opts.precision, format(y));
+        wkt += std::string(" ") + buf;
+        if (isInteger(buf))
+            wkt += ".0";
     }
 
-    nLenX = strlen(szX);
-    nLenY = strlen(szY);
-
+    // Why do we always format Z with type 'g'?
     if( nDimension == 3 )
     {
-        if( CPLIsDoubleAnInt(z) )
-        {
-            snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
-        }
+        if(opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
+            wkt += ' ' + std::to_string(static_cast<int>(z));
         else
         {
-            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
+            char buf[80];
+            OGRFormatDouble(buf, 80, '.', opts.precision, 'g' );
+            wkt += std::string(" ") + buf;
         }
     }
-
-    if( nLenX + 1 + nLenY + ((nDimension == 3) ? (1 + strlen(szZ)) : 0) >=
-        maxTargetSize )
-    {
-#ifdef DEBUG
-        CPLDebug( "OGR",
-                  "Yow!  Got this big result in OGRMakeWktCoordinate(): "
-                  "%s %s %s",
-                  szX, szY, szZ );
-#endif
-        if( nDimension == 3 )
-            strcpy( pszTarget, "0 0 0");
-        else
-            strcpy( pszTarget, "0 0");
-    }
-    else
-    {
-        memcpy( pszTarget, szX, nLenX );
-        pszTarget[nLenX] = ' ';
-        memcpy( pszTarget + nLenX + 1, szY, nLenY );
-        if( nDimension == 3 )
-        {
-            pszTarget[nLenX + 1 + nLenY] = ' ';
-            strcpy( pszTarget + nLenX + 1 + nLenY + 1, szZ );
-        }
-        else
-        {
-            pszTarget[nLenX + 1 + nLenY] = '\0';
-        }
-    }
+    return wkt;
 }
 
 /************************************************************************/
@@ -331,116 +308,77 @@ void OGRMakeWktCoordinateM( char *pszTarget,
                             OGRBoolean hasZ, OGRBoolean hasM )
 
 {
-    const size_t bufSize = 75;
-    // Assumed max length of the target buffer.
-    const size_t maxTargetSize = 75;
-    const char chDecimalSep = '.';
-    static int nPrecision = -1;
-    if( nPrecision < 0 )
-        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
+    std::string wkt = OGRMakeWktCoordinateM(x, y, z, m, hasZ, hasM,
+        OGRWktOptions());
+    memcpy(pszTarget, wkt.data(), wkt.size() + 1);
+}
 
-    char szX[bufSize] = {};
-    char szY[bufSize] = {};
-    char szZ[bufSize] = {};
-    char szM[bufSize] = {};
-
-    size_t nLen = 0;
-    size_t nLenX = 0;
-    size_t nLenY = 0;
-
-    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
+                                  OGRBoolean hasZ, OGRBoolean hasM,
+                                  OGRWktOptions opts)
+{
+    auto format = [&opts](double val)
     {
-        snprintf( szX, bufSize, "%d", static_cast<int>(x) );
-        snprintf( szY, bufSize, "%d", static_cast<int>(y) );
+        if (opts.format == OGRWktFormat::F)
+            return 'f';
+        else if (opts.format == OGRWktFormat::G)
+            return 'g';
+        return (fabs(val) < 1 ? 'f' : 'g');
+    };
+
+    auto isInteger = [](const std::string s)
+    {
+        return s.find_first_not_of("'0123456789") == std::string::npos;
+    };
+
+    std::string wkt;
+
+    if( opts.format == OGRWktFormat::Default &&
+        CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+    {
+        wkt = std::to_string(static_cast<int>(x)) + " " +
+            std::to_string(static_cast<int>(y));
     }
     else
     {
-        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision,
-                         fabs(x) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(x) && strchr(szX, '.') == nullptr &&
-            strchr(szX, 'e') == nullptr && strlen(szX) < bufSize - 2 )
-        {
-            strcat(szX, ".0");
-        }
-        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision,
-                         fabs(y) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(y) && strchr(szY, '.') == nullptr &&
-            strchr(szY, 'e') == nullptr && strlen(szY) < bufSize - 2 )
-        {
-            strcat(szY, ".0");
-        }
-    }
+        char buf[80];
+        OGRFormatDouble(buf, 80, x, '.', opts.precision, format(x));
+        wkt += buf;
+        if (isInteger(buf))
+            wkt += ".0";
 
-    nLenX = strlen(szX);
-    nLenY = strlen(szY);
-    nLen = nLenX + nLenY + 1;
+        OGRFormatDouble(buf, 80, y, '.', opts.precision, format(y));
+        wkt += std::string(" ") + buf;
+        if (isInteger(buf))
+            wkt += ".0";
+    }
 
     if( hasZ )
     {
-        if( CPLIsDoubleAnInt(z) )
-        {
-            snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
-        }
+        if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
+            wkt += ' ' + std::to_string(static_cast<int>(z));
         else
         {
-            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
+            char buf[80];
+            OGRFormatDouble(buf, 80, z, '.', opts.precision, 'g' );
+            wkt += std::string(" ") + buf;
         }
-        nLen += strlen(szZ) + 1;
     }
 
     if( hasM )
     {
-        if( CPLIsDoubleAnInt(m) )
+        if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(m) )
         {
-            snprintf( szM, bufSize, "%d", static_cast<int>(m) );
+            wkt += ' ' + std::to_string(static_cast<int>(m));
         }
         else
         {
-            OGRFormatDouble( szM, bufSize, m, chDecimalSep, nPrecision, 'g' );
+            char buf[80];
+            OGRFormatDouble(buf, 80, m, '.', opts.precision, 'g' );
+            wkt += std::string(" ") + buf;
         }
-        nLen += strlen(szM) + 1;
     }
-
-    if( nLen >= maxTargetSize )
-    {
-#ifdef DEBUG
-        CPLDebug( "OGR",
-                  "Yow!  Got this big result in OGRMakeWktCoordinate(): "
-                  "%s %s %s %s",
-                  szX, szY, szZ, szM );
-#endif
-        if( hasZ && hasM )
-            strcpy( pszTarget, "0 0 0 0");
-        else if( hasZ || hasM )
-            strcpy( pszTarget, "0 0 0");
-        else
-            strcpy( pszTarget, "0 0");
-    }
-    else
-    {
-        char *target = pszTarget;
-        strcpy( target, szX );
-        target += nLenX;
-        *target = ' ';
-        ++target;
-        strcpy( target, szY );
-        target += nLenY;
-        if( hasZ )
-        {
-            *target = ' ';
-            ++target;
-            strcpy( target, szZ );
-            target += strlen(szZ);
-        }
-        if( hasM )
-        {
-            *target = ' ';
-            ++target;
-            strcpy( target, szM );
-            target += strlen(szM);
-        }
-        *target = '\0';
-    }
+    return wkt;
 }
 
 /************************************************************************/

@@ -133,11 +133,11 @@ OGRMultiLineString::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText,
-                                        OGRwkbVariant eWkbVariant ) const
+std::string OGRMultiLineString::exportToWkt(OGRWktOptions opts,
+                                            OGRErr *err) const
 
 {
-    return exportToWktInternal( ppszDstText, eWkbVariant, "LINESTRING" );
+    return exportToWktInternal(opts, err);
 }
 
 /************************************************************************/

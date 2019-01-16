@@ -56,6 +56,34 @@ typedef void *OGRGeometryH;
 #endif /* DEFINEH_OGRGeometryH */
 /*! @endcond */
 
+enum class OGRWktFormat
+{
+    F,
+    G,
+    Default
+};
+
+struct OGRWktOptions
+{
+public:
+    OGRwkbVariant variant;
+    int precision;
+    bool round;
+    OGRWktFormat format;
+
+    OGRWktOptions() : variant(wkbVariantOldOgc), format(OGRWktFormat::Default)
+    {
+        static int defPrecision = getDefaultPrecision();
+        static bool defRound = getDefaultRound();
+
+        precision = defPrecision;
+        round = defRound;
+    }
+
+private:
+    static int getDefaultPrecision();
+    static bool getDefaultRound();
+};
 
 /**
  * Simple container for a position.
@@ -321,6 +349,7 @@ class CPL_DLL OGRGeometry
     OGRBoolean   IsSFCGALCompatible() const;
 
     void         HomogenizeDimensionalityWith( OGRGeometry* poOtherGeom );
+    std::string  wktTypeString(OGRwkbVariant variant) const;
 
 //! @endcond
 
@@ -388,8 +417,10 @@ class CPL_DLL OGRGeometry
         return importFromWkt( const_cast<const char**>(ppszInput) );
     }
 
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant=wkbVariantOldOgc ) const = 0;
+    OGRErr exportToWkt( char ** ppszDstText,
+        OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const = 0;
 
     // Non-standard.
     virtual OGRwkbGeometryType getGeometryType() const = 0;
@@ -834,9 +865,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
         const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    OGRErr exportToWkt( char ** ppszDstText,
-                        OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry
     virtual int getDimension() const override;
@@ -1135,9 +1165,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
         const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
     virtual OGRGeometry *clone() const override;
@@ -1427,9 +1456,8 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
         const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
     virtual OGRBoolean  IsValid() const override;
@@ -1536,8 +1564,8 @@ class CPL_DLL OGRCurveCollection
                                                           OGRCurve* poCurve ),
                     OGRwkbVariant eWkbVariant,
                     int& nBytesConsumedOut );
-    OGRErr          exportToWkt( const OGRGeometry* poGeom,
-                                 char ** ppszDstText ) const;
+    std::string     exportToWkt(const OGRGeometry *geom, OGRWktOptions opts,
+                                OGRErr *err) const;
     OGRErr          exportToWkb( const OGRGeometry* poGeom, OGRwkbByteOrder,
                                  unsigned char *,
                                  OGRwkbVariant eWkbVariant ) const;
@@ -1642,9 +1670,8 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
         const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
     virtual OGRGeometry *clone() const override;
@@ -1840,9 +1867,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
         const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant eWkbVariant = wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry
     virtual int getDimension() const override;
@@ -1980,9 +2006,8 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
 
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // ICurvePolygon.
     virtual OGRPolygon* CurvePolyToPoly(
@@ -2105,9 +2130,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     int         nGeomCount = 0;
     OGRGeometry **papoGeoms = nullptr;
 
-    OGRErr              exportToWktInternal( char ** ppszDstText,
-                                             OGRwkbVariant eWkbVariant,
-                                             const char* pszSkipPrefix ) const;
+    std::string exportToWktInternal(OGRWktOptions opts, OGRErr *err) const;
     static OGRGeometryCollection* TransferMembersAndDestroy(
         OGRGeometryCollection* poSrc,
         OGRGeometryCollection* poDst );
@@ -2166,9 +2189,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
 
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     virtual double get_Length() const;
     virtual double get_Area() const;
@@ -2264,8 +2286,8 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
 
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IMultiSurface methods
     virtual OGRErr PointOnSurface( OGRPoint * poPoint ) const;
@@ -2353,8 +2375,8 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
@@ -2406,8 +2428,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRBoolean         isCompatibleSubType( OGRwkbGeometryType ) const;
     virtual const char*        getSubGeometryName() const;
     virtual OGRwkbGeometryType getSubGeometryType() const;
-    OGRErr exportToWktInternal (char ** ppszDstText, OGRwkbVariant eWkbVariant,
-                                const char* pszSkipPrefix ) const;
+    std::string exportToWktInternal (OGRWktOptions opts, OGRErr *err) const;
 
     virtual OGRPolyhedralSurfaceCastToMultiPolygon GetCasterToMultiPolygon()
         const;
@@ -2449,9 +2470,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
         const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    virtual OGRErr exportToWkt( char ** ppszDstText,
-                                OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry methods.
     virtual int getDimension() const override;
@@ -2624,8 +2644,8 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     virtual OGRwkbGeometryType getGeometryType() const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry methods.
     virtual int getDimension() const override;
@@ -2703,8 +2723,8 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     virtual OGRwkbGeometryType getGeometryType() const override;
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // IGeometry methods.
     virtual int getDimension() const override;
@@ -2776,8 +2796,8 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
-        const override;
+    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+                                    OGRErr *err = nullptr) const override;
 
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )

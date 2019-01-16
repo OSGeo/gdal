@@ -263,11 +263,9 @@ OGRErr OGRMultiSurface::importFromWkt( const char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRMultiSurface::exportToWkt( char ** ppszDstText,
-                                     OGRwkbVariant /* eWkbVariant */ ) const
-
+std::string OGRMultiSurface::exportToWkt(OGRWktOptions opts, OGRErr *err) const
 {
-    return exportToWktInternal( ppszDstText, wkbVariantIso, "POLYGON" );
+    return exportToWktInternal(opts, err);
 }
 
 /************************************************************************/

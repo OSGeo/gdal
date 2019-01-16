@@ -87,7 +87,9 @@ const char CPL_DLL * OGRWktReadPointsM( const char * pszInput,
                                         int * pnReadPoints );
 
 void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
+std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int, OGRWktOptions opts );
 void CPL_DLL OGRMakeWktCoordinateM( char *, double, double, double, double, OGRBoolean, OGRBoolean );
+std::string CPL_DLL OGRMakeWktCoordinateM( double, double, double, double, OGRBoolean, OGRBoolean, OGRWktOptions opts );
 
 #endif
 

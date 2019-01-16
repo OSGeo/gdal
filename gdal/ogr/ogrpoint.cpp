@@ -560,60 +560,24 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
 /*      equivalent.                                                     */
 /************************************************************************/
 
-OGRErr OGRPoint::exportToWkt( char ** ppszDstText,
-                              OGRwkbVariant eWkbVariant ) const
-
+std::string OGRPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
 {
+    std::string wkt = "POINT " + wktTypeString(opts.variant);
     if( IsEmpty() )
     {
-        if( eWkbVariant == wkbVariantIso )
-        {
-            if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-                *ppszDstText = CPLStrdup("POINT ZM EMPTY");
-            else if( flags & OGR_G_MEASURED )
-                *ppszDstText = CPLStrdup("POINT M EMPTY");
-            else if( flags & OGR_G_3D )
-                *ppszDstText = CPLStrdup("POINT Z EMPTY");
-            else
-                *ppszDstText = CPLStrdup("POINT EMPTY");
-        }
-        else
-        {
-            *ppszDstText = CPLStrdup("POINT EMPTY");
-        }
+        wkt += "EMPTY";
     }
     else
     {
-        char szTextEquiv[180] = {};
-        if( eWkbVariant == wkbVariantIso )
-        {
-            char szCoordinate[80] = {};
-            OGRMakeWktCoordinateM(szCoordinate, x, y, z, m,
-                                  Is3D(), IsMeasured());
-            if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-                snprintf(szTextEquiv, sizeof(szTextEquiv),
-                         "POINT ZM (%s)", szCoordinate);
-            else if( flags & OGR_G_MEASURED )
-                snprintf(szTextEquiv, sizeof(szTextEquiv),
-                         "POINT M (%s)", szCoordinate);
-            else if( flags & OGR_G_3D )
-                snprintf(szTextEquiv, sizeof(szTextEquiv),
-                         "POINT Z (%s)", szCoordinate);
-            else
-                snprintf(szTextEquiv, sizeof(szTextEquiv),
-                         "POINT (%s)", szCoordinate);
-        }
-        else
-        {
-            char szCoordinate[80] = {};
-            OGRMakeWktCoordinateM(szCoordinate, x, y, z, m, Is3D(), FALSE);
-            snprintf( szTextEquiv, sizeof(szTextEquiv),
-                      "POINT (%s)", szCoordinate );
-        }
-        *ppszDstText = CPLStrdup( szTextEquiv );
+        char szCoordinate[80] = {};
+        bool measured = (opts.variant == wkbVariantIso) ? IsMeasured() : FALSE;
+        OGRMakeWktCoordinateM(szCoordinate, x, y, z, m, Is3D(), measured);
+        wkt += std::string("(") + szCoordinate + ")"; 
     }
 
-    return OGRERR_NONE;
+    if (err)
+        *err = OGRERR_NONE;
+    return wkt;
 }
 
 /************************************************************************/
