@@ -971,7 +971,7 @@ class GDALPDFStreamPoppler : public GDALPDFStream
 
 GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 {
-#ifndef POPPLER_0_58_OR_LATER
+#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58)
     m_po->free();
 #endif
     if (m_bDestroy)
@@ -1055,7 +1055,7 @@ const CPLString& GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
     {
-#ifdef POPPLER_0_58_OR_LATER
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
         // At least available since poppler 0.41
         const GooString* gooString = m_po->getString();
 #else
@@ -1189,7 +1189,7 @@ GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
     if (oIter != m_map.end())
         return oIter->second;
 
-#ifdef POPPLER_0_58_OR_LATER
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     Object o = m_poDict->lookupNF(((char*)pszKey));
     if (!o.isNull())
     {
@@ -1323,7 +1323,7 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
     if (m_v[nIndex] != nullptr)
         return m_v[nIndex];
 
-#ifdef POPPLER_0_58_OR_LATER
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     Object o = m_poArray->getNF(nIndex);
     if( !o.isNull() )
     {
