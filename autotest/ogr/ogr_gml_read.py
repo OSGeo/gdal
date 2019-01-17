@@ -3536,6 +3536,9 @@ def test_ogr_gml_gml2_write_geometry_error():
 
 def test_ogr_gml_srsname_only_on_top_bounded_by():
 
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
     tmpname = '/vsimem/test_ogr_gml_srsname_only_on_top_bounded_by.xml'
     gdal.FileFromMemBuffer(tmpname, """<?xml version="1.0" encoding="utf-8" ?>
 <ogr:FeatureCollection
