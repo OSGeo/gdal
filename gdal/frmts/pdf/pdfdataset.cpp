@@ -3416,7 +3416,11 @@ void PDFDataset::FindLayersPoppler()
 #endif
             if( ocg != nullptr && ocg->getName() != nullptr )
             {
+#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
+                const char* pszLayerName = (const char*)ocg->getName()->c_str();
+#else
                 const char* pszLayerName = (const char*)ocg->getName()->getCString();
+#endif
                 AddLayer(pszLayerName);
                 oLayerOCGMapPoppler[pszLayerName] = ocg;
             }
@@ -4740,7 +4744,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     GooString* poMetadata = poCatalogPoppler->readMetadata();
     if (poMetadata)
     {
+#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
+        const char* pszContent = poMetadata->c_str();
+#else
         const char* pszContent = poMetadata->getCString();
+#endif
         if (pszContent != nullptr &&
             STARTS_WITH(pszContent, "<?xpacket begin="))
         {
