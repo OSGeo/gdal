@@ -1061,8 +1061,13 @@ const CPLString& GDALPDFObjectPoppler::GetString()
 #else
         GooString* gooString = m_po->getString();
 #endif
+#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
+        return (osStr = GDALPDFGetUTF8StringFromBytes(reinterpret_cast<const GByte*>(gooString->c_str()),
+                                                      static_cast<int>(gooString->getLength())));
+#else
         return (osStr = GDALPDFGetUTF8StringFromBytes(reinterpret_cast<const GByte*>(gooString->getCString()),
                                                       static_cast<int>(gooString->getLength())));
+#endif
     }
     else
         return (osStr = "");
