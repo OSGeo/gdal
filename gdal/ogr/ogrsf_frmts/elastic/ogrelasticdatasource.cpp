@@ -228,7 +228,7 @@ OGRLayer* OGRElasticDataSource::GetLayerByName(const char* pszName)
         }
         for( auto& poLayer: m_apoLayers )
         {
-            if( EQUAL( poLayer->GetName(), pszName) )
+            if( EQUAL( poLayer->GetIndexName(), pszName) )
             {
                 return poLayer.get();
             }
