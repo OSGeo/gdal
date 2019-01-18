@@ -627,28 +627,34 @@ std::string OGRPolygon::exportToWkt(OGRWktOptions opts,
 /* -------------------------------------------------------------------- */
     wkt = getGeometryName() + wktTypeString(opts.variant);
     if( getExteriorRing() == nullptr || getExteriorRing()->IsEmpty() )
-        return wkt + "EMPTY";
+        wkt += "EMPTY";
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
 /* -------------------------------------------------------------------- */
 
-    bool first(true);
-    wkt += "(";
-    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    else
     {
-        OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
-        if( poLR->getNumPoints() )
+        bool first(true);
+        wkt += "(";
+        for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
         {
-            if (!first)
-                wkt += ',';
-            first = false;
-            wkt += poLR->exportToWkt(opts, err);
-            if ( err && *err != OGRERR_NONE )
-                return std::string();
+            OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
+            if( poLR->getNumPoints() )
+            {
+                if (!first)
+                    wkt += ',';
+                first = false;
+                std::string tempWkt = poLR->exportToWkt(opts, err);
+                if ( err && *err != OGRERR_NONE )
+                    return std::string();
+
+                // Remove leading "LINEARRING..."
+                wkt += tempWkt.substr(tempWkt.find_first_of('('));
+            }
         }
+        wkt += ')';
     }
-    wkt += ')';
 
     if (err)
         *err = OGRERR_NONE;

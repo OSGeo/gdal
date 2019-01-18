@@ -298,6 +298,8 @@ std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
 {
     bool first = true;
     std::string wkt;
+
+    opts.variant = wkbVariantIso;
     for (int i = 0; i < nCurveCount; ++i)
     {
         OGRGeometry *geom = papoCurves[i];
@@ -305,17 +307,25 @@ std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
         std::string tempWkt = geom->exportToWkt(opts, err);
         if (err && *err != OGRERR_NONE)
             return std::string();
-        auto pos = tempWkt.find('(');
 
-        // Skip empty geoms
-        if (pos == std::string::npos)
+        // A curve collection has a list of linestrings (OGRCompoundCurve),
+        // which should have their leader removed, or a OGRCurvePolygon,
+        // which has leaders for each of its sub-geometries that aren't
+        // linestrings.
+        if (tempWkt.compare(0, strlen("LINESTRING"), "LINESTRING") == 0)
+        {
+            auto pos = tempWkt.find('(');
+            if (pos != std::string::npos)
+                tempWkt = tempWkt.substr(pos);
+        }
+
+        if (tempWkt.find("EMPTY") != std::string::npos)
             continue;
+
         if (!first)
             wkt += std::string(",");
         first = false;
-
-        // Extract the '( ... )' part of the child geometry.
-        wkt += tempWkt.substr(pos);
+        wkt += tempWkt;
     }
 
     if (err)
@@ -324,7 +334,7 @@ std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
         baseGeom->wktTypeString(opts.variant);
     if (wkt.empty())
         return leader + "EMPTY";
-    return leader + wkt;
+    return leader + "(" + wkt + ")";
 }
 
 /************************************************************************/

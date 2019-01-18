@@ -1742,15 +1742,16 @@ OGRErr OGRGeometry::importPreambleFromWkt( const char ** ppszInput,
 ///    empty string.
 std::string OGRGeometry::wktTypeString(OGRwkbVariant variant) const
 {
-    std::string s;
+    std::string s(" ");
 
-    if (variant != wkbVariantIso)
-        return s;
-    if (flags & OGR_G_3D)
-        s += "Z";
-    if (flags & OGR_G_MEASURED)
-        s += "M";
-    if (s.size())
+    if (variant == wkbVariantIso)
+    {
+        if (flags & OGR_G_3D)
+            s += "Z";
+        if (flags & OGR_G_MEASURED)
+            s += "M";
+    }
+    if (s.size() > 1)
         s += " ";
     return s;
 }

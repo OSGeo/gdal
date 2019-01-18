@@ -808,38 +808,47 @@ std::string OGRGeometryCollection::exportToWkt(OGRWktOptions opts,
     return exportToWktInternal(opts, err);
 }
 
+
 //! @cond Doxygen_Suppress
-std::string OGRGeometryCollection::exportToWktInternal(
-    OGRWktOptions opts, OGRErr *err) const
+std::string OGRGeometryCollection::exportToWktInternal(OGRWktOptions opts,
+    OGRErr *err, std::string exclude) const
 {
     bool first = true;
+    size_t excludeSize = exclude.size();
     std::string wkt;
+
     for (int i = 0; i < nGeomCount; ++i)
     {
         OGRGeometry *geom = papoGeoms[i];
-
         std::string tempWkt = geom->exportToWkt(opts, err);
         if (err && *err != OGRERR_NONE)
             return std::string();
-        auto pos = tempWkt.find('(');
 
-        // Skip empty geoms
-        if (pos == std::string::npos)
-            continue;
+        // For some strange reason we exclude the typename leader when using
+        // some geometries as part of a collection.
+        if (excludeSize && (tempWkt.compare(0, excludeSize, exclude) == 0))
+        {
+            auto pos = tempWkt.find('(');
+            // We won't have an opening paren if the geom is empty.
+            if (pos == std::string::npos)
+                continue;
+            tempWkt = tempWkt.substr(pos);
+        }
+
         if (!first)
             wkt += std::string(",");
         first = false;
-
-        // Extract the '( ... )' part of the child geometry.
-        wkt += tempWkt.substr(pos);
+        wkt += tempWkt;
     }
 
     if (err)
         *err = OGRERR_NONE;
-    std::string leader = getGeometryName() + wktTypeString(opts.variant);
     if (wkt.empty())
-        return leader + "EMPTY";
-    return leader + wkt;
+        wkt += "EMPTY";
+    else
+        wkt = "(" + wkt + ")";
+     wkt = getGeometryName() + wktTypeString(opts.variant) + wkt;
+    return wkt;
 }
 //! @endcond
 

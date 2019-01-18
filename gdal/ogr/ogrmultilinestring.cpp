@@ -137,7 +137,7 @@ std::string OGRMultiLineString::exportToWkt(OGRWktOptions opts,
                                             OGRErr *err) const
 
 {
-    return exportToWktInternal(opts, err);
+    return exportToWktInternal(opts, err, "LINESTRING");
 }
 
 /************************************************************************/

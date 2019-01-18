@@ -448,6 +448,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( const char ** ppszInput )
 std::string OGRPolyhedralSurface::exportToWkt(OGRWktOptions opts,
                                               OGRErr *err) const
 {
+    opts.variant = wkbVariantIso;
     return exportToWktInternal(opts, err);
 }
 
@@ -483,7 +484,7 @@ std::string OGRPolyhedralSurface::exportToWktInternal(OGRWktOptions opts,
     std::string leader = getGeometryName() + wktTypeString(opts.variant);
     if (wkt.empty())
         return leader + "EMPTY";
-    return leader + wkt;
+    return leader + "(" + wkt + ")";
 }
 //! @endcond
 

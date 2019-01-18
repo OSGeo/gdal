@@ -151,35 +151,40 @@ OGRMultiPoint::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 
 std::string OGRMultiPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
 {
+    std::string wkt = getGeometryName() + wktTypeString(opts.variant);
     if( IsEmpty() )
-        return getGeometryName() + wktTypeString(opts.variant) + "EMPTY";
-
-    bool first(true);
-    std::string wkt;
-    //ABELL - Why universal ref?
-    for( auto&& poPoint: this )
+        wkt += "EMPTY";
+    else
     {
-        if( poPoint->IsEmpty() )
-            continue;
+        bool first(true);
+        //ABELL - Why universal ref?
+        wkt += "(";
+        for( auto&& poPoint: this )
+        {
+            if( poPoint->IsEmpty() )
+                continue;
 
-        if( !first )
-            wkt += ",";
-        first = false;
+            if( !first )
+                wkt += ",";
+            first = false;
 
-        if( opts.variant == wkbVariantIso )
-            wkt += "(";
+            if( opts.variant == wkbVariantIso )
+                wkt += "(";
 
-        wkt += OGRMakeWktCoordinateM(poPoint->getX(), poPoint->getY(),
-            poPoint->getZ(), poPoint->getM(), poPoint->Is3D(),
-            poPoint->IsMeasured() && (opts.variant == wkbVariantIso), opts);
+            wkt += OGRMakeWktCoordinateM(poPoint->getX(), poPoint->getY(),
+                    poPoint->getZ(), poPoint->getM(), poPoint->Is3D(),
+                    poPoint->IsMeasured() && (opts.variant == wkbVariantIso),
+                    opts);
 
-        if( opts.variant == wkbVariantIso )
-            wkt += ")";
+            if( opts.variant == wkbVariantIso )
+                wkt += ")";
+        }
+        wkt += ")";
     }
 
     if (err)
         *err = OGRERR_NONE;
-    return getGeometryName() + wktTypeString(opts.variant) + "(" + wkt + ")";
+    return wkt;
 }
 
 /************************************************************************/

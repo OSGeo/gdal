@@ -252,7 +252,7 @@ std::string OGRFormatDouble(double val, OGRWktOptions opts)
         auto nzpos = sval.find_last_not_of('0');
         if (pos == nzpos)
             nzpos++;
-        sval = sval.substr(0, nzpos);
+        sval = sval.substr(0, nzpos + 1);
     }
     return sval;
 }

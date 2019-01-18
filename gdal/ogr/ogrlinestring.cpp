@@ -1837,7 +1837,8 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( const char ** ppszInput,
 
 std::string OGRSimpleCurve::exportToWkt(OGRWktOptions opts, OGRErr *err) const
 {
-    std::string wkt = getGeometryName() + wktTypeString(opts.variant);;
+    // LINEARRING or LINESTRING or CIRCULARSTRING
+    std::string wkt = getGeometryName() + wktTypeString(opts.variant);
     if( IsEmpty() )
     {
         wkt += "EMPTY";
@@ -1855,12 +1856,10 @@ std::string OGRSimpleCurve::exportToWkt(OGRWktOptions opts, OGRErr *err) const
             if (i > 0)
                 wkt += ",";
 
-            char buf[80];
             wkt += OGRMakeWktCoordinateM(paoPoints[i].x, paoPoints[i].y,
                                          padfZ ? padfZ[i] : 0.0,
                                          padfM ? padfM[i] : 0.0,
                                          hasZ, hasM, opts );
-            wkt += buf;
         }
         wkt += ")";
     }
