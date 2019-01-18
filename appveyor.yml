@@ -119,7 +119,7 @@ install:
       $env:NMAKE_LOCAL+="HDF5_DIR = `$(SDK_PREFIX)`n"
       $env:NMAKE_LOCAL+="HDF5_LIB = `$(SDK_LIB)\hdf5.lib`n"
       $env:NMAKE_LOCAL+="KEA_CFLAGS = -I`$(SDK_INC)`n"
-      $env:NMAKE_LOCAL+="KEA_LIB = `$(SDK_LIB)\libkea.lib`n"
+      $env:NMAKE_LOCAL+="KEA_LIB = `$(SDK_LIB)\libkea.lib `$(SDK_LIB)\hdf5_cpp.lib`n"
       $env:NMAKE_LOCAL+="NETCDF_SETTING=yes`n"
       $env:NMAKE_LOCAL+="NETCDF_LIB=`$(SDK_LIB)\netcdf.lib`n"
       $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"

@@ -75,11 +75,13 @@ void GDALRegister_KEA()
         static_cast<int>(kealib::KEA_SIEVE_BUF),
         static_cast<int>(kealib::KEA_META_BLOCKSIZE),
         kealib::KEA_DEFLATE ) );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = KEADataset::Open;
     poDriver->pfnIdentify = KEADataset::Identify;
     poDriver->pfnCreate = KEADataset::Create;
     poDriver->pfnCreateCopy = KEADataset::CreateCopy;
+    poDriver->pfnUnloadDriver = KEADatasetDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
