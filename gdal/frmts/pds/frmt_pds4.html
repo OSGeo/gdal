@@ -18,12 +18,6 @@ GeoTIFF file with a strip organization compatible of a raw imagery file.<p>
 The driver also reads and write georeferencing and coordinate system information
 as well as selected other header metadata.<p>
 
-If several Array objects are present in the label, they will be reported as
-separate subdatasets (typically the main subdataset is an Array3D, and
-backplanes are represented as Array2D). Creation of new datasets with
-subdatasets is not supported: only a single Array3D with possibly multiple bands
-is supported.<p>
-
 A mask band is attached to each source band. The
 value of this mask band is 0 when the pixel value is one of the missing constants.<p>
 
@@ -90,11 +84,31 @@ Array_2D_Spectrum/Array_3D/Array_3D_Image/Array_3D_Movie/Array_3D_Spectrum.
 To set the XML element that defines the type of array. Defaults to Array_3D_Image.
 Using a Array_2D* for a multiband image is not supported. When using a
 Array_2D* value, INTERLEAVE will be ignored.</li>
+<li> <b>ARRAY_IDENTIFIER</b>=string. (GDAL &gt;= 2.5.0) Identifier to put in the Array element.</li>
+<li> <b>UNIT</b>=string. (GDAL &gt;= 2.5.0) Content of the Element_Array.unit.
+If not provided, the unit of the source band in case of copying from another
+raster will be used (if present on the source band).</li>
 <li> <b>BOUNDING_DEGREES</b>=west_lon,south_lat,east_lon,north_lat. Manually set
 bounding box</li>
 </ul>
 
-<h2>Examples:</h2>
+<h2>Subdataset / multiple image support</h2>
+
+<p>
+If several Array objects are present in the label, they will be reported as
+separate subdatasets (typically the main subdataset is an Array3D, and
+backplanes are represented as Array2D).</p>
+
+<p>Since GDAL 2.5.0, creation of new datasets with
+subdatasets is supported (through the APPEND_SUBDATASET=YES creation option).
+One important restriction is that, given that the georeferencing information in
+the PDS4 XML label is global for the whole dataset, all subdatasets must share
+the same georeferencing information: coordinate reference system, georegistration
+and resolution. Appending to both RAW and GEOTIFF raster is supported. In
+append mode, most creation options are ignored, except INTERLEAVE (if GeoTIFF
+output image), ARRAY_TYPE and ARRAY_IDENTIFIER.<p>
+
+<h2>Examples</h2>
 
 <li>Listing bands and subdatasets:</li>
 
@@ -254,10 +268,16 @@ gdal.Translate('out.xml', 'in.tif', format = 'PDS4',
 gdal.Unlink(in_memory_template)
 </pre>
 
+
+<li>Appending a new image (subdataset) to an existing PDS4 dataset.</li>
+
+<pre>$ gdal_translate new_image.tif existing_output.xml -of PDS4 \
+                      -co APPEND_SUBDATASET=YES \
+                      -co ARRAY_IDENTIFIER=my_new_image</pre>
+
 <h2>Limitations</h2>
 
 <ul>
-<li>No support for the creation of subdatasets</li>
 <li>No PDS4 table support</li>
 </ul>
 

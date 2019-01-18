@@ -1076,5 +1076,130 @@ def test_pds4_18():
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
+###############################################################################
+# Test APPEND_SUBDATASET=YES
 
 
+@pytest.mark.parametrize('options', [['IMAGE_FORMAT=RAW'], ['IMAGE_FORMAT=GEOTIFF']])
+def test_pds4_append_subdataset(options):
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=options)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=6378137 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    src_ds.GetRasterBand(1).Fill(2)
+
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+    ds = gdal.Open(filename)
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2, subds
+
+    ds = gdal.Open('PDS4:/vsimem/out.xml:1:1')
+    assert ds.GetRasterBand(1).Checksum() == 1
+
+    ds = gdal.Open('PDS4:/vsimem/out.xml:1:2')
+    assert ds.GetRasterBand(1).Checksum() == 2
+
+    src_ds.GetRasterBand(1).Fill(3)
+
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+
+    ds = gdal.Open('PDS4:/vsimem/out.xml:1:3')
+    assert ds.GetRasterBand(1).Checksum() == 3
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+###############################################################################
+# Test APPEND_SUBDATASET=YES error case
+
+
+def test_pds4_append_subdataset_not_same_gt():
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=6378137 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([2.1, 1, 0, 49, 0, -2])
+    src_ds.GetRasterBand(1).Fill(2)
+
+    assert not gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+###############################################################################
+# Test APPEND_SUBDATASET=YES error case
+
+
+def test_pds4_append_subdataset_not_same_srs():
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=6378137 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=1 +no_defs')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    src_ds.GetRasterBand(1).Fill(2)
+
+    assert not gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+###############################################################################
+# Test unit
+
+
+def test_pds4_unit():
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1)
+    ds.GetRasterBand(1).SetUnitType('my unit')
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetUnitType() == 'my unit'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    src_ds.GetRasterBand(1).SetUnitType('my other unit')
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds)
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetUnitType() == 'my other unit'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds,
+                                                   options=['UNIT=yet another unit'])
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetUnitType() == 'yet another unit'
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
