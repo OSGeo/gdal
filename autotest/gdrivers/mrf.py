@@ -136,14 +136,9 @@ def test_mrf_zen_test():
     return result
 
 
-def test_mrf_overview_near_fact_2():
+def test_mrf_overview_nearnb_fact_2():
 
-    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/byte.tif')
-    ref_ds.BuildOverviews('NEAR', [2])
-    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    ref_ds = None
-    gdal.Unlink('/vsimem/out.tif')
-
+    expected_cs = 1087
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
                gdal.GDT_Float32, gdal.GDT_Float64]:
@@ -152,7 +147,7 @@ def test_mrf_overview_near_fact_2():
                                 format='MRF',
                                 creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'],
                                 outputType=dt)
-        out_ds.BuildOverviews('NEAR', [2])
+        out_ds.BuildOverviews('NEARNB', [2])
         out_ds = None
 
         ds = gdal.Open('/vsimem/out.mrf')
@@ -168,15 +163,9 @@ def test_mrf_overview_near_fact_2():
 
     
 
-def test_mrf_overview_near_with_nodata_fact_2():
+def test_mrf_overview_nearnb_with_nodata_fact_2():
 
-    ref_ds = gdal.Translate('/vismem/out.tif', 'data/byte.tif',
-                            noData=107)
-    ref_ds.BuildOverviews('NEAR', [2])
-    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    ref_ds = None
-    gdal.Unlink('/vsimem/out.tif')
-
+    expected_cs = 1117
     for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
                gdal.GDT_Float32, gdal.GDT_Float64]:
@@ -186,7 +175,7 @@ def test_mrf_overview_near_with_nodata_fact_2():
                                 creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'],
                                 outputType=dt,
                                 noData=107)
-        out_ds.BuildOverviews('NEAR', [2])
+        out_ds.BuildOverviews('NEARNB', [2])
         out_ds = None
 
         ds = gdal.Open('/vsimem/out.mrf')
@@ -259,18 +248,13 @@ def test_mrf_overview_avg_with_nodata_fact_2():
 
     
 
-def test_mrf_overview_near_fact_3():
+def test_mrf_overview_nearnb_fact_3():
 
-    ref_ds = gdal.Translate('/vsimem/out.tif', 'data/byte.tif')
-    ref_ds.BuildOverviews('NEAR', [3])
-    expected_cs = ref_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    ref_ds = None
-    gdal.Unlink('/vsimem/out.tif')
-
+    expected_cs = 478
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                             format='MRF',
                             creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=10'])
-    out_ds.BuildOverviews('NEAR', [3])
+    out_ds.BuildOverviews('NEARNB', [3])
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
@@ -339,7 +323,7 @@ def test_mrf_overview_partial_block():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                             creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=8'])
-    out_ds.BuildOverviews('NEAR', [2])
+    out_ds.BuildOverviews('NEARNB', [2])
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
@@ -354,13 +338,13 @@ def test_mrf_overview_partial_block():
     gdal.Unlink('/vsimem/out.til')
 
 
-def test_mrf_overview_near_implicit_level():
+def test_mrf_overview_nearnb_implicit_level():
 
     # We ask only overview level 2, but MRF automatically creates 2 and 4
     # so check that 4 is properly initialized
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                             creationOptions=['COMPRESS=NONE', 'BLOCKSIZE=5'])
-    out_ds.BuildOverviews('NEAR', [2])
+    out_ds.BuildOverviews('NEARNB', [2])
     out_ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
@@ -388,7 +372,7 @@ def test_mrf_overview_external():
 
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     ds = gdal.Open('/vsimem/out.mrf')
-    ds.BuildOverviews('NEAR', [2])
+    ds.BuildOverviews('NEARNB', [2])
     ds = None
 
     ds = gdal.Open('/vsimem/out.mrf')
@@ -636,6 +620,4 @@ def test_mrf_cleanup():
     gdal.Unlink('/vsimem/out.idx')
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
-
-
 
