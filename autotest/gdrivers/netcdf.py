@@ -2794,6 +2794,76 @@ def test_netcdf_82():
     }
     assert md == expected_md, 'Did not get expected metadata'
 
+###############################################################################
+# Test complex data subsets
+
+
+def test_netcdf_83():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/complex.nc')
+    sds_list = ds.GetMetadata('SUBDATASETS')
+
+    assert len(sds_list) == 6, 'Did not get expected complex subdataset count.'
+
+    assert sds_list['SUBDATASET_1_NAME'] == 'NETCDF:"data/complex.nc":f32' and sds_list['SUBDATASET_2_NAME'] == 'NETCDF:"data/complex.nc":f64' and sds_list['SUBDATASET_3_NAME'] == 'NETCDF:"data/complex.nc":/group/fmul', \
+        'did not get expected subdatasets.'
+
+    ds = None
+
+    assert not gdaltest.is_file_open('data/complex.nc'), 'file still opened.'
+
+###############################################################################
+# Confirm complex subset data access and checksum
+# Start with Float32
+
+
+def test_netcdf_84():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('NETCDF:"data/complex.nc":f32')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 523, 'did not get expected checksum'
+
+# Repeat for Float64
+
+
+def test_netcdf_85():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('NETCDF:"data/complex.nc":f64')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat64
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 511, 'did not get expected checksum'
+
+
+# Check for groups support
+
+def test_netcdf_86():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('NETCDF:"data/complex.nc":/group/fmul')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 453, 'did not get expected checksum for band 1'
+
+    cs = ds.GetRasterBand(2).Checksum()
+    assert cs == 629, 'did not get expected checksum for band 2'
+
+    cs = ds.GetRasterBand(3).Checksum()
+    assert cs == 473, 'did not get expected checksum for band 3'
 
 ###############################################################################
 def test_netcdf_uffd():
