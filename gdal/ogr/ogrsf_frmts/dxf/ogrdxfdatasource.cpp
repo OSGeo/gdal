@@ -417,6 +417,10 @@ bool OGRDXFDataSource::ReadLayerDefinition()
                 oLayerProperties["Hidden"] = "1";
             break;
 
+          case 420:
+            oLayerProperties["TrueColor"] = szLineBuf;
+            break;
+
           case 70:
             oLayerProperties["Flags"] = szLineBuf;
             if( atoi(szLineBuf) & 0x01 ) // Is layer frozen?

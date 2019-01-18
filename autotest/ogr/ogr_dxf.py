@@ -142,7 +142,7 @@ def test_ogr_dxf_3():
                              % (geom.GetX(0), geom.GetY(0)))
 
 ###############################################################################
-# Third feature: point.
+# Third feature: POINT with RGB true color
 
 
 def test_ogr_dxf_4():
@@ -150,6 +150,9 @@ def test_ogr_dxf_4():
     feat = gdaltest.dxf_layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT (83.5 160.0 0)')
+
+    assert feat.GetStyleString() == 'PEN(c:#ffbeb8)', \
+        'got wrong color on POINT'
 
 ###############################################################################
 # Fourth feature: LINE
@@ -3202,6 +3205,24 @@ def test_ogr_dxf_48():
     if f.GetStyleString() != 'PEN(c:#000000)':
         f.DumpReadable()
         pytest.fail('Wrong style string on feature 15')
+
+    # ByBlock feature inserted via a true-color INSERT
+    f = lyr.GetFeature(16)
+    if f.GetStyleString() != 'PEN(c:#18dce1)':
+        f.DumpReadable()
+        pytest.fail('Wrong style string on feature 16')
+
+    # True-color feature in block
+    f = lyr.GetFeature(17)
+    if f.GetStyleString() != 'PEN(c:#5e089b)':
+        f.DumpReadable()
+        pytest.fail('Wrong style string on feature 17')
+
+    # ByBlock feature inserted via a ByLayer INSERT on true-color layer
+    f = lyr.GetFeature(18)
+    if f.GetStyleString() != 'PEN(c:#8ef19c)':
+        f.DumpReadable()
+        pytest.fail('Wrong style string on feature 18')
 
     
 ###############################################################################

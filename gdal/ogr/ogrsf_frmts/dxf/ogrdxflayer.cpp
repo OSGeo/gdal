@@ -186,6 +186,10 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
         poFeature->oStyleProperties["Color"] = pszValue;
         break;
 
+      case 420:
+        poFeature->oStyleProperties["TrueColor"] = pszValue;
+        break;
+
       case 6:
         poFeature->SetField( "Linetype", TextRecode(pszValue) );
         break;
