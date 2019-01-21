@@ -668,7 +668,7 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL( const char* pszURL )
 /*                           MultiPerform()                             */
 /************************************************************************/
 
-void MultiPerform(CURLM* hCurlMultiHandle, CURL* hEasyHandle)
+CURLcode MultiPerform(CURLM* hCurlMultiHandle, CURL* hEasyHandle)
 {
     int repeats = 0;
 
@@ -689,24 +689,25 @@ void MultiPerform(CURLM* hCurlMultiHandle, CURL* hEasyHandle)
             break;
         }
 
-#ifdef undef
-        CURLMsg *msg;
-        do {
-            int msgq = 0;
-            msg = curl_multi_info_read(hCurlMultiHandle, &msgq);
-            if(msg && (msg->msg == CURLMSG_DONE))
-            {
-                CURL *e = msg->easy_handle;
-            }
-        } while(msg);
-#endif
-
         CPLMultiPerformWait(hCurlMultiHandle, repeats);
     }
     CPLHTTPRestoreSigPipeHandler(old_handler);
 
+    CURLMsg *msg;
+    CURLcode result = CURLE_OK;
+    do {
+        int msgq = 0;
+        msg = curl_multi_info_read(hCurlMultiHandle, &msgq);
+        if(msg && (msg->msg == CURLMSG_DONE) && (msg->easy_handle == hEasyHandle))
+        {
+            result = msg->data.result;
+        }
+    } while(msg);
+
     if( hEasyHandle )
         curl_multi_remove_handle(hCurlMultiHandle, hEasyHandle);
+
+    return result;
 }
 
 /************************************************************************/
@@ -1264,7 +1265,7 @@ retry:
 
     curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    CURLcode curl_result_code = MultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1284,10 +1285,11 @@ retry:
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-    if( ENABLE_DEBUG && szCurlErrBuf[0] != '\0' )
+    if( ENABLE_DEBUG && curl_result_code != CURLE_OK )
     {
-        CPLDebug("VSICURL", "DownloadRegion(%s): response_code=%d, msg=%s",
+        CPLDebug("VSICURL", "DownloadRegion(%s): curl_result_code=%d response_code=%d, msg=%s",
                  osURL.c_str(),
+                 static_cast<int>(curl_result_code),
                  static_cast<int>(response_code),
                  szCurlErrBuf);
     }
@@ -1356,10 +1358,11 @@ retry:
         }
     }
 
-    if( (response_code != 200 && response_code != 206 &&
+    if( (curl_result_code != CURLE_OK) ||
+        (response_code != 200 && response_code != 206 &&
          response_code != 225 && response_code != 226 &&
          response_code != 426) ||
-        sWriteFuncHeaderData.bError )
+        sWriteFuncHeaderData.bError)
     {
         if( sWriteFuncData.pBuffer != nullptr &&
             CanRestartOnError(reinterpret_cast<const char*>(sWriteFuncData.pBuffer),
@@ -1371,19 +1374,35 @@ retry:
             return DownloadRegion(startOffset, nBlocks);
         }
 
-        // If HTTP 429, 500, 502, 503, 504 error retry after a
-        // pause.
+        // If HTTP 429, 500, 502, 503, 504
+        // or socket/connection error
+        // retry after a pause.
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
             static_cast<int>(response_code), dfRetryDelay,
             sWriteFuncHeaderData.pBuffer);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                        "HTTP error code: %d - %s. "
-                        "Retrying again in %.1f secs",
-                        static_cast<int>(response_code), m_pszURL,
-                        dfRetryDelay);
+            if (curl_result_code == CURLE_OK)
+            {
+                // HTTP server error
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "HTTP error code: %d - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(response_code), m_pszURL,
+                            dfRetryDelay);
+            }
+            else
+            {
+                // Connection/transfer error
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "Request error: %d (%s) - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(curl_result_code),
+                            szCurlErrBuf,
+                            m_pszURL,
+                            dfRetryDelay);
+            }
             CPLSleep(dfRetryDelay);
             dfRetryDelay = dfNewRetryDelay;
             nRetryCount++;
@@ -1393,17 +1412,15 @@ retry:
             goto retry;
         }
 
-        if( response_code >= 400 && szCurlErrBuf[0] != '\0' )
-        {
-            if( strcmp(szCurlErrBuf, "Couldn't use REST") == 0 )
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "%d: %s, Range downloading not supported by this server!",
-                    static_cast<int>(response_code), szCurlErrBuf);
-            else
-                CPLError(CE_Failure, CPLE_AppDefined, "%d: %s",
-                         static_cast<int>(response_code), szCurlErrBuf);
-        }
+        if( curl_result_code == CURLE_FTP_COULDNT_USE_REST || curl_result_code == CURLE_RANGE_ERROR )
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "%d: %s, Range downloading not supported by this server!",
+                static_cast<int>(response_code), szCurlErrBuf);
+        else if ( curl_result_code != CURLE_OK )
+            CPLError(CE_Failure, CPLE_AppDefined, "%d HTTP%d: %s",
+                     curl_result_code, static_cast<int>(response_code), szCurlErrBuf);
+
         if( !oFileProp.bHasComputedFileSize && startOffset == 0 )
         {
             oFileProp.bHasComputedFileSize = true;

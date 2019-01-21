@@ -548,7 +548,7 @@ void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
                                         void              *pReadCbkUserData );
 size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                                       size_t nmemb, void *req );
-void MultiPerform(CURLM* hCurlMultiHandle,
+CURLcode MultiPerform(CURLM* hCurlMultiHandle,
                          CURL* hEasyHandle = nullptr);
 void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle);
 

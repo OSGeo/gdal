@@ -514,7 +514,9 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
     if( response_code == 429 || response_code == 500 ||
         (response_code >= 502 && response_code <= 504) ||
         // S3 sends some client timeout errors as 400 Client Error
-        (response_code == 400 && pszErrBuf && strstr(pszErrBuf, "RequestTimeout")) )
+        (response_code == 400 && pszErrBuf && strstr(pszErrBuf, "RequestTimeout")) ||
+        pszErrBuf  // any transfer/connection/socket error
+        )
     {
         // Use an exponential backoff factor of 2 plus some random jitter
         // We don't care about cryptographic quality randomness, hence:
