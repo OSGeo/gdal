@@ -625,6 +625,51 @@ static CPLErr GDALRasterizeOptions( char **papszOptions,
  * @param pProgressArg callback data for progress function.
  *
  * @return CE_None on success or CE_Failure on error.
+ *
+ * <strong>Example</strong><br>
+ * GDALRasterizeGeometries rasterize output to MEM Dataset :<br>
+ * @code
+ *     int nBufXSize      = 1024;
+ *     int nBufYSize      = 1024;
+ *     int nBandCount     = 1;
+ *     GDALDataType eType = GDT_Byte;
+ *     int nDataTypeSize  = GDALGetDataTypeSizeBytes(eType);
+ *
+ *     void* pData = CPLCalloc( nBufXSize*nBufYSize*nBandCount, nDataTypeSize );
+ *     char memdsetpath[1024];
+ *     sprintf(memdsetpath,"MEM:::DATAPOINTER=0x%p,PIXELS=%d,LINES=%d,"
+ *             "BANDS=%d,DATATYPE=%s,PIXELOFFSET=%d,LINEOFFSET=%d",
+ *             pData,nBufXSize,nBufYSize,nBandCount,GDALGetDataTypeName(eType),
+ *             nBandCount*nDataTypeSize, nBufXSize*nBandCount*nDataTypeSize );
+ *
+ *      // Open Memory Dataset
+ *      GDALDatasetH hMemDset = GDALOpen(memdsetpath, GA_Update);
+ *      // or create it as follows
+ *      // GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
+ *      // GDALDatasetH hMemDset = GDALCreate(hMemDriver, "", nBufXSize, nBufYSize, nBandCount, eType, NULL);
+ *
+ *      double adfGeoTransform[6];
+ *      // Assign GeoTransform parameters,Omitted here.
+ *
+ *      GDALSetGeoTransform(hMemDset,adfGeoTransform);
+ *      GDALSetProjection(hMemDset,pszProjection); // Can not
+ *      
+ *      // Do something ...
+ *      // Need an array of OGRGeometry objects,The assumption here is pahGeoms
+ *      
+ *      int bandList[3] = { 1, 2, 3};
+ *      std::vector<double> geomBurnValue(nGeomCount*nBandCount,255.0);
+ *      CPLErr err = GDALRasterizeGeometries(hMemDset, nBandCount, bandList,
+ *                              nGeomCount, pahGeoms, pfnTransformer, pTransformArg,
+ *                              geomBurnValue.data(), papszOptions,
+ *                              pfnProgress, pProgressArg);
+ *      if( err != CE_None )
+ *      {
+ *          // Do something ...
+ *      }
+ *      GDALClose(hMemDset);
+ *      CPLFree(pData);
+ *@endcode
  */
 
 CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
