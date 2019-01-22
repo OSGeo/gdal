@@ -157,9 +157,9 @@ std::string OGRMultiPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
     else
     {
         bool first(true);
-        //ABELL - Why universal ref?
         wkt += "(";
-        for( auto&& poPoint: this )
+        // OGRMultiPoint has a begin()/end().
+        for(const OGRPoint *poPoint: this)
         {
             if( poPoint->IsEmpty() )
                 continue;
