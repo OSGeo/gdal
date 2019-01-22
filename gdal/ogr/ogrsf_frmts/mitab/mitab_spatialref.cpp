@@ -797,10 +797,6 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      *----------------------------------------------------------------*/
     switch( sTABProj.nProjId )
     {
-        /*--------------------------------------------------------------
-         * NonEarth ... we return with an empty SpatialRef.  Eventually
-         * we might want to include the units, but not for now.
-         *-------------------------------------------------------------*/
       case 0:
         poSpatialRef->SetLocalCS( "Nonearth" );
         break;
