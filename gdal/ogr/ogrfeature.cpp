@@ -4676,7 +4676,7 @@ void OGRFeature::SetField( int iField, const char * const * papszValues )
     else if( eType == OFTRealList )
     {
         const int nValues = CSLCount(papszValues);
-        double* padfValues = OGRFeature::SetField( const char* pszFName,  const char * const * papszValues )static_cast<double *>(
+        double* padfValues = static_cast<double *>(
             VSI_MALLOC_VERBOSE(nValues * sizeof(double)) );
         if( padfValues == nullptr )
             return;
