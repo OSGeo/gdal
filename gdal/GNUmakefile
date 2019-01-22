@@ -4,7 +4,6 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
-			$(GDAL_ROOT)/third_party/o/*.o \
 			$(GDAL_ROOT)/apps/commonutils.o \
 			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
 			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
@@ -20,6 +19,10 @@ GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
 
 ifeq ($(GNM_ENABLED),yes)
    GDAL_OBJ += $(GDAL_ROOT)/gnm/*.o $(GDAL_ROOT)/gnm/gnm_frmts/o/*.o
+endif
+
+ifeq ($(HAVE_LERC),yes)
+   GDAL_OBJ += $(GDAL_ROOT)/third_party/o/*.o
 endif
 
 include ./ogr/file.lst
