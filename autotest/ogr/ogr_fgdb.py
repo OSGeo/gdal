@@ -979,11 +979,11 @@ def ogr_fgdb_18_test_results():
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nodefault')).GetDefault() is None
     # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
     #    gdaltest.post_reason('fail')
-    #    return 'fail'
+    #    pytest.fail()
     # if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
     #    gdaltest.post_reason('fail')
     #    print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
-    #    return 'fail'
+    #    pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
@@ -2150,10 +2150,10 @@ def test_ogr_fgdb_25():
 # Test field alias read support using the FileGDB driver
 
 
-def ogr_fgdb_26():
+def test_ogr_fgdb_26():
     
     if  ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
     
     try:
         shutil.rmtree('tmp/aliasname.gdb')
@@ -2161,13 +2161,11 @@ def ogr_fgdb_26():
         pass
     gdaltest.unzip('tmp', 'data/aliasname.gdb.zip')
     if not os.path.exists('tmp/aliasname.gdb'):
-        gdaltest.post_reason('failure to unzip archive')
-        return 'fail'
+        pytest.fail()
 
     ds = ogrtest.fgdb_drv.Open('tmp/aliasname.gdb')
     if not ds:
-        gdaltest.post_reason('failure to open dataset')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test table
     table00 = ds.GetLayerByName('table00')
@@ -2176,14 +2174,12 @@ def ogr_fgdb_26():
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'textual label':
-        gdaltest.post_reason('table00:has_alias mismatch')
-        return 'fail'
+        pytest.fail()
     ## test: field 'no_alias' has no alias, the field name will be returned
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('no_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'no_alias':
-        gdaltest.post_reason('table00:no_alias mismatch')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test feature class
     featureclass00 = ds.GetLayerByName('featureclass00')
@@ -2191,13 +2187,11 @@ def ogr_fgdb_26():
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'textual label':
-        gdaltest.post_reason('featureclass00:has_alias mismatch')
-        return 'fail'
+        pytest.fail()
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('no_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'no_alias':
-        gdaltest.post_reason('featureclass00:no_alias mismatch')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test feature class within a feature dataset
     featureclass01 = ds.GetLayerByName('featureclass01')
@@ -2205,96 +2199,21 @@ def ogr_fgdb_26():
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'textual label':
-        gdaltest.post_reason('featureclass01:has_alias mismatch')
-        return 'fail'
+        pytest.fail()
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('no_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'no_alias':
-        gdaltest.post_reason('featureclass01:no_alias mismatch')
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
-###############################################################################
-<<<<<<< HEAD
-# Test field alias write support using the FileGDB driver
-=======
-# Test field alias read support using the FileGDB driver
-
-
-def ogr_fgdb_26():
-    
-    if  ogrtest.fgdb_drv is None:
-        return 'skip'
-    
-    try:
-        shutil.rmtree('tmp/aliasname.gdb')
-    except OSError:
-        pass
-    gdaltest.unzip('tmp', 'data/aliasname.gdb.zip')
-    if not os.path.exists('tmp/aliasname.gdb'):
-        gdaltest.post_reason('failure to unzip archive')
-        return 'fail'
-
-    ds = ogrtest.fgdb_drv.Open('tmp/aliasname.gdb')
-    if not ds:
-        gdaltest.post_reason('failure to open dataset')
-        return 'fail'
-
-    ## retrieve and test table
-    table00 = ds.GetLayerByName('table00')
-    layerDefn = table00.GetLayerDefn()
-    ## test: field 'has_alias' has an alias, 'textual label', which will be returned
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'textual label':
-        gdaltest.post_reason('table00:has_alias mismatch')
-        return 'fail'
-    ## test: field 'no_alias' has no alias, the field name will be returned
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('no_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'no_alias':
-        gdaltest.post_reason('table00:no_alias mismatch')
-        return 'fail'
-
-    ## retrieve and test feature class
-    featureclass00 = ds.GetLayerByName('featureclass00')
-    layerDefn = featureclass00.GetLayerDefn()
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'textual label':
-        gdaltest.post_reason('featureclass00:has_alias mismatch')
-        return 'fail'
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('no_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'no_alias':
-        gdaltest.post_reason('featureclass00:no_alias mismatch')
-        return 'fail'
-
-    ## retrieve and test feature class within a feature dataset
-    featureclass01 = ds.GetLayerByName('featureclass01')
-    layerDefn = featureclass01.GetLayerDefn()
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'textual label':
-        gdaltest.post_reason('featureclass01:has_alias mismatch')
-        return 'fail'
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('no_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'no_alias':
-        gdaltest.post_reason('featureclass01:no_alias mismatch')
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Test field alias write support using the FileGDB driver
 
 
-def ogr_fgdb_27():
+def test_ogr_fgdb_27():
     
     if ogrtest.fgdb_drv is None:
-        return 'skip'
+        pytest.skip()
 
     try:
         shutil.rmtree('tmp/aliasname.gdb')
@@ -2302,13 +2221,11 @@ def ogr_fgdb_27():
         pass
     gdaltest.unzip('tmp', 'data/aliasname.gdb.zip')
     if not os.path.exists('tmp/aliasname.gdb'):
-        gdaltest.post_reason('failure to unzip archive')
-        return 'fail'
+        pytest.fail()
 
     ds = ogrtest.fgdb_drv.Open('tmp/aliasname.gdb', 1) # enable update
     if not ds:
-        gdaltest.post_reason('failure to open dataset')
-        return 'fail'
+        pytest.fail()
     
     ## retrieve and test table
     table00 = ds.GetLayerByName('table00')
@@ -2318,8 +2235,7 @@ def ogr_fgdb_27():
     fieldDefn.SetAliasName('updated alias')
     alias = fieldDefn.GetAliasName()
     if not alias == 'updated alias':
-        gdaltest.post_reason('table00:has_alias update failed')
-        return 'fail'
+        pytest.fail()
     ## test: removing an alias name works in memory
     ## note: GetAliasName() returns the field name when no alias name is defined
     try:
@@ -2330,8 +2246,7 @@ def ogr_fgdb_27():
     fieldDefn.SetAliasName('')
     alias = fieldDefn.GetAliasName()
     if not alias == 'has_alias':
-        gdaltest.post_reason('table00:has_alias removal failed')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test feature class
     featureclass00 = ds.GetLayerByName('featureclass00')
@@ -2340,8 +2255,7 @@ def ogr_fgdb_27():
     fieldDefn.SetAliasName('updated alias')
     alias = fieldDefn.GetAliasName()
     if not alias == 'updated alias':
-        gdaltest.post_reason('featureclass00:has_alias update failed')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test feature class within a feature dataset
     featureclass01 = ds.GetLayerByName('featureclass01')
@@ -2350,8 +2264,7 @@ def ogr_fgdb_27():
     fieldDefn.SetAliasName('updated alias')
     alias = fieldDefn.GetAliasName()
     if not alias == 'updated alias':
-        gdaltest.post_reason('featureclass01:has_alias update failed')
-        return 'fail'
+        pytest.fail()
 
     ## create a new table
     table01 = ds.CreateLayer('table01', None, ogr.wkbNone)
@@ -2367,8 +2280,7 @@ def ogr_fgdb_27():
     ds = None
     ds = ogrtest.fgdb_drv.Open('tmp/aliasname.gdb')
     if not ds:
-        gdaltest.post_reason('failure to open dataset')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test table
     table00 = ds.GetLayerByName('table00')
@@ -2377,8 +2289,7 @@ def ogr_fgdb_27():
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'textual label':
-        gdaltest.post_reason('table00:has_alias mismatch')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test feature class
     featureclass00 = ds.GetLayerByName('featureclass00')
@@ -2386,8 +2297,7 @@ def ogr_fgdb_27():
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'textual label':
-        gdaltest.post_reason('featureclass00:has_alias mismatch')
-        return 'fail'
+        pytest.fail()
 
     ## retrieve and test feature class within a feature dataset
     featureclass01 = ds.GetLayerByName('featureclass01')
@@ -2395,8 +2305,7 @@ def ogr_fgdb_27():
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'textual label':
-        gdaltest.post_reason('featureclass01:has_alias mismatch')
-        return 'fail'
+        pytest.fail()
     
     ## retrieve and test added table
     table01 = ds.GetLayerByName('table01')
@@ -2404,133 +2313,8 @@ def ogr_fgdb_27():
     fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('new_field'))
     alias = fieldDefn.GetAliasName()
     if not alias == 'new field':
-        gdaltest.post_reason('table01:new_field mismatch')
-        return 'fail'
+        pytest.fail()
 
-    return 'success'
-
-###############################################################################
-# Cleanup
->>>>>>> f3129e7429... OGRFieldDefn and filegdb support for field alias names
-
-
-def ogr_fgdb_27():
-    
-    if ogrtest.fgdb_drv is None:
-        return 'skip'
-
-    try:
-        shutil.rmtree('tmp/aliasname.gdb')
-    except OSError:
-        pass
-    gdaltest.unzip('tmp', 'data/aliasname.gdb.zip')
-    if not os.path.exists('tmp/aliasname.gdb'):
-        gdaltest.post_reason('failure to unzip archive')
-        return 'fail'
-
-    ds = ogrtest.fgdb_drv.Open('tmp/aliasname.gdb', 1) # enable update
-    if not ds:
-        gdaltest.post_reason('failure to open dataset')
-        return 'fail'
-    
-    ## retrieve and test table
-    table00 = ds.GetLayerByName('table00')
-    layerDefn = table00.GetLayerDefn()
-    ## test: updating an alias name works in memory
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    fieldDefn.SetAliasName('updated alias')
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'updated alias':
-        gdaltest.post_reason('table00:has_alias update failed')
-        return 'fail'
-    ## test: removing an alias name works in memory
-    ## note: GetAliasName() returns the field name when no alias name is defined
-    try:
-        fieldDefn.SetAliasName(None)
-    except:
-        ## expected (passing 0 works in C/C++, but Python throws ValueError)
-        pass
-    fieldDefn.SetAliasName('')
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'has_alias':
-        gdaltest.post_reason('table00:has_alias removal failed')
-        return 'fail'
-
-    ## retrieve and test feature class
-    featureclass00 = ds.GetLayerByName('featureclass00')
-    layerDefn = featureclass00.GetLayerDefn()
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    fieldDefn.SetAliasName('updated alias')
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'updated alias':
-        gdaltest.post_reason('featureclass00:has_alias update failed')
-        return 'fail'
-
-    ## retrieve and test feature class within a feature dataset
-    featureclass01 = ds.GetLayerByName('featureclass01')
-    layerDefn = featureclass01.GetLayerDefn()
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    fieldDefn.SetAliasName('updated alias')
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'updated alias':
-        gdaltest.post_reason('featureclass01:has_alias update failed')
-        return 'fail'
-
-    ## create a new table
-    table01 = ds.CreateLayer('table01', None, ogr.wkbNone)
-    fieldDefn = ogr.FieldDefn('new_field', ogr.OFTInteger)
-    fieldDefn.SetAliasName('new field')
-    table01.CreateField(fieldDefn)
-    layerDefn = table01.GetLayerDefn()
-    feature = ogr.Feature(layerDefn)
-    feature.SetField(layerDefn.GetFieldIndex('new_field'), 1)
-    table01.CreateFeature(feature)
-
-    ## close and reopen
-    ds = None
-    ds = ogrtest.fgdb_drv.Open('tmp/aliasname.gdb')
-    if not ds:
-        gdaltest.post_reason('failure to open dataset')
-        return 'fail'
-
-    ## retrieve and test table
-    table00 = ds.GetLayerByName('table00')
-    layerDefn = table00.GetLayerDefn()
-    # test: driver does not support persistence
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'textual label':
-        gdaltest.post_reason('table00:has_alias mismatch')
-        return 'fail'
-
-    ## retrieve and test feature class
-    featureclass00 = ds.GetLayerByName('featureclass00')
-    layerDefn = featureclass00.GetLayerDefn()
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'textual label':
-        gdaltest.post_reason('featureclass00:has_alias mismatch')
-        return 'fail'
-
-    ## retrieve and test feature class within a feature dataset
-    featureclass01 = ds.GetLayerByName('featureclass01')
-    layerDefn = featureclass01.GetLayerDefn()
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('has_alias'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'textual label':
-        gdaltest.post_reason('featureclass01:has_alias mismatch')
-        return 'fail'
-    
-    ## retrieve and test added table
-    table01 = ds.GetLayerByName('table01')
-    layerDefn = table01.GetLayerDefn()
-    fieldDefn = layerDefn.GetFieldDefn(layerDefn.GetFieldIndex('new_field'))
-    alias = fieldDefn.GetAliasName()
-    if not alias == 'new field':
-        gdaltest.post_reason('table01:new_field mismatch')
-        return 'fail'
-
-    return 'success'
 
 ###############################################################################
 # Cleanup
