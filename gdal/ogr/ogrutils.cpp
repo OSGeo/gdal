@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "ogr_p.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
