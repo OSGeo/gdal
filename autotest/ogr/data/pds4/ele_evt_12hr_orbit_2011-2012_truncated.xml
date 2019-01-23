@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1700.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 http://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1700.xsd">
+  <Identification_Area>
+    <logical_identifier>urn:nasa:pds:izenberg_pdart14_meap:data_eetable:ele_evt_12hr_orbit_2011-2012</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>Mercury Energetic Electrons Events Table</title>
+    <information_model_version>1.7.0.0</information_model_version>
+    <product_class>Product_Observational</product_class>
+    <Modification_History>
+      <Modification_Detail>
+        <modification_date>2017-02-09</modification_date>
+        <version_id>1.0</version_id>
+        <description>Izenberg PDART 2014 MEAP Energetic Electron Events Table. 12 hr orbit 2011-2012.</description>
+      </Modification_Detail>
+    </Modification_History>
+  </Identification_Area>
+  <Observation_Area>
+    <Time_Coordinates>
+      <start_date_time>2011-03-25Z</start_date_time>
+      <stop_date_time>2012-04-15Z</stop_date_time>
+    </Time_Coordinates>
+    <Primary_Result_Summary>
+      <purpose>Science</purpose>
+      <processing_level>Derived</processing_level>
+      <description>Data from the MESSENGER Neutron Spectrometer (NS) have been used to detect
+              and characterize energetic electron (EE) events within Mercury's magnetosphere.</description>
+    </Primary_Result_Summary>
+    <Investigation_Area>
+      <name>MESSENGER</name>
+      <type>Mission</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:investigation:mission.messenger</lid_reference>
+        <reference_type>data_to_investigation</reference_type>
+      </Internal_Reference>
+    </Investigation_Area>
+    <Observing_System>
+      <name>MESSENGER NS</name>
+      <Observing_System_Component>
+        <name>MESSENGER</name>
+        <type>Spacecraft</type>
+        <Internal_Reference>
+          <lid_reference>urn:nasa:pds:context:instrument_host:spacecraft.mess</lid_reference>
+          <reference_type>is_instrument_host</reference_type>
+        </Internal_Reference>
+      </Observing_System_Component>
+      <Observing_System_Component>
+        <name>NS</name>
+        <type>Instrument</type>
+        <Internal_Reference>
+          <lid_reference>urn:nasa:pds:context:instrument:ns.mess</lid_reference>
+          <reference_type>is_instrument</reference_type>
+        </Internal_Reference>
+      </Observing_System_Component>
+    </Observing_System>
+    <Target_Identification>
+      <name>Mercury</name>
+      <type>Planet</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:target:planet.mercury</lid_reference>
+        <reference_type>collection_to_target</reference_type>
+      </Internal_Reference>
+    </Target_Identification>
+  </Observation_Area>
+  <Reference_List>
+    <External_Reference>
+      <doi>10.1126/science.1211141</doi>
+      <reference_text>Ho et al., 2011, MESSENGER observations of transient bursts of 
+               energetic electrons in Mercury's magnetosphere, Science, 333, 1865-8.
+            </reference_text>
+    </External_Reference>
+  </Reference_List>
+  <File_Area_Observational>
+    <File>
+      <file_name>ele_evt_12hr_orbit_2011-2012_truncated.tab</file_name>
+      <creation_date_time>2017-02-09T12:44:00Z</creation_date_time>
+      <file_size unit="byte">2124</file_size>
+    </File>
+    <Header>
+      <offset unit="byte">0</offset>
+      <object_length unit="byte">354</object_length>
+      <parsing_standard_id>7-Bit ASCII Text</parsing_standard_id>
+      <description>The first row of the table contains column headings.</description>
+    </Header>
+    <Table_Character>
+      <name>Energetic Electron events, 12 hour orbit, 2011-2012</name>
+      <offset unit="byte">354</offset>
+      <records>5</records>
+      <record_delimiter>Carriage-Return Line-Feed</record_delimiter>
+      <Record_Character>
+        <fields>22</fields>
+        <groups>0</groups>
+        <record_length unit="byte">354</record_length>
+        <Field_Character>
+          <name>Event Number</name>
+          <field_number>1</field_number>
+          <field_location unit="byte">1</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>EE event number. The value is repeated for 'Event 
+                      Length' rows in the file.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Event Length</name>
+          <field_number>2</field_number>
+          <field_location unit="byte">17</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Number of 20-second accumulations.  The value is repeated 
+                      for 'Event Length' rows in the file.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Day of Year</name>
+          <field_number>3</field_number>
+          <field_location unit="byte">33</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Day of year on which the 20-second accumulation 
+                      occurs.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Month</name>
+          <field_number>4</field_number>
+          <field_location unit="byte">49</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Month in which the 20-second accumulation 
+                      occurs.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Day</name>
+          <field_number>5</field_number>
+          <field_location unit="byte">65</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Day in the month in which the 20-second 
+                      accumulation occurs.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Year</name>
+          <field_number>6</field_number>
+          <field_location unit="byte">81</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Year in which the 20-second accumulation 
+                      occurs.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Hour</name>
+          <field_number>7</field_number>
+          <field_location unit="byte">97</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Hour within the day in which the 20-second 
+                      accumulation occurs.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Minute</name>
+          <field_number>8</field_number>
+          <field_location unit="byte">113</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Minute within the hour in which the 20-second 
+                      accumulation occurs.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Second</name>
+          <field_number>9</field_number>
+          <field_location unit="byte">129</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Second within the minute in which the 
+                      20-second accumulation occurs.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>MET</name>
+          <field_number>10</field_number>
+          <field_location unit="byte">145</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>s</unit>
+          <description>Mission elapsed time, and is the mission tag 
+                      time in seconds of the start of the associated 
+                      accumulated period.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Orbit Number</name>
+          <field_number>11</field_number>
+          <field_location unit="byte">161</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Unique identifier for a given orbit of 
+                      MESSENGER around Mercury. Orbit number is defined as 
+                      starting at apoherm and is calculated using the MET 
+                      value and the appropriate SPICE kernels. Orbit 
+                      numbering does not start until MESSENGER performs the 
+                      Mercury orbit insertion. Until that time the value for 
+                      orbit number is 0.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Altitude</name>
+          <field_number>12</field_number>
+          <field_location unit="byte">177</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>km</unit>
+          <description>Spacecraft altitude above the subsatellite 
+                      point on the target in units of km.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Latitude</name>
+          <field_number>13</field_number>
+          <field_location unit="byte">193</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>deg</unit>
+          <description>Target-centric latitude of the spacecraft 
+                      subsatellite point in degrees.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Longitude</name>
+          <field_number>14</field_number>
+          <field_location unit="byte">209</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>deg</unit>
+          <description>Target-centric longitude of the spacecraft 
+                      subsatellite point in degrees.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Local Time</name>
+          <field_number>15</field_number>
+          <field_location unit="byte">225</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>hr</unit>
+          <description>Local time of the spacecraft subsatellite 
+                      point in hours from 0 to 24.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Beta Angle</name>
+          <field_number>16</field_number>
+          <field_location unit="byte">241</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>deg</unit>
+          <description>Angle of the normal of the spacecraft 
+                      orbital plane with respect to Mercury-to-Sun vector 
+                      in degrees.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Sun Distance</name>
+          <field_number>17</field_number>
+          <field_location unit="byte">257</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>km</unit>
+          <description>Distance of the spacecraft to the Sun in 
+                      units of km.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Periapsis Latitude</name>
+          <field_number>18</field_number>
+          <field_location unit="byte">273</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>deg</unit>
+          <description>Target-centric latitude of the spacecraft 
+                      when it is at the periapsis (lowest) altitude for the 
+                      given orbit number.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>Event Length Minute</name>
+          <field_number>19</field_number>
+          <field_location unit="byte">289</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>min</unit>
+          <description>Length of the EE event in minutes. The 
+                      value is repeated for 'Event Length' rows in the file.
+                      </description>
+        </Field_Character>
+        <Field_Character>
+          <name>SN</name>
+          <field_number>20</field_number>
+          <field_location unit="byte">305</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <unit>none</unit>
+          <description>Event signal-to-noise, and is the measure 
+                      of the size of the event within each 20-second 
+                      accumulation.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>BP_TOT</name>
+          <field_number>21</field_number>
+          <field_location unit="byte">321</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Total counts within the Borated Plastic 
+                      sensor, 64-channel, 20-s spectral accumulation.</description>
+        </Field_Character>
+        <Field_Character>
+          <name>BP_LOW</name>
+          <field_number>22</field_number>
+          <field_location unit="byte">337</field_location>
+          <data_type>ASCII_Real</data_type>
+          <field_length unit="byte">16</field_length>
+          <description>Total counts within the lowest 12 channels 
+                      of the Borated Plastic sensor, 64-channel, 20-s spectral 
+                      accumulation.</description>
+          <Special_Constants>
+              <!-- added for testing purpose -->
+            <missing_constant>-9.99</missing_constant>
+          </Special_Constants>
+        </Field_Character>
+      </Record_Character>
+    </Table_Character>
+  </File_Area_Observational>
+</Product_Observational>

@@ -33,6 +33,7 @@
 
 #include "cpl_error.h"
 #include "cpl_minixml.h"
+#include "cpl_string.h"
 #include "ogrlayerpool.h"
 #include "ogrsf_frmts.h"
 
@@ -287,5 +288,6 @@ class OGRVRTDataSource final: public OGRDataSource
 };
 
 OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError);
+CPLString OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType);
 
 #endif  // ndef OGR_VRT_H_INCLUDED
