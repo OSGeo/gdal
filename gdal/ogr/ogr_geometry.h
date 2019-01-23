@@ -71,7 +71,8 @@ public:
     bool round;
     OGRWktFormat format;
 
-    OGRWktOptions() : variant(wkbVariantOldOgc), format(OGRWktFormat::Default)
+    OGRWktOptions() : variant(wkbVariantOldOgc), precision(15), round(true),
+        format(OGRWktFormat::Default)
     {
         static int defPrecision = getDefaultPrecision();
         static bool defRound = getDefaultRound();
