@@ -102,7 +102,7 @@ namespace NGWAPI {
     bool UpdateFeature(const std::string &osUrl, const std::string &osResourceId,
         const std::string &osFeatureId, const std::string &osFeatureJson,
         char **papszHTTPOptions);
-    bool PatchFeatures(const std::string &osUrl, const std::string &osResourceId,
+    std::vector<GIntBig> PatchFeatures(const std::string &osUrl, const std::string &osResourceId,
         const std::string &osFeaturesJson, char **papszHTTPOptions);
     bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
         char **papszHTTPOptions, int nEPSG, OGREnvelope &stExtent);
@@ -196,7 +196,6 @@ private:
     void FetchPermissions();
     void FreeFeaturesCache( bool bForce = false );
     std::string CreateNGWResourceJson();
-    std::string FeaturesToJson();
     OGRErr SyncFeatures();
     GIntBig GetMaxFeatureCount( bool bForce );
     bool FillFeatures(const std::string &osUrl);

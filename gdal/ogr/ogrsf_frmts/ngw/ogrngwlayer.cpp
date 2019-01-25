@@ -1145,19 +1145,53 @@ OGRErr OGRNGWLayer::SyncFeatures()
     {
         return OGRERR_NONE;
     }
-    bool bResult = NGWAPI::PatchFeatures( poDS->GetUrl(), osResourceId,
-        FeaturesToJson(), poDS->GetHeaders() );
-    if( bResult )
+
+    CPLJSONArray oFeatureJsonArray;
+    std::vector<GIntBig> aoPatchedFIDs;
+    for(GIntBig nFID : soChangedIds)
     {
-        bNeedSyncData = false;
-        nFeatureCount += GetNewFeaturesCount();
-        soChangedIds.clear();
-        FreeMap(moFeatures); // While patching we cannot receive new features FIDs.
+        if( moFeatures[nFID] != nullptr )
+        {
+            oFeatureJsonArray.Add( FeatureToJson( moFeatures[nFID] ) );
+            aoPatchedFIDs.push_back(nFID);
+        }
     }
-    else
+
+    if( !aoPatchedFIDs.empty() )
     {
-        // Error message should set in NGWAPI::PatchFeatures function.
-        return OGRERR_FAILURE;
+        auto osIDs = NGWAPI::PatchFeatures( poDS->GetUrl(), osResourceId,
+            oFeatureJsonArray.Format(CPLJSONObject::Plain), poDS->GetHeaders() );
+        if( !osIDs.empty() )
+        {
+            bNeedSyncData = false;
+            nFeatureCount += GetNewFeaturesCount();
+            soChangedIds.clear();
+            if( osIDs.size() != aoPatchedFIDs.size() ) // Expected equal identifier count.
+            {
+                CPLDebug("ngw", "Patched feature count is not equal. Reload features from server.");
+                FreeMap(moFeatures);
+            }
+            else // Just update identifiers.
+            {
+                int nCounter = 0;
+                for(GIntBig nFID : aoPatchedFIDs)
+                {
+                    GIntBig nNewFID = osIDs[nCounter++];
+                    OGRFeature *poFeature = moFeatures[nFID];
+                    poFeature->SetFID(nNewFID);
+                    moFeatures.erase(nFID);
+                    moFeatures[nNewFID] = poFeature;
+                }
+            }
+        }
+        else
+        {
+            // Error message should set in NGWAPI::PatchFeatures function.
+            if( CPLGetLastErrorNo() != 0 )
+            {
+                return OGRERR_FAILURE;
+            }
+        }
     }
     return OGRERR_NONE;
 }
@@ -1273,22 +1307,6 @@ bool OGRNGWLayer::DeleteAllFeatures()
     CPLError(CE_Failure, CPLE_AppDefined,
         "Delete all features operation is not permitted.");
     return false;
-}
-
-/*
- * FeaturesToJson()
- */
-std::string OGRNGWLayer::FeaturesToJson()
-{
-    CPLJSONArray oFeatureJsonArray;
-    for(GIntBig nFID : soChangedIds)
-    {
-        if( moFeatures[nFID] != nullptr )
-        {
-            oFeatureJsonArray.Add( FeatureToJson( moFeatures[nFID] ) );
-        }
-    }
-    return oFeatureJsonArray.Format(CPLJSONObject::Plain);
 }
 
 /*
