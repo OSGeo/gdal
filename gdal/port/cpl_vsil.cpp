@@ -2320,8 +2320,7 @@ const char* VSIGetFileSystemOptions( const char* pszFilename )
 ** Notes on Multithreading:
 **
 ** The VSIFileManager maintains a list of file type handlers (mem, large
-** file, etc).  It should be thread safe as long as all the handlers are
-** instantiated before multiple threads begin to operate.
+** file, etc).  It should be thread safe.
 **/
 
 /************************************************************************/
@@ -2362,79 +2361,44 @@ static VSIFileManager *poManager = nullptr;
 static CPLMutex* hVSIFileManagerMutex = nullptr;
 
 VSIFileManager *VSIFileManager::Get()
-
 {
-    static volatile GPtrDiff_t nConstructerPID = 0;
-    if( poManager != nullptr )
-    {
-        if( nConstructerPID != 0 )
-        {
-            GPtrDiff_t nCurrentPID = static_cast<GPtrDiff_t>(CPLGetPID());
-            if( nConstructerPID != nCurrentPID )
-            {
-                {
-                    CPLMutexHolder oHolder( &hVSIFileManagerMutex );
-                }
-                // This construct to avoid a lock is highly questionable
-                // and could probably fail with out-of-order CPU execution
-                // so the cppcheck warning is probably quite relevant.
-                // cppcheck-suppress identicalInnerCondition
-                if( nConstructerPID != 0 )
-                {
-                    VSIDebug1( "nConstructerPID != 0: %d", nConstructerPID);
-                    assert(false);
-                }
-            }
-        }
+      CPLMutexHolder oHolder(&hVSIFileManagerMutex);
+      if ( poManager != nullptr ) {
         return poManager;
-    }
+      }
 
-    CPLMutexHolder oHolder2( &hVSIFileManagerMutex );
-    if( poManager == nullptr )
-    {
-        nConstructerPID = static_cast<GPtrDiff_t>(CPLGetPID());
-#ifdef DEBUG_VERBOSE
-        printf("Thread " CPL_FRMT_GIB": VSIFileManager in construction\n",  // ok
-               static_cast<GIntBig>(nConstructerPID));
-#endif
-        poManager = new VSIFileManager;
-        VSIInstallLargeFileHandler();
-        VSIInstallSubFileHandler();
-        VSIInstallMemFileHandler();
+      poManager = new VSIFileManager;
+      VSIInstallLargeFileHandler();
+      VSIInstallSubFileHandler();
+      VSIInstallMemFileHandler();
 #ifdef HAVE_LIBZ
-        VSIInstallGZipFileHandler();
-        VSIInstallZipFileHandler();
+      VSIInstallGZipFileHandler();
+      VSIInstallZipFileHandler();
 #endif
 #ifdef HAVE_CURL
-        VSIInstallCurlFileHandler();
-        VSIInstallCurlStreamingFileHandler();
-        VSIInstallS3FileHandler();
-        VSIInstallS3StreamingFileHandler();
-        VSIInstallGSFileHandler();
-        VSIInstallGSStreamingFileHandler();
-        VSIInstallAzureFileHandler();
-        VSIInstallAzureStreamingFileHandler();
-        VSIInstallOSSFileHandler();
-        VSIInstallOSSStreamingFileHandler();
-        VSIInstallSwiftFileHandler();
-        VSIInstallSwiftStreamingFileHandler();
-        VSIInstallWebHdfsHandler();
+      VSIInstallCurlFileHandler();
+      VSIInstallCurlStreamingFileHandler();
+      VSIInstallS3FileHandler();
+      VSIInstallS3StreamingFileHandler();
+      VSIInstallGSFileHandler();
+      VSIInstallGSStreamingFileHandler();
+      VSIInstallAzureFileHandler();
+      VSIInstallAzureStreamingFileHandler();
+      VSIInstallOSSFileHandler();
+      VSIInstallOSSStreamingFileHandler();
+      VSIInstallSwiftFileHandler();
+      VSIInstallSwiftStreamingFileHandler();
+      VSIInstallWebHdfsHandler();
 #endif
-        VSIInstallStdinHandler();
-        VSIInstallHdfsHandler();
-        VSIInstallStdoutHandler();
-        VSIInstallSparseFileHandler();
-        VSIInstallTarFileHandler();
-        VSIInstallCryptFileHandler();
+      VSIInstallStdinHandler();
+      VSIInstallHdfsHandler();
+      VSIInstallStdoutHandler();
+      VSIInstallSparseFileHandler();
+      VSIInstallTarFileHandler();
+      VSIInstallCryptFileHandler();
 
-#ifdef DEBUG_VERBOSE
-        printf("Thread " CPL_FRMT_GIB": VSIFileManager construction finished\n",  // ok
-               static_cast<GIntBig>(nConstructerPID));
-#endif
-        nConstructerPID = 0;
-    }
+      return poManager;
 
-    return poManager;
 }
 
 /************************************************************************/
