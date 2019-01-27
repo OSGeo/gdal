@@ -1068,7 +1068,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         {
             nPixelOffset = nItemSize;
             nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nBandOffset) * CPLSM(nCols)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nBandOffset) * CPLSM(l_nBands)).v();
         }
     }
     catch( const CPLSafeIntOverflow& )
