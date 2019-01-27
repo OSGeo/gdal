@@ -83,6 +83,8 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                                     CPLODBCStatement *poStmtIn )
 
 {
+    bool bShowFidColumn = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_SHOW_FID_COLUMN", "NO"));
+
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     nRawColumns = poStmtIn->GetColCount();
 
@@ -170,7 +172,9 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                         bIsIdentityFid = TRUE;
 
                     nFIDColumnIndex = iCol;
-                    continue;
+
+                    if (!bShowFidColumn)
+                        continue;
                 }
             }
         }
@@ -181,7 +185,9 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 pszFIDColumn = CPLStrdup( poStmtIn->GetColName(iCol) );
                 bIsIdentityFid = TRUE;
                 nFIDColumnIndex = iCol;
-                continue;
+
+                if (!bShowFidColumn)
+                    continue;
             }
             else if (EQUAL(poStmtIn->GetColTypeName( iCol ), "bigint identity"))
             {
@@ -189,7 +195,9 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 bIsIdentityFid = TRUE;
                 SetMetadataItem(OLMD_FID64, "YES");
                 nFIDColumnIndex = iCol;
-                continue;
+
+                if (!bShowFidColumn)
+                    continue;
             }
         }
 
