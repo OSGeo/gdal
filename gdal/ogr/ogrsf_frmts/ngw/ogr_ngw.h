@@ -228,6 +228,9 @@ class OGRNGWDataset final : public GDALDataset
     int nRasters;
     int nCacheExpires, nCacheMaxSize;
 
+    // json
+    std::string osJsonDepth;
+
 public:
     OGRNGWDataset();
     virtual ~OGRNGWDataset();

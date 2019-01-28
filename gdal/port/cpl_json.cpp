@@ -336,7 +336,7 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, char ** /*papszOpti
 #endif // HAVE_CURL
 {
 #ifdef HAVE_CURL
-    int nDepth = atoi( CSLFetchNameValueDef( papszOptions, "JSON_DEPTH", "10") );
+    int nDepth = atoi( CSLFetchNameValueDef( papszOptions, "JSON_DEPTH", "32") ); // Same as JSON_TOKENER_DEFAULT_DEPTH
     JsonContext ctx = { nullptr, json_tokener_new_ex(nDepth), 0 };
 
     CPLHTTPFetchWriteFunc pWriteFunc = CPLJSONWriteFunction;

@@ -90,6 +90,8 @@ The following configuration options are available:
     <li><b>NGW_CACHE_MAX_SIZE</b>: The cache maximum size in bytes. If cache
         reached maximum size, expired cached files will be deleted. Defaults
         to 67108864 (64Mb).
+    <li><b>NGW_JSON_DEPTH</b>: The depth of json response that can be parsed. If
+        depth is greater than this value, parse error occurs.
 </ul>
 
 <h2>Authentication</h2>
@@ -101,6 +103,28 @@ and password in open, create or configuration options.
 <h2>Open options</h2>
 
 The following open options are available:
+
+<ul>
+    <li>USERPWD - Username and password, separated by colon.
+    <li>CACHE_EXPIRES=604800 - Time in seconds cached files will stay valid. If
+        cached file expires it is deleted when maximum size of cache is reached.
+        Also expired file can be overwritten by the new one from web. Defaults
+        to 604800 (7 days).
+    <li>CACHE_MAX_SIZE=67108864 - The cache maximum size in bytes. If cache
+        reached maximum size, expired cached files will be deleted. Defaults
+        to 67108864 (64Mb).
+    <li>JSON_DEPTH=32 - The depth of json response that can be parsed. If
+        depth is greater than this value, parse error occurs.
+</ul>
+
+<h2>Create copy options</h2>
+
+NextGIS Web supported only GeoTIFF with 3 (RGB) or 4 (RGBA) bangs with datatype
+Byte. In CreateCopy function if source dataset has GeoTiff file format it will
+copy as is. For other formats the addtional transformation to temporary GeoTiff
+file will be executed.
+<p>
+The following copy options are available:
 
 <ul>
     <li>KEY - Key value. Must be unique in whole NextGIS Web instance. Optional.
@@ -115,26 +139,8 @@ The following open options are available:
     <li>CACHE_MAX_SIZE=67108864 - The cache maximum size in bytes. If cache
         reached maximum size, expired cached files will be deleted. Defaults
         to 67108864 (64Mb).
-</ul>
-
-<h2>Create copy options</h2>
-
-NextGIS Web supported only GeoTIFF with 3 (RGB) or 4 (RGBA) bangs with datatype
-Byte. In CreateCopy function if source dataset has GeoTiff file format it will
-copy as is. For other formats the addtional transformation to temporary GeoTiff
-file will be executed.
-<p>
-The following copy options are available:
-
-<ul>
-    <li>USERPWD - Username and password, separated by colon.
-    <li>CACHE_EXPIRES=604800 - Time in seconds cached files will stay valid. If
-        cached file expires it is deleted when maximum size of cache is reached.
-        Also expired file can be overwritten by the new one from web. Defaults
-        to 604800 (7 days).
-    <li>CACHE_MAX_SIZE=67108864 - The cache maximum size in bytes. If cache
-        reached maximum size, expired cached files will be deleted. Defaults
-        to 67108864 (64Mb).
+    <li>JSON_DEPTH=32 - The depth of json response that can be parsed. If
+        depth is greater than this value, parse error occurs.
 </ul>
 
 <h2>Metadata</h2>

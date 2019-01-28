@@ -74,6 +74,8 @@ The following configuration options are available:
         supported by server.
     <li><b>NGW_NATIVE_DATA</b>: Whether to store the json <i>extensions</i> key
         in feature native data.
+    <li><b>NGW_JSON_DEPTH</b>: The depth of json response that can be parsed. If
+        depth is greater than this value, parse error occurs.
 </ul>
 
 <h2>Authentication</h2>
@@ -152,6 +154,8 @@ The following open options are available:
         is -1.
     <li>NATIVE_DATA=NO - Whether to store the json <i>extensions</i> key in
         feature native data. Default value is NO.
+    <li>JSON_DEPTH=32 - The depth of json response that can be parsed. If
+        depth is greater than this value, parse error occurs.
 </ul>
 
 <h2>Dataset creation options</h2>
@@ -169,6 +173,8 @@ The following dataset/datasource creation options are available:
         is -1.
     <li>NATIVE_DATA=NO - Whether to store the json <i>extensions</i> key in
         feature native data. Default value is NO.
+    <li>JSON_DEPTH=32 - The depth of json response that can be parsed. If
+        depth is greater than this value, parse error occurs.
 </ul>
 
 <h2>Layer creation options</h2>

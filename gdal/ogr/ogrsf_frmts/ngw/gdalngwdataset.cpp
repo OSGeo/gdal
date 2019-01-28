@@ -65,7 +65,8 @@ OGRNGWDataset::OGRNGWDataset() :
     poRasterDS(nullptr),
     nRasters(0),
     nCacheExpires(604800),  // 7 days
-    nCacheMaxSize(67108864) // 64 MB
+    nCacheMaxSize(67108864),// 64 MB
+    osJsonDepth("32")
 {}
 
 /*
@@ -197,6 +198,9 @@ bool OGRNGWDataset::Open( const std::string &osUrlIn,
 
     bExtInNativeData = CPLFetchBool( papszOpenOptionsIn, "NATIVE_DATA",
         CPLTestBool( CPLGetConfigOption("NGW_NATIVE_DATA", "NO") ) );
+
+    osJsonDepth = CSLFetchNameValueDef( papszOpenOptionsIn, "JSON_DEPTH",
+        CPLGetConfigOption("NGW_JSON_DEPTH", "32"));
 
     return Init( nOpenFlagsIn );
 }
@@ -790,6 +794,7 @@ char **OGRNGWDataset::GetHeaders() const
 {
     char **papszOptions = nullptr;
     papszOptions = CSLAddString(papszOptions, "HEADERS=Accept: */*");
+    papszOptions = CSLAddNameValue(papszOptions, "JSON_DEPTH", osJsonDepth.c_str());
     if( !osUserPwd.empty() )
     {
         papszOptions = CSLAddString(papszOptions, "HTTPAUTH=BASIC");
