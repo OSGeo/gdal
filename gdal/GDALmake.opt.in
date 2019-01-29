@@ -401,11 +401,6 @@ LIBXML2_INC = @LIBXML2_INC@
 LIBXML2_LIB = @LIBXML2_LIB@
 
 #
-# CAD Support
-#
-HAVE_CAD	=	yes
-
-#
 # Informix DataBlade support
 #
 HAVE_IDB	= @HAVE_IDB@
@@ -577,30 +572,12 @@ HAVE_OPENSSL_CRYPTO    =       @HAVE_OPENSSL_CRYPTO@
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GTiff().
 #
-GDAL_FORMATS :=
-GDAL_FORMATS += gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm
-GDAL_FORMATS += sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b
-GDAL_FORMATS += nitf bmp airsar rs2 ilwis rmf leveller sgi srtmhgt
-GDAL_FORMATS += idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg
-GDAL_FORMATS += coasp tsx terragen blx msgn til r northwood saga xyz hf2
-GDAL_FORMATS += kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals
-GDAL_FORMATS += safe sentinel2 derived
-GDAL_FORMATS += prf
-GDAL_FORMATS += sigdem
-GDAL_FORMATS += ignfheightasciigrid
-GDAL_FORMATS += @OPT_GDAL_FORMATS@
+GDAL_FORMATS := derived gtiff hfa mem raw vrt @GDALFORMATS_ENABLED@ @OPT_GDAL_FORMATS@
+OGR_FORMATS := @OGRFORMATS_ENABLED@
+OGR_FORMATS_ENABLED_CFLAGS := @OGRFORMATS_ENABLED_CFLAGS@
 
 ifneq ($(PCIDSK_SETTING),no)
 GDAL_FORMATS += pcidsk
-endif
-
-ifneq ($(LIBZ_SETTING),no)
-GDAL_FORMATS := $(GDAL_FORMATS) rik ozi
-
-ifneq ($(PDF_PLUGIN),yes)
-GDAL_FORMATS := $(GDAL_FORMATS) pdf
-endif
-
 endif
 
 ifeq ($(HAVE_SQLITE),yes)
@@ -615,7 +592,6 @@ ifeq ($(HAVE_CHARLS),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) jpegls
 endif
 
-GDAL_FORMATS := $(GDAL_FORMATS) arg
 
 #
 # CONFIG_LIBS is what local program should link against, and CONFIG_LIBS_INS

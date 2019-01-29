@@ -1347,6 +1347,124 @@ fi
 
 AC_SUBST(ZSTD_SETTING,$ZSTD_SETTING)
 
+GDALFORMATS_ENABLED=
+GDALFORMATS_DISABLED=
+OGRFORMATS_ENABLED=
+OGRFORMATS_ENABLED_CFLAGS=
+OGRFORMATS_DISABLED=
+
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map msgn ngsgeoid nitf northwood pds prf r rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen til tsx usgsdem xpm xyz zmap])
+AC_DEFUN([INTERNAL_OPT_FORMATS],[eeda plmosaic ozi pdf rda rik wcs wms wmts])
+AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo geoconcept georss gml gmt gpsbabel gpx gtm htf jml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
+AC_DEFUN([INTERNAL_CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic gft ngw plscenes wfs])dnl
+
+AC_ARG_ENABLE(all-optional-drivers, AS_HELP_STRING([--disable-all-optional-drivers], [disable all non-mandatory internal drivers. Individual drivers can be added with --enable-driver-XXX]))
+if test "x$enable_all_optional_drivers" = "xno"; then :
+  all_drivers_disabled=yes
+else
+  all_drivers_disabled=no
+fi
+
+m4_define([ARG_DRIVER_ENABLED],[dnl
+cur_driver_enabled=yes
+requested=m4_join([_],[$enable_driver],$1)
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+])
+
+
+
+m4_foreach_w([frmt], INTERNAL_FORMATS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],INTERNAL_OPT_FORMATS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt format support (enabled by default, requires dependency)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_define([_OGRDEFINE],[m4_join([],[-D],m4_toupper([$1]),[_ENABLED])])
+
+m4_foreach_w([frmt],INTERNAL_DRIVERS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+AC_DEFUN([INTERNAL_DRIVERS_WITH_SAME_NAME_AS_FORMAT],[idrisi pds sdts])dnl
+m4_foreach_w([frmt],INTERNAL_DRIVERS_WITH_SAME_NAME_AS_FORMAT,
+[
+driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+if test "x$driver_enabled" != "xno"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+fi
+])
+
+m4_foreach_w([frmt],INTERNAL_CURL_DRIVERS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires curl)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+AC_SUBST(OGRFORMATS_ENABLED,$OGRFORMATS_ENABLED)
+AC_SUBST(OGRFORMATS_ENABLED_CFLAGS,$OGRFORMATS_ENABLED_CFLAGS)
+AC_SUBST(GDALFORMATS_ENABLED,$GDALFORMATS_ENABLED)
+
+if test "$LIBZ_SETTING" != "no" ; then
+  if test "x$INTERNAL_FORMAT_rik_ENABLED" = "xyes"; then
+      GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rik"
+  fi 
+  if test "x$INTERNAL_FORMAT_ozi_ENABLED" = "xyes"; then
+      GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ozi"
+  fi 
+fi
+
+
+
 dnl ---------------------------------------------------------------------------
 dnl Select an PostgreSQL Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -3838,7 +3956,20 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  OPT_GDAL_FORMATS="wcs wms plmosaic wmts rda eeda $OPT_GDAL_FORMATS"
+AC_DEFUN([INTERNAL_CURL_FORMATS],[eeda plmosaic rda wcs wms wmts])dnl
+m4_foreach_w([frmt],INTERNAL_CURL_FORMATS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  fi 
+])
+m4_foreach_w([frmt],INTERNAL_CURL_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi 
+])
 
 fi
 
@@ -4636,6 +4767,13 @@ else
 fi
 
 AC_SUBST(PDF_PLUGIN, $PDF_PLUGIN)
+if test "$PDF_PLUGIN" != "yes" ; then
+  if test "x$INTERNAL_FORMAT_pdf_ENABLED" = "xyes"; then
+    if test "$LIBZ_SETTING" != "no" ; then
+      GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED pdf"
+    fi
+  fi 
+fi
 
 
 dnl ---------------------------------------------------------------------------
@@ -5802,6 +5940,10 @@ LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
+LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
+LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])
+LOC_MSG([  misc. ogr formats:        ${OGRFORMATS_ENABLED}])
+LOC_MSG([  disabled ogr formats:     ${OGRFORMATS_DISABLED}])
 
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
