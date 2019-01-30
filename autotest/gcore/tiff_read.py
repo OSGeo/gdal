@@ -3119,7 +3119,11 @@ def test_tiff_read_overview_of_external_mask():
     assert flags1 == gdal.GMF_PER_DATASET
 
 ###############################################################################
+# Test reading GeoTIFF file ModelTiepointTag(z) != 0 and ModelPixelScaleTag(z) = 0
+# Test https://issues.qgis.org/issues/20493
 
+def test_tiff_read_ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero():
 
-
-
+    ds = gdal.Open('data/ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero.tif')
+    assert ds.GetRasterBand(1).GetScale() == 1
+    assert ds.GetRasterBand(1).GetOffset() == 0
