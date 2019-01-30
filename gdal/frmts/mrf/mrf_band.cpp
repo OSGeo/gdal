@@ -860,7 +860,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     ILSize req(xblk, yblk, 0, (nBand-1)/cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
-    CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level  %d, stride %d\n", xblk, yblk,
+    CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level %d, stride %d\n", xblk, yblk,
         nBand, m_l, cstride);
 
     // Finish the Create call
