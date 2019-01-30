@@ -224,8 +224,13 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                 // One more try to get cached block. For example if no web access
                 // available
                 CPLDebug("WMS", "ReadBlockFromCache");
-                ret = ReadBlockFromCache(request.URL, request.x,
-                                         request.y, nBand, p, advise_read);
+
+                if (m_parent_dataset->m_cache != nullptr)
+                    ret = ReadBlockFromCache(request.URL, request.x,
+                        request.y, nBand, p, advise_read);
+                else
+                    ret = CE_Failure;
+
                 if( ret != CE_None )
                 {
                     CPLDebug("WMS", "After ReadBlockFromCache");
