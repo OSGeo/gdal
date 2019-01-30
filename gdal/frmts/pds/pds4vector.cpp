@@ -1018,6 +1018,8 @@ static OGRFieldType GetFieldTypeFromPDS4DataType(const char* pszDataType,
 
 bool PDS4FixedWidthTable::ReadTableDef(const CPLXMLNode* psTable)
 {
+    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
+
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -1260,6 +1262,11 @@ void PDS4FixedWidthTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
         CPLCreateXMLElementAndValue(psTable,
                                     (osPrefix + "local_identifier").c_str(),
                                     osLocalIdentifier);
+    else if( m_bFirstLayer )
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "local_identifier").c_str(),
+                                    "first_table");
+
     CPLXMLNode* psOffset = CPLCreateXMLElementAndValue(
         psTable, (osPrefix + "offset").c_str(),
         CPLSPrintf(CPL_FRMT_GUIB, m_nOffset));
@@ -1407,6 +1414,8 @@ bool PDS4FixedWidthTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
+    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
+
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {
@@ -2039,6 +2048,8 @@ OGRErr PDS4DelimitedTable::CreateField( OGRFieldDefn *poFieldIn, int )
 
 bool PDS4DelimitedTable::ReadTableDef(const CPLXMLNode* psTable)
 {
+    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
+
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -2259,6 +2270,10 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
         CPLCreateXMLElementAndValue(psTable,
                                     (osPrefix + "local_identifier").c_str(),
                                     osLocalIdentifier);
+    else if( m_bFirstLayer )
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "local_identifier").c_str(),
+                                    "first_table");
 
     CPLXMLNode* psOffset = CPLCreateXMLElementAndValue(
         psTable, (osPrefix + "offset").c_str(),
@@ -2382,6 +2397,8 @@ bool PDS4DelimitedTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
+    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
+
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {

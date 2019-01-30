@@ -45,13 +45,23 @@ def validate_xml(filename):
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd',
-                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1800.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B00.xsd',
                                   force_download=True):
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1800.xsd',
-                                  'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1800.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1B00.xsd',
+                                  'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1B00.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
+                                  'raw.githubusercontent.com_thareUSGS_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1800.xsd',
                                   force_download=True):
         pytest.skip()
 
@@ -69,7 +79,7 @@ def validate_xml(filename):
         'VALIDATE=YES',
         'FAIL_IF_VALIDATION_ERROR=YES',
         'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
-    assert ds is not None
+    return ds is not None
 
 
 ###############################################################################
@@ -165,7 +175,7 @@ def test_ogr_pds4_append_and_modify_table_character():
     assert not f.IsFieldSet('MET')
     ds = None
 
-    validate_xml('/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml')
+    assert validate_xml('/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml')
 
     # Re-open
     ds = ogr.Open('/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml', update = 1)
@@ -202,7 +212,7 @@ def test_ogr_pds4_delete_from_table_character():
     assert '<description>EE event number. The value is repeated for' in data
     assert '<Special_Constants>' in data
 
-    validate_xml('/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml')
+    assert validate_xml('/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml')
 
     # Re-open
     ds = ogr.Open('/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml', update = 1)
@@ -285,7 +295,7 @@ def test_ogr_pds4_create_table_character():
     assert 'LSB' not in data
     assert 'MSB' not in data
 
-    validate_xml('/vsimem/test.xml')
+    assert validate_xml('/vsimem/test.xml')
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayer(0)
@@ -310,7 +320,7 @@ def test_ogr_pds4_create_table_character():
     lyr.CreateFeature(f)
     ds = None
 
-    validate_xml('/vsimem/test.xml')
+    assert validate_xml('/vsimem/test.xml')
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('bar')
@@ -338,7 +348,7 @@ def test_ogr_pds4_create_with_srs():
     lyr.CreateFeature(f)
     ds = None
 
-    validate_xml('/vsimem/test.xml')
+    assert validate_xml('/vsimem/test.xml')
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('bar')
@@ -434,7 +444,7 @@ def test_ogr_pds4_create_table_binary():
                 assert 'Unsigned' in data, data
                 assert 'Signed' not in data, data
 
-            validate_xml('/vsimem/test.xml')
+            assert validate_xml('/vsimem/test.xml')
 
             ds = ogr.Open('/vsimem/test.xml')
             layername = endianness
@@ -466,7 +476,7 @@ def test_ogr_pds4_create_table_binary():
     lyr.CreateFeature(f)
     ds = None
 
-    validate_xml('/vsimem/test.xml')
+    assert validate_xml('/vsimem/test.xml')
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('bar')
@@ -522,7 +532,7 @@ def test_ogr_pds4_create_table_delimited():
     assert 'LSB' not in data
     assert 'MSB' not in data
 
-    validate_xml('/vsimem/test.xml')
+    assert validate_xml('/vsimem/test.xml')
 
     ds = gdal.OpenEx('/vsimem/test.xml')
     assert ds
@@ -559,7 +569,7 @@ def test_ogr_pds4_create_table_delimited():
     lyr.CreateFeature(f)
     ds = None
 
-    validate_xml('/vsimem/test.xml')
+    assert validate_xml('/vsimem/test.xml')
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('no_geom')
@@ -608,7 +618,7 @@ def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
     lyr.CreateFeature(f)
     ds = None
 
-    validate_xml('/vsimem/test.xml')
+    assert validate_xml('/vsimem/test.xml')
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('foo')

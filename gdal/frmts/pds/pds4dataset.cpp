@@ -3146,7 +3146,8 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
 /*                            CreateHeader()                            */
 /************************************************************************/
 
-void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct)
+void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
+                               bool bCartNeedsInternalReference)
 {
     CPLString osPrefix;
     if( STARTS_WITH(psProduct->pszValue, "pds:") )
@@ -3196,10 +3197,26 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct)
     }
     SubstituteVariables(psProduct, m_papszCreationOptions);
 
-    CPLXMLNode* psDisciplineArea = nullptr;
+    // Remove <Discipline_Area>/<disp:Display_Settings> if there is no raster
+    if( GetRasterCount() == 0 )
+    {
+        CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psProduct,
+            (osPrefix + "Observation_Area." + osPrefix + "Discipline_Area").c_str());
+        if( psDisciplineArea )
+        {
+            CPLXMLNode* psDisplaySettings = CPLGetXMLNode(
+                psDisciplineArea, "disp:Display_Settings");
+            if( psDisplaySettings )
+            {
+                CPLRemoveXMLChild(psDisciplineArea, psDisplaySettings);
+                CPLDestroyXMLNode(psDisplaySettings);
+            }
+        }
+    }
+
     if( GetRasterCount() || !osWKT.empty() )
     {
-        psDisciplineArea = CPLGetXMLNode(psProduct,
+        CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psProduct,
             (osPrefix + "Observation_Area." + osPrefix + "Discipline_Area").c_str());
         if( GetRasterCount() && !(m_bGotTransform && !osWKT.empty()) )
         {
@@ -3207,26 +3224,13 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct)
             // from the template
             if( psDisciplineArea )
             {
-                CPLXMLNode* psPrev = nullptr;
-                for( CPLXMLNode* psIter = psDisciplineArea->psChild;
-                        psIter != nullptr; psPrev = psIter, psIter = psIter->psNext )
+                CPLXMLNode* psCart = CPLGetXMLNode(psDisciplineArea, "cart:Cartography");
+                if( psCart == nullptr )
+                    psCart = CPLGetXMLNode(psDisciplineArea, "Cartography");
+                if( psCart )
                 {
-                    if( psIter->eType == CXT_Element &&
-                        (strcmp(psIter->pszValue, "Cartography") == 0 ||
-                        strcmp(psIter->pszValue, "cart:Cartography") == 0) )
-                    {
-                        if( psPrev )
-                        {
-                            psPrev->psNext = psIter->psNext;
-                        }
-                        else
-                        {
-                            psDisciplineArea->psChild = psIter->psNext;
-                        }
-                        psIter->psNext = nullptr;
-                        CPLDestroyXMLNode(psIter);
-                        break;
-                    }
+                    CPLRemoveXMLChild(psDisciplineArea, psCart);
+                    CPLDestroyXMLNode(psCart);
                 }
             }
         }
@@ -3268,9 +3272,19 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct)
                     if( psSchemaLoc != nullptr && psSchemaLoc->psChild != nullptr &&
                         psSchemaLoc->psChild->pszValue != nullptr )
                     {
+                        CPLString osCartSchema;
+                        if( strstr(psSchemaLoc->psChild->pszValue, "PDS4_PDS_1B00.xsd") )
+                        {
+                            osCartSchema = "https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
+                            bCartNeedsInternalReference = true;
+                        }
+                        else
+                        {
+                            osCartSchema = "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd";
+                            bCartNeedsInternalReference = false;
+                        }
                         CPLString osNewVal(psSchemaLoc->psChild->pszValue);
-                        osNewVal += " http://pds.nasa.gov/pds4/cart/v1 "
-                            "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd";
+                        osNewVal += " http://pds.nasa.gov/pds4/cart/v1 " + osCartSchema;
                         CPLFree(psSchemaLoc->psChild->pszValue);
                         psSchemaLoc->psChild->pszValue = CPLStrdup(osNewVal);
                     }
@@ -3284,32 +3298,45 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct)
                     psCart->psChild = nullptr;
                 }
             }
+
+            if( bCartNeedsInternalReference )
+            {
+                const char* pszLocalIdentifier = CPLGetXMLValue(
+                    psDisciplineArea,
+                    "disp:Display_Settings.Local_Internal_Reference."
+                                                    "local_identifier_reference",
+                    GetRasterCount() == 0 ? "first_table" : "image");
+                CPLXMLNode* psLIR = CPLCreateXMLNode(psCart, CXT_Element,
+                                        (osPrefix + "Local_Internal_Reference").c_str());
+                CPLCreateXMLElementAndValue(psLIR,
+                            (osPrefix + "local_identifier_reference").c_str(),
+                            pszLocalIdentifier);
+                CPLCreateXMLElementAndValue(psLIR,
+                            (osPrefix + "local_reference_type").c_str(),
+                            "cartography_parameters_to_image_object");
+            }
+
             WriteGeoreferencing(psCart, osWKT);
         }
     }
     else
     {
         // Remove Observation_Area.Discipline_Area if it contains only
-        // <disp:Display_Settings>
+        // <disp:Display_Settings> or is empty
         CPLXMLNode* psObservationArea = CPLGetXMLNode(psProduct,
             (osPrefix + "Observation_Area").c_str());
         if( psObservationArea )
         {
-            CPLXMLNode* psPrev = nullptr;
-            for( CPLXMLNode* psIter = psObservationArea->psChild;
-                    psIter != nullptr; psPrev = psIter, psIter = psIter->psNext )
+            CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psObservationArea,
+                (osPrefix + "Discipline_Area").c_str());
+            if( psDisciplineArea &&
+                (psDisciplineArea->psChild == nullptr ||
+                 (psDisciplineArea->psChild->eType == CXT_Element &&
+                  psDisciplineArea->psChild->psNext == nullptr &&
+                  strcmp(psDisciplineArea->psChild->pszValue, "disp:Display_Settings") == 0)) )
             {
-                if( psIter->eType == CXT_Element &&
-                    strcmp(psIter->pszValue, "Discipline_Area") == 0 &&
-                    psPrev &&
-                    psIter->psChild &&
-                    psIter->psChild->eType == CXT_Element &&
-                    strcmp(psIter->psChild->pszValue, "disp:Display_Settings") == 0 )
-                {
-                    psPrev->psNext = nullptr;
-                    CPLDestroyXMLNode(psIter);
-                    break;
-                }
+                CPLRemoveXMLChild(psObservationArea, psDisciplineArea);
+                CPLDestroyXMLNode(psDisciplineArea);
             }
         }
     }
@@ -3388,6 +3415,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct)
             CPLCreateXMLElementAndValue(psFile, (osPrefix + "file_name").c_str(),
                                         CPLGetFilename(m_osImageFilename));
 
+            CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psProduct,
+                (osPrefix + "Observation_Area." + osPrefix + "Discipline_Area").c_str());
             const char* pszLocalIdentifier = CPLGetXMLValue(
                 psDisciplineArea,
                 "disp:Display_Settings.Local_Internal_Reference."
@@ -3463,7 +3492,39 @@ void PDS4Dataset::WriteHeader()
 
     if( m_bCreateHeader )
     {
-        CreateHeader(psProduct);
+        bool bCartNeedsInternalReference = false;
+        char* pszXML = CPLSerializeXMLTree(psRoot);
+        if( pszXML )
+        {
+            const char* pszIter = pszXML;
+            while( true )
+            {
+                const char* pszCartSchema = strstr(pszIter, "PDS4_CART_");
+                if( pszCartSchema )
+                {
+                    if( strlen(pszCartSchema) >= strlen("PDS4_CART_xxxx.xsd") &&
+                        EQUALN(pszCartSchema + strlen("PDS4_CART_xxxx."), "xsd", 3) )
+                    {
+                        CPLString osVersion(pszCartSchema + strlen("PDS4_CART_"), 4);
+                        bCartNeedsInternalReference =
+                            strtol(osVersion, nullptr, 16) >= strtol("1900", nullptr, 16);
+                        break;
+                    }
+                    else
+                    {
+                        pszIter = pszCartSchema + 1;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            CPLFree(pszXML);
+        }
+
+        CreateHeader(psProduct, bCartNeedsInternalReference);
     }
 
     WriteVectorLayers(psProduct);
