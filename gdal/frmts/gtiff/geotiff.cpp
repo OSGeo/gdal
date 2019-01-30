@@ -14622,19 +14622,23 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                              padfTiePoints[2] != 0.0 ||
                              padfTiePoints[5] != 0.0) )
                         {
-                            /* modelTiePointTag = (pixel, line, z0, X, Y, Z0) */
-                            /* thus Z(some_point) = (z(some_point) - z0) * scaleZ + Z0 */
-                            /* equivalently written as */
-                            /* Z(some_point) = z(some_point) * scaleZ + offsetZ with */
-                            /* offsetZ = - z0 * scaleZ + Z0 */
-                            double dfScale = padfScale[2];
-                            double dfOffset =
-                                -padfTiePoints[2] * dfScale + padfTiePoints[5];
-                            GTiffRasterBand* poBand =
-                                cpl::down_cast<GTiffRasterBand*>(GetRasterBand(1));
-                            poBand->bHaveOffsetScale = true;
-                            poBand->dfScale = dfScale;
-                            poBand->dfOffset = dfOffset;
+                            LookForProjection();
+                            if( pszProjection && HasVerticalCS(pszProjection) )
+                            {
+                                /* modelTiePointTag = (pixel, line, z0, X, Y, Z0) */
+                                /* thus Z(some_point) = (z(some_point) - z0) * scaleZ + Z0 */
+                                /* equivalently written as */
+                                /* Z(some_point) = z(some_point) * scaleZ + offsetZ with */
+                                /* offsetZ = - z0 * scaleZ + Z0 */
+                                double dfScale = padfScale[2];
+                                double dfOffset =
+                                    -padfTiePoints[2] * dfScale + padfTiePoints[5];
+                                GTiffRasterBand* poBand =
+                                    cpl::down_cast<GTiffRasterBand*>(GetRasterBand(1));
+                                poBand->bHaveOffsetScale = true;
+                                poBand->dfScale = dfScale;
+                                poBand->dfOffset = dfOffset;
+                            }
                         }
                     }
                 }
@@ -17488,7 +17492,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+    CPLString osOldGTIFF_REPORT_COMPD_CSVal(
+        CPLGetConfigOption("GTIFF_REPORT_COMPD_CS", ""));
+    CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
     poDS->CloneInfo( poSrcDS, nCloneInfoFlags );
+    CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS",
+        osOldGTIFF_REPORT_COMPD_CSVal.empty() ? nullptr :
+        osOldGTIFF_REPORT_COMPD_CSVal.c_str());
 
     if( !bGeoTIFF && (poDS->GetPamFlags() & GPF_DISABLED) == 0 )
     {
