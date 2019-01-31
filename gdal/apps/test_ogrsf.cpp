@@ -896,7 +896,8 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         !EQUAL(poDriver->GetDescription(), "LIBKML") &&
         !EQUAL(poDriver->GetDescription(), "PDF") &&
         !EQUAL(poDriver->GetDescription(), "GeoJSON") &&
-        !EQUAL(poDriver->GetDescription(), "OGR_GMT") )
+        !EQUAL(poDriver->GetDescription(), "OGR_GMT") &&
+        !EQUAL(poDriver->GetDescription(), "PDS4") )
     {
         /* Reopen dataset */
         poDS = LOG_ACTION(static_cast<GDALDataset*>(GDALOpenEx(osFilename,
