@@ -595,13 +595,16 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                                                  FALSE,
                                                  0, 0, false, true,
                                                  false );
-                    bool bLatLongOrder = true;
-                    if( !osSRS.empty() )
-                        bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
-                    if( bLatLongOrder && CPLTestBool(
-                            CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")) )
-                        poGeom->swapXY();
-                    poFeature->SetGeometryDirectly(poGeom);
+                    if( poGeom )
+                    {
+                        bool bLatLongOrder = true;
+                        if( !osSRS.empty() )
+                            bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
+                        if( bLatLongOrder && CPLTestBool(
+                                CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")) )
+                            poGeom->swapXY();
+                        poFeature->SetGeometryDirectly(poGeom);
+                    }
                 }
 
                 psIter->psNext = psNext;
