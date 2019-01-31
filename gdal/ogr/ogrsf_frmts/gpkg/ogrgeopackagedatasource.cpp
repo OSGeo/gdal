@@ -1841,14 +1841,12 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
     m_bRecordInsertedInGPKGContent = true;
     m_nSRID = nSRSId;
-    if( nSRSId > 0 )
+
+    OGRSpatialReference* poSRS = GetSpatialRef( nSRSId );
+    if( poSRS )
     {
-        OGRSpatialReference* poSRS = GetSpatialRef( nSRSId );
-        if( poSRS )
-        {
-            poSRS->exportToWkt(&m_pszProjection);
-            poSRS->Release();
-        }
+        poSRS->exportToWkt(&m_pszProjection);
+        poSRS->Release();
     }
 
     /* Various sanity checks added in the SELECT */
