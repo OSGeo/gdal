@@ -168,8 +168,6 @@ class OGRVRTLayer final: public OGRLayer
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
-
     virtual GIntBig     GetFeatureCount( int ) override;
 
     virtual OGRErr      SetAttributeFilter( const char * ) override;

@@ -296,7 +296,7 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
         assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint')).GetSubType() == ogr.OFSTInt16
         assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() == ogr.OFSTFloat32
         if data[1] != ogr.wkbNone:
-            assert lyr.GetSpatialRef().IsSame(srs) == 1
+            assert lyr.GetSpatialRef().IsSame(srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']) == 1
         feat = lyr.GetNextFeature()
         if data[1] != ogr.wkbNone:
             try:

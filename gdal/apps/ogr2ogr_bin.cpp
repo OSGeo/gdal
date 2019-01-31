@@ -72,7 +72,7 @@ static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
         "               [-progress] [-sql <sql statement>|@filename] [-dialect dialect]\n"
         "               [-preserve_fid] [-fid FID] [-limit nb_features]\n"
         "               [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]\n"
-        "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
+        "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct proj_string]\n"
         "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
         "               dst_datasource_name src_datasource_name\n"
         "               [-lco NAME=VALUE] [-nln name] \n"

@@ -978,7 +978,8 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
         {
             // If there is none defined, we use 4326.
             poSRS = new OGRSpatialReference();
-            poSRS->SetFromUserInput(SRS_WKT_WGS84);
+            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
         CPLErrorReset();
 
@@ -1183,7 +1184,8 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
     {
         // If there is none defined, we use 4326.
         poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_WKT_WGS84);
+        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
     CPLErrorReset();
@@ -1322,6 +1324,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             const char* pszName = json_object_get_string( poNameURL );
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE != poSRS->SetFromUserInput( pszName ) )
             {
                 delete poSRS;
@@ -1344,6 +1347,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             int nEPSG = json_object_get_int( poObjCode );
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE != poSRS->importFromEPSG( nEPSG ) )
             {
                 delete poSRS;
@@ -1372,6 +1376,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             const char* pszURL = json_object_get_string( poObjURL );
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE != poSRS->importFromUrl( pszURL ) )
             {
                 delete poSRS;
@@ -1392,6 +1397,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
                 return nullptr;
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE !=
                 poSRS->importFromURN( json_object_get_string(poObjURN) ) )
             {

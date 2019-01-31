@@ -578,6 +578,7 @@ void OGRJMLLayer::LoadSchema()
             OGRSpatialReference* poSRS = new OGRSpatialReference();
             poSRS->importFromEPSG(atoi(osSRSName.substr(
                 strlen("http://www.opengis.net/gml/srs/epsg.xml#")).c_str()));
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
             poSRS->Release();
         }

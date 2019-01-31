@@ -145,7 +145,10 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer(
     {
         OGRSpatialReference oSRS;
         oSRS.SetWellKnownGeogCS("WGS84");
-        if( !poSRS->IsSame(&oSRS) )
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        const char* const apszOptions[] = {
+                "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+        if( !poSRS->IsSame(&oSRS, apszOptions) )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "For a non GML dialect, only WGS84 SRS is supported");
@@ -156,8 +159,16 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer(
     nLayers++;
     papoLayers = static_cast<OGRGeoRSSLayer **>(
         CPLRealloc(papoLayers, nLayers * sizeof(OGRGeoRSSLayer*)));
+    auto poSRSClone = poSRS;
+    if( poSRSClone )
+    {
+        poSRSClone = poSRSClone->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     papoLayers[nLayers-1] =
-        new OGRGeoRSSLayer(pszName, pszLayerName, this, poSRS, TRUE);
+        new OGRGeoRSSLayer(pszName, pszLayerName, this, poSRSClone, TRUE);
+    if( poSRSClone )
+        poSRSClone->Release();
 
     return papoLayers[nLayers-1];
 }

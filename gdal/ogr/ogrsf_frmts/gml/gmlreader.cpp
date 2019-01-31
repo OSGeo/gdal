@@ -1440,14 +1440,6 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
         if (m_bInvertAxisOrderIfLatLong && GML_IsSRSLatLongOrder(pszSRSName) &&
             oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
         {
-            OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode("GEOGCS");
-            if( poGEOGCS != nullptr )
-                poGEOGCS->StripNodes("AXIS");
-
-            OGR_SRSNode *poPROJCS = oSRS.GetAttrNode("PROJCS");
-            if (poPROJCS != nullptr && oSRS.EPSGTreatsAsNorthingEasting())
-                poPROJCS->StripNodes("AXIS");
-
             char* pszWKT = nullptr;
             if (oSRS.exportToWkt(&pszWKT) == OGRERR_NONE)
                 poClass->SetSRSName(pszWKT);

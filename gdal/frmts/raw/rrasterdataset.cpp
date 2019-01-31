@@ -95,8 +95,14 @@ class RRASTERDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double *padfGeoTransform ) override;
-    const char *GetProjectionRef() override;
-    CPLErr SetProjection( const char *pszSRS ) override;
+    const char *_GetProjectionRef() override;
+    CPLErr _SetProjection( const char *pszSRS ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" ) override;
@@ -865,7 +871,7 @@ CPLErr RRASTERDataset::SetGeoTransform( double *padfGeoTransform )
 /*                           GetProjectionRef()                         */
 /************************************************************************/
 
-const char * RRASTERDataset::GetProjectionRef()
+const char * RRASTERDataset::_GetProjectionRef()
 {
     return m_osProjection.c_str();
 }
@@ -874,7 +880,7 @@ const char * RRASTERDataset::GetProjectionRef()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr RRASTERDataset::SetProjection( const char *pszSRS )
+CPLErr RRASTERDataset::_SetProjection( const char *pszSRS )
 
 {
     if( GetAccess() != GA_Update )

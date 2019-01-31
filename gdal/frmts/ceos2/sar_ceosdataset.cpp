@@ -147,7 +147,10 @@ class SAR_CEOSDataset : public GDALPamDataset
     ~SAR_CEOSDataset() override;
 
     int GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP *GetGCPs() override;
 
     char **GetMetadataDomainList() override;
@@ -716,11 +719,11 @@ int SAR_CEOSDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *SAR_CEOSDataset::GetGCPProjection()
+const char *SAR_CEOSDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 )
-        return SRS_WKT_WGS84;
+        return SRS_WKT_WGS84_LAT_LONG;
 
     return "";
 }

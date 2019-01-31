@@ -171,6 +171,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 0,    101, "WGS_60",                     26,0,    0,   0,    0, 0, 0, 0, 0},
 { 6760, 102, "WGS_66",                     27,0,    0,   0,    0, 0, 0, 0, 0},
 { 6322, 103, "WGS_1972",                   1, 0,    8,   10,   0, 0, 0, 0, 0},
+{ 6322, 103, "World_Geodetic_System_1972", 1, 0,    8,   10,   0, 0, 0, 0, 0},
 { 6326, 104, "WGS_1984",                   28,0,    0,   0,    0, 0, 0, 0, 0},
 { 6309, 105, "Yacare",                     4, -155, 171, 37,   0, 0, 0, 0, 0},
 { 6311, 106, "Zanderij",                   4, -265, 120, -358, 0, 0, 0, 0, 0},
@@ -791,6 +792,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      * Transform them into an OGRSpatialReference.
      *----------------------------------------------------------------*/
     OGRSpatialReference* poSpatialRef = new OGRSpatialReference;
+    poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     /*-----------------------------------------------------------------
      * Handle the PROJCS style projections, but add the datum later.
@@ -799,6 +801,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     {
       case 0:
         poSpatialRef->SetLocalCS( "Nonearth" );
+        poSpatialRef->SetLinearUnits(pszUnitsName, CPLAtof(pszUnitsConv));
         break;
 
         /*--------------------------------------------------------------
@@ -1053,9 +1056,10 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          * Regional Mercator (regular mercator with a latitude).
          *-------------------------------------------------------------*/
       case 26:
-        poSpatialRef->SetMercator( sTABProj.adProjParams[1],
-                                     sTABProj.adProjParams[0],
-                                     1.0, 0.0, 0.0 );
+        poSpatialRef->SetMercator2SP( sTABProj.adProjParams[1],
+                                      0.0,
+                                      sTABProj.adProjParams[0],
+                                      0.0, 0.0 );
         break;
 
         /*--------------------------------------------------------------
@@ -1119,7 +1123,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     /*-----------------------------------------------------------------
      * Collect units definition.
      *----------------------------------------------------------------*/
-    if( sTABProj.nProjId != 1 && poSpatialRef->GetRoot() != nullptr )
+    if( sTABProj.nProjId != 0 && sTABProj.nProjId != 1 && poSpatialRef->GetRoot() != nullptr )
     {
         OGR_SRSNode     *poUnits = new OGR_SRSNode("UNIT");
 
@@ -1205,44 +1209,6 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     {
         CPLStrlcpy( szDatumName, psDatumInfo->pszOGCDatumName,
                     sizeof(szDatumName) );
-
-        /* For LCC, standard parallel 1 and 2 can be switched indifferently */
-        /* So the MapInfo order and the EPSG order are not generally identical */
-        /* which may cause recognition problems when reading in MapInfo */
-        if( sTABProj.nProjId == 3 )
-        {
-            double dfCenterLong = sTABProj.adProjParams[0];
-            double dfCenterLat = sTABProj.adProjParams[1];
-            double dfStdP1 = sTABProj.adProjParams[2];
-            double dfStdP2 = sTABProj.adProjParams[3];
-
-            for(size_t i=0;i<sizeof(asMapInfoLCCSRSList)/sizeof(asMapInfoLCCSRSList[0]);i++)
-            {
-                if( sTABProj.nDatumId == asMapInfoLCCSRSList[i].nMapInfoDatumID &&
-                    TAB_EQUAL( dfCenterLong, asMapInfoLCCSRSList[i].dfCenterLong ) &&
-                    TAB_EQUAL( dfCenterLat, asMapInfoLCCSRSList[i].dfCenterLat ) )
-                {
-                    if( TAB_EQUAL( dfStdP1, asMapInfoLCCSRSList[i].dfStdP1 ) &&
-                        TAB_EQUAL( dfStdP2, asMapInfoLCCSRSList[i].dfStdP2 ) )
-                    {
-                        if( asMapInfoLCCSRSList[i].bReverseStdP )
-                        {
-                            CPLDebug("MITAB", "Switching standard parallel 1 and 2");
-                            poSpatialRef->SetLCC( sTABProj.adProjParams[3],
-                                    sTABProj.adProjParams[2],
-                                    sTABProj.adProjParams[1],
-                                    sTABProj.adProjParams[0],
-                                    sTABProj.adProjParams[4],
-                                    sTABProj.adProjParams[5] );
-                        }
-                        if( asMapInfoLCCSRSList[i].nEPSGCode > 0 )
-                            poSpatialRef->SetAuthority( "PROJCS", "EPSG",
-                                        asMapInfoLCCSRSList[i].nEPSGCode );
-                        break;
-                    }
-                }
-            }
-        }
     }
     else
     {
@@ -1365,6 +1331,44 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
             else
             {
                 delete poLCC1SP;
+            }
+        }
+    }
+
+    /* For LCC, standard parallel 1 and 2 can be switched indifferently */
+    /* So the MapInfo order and the EPSG order are not generally identical */
+    /* which may cause recognition problems when reading in MapInfo */
+    if( sTABProj.nProjId == 3 )
+    {
+        double dfCenterLong = sTABProj.adProjParams[0];
+        double dfCenterLat = sTABProj.adProjParams[1];
+        double dfStdP1 = sTABProj.adProjParams[2];
+        double dfStdP2 = sTABProj.adProjParams[3];
+
+        for(size_t i=0;i<sizeof(asMapInfoLCCSRSList)/sizeof(asMapInfoLCCSRSList[0]);i++)
+        {
+            if( sTABProj.nDatumId == asMapInfoLCCSRSList[i].nMapInfoDatumID &&
+                TAB_EQUAL( dfCenterLong, asMapInfoLCCSRSList[i].dfCenterLong ) &&
+                TAB_EQUAL( dfCenterLat, asMapInfoLCCSRSList[i].dfCenterLat ) )
+            {
+                if( TAB_EQUAL( dfStdP1, asMapInfoLCCSRSList[i].dfStdP1 ) &&
+                    TAB_EQUAL( dfStdP2, asMapInfoLCCSRSList[i].dfStdP2 ) )
+                {
+                    if( asMapInfoLCCSRSList[i].bReverseStdP )
+                    {
+                        CPLDebug("MITAB", "Switching standard parallel 1 and 2");
+                        poSpatialRef->SetLCC( sTABProj.adProjParams[3],
+                                sTABProj.adProjParams[2],
+                                sTABProj.adProjParams[1],
+                                sTABProj.adProjParams[0],
+                                sTABProj.adProjParams[4],
+                                sTABProj.adProjParams[5] );
+                    }
+                    if( asMapInfoLCCSRSList[i].nEPSGCode > 0 )
+                        poSpatialRef->SetAuthority( "PROJCS", "EPSG",
+                                    asMapInfoLCCSRSList[i].nEPSGCode );
+                    break;
+                }
             }
         }
     }
@@ -1635,6 +1639,14 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         }
     }
 
+    else if( EQUAL(pszProjection,SRS_PT_MERCATOR_2SP) )
+    {
+        sTABProj.nProjId = 26;
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        nParmCount = 2; // FIXME for MIF export ?
+    }
+
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
     {
         sTABProj.nProjId = 11;
@@ -1664,6 +1676,20 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         sTABProj.nProjId = 25;
         parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        nParmCount = 4;
+    }
+
+    // Swiss Oblique expressed as Hotine Oblique Mercator Azimuth Center
+    else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER) &&
+             std::abs( poSpatialRef->GetNormProjParm(SRS_PP_AZIMUTH, 90.0) - 90.0 ) < 1e-8 &&
+             std::abs( poSpatialRef->GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, 90.0) - 90.0 ) < 1e-8 &&
+             std::abs( poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0) - 1.0 ) < 1e-8 )
+    {
+        sTABProj.nProjId = 25;
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
@@ -1981,8 +2007,10 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         (pszAuthorityCode = poSpatialRef->GetAuthorityCode(nullptr)) != nullptr &&
         atoi(pszAuthorityCode) == 3857) ||
         ((pszExtension = poSpatialRef->GetExtension(nullptr, "PROJ4")) != nullptr &&
-         EQUAL(pszExtension,
-               "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs")) )
+         (EQUAL(pszExtension,
+               "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs") ||
+          EQUAL(pszExtension,
+               "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"))) )
     {
         sTABProj.nDatumId = 157;
         sTABProj.nEllipsoidId = 54;

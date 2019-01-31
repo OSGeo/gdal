@@ -310,7 +310,10 @@ class USGSDEMDataset : public GDALPamDataset
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 };
 
 /************************************************************************/
@@ -827,7 +830,7 @@ CPLErr USGSDEMDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *USGSDEMDataset::GetProjectionRef()
+const char *USGSDEMDataset::_GetProjectionRef()
 
 {
     return pszProjection;

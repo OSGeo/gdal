@@ -1500,7 +1500,7 @@ def test_ogr_pg_32():
     # Create second layer with very approximative EPSG:4326
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
+    srs.SetFromUserInput('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]')
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer('testsrtext2', srs=srs)
 
     # Must still be 1

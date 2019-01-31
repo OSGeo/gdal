@@ -253,6 +253,7 @@ int OGREDIGEODataSource::ReadGEO()
 
     /* All the SRS names mentioned in B.8.2.3 and B.8.3.1 are in the IGN file */
     poSRS = new OGRSpatialReference();
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     CPLString osProj4Str = "+init=IGNF:" + osREL;
     if (poSRS->SetFromUserInput(osProj4Str.c_str()) != OGRERR_NONE)
     {

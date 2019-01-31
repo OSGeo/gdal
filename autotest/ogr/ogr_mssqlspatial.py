@@ -126,7 +126,9 @@ def test_ogr_mssqlspatial_2():
     assert gdaltest.mssqlspatial_lyr.GetFeatureCount() == shp_lyr.GetFeatureCount(), \
         'not matching feature count'
 
-    assert gdaltest.mssqlspatial_lyr.GetSpatialRef().IsSame(shp_lyr.GetSpatialRef()), \
+    got_srs = gdaltest.mssqlspatial_lyr.GetSpatialRef()
+    expected_srs = shp_lyr.GetSpatialRef()
+    assert got_srs.GetAuthorityCode(None) == expected_srs.GetAuthorityCode(None), \
         'not matching spatial ref'
 
 ###############################################################################
@@ -307,7 +309,7 @@ def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
     created_spatial_reference = created_feature_geometry.GetSpatialReference()
     assert ((created_spatial_reference == spatial_reference)
             or ((created_spatial_reference is not None)
-                and created_spatial_reference.IsSame(spatial_reference))), \
+                and created_spatial_reference.IsSame(spatial_reference, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES'] ))), \
         'created-feature SRS does not match original'
 
     # Clean up

@@ -321,7 +321,8 @@ void OGRIDFDataSource::Parse()
                     iZ = CSLFindString(papszAtr, "Z");
                     eLayerType = LAYER_NODE;
                     iNodeID = CSLFindString(papszAtr, "NODE_ID");
-                    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
+                    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poCurLayer = m_poTmpDS->CreateLayer(osTablename, poSRS,
                             iZ < 0 ? wkbPoint : wkbPoint25D, apszOptions);
                     poSRS->Release();
@@ -332,7 +333,8 @@ void OGRIDFDataSource::Parse()
                         ((iToNode = CSLFindString(papszAtr, "TO_NODE")) >= 0) )
                 {
                     eLayerType = LAYER_LINK;
-                    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
+                    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poCurLayer = m_poTmpDS->CreateLayer(osTablename, poSRS,
                         iZ < 0 ? wkbLineString : wkbLineString25D, apszOptions);
                     poSRS->Release();
@@ -345,7 +347,8 @@ void OGRIDFDataSource::Parse()
                 {
                     iZ = CSLFindString(papszAtr, "Z");
                     eLayerType = LAYER_LINKCOORDINATE;
-                    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
+                    OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poCurLayer = m_poTmpDS->CreateLayer(osTablename, poSRS,
                             iZ < 0 ? wkbPoint : wkbPoint25D, apszOptions);
                     poSRS->Release();
@@ -910,7 +913,8 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
     if( m_iLongitudeVDV452 >= 0 && m_iLatitudeVDV452 >= 0 )
     {
         m_poFeatureDefn->SetGeomType(wkbPoint);
-        OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
+        OGRSpatialReference* poSRS = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
         poSRS->Release();
     }

@@ -350,7 +350,7 @@ int OGRSDELayer::NeedLayerInfo()
         else
         {
             poSRS = new OGRSpatialReference(szWKT);
-            poSRS->morphFromESRI();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
 
         LFLOAT falsex, falsey, xyunits;

@@ -74,11 +74,17 @@ class BSBDataset : public GDALPamDataset
     static int Identify( GDALOpenInfo * );
 
     int GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     const GDAL_GCP *GetGCPs() override;
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
 };
 
 /************************************************************************/
@@ -190,13 +196,7 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 BSBDataset::BSBDataset() :
     nGCPCount(0),
     pasGCPList(nullptr),
-    osGCPProjection(
-        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-        "SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],"
-        "TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],"
-        "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],"
-        "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
-        "AUTHORITY[\"EPSG\",4326]]"),
+    osGCPProjection(SRS_WKT_WGS84_LAT_LONG),
     bGeoTransformSet(FALSE),
     psInfo(nullptr)
 {
@@ -243,7 +243,7 @@ CPLErr BSBDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *BSBDataset::GetProjectionRef()
+const char *BSBDataset::_GetProjectionRef()
 
 {
     if( bGeoTransformSet )
@@ -420,7 +420,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
     {
         const char *pszPR = strstr(pszKNP,"PR=");
         const char *pszGD = strstr(pszKNP,"GD=");
-        const char *pszGEOGCS = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]";
+        const char *pszGEOGCS = SRS_WKT_WGS84_LAT_LONG;
         CPLString osPP;
 
         // Capture the PP string.
@@ -459,7 +459,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         {
 
             osUnderlyingSRS.Printf(
-                "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]",
+                "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1]]",
                 pszGEOGCS, osPP.c_str() );
         }
 
@@ -469,14 +469,14 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
             // This is not *really* UTM unless the central meridian
             // matches a zone which it does not in some (most?) maps.
             osUnderlyingSRS.Printf(
-                "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0]]",
+                "PROJCS[\"unnamed\",%s,PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1]]",
                 pszGEOGCS, osPP.c_str() );
         }
 
         else if( STARTS_WITH_CI(pszPR, "PR=POLYCONIC") && !osPP.empty() )
         {
             osUnderlyingSRS.Printf(
-                "PROJCS[\"unnamed\",%s,PROJECTION[\"Polyconic\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]",
+                "PROJCS[\"unnamed\",%s,PROJECTION[\"Polyconic\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1]]",
                 pszGEOGCS, osPP.c_str() );
         }
 
@@ -506,7 +506,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 
             if( !osP2.empty() && !osP3.empty() )
                 osUnderlyingSRS.Printf(
-                    "PROJCS[\"unnamed\",%s,PROJECTION[\"Lambert_Conformal_Conic_2SP\"],PARAMETER[\"standard_parallel_1\",%s],PARAMETER[\"standard_parallel_2\",%s],PARAMETER[\"latitude_of_origin\",0.0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0]]",
+                    "PROJCS[\"unnamed\",%s,PROJECTION[\"Lambert_Conformal_Conic_2SP\"],PARAMETER[\"standard_parallel_1\",%s],PARAMETER[\"standard_parallel_2\",%s],PARAMETER[\"latitude_of_origin\",0.0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0],UNIT[\"Meter\",1]]",
                     pszGEOGCS, osP2.c_str(), osP3.c_str(), osPP.c_str() );
         }
     }
@@ -519,8 +519,10 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
     {
         OGRSpatialReference oGeog_SRS, oProjected_SRS;
 
+        oProjected_SRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         oProjected_SRS.SetFromUserInput( osUnderlyingSRS );
         oGeog_SRS.CopyGeogCSFrom( &oProjected_SRS );
+        oGeog_SRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         OGRCoordinateTransformation *poCT
             = OGRCreateCoordinateTransformation( &oGeog_SRS,
@@ -819,7 +821,7 @@ int BSBDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *BSBDataset::GetGCPProjection()
+const char *BSBDataset::_GetGCPProjection()
 
 {
     return osGCPProjection;

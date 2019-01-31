@@ -765,8 +765,14 @@ public:
                                          const char * pszDomain = "" ) override;
     CPLErr              FlushCacheWithErrCode();
 
-    virtual const char* GetProjectionRef() override;
-    virtual CPLErr      SetProjection( const char* pszProjection ) override;
+    virtual const char* _GetProjectionRef() override;
+    virtual CPLErr      _SetProjection( const char* pszProjection ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
     virtual CPLErr      SetGeoTransform( double* padfGeoTransform ) override;

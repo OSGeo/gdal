@@ -78,7 +78,7 @@ def test_ogr_gxt_1():
                                       max_error=0.000000001) == 0)
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput('PROJCS["Lambert 93",GEOGCS["unnamed",DATUM["ITRS-89",SPHEROID["GRS 80",6378137,298.257222099657],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",44],PARAMETER["standard_parallel_2",49],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000]]')
+    srs.SetFromUserInput('PROJCS["Lambert 93",GEOGCS["unnamed",DATUM["ITRS-89",SPHEROID["GRS 80",6378137,298.257222099657],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",44],PARAMETER["standard_parallel_2",49],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["metre",1]]')
 
     assert lyr.GetSpatialRef().IsSame(srs), 'SRS is not the one expected.'
 
@@ -162,7 +162,7 @@ def test_ogr_gxt_3():
     gdaltest.gxt_ds = ogr.Open('tmp/tmp.gxt')
     gxt_lyr = gdaltest.gxt_ds.GetLayerByName('points.points')
 
-    assert gxt_lyr.GetSpatialRef().IsSame(srs), 'Output SRS is not the one expected.'
+    assert gxt_lyr.GetSpatialRef().IsSame(srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'Output SRS is not the one expected.'
 
     expect = ['PID1', 'PID2']
 

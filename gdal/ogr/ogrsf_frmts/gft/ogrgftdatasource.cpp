@@ -297,7 +297,7 @@ const char*  OGRGFTDataSource::GetAPIURL() const
 /************************************************************************/
 
 OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszNameIn,
-                                            CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                                            OGRSpatialReference * /*poSpatialRef*/,
                                             OGRwkbGeometryType eGType,
                                             char ** papszOptions )
 {

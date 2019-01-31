@@ -1214,7 +1214,15 @@ def test_warp_37():
 
     # Dummy proj.4 method
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=dummy_method +wktext')
+    sr.ImportFromWkt("""PROJCS["unnamed",
+    GEOGCS["unnamed ellipse",
+        DATUM["unknown",
+            SPHEROID["unnamed",6378137,298.257223563]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["custom_proj4"],
+    UNIT["Meter",1],
+    EXTENSION["PROJ4","+proj=dummy_method +units=m +wktext"]]""")
     dst_wkt = sr.ExportToWkt()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -1223,10 +1231,10 @@ def test_warp_37():
     gdal.ErrorReset()
     assert tmp_ds is None
 
-    # Incompatible projection (UTM 40 is on the other side of the earth w.r.t UTM 11)
+    # Incompatible projection (pseudo-UTM 40 is on the other side of the earth w.r.t UTM 11)
     sr = osr.SpatialReference()
-    # Use inline definition instead of EPSG:32640 so that we don't use etmerc on proj 4.9.3
-    sr.SetFromUserInput('+proj=tmerc +lat_0=0 +lon_0=57 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs +wktext')
+    # Use inline definition instead of EPSG:32640 with modified k, so that we don't use etmerc
+    sr.SetFromUserInput('+proj=tmerc +lat_0=0 +lon_0=57 +k=0.9995 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs +wktext')
     dst_wkt = sr.ExportToWkt()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')

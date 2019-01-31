@@ -70,7 +70,10 @@ class MSGNDataset : public GDALDataset
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr     GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 };
 
 /************************************************************************/
@@ -333,7 +336,7 @@ CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *MSGNDataset::GetProjectionRef()
+const char *MSGNDataset::_GetProjectionRef()
 
 {
     return pszProjection;

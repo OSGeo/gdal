@@ -53,6 +53,7 @@ OGRS57DataSource::OGRS57DataSource(char** papszOpenOptionsIn) :
     bExtentsSet(false)
 {
     poSpatialRef->SetWellKnownGeogCS( "WGS84" );
+    poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */

@@ -1481,6 +1481,7 @@ bool PDS4FixedWidthTable::InitializeNewLayer(
         if( poSRS )
         {
             auto poSRSClone = poSRS->Clone();
+            poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRSClone);
             poSRSClone->Release();
         }
@@ -2459,6 +2460,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(
         if( poSRS )
         {
             auto poSRSClone = poSRS->Clone();
+            poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRSClone);
             poSRSClone->Release();
         }

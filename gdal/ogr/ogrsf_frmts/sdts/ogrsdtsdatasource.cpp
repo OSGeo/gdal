@@ -147,6 +147,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     SDTS_XREF   *poXREF = poTransfer->GetXREF();
 
     poSRS = new OGRSpatialReference();
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if( EQUAL(poXREF->pszSystemName,"UTM") )
     {
@@ -167,8 +168,6 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     else /* if( EQUAL(poXREF->pszDatum,"WGE") ) or default case */
         poSRS->SetGeogCS("WGS 84", "WGS_1984",
                          "WGS 84", 6378137, 298.257223563 );
-
-    poSRS->Fixup();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize a layer for each source dataset layer.               */

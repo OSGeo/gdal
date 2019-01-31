@@ -66,6 +66,8 @@ OGRNTFDataSource::OGRNTFDataSource() :
         "AUTHORITY[\"EPSG\",\"27700\"]]")),
     papszOptions(nullptr)
 {
+    poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */

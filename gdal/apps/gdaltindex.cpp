@@ -224,6 +224,7 @@ MAIN_START(argc, argv)
                      "when -t_srs is requested.\n" );
         }
         hTargetSRS = OSRNewSpatialReference("");
+        OSRSetAxisMappingStrategy(hTargetSRS, OAMS_TRADITIONAL_GIS_ORDER);
         // coverity[tainted_data]
         if( OSRSetFromUserInput( hTargetSRS, pszTargetSRS ) != CE_None )
         {
@@ -344,6 +345,7 @@ MAIN_START(argc, argv)
                 if (pszWKT != nullptr && pszWKT[0] != '\0')
                 {
                     hSpatialRef = OSRNewSpatialReference(pszWKT);
+                    OSRSetAxisMappingStrategy(hSpatialRef, OAMS_TRADITIONAL_GIS_ORDER);
                 }
                 GDALClose(hDS);
             }
@@ -594,6 +596,7 @@ MAIN_START(argc, argv)
             projectionRef[0] != '\0' )
         {
             hSourceSRS = OSRNewSpatialReference( projectionRef );
+            OSRSetAxisMappingStrategy(hSourceSRS, OAMS_TRADITIONAL_GIS_ORDER);
         }
 
         // If set target srs, do the forward transformation of all points.

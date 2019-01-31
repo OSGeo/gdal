@@ -1543,7 +1543,7 @@ def get_opened_files():
     for fd in file_numbers:
         try:
             filename = os.readlink('%s/%s' % (fdpath, fd))
-            if not filename.startswith('/dev/') and not filename.startswith('pipe:'):
+            if not filename.startswith('/dev/') and not filename.startswith('pipe:') and filename.find('proj.db') < 0:
                 filenames.append(filename)
         except OSError:
             pass

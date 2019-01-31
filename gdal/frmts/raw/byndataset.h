@@ -230,8 +230,14 @@ class BYNDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
     CPLErr SetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
-    CPLErr SetProjection( const char* pszProjString ) override;
+    const char *_GetProjectionRef() override;
+    CPLErr _SetProjection( const char* pszProjString ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );

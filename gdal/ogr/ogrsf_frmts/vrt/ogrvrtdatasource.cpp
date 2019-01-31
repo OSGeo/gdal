@@ -277,6 +277,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(
     else
     {
         poSrcSRS = new OGRSpatialReference();
+        poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSrcSRS->SetFromUserInput(pszSourceSRS) != OGRERR_NONE )
         {
             delete poSrcSRS;
@@ -292,6 +293,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(
     }
 
     OGRSpatialReference *poTargetSRS = new OGRSpatialReference();
+    poTargetSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( poTargetSRS->SetFromUserInput(pszTargetSRS) != OGRERR_NONE )
     {
         delete poTargetSRS;

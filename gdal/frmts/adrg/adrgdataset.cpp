@@ -81,7 +81,10 @@ class ADRGDataset : public GDALPamDataset
     ADRGDataset();
     ~ADRGDataset() override;
 
-    const char *GetProjectionRef(void) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     CPLErr GetGeoTransform( double * padfGeoTransform ) override;
     CPLErr SetGeoTransform( double * padfGeoTransform ) override;
 
@@ -734,7 +737,7 @@ char **ADRGDataset::GetMetadata( const char *pszDomain )
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
-const char* ADRGDataset::GetProjectionRef()
+const char* ADRGDataset::_GetProjectionRef()
 {
     return osSRS;
 }
@@ -1214,7 +1217,8 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 "PARAMETER[\"latitude_of_center\",90],"
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
-                "PARAMETER[\"false_northing\",0]]";
+                "PARAMETER[\"false_northing\",0],"
+                "UNIT[\"metre\",1]]";
     }
     else if (ZNA == 18)
     {
@@ -1232,7 +1236,8 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 "PARAMETER[\"latitude_of_center\",-90],"
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
-                "PARAMETER[\"false_northing\",0]]";
+                "PARAMETER[\"false_northing\",0],"
+                "UNIT[\"metre\",1]]";
     }
     else
     {
@@ -1242,7 +1247,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         poDS->adfGeoTransform[3] = PSO;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - 360. / BRV;
-        poDS->osSRS = SRS_WKT_WGS84;
+        poDS->osSRS = SRS_WKT_WGS84_LAT_LONG;
     }
 
     // if( isGIN )

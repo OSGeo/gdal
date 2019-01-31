@@ -50,6 +50,8 @@ namespace tut
         {
             srs_utm_ = OSRNewSpatialReference(nullptr);
             srs_ll_ = OSRNewSpatialReference(nullptr);
+            OSRSetAxisMappingStrategy(srs_utm_, OAMS_TRADITIONAL_GIS_ORDER);
+            OSRSetAxisMappingStrategy(srs_ll_, OAMS_TRADITIONAL_GIS_ORDER);
         }
 
         ~test_osr_ct_data()

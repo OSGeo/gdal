@@ -90,7 +90,6 @@ def test_osr_basic_2():
 
     srs = osr.SpatialReference()
     srs.SetStatePlane(403, 1)  # California III NAD83.
-    # print srs.ExportToPrettyWkt()
 
     parm_list = \
         [(osr.SRS_PP_STANDARD_PARALLEL_1, 38.43333333333333),
@@ -171,19 +170,11 @@ def test_osr_basic_3():
 
     assert srs.GetLinearUnitsName() == 'Foot', 'Didnt get Foot linear units'
 
-    if srs.GetLinearUnits() != 0.3048006096012192:
-        print('%.16g' % srs.GetLinearUnits())
-        pytest.fail('Didnt get Foot linear units')
+    assert srs.GetLinearUnits() == pytest.approx(0.3048006096012192, 1e-16)
 
-    if srs.GetTargetLinearUnits('PROJCS') != 0.3048006096012192:
-        print('%.16g' % srs.GetTargetLinearUnits('PROJCS'))
-        pytest.fail('Didnt get Foot linear units')
+    assert srs.GetTargetLinearUnits('PROJCS') == pytest.approx(0.3048006096012192, 1e-16)
 
-    if srs.GetTargetLinearUnits(None) != 0.3048006096012192:
-        print('%.16g' % srs.GetTargetLinearUnits(None))
-        pytest.fail('Didnt get Foot linear units')
-
-    
+    assert srs.GetTargetLinearUnits(None) == pytest.approx(0.3048006096012192, 1e-16)
 
 ###############################################################################
 # Translate a coordinate system with nad shift into to PROJ.4 and back
@@ -193,6 +184,7 @@ def test_osr_basic_4():
 
     srs = osr.SpatialReference()
     srs.SetGS(cm=-117.0, fe=100000.0, fn=100000)
+    srs.SetLinearUnits('meter', 1)
     srs.SetGeogCS('Test GCS', 'Test Datum', 'WGS84',
                   osr.SRS_WGS84_SEMIMAJOR, osr.SRS_WGS84_INVFLATTENING)
 
@@ -216,7 +208,8 @@ def test_osr_basic_5():
 
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC:1.3:CRS84')
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
-    assert wkt_1 == wkt_2, 'CRS84 lookup not as expected.'
+    assert wkt_1 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Longitude",EAST],AXIS["Latitude",NORTH]]'
+    assert wkt_2 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
 ###############################################################################
 # Test URN support for EPSG
@@ -250,9 +243,8 @@ def test_osr_basic_6():
 
 def test_osr_basic_7():
 
-    wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
-    wkt_2 = 'PROJCS["UTM Zone 11, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]]]'
-    assert wkt_1 == wkt_2, 'AUTO42001 urn lookup not as expected.'
+    wkt = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
+    assert wkt.find('GEOGCS["WGS 84"') > 0 and wkt.find('PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]') > 0, 'AUTO42001 urn lookup not as expected.'
 
 ###############################################################################
 # Test the SetLinearUnitsAndUpdateParameters() method.
@@ -267,9 +259,6 @@ def test_osr_basic_8():
     fe = srs.GetProjParm('false_easting')
 
     assert fe == 1000.0, 'false easting was unexpectedly updated.'
-
-    if 'SetLinearUnitsAndUpdateParameters' not in dir(srs):
-        pytest.skip()
 
     srs.SetFromUserInput('+proj=tmerc +x_0=1000 +datum=WGS84 +units=m')
     srs.SetLinearUnitsAndUpdateParameters('Foot', 0.3048)
@@ -347,6 +336,8 @@ def test_osr_basic_11():
     PARAMETER["scale_factor",0.9996],
     PARAMETER["false_easting",500000],
     PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","2038"],
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH]]""")
@@ -361,22 +352,21 @@ def test_osr_basic_11():
             AUTHORITY["EPSG","6140"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9108"]],
         AUTHORITY["EPSG","4140"]],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
     PROJECTION["Transverse_Mercator"],
     PARAMETER["central_meridian",-63],
     PARAMETER["scale_factor",0.9996],
     PARAMETER["false_easting",500000],
     PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","2038"],
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH]]""")
 
-    if srs1.IsSame(srs2):
-        return
-
-    pytest.fail()
+    assert srs1.IsSame(srs2)
 
 ###############################################################################
 # Test URN support for OGC:CRS84.
@@ -386,7 +376,8 @@ def test_osr_basic_12():
 
     wkt_1 = osr.GetUserInputAsWKT('CRS:84')
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
-    assert wkt_1 == wkt_2, 'CRS:84 lookup not as expected.'
+    assert wkt_1 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Longitude",EAST],AXIS["Latitude",NORTH]]'
+    assert wkt_2 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
 ###############################################################################
 # Test GEOCCS lookup in supporting data files.
@@ -395,7 +386,8 @@ def test_osr_basic_12():
 def test_osr_basic_13():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4328)
+    with gdaltest.config_option('OSR_USE_NON_DEPRECATED', 'NO'):
+        srs.ImportFromEPSG(4328)
 
     expected_wkt = 'GEOCCS["WGS 84 (geocentric) (deprecated)",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Geocentric X",OTHER],AXIS["Geocentric Y",OTHER],AXIS["Geocentric Z",NORTH],AUTHORITY["EPSG","4328"]]'
     wkt = srs.ExportToWkt()
@@ -417,7 +409,7 @@ def test_osr_basic_14():
     srs.SetWellKnownGeogCS('WGS84')
     srs.SetLinearUnits('meter', 1.0)
 
-    expected_wkt = 'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1]]'
+    expected_wkt = 'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1],AXIS["Geocentric X",OTHER],AXIS["Geocentric Y",OTHER],AXIS["Geocentric Z",NORTH]]'
     wkt = srs.ExportToWkt()
 
     assert wkt == expected_wkt, 'did not get expected GEOCCS WKT.'
@@ -439,6 +431,7 @@ def test_osr_basic_15():
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
         AUTHORITY["EPSG","6326"]],
+    UNIT["metre",1],
     AXIS["Geocentric X",OTHER],
     AXIS["Geocentric Y",OTHER],
     AXIS["Geocentric Z",OTHER],
@@ -447,11 +440,8 @@ def test_osr_basic_15():
     srs = osr.SpatialReference()
     srs.SetFromUserInput(wkt)
 
-    assert srs.Validate() != 0, 'Validate() fails to detect misordering.'
-
-    srs.Fixup()
-
-    assert srs.Validate() == 0, 'Fixup() failed to correct srs.'
+    # Missing PRIMEM
+    assert srs.Validate() != 0
 
 ###############################################################################
 # Test OSRSetGeocCS()
@@ -468,21 +458,23 @@ def test_osr_basic_16():
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
         AUTHORITY["EPSG","6326"]],
+    UNIT["metre",1],
     AXIS["Geocentric X",OTHER],
     AXIS["Geocentric Y",OTHER],
     AXIS["Geocentric Z",OTHER],
     AUTHORITY["EPSG","4328"]]""")
     srs.SetGeocCS("a")
     expect_wkt = """GEOCCS["a",
-    PRIMEM["Greenwich",0,
-        AUTHORITY["EPSG","8901"]],
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
         AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["metre",1],
     AXIS["Geocentric X",OTHER],
     AXIS["Geocentric Y",OTHER],
-    AXIS["Geocentric Z",OTHER],
+    AXIS["Geocentric Z",NORTH],
     AUTHORITY["EPSG","4328"]]"""
     wkt = srs.ExportToPrettyWkt()
     if wkt != expect_wkt:
@@ -494,13 +486,18 @@ def test_osr_basic_16():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     srs.SetGeocCS("a")
-    expect_wkt = """GEOCCS["a",
+    expect_wkt = """GEOCCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
         AUTHORITY["EPSG","6326"]],
     PRIMEM["Greenwich",0,
-        AUTHORITY["EPSG","8901"]]]"""
+        AUTHORITY["EPSG","8901"]],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Geocentric X",OTHER],
+    AXIS["Geocentric Y",OTHER],
+    AXIS["Geocentric Z",NORTH]]"""
     wkt = srs.ExportToPrettyWkt()
     if wkt != expect_wkt:
         print('Got:%s' % wkt)
@@ -517,14 +514,8 @@ def test_osr_basic_16():
 
     # Limit test : build GEOCCS from an invalid GEOGCS
     srs = osr.SpatialReference()
-    srs.SetFromUserInput("""GEOGCS["foo"]""")
-    srs.SetGeocCS("bar")
-    expect_wkt = """GEOCCS["bar"]"""
-    wkt = srs.ExportToPrettyWkt()
-    if wkt != expect_wkt:
-        print('Got:%s' % wkt)
-        print('Expected:%s' % expect_wkt)
-        pytest.fail('Did not get expected result.')
+    with gdaltest.error_handler():
+        assert srs.SetFromUserInput("""GEOGCS["foo"]""") != 0
 
     
 ###############################################################################
@@ -594,11 +585,11 @@ def test_osr_basic_20():
     sr = osr.SpatialReference()
     sr.ImportFromEPSGA(4326)
 
-    assert sr.GetAxisName(None, 0) == 'Latitude'
+    assert sr.GetAxisName(None, 0) == 'Geodetic latitude'
 
     assert sr.GetAxisOrientation(None, 0) == osr.OAO_North
 
-    assert sr.GetAxisName('GEOGCS', 1) == 'Longitude'
+    assert sr.GetAxisName('GEOGCS', 1) == 'Geodetic longitude'
 
     assert sr.GetAxisOrientation('GEOGCS', 1) == osr.OAO_East
 
@@ -620,7 +611,10 @@ def test_osr_basic_21():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",4.45405154589751]]"""
+    PARAMETER["standard_parallel_1",4.45405154589751],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
 
     wkt2 = """PROJCS["unnamed",
     GEOGCS["Segara (Jakarta)",
@@ -632,7 +626,10 @@ def test_osr_basic_21():
     PARAMETER["central_meridian",110],
     PARAMETER["scale_factor",0.997],
     PARAMETER["false_easting",3900000],
-    PARAMETER["false_northing",900000]]"""
+    PARAMETER["false_northing",900000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
 
     wkt2_not_equivalent = """PROJCS["unnamed",
     GEOGCS["Segara (Jakarta)",
@@ -644,7 +641,10 @@ def test_osr_basic_21():
     PARAMETER["central_meridian",110],
     PARAMETER["scale_factor",0.998],
     PARAMETER["false_easting",3900000],
-    PARAMETER["false_northing",900000]]"""
+    PARAMETER["false_northing",900000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
 
     sr1 = osr.SpatialReference()
     sr1.ImportFromWkt(wkt1)
@@ -710,7 +710,10 @@ def test_osr_basic_22():
     PARAMETER["central_meridian",3],
     PARAMETER["scale_factor",0.9990510286374693],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6602157.83881033]]"""
+    PARAMETER["false_northing",6602157.83881033],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
     expected_sr2 = osr.SpatialReference()
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
@@ -739,7 +742,10 @@ def test_osr_basic_22():
     PARAMETER["latitude_of_origin",46.5],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -759,7 +765,10 @@ def test_osr_basic_22():
     PARAMETER["central_meridian",3],
     PARAMETER["scale_factor",1],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]"""
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
     expected_sr2 = osr.SpatialReference()
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
@@ -787,7 +796,10 @@ def test_osr_basic_22():
     PARAMETER["latitude_of_origin",46.123],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -807,7 +819,10 @@ def test_osr_basic_22():
     PARAMETER["central_meridian",3],
     PARAMETER["scale_factor",1],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6637093.292952879]]"""
+    PARAMETER["false_northing",6637093.292952879],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
     expected_sr2 = osr.SpatialReference()
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
@@ -832,7 +847,10 @@ def test_osr_basic_22():
     PARAMETER["latitude_of_origin",46.4567],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6637093.292952879]]"""
+    PARAMETER["false_northing",6637093.292952879],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
     expected_sr3 = osr.SpatialReference()
     expected_sr3.ImportFromWkt(expected_sr3_wkt)
     assert sr3.IsSame(expected_sr3) != 0
@@ -887,7 +905,10 @@ def test_osr_basic_23():
     PARAMETER["latitude_of_origin",46.85],
     PARAMETER["central_meridian",0],
     PARAMETER["false_easting",234.358],
-    PARAMETER["false_northing",4185861.369]]"""
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
     expected_sr2 = osr.SpatialReference()
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
@@ -919,7 +940,10 @@ def test_osr_basic_24():
         PARAMETER["central_meridian",0],
         PARAMETER["scale_factor",0.5],
         PARAMETER["false_easting",0],
-        PARAMETER["false_northing",0]]""")
+        PARAMETER["false_northing",0],
+        UNIT["metre",1],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_MERCATOR_2SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -937,7 +961,10 @@ def test_osr_basic_24():
     PARAMETER["standard_parallel_1",60.08325228676391],
     PARAMETER["central_meridian",0],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
     expected_sr2 = osr.SpatialReference()
     expected_sr2.ImportFromWkt(expected_sr2_wkt)
 
@@ -957,6 +984,8 @@ def test_osr_basic_25():
     sr.SetFromUserInput("""GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
             UNIT["degree",0.0174532925199433]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
     assert sr2 is None
@@ -965,12 +994,17 @@ def test_osr_basic_25():
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
             UNIT["degree",0.0174532925199433]],
         PROJECTION["Mercator_1SP"],
         PARAMETER["central_meridian",0],
         PARAMETER["scale_factor",0.5],
         PARAMETER["false_easting",0],
-        PARAMETER["false_northing",0]]""")
+        PARAMETER["false_northing",0],
+        UNIT["metre",1],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(None)
     assert sr2 is None
@@ -987,12 +1021,17 @@ def test_osr_basic_25():
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
             UNIT["degree",0.0174532925199433]],
         PROJECTION["Mercator_1SP"],
         PARAMETER["central_meridian",0],
         PARAMETER["scale_factor",-0.5],
         PARAMETER["false_easting",0],
-        PARAMETER["false_northing",0]]""")
+        PARAMETER["false_northing",0],
+        UNIT["metre",1],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_2SP')
     assert sr2 is None
 
@@ -1002,12 +1041,17 @@ def test_osr_basic_25():
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,0.1]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
             UNIT["degree",0.0174532925199433]],
         PROJECTION["Mercator_1SP"],
         PARAMETER["central_meridian",0],
         PARAMETER["scale_factor",0.5],
         PARAMETER["false_easting",0],
-        PARAMETER["false_northing",0]]""")
+        PARAMETER["false_northing",0],
+        UNIT["metre",1],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_2SP')
     assert sr2 is None
 
@@ -1017,12 +1061,17 @@ def test_osr_basic_25():
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Mercator_2SP"],
     PARAMETER["standard_parallel_1",100],
     PARAMETER["central_meridian",0],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]""")
+    PARAMETER["false_northing",0],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
     assert sr2 is None
 
@@ -1032,12 +1081,17 @@ def test_osr_basic_25():
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,0.1]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Mercator_2SP"],
     PARAMETER["standard_parallel_1",60],
     PARAMETER["central_meridian",0],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]""")
+    PARAMETER["false_northing",0],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
     assert sr2 is None
 
@@ -1054,7 +1108,10 @@ def test_osr_basic_25():
     PARAMETER["central_meridian",0],
     PARAMETER["scale_factor",-0.99994471],
     PARAMETER["false_easting",234.358],
-    PARAMETER["false_northing",4185861.369]]""")
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     assert sr2 is None
 
@@ -1071,7 +1128,10 @@ def test_osr_basic_25():
     PARAMETER["central_meridian",0],
     PARAMETER["scale_factor",0.99994471],
     PARAMETER["false_easting",234.358],
-    PARAMETER["false_northing",4185861.369]]""")
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     assert sr2 is None
 
@@ -1088,7 +1148,10 @@ def test_osr_basic_25():
     PARAMETER["central_meridian",0],
     PARAMETER["scale_factor",0.99994471],
     PARAMETER["false_easting",234.358],
-    PARAMETER["false_northing",4185861.369]]""")
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     assert sr2 is None
 
@@ -1105,7 +1168,10 @@ def test_osr_basic_25():
     PARAMETER["central_meridian",0],
     PARAMETER["scale_factor",0.99994471],
     PARAMETER["false_easting",234.358],
-    PARAMETER["false_northing",4185861.369]]""")
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
     assert sr2 is None
 
@@ -1114,6 +1180,8 @@ def test_osr_basic_25():
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",246.4567],
@@ -1121,7 +1189,10 @@ def test_osr_basic_25():
     PARAMETER["latitude_of_origin",46.123],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     assert sr2 is None
 
@@ -1130,6 +1201,8 @@ def test_osr_basic_25():
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",46.4567],
@@ -1137,7 +1210,10 @@ def test_osr_basic_25():
     PARAMETER["latitude_of_origin",46.123],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     assert sr2 is None
 
@@ -1146,6 +1222,8 @@ def test_osr_basic_25():
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",46.4567],
@@ -1153,7 +1231,10 @@ def test_osr_basic_25():
     PARAMETER["latitude_of_origin",246.123],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     assert sr2 is None
 
@@ -1162,6 +1243,8 @@ def test_osr_basic_25():
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",1],
@@ -1169,7 +1252,10 @@ def test_osr_basic_25():
     PARAMETER["latitude_of_origin",10],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     assert sr2 is None
 
@@ -1178,6 +1264,8 @@ def test_osr_basic_25():
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",.0000000000000001],
@@ -1185,7 +1273,10 @@ def test_osr_basic_25():
     PARAMETER["latitude_of_origin",10],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     assert sr2 is None
 
@@ -1194,6 +1285,8 @@ def test_osr_basic_25():
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,0.1]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433]],
     PROJECTION["Lambert_Conformal_Conic_2SP"],
     PARAMETER["standard_parallel_1",46.4567],
@@ -1201,7 +1294,10 @@ def test_osr_basic_25():
     PARAMETER["latitude_of_origin",46.123],
     PARAMETER["central_meridian",3],
     PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000]]""")
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]""")
     sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
     assert sr2 is None
 
@@ -1213,20 +1309,212 @@ def test_osr_basic_setgeogcs():
 
     sr = osr.SpatialReference()
     sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
-    assert sr.ExportToWkt() == 'GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    assert sr.ExportToWkt() == 'GEOGCS["unnamed",DATUM["unnamed",SPHEROID["unnamed",0,0]],PRIMEM["Reference meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
 
     sr.SetGeogCS('a', 'b', 'c', 1, 2, 'd', 3, 'e', 4)
-    assert sr.ExportToWkt() == 'GEOGCS["a",DATUM["b",SPHEROID["c",1,2]],PRIMEM["d",3],UNIT["e",4]]'
+    assert sr.ExportToWkt() == 'GEOGCS["a",DATUM["b",SPHEROID["c",1,2]],PRIMEM["d",3],UNIT["e",4],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
 
     sr.SetUTM(31)
     sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
-    assert sr.ExportToWkt() == 'PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0.01308996938995747],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
-
-    sr.ImportFromWkt('FOO["bar",GEOGCS[]]')
-    assert sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0) != 0, sr.ExportToWkt()
-    assert sr.ExportToWkt() == 'FOO["bar",GEOGCS[]]'
+    assert sr.ExportToWkt() == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["unnamed",SPHEROID["unnamed",0,0]],PRIMEM["Reference meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
 
 ###############################################################################
+# Test other authorities than EPSG, e.g. IGNF:XXXX
+#
+
+def test_osr_basic_set_from_user_input_IGNF():
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput("IGNF:LAMB93") == 0
+
+    assert srs.GetAuthorityName(None) == 'IGNF' and srs.GetAuthorityCode(None) == 'LAMB93'
+
+
+def test_osr_basic_set_from_user_input_IGNF_non_existing_code():
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput("IGNF:non_existing_code") != 0
+
+
+def test_osr_basic_set_from_user_input_non_existing_authority():
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput("non_existing_auth:1234") != 0
+
+
+def test_osr_basic_set_from_user_input_GEODCRS():
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput("""GEODCRS["WGS 84",
+    DATUM["World Geodetic System 1984",
+        ELLIPSOID["WGS 84",6378137,298.257223563,
+            LENGTHUNIT["metre",1]]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,2],
+        AXIS["geodetic latitude (Lat)",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]],
+    AREA["World"],
+    BBOX[-90,-180,90,180],
+    ID["EPSG",4326]]""") == 0
+    assert srs.Validate() == 0
+
+
+def test_osr_basic_set_from_user_input_GEOGCRS():
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput("""GEOGCRS["WGS 84",
+    DATUM["World Geodetic System 1984",
+        ELLIPSOID["WGS 84",6378137,298.257223563,
+            LENGTHUNIT["metre",1]]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,2],
+        AXIS["geodetic latitude (Lat)",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]],
+    USAGE[
+        SCOPE["unknown"],
+        AREA["World"],
+        BBOX[-90,-180,90,180]],
+    ID["EPSG",4326]]""") == 0
+    assert srs.Validate() == 0
+
+
+def test_osr_basic_set_from_user_input_PROJCRS():
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput("""PROJCRS["WGS 84 / UTM zone 31N",
+    BASEGEODCRS["WGS 84",
+        DATUM["World Geodetic System 1984",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]]],
+    CONVERSION["UTM zone 31N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",3,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    AREA["World - N hemisphere - 0°E to 6°E - by country"],
+    BBOX[0,0,84,6],
+    ID["EPSG",32631]]""") == 0
+    assert srs.Validate() == 0
+
+
+def test_osr_basic_set_from_user_input_COMPOUNDCRS():
+
+    srs = osr.SpatialReference()
+    assert srs.SetFromUserInput("""COMPOUNDCRS["KKJ / Finland Uniform Coordinate System + N60 height",
+    PROJCRS["KKJ / Finland Uniform Coordinate System",
+        BASEGEODCRS["KKJ",
+            DATUM["Kartastokoordinaattijarjestelma (1966)",
+                ELLIPSOID["International 1924",6378388,297,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]]],
+        CONVERSION["Finland Uniform Coordinate System",
+            METHOD["Transverse Mercator",
+                ID["EPSG",9807]],
+            PARAMETER["Latitude of natural origin",0,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",27,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",1,
+                SCALEUNIT["unity",1],
+                ID["EPSG",8805]],
+            PARAMETER["False easting",3500000,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8806]],
+            PARAMETER["False northing",0,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8807]]],
+        CS[Cartesian,2],
+            AXIS["northing (X)",north,
+                ORDER[1],
+                LENGTHUNIT["metre",1]],
+            AXIS["easting (Y)",east,
+                ORDER[2],
+                LENGTHUNIT["metre",1]]],
+    VERTCRS["N60 height",
+        VDATUM["Helsinki 1960"],
+        CS[vertical,1],
+            AXIS["gravity-related height (H)",up,
+                LENGTHUNIT["metre",1]]],
+    AREA["Finland - onshore"],
+    BBOX[59.75,19.24,70.09,31.59],
+    ID["EPSG",3901]]""") == 0
+    assert srs.Validate() == 0
+
+
+def test_osr_basic_export_to_sfsql():
+
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    assert sr.ExportToWkt(['FORMAT=SFSQL']) == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
 
 
 
+def test_osr_basic_export_to_wkt1_esri():
+
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    assert sr.ExportToWkt(['FORMAT=WKT1_ESRI']) == 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]'
+
+
+def test_osr_basic_export_to_wkt1_gdal():
+
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    assert sr.ExportToWkt(['FORMAT=WKT1_GDAL']) == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+
+
+def test_osr_basic_export_to_wkt2_2015():
+
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    assert sr.ExportToWkt(['FORMAT=WKT2_2015']) == 'GEODCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],CS[ellipsoidal,2],AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4326]]'
+
+
+def test_osr_basic_export_to_wkt2_2018():
+
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    assert sr.ExportToWkt(['FORMAT=WKT2_2018']) == 'GEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],CS[ellipsoidal,2],AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4326]]'
+
+
+def test_osr_get_name():
+
+    sr = osr.SpatialReference()
+    assert sr.GetName() is None
+    sr.SetWellKnownGeogCS('WGS84')
+    assert sr.GetName() == 'WGS 84'

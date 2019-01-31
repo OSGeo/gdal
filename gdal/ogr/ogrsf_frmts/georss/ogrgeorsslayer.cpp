@@ -1879,7 +1879,8 @@ void OGRGeoRSSLayer::LoadSchema()
         if( pszGMLSRSName == nullptr )
         {
             poSRS = new OGRSpatialReference();
-            poSRS->SetWellKnownGeogCS( "WGS84" ); /* no AXIS definition ! */
+            poSRS->SetWellKnownGeogCS( "WGS84" );
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
         else
         {

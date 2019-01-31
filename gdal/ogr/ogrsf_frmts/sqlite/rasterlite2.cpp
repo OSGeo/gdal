@@ -2105,14 +2105,10 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     }
     else
     {
-        const char* pszProjectionRef = poSrcDS->GetProjectionRef();
-        if( pszProjectionRef != nullptr && !EQUAL(pszProjectionRef, "") )
+        const OGRSpatialReference* poSRS = poSrcDS->GetSpatialRef();
+        if( poSRS )
         {
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromWkt(pszProjectionRef) == OGRERR_NONE )
-            {
-                nSRSId = poDS->FetchSRSId( &oSRS );
-            }
+            nSRSId = poDS->FetchSRSId( poSRS );
         }
     }
 
@@ -2447,9 +2443,9 @@ CPLErr OGRSQLiteDataSource::GetGeoTransform( double* padfGeoTransform )
 /*                           GetProjectionRef()                         */
 /************************************************************************/
 
-const char* OGRSQLiteDataSource::GetProjectionRef()
+const char* OGRSQLiteDataSource::_GetProjectionRef()
 {
     if( !m_osProjection.empty() )
         return m_osProjection.c_str();
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }

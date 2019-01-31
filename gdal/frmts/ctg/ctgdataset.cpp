@@ -130,7 +130,10 @@ class CTGDataset : public GDALPamDataset
     ~CTGDataset() override;
 
     CPLErr GetGeoTransform( double * ) override;
-    const char* GetProjectionRef() override;
+    const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -560,7 +563,7 @@ CPLErr CTGDataset::GetGeoTransform( double * padfTransform )
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char* CTGDataset::GetProjectionRef()
+const char* CTGDataset::_GetProjectionRef()
 
 {
     return pszProjection;

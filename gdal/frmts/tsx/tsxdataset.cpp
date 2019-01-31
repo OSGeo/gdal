@@ -94,11 +94,17 @@ public:
     virtual ~TSXDataset();
 
     virtual int GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    virtual const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
 
     CPLErr GetGeoTransform( double* padfTransform) override;
-    const char* GetProjectionRef() override;
+    const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int Identify( GDALOpenInfo *poOpenInfo );
@@ -747,7 +753,7 @@ int TSXDataset::GetGCPCount() {
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *TSXDataset::GetGCPProjection() {
+const char *TSXDataset::_GetGCPProjection() {
     return pszGCPProjection;
 }
 
@@ -762,7 +768,7 @@ const GDAL_GCP *TSXDataset::GetGCPs() {
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
-const char *TSXDataset::GetProjectionRef()
+const char *TSXDataset::_GetProjectionRef()
 {
     return pszProjection;
 }

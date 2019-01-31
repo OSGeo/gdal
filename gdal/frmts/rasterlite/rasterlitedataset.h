@@ -66,7 +66,10 @@ class RasterliteDataset final: public GDALPamDataset
     virtual const char *GetMetadataItem( const char *pszName,
                                          const char *pszDomain ) override;
     virtual CPLErr GetGeoTransform( double* padfGeoTransform ) override;
-    virtual const char* GetProjectionRef() override;
+    virtual const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     virtual char** GetFileList() override;
 

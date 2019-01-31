@@ -452,3 +452,84 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     gdal.Unlink(tmpfilename)
 
 
+###############################################################################
+# Check that ogr2ogr does data axis to CRS axis mapping adaptations in case
+# of the output driver not following the mapping of the input dataset.
+
+def test_ogr2ogr_axis_mapping_swap():
+
+    gdal.FileFromMemBuffer("/vsimem/test_ogr2ogr_axis_mapping_swap.gml",
+"""<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <ogr:featureMember>
+    <ogr:test gml:id="test.0">
+      <ogr:geometryProperty><gml:Point srsName="urn:ogc:def:crs:EPSG::4326">
+        <gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>
+    </ogr:test>
+  </ogr:featureMember>
+</ogr:FeatureCollection>""")
+    gdal.FileFromMemBuffer("/vsimem/test_ogr2ogr_axis_mapping_swap.gfs",
+""""<GMLFeatureClassList>
+  <GMLFeatureClass>
+    <Name>test</Name>
+    <ElementPath>test</ElementPath>
+    <SRSName>urn:ogc:def:crs:EPSG::4326</SRSName>
+  </GMLFeatureClass>
+</GMLFeatureClassList>""")
+
+    ds = gdal.OpenEx('/vsimem/test_ogr2ogr_axis_mapping_swap.gml',
+                     open_options = ['INVERT_AXIS_ORDER_IF_LAT_LONG=NO'])
+    if ds is None:
+        gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gml")
+        gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gfs")
+        pytest.skip()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1,2]
+    ds = None
+    ds = gdal.VectorTranslate('/vsimem/test_ogr2ogr_axis_mapping_swap.shp',
+                              '/vsimem/test_ogr2ogr_axis_mapping_swap.gml')
+    gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gml")
+    gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gfs")
+
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    ret = ogrtest.check_feature_geometry(feat, "POINT (2 49)")
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
+        '/vsimem/test_ogr2ogr_axis_mapping_swap.shp')
+
+    assert ret == 0
+
+
+###############################################################################
+# Test -ct
+
+def test_ogr2ogr_lib_ct():
+
+    ds = gdal.VectorTranslate('', '../ogr/data/poly.shp',
+                              format='Memory', dstSRS='EPSG:32630',
+                              reproject=True,
+                              coordinateOperation="+proj=affine +s11=-1")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    #f.DumpReadable()
+    assert ogrtest.check_feature_geometry(f, "POLYGON ((-479819.84375 4765180.5,-479690.1875 4765259.5,-479647.0 4765369.5,-479730.375 4765400.5,-480039.03125 4765539.5,-480035.34375 4765558.5,-480159.78125 4765610.5,-480202.28125 4765482.0,-480365.0 4765015.5,-480389.6875 4764950.0,-480133.96875 4764856.5,-480080.28125 4764979.5,-480082.96875 4765049.5,-480088.8125 4765139.5,-480059.90625 4765239.5,-480019.71875 4765319.5,-479980.21875 4765409.5,-479909.875 4765370.0,-479859.875 4765270.0,-479819.84375 4765180.5))") == 0
+
+
+###############################################################################
+# Test -ct without SRS specification
+
+def test_ogr2ogr_lib_ct_no_srs():
+
+    ds = gdal.VectorTranslate('', '../ogr/data/poly.shp',
+                              format='Memory',
+                              coordinateOperation="+proj=affine +s11=-1")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == '27700'
+    f = lyr.GetNextFeature()
+    #f.DumpReadable()
+    assert ogrtest.check_feature_geometry(f, "POLYGON ((-479819.84375 4765180.5,-479690.1875 4765259.5,-479647.0 4765369.5,-479730.375 4765400.5,-480039.03125 4765539.5,-480035.34375 4765558.5,-480159.78125 4765610.5,-480202.28125 4765482.0,-480365.0 4765015.5,-480389.6875 4764950.0,-480133.96875 4764856.5,-480080.28125 4764979.5,-480082.96875 4765049.5,-480088.8125 4765139.5,-480059.90625 4765239.5,-480019.71875 4765319.5,-479980.21875 4765409.5,-479909.875 4765370.0,-479859.875 4765270.0,-479819.84375 4765180.5))") == 0

@@ -257,7 +257,7 @@ public:
     virtual OGRLayer *ExecuteSQL( const char *pszStatement,
         OGRGeometry *poSpatialFilter, const char *pszDialect ) override;
 
-    virtual const char *GetProjectionRef(void) override;
+    virtual const OGRSpatialReference *GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform( double *padfTransform ) override;
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag, int nXOff, int nYOff,
         int nXSize, int nYSize, void *pData, int nBufXSize, int nBufYSize,

@@ -152,6 +152,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
 {
     m_poStyleTable = nullptr;
     m_poOgrSRS->SetWellKnownGeogCS( "WGS84" );
+    m_poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     SetDescription( m_poOgrFeatureDefn->GetName() );
     m_poOgrFeatureDefn->Reference();

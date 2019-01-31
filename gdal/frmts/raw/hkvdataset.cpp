@@ -202,14 +202,24 @@ class HKVDataset final: public RawDataset
     ~HKVDataset() override;
 
     int GetGCPCount() override /* const */ { return nGCPCount; }
-    const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP *GetGCPs() override;
 
-    const char *GetProjectionRef(void) override;
+    const char *_GetProjectionRef(void) override;
     CPLErr GetGeoTransform( double * ) override;
 
     CPLErr SetGeoTransform( double * ) override;
-    CPLErr SetProjection( const char * ) override;
+    CPLErr _SetProjection( const char * ) override;
+
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -437,7 +447,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *HKVDataset::GetProjectionRef()
+const char *HKVDataset::_GetProjectionRef()
 
 {
     return pszProjection;
@@ -499,17 +509,14 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
         // by importFromWkt).
         OGRSpatialReference oUTM;
         oUTM.importFromWkt(pszProjection);
+        oUTM.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-        OGR_SRSNode* poGEOGCS = oUTM.GetAttrNode("GEOGCS");
-        if( poGEOGCS )
+        auto poLLSRS = oUTM.CloneGeogCS();
+        if( poLLSRS )
         {
-            char *pszGCPProj = nullptr;
-            poGEOGCS->exportToWkt(&pszGCPProj);
-
-            OGRSpatialReference oLL;
-            oLL.importFromWkt(pszGCPProj);
-            CPLFree(pszGCPProj);
-            poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
+            poLLSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poTransform = OGRCreateCoordinateTransformation( &oUTM, poLLSRS );
+            delete poLLSRS;
             if( poTransform == nullptr )
             {
                 bSuccess = false;
@@ -791,13 +798,13 @@ CPLErr HKVDataset::SetGCPProjection( const char *pszNewProjection )
 /*      We provide very limited support for setting the projection.     */
 /************************************************************************/
 
-CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
+CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
 
 {
     // Update a georef file.
 
 #ifdef DEBUG_VERBOSE
-    printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );/*ok*/
+    printf( "HKVDataset::_SetProjection(%s)\n", pszNewProjection );/*ok*/
 #endif
 
     if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
@@ -888,7 +895,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *HKVDataset::GetGCPProjection()
+const char *HKVDataset::_GetGCPProjection()
 
 {
   return pszGCPProjection;
@@ -1085,6 +1092,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             oUTM.SetUTM( nZone, 1 );
 
         OGRSpatialReference oLL;
+        oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (pszOriginLong != nullptr)
         {
             oUTM.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,CPLAtof(pszOriginLong));
@@ -1190,6 +1198,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
     else if( pszProjName != nullptr && nGCPCount == 5 )
     {
         OGRSpatialReference oLL;
+        oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         if (pszOriginLong != nullptr)
         {

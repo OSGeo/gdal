@@ -218,6 +218,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         bool                DeleteVectorOrRasterLayer(
                                                 const char* pszLayerName );
 
+        bool                ConvertGpkgSpatialRefSysToExtensionWkt2();
+
     public:
                             GDALGeoPackageDataset();
                             virtual ~GDALGeoPackageDataset();
@@ -232,8 +234,14 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                              const char * pszValue,
                                              const char * pszDomain = "" ) override;
 
-        virtual const char* GetProjectionRef() override;
-        virtual CPLErr      SetProjection( const char* pszProjection ) override;
+        virtual const char* _GetProjectionRef() override;
+        virtual CPLErr      _SetProjection( const char* pszProjection ) override;
+        const OGRSpatialReference* GetSpatialRef() const override {
+            return GetSpatialRefFromOldGetProjectionRef();
+        }
+        CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+            return OldSetProjectionFromSetSpatialRef(poSRS);
+        }
 
         virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
         virtual CPLErr      SetGeoTransform( double* padfGeoTransform ) override;

@@ -583,6 +583,7 @@ def test_ogr_geom_transform_to():
     # Input SRS is EPSG:4326
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     geom.AssignSpatialReference(sr)
 
     # Output SRS is EPSG:32631
@@ -611,6 +612,7 @@ def test_ogr_geom_transform():
 
     # Input SRS is EPSG:4326
     sr = osr.SpatialReference()
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     sr.ImportFromEPSG(4326)
 
     # Output SRS is EPSG:32631

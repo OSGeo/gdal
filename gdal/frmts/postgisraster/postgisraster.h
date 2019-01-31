@@ -321,8 +321,15 @@ public:
     static CPLErr Delete(const char*);
     virtual char      **GetMetadataDomainList() override;
     char ** GetMetadata(const char *) override;
-    const char* GetProjectionRef() override;
-    CPLErr SetProjection(const char*) override;
+    const char* _GetProjectionRef() override;
+    CPLErr _SetProjection(const char*) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
+
     CPLErr SetGeoTransform(double *) override;
     CPLErr GetGeoTransform(double *) override;
     char **GetFileList() override;

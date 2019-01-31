@@ -130,6 +130,9 @@ struct GDALInfoOptions
         */
     char **papszExtraMDDomains;
 
+    /*! WKT format used for SRS */
+    char* pszWKTFormat;
+
     bool bStdoutOutput;
 };
 
@@ -319,55 +322,62 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                GDALGetRasterYSize( hDataset ) );
     }
 
+    CPLString osWKTFormat("FORMAT=");
+    osWKTFormat += psOptions->pszWKTFormat;
+    const char* const apszWKTOptions[] =
+        { osWKTFormat.c_str(), "MULTILINE=YES", nullptr };
+
 /* -------------------------------------------------------------------- */
 /*      Report projection.                                              */
 /* -------------------------------------------------------------------- */
-    if( GDALGetProjectionRef( hDataset ) != nullptr )
+    auto hSRS = GDALGetSpatialRef( hDataset );
+    if( hSRS != nullptr )
     {
         json_object *poCoordinateSystem = nullptr;
 
         if( bJson )
             poCoordinateSystem = json_object_new_object();
 
-        char *pszProjection =
-            const_cast<char *>( GDALGetProjectionRef( hDataset ) );
+        char *pszPrettyWkt = nullptr;
 
-        OGRSpatialReferenceH hSRS =
-            OSRNewSpatialReference(nullptr);
-        if( OSRImportFromWkt( hSRS, &pszProjection ) == CE_None )
+        OSRExportToWktEx( hSRS, &pszPrettyWkt, apszWKTOptions );
+
+        int nAxesCount = 0;
+        const int* panAxes = OSRGetDataAxisToSRSAxisMapping( hSRS, &nAxesCount );
+
+        if( bJson )
         {
-            char *pszPrettyWkt = nullptr;
+            json_object *poWkt = json_object_new_string(pszPrettyWkt);
+            json_object_object_add(poCoordinateSystem, "wkt", poWkt);
 
-            OSRExportToPrettyWkt( hSRS, &pszPrettyWkt, FALSE );
-
-            if( bJson )
+            json_object* poAxisMapping = json_object_new_array();
+            for( int i = 0; i < nAxesCount; i++ )
             {
-                json_object *poWkt = json_object_new_string(pszPrettyWkt);
-                json_object_object_add(poCoordinateSystem, "wkt", poWkt);
+                json_object_array_add(poAxisMapping,
+                                      json_object_new_int(panAxes[i]));
             }
-            else
-            {
-                Concat( osStr, psOptions->bStdoutOutput,
-                        "Coordinate System is:\n%s\n",
-                        pszPrettyWkt );
-            }
-            CPLFree( pszPrettyWkt );
+            json_object_object_add(
+                poCoordinateSystem, "dataAxisToSRSAxisMapping", poAxisMapping);
         }
         else
         {
-            if( bJson )
+            Concat( osStr, psOptions->bStdoutOutput,
+                    "Coordinate System is:\n%s\n",
+                    pszPrettyWkt );
+
+            Concat( osStr, psOptions->bStdoutOutput,
+                    "Data axis to CRS axis mapping: ");
+            for( int i = 0; i < nAxesCount; i++ )
             {
-                json_object *poWkt =
-                    json_object_new_string(GDALGetProjectionRef(hDataset));
-                json_object_object_add(poCoordinateSystem, "wkt", poWkt);
+                if( i > 0 )
+                {
+                    Concat( osStr, psOptions->bStdoutOutput, ",");
+                }
+                Concat( osStr, psOptions->bStdoutOutput, "%d", panAxes[i]);
             }
-            else
-            {
-                Concat( osStr, psOptions->bStdoutOutput,
-                        "Coordinate System is `%s'\n",
-                        GDALGetProjectionRef( hDataset ) );
-            }
+            Concat( osStr, psOptions->bStdoutOutput, "\n");
         }
+        CPLFree( pszPrettyWkt );
 
         if ( psOptions->bReportProj4 )
         {
@@ -388,8 +398,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         if( bJson )
             json_object_object_add(poJsonObject, "coordinateSystem",
                                    poCoordinateSystem);
-
-        OSRDestroySpatialReference( hSRS );
     }
 
 /* -------------------------------------------------------------------- */
@@ -448,56 +456,56 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
     {
         json_object * const poGCPs = bJson ? json_object_new_object() : nullptr;
 
-        if (GDALGetGCPProjection(hDataset) != nullptr)
+        hSRS = GDALGetGCPSpatialRef(hDataset);
+        if (hSRS)
         {
             json_object *poGCPCoordinateSystem = nullptr;
 
-            char *pszProjection =
-                const_cast<char *>( GDALGetGCPProjection( hDataset ) );
+            char *pszPrettyWkt = nullptr;
 
-            OGRSpatialReferenceH hSRS =
-                OSRNewSpatialReference(nullptr);
-            if( OSRImportFromWkt( hSRS, &pszProjection ) == CE_None )
+            int nAxesCount = 0;
+            const int* panAxes = OSRGetDataAxisToSRSAxisMapping( hSRS, &nAxesCount );
+
+            OSRExportToWktEx( hSRS, &pszPrettyWkt, apszWKTOptions );
+
+            if( bJson )
             {
-                char *pszPrettyWkt = nullptr;
+                json_object *poWkt = json_object_new_string(pszPrettyWkt);
+                poGCPCoordinateSystem = json_object_new_object();
 
-                OSRExportToPrettyWkt( hSRS, &pszPrettyWkt, FALSE );
-                if( bJson )
-                {
-                    json_object *poWkt = json_object_new_string(pszPrettyWkt);
-                    poGCPCoordinateSystem = json_object_new_object();
+                json_object_object_add(poGCPCoordinateSystem, "wkt", poWkt);
 
-                    json_object_object_add(poGCPCoordinateSystem, "wkt", poWkt);
-                }
-                else
+                json_object* poAxisMapping = json_object_new_array();
+                for( int i = 0; i < nAxesCount; i++ )
                 {
-                    Concat(osStr, psOptions->bStdoutOutput,
-                           "GCP Projection = \n%s\n", pszPrettyWkt );
+                    json_object_array_add(poAxisMapping,
+                                        json_object_new_int(panAxes[i]));
                 }
-                CPLFree( pszPrettyWkt );
+                json_object_object_add(
+                    poGCPCoordinateSystem, "dataAxisToSRSAxisMapping", poAxisMapping);
             }
             else
             {
-                if(bJson)
-                {
-                    json_object *poWkt =
-                        json_object_new_string(GDALGetGCPProjection(hDataset));
-                    poGCPCoordinateSystem = json_object_new_object();
+                Concat(osStr, psOptions->bStdoutOutput,
+                        "GCP Projection = \n%s\n", pszPrettyWkt );
 
-                    json_object_object_add(poGCPCoordinateSystem, "wkt", poWkt);
-                }
-                else
+                Concat( osStr, psOptions->bStdoutOutput,
+                        "Data axis to CRS axis mapping: ");
+                for( int i = 0; i < nAxesCount; i++ )
                 {
-                    Concat(osStr, psOptions->bStdoutOutput,
-                           "GCP Projection = %s\n",
-                           GDALGetGCPProjection( hDataset ) );
+                    if( i > 0 )
+                    {
+                        Concat( osStr, psOptions->bStdoutOutput, ",");
+                    }
+                    Concat( osStr, psOptions->bStdoutOutput, "%d", panAxes[i]);
                 }
+                Concat( osStr, psOptions->bStdoutOutput, "\n");
             }
+            CPLFree( pszPrettyWkt );
 
             if(bJson)
                 json_object_object_add(poGCPs, "coordinateSystem",
                                        poGCPCoordinateSystem);
-            OSRDestroySpatialReference( hSRS );
         }
 
         json_object * const poGCPList = bJson ? json_object_new_array() : nullptr;
@@ -565,47 +573,35 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 /* -------------------------------------------------------------------- */
 /*      Setup projected to lat/long transform if appropriate.           */
 /* -------------------------------------------------------------------- */
-    const char  *pszProjection = nullptr;
+    OGRSpatialReferenceH hProj = nullptr;
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
-        pszProjection = GDALGetProjectionRef(hDataset);
+        hProj = GDALGetSpatialRef(hDataset);
 
     OGRCoordinateTransformationH hTransform = nullptr;
     bool bTransformToWGS84 = false;
 
-    if( pszProjection != nullptr && strlen(pszProjection) > 0 )
+    if( hProj )
     {
         OGRSpatialReferenceH hLatLong = nullptr;
 
-        OGRSpatialReferenceH hProj = OSRNewSpatialReference( pszProjection );
-        if( hProj != nullptr )
+        OGRErr eErr = OGRERR_NONE;
+        // Check that it looks like Earth before trying to reproject to wgs84...
+        if(bJson &&
+            fabs( OSRGetSemiMajor(hProj, &eErr) - 6378137.0) < 10000.0 &&
+            eErr == OGRERR_NONE )
         {
-            OGRErr eErr = OGRERR_NONE;
-            // Check that it looks like Earth before trying to reproject to wgs84...
-            if(bJson &&
-               fabs( OSRGetSemiMajor(hProj, &eErr) - 6378137.0) < 10000.0 &&
-               eErr == OGRERR_NONE )
+            bTransformToWGS84 = true;
+            hLatLong = OSRNewSpatialReference( nullptr );
+            OSRSetWellKnownGeogCS( hLatLong, "WGS84" );
+            OSRSetAxisMappingStrategy(hLatLong, OAMS_TRADITIONAL_GIS_ORDER);
+        }
+        else
+        {
+            hLatLong = OSRCloneGeogCS( hProj );
+            if( hLatLong )
             {
-                bTransformToWGS84 = true;
-                hLatLong = OSRNewSpatialReference( nullptr );
-                OSRSetWellKnownGeogCS( hLatLong, "WGS84" );
-            }
-            else
-            {
-                hLatLong = OSRCloneGeogCS( hProj );
-                if( hLatLong )
-                {
-                    // Drop GEOGCS|UNIT child to be sure to output as degrees
-                    OGRSpatialReference* poLatLong = reinterpret_cast<
-                        OGRSpatialReference*>(hLatLong);
-                    OGR_SRSNode *poGEOGCS = poLatLong->GetRoot();
-                    if( poGEOGCS )
-                    {
-                        const int iUnitChild =
-                            poGEOGCS->FindChild("UNIT");
-                        if( iUnitChild != -1 )
-                            poGEOGCS->DestroyChild(iUnitChild);
-                    }
-                }
+                // Override GEOGCS|UNIT child to be sure to output as degrees
+                OSRSetAngularUnits( hLatLong, SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV) );
             }
         }
 
@@ -617,9 +613,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 
             OSRDestroySpatialReference( hLatLong );
         }
-
-        if( hProj != nullptr )
-            OSRDestroySpatialReference( hProj );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1822,6 +1815,7 @@ GDALInfoOptions *GDALInfoOptionsNew(
     psOptions->bShowColorTable = TRUE;
     psOptions->bListMDD = FALSE;
     psOptions->bShowFileList = TRUE;
+    psOptions->pszWKTFormat = CPLStrdup("WKT2");
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
@@ -1887,6 +1881,12 @@ GDALInfoOptions *GDALInfoOptionsNew(
                 psOptionsForBinary->nSubdataset = atoi(papszArgv[i]);
             }
         }
+        else if( EQUAL(papszArgv[i], "-wkt_format") && papszArgv[i+1] != nullptr )
+        {
+            CPLFree(psOptions->pszWKTFormat);
+            psOptions->pszWKTFormat = CPLStrdup( papszArgv[++i] );
+        }
+
         else if( papszArgv[i][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -1929,6 +1929,7 @@ void GDALInfoOptionsFree( GDALInfoOptions *psOptions )
     if( psOptions != nullptr )
     {
         CSLDestroy( psOptions->papszExtraMDDomains );
+        CPLFree( psOptions->pszWKTFormat );
 
         CPLFree(psOptions);
     }

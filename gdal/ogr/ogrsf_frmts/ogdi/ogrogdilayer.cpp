@@ -47,7 +47,7 @@ OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
     m_eFamily(eFamily),
     m_poFeatureDefn(nullptr),
     // Keep a reference on the SpatialRef (owned by the dataset).
-    m_poSpatialRef(m_poODS->GetSpatialRef()),
+    m_poSpatialRef(m_poODS->DSGetSpatialRef()),
     m_sFilterBounds(*(m_poODS->GetGlobalBounds())),
     m_iNextShapeId(0),
     m_nTotalShapeCount(-1),

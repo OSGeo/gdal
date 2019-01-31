@@ -589,12 +589,12 @@ def test_ogr_sqlite_13():
     gdaltest.sl_ds = ogr.Open('tmp/sqlite_test.db', update=1)
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('wgs84layer')
 
-    assert gdaltest.sl_lyr.GetSpatialRef().IsSame(srs), 'SRS is not the one expected.'
+    assert gdaltest.sl_lyr.GetSpatialRef().IsSame(srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'SRS is not the one expected.'
 
     ######################################################
     # Create second layer with very approximative EPSG:4326
     srs = osr.SpatialReference()
-    srs.SetFromUserInput('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
+    srs.SetFromUserInput('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]')
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer('wgs84layer_approx', srs=srs)
 
     # Must still be 1

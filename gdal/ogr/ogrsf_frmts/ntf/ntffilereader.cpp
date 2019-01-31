@@ -706,7 +706,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
     }
 
     if( poGeometry != nullptr )
-        poGeometry->assignSpatialReference( poDS->GetSpatialRef() );
+        poGeometry->assignSpatialReference( poDS->DSGetSpatialRef() );
 
     return poGeometry;
 }
@@ -809,7 +809,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
     }
 
     if( poGeometry != nullptr )
-        poGeometry->assignSpatialReference( poDS->GetSpatialRef() );
+        poGeometry->assignSpatialReference( poDS->DSGetSpatialRef() );
 
     return poGeometry;
 }

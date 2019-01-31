@@ -40,7 +40,10 @@ class SDEDataset : public GDALDataset
         virtual int     GetRasterXSize();
         virtual int     GetRasterYSize();
 
-        const char *GetProjectionRef() override;
+        const char *_GetProjectionRef() override;
+        const OGRSpatialReference* GetSpatialRef() const override {
+            return GetSpatialRefFromOldGetProjectionRef();
+        }
 };
 
 #endif

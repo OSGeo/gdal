@@ -60,30 +60,14 @@ class TestMetaCRS(object):
 
         result = self.parse_line()
 
-        try:
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
-            ct = osr.CoordinateTransformation(self.src_srs, self.dst_srs)
-            gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                pytest.skip('PROJ.4 missing, transforms not available.')
-        except ValueError:
-            gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                pytest.skip('PROJ.4 missing, transforms not available.')
-            pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-        except:
-            gdal.PopErrorHandler()
-            pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+        ct = osr.CoordinateTransformation(self.src_srs, self.dst_srs)
 
         ######################################################################
-        # Transform source point to destination SRS, swapping EPSG GEOGCS
-        # axes if needed.
-
-        if self.src_srs.EPSGTreatsAsLatLong():
-            self.src_xyz = (self.src_xyz[1], self.src_xyz[0], self.src_xyz[2])
+        # Transform source point to destination SRS
 
         result = ct.TransformPoint(self.src_xyz[0], self.src_xyz[1], self.src_xyz[2])
-
+ 
+        # This is odd, but it seems the expected results are switched
         if self.src_srs.EPSGTreatsAsLatLong():
             result = (result[1], result[0], result[2])
 
@@ -94,7 +78,7 @@ class TestMetaCRS(object):
             + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
-            err_msg = 'Dest error is %g, src=%g,%g,%g, dst=%g,%g,%g, exp=%g,%g,%g' \
+            err_msg = 'Dest error is %g, src=%g,%g,%g, dst=%.18g,%.18g,%.18g, exp=%.18g,%.18g,%.18g' \
                       % (error,
                          self.src_xyz[0], self.src_xyz[1], self.src_xyz[2],
                          result[0], result[1], result[2],
@@ -148,7 +132,7 @@ class TestMetaCRS(object):
     def build_srs(self, typ, crstext):
         if typ == 'EPSG':
             srs = osr.SpatialReference()
-            if srs.ImportFromEPSGA(int(crstext)) == 0:
+            if srs.ImportFromEPSG(int(crstext)) == 0:
                 return srs
             gdaltest.post_reason('failed to translate EPSG:' + crstext)
             return None

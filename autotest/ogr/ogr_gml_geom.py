@@ -1263,9 +1263,10 @@ def test_gml_write_gml3_srs():
 
     srlonglat = osr.SpatialReference()
     srlonglat.SetFromUserInput("EPSG:4326")
+    srlonglat.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
     srlatlong = osr.SpatialReference()
-    srlatlong.SetFromUserInput("EPSGA:4326")
+    srlatlong.SetFromUserInput("EPSG:4326")
 
     geom = ogr.CreateGeometryFromWkt('POINT(500000 4500000)')
     geom.AssignSpatialReference(sr32631)

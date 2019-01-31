@@ -1816,16 +1816,38 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
         psTransform->nBufferHeight = -1;
         psTransform->nLastQueriedX = -1;
         psTransform->nLastQueriedY = -1;
-        const char* pszSpatialRef = psTransform->poDS->GetProjectionRef();
-        if( pszSpatialRef != nullptr && pszSpatialRef[0] != '\0' )
+        auto poDSSpaRefSrc = psTransform->poDS->GetSpatialRef();
+        if( poDSSpaRefSrc )
         {
-            OGRSpatialReference* poWGSSpaRef =
-                    new OGRSpatialReference(SRS_WKT_WGS84);
+            auto poDSSpaRef = poDSSpaRefSrc->Clone();
 
-            OGRSpatialReference* poDSSpaRef =
-                    new OGRSpatialReference(pszSpatialRef);
             if( !psTransform->bApplyDEMVDatumShift )
                 poDSSpaRef->StripVertical();
+
+            auto wkt_EPSG_4979 =
+            "GEODCRS[\"WGS 84\",\n"
+            "    DATUM[\"World Geodetic System 1984\",\n"
+            "        ELLIPSOID[\"WGS 84\",6378137,298.257223563,\n"
+            "            LENGTHUNIT[\"metre\",1]]],\n"
+            "    PRIMEM[\"Greenwich\",0,\n"
+            "        ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "    CS[ellipsoidal,3],\n"
+            "        AXIS[\"geodetic latitude (Lat)\",north,\n"
+            "            ORDER[1],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "        AXIS[\"geodetic longitude (Lon)\",east,\n"
+            "            ORDER[2],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "        AXIS[\"ellipsoidal height (h)\",up,\n"
+            "            ORDER[3],\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "    AREA[\"World (by country)\"],\n"
+            "    BBOX[-90,-180,90,180],\n"
+            "    ID[\"EPSG\",4979]]";
+            OGRSpatialReference* poWGSSpaRef =
+                    new OGRSpatialReference(
+                        poDSSpaRef->IsCompound() ? wkt_EPSG_4979 : SRS_WKT_WGS84_LAT_LONG);
+            poWGSSpaRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             if( !poWGSSpaRef->IsSame(poDSSpaRef) )
                 psTransform->poCT =

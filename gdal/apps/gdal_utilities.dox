@@ -196,7 +196,7 @@ Lists information about a raster dataset.
 \verbatim
 gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
          [-norat] [-noct] [-nofl] [-checksum] [-proj4]
-         [-listmdd] [-mdd domain|`all`]*
+         [-listmdd] [-mdd domain|`all`]* [-wkt_format WKT1|WKT2|...]
          [-sd subdataset] [-oo NAME=VALUE]* datasetname
 \endverbatim
 
@@ -227,6 +227,9 @@ of metadata strings.</dd>
 "all" can be used to report metadata in all domains</dd>
 <dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
 file list.</dd>
+<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 2.5.0) WKT format
+used to display the SRS. Currently supported values are: WKT1,
+WKT2 (latest WKT version, currently WKT2_2018), WKT2_2015, WKT2_2018 </dd>
 <dt> <b>-sd</b> <i>subdataset</i></dt><dd> (GDAL >= 1.9.0) If the input
 dataset contains several subdatasets read and display a subdataset with
 specified number (starting from 1). This is an alternative of giving the full
@@ -1383,7 +1386,7 @@ Transforms coordinates.
 \verbatim
 gdaltransform [--help-general]
     [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
-    [-order n] [-tps] [-rpc] [-geoloc]
+    [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc]
     [-gcp pixel line easting northing [elevation]]* [-output_xy]
     [srcfile [dstfile]]
 \endverbatim
@@ -1404,6 +1407,10 @@ The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
 (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
 containing well known text.</dd>
+<dt> <b>-ct</b> <em>proj_string</em>:</dt><dd> (GDAL &gt;= 2.5)
+PROJ string overriding the default
+transformation from the source to the target CRS. It must take into account the
+axis order of the source and target CRS.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
 to pass to GDALCreateGenImgProjTransformer2(). </dd>
 <dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping
@@ -1421,8 +1428,8 @@ available GCPs.</dd>
 <dt> <em>dstfile</em>:</dt><dd> File with destination projection definition. </dd>
 </dl>
 
-
-Coordinates are read as pairs (or triples) of numbers per line from standard
+Coordinates are read as pairs, triples for 3D or, since GDAL 2.5.0, quadruplets
+for X,Y,Z,time of numbers per line from standard
 input, transformed, and written out to standard output in the same way. All
 transformations offered by gdalwarp are handled, including gcp-based ones.
 
@@ -1464,6 +1471,22 @@ gdaltransform -i -rpc 06OCT20025052-P2AS-005553965230_01_P001.TIF
 Produces this output measured in pixels and lines on the image:
 \verbatim
 3499.49282422381 2910.83892848414 50
+\endverbatim
+
+\section gdaltransform_4D X,Y,Z,time transform
+
+15-term time-dependent Helmert coordinate transformation from ITRF2000 to ITRF93
+for a coordinate at epoch 2000.0
+
+\verbatim
+gdaltransform -ct "+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=cart +step +proj=helmert +convention=position_vector +x=0.0127 +dx=-0.0029 +rx=-0.00039 +drx=-0.00011 +y=0.0065 +dy=-0.0002 +ry=0.00080 +dry=-0.00019 +z=-0.0209 +dz=-0.0006 +rz=-0.00114 +drz=0.00007 +s=0.00195 +ds=0.00001 +t_epoch=1988.0 +step +proj=cart +inv +step +proj=unitconvert +xy_in=rad +xy_out=deg"
+2 49 0 2000
+\endverbatim
+
+Produces this output measured in longitude degrees, latitude degrees and ellipsoid height in metre:
+\verbatim
+2.0000005420366 49.0000003766711 -0.0222802283242345
+
 \endverbatim
 
 \if man
@@ -2593,12 +2616,12 @@ OR any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file conta
 
 Options:
    [--help-general] [-h]  Show help and exit
-   [-p]                   Pretty-print where applicable (e.g. WKT)
+   [--single-line]        Print WKT on single line
    [-V]                   Validate SRS
    [-e]                   Search for EPSG number(s) corresponding to SRS
    [-o out_type]          Output type { default, all, wkt_all, proj4,
                                         wkt, wkt_simple, wkt_noct, wkt_esri,
-                                        mapinfo, xml }
+                                        wkt2_2015, wkt2_2018, mapinfo, xml }
 
 \endverbatim
 
@@ -2615,10 +2638,14 @@ Output types:
 - <b>all</b>&nbsp;&nbsp;&nbsp;all options available
 - <b>wkt_all</b>&nbsp;&nbsp;&nbsp;all wkt options available
 - <b>proj4</b>&nbsp;&nbsp;&nbsp;PROJ.4 string
-- <b>wkt</b>&nbsp;&nbsp;&nbsp;OGC WKT format (full)
-- <b>wkt_simple</b>&nbsp;&nbsp;&nbsp;OGC WKT (simplified)
-- <b>wkt_noct</b>&nbsp;&nbsp;&nbsp;OGC WKT (without OGC CT params)
+- <b>wkt1</b>&nbsp;&nbsp;&nbsp;OGC WKT format (full)
+- <b>wkt_simple</b>&nbsp;&nbsp;&nbsp;OGC WKT 1 (simplified)
+- <b>wkt_noct</b>&nbsp;&nbsp;&nbsp;OGC WKT 1 (without OGC CT params)
 - <b>wkt_esri</b>&nbsp;&nbsp;&nbsp;ESRI WKT format
+- <b>wkt</b>&nbsp;&nbsp;&nbsp;Latest WKT version supported, currently wkt2_2018
+- <b>wkt2</b>&nbsp;&nbsp;&nbsp;Latest WKT2 version supported, currently wkt2_2018
+- <b>wkt2_2015</b>&nbsp;&nbsp;&nbsp;OGC WKT2:2015
+- <b>wkt2_2018</b>&nbsp;&nbsp;&nbsp;OGC WKT2:2018
 - <b>mapinfo</b>&nbsp;&nbsp;&nbsp;Mapinfo style CoordSys format
 - <b>xml</b>&nbsp;&nbsp;&nbsp;XML format (GML based)
 
@@ -2658,70 +2685,202 @@ PROJ.4 : '+proj=utm +zone=19 +south +datum=WGS84 +units=m +no_defs '
 
 \n
 \verbatim
-$ gdalsrsinfo  -o wkt -p  "EPSG:32722"
+$ gdalsrsinfo  -o wkt "EPSG:32722"
 
-PROJCS["WGS 84 / UTM zone 22S",
-    GEOGCS["WGS 84",
-        DATUM["WGS_1984",
-            SPHEROID["WGS 84",6378137,298.257223563,
-                AUTHORITY["EPSG","7030"]],
-            AUTHORITY["EPSG","6326"]],
+PROJCRS["WGS 84 / UTM zone 22S",
+    BASEGEOGCRS["WGS 84",
+        DATUM["World Geodetic System 1984",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]]],
         PRIMEM["Greenwich",0,
-            AUTHORITY["EPSG","8901"]],
-        UNIT["degree",0.0174532925199433,
-            AUTHORITY["EPSG","9122"]],
-        AUTHORITY["EPSG","4326"]],
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",-51],
-    PARAMETER["scale_factor",0.9996],
-    PARAMETER["false_easting",500000],
-    PARAMETER["false_northing",10000000],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
-    AXIS["Easting",EAST],
-    AXIS["Northing",NORTH],
-    AUTHORITY["EPSG","32722"]]
+            ANGLEUNIT["degree",0.0174532925199433]]],
+    CONVERSION["UTM zone 22S",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-51,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",10000000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    USAGE[
+        SCOPE["unknown"],
+        AREA["World - S hemisphere - 54°W to 48°W - by country"],
+        BBOX[-80,-54,0,-48]],
+    ID["EPSG",32722]]
+
 \endverbatim
 
 \n
 \verbatim
-$ gdalsrsinfo  -o wkt_all  "EPSG:4618"
-
-OGC WKT :
-GEOGCS["SAD69",
-    DATUM["South_American_Datum_1969",
-        SPHEROID["GRS 1967 Modified",6378160,298.25,
-            AUTHORITY["EPSG","7050"]],
-        TOWGS84[-57,1,-41,0,0,0,0],
-        AUTHORITY["EPSG","6618"]],
+$ gdalsrsinfo -o wkt_all "EPSG:4322"
+OGC WKT 1:
+GEOGCS["WGS 72",
+    DATUM["World_Geodetic_System_1972",
+        SPHEROID["WGS 72",6378135,298.26,
+            AUTHORITY["EPSG","7043"]],
+        TOWGS84[0,0,4.5,0,0,0.554,0.2263],
+        AUTHORITY["EPSG","6322"]],
     PRIMEM["Greenwich",0,
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
-    AUTHORITY["EPSG","4618"]]
+    AXIS["Latitude",NORTH],
+    AXIS["Longitude",EAST],
+    AUTHORITY["EPSG","4322"]]
 
-OGC WKT (simple) :
-GEOGCS["SAD69",
-    DATUM["South_American_Datum_1969",
-        SPHEROID["GRS 1967 Modified",6378160,298.25],
-        TOWGS84[-57,1,-41,0,0,0,0]],
+OGC WKT2:2015 :
+BOUNDCRS[
+    SOURCECRS[
+        GEODCRS["WGS 72",
+            DATUM["World Geodetic System 1972",
+                ELLIPSOID["WGS 72",6378135,298.26,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            CS[ellipsoidal,2],
+                AXIS["geodetic latitude (Lat)",north,
+                    ORDER[1],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+                AXIS["geodetic longitude (Lon)",east,
+                    ORDER[2],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+            AREA["World"],
+            BBOX[-90,-180,90,180],
+            ID["EPSG",4322]]],
+    TARGETCRS[
+        GEODCRS["WGS 84",
+            DATUM["World Geodetic System 1984",
+                ELLIPSOID["WGS 84",6378137,298.257223563,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            CS[ellipsoidal,2],
+                AXIS["latitude",north,
+                    ORDER[1],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+                AXIS["longitude",east,
+                    ORDER[2],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+            ID["EPSG",4326]]],
+    ABRIDGEDTRANSFORMATION["WGS 72 to WGS 84 (1)",
+        METHOD["Position Vector transformation (geog2D domain)",
+            ID["EPSG",9606]],
+        PARAMETER["X-axis translation",0,
+            ID["EPSG",8605]],
+        PARAMETER["Y-axis translation",0,
+            ID["EPSG",8606]],
+        PARAMETER["Z-axis translation",4.5,
+            ID["EPSG",8607]],
+        PARAMETER["X-axis rotation",0,
+            ID["EPSG",8608]],
+        PARAMETER["Y-axis rotation",0,
+            ID["EPSG",8609]],
+        PARAMETER["Z-axis rotation",0.554,
+            ID["EPSG",8610]],
+        PARAMETER["Scale difference",1.0000002263,
+            ID["EPSG",8611]],
+        AREA["World"],
+        BBOX[-90,-180,90,180],
+        ID["EPSG",1237]]]
+
+OGC WKT2:2018 :
+BOUNDCRS[
+    SOURCECRS[
+        GEOGCRS["WGS 72",
+            DATUM["World Geodetic System 1972",
+                ELLIPSOID["WGS 72",6378135,298.26,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            CS[ellipsoidal,2],
+                AXIS["geodetic latitude (Lat)",north,
+                    ORDER[1],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+                AXIS["geodetic longitude (Lon)",east,
+                    ORDER[2],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+            USAGE[
+                SCOPE["unknown"],
+                AREA["World"],
+                BBOX[-90,-180,90,180]],
+            ID["EPSG",4322]]],
+    TARGETCRS[
+        GEOGCRS["WGS 84",
+            DATUM["World Geodetic System 1984",
+                ELLIPSOID["WGS 84",6378137,298.257223563,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            CS[ellipsoidal,2],
+                AXIS["latitude",north,
+                    ORDER[1],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+                AXIS["longitude",east,
+                    ORDER[2],
+                    ANGLEUNIT["degree",0.0174532925199433]],
+            ID["EPSG",4326]]],
+    ABRIDGEDTRANSFORMATION["WGS 72 to WGS 84 (1)",
+        METHOD["Position Vector transformation (geog2D domain)",
+            ID["EPSG",9606]],
+        PARAMETER["X-axis translation",0,
+            ID["EPSG",8605]],
+        PARAMETER["Y-axis translation",0,
+            ID["EPSG",8606]],
+        PARAMETER["Z-axis translation",4.5,
+            ID["EPSG",8607]],
+        PARAMETER["X-axis rotation",0,
+            ID["EPSG",8608]],
+        PARAMETER["Y-axis rotation",0,
+            ID["EPSG",8609]],
+        PARAMETER["Z-axis rotation",0.554,
+            ID["EPSG",8610]],
+        PARAMETER["Scale difference",1.0000002263,
+            ID["EPSG",8611]],
+        USAGE[
+            SCOPE["unknown"],
+            AREA["World"],
+            BBOX[-90,-180,90,180]],
+        ID["EPSG",1237]]]
+
+OGC WKT 1 (simple) :
+GEOGCS["WGS 72",
+    DATUM["World_Geodetic_System_1972",
+        SPHEROID["WGS 72",6378135,298.26],
+        TOWGS84[0,0,4.5,0,0,0.554,0.2263]],
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]
 
-OGC WKT (no CT) :
-GEOGCS["SAD69",
-    DATUM["South_American_Datum_1969",
-        SPHEROID["GRS 1967 Modified",6378160,298.25]],
+OGC WKT 1 (no CT) :
+GEOGCS["WGS 72",
+    DATUM["World_Geodetic_System_1972",
+        SPHEROID["WGS 72",6378135,298.26]],
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]
 
 ESRI WKT :
-GEOGCS["SAD69",
-    DATUM["D_South_American_1969",
-        SPHEROID["GRS_1967_Truncated",6378160,298.25]],
-    PRIMEM["Greenwich",0],
-    UNIT["Degree",0.017453292519943295]]
+GEOGCS["GCS_WGS_1972",
+    DATUM["D_WGS_1972",
+        SPHEROID["WGS_1972",6378135.0,298.26]],
+    PRIMEM["Greenwich",0.0],
+    UNIT["Degree",0.0174532925199433]]
+
 \endverbatim
 
 

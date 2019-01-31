@@ -29,19 +29,14 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "gdalwarper.h"
 #include "vrtdataset.h"
 #include "ogr_spatialref.h"
 
-#ifdef PROJ_STATIC
-#if defined(PROJ_VERSION) && PROJ_VERSION >= 5
 #include "proj.h"
-#else
-#include "proj_api.h"
-#endif
-#endif
 
 #include <limits>
 
@@ -76,7 +71,7 @@ class GDALApplyVSGDataset final: public GDALDataset
         virtual int        CloseDependentDatasets() override;
 
         virtual CPLErr GetGeoTransform(double* padfGeoTransform) override;
-        virtual const char* GetProjectionRef() override;
+        virtual const OGRSpatialReference* GetSpatialRef() const override;
 
         bool    IsInitOK();
 };
@@ -174,12 +169,12 @@ CPLErr GDALApplyVSGDataset::GetGeoTransform(double* padfGeoTransform)
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char* GDALApplyVSGDataset::GetProjectionRef()
+const OGRSpatialReference* GDALApplyVSGDataset::GetSpatialRef() const
 {
-    return m_poSrcDataset->GetProjectionRef();
+    return m_poSrcDataset->GetSpatialRef();
 }
 
 /************************************************************************/
@@ -393,10 +388,25 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
                  "Source dataset has no geotransform.");
         return nullptr;
     }
-    const char* pszSrcProjection = CSLFetchNameValueDef(papszOptions,
-                                            "SRC_SRS",
-                                            GDALGetProjectionRef(hSrcDataset));
-    if( pszSrcProjection == nullptr || pszSrcProjection[0] == '\0' )
+    const char* pszSrcProjection = CSLFetchNameValue(papszOptions, "SRC_SRS");
+    OGRSpatialReference oSrcSRS;
+    if( pszSrcProjection != nullptr && pszSrcProjection[0] != '\0' )
+    {
+        oSrcSRS.SetFromUserInput(pszSrcProjection);
+    }
+    else
+    {
+        auto poSRS = GDALDataset::FromHandle(hSrcDataset)->GetSpatialRef();
+        if( poSRS )
+            oSrcSRS = *poSRS;
+    }
+
+    if( oSrcSRS.IsCompound() )
+    {
+        oSrcSRS.StripVertical();
+    }
+
+    if( oSrcSRS.IsEmpty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Source dataset has no projection.");
@@ -416,8 +426,9 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
                  "Grid dataset has no geotransform.");
         return nullptr;
     }
-    const char* pszGridProjection = GDALGetProjectionRef(hGridDataset);
-    if( pszGridProjection == nullptr || pszGridProjection[0] == '\0' )
+
+    OGRSpatialReferenceH hGridSRS = GDALGetSpatialRef(hGridDataset);
+    if( hGridSRS == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Grid dataset has no projection.");
@@ -444,25 +455,37 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
     const int nSrcXSize = GDALGetRasterXSize(hSrcDataset);
     const int nSrcYSize = GDALGetRasterYSize(hSrcDataset);
 
-    OGRSpatialReference oSRS;
-    CPLString osSrcProjection(pszSrcProjection);
-    oSRS.SetFromUserInput(osSrcProjection);
-    if( oSRS.IsCompound() )
-    {
-        OGR_SRSNode* poNode = oSRS.GetRoot()->GetChild(1);
-        if( poNode != nullptr )
-        {
-            char* pszWKT = nullptr;
-            poNode->exportToWkt(&pszWKT);
-            osSrcProjection = pszWKT;
-            CPLFree(pszWKT);
-        }
-    }
+    double dfWestLongitudeDeg = 0.0;
+    double dfSouthLatitudeDeg = 0.0;
+    double dfEastLongitudeDeg = 0.0;
+    double dfNorthLatitudeDeg = 0.0;
+    GDALComputeAreaOfInterest(
+        &oSrcSRS,
+        adfSrcGT,
+        nSrcXSize,
+        nSrcYSize,
+        dfWestLongitudeDeg,
+        dfSouthLatitudeDeg,
+        dfEastLongitudeDeg,
+        dfNorthLatitudeDeg);
 
-    void* hTransform = GDALCreateGenImgProjTransformer3( pszGridProjection,
+    CPLStringList aosOptions;
+    if( !(dfWestLongitudeDeg == 0.0 && dfSouthLatitudeDeg == 0.0 &&
+            dfEastLongitudeDeg == 0.0 && dfNorthLatitudeDeg == 0.0) )
+    {
+        aosOptions.SetNameValue(
+            "AREA_OF_INTEREST",
+            CPLSPrintf("%.16g,%.16g,%.16g,%.16g",
+                        dfWestLongitudeDeg,
+                        dfSouthLatitudeDeg,
+                        dfEastLongitudeDeg,
+                        dfNorthLatitudeDeg));
+    }
+    void* hTransform = GDALCreateGenImgProjTransformer4( hGridSRS,
                                                          adfGridGT,
-                                                         osSrcProjection,
-                                                         adfSrcGT );
+                                                         OGRSpatialReference::ToHandle(&oSrcSRS),
+                                                         adfSrcGT,
+                                                         aosOptions.List());
     if( hTransform == nullptr )
         return nullptr;
     GDALWarpOptions* psWO = GDALCreateWarpOptions();
@@ -551,18 +574,6 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
 }
 
 /************************************************************************/
-/*                          my_proj4_logger()                           */
-/************************************************************************/
-
-#if defined(PROJ_STATIC) && PJ_VERSION >= 490 && PJ_VERSION <= 493
-static void my_proj4_logger(void * user_data, int /*level*/, const char * msg)
-{
-    CPLString* posMsg = static_cast<CPLString*>(user_data);
-    *posMsg += msg;
-}
-#endif
-
-/************************************************************************/
 /*                           GetProj4Filename()                         */
 /************************************************************************/
 
@@ -576,78 +587,12 @@ static CPLString GetProj4Filename(const char* pszFilename)
         return pszFilename;
     }
 
-#if defined(PROJ_STATIC) && PROJ_VERSION >= 5
     PJ_GRID_INFO info = proj_grid_info(pszFilename);
     if( info.filename[0] )
     {
         osFilename = info.filename;
     }
-#elif defined(PROJ_STATIC) && PJ_VERSION > 493
-    osFilename.resize(2048);
-    projCtx ctx = pj_ctx_alloc();
-    if( pj_find_file(ctx, pszFilename, &osFilename[0], osFilename.size()) )
-    {
-        osFilename.resize( strlen(osFilename) );
-    }
-    else
-    {
-        osFilename.clear();
-    }
-    pj_ctx_free(ctx);
-#else
-    // Transpose some of the proj.4 pj_open_lib() logic...
 
-    /* check if ~/name */
-    char* pszSysname;
-    if (*pszFilename == '~' &&
-        (pszFilename[1] == '/' || pszFilename[1] == '\\') )
-    {
-        if ((pszSysname = getenv("HOME")) != nullptr)
-        {
-            osFilename = CPLFormFilename(pszSysname, pszFilename + 1, nullptr);
-        }
-        return osFilename;
-    }
-
-    /* or is environment PROJ_LIB defined */
-    else if ((pszSysname = getenv("PROJ_LIB")) != nullptr)
-    {
-        osFilename = CPLFormFilename(pszSysname, pszFilename, nullptr);
-        VSIStatBufL sStat;
-        if( VSIStatL(osFilename, &sStat) == 0 )
-            return osFilename;
-        osFilename.clear();
-    }
-
-
-#if defined(PROJ_STATIC) && PJ_VERSION >= 490
-    // Super messy. proj.4 up to 4.9.3 had no public API to return the full
-    // path to a resource file, so we rely on the fact that it emits a log
-    // message with it...
-    // Basically this is needed in the case where the file is in the
-    // resource installation directory of proj.4, which we have no way to
-    // know otherwise.
-    CPLString osMsg;
-    projCtx ctx = pj_ctx_alloc();
-    pj_ctx_set_app_data(ctx, &osMsg);
-    pj_ctx_set_debug(ctx, PJ_LOG_DEBUG_MAJOR);
-    pj_ctx_set_logger(ctx, my_proj4_logger);
-    PAFile f = pj_open_lib(ctx, pszFilename, "rb");
-    if( f )
-    {
-        pj_ctx_fclose(ctx, f);
-        size_t nPos = osMsg.find("fopen(");
-        if( nPos != std::string::npos )
-        {
-            osFilename = osMsg.substr(nPos + strlen("fopen("));
-            nPos = osFilename.find(")");
-            if( nPos != std::string::npos )
-                osFilename = osFilename.substr(0, nPos);
-        }
-    }
-    pj_ctx_free(ctx);
-#endif
-#endif
     return osFilename;
 }
 

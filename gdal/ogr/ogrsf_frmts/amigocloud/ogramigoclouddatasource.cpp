@@ -366,7 +366,15 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
-    poLayer->SetDeferredCreation(eGType, poSpatialRef, bGeomNullable);
+    OGRSpatialReference* poSRSClone = poSpatialRef;
+    if( poSRSClone )
+    {
+        poSRSClone = poSRSClone->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    poLayer->SetDeferredCreation(eGType, poSRSClone, bGeomNullable);
+    if( poSRSClone )
+        poSRSClone->Release();
     papoLayers = (OGRAmigoCloudTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRAmigoCloudTableLayer*));
     papoLayers[nLayers ++] = poLayer;

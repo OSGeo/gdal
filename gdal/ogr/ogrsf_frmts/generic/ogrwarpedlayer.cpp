@@ -381,7 +381,7 @@ static double TransformAndUpdateBBAndReturnX(
     double& dfMinX, double& dfMinY, double& dfMaxX, double& dfMaxY )
 {
     int bSuccess = FALSE;
-    poCT->TransformEx( 1, &dfX, &dfY, nullptr, &bSuccess );
+    poCT->Transform( 1, &dfX, &dfY, nullptr, nullptr, &bSuccess );
     if( bSuccess )
     {
         if( dfX < dfMinX ) dfMinX = dfX;
@@ -455,8 +455,8 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
 
     int bRet = FALSE;
 
-    if( poCT->TransformEx( (NSTEP + 1) * (NSTEP + 1), padfX, padfY, nullptr,
-                            pabSuccess ) )
+    if( poCT->Transform( (NSTEP + 1) * (NSTEP + 1), padfX, padfY, nullptr,
+                         nullptr, pabSuccess ) )
     {
         double dfMinX = 0.0;
         double dfMinY = 0.0;

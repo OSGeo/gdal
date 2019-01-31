@@ -19,7 +19,7 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-ALL_C_FLAGS	=	$(CPPFLAGS) $(CFLAGS) -DDONT_DEPRECATE_SPRINTF
+ALL_C_FLAGS	=	$(CPPFLAGS) $(CFLAGS) -DDONT_DEPRECATE_SPRINTF $(PROJ_INCLUDE) $(PROJ_FLAGS)
 
 ifeq ($(TIFF_SETTING),internal)
 ALL_C_FLAGS	:=	-I../libtiff $(ALL_C_FLAGS)

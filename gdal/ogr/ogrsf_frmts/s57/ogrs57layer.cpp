@@ -55,7 +55,7 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
     SetDescription( poFeatureDefn->GetName() );
     if( poFeatureDefn->GetGeomFieldCount() > 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
-            poDS->GetSpatialRef() );
+            poDS->DSGetSpatialRef() );
 
     if( EQUAL(poDefnIn->GetName(),OGRN_VI) )
         nRCNM = RCNM_VI;

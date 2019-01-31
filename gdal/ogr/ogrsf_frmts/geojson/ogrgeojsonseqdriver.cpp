@@ -138,6 +138,7 @@ class OGRGeoJSONSeqWriteLayer final: public OGRLayer
     OGRFeatureDefn* m_poFeatureDefn = nullptr;
 
     OGRCoordinateTransformation* m_poCT = nullptr;
+    OGRGeometryFactory::TransformWithOptionsCache m_oTransformCache;
     OGRGeoJSONWriteOptions m_oWriteOptions;
     bool m_bRS = false;
 };
@@ -209,7 +210,10 @@ OGRLayer* OGRGeoJSONSeqDataSource::ICreateLayer( const char* pszNameIn,
     {
         OGRSpatialReference oSRSWGS84;
         oSRSWGS84.SetWellKnownGeogCS( "WGS84" );
-        if( !poSRS->IsSame(&oSRSWGS84) )
+        oSRSWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        const char* const apszOptions[] = {
+            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+        if( !poSRS->IsSame(&oSRSWGS84, apszOptions) )
         {
             poCT = OGRCreateCoordinateTransformation( poSRS, &oSRSWGS84 );
             if( poCT == nullptr )
@@ -253,8 +257,12 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(OGRGeoJSONSeqDataSource* poDS,
     SetDescription(pszName);
     m_poFeatureDefn = new OGRFeatureDefn(pszName);
     m_poFeatureDefn->Reference();
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
-        OGRSpatialReference::GetWGS84SRS());
+
+    OGRSpatialReference* poSRSWGS84 = new OGRSpatialReference();
+    poSRSWGS84->SetWellKnownGeogCS( "WGS84" );
+    poSRSWGS84->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRSWGS84);
+    poSRSWGS84->Release();
 
     Init();
 }
@@ -549,7 +557,7 @@ OGRErr OGRGeoJSONSeqWriteLayer::ICreateFeature( OGRFeature* poFeature )
             const char* const apszOptions[] = { "WRAPDATELINE=YES", nullptr };
             OGRGeometry* poNewGeom =
                 OGRGeometryFactory::transformWithOptions(
-                    poGeometry, m_poCT, const_cast<char**>(apszOptions));
+                    poGeometry, m_poCT, const_cast<char**>(apszOptions), m_oTransformCache);
             if( poNewGeom == nullptr )
             {
                 return OGRERR_FAILURE;

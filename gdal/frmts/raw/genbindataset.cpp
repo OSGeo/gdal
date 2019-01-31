@@ -210,7 +210,10 @@ class GenBinDataset final: public RawDataset
     ~GenBinDataset() override;
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef(void) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     char **GetFileList() override;
 
@@ -379,13 +382,13 @@ GenBinDataset::~GenBinDataset()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *GenBinDataset::GetProjectionRef()
+const char *GenBinDataset::_GetProjectionRef()
 
 {
     if (pszProjection && strlen(pszProjection) > 0)
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/

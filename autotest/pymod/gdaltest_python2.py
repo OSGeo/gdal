@@ -179,7 +179,7 @@ def read_in_thread(f, q):
 # Compatible with Python 2.6 or above
 
 
-def _runexternal_out_and_err_subprocess(cmd, check_memleak=True):
+def _runexternal_out_and_err_subprocess(cmd, check_memleak=True, encoding=None):
     # pylint: disable=unused-argument
     command = shlex.split(cmd)
     command = [elt.replace('\x00', '') for elt in command]
@@ -210,8 +210,11 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak=True):
     if waitcode != 0:
         ret_stderr = ret_stderr + '\nERROR ret code = %d' % waitcode
 
+    if encoding is not None:
+        ret_stdout = ret_stdout.decode(encoding)
+
     return (ret_stdout, ret_stderr)
 
 
-def runexternal_out_and_err(cmd, check_memleak=True):
-    return _runexternal_out_and_err_subprocess(cmd, check_memleak=check_memleak)
+def runexternal_out_and_err(cmd, check_memleak=True, encoding=None):
+    return _runexternal_out_and_err_subprocess(cmd, check_memleak=check_memleak, encoding=encoding)

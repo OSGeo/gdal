@@ -881,7 +881,8 @@ def test_ogr_geojson_23():
     sr_got = lyr.GetSpatialRef()
     ds = None
 
-    assert sr_got.ExportToWkt() == sr.ExportToWkt(), 'did not get expected SRS'
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    assert sr_got.IsSame(sr), 'did not get expected SRS'
 
     fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_23.json', 'rb')
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')

@@ -63,8 +63,8 @@ class CPL_DLL MEMDataset : public GDALDataset
 
     char        *pszProjection;
 
-    int          nGCPCount;
-    GDAL_GCP    *pasGCPs;
+    int          m_nGCPCount;
+    GDAL_GCP    *m_pasGCPs;
     CPLString    osGCPProjection;
 
     int          m_nOverviewDSCount;
@@ -80,8 +80,14 @@ class CPL_DLL MEMDataset : public GDALDataset
                  MEMDataset();
     virtual      ~MEMDataset();
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection( const char * ) override;
+    const char *_GetProjectionRef(void) override;
+    CPLErr _SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
@@ -89,11 +95,18 @@ class CPL_DLL MEMDataset : public GDALDataset
     virtual void *GetInternalHandle( const char * ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
-
+    CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection ) override;
+    using GDALDataset::SetGCPs;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const OGRSpatialReference* poSRS ) override {
+        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
+    }
     virtual CPLErr        AddBand( GDALDataType eType,
                                    char **papszOptions=nullptr ) override;
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,

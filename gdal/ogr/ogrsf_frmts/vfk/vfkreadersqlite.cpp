@@ -239,6 +239,7 @@ VFKReaderSQLite::VFKReaderSQLite( const GDALOpenInfo* poOpenInfo ) :
 
         /* insert S-JTSK into spatial_ref_sys table */
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poSRS->importFromEPSG(5514) != OGRERR_FAILURE)
         {
             char *pszWKT = nullptr;

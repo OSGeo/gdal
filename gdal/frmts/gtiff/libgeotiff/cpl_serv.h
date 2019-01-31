@@ -37,7 +37,6 @@
 
 #include "cpl_port.h"
 #include "cpl_string.h"
-#include "cpl_csv.h"
 
 #define GTIFAtof CPLAtof
 #define GTIFStrtod CPLStrtod

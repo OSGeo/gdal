@@ -1462,7 +1462,7 @@ def test_netcdf_42():
         'LINE_OFFSET': '0',
         'X_DATASET': 'NETCDF:"tmp/netcdf_42.nc":lon',
         'PIXEL_STEP': '1',
-        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         'PIXEL_OFFSET': '0',
         'X_BAND': '1',
         'LINE_STEP': '1',
@@ -1492,12 +1492,18 @@ def test_netcdf_43():
         'LINE_OFFSET': '0',
         'X_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lon',
         'PIXEL_STEP': '1',
-        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         'PIXEL_OFFSET': '0',
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lat',
             'Y_BAND': '1'})
+
+    tmp_ds = gdal.Warp('', 'tmp/netcdf_43.nc', options = '-f MEM -geoloc')
+    gt = tmp_ds.GetGeoTransform()
+    assert abs(gt[0] - -117.3) < 1, gt
+    assert abs(gt[3] - 33.9) < 1, gt
+
 
 ###############################################################################
 # Test NC_USHORT/UINT read/write - netcdf-4 only (#6337)
@@ -2753,7 +2759,7 @@ def test_netcdf_81():
         'Did not get expected dimensions'
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6367470,594.3130483479559]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Rotated_pole"],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unnamed",SPHEROID["Spheroid",6367470,594.313048347956]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()

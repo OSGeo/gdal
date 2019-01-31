@@ -146,6 +146,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
           {
 #if 0
               poSRS = new OGRSpatialReference();
+              poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
               AVCE00File *hFile
                   = AVCE00ReadOpen( psE00->pszCoverPath,
                                     psSec->pszFilename,
@@ -157,6 +158,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
                   char **papszPRJ = AVCE00ReadNextPrj( hFile );
 
                   poSRS = new OGRSpatialReference();
+                  poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                   if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
                   {
                       CPLError( CE_Warning, CPLE_AppDefined,
@@ -214,7 +216,7 @@ OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
 /************************************************************************/
 /*                           GetSpatialRef()                            */
 /************************************************************************/
-OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
+OGRSpatialReference *OGRAVCE00DataSource::DSGetSpatialRef()
 {
     if (m_bSRSFetched)
         return poSRS;
@@ -235,6 +237,7 @@ OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
                 if( pszPRJ )
                 {
                     poSRS = new OGRSpatialReference();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     if( poSRS->importFromESRI( pszPRJ ) != OGRERR_NONE )
                     {
                         CPLError( CE_Warning, CPLE_AppDefined,

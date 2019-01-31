@@ -88,7 +88,10 @@ class DIPExDataset final: public GDALPamDataset
 
     CPLErr GetGeoTransform( double * ) override;
 
-    const char *GetProjectionRef( void ) override;
+    const char *_GetProjectionRef( void ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -357,7 +360,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *DIPExDataset::GetProjectionRef()
+const char *DIPExDataset::_GetProjectionRef()
 
 {
     return osSRS.c_str();

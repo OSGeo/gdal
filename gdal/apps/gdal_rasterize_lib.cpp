@@ -149,22 +149,15 @@ static CPLErr ProcessLayer(
     OGRCoordinateTransformationH hCT = nullptr;
     if (!bSRSIsSet)
     {
-        OGRSpatialReferenceH  hDstSRS = nullptr;
-        const char* pszProjection = GDALGetProjectionRef( hDstDS );
-        if( pszProjection != nullptr && pszProjection[0] != '\0' )
-        {
-            hDstSRS = OSRNewSpatialReference(nullptr);
-            char* pszProjectionTmp = const_cast<char*>(pszProjection);
-            if( OSRImportFromWkt( hDstSRS, &pszProjectionTmp ) != OGRERR_NONE )
-            {
-                OSRDestroySpatialReference(hDstSRS);
-                hDstSRS = nullptr;
-            }
-        }
+        OGRSpatialReferenceH hDstSRS = GDALGetSpatialRef(hDstDS);
+
+        if( hDstSRS )
+            hDstSRS = OSRClone(hDstSRS);
         else if( GDALGetMetadata(hDstDS, "RPC") != nullptr )
         {
             hDstSRS = OSRNewSpatialReference(nullptr);
-            CPL_IGNORE_RET_VAL( OSRSetFromUserInput(hDstSRS, SRS_WKT_WGS84) );
+            CPL_IGNORE_RET_VAL( OSRSetFromUserInput(hDstSRS, SRS_WKT_WGS84_LAT_LONG) );
+            OSRSetAxisMappingStrategy(hDstSRS, OAMS_TRADITIONAL_GIS_ORDER);
         }
 
         OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hSrcLayer);

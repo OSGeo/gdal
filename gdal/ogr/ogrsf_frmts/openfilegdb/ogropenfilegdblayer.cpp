@@ -226,8 +226,9 @@ OGROpenFileGDBLayer::~OGROpenFileGDBLayer()
 
 static OGRSpatialReference* BuildSRS(const char* pszWKT)
 {
-    OGRSpatialReference* poSRS = new OGRSpatialReference( pszWKT );
-    if( poSRS->morphFromESRI() != OGRERR_NONE )
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if( poSRS->importFromWkt(pszWKT) != OGRERR_NONE )
     {
         delete poSRS;
         poSRS = nullptr;
@@ -244,6 +245,7 @@ static OGRSpatialReference* BuildSRS(const char* pszWKT)
             {
                 poSRS->Release();
                 poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 CPLFree(pahSRS);
             }
             else
@@ -371,6 +373,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         {
             int bSuccess = FALSE;
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // Try first with nLatestWKID as there is a higher chance it is a
             // EPSG code and not an ESRI one.

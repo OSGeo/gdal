@@ -43,12 +43,14 @@ const double NAUTICAL_MILE_TO_METER = 1852.0;
 
 OGROpenAirLayer::OGROpenAirLayer( VSILFILE* fp ) :
     poFeatureDefn(new OGRFeatureDefn( "airspaces" )),
-    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG)),
     fpOpenAir(fp),
     bEOF(false),
     bHasLastLine(false),
     nNextFID(0)
 {
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPolygon );

@@ -42,6 +42,9 @@
 #include "ogr_spatialref.h"
 #include "idrisi.h"
 
+#include "proj_experimental.h"
+#include "ogr_proj_p.h"
+
 #include <cmath>
 
 CPL_CVSID( "$Id$" )
@@ -536,8 +539,14 @@ public:
     virtual char **GetFileList(void) override;
     virtual CPLErr GetGeoTransform( double *padfTransform ) override;
     virtual CPLErr SetGeoTransform( double *padfTransform ) override;
-    virtual const char *GetProjectionRef( void ) override;
-    virtual CPLErr SetProjection( const char *pszProjString ) override;
+    virtual const char *_GetProjectionRef( void ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    virtual CPLErr _SetProjection( const char *pszProjString ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 };
 
 //  ----------------------------------------------------------------------------
@@ -1458,9 +1467,9 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *IdrisiDataset::GetProjectionRef( void )
+const char *IdrisiDataset::_GetProjectionRef( void )
 {
-    const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
+    const char *pszPamSRS = GDALPamDataset::_GetProjectionRef();
 
     if( pszPamSRS != nullptr && strlen( pszPamSRS ) > 0 )
         return pszPamSRS;
@@ -1482,7 +1491,7 @@ const char *IdrisiDataset::GetProjectionRef( void )
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr IdrisiDataset::SetProjection( const char *pszProjString )
+CPLErr IdrisiDataset::_SetProjection( const char *pszProjString )
 {
     CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszProjString );
@@ -2616,8 +2625,48 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
 
         if( nEPSG == 0 )
         {
-            nEPSG = atoi_nz( CSVGetField( CSVFilename( "gcs.csv" ),
-                "DATUM_NAME", pszDatum, CC_ApproxString, "COORD_REF_SYS_CODE" ) );
+            const PJ_TYPE nObjType = PJ_TYPE_GEODETIC_REFERENCE_FRAME;
+            auto datumList = proj_create_from_name(
+                OSRGetProjTLSContext(),
+                "EPSG",
+                pszDatum,
+                &nObjType,
+                1,
+                true,
+                1,
+                nullptr);
+            if( datumList && proj_list_get_count(datumList) == 1 )
+            {
+                auto datum = proj_list_get(OSRGetProjTLSContext(), datumList, 0);
+                if( datum )
+                {
+                    const char* datumCode = proj_get_id_code(datum, 0);
+                    if( datumCode )
+                    {
+                        auto crsList = proj_query_geodetic_crs_from_datum(
+                            OSRGetProjTLSContext(), "EPSG", "EPSG",
+                            datumCode, "geographic 2D");
+                        if( crsList && proj_list_get_count(crsList) != 0 )
+                        {
+                            auto crs = proj_list_get(
+                                OSRGetProjTLSContext(), crsList, 0);
+                            if( crs )
+                            {
+                                const char* crsCode = proj_get_id_code(crs, 0);
+                                if( crsCode )
+                                {
+                                    nEPSG = atoi(crsCode);
+                                }
+                                proj_destroy(crs);
+                            }
+                        }
+                        proj_list_destroy(crsList);
+
+                    }
+                    proj_destroy(datum);
+                }
+            }
+            proj_list_destroy(datumList);
         }
 
         // ----------------------------------------------------------------------
@@ -2626,8 +2675,31 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
 
         if( nEPSG == 0 )
         {
-            nEPSG = atoi_nz( CSVGetField( CSVFilename( "gcs.csv" ),
-                "COORD_REF_SYS_NAME", pszDatum, CC_ApproxString, "COORD_REF_SYS_CODE" ) );
+            const PJ_TYPE nObjType = PJ_TYPE_GEOGRAPHIC_2D_CRS;
+            auto crsList = proj_create_from_name(
+                OSRGetProjTLSContext(),
+                "EPSG",
+                pszDatum,
+                &nObjType,
+                1,
+                true,
+                1,
+                nullptr);
+            if( crsList && proj_list_get_count(crsList) != 0 )
+            {
+                auto crs = proj_list_get(
+                    OSRGetProjTLSContext(), crsList, 0);
+                if( crs )
+                {
+                    const char* crsCode = proj_get_id_code(crs, 0);
+                    if( crsCode )
+                    {
+                        nEPSG = atoi(crsCode);
+                    }
+                    proj_destroy(crs);
+                }
+            }
+            proj_list_destroy(crsList);
         }
 
         if( nEPSG != 0 )

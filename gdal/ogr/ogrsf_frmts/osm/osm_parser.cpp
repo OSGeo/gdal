@@ -59,7 +59,9 @@ CPL_CVSID("$Id$")
 // doing checks for each byte.
 constexpr int EXTRA_BYTES = 1;
 
+#ifdef HAVE_EXPAT
 constexpr int XML_BUFSIZE = 64 * 1024;
+#endif
 
 // Per OSM PBF spec
 constexpr unsigned int MAX_BLOB_HEADER_SIZE = 64 * 1024;

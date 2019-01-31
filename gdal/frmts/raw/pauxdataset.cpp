@@ -70,12 +70,18 @@ class PAuxDataset final: public RawDataset
     char        **papszAuxLines;
     int         bAuxUpdated;
 
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
 
     int    GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP *GetGCPs() override;
 
     char **GetFileList() override;
@@ -490,7 +496,7 @@ int PAuxDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *PAuxDataset::GetGCPProjection()
+const char *PAuxDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 && pszGCPProjection != nullptr )
@@ -513,13 +519,13 @@ const GDAL_GCP *PAuxDataset::GetGCPs()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *PAuxDataset::GetProjectionRef()
+const char *PAuxDataset::_GetProjectionRef()
 
 {
     if( pszProjection )
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/

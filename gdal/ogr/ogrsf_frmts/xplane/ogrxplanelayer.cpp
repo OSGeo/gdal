@@ -50,6 +50,7 @@ OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName ) :
     poFeatureDefn->Reference();
 
     poSRS->SetWellKnownGeogCS("WGS84");
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 }
 

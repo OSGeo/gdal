@@ -29,6 +29,7 @@
 ###############################################################################
 
 from osgeo import gdal
+from osgeo import osr
 
 
 import gdaltest
@@ -133,6 +134,53 @@ def test_bsb_6():
 
     return ret
 
+###############################################################################
+
+def test_bsb_tmerc():
+    if gdaltest.bsb_dr is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/transverse_mercator.kap')
+    gt = ds.GetGeoTransform()
+    expected_gt = [28487.6637325402, 1.2711141208521637, 0.009061669923111566,
+                   6539651.728646593, 0.015209115944776083, -1.267821834560455]
+    assert min([abs(gt[i] - expected_gt[i]) <= 1e-8 * abs(expected_gt[i]) for i in range(6)]) == True, gt
+    expected_wkt = """PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",18.0582833333333],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["Meter",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
+    expected_sr = osr.SpatialReference()
+    expected_sr.SetFromUserInput(expected_wkt)
+    expected_sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER);
+    got_sr = ds.GetSpatialRef()
+    assert expected_sr.IsSame(got_sr), got_sr.ExportToWkt()
+    got_sr = ds.GetGCPSpatialRef()
+    assert expected_sr.IsSame(got_sr), got_sr.ExportToWkt()
+    assert ds.GetGCPCount() == 3
+    gcps = ds.GetGCPs()
+    assert len(gcps) == 3
+
+    assert gcps[0].GCPPixel == 25 and \
+       gcps[0].GCPLine == 577 and \
+       abs(gcps[0].GCPX - 28524.670169107143) < 1e-5 and \
+       abs(gcps[0].GCPY - 6538920.57567595) < 1e-5 and \
+       gcps[0].GCPZ == 0
 
 
 

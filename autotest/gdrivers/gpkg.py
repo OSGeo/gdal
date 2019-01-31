@@ -235,6 +235,10 @@ def test_gpkg_1():
     assert sql_lyr.GetFeatureCount() == 0
     out_ds.ReleaseResultSet(sql_lyr)
 
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_spatial_ref_sys')
+    assert sql_lyr.GetLayerDefn().GetFieldIndex('definition_12_063') < 0
+    out_ds.ReleaseResultSet(sql_lyr)
+
     out_ds = None
 
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options=['BAND_COUNT=3'])
@@ -2035,7 +2039,7 @@ def test_gpkg_26():
 
         gdal.Unlink('/vsimem/tmp.gpkg')
 
-    tests = [('GoogleCRS84Quad', [[42255, 47336, 24963, 35707], [42253, 47333, 24961, 35707]], None),
+    tests = [('GoogleCRS84Quad', [[42255, 47336, 24963, 35707], [42255, 47336, 24965, 35707], [42253, 47333, 24961, 35707]], None),
              ('GoogleMapsCompatible', [[35429, 36787, 20035, 17849]], None)]
 
     for (scheme, expected_cs, other_options) in tests:
@@ -3187,6 +3191,93 @@ def test_gpkg_match_overview_factor():
     ds = None
 
     gdal.Unlink('/vsimem/gpkg_match_overview_factor.gpkg')
+
+
+###############################################################################
+
+
+def test_gpkg_wkt2():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+
+    # WKT2-only compatible SRS with EPSG code
+    filename = '/vsimem/test_gpkg_wkt2.gpkg'
+    ds = gdaltest.gpkg_dr.Create(filename, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4979) # WGS 84 3D
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds.SetSpatialRef(sr)
+    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds = None
+
+    ds = gdal.Open(filename)
+    sr_got = ds.GetSpatialRef()
+    assert sr_got.IsSame(sr), sr_got.ExportToWkt()
+
+    lyr = ds.ExecuteSQL('SELECT * FROM gpkg_spatial_ref_sys ORDER BY srs_id')
+    f = lyr.GetNextFeature()
+    assert f.GetField('srs_name') == 'Undefined cartesian SRS'
+    assert f.GetField('srs_id') == -1
+    assert f.GetField('organization') == 'NONE'
+    assert f.GetField('organization_coordsys_id') == -1
+    assert f.GetField('definition') == 'undefined'
+    assert f.GetField('description') == 'undefined cartesian coordinate reference system'
+    assert f.GetField('definition_12_063') == 'undefined'
+
+    lyr.GetNextFeature()
+
+    f = lyr.GetNextFeature()
+    assert f.GetField('definition').startswith('GEOGCS["WGS 84"')
+    assert f.GetField('definition_12_063').startswith('GEODCRS["WGS 84"') and 'ID["EPSG",4326]' in f.GetField('definition_12_063')
+
+    f = lyr.GetNextFeature()
+    assert f.GetField('definition') == 'undefined'
+    assert f.GetField('definition_12_063').startswith('GEODCRS["WGS 84"') and 'ID["EPSG",4979]' in f.GetField('definition_12_063')
+
+    ds.ReleaseResultSet(lyr)
+
+    lyr = ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE extension_name = 'gpkg_crs_wkt'")
+    assert lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(lyr)
+
+    ds = None
+
+    # WKT2-only compatible SRS without EPSG code
+    ds = gdaltest.gpkg_dr.Create(filename, 1, 1, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=table2'])
+    sr.SetFromUserInput('GEODCRS["my CRS",DATUM["my datum",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],CS[ellipsoidal,3],AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],AXIS["ellipsoidal height (h)",up,ORDER[3],LENGTHUNIT["metre",1]]]')
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds.SetSpatialRef(sr)
+    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds = None
+
+    ds = gdal.Open('GPKG:' + filename + ':table2')
+    sr_got = ds.GetSpatialRef()
+    assert sr_got.IsSame(sr), sr_got.ExportToWkt()
+    ds = None
+
+    # WKT1 compatible SRS
+    ds = gdaltest.gpkg_dr.Create(filename, 1, 1, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=table3'])
+    sr.ImportFromEPSG(32631)
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds.SetSpatialRef(sr)
+    ds.SetGeoTransform([500000,1,0,4500000,0,-1])
+    ds = None
+
+    ds = gdal.Open('GPKG:' + filename + ':table3')
+    sr_got = ds.GetSpatialRef()
+    assert sr_got.IsSame(sr), sr_got.ExportToWkt()
+
+    lyr = ds.ExecuteSQL('SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id = 32631')
+    f = lyr.GetNextFeature()
+    assert f.GetField('definition').startswith('PROJCS["WGS 84 / UTM zone 31N",') and 'AUTHORITY["EPSG","32631"]' in f.GetField('definition')
+    assert f.GetField('definition_12_063').startswith('PROJCRS["WGS 84 / UTM zone 31N",') and 'ID["EPSG",32631]' in f.GetField('definition_12_063')
+    ds.ReleaseResultSet(lyr)
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    gdal.Unlink(filename)
 
 ###############################################################################
 #

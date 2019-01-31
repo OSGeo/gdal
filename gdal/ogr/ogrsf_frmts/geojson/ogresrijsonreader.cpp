@@ -1020,8 +1020,8 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
 
             const char* pszWKT = json_object_get_string( poObjWkt );
             poSRS = new OGRSpatialReference();
-            if( OGRERR_NONE != poSRS->importFromWkt( pszWKT ) ||
-                poSRS->morphFromESRI() != OGRERR_NONE )
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if( OGRERR_NONE != poSRS->importFromWkt( pszWKT ) )
             {
                 delete poSRS;
                 poSRS = nullptr;
@@ -1033,6 +1033,7 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
         const int nEPSG = json_object_get_int( poObjWkid );
 
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( OGRERR_NONE != poSRS->importFromEPSG( nEPSG ) )
         {
             delete poSRS;

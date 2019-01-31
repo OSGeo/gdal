@@ -87,11 +87,11 @@ class GDALOverviewDataset final: public GDALDataset
                          int bThisLevelOnly );
     ~GDALOverviewDataset() override;
 
-    const char *GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr GetGeoTransform( double * ) override;
 
     int GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
     char  **GetMetadata( const char * pszDomain = "" ) override;
@@ -340,13 +340,13 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char *GDALOverviewDataset::GetProjectionRef()
+const OGRSpatialReference *GDALOverviewDataset::GetSpatialRef() const
 
 {
-    return poMainDS->GetProjectionRef();
+    return poMainDS->GetSpatialRef();
 }
 
 /************************************************************************/
@@ -385,13 +385,13 @@ int GDALOverviewDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *GDALOverviewDataset::GetGCPProjection()
+const OGRSpatialReference *GDALOverviewDataset::GetGCPSpatialRef() const
 
 {
-    return poMainDS->GetGCPProjection();
+    return poMainDS->GetGCPSpatialRef();
 }
 
 /************************************************************************/

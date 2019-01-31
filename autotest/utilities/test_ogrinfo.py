@@ -315,7 +315,7 @@ def test_ogrinfo_22():
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' tmp/test_ogrinfo_22.csv', check_memleak=False)
     assert '1: test_ogrinfo_22 (Unknown (any), Unknown (any))' in ret
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al tmp/test_ogrinfo_22.csv', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al -wkt_format wkt1 tmp/test_ogrinfo_22.csv', check_memleak=False)
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_22.csv'
       using driver `CSV' successful.
 
@@ -335,7 +335,10 @@ GEOGCS["WGS 84",
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
+    AXIS["Latitude",NORTH],
+    AXIS["Longitude",EAST],
     AUTHORITY["EPSG","4326"]]
+Data axis to CRS axis mapping: 2,1
 SRS WKT (geom__WKTgeom2_EPSG_32631):
 PROJCS["WGS 84 / UTM zone 31N",
     GEOGCS["WGS 84",
@@ -359,6 +362,7 @@ PROJCS["WGS 84 / UTM zone 31N",
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH],
     AUTHORITY["EPSG","32631"]]
+Data axis to CRS axis mapping: 1,2
 Geometry Column 1 = geom__WKTgeom1_EPSG_4326
 Geometry Column 2 = geom__WKTgeom2_EPSG_32631
 _WKTgeom1_EPSG_4326: String (0.0)
@@ -390,7 +394,7 @@ def test_ogrinfo_23():
     f.write('"POINT(3 4)","POINT(1 2)"\n')
     f.close()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al tmp/test_ogrinfo_23.csv -spat 1 2 1 2 -geomfield geom__WKTgeom2_EPSG_32631', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al tmp/test_ogrinfo_23.csv -wkt_format wkt1 -spat 1 2 1 2 -geomfield geom__WKTgeom2_EPSG_32631', check_memleak=False)
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_23.csv'
       using driver `CSV' successful.
 
@@ -410,7 +414,10 @@ GEOGCS["WGS 84",
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
+    AXIS["Latitude",NORTH],
+    AXIS["Longitude",EAST],
     AUTHORITY["EPSG","4326"]]
+Data axis to CRS axis mapping: 2,1
 SRS WKT (geom__WKTgeom2_EPSG_32631):
 PROJCS["WGS 84 / UTM zone 31N",
     GEOGCS["WGS 84",
@@ -434,6 +441,7 @@ PROJCS["WGS 84 / UTM zone 31N",
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH],
     AUTHORITY["EPSG","32631"]]
+Data axis to CRS axis mapping: 1,2
 Geometry Column 1 = geom__WKTgeom1_EPSG_4326
 Geometry Column 2 = geom__WKTgeom2_EPSG_32631
 _WKTgeom1_EPSG_4326: String (0.0)
@@ -495,7 +503,6 @@ PROJCS["OSGB 1936 / British National Grid",
         DATUM["OSGB_1936",
             SPHEROID["Airy 1830",6377563.396,299.3249646,
                 AUTHORITY["EPSG","7001"]],
-            TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],
             AUTHORITY["EPSG","6277"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
@@ -541,7 +548,6 @@ PROJCS["OSGB 1936 / British National Grid",
         DATUM["OSGB_1936",
             SPHEROID["Airy 1830",6377563.396,299.3249646,
                 AUTHORITY["EPSG","7001"]],
-            TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],
             AUTHORITY["EPSG","6277"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
@@ -559,6 +565,7 @@ PROJCS["OSGB 1936 / British National Grid",
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH],
     AUTHORITY["EPSG","27700"]]
+Data axis to CRS axis mapping: 1,2
 AREA: Real (12.3)
 EAS_ID: Integer64 (11.0)
 PRFEDEA: String (16.0)
@@ -585,7 +592,6 @@ PROJCS["OSGB 1936 / British National Grid",
         DATUM["OSGB_1936",
             SPHEROID["Airy 1830",6377563.396,299.3249646,
                 AUTHORITY["EPSG","7001"]],
-            TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],
             AUTHORITY["EPSG","6277"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
@@ -603,6 +609,7 @@ PROJCS["OSGB 1936 / British National Grid",
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH],
     AUTHORITY["EPSG","27700"]]
+Data axis to CRS axis mapping: 1,2
 AREA: Real (12.3)
 EAS_ID: Integer64 (11.0)
 PRFEDEA: String (16.0)

@@ -2860,19 +2860,10 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
             {
                 OGRSpatialReference* poSRS =
                                 new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
                 if( poSRS->SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 {
-                    OGR_SRSNode *poGEOGCS = poSRS->GetAttrNode( "GEOGCS" );
-                    if( poGEOGCS != nullptr )
-                        poGEOGCS->StripNodes( "AXIS" );
-
-                    OGR_SRSNode *poPROJCS = poSRS->GetAttrNode( "PROJCS" );
-                    if (poPROJCS != nullptr &&
-                        poSRS->EPSGTreatsAsNorthingEasting())
-                    {
-                        poPROJCS->StripNodes( "AXIS" );
-                    }
-
                     m_oMapGeomFieldDefnToSRSName[poGeomFieldDefn] = pszSRSName;
                     poGeomFieldDefn->SetSpatialRef(poSRS);
                 }
@@ -2907,8 +2898,9 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
             {
                 OGRSpatialReference oSRS;
                 oSRS.SetFromUserInput( pszSRSName );
-                bSwapXY = CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong()) ||
-                            CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
+                bSwapXY = !STARTS_WITH_CI(pszSRSName, "EPSG:") &&
+                    (CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong()) ||
+                     CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting()));
                 m_oMapSRSNameToInvertedAxis[ pszSRSName ] = bSwapXY;
             }
             else

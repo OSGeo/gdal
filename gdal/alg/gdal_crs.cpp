@@ -52,6 +52,7 @@
  ****************************************************************************/
 
 #include "gdal_alg.h"
+#include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
@@ -63,22 +64,9 @@
 
 CPL_CVSID("$Id$")
 
-/* Hum, we cannot include gdal_priv.h from a .c file... */
-CPL_C_START
-
-void GDALSerializeGCPListToXML( CPLXMLNode* psParentNode,
-                                GDAL_GCP* pasGCPList,
-                                int nGCPCount,
-                                const char* pszGCPProjection );
-void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
-                                    GDAL_GCP** ppasGCPList,
-                                    int* pnGCPCount,
-                                    char** ppszGCPProjection );
-
-CPL_C_END
-
 #define MAXORDER 3
 
+namespace {
 struct Control_Points
 {
     int  count;
@@ -88,6 +76,7 @@ struct Control_Points
     double *n2;
     int *status;
 };
+}
 
 typedef struct
 {
@@ -151,10 +140,10 @@ static
 void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, double dfRatioY )
 {
     int i = 0;
-    GDAL_GCP *pasGCPList = NULL;
-    GCPTransformInfo *psInfo = (GCPTransformInfo *) hTransformArg;
+    GDAL_GCP *pasGCPList = nullptr;
+    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(hTransformArg);
 
-    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarGCPTransformer", NULL );
+    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarGCPTransformer", nullptr );
 
     if( dfRatioX == 1.0 && dfRatioY == 1.0 )
     {
@@ -171,8 +160,8 @@ void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, dou
             pasGCPList[i].dfGCPLine /= dfRatioY;
         }
         /* As remove_outliers modifies the provided GCPs we don't need to reapply it */
-        psInfo = (GCPTransformInfo *) GDALCreateGCPTransformer(
-            psInfo->nGCPCount, pasGCPList, psInfo->nOrder, psInfo->bReversed );
+        psInfo = static_cast<GCPTransformInfo *>(GDALCreateGCPTransformer(
+            psInfo->nGCPCount, pasGCPList, psInfo->nOrder, psInfo->bReversed ));
         GDALDeinitGCPs( psInfo->nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
@@ -189,12 +178,12 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed, int bRefine, double dfTolerance, int nMinimumGcps)
 
 {
-    GCPTransformInfo *psInfo = NULL;
-    double *padfGeoX = NULL;
-    double *padfGeoY = NULL;
-    double *padfRasterX = NULL;
-    double *padfRasterY = NULL;
-    int *panStatus = NULL;
+    GCPTransformInfo *psInfo = nullptr;
+    double *padfGeoX = nullptr;
+    double *padfGeoY = nullptr;
+    double *padfRasterX = nullptr;
+    double *padfRasterY = nullptr;
+    int *panStatus = nullptr;
     int iGCP = 0;
     int nCRSresult = 0;
     struct Control_Points sPoints;
@@ -216,7 +205,7 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
             nReqOrder = 1;
     }
 
-    psInfo = (GCPTransformInfo *) CPLCalloc(sizeof(GCPTransformInfo),1);
+    psInfo = static_cast<GCPTransformInfo *>(CPLCalloc(sizeof(GCPTransformInfo),1));
     psInfo->bReversed = bReversed;
     psInfo->nOrder = nReqOrder;
     psInfo->bRefine = bRefine;
@@ -252,11 +241,13 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
         /* -------------------------------------------------------------------- */
         /*      Allocate and initialize the working points list.                */
         /* -------------------------------------------------------------------- */
-        padfGeoX = (double *) CPLCalloc(sizeof(double),nGCPCount);
-        padfGeoY = (double *) CPLCalloc(sizeof(double),nGCPCount);
-        padfRasterX = (double *) CPLCalloc(sizeof(double),nGCPCount);
-        padfRasterY = (double *) CPLCalloc(sizeof(double),nGCPCount);
-        panStatus = (int *) CPLCalloc(sizeof(int),nGCPCount);
+      try
+      {
+        padfGeoX = new double[nGCPCount];
+        padfGeoY = new double[nGCPCount];
+        padfRasterX = new double[nGCPCount];
+        padfRasterY = new double[nGCPCount];
+        panStatus = new int[nGCPCount];
         for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
         {
             panStatus[iGCP] = 1;
@@ -284,18 +275,24 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
                                                 psInfo->adfToGeoX, psInfo->adfToGeoY,
                                                 psInfo->adfFromGeoX, psInfo->adfFromGeoY,
                                                 nReqOrder );
-        CPLFree( padfGeoX );
-        CPLFree( padfGeoY );
-        CPLFree( padfRasterX );
-        CPLFree( padfRasterY );
-        CPLFree( panStatus );
+      }
+      catch( const std::exception& e )
+      {
+          CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+          nCRSresult = MINTERR;
+      }
+      delete[] padfGeoX;
+      delete[] padfGeoY;
+      delete[] padfRasterX;
+      delete[] padfRasterY;
+      delete[] panStatus;
     }
 
     if (nCRSresult != 1)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "%s", CRS_error_message[-nCRSresult]);
         GDALDestroyGCPTransformer( psInfo );
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -315,7 +312,7 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
  * GDALTransformerFunc signature.  The returned transform argument should
  * be deallocated with GDALDestroyGCPTransformer when no longer needed.
  *
- * This function may fail (returning NULL) if the provided set of GCPs
+ * This function may fail (returning nullptr) if the provided set of GCPs
  * are inadequate for the requested order, the determinate is zero or they
  * are otherwise "ill conditioned".
  *
@@ -329,7 +326,7 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
  * Using 3 is not recommended due to potential numeric instabilities issues.
  * @param bReversed set it to TRUE to compute the reversed transformation.
  *
- * @return the transform argument or NULL if creation fails.
+ * @return the transform argument or nullptr if creation fails.
  */
 void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed )
@@ -371,12 +368,10 @@ void *GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 void GDALDestroyGCPTransformer( void *pTransformArg )
 
 {
-    GCPTransformInfo *psInfo = NULL;
-
-    if( pTransformArg == NULL )
+    if( pTransformArg == nullptr )
         return;
 
-    psInfo = (GCPTransformInfo *) pTransformArg;
+    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(pTransformArg);
 
     if( CPLAtomicDec(&(psInfo->nRefCount)) == 0 )
     {
@@ -419,7 +414,7 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 
 {
     int i = 0;
-    GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
+    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(pTransformArg);
 
     if( psInfo->bReversed )
         bDstToSrc = !bDstToSrc;
@@ -457,12 +452,12 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
 
 {
-    CPLXMLNode *psTree = NULL;
-    GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
+    CPLXMLNode *psTree = nullptr;
+    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(pTransformArg);
 
-    VALIDATE_POINTER1( pTransformArg, "GDALSerializeGCPTransformer", NULL );
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeGCPTransformer", nullptr );
 
-    psTree = CPLCreateXMLNode( NULL, CXT_Element, "GCPTransformer" );
+    psTree = CPLCreateXMLNode( nullptr, CXT_Element, "GCPTransformer" );
 
 /* -------------------------------------------------------------------- */
 /*      Serialize Order and bReversed.                                  */
@@ -503,7 +498,7 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
         GDALSerializeGCPListToXML( psTree,
                                    psInfo->pasGCPList,
                                    psInfo->nGCPCount,
-                                   NULL );
+                                   nullptr );
     }
 
     return psTree;
@@ -516,9 +511,9 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
 void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
 
 {
-    GDAL_GCP *pasGCPList = 0;
+    GDAL_GCP *pasGCPList = nullptr;
     int nGCPCount = 0;
-    void *pResult = NULL;
+    void *pResult = nullptr;
     int nReqOrder = 0;
     int bReversed = 0;
     int bRefine = 0;
@@ -530,12 +525,12 @@ void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
     /* -------------------------------------------------------------------- */
     CPLXMLNode *psGCPList = CPLGetXMLNode( psTree, "GCPList" );
 
-    if( psGCPList != NULL )
+    if( psGCPList != nullptr )
     {
         GDALDeserializeGCPListFromXML( psGCPList,
                                        &pasGCPList,
                                        &nGCPCount,
-                                       NULL );
+                                       nullptr );
     }
 
 /* -------------------------------------------------------------------- */
@@ -690,7 +685,7 @@ CRS_compute_georef_equations (GCPTransformInfo *psInfo, struct Control_Points *c
                                       double E21[], double N21[],
                                       int order)
 {
-    double *tempptr = NULL;
+    double *tempptr = nullptr;
     int status = 0;
 
     if(order < 1 || order > MAXORDER)
@@ -737,8 +732,8 @@ static int
 calccoef (struct Control_Points *cp, double x_mean, double y_mean, double E[], double N[], int order)
 {
     struct MATRIX m;
-    double *a = NULL;
-    double *b = NULL;
+    double *a = nullptr;
+    double *b = nullptr;
     int numactive = 0;   /* NUMBER OF ACTIVE CONTROL POINTS */
     int status = 0;
     int i = 0;
@@ -763,22 +758,22 @@ calccoef (struct Control_Points *cp, double x_mean, double y_mean, double E[], d
 
     /* INITIALIZE MATRIX */
 
-    m.v = (double *)CPLCalloc(m.n*m.n,sizeof(double));
-    if(m.v == NULL)
+    m.v = static_cast<double*>(VSICalloc(m.n*m.n,sizeof(double)));
+    if(m.v == nullptr)
     {
         return(MMEMERR);
     }
-    a = (double *)CPLCalloc(m.n,sizeof(double));
-    if(a == NULL)
+    a = static_cast<double*>(VSICalloc(m.n,sizeof(double)));
+    if(a == nullptr)
     {
-        CPLFree((char *)m.v);
+        CPLFree(m.v);
         return(MMEMERR);
     }
-    b = (double *)CPLCalloc(m.n,sizeof(double));
-    if(b == NULL)
+    b = static_cast<double*>(VSICalloc(m.n,sizeof(double)));
+    if(b == nullptr)
     {
-        CPLFree((char *)m.v);
-        CPLFree((char *)a);
+        CPLFree(m.v);
+        CPLFree(a);
         return(MMEMERR);
     }
 
@@ -787,9 +782,9 @@ calccoef (struct Control_Points *cp, double x_mean, double y_mean, double E[], d
     else
         status = calcls(cp,&m, x_mean, y_mean,a,b,E,N);
 
-    CPLFree((char *)m.v);
-    CPLFree((char *)a);
-    CPLFree((char *)b);
+    CPLFree(m.v);
+    CPLFree(a);
+    CPLFree(b);
 
     return(status);
 }
@@ -920,18 +915,18 @@ static double term (int nTerm, double e, double n)
 {
     switch(nTerm)
     {
-      case  1: return((double)1.0);
-      case  2: return((double)e);
-      case  3: return((double)n);
-      case  4: return((double)(e*e));
-      case  5: return((double)(e*n));
-      case  6: return((double)(n*n));
-      case  7: return((double)(e*e*e));
-      case  8: return((double)(e*e*n));
-      case  9: return((double)(e*n*n));
-      case 10: return((double)(n*n*n));
+      case  1: return(1.0);
+      case  2: return(e);
+      case  3: return(n);
+      case  4: return((e*e));
+      case  5: return((e*n));
+      case  6: return((n*n));
+      case  7: return((e*e*e));
+      case  8: return((e*e*n));
+      case  9: return((e*n*n));
+      case 10: return((n*n*n));
     }
-    return((double)0.0);
+    return 0.0;
 }
 
 /***************************************************************************/
@@ -1074,7 +1069,7 @@ static int worst_outlier(struct Control_Points *cp, double x_mean, double y_mean
     double dfCurrentDifference = 0.0;
     double dfSampleResidual = 0.0;
     double dfLineResidual = 0.0;
-    double *padfResiduals = (double *) CPLCalloc(sizeof(double),cp->count);
+    double *padfResiduals = static_cast<double*>(CPLCalloc(sizeof(double),cp->count));
 
     for(nI = 0; nI < cp->count; nI++)
     {
@@ -1122,11 +1117,11 @@ static int worst_outlier(struct Control_Points *cp, double x_mean, double y_mean
 /***************************************************************************/
 static int remove_outliers( GCPTransformInfo *psInfo )
 {
-    double *padfGeoX = NULL;
-    double *padfGeoY = NULL;
-    double *padfRasterX = NULL;
-    double *padfRasterY = NULL;
-    int *panStatus = NULL;
+    double *padfGeoX = nullptr;
+    double *padfGeoY = nullptr;
+    double *padfRasterX = nullptr;
+    double *padfRasterY = nullptr;
+    int *panStatus = nullptr;
     int nI = 0;
     int nCRSresult = 0;
     int nGCPCount = 0;
@@ -1146,88 +1141,96 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     nReqOrder = psInfo->nOrder;
     dfTolerance = psInfo->dfTolerance;
 
-    padfGeoX = (double *) CPLCalloc(sizeof(double),nGCPCount);
-    padfGeoY = (double *) CPLCalloc(sizeof(double),nGCPCount);
-    padfRasterX = (double *) CPLCalloc(sizeof(double),nGCPCount);
-    padfRasterY = (double *) CPLCalloc(sizeof(double),nGCPCount);
-    panStatus = (int *) CPLCalloc(sizeof(int),nGCPCount);
-
-    for( nI = 0; nI < nGCPCount; nI++ )
+    try
     {
-        panStatus[nI] = 1;
-        padfGeoX[nI] = psInfo->pasGCPList[nI].dfGCPX;
-        padfGeoY[nI] = psInfo->pasGCPList[nI].dfGCPY;
-        padfRasterX[nI] = psInfo->pasGCPList[nI].dfGCPPixel;
-        padfRasterY[nI] = psInfo->pasGCPList[nI].dfGCPLine;
-        x1_sum += psInfo->pasGCPList[nI].dfGCPPixel;
-        y1_sum += psInfo->pasGCPList[nI].dfGCPLine;
-        x2_sum += psInfo->pasGCPList[nI].dfGCPX;
-        y2_sum += psInfo->pasGCPList[nI].dfGCPY;
-    }
-    psInfo->x1_mean = x1_sum / nGCPCount;
-    psInfo->y1_mean = y1_sum / nGCPCount;
-    psInfo->x2_mean = x2_sum / nGCPCount;
-    psInfo->y2_mean = y2_sum / nGCPCount;
+        padfGeoX = new double[nGCPCount];
+        padfGeoY = new double[nGCPCount];
+        padfRasterX = new double[nGCPCount];
+        padfRasterY = new double[nGCPCount];
+        panStatus = new int[nGCPCount];
 
-    sPoints.count = nGCPCount;
-    sPoints.e1 = padfRasterX;
-    sPoints.n1 = padfRasterY;
-    sPoints.e2 = padfGeoX;
-    sPoints.n2 = padfGeoY;
-    sPoints.status = panStatus;
-
-    nCRSresult = CRS_compute_georef_equations( psInfo, &sPoints,
-                                      psInfo->adfToGeoX, psInfo->adfToGeoY,
-                                      psInfo->adfFromGeoX, psInfo->adfFromGeoY,
-                                      nReqOrder );
-
-    while(sPoints.count > nMinimumGcps)
-    {
-        int nIndex =
-            worst_outlier(&sPoints, psInfo->x1_mean, psInfo->y1_mean, psInfo->nOrder, 
-                          psInfo->adfToGeoX, psInfo->adfToGeoY,
-                          dfTolerance);
-
-        //If no outliers were detected, stop the GCP elimination
-        if(nIndex == -1)
+        for( nI = 0; nI < nGCPCount; nI++ )
         {
-            break;
+            panStatus[nI] = 1;
+            padfGeoX[nI] = psInfo->pasGCPList[nI].dfGCPX;
+            padfGeoY[nI] = psInfo->pasGCPList[nI].dfGCPY;
+            padfRasterX[nI] = psInfo->pasGCPList[nI].dfGCPPixel;
+            padfRasterY[nI] = psInfo->pasGCPList[nI].dfGCPLine;
+            x1_sum += psInfo->pasGCPList[nI].dfGCPPixel;
+            y1_sum += psInfo->pasGCPList[nI].dfGCPLine;
+            x2_sum += psInfo->pasGCPList[nI].dfGCPX;
+            y2_sum += psInfo->pasGCPList[nI].dfGCPY;
         }
+        psInfo->x1_mean = x1_sum / nGCPCount;
+        psInfo->y1_mean = y1_sum / nGCPCount;
+        psInfo->x2_mean = x2_sum / nGCPCount;
+        psInfo->y2_mean = y2_sum / nGCPCount;
 
-        CPLFree(psInfo->pasGCPList[nIndex].pszId);
-        CPLFree(psInfo->pasGCPList[nIndex].pszInfo);
-
-        for( nI = nIndex; nI < sPoints.count - 1; nI++ )
-        {
-            sPoints.e1[nI] = sPoints.e1[nI + 1];
-            sPoints.n1[nI] = sPoints.n1[nI + 1];
-            sPoints.e2[nI] = sPoints.e2[nI + 1];
-            sPoints.n2[nI] = sPoints.n2[nI + 1];
-            psInfo->pasGCPList[nI].pszId = psInfo->pasGCPList[nI + 1].pszId;
-            psInfo->pasGCPList[nI].pszInfo = psInfo->pasGCPList[nI + 1].pszInfo;
-        }
-
-        sPoints.count = sPoints.count - 1;
+        sPoints.count = nGCPCount;
+        sPoints.e1 = padfRasterX;
+        sPoints.n1 = padfRasterY;
+        sPoints.e2 = padfGeoX;
+        sPoints.n2 = padfGeoY;
+        sPoints.status = panStatus;
 
         nCRSresult = CRS_compute_georef_equations( psInfo, &sPoints,
-                                      psInfo->adfToGeoX, psInfo->adfToGeoY,
-                                      psInfo->adfFromGeoX, psInfo->adfFromGeoY,
-                                      nReqOrder );
-    }
+                                        psInfo->adfToGeoX, psInfo->adfToGeoY,
+                                        psInfo->adfFromGeoX, psInfo->adfFromGeoY,
+                                        nReqOrder );
 
-    for( nI = 0; nI < sPoints.count; nI++ )
+        while(sPoints.count > nMinimumGcps)
+        {
+            int nIndex =
+                worst_outlier(&sPoints, psInfo->x1_mean, psInfo->y1_mean, psInfo->nOrder, 
+                            psInfo->adfToGeoX, psInfo->adfToGeoY,
+                            dfTolerance);
+
+            //If no outliers were detected, stop the GCP elimination
+            if(nIndex == -1)
+            {
+                break;
+            }
+
+            CPLFree(psInfo->pasGCPList[nIndex].pszId);
+            CPLFree(psInfo->pasGCPList[nIndex].pszInfo);
+
+            for( nI = nIndex; nI < sPoints.count - 1; nI++ )
+            {
+                sPoints.e1[nI] = sPoints.e1[nI + 1];
+                sPoints.n1[nI] = sPoints.n1[nI + 1];
+                sPoints.e2[nI] = sPoints.e2[nI + 1];
+                sPoints.n2[nI] = sPoints.n2[nI + 1];
+                psInfo->pasGCPList[nI].pszId = psInfo->pasGCPList[nI + 1].pszId;
+                psInfo->pasGCPList[nI].pszInfo = psInfo->pasGCPList[nI + 1].pszInfo;
+            }
+
+            sPoints.count = sPoints.count - 1;
+
+            nCRSresult = CRS_compute_georef_equations( psInfo, &sPoints,
+                                        psInfo->adfToGeoX, psInfo->adfToGeoY,
+                                        psInfo->adfFromGeoX, psInfo->adfFromGeoY,
+                                        nReqOrder );
+        }
+
+        for( nI = 0; nI < sPoints.count; nI++ )
+        {
+            psInfo->pasGCPList[nI].dfGCPX = sPoints.e2[nI];
+            psInfo->pasGCPList[nI].dfGCPY = sPoints.n2[nI];
+            psInfo->pasGCPList[nI].dfGCPPixel = sPoints.e1[nI];
+            psInfo->pasGCPList[nI].dfGCPLine = sPoints.n1[nI];
+        }
+        psInfo->nGCPCount = sPoints.count;
+    }
+    catch( const std::exception& e )
     {
-        psInfo->pasGCPList[nI].dfGCPX = sPoints.e2[nI];
-        psInfo->pasGCPList[nI].dfGCPY = sPoints.n2[nI];
-        psInfo->pasGCPList[nI].dfGCPPixel = sPoints.e1[nI];
-        psInfo->pasGCPList[nI].dfGCPLine = sPoints.n1[nI];
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        nCRSresult = MINTERR;
     }
-    psInfo->nGCPCount = sPoints.count;
+    delete[] padfGeoX;
+    delete[] padfGeoY;
+    delete[] padfRasterX;
+    delete[] padfRasterY;
+    delete[] panStatus;
 
-    CPLFree( sPoints.e1 );
-    CPLFree( sPoints.n1 );
-    CPLFree( sPoints.e2 );
-    CPLFree( sPoints.n2 );
-    CPLFree( sPoints.status );
     return nCRSresult;
 }

@@ -213,6 +213,8 @@ GEOGCS["WGS 84",
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
+    AXIS["Latitude",NORTH],
+    AXIS["Longitude",EAST],
     AUTHORITY["EPSG","4326"]]
 SRS WKT (geom__WKTgeom2_EPSG_32631):
 PROJCS["WGS 84 / UTM zone 31N",
@@ -289,6 +291,8 @@ GEOGCS["WGS 84",
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
+    AXIS["Latitude",NORTH],
+    AXIS["Longitude",EAST],
     AUTHORITY["EPSG","4326"]]
 SRS WKT (geom__WKTgeom2_EPSG_32631):
 PROJCS["WGS 84 / UTM zone 31N",

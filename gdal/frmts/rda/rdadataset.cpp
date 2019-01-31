@@ -173,7 +173,10 @@ class GDALRDADataset: public GDALDataset
         static GDALDataset* OpenStatic( GDALOpenInfo* poOpenInfo );
 
         CPLErr          GetGeoTransform(double *padfTransform) override;
-        const char*     GetProjectionRef() override;
+        const char*     _GetProjectionRef() override;
+        const OGRSpatialReference* GetSpatialRef() const override {
+            return GetSpatialRefFromOldGetProjectionRef();
+        }
         CPLErr          IRasterIO(GDALRWFlag eRWFlag,
                                       int nXOff, int nYOff,
                                       int nXSize, int nYSize,
@@ -1534,7 +1537,7 @@ CPLErr GDALRDADataset::GetGeoTransform(double *padfTransform)
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
-const char* GDALRDADataset::GetProjectionRef()
+const char* GDALRDADataset::_GetProjectionRef()
 {
     if( !m_bTriedReadGeoreferencing )
         ReadGeoreferencing();

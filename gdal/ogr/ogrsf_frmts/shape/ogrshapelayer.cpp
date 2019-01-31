@@ -240,8 +240,16 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
             eType = eRequestedGeomType;
         }
 
+        OGRSpatialReference* poSRSClone = poSRSIn;
+        if( poSRSClone )
+        {
+            poSRSClone = poSRSClone->Clone();
+            poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        }
         OGRShapeGeomFieldDefn* poGeomFieldDefn =
-            new OGRShapeGeomFieldDefn(pszFullName, eType, bSRSSetIn, poSRSIn);
+            new OGRShapeGeomFieldDefn(pszFullName, eType, bSRSSetIn, poSRSClone);
+        if( poSRSClone )
+            poSRSClone->Release();
         poFeatureDefn->SetGeomType(wkbNone);
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
     }
@@ -2113,6 +2121,7 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
         osPrjFile = pszPrjFile;
 
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         // Remove UTF-8 BOM if found
         // http://lists.osgeo.org/pipermail/gdal-dev/2014-July/039527.html
         if( static_cast<unsigned char>(papszLines[0][0]) == 0xEF &&
@@ -2169,6 +2178,7 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
                 {
                     poSRS->Release();
                     poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     CPLFree(pahSRS);
                 }
                 else

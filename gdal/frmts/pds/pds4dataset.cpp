@@ -556,20 +556,20 @@ int PDS4Dataset::CloseDependentDatasets()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *PDS4Dataset::GetProjectionRef()
+const char *PDS4Dataset::_GetProjectionRef()
 
 {
     if( !m_osWKT.empty() )
         return m_osWKT;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr PDS4Dataset::SetProjection(const char* pszWKT)
+CPLErr PDS4Dataset::_SetProjection(const char* pszWKT)
 
 {
     if( eAccess == GA_ReadOnly )
@@ -2067,17 +2067,21 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT)
     {
         bHasBoundingBox = false;
         OGRSpatialReference* poSRSLongLat = oSRS.CloneGeogCS();
-        OGRCoordinateTransformation* poCT =
-            OGRCreateCoordinateTransformation(&oSRS, poSRSLongLat);
-        if( poCT )
+        if( poSRSLongLat )
         {
-            if( poCT->Transform(4, adfX, adfY) )
+            poSRSLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            OGRCoordinateTransformation* poCT =
+                OGRCreateCoordinateTransformation(&oSRS, poSRSLongLat);
+            if( poCT )
             {
-                bHasBoundingBox = true;
+                if( poCT->Transform(4, adfX, adfY) )
+                {
+                    bHasBoundingBox = true;
+                }
+                delete poCT;
             }
-            delete poCT;
+            delete poSRSLongLat;
         }
-        delete poSRSLongLat;
     }
 
     if( !bHasBoundingBox )

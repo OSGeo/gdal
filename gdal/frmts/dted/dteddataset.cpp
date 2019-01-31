@@ -58,7 +58,10 @@ class DTEDDataset : public GDALPamDataset
     DTEDDataset();
     ~DTEDDataset() override;
 
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     CPLErr GetGeoTransform( double * ) override;
 
     const char* GetFileName() const { return pszFilename; }
@@ -463,7 +466,7 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->TryLoadXML( poOpenInfo->GetSiblingFiles() );
 
     // if no SR in xml, try aux
-    const char* pszPrj = poDS->GDALPamDataset::GetProjectionRef();
+    const char* pszPrj = poDS->GDALPamDataset::_GetProjectionRef();
     if( !pszPrj || strlen(pszPrj) == 0 )
     {
         int bTryAux = TRUE;
@@ -517,11 +520,11 @@ CPLErr DTEDDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *DTEDDataset::GetProjectionRef()
+const char *DTEDDataset::_GetProjectionRef()
 
 {
     // get xml and aux SR first
-    const char* pszPrj = GDALPamDataset::GetProjectionRef();
+    const char* pszPrj = GDALPamDataset::_GetProjectionRef();
     const char* pszVertDatum;
     if(pszPrj && strlen(pszPrj) > 0)
         return pszPrj;
@@ -537,12 +540,12 @@ const char *DTEDDataset::GetProjectionRef()
         if (EQUAL(pszVertDatum, "MSL") &&
             CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
         {
-                return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
+                return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
 
         }
         else
         {
-            return SRS_WKT_WGS84;
+            return SRS_WKT_WGS84_LAT_LONG;
         }
 
     }
@@ -560,7 +563,7 @@ const char *DTEDDataset::GetProjectionRef()
                       "fix the DTED file.\n"
                       "No more warnings will be issued in this session about this operation.", GetFileName() );
         }
-        return "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4322\"]]";
+        return "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4322\"]]";
     }
     else
     {
@@ -573,11 +576,7 @@ const char *DTEDDataset::GetProjectionRef()
                       "The DTED driver is going to consider it as WGS84.\n"
                       "No more warnings will be issued in this session about this operation.", GetFileName(), pszPrj );
         }
-        return
-            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-            "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-            "AUTHORITY[\"EPSG\",\"4326\"]]";
+        return SRS_WKT_WGS84_LAT_LONG;
     }
 }
 

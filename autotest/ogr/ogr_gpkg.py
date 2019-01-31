@@ -40,7 +40,6 @@ from osgeo import ogr
 from osgeo import osr
 import gdaltest
 
-from osr import osr_proj4
 
 ###############################################################################
 # Validate a geopackage
@@ -922,28 +921,27 @@ def test_ogr_gpkg_15():
         pytest.fail()
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    if osr_proj4.have_proj480():
-        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, ST_SRID(geom)) FROM tbl_linestring_renamed")
-        feat = sql_lyr.GetNextFeature()
-        if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 5,10 5,10 10,5 10)':
-            feat.DumpReadable()
-            pytest.fail()
-        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, ST_SRID(geom)) FROM tbl_linestring_renamed")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 5,10 5,10 10,5 10)':
+        feat.DumpReadable()
+        pytest.fail()
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_SRID(ST_Transform(geom, 4326)) FROM tbl_linestring_renamed")
-        feat = sql_lyr.GetNextFeature()
-        if feat.GetField(0) != 4326:
-            feat.DumpReadable()
-            pytest.fail()
-        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_SRID(ST_Transform(geom, 4326)) FROM tbl_linestring_renamed")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 4326:
+        feat.DumpReadable()
+        pytest.fail()
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-        # Spatialite geometry: SRID=4326,MULTIPOINT EMPTY
-        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_SRID(ST_Transform(x'0001E610000000000000000000000000000000000000000000000000000000000000000000007C0400000000000000FE', 4326)) FROM tbl_linestring_renamed")
-        feat = sql_lyr.GetNextFeature()
-        if feat.GetField(0) != 4326:
-            feat.DumpReadable()
-            pytest.fail()
-        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    # Spatialite geometry: SRID=4326,MULTIPOINT EMPTY
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_SRID(ST_Transform(x'0001E610000000000000000000000000000000000000000000000000000000000000000000007C0400000000000000FE', 4326)) FROM tbl_linestring_renamed")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 4326:
+        feat.DumpReadable()
+        pytest.fail()
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     # Error case: less than 8 bytes
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_MinX(x'00')")
@@ -1408,7 +1406,7 @@ def test_ogr_gpkg_20():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""GEOGCS["my geogcs",
     DATUM["my datum",
-        SPHEROID["my spheroid",1000,0]],
+        SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
     AUTHORITY["my_org","4326"]]""")
     lyr = ds.CreateLayer('my_org_4326', srs=srs)
 
@@ -1416,7 +1414,7 @@ def test_ogr_gpkg_20():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""GEOGCS["another geogcs",
     DATUM["another datum",
-        SPHEROID["another spheroid",1000,0]]]""")
+        SPHEROID["another spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]""")
     lyr = ds.CreateLayer('without_org', srs=srs)
 
     ds = None
@@ -3439,7 +3437,7 @@ def test_ogr_gpkg_50():
     srs_without_org = osr.SpatialReference()
     srs_without_org.SetFromUserInput("""GEOGCS["another geogcs",
     DATUM["another datum",
-        SPHEROID["another spheroid",1000,0]]]""")
+        SPHEROID["another spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]""")
     lyr = ds.CreateLayer('without_org', srs=srs_without_org)
 
     ds = None
@@ -3453,7 +3451,7 @@ def test_ogr_gpkg_50():
     assert lyr.GetSpatialRef().IsSame(srs_without_org)
     sql_lyr = ds.ExecuteSQL('SELECT definition_12_063 FROM gpkg_spatial_ref_sys WHERE srs_id = 32631')
     f = sql_lyr.GetNextFeature()
-    assert f.GetField(0) == 'undefined'
+    assert f.GetField(0).startswith('PROJCRS["WGS 84 / UTM zone 31N"')
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 

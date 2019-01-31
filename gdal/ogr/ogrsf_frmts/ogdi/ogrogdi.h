@@ -125,7 +125,7 @@ class OGROGDIDataSource final: public OGRDataSource
     int                 TestCapability( const char * ) override;
 
     ecs_Region         *GetGlobalBounds() { return &m_sGlobalBounds; }
-    OGRSpatialReference*GetSpatialRef() { return m_poSpatialRef; }
+    OGRSpatialReference*DSGetSpatialRef() { return m_poSpatialRef; }
     int                 GetClientID() { return m_nClientID; }
 
     OGROGDILayer       *GetCurrentLayer() { return m_poCurrentLayer; }

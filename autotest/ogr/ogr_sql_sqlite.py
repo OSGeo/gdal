@@ -323,7 +323,7 @@ def test_ogr_sql_sqlite_2():
         feat.DumpReadable()
         pytest.fail()
     got_srs = feat.GetGeometryRef().GetSpatialReference()
-    assert not (got_srs is None or srs.IsSame(got_srs) == 0)
+    assert not (got_srs is None or srs.IsSame(got_srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']) == 0)
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
@@ -338,7 +338,7 @@ def test_ogr_sql_sqlite_2():
         feat.DumpReadable()
         pytest.fail()
     got_srs = feat.GetGeometryRef().GetSpatialReference()
-    assert not (got_srs is None or srs.IsSame(got_srs) == 0)
+    assert not (got_srs is None or srs.IsSame(got_srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']) == 0)
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 

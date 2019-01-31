@@ -96,14 +96,5 @@ parser:
 	sed -i.bak "s/(union yyalloc \*) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize))/static_cast<union yyalloc *>(YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize)))/" swq_parser.cpp
 	rm swq_parser.cpp.bak
 
-# The sed hack is to please MSVC
-osr_cs_wkt_parser:
-	bison --no-lines -p osr_cs_wkt_ -d -oosr_cs_wkt_parser.c osr_cs_wkt_grammar.y
-	sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" < osr_cs_wkt_parser.c | sed "s/yyerrorlab:/#if 0\nyyerrorlab:/" | sed "s/yyerrlab1:/#endif\nyyerrlab1:/" | sed "s/for (yylen = 0; yystr\[yylen\]; yylen++)/for (yylen = 0; yystr != YY_NULL \&\& yystr\[yylen\]; yylen++)/"  > osr_cs_wkt_parser.c.tmp
-	mv osr_cs_wkt_parser.c.tmp osr_cs_wkt_parser.c
-
-osr_cs_wkt_parser.$(OBJ_EXT):   osr_cs_wkt_parser.c
-	$(CC) $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(NO_LOGICAL_OP_FLAG) -c -o $@ $<
-
 swq_parser.$(OBJ_EXT):   swq_parser.cpp
 	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(CPPFLAGS) $(NO_LOGICAL_OP_FLAG) -c -o $@ $<

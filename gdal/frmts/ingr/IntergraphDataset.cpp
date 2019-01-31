@@ -708,7 +708,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
 
     double adfGeoTransform[6];
 
-    poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+    poDstDS->SetSpatialRef( poSrcDS->GetSpatialRef() );
     poSrcDS->GetGeoTransform( adfGeoTransform );
     poDstDS->SetGeoTransform( adfGeoTransform );
 
@@ -860,10 +860,10 @@ CPLErr IntergraphDataset::SetGeoTransform( double *padfTransform )
 }
 
 //  ----------------------------------------------------------------------------
-//                                            IntergraphDataset::SetProjection()
+//                                            IntergraphDataset::_SetProjection()
 //  ----------------------------------------------------------------------------
 
-CPLErr IntergraphDataset::SetProjection( const char * /* pszProjString */ )
+CPLErr IntergraphDataset::_SetProjection( const char * /* pszProjString */ )
 {
     return CE_None;
 }

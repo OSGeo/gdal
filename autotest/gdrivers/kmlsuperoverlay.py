@@ -68,6 +68,15 @@ def test_kmlsuperoverlay_3():
     del ds
     src_ds = None
 
+    f = gdal.VSIFOpenL('tmp/tmp.kml', 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert '<north>33.903651' in data, data
+    assert '<south>33.625312' in data, data
+    assert '<east>-117.309784' in data, data
+    assert '<west>-117.639992' in data, data
+
     filelist = ['tmp/0/0/0.jpg',
                 'tmp/0/0/0.kml',
                 'tmp/1/0/0.jpg',

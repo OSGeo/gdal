@@ -853,6 +853,7 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
   double f;
 
   poSR= OSRNewSpatialReference(NULL);
+  OSRSetAxisMappingStrategy(poSR, OAMS_TRADITIONAL_GIS_ORDER);
 
   if( syscoord && GetSysCoordSystemID_GCSRS(syscoord)!=-1 )
   {

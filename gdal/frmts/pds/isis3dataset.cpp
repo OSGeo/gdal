@@ -197,8 +197,14 @@ public:
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr SetGeoTransform( double * padfTransform ) override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char* pszProjection ) override;
+    virtual const char *_GetProjectionRef(void) override;
+    virtual CPLErr _SetProjection( const char* pszProjection ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     virtual char **GetFileList() override;
 
@@ -1434,23 +1440,23 @@ char **ISIS3Dataset::GetFileList()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *ISIS3Dataset::GetProjectionRef()
+const char *ISIS3Dataset::_GetProjectionRef()
 
 {
     if( !m_osProjection.empty() )
         return m_osProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::SetProjection( const char* pszProjection )
+CPLErr ISIS3Dataset::_SetProjection( const char* pszProjection )
 {
     if( eAccess == GA_ReadOnly )
-        return GDALPamDataset::SetProjection( pszProjection );
+        return GDALPamDataset::_SetProjection( pszProjection );
     m_osProjection = pszProjection ? pszProjection : "";
     if( m_poExternalDS )
         m_poExternalDS->SetProjection(pszProjection);
@@ -2525,17 +2531,21 @@ void ISIS3Dataset::BuildLabel()
                 else
                 {
                     OGRSpatialReference* poSRSLongLat = oSRS.CloneGeogCS();
-                    OGRCoordinateTransformation* poCT =
-                        OGRCreateCoordinateTransformation(&oSRS, poSRSLongLat);
-                    if( poCT )
+                    if( poSRSLongLat )
                     {
-                        if( poCT->Transform(4, adfX, adfY) )
+                        poSRSLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                        OGRCoordinateTransformation* poCT =
+                            OGRCreateCoordinateTransformation(&oSRS, poSRSLongLat);
+                        if( poCT )
                         {
-                            bLongLatCorners = true;
+                            if( poCT->Transform(4, adfX, adfY) )
+                            {
+                                bLongLatCorners = true;
+                            }
+                            delete poCT;
                         }
-                        delete poCT;
+                        delete poSRSLongLat;
                     }
-                    delete poSRSLongLat;
                 }
             }
             if( bLongLatCorners )

@@ -40,10 +40,12 @@ CPL_CVSID("$Id$")
 
 OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp ) :
     poFeatureDefn(new OGRFeatureDefn("labels")),
-    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG)),
     fpOpenAir(fp),
     nNextFID(0)
 {
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );

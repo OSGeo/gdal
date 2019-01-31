@@ -292,17 +292,12 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj,
                     osLayerName = CPLSPrintf("Layer%d", nLayers + 1);
             }
 
-            const char* l_pszWKT = GetProjectionRef();
-            OGRSpatialReference* poSRS = nullptr;
-            if (l_pszWKT && l_pszWKT[0] != '\0')
-            {
-                poSRS = new OGRSpatialReference();
-                poSRS->importFromWkt(l_pszWKT);
-            }
-
+            auto poSRSOri = GetSpatialRef();
+            OGRSpatialReference* poSRS = poSRSOri ? poSRSOri->Clone() : nullptr;
             OGRPDFLayer* poLayer =
                 new OGRPDFLayer(this, osLayerName.c_str(), poSRS, wkbUnknown);
-            delete poSRS;
+            if( poSRS )
+                poSRS->Release();
 
             poLayer->Fill(poArray);
 
@@ -1628,17 +1623,12 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
                 OGRPDFLayer* poLayer = (OGRPDFLayer*) GetLayerByName(osSanitizedName.c_str());
                 if (poLayer == nullptr)
                 {
-                    const char* l_pszWKT = GetProjectionRef();
-                    OGRSpatialReference* poSRS = nullptr;
-                    if (l_pszWKT && l_pszWKT[0] != '\0')
-                    {
-                        poSRS = new OGRSpatialReference();
-                        poSRS->importFromWkt(l_pszWKT);
-                    }
-
+                    auto poSRSOri = GetSpatialRef();
+                    OGRSpatialReference* poSRS = poSRSOri ? poSRSOri->Clone() : nullptr;
                     poLayer =
                         new OGRPDFLayer(this, osSanitizedName.c_str(), poSRS, wkbUnknown);
-                    delete poSRS;
+                    if( poSRS )
+                        poSRS->Release();
 
                     papoLayers = (OGRLayer**)
                         CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));

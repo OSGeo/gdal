@@ -31,14 +31,11 @@
 ###############################################################################
 
 import os
-import sys
 import struct
 import shutil
 from osgeo import gdal
 from osgeo import osr
 import pytest
-
-sys.path.append('../osr')
 
 import gdaltest
 
@@ -57,9 +54,6 @@ def has_jp2kdrv():
 
 
 def test_grib_1():
-    # Test proj4 presence
-    import osr_ct
-    osr_ct.test_osr_ct_1()
 
     tst = gdaltest.GDALTest('GRIB', 'grib/ds.mint.bin', 2, 46927)
     return tst.testOpen()
@@ -256,7 +250,6 @@ def test_grib_grib2_read_all_zero_data():
 ###############################################################################
 # GRIB1 file with rotate pole lonlat
 
-
 def test_grib_grib2_read_rotated_pole_lonlat():
 
     ds = gdal.Open('/vsisparse/data/grib/rotated_pole.grb.xml')
@@ -265,7 +258,7 @@ def test_grib_grib2_read_rotated_pole_lonlat():
         'Did not get expected dimensions'
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Sphere",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Rotated_pole"],EXTENSION["PROJ4","+proj=ob_tran +lon_0=-15 +o_proj=longlat +o_lon_p=0 +o_lat_p=30 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unnamed",SPHEROID["Sphere",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +lon_0=-15 +o_proj=longlat +o_lon_p=0 +o_lat_p=30 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -321,7 +314,7 @@ def test_grib_grib2_read_transverse_mercator():
     ds = gdal.Open('data/grib/transverse_mercator.grb2')
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Sphere",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Metre",1]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unnamed",SPHEROID["Sphere",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -335,13 +328,10 @@ def test_grib_grib2_read_transverse_mercator():
 
 def test_grib_grib2_read_mercator():
 
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/mercator.grb2')
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -356,13 +346,10 @@ def test_grib_grib2_read_mercator():
 
 def test_grib_grib2_read_mercator_2sp():
 
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/mercator_2sp.grb2')
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_2SP"],PARAMETER["standard_parallel_1",33.5],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Mercator_2SP"],PARAMETER["standard_parallel_1",33.5],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -377,13 +364,10 @@ def test_grib_grib2_read_mercator_2sp():
 
 def test_grib_grib2_read_lcc():
 
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/lambert_conformal_conic.grb2')
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",33],PARAMETER["standard_parallel_2",34],PARAMETER["latitude_of_origin",33.5],PARAMETER["central_meridian",117],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",33.5],PARAMETER["central_meridian",117],PARAMETER["standard_parallel_1",33],PARAMETER["standard_parallel_2",34],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -398,13 +382,10 @@ def test_grib_grib2_read_lcc():
 
 def test_grib_grib2_read_polar_stereo():
 
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/polar_stereographic.grb2')
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",60],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",60],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",SOUTH],AXIS["Northing",SOUTH]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -419,13 +400,10 @@ def test_grib_grib2_read_polar_stereo():
 
 def test_grib_grib2_read_aea():
 
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/albers_equal_area.grb2')
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",33],PARAMETER["standard_parallel_2",34],PARAMETER["latitude_of_center",33.5],PARAMETER["longitude_of_center",117],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["latitude_of_center",33.5],PARAMETER["longitude_of_center",117],PARAMETER["standard_parallel_1",33],PARAMETER["standard_parallel_2",34],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -440,13 +418,10 @@ def test_grib_grib2_read_aea():
 
 def test_grib_grib2_read_laea():
 
-    if gdaltest.have_proj4 == 0:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/lambert_azimuthal_equal_area.grb2')
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",33.5],PARAMETER["longitude_of_center",243],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",33.5],PARAMETER["longitude_of_center",243],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -789,7 +764,7 @@ def test_grib_grib2_write_projections():
     tmpfilename = '/vsimem/out.grb2'
     gdal.Translate(tmpfilename, src_ds, format='GRIB')
     out_ds = gdal.Open(tmpfilename)
-    expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.9786982139109]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_2SP"],PARAMETER["standard_parallel_1",33.500986],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
+    expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unnamed",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.978698213911]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Mercator_2SP"],PARAMETER["standard_parallel_1",33.500986],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     got_sr = osr.SpatialReference()
     got_sr.SetFromUserInput(out_ds.GetProjectionRef())
     expected_sr = osr.SpatialReference()
@@ -821,11 +796,12 @@ def test_grib_grib2_write_projections():
     PARAMETER["central_meridian",117],
     PARAMETER["scale_factor",0.9999],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]""")
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]""")
     tmpfilename = '/vsimem/out.grb2'
     gdal.Translate(tmpfilename, src_ds, format='GRIB')
     out_ds = gdal.Open(tmpfilename)
-    expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.9786982139109]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",34.310911],PARAMETER["standard_parallel_2",32.686501],PARAMETER["latitude_of_origin",33.5],PARAMETER["central_meridian",117],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
+    expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unnamed",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.978698213911]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",33.5],PARAMETER["central_meridian",117],PARAMETER["standard_parallel_1",34.310911],PARAMETER["standard_parallel_2",32.686501],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     got_sr = osr.SpatialReference()
     got_sr.SetFromUserInput(out_ds.GetProjectionRef())
     expected_sr = osr.SpatialReference()

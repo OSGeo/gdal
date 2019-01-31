@@ -86,7 +86,7 @@ ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|\@filename]
         [-sql statement|\@filename] [-dialect dialect] [-al] [-rl] [-so] [-fields={YES/NO}]
         [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
         [-nomd] [-listmdd] [-mdd domain|`all`]*
-        [-nocount] [-noextent]
+        [-nocount] [-noextent] [-wkt_format WKT1|WKT2|...]
         datasource_name [layer [layer ...]]
 
 \endverbatim
@@ -147,6 +147,9 @@ of metadata strings.</dd>
 <dt> <b>-noextent</b></dt><dd>(starting with GDAL 2.0)  Suppress spatial extent printing.</dd>
 <dt> <b>\-\-formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
+<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 2.5.0) WKT format
+used to display the SRS. Currently supported values are: WKT1,
+WKT2 (latest WKT version, currently WKT2_2018), WKT2_2015, WKT2_2018 </dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename,
 directory or other virtual name.  See the <a href="ogr_formats.html">OGR Vector
 Formats</a> list for supported datasources.</dd>
@@ -258,7 +261,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-progress] [-sql <sql statement>|\@filename] [-dialect dialect]
                [-preserve_fid] [-fid FID] [-limit nb_features]
                [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
-               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
+               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct proj_string]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name]
@@ -372,6 +375,10 @@ GDAL 2.1</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
+<dt> <b>-ct</b> <em>proj_string</em>:</dt><dd> (GDAL &gt;= 2.5)
+PROJ string overriding the default
+transformation from the source to the target CRS. It must take into account the
+axis order of the source and target CRS.</dd>
 <dt> <b>-preserve_fid</b>:</dt><dd>Use the FID of the source features instead of
 letting the output driver to automatically assign a new one (when it needs to
 assign a FID. Some formats, like GeoJSON, have optional FID)

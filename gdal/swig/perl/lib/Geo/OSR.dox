@@ -26,21 +26,6 @@
 # @param name the user input
 # @return a WKT string.
 
-## @sub \@GetProjectionMethods()
-# @deprecated Use Geo::OSR::Projections.
-#
-# @return reference to an array of possible projection methods.
-
-## @sub @GetProjectionMethodParameterList($projection)
-# @param projection one of Geo::OSR::Projections
-# @return a list (arrayref parameters, $projection_name).
-
-## @sub @GetProjectionMethodParamInfo($projection, $parameter)
-# @param projection one of Geo::OSR::Projections
-# @param parameter one of Geo::OSR::Parameters
-# @return a list ($user_friendly_name, $type, $default_value).
-
-
 ## @class Geo::OSR::SpatialReference
 # @brief A spatial reference system.
 # @details <a href="http://www.gdal.org/classOGRSpatialReference.html">Documentation

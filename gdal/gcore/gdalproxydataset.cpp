@@ -166,8 +166,10 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadataItem,
                         (const char * pszName, const char * pszValue, const char * pszDomain),
                         (pszName, pszValue, pszDomain))
 
-D_PROXY_METHOD_WITH_RET(const char *, nullptr, GetProjectionRef, (), ())
-D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetProjection, (const char* pszProjection), (pszProjection))
+D_PROXY_METHOD_WITH_RET(const char *, nullptr, _GetProjectionRef, (), ())
+D_PROXY_METHOD_WITH_RET(const OGRSpatialReference *, nullptr, GetSpatialRef, () const, ())
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, _SetProjection, (const char* pszProjection), (pszProjection))
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetSpatialRef, (const OGRSpatialReference* poSRS), (poSRS))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetGeoTransform, (double* padfGeoTransform), (padfGeoTransform))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGeoTransform, (double* padfGeoTransform), (padfGeoTransform))
 
@@ -175,12 +177,17 @@ D_PROXY_METHOD_WITH_RET(void *, nullptr, GetInternalHandle, ( const char * arg1)
 D_PROXY_METHOD_WITH_RET(GDALDriver *, nullptr, GetDriver, (), ())
 D_PROXY_METHOD_WITH_RET(char **, nullptr, GetFileList, (), ())
 D_PROXY_METHOD_WITH_RET(int, 0, GetGCPCount, (), ())
-D_PROXY_METHOD_WITH_RET(const char *, nullptr, GetGCPProjection, (), ())
+D_PROXY_METHOD_WITH_RET(const char *, nullptr, _GetGCPProjection, (), ())
+D_PROXY_METHOD_WITH_RET(const OGRSpatialReference *, nullptr, GetGCPSpatialRef, () const, ())
 D_PROXY_METHOD_WITH_RET(const GDAL_GCP *, nullptr, GetGCPs, (), ())
-D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGCPs,
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, _SetGCPs,
                         (int nGCPCount, const GDAL_GCP *pasGCPList,
                          const char *pszGCPProjection),
                         (nGCPCount, pasGCPList, pszGCPProjection))
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGCPs,
+                        (int nGCPCount, const GDAL_GCP *pasGCPList,
+                         const OGRSpatialReference *poGCP_SRS),
+                        (nGCPCount, pasGCPList, poGCP_SRS))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         ( int nXOff, int nYOff, int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize,
@@ -195,7 +202,7 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (n
 /************************************************************************/
 
 void GDALProxyDataset::UnrefUnderlyingDataset(
-    GDALDataset* /* poUnderlyingDataset */)
+    GDALDataset* /* poUnderlyingDataset */) const
 {}
 
 /* ******************************************************************** */

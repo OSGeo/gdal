@@ -766,6 +766,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                 {
                     const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
                     OGRSpatialReference *poSRS = new OGRSpatialReference();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poSRS->importFromEPSG(nEPSGCode);
                     oGeomFieldDefn.SetSpatialRef(poSRS);
                     poSRS->Release();
@@ -955,6 +956,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             if( VSIIngestFile(fpPRJ, nullptr, &pabyRet, nullptr, 1000000) )
             {
                 OGRSpatialReference *poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if( poSRS->SetFromUserInput((const char *)pabyRet) ==
                     OGRERR_NONE )
                 {
@@ -1964,8 +1966,12 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
 
         return OGRERR_FAILURE;
     }
-
-    poFeatureDefn->AddGeomFieldDefn(poGeomField);
+    OGRGeomFieldDefn oGeomField(poGeomField);
+    if( oGeomField.GetSpatialRef() )
+    {
+        oGeomField.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    poFeatureDefn->AddGeomFieldDefn(&oGeomField);
 
     const char *pszName = poGeomField->GetNameRef();
     if( EQUAL(pszName, ""))
