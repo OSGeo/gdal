@@ -46,6 +46,7 @@ SUBDIRS-$(CURL_SETTING) += amigocloud
 SUBDIRS-$(CURL_SETTING) += plscenes
 SUBDIRS-$(CURL_SETTING) += csw
 SUBDIRS-$(HAVE_MONGODB) += mongodb
+SUBDIRS-$(HAVE_MONGOCXXV3) += mongodbv3
 SUBDIRS-$(CURL_SETTING) += ngw
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)

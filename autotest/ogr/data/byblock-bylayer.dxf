@@ -303,6 +303,34 @@ EE
 348
 0
   0
+LAYER
+  5
+EF238
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+TrueColorLayer
+ 70
+     0
+ 62
+   101
+420
+  9367964
+  6
+Continuous
+370
+    -3
+390
+F
+347
+EE
+348
+0
+  0
 ENDTAB
   0
 TABLE
@@ -622,6 +650,26 @@ BlockWithLineByBlock
      1
 281
      0
+  0
+BLOCK_RECORD
+  5
+EF221
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+BlockWithTrueColorLine
+340
+0
+  70
+      0
+ 280
+      1
+ 281
+      0
   0
 ENDTAB
   0
@@ -1523,6 +1571,74 @@ AcDbEntity
 100
 AcDbBlockEnd
   0
+BLOCK
+  5
+EF222
+330
+EF221
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+BlockWithTrueColorLine
+ 70
+     0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+BlockWithTrueColorLine
+  1
+
+  0
+LINE
+  5
+EF232
+330
+EF221
+100
+AcDbEntity
+  8
+0
+  6
+Continuous
+ 62
+   194
+420
+  6162587
+100
+AcDbLine
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+1.0
+ 21
+1.0
+ 31
+0.0
+  0
+ENDBLK
+  5
+EF223
+330
+EF221
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
 ENDSEC
   0
 SECTION
@@ -1686,6 +1802,78 @@ AcDbCircle
 0.0
  40
 1.649074916130547
+  0
+INSERT
+  5
+EF218
+330
+EEEEE
+100
+AcDbEntity
+  8
+TrueColorLayer
+  6
+Continuous
+ 62
+   132
+420
+  1629409
+100
+AcDbBlockReference
+  2
+BlockWithLineByBlock
+ 10
+316837.2095681315
+ 20
+5814533.908666889
+ 30
+0.0
+  0
+INSERT
+  5
+EF236
+330
+EEEEE
+100
+AcDbEntity
+  8
+TrueColorLayer
+  6
+Continuous
+ 62
+     4
+100
+AcDbBlockReference
+  2
+BlockWithTrueColorLine
+ 10
+316837.3334775944
+ 20
+5814533.512409018
+ 30
+0.0
+  0
+INSERT
+  5
+EF237
+330
+EEEEE
+100
+AcDbEntity
+  8
+TrueColorLayer
+  6
+Continuous
+100
+AcDbBlockReference
+  2
+BlockWithLineByBlock
+ 10
+316837.0689098563
+ 20
+5814534.325012657
+ 30
+0.0
   0
 ENDSEC
   0

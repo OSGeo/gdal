@@ -107,6 +107,13 @@ typedef struct
     VSICurlReadCbkFunc  pfnReadCbk;
     void               *pReadCbkUserData;
     bool                bInterrupted;
+
+#if LIBCURL_VERSION_NUM < 0x073600
+    // Workaround to ignore extra HTTP response headers from
+    // proxies in older versions of curl.
+    // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
+    bool            bIsProxyConnectHeader;
+#endif
 } WriteFuncStruct;
 
 /************************************************************************/

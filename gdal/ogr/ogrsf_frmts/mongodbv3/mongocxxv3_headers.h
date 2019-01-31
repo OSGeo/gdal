@@ -1,13 +1,11 @@
 /******************************************************************************
  *
- * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
- * Purpose:  Function to register all known OGR drivers.
- * Authors:  Mikhail Gusev (gusevmihs at gmail dot com)
- *           Dmitry Baryshnikov, polimax@mail.ru
+ * Project:  GDAL
+ * Purpose:  Includes MongoDB C++ v3 SDK headers
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2014, Mikhail Gusev
- * Copyright (c) 2014-2015, NextGIS <info@nextgis.com>
+ * Copyright (c) 2019, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,26 +24,27 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+ *****************************************************************************/
 
-#include "gnm_frmts.h"
+#ifndef MONGOCXXV3_HEADERS_H
+#define MONGOCXXV3_HEADERS_H
 
-CPL_CVSID("$Id$")
-
-void GNMRegisterAllInternal()
-{
-#ifdef GNMFILE_ENABLED
-    RegisterGNMFile();
+#if defined(__GNUC__) && !defined(_MSC_VER)
+#pragma GCC system_header
 #endif
 
-#ifdef GNMDB_ENABLED
-    RegisterGNMDatabase();
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/builder/basic/kvp.hpp>
+#include <bsoncxx/json.hpp>
+#include <bsoncxx/stdx/make_unique.hpp>
+#include <bsoncxx/string/to_string.hpp>
+#include <bsoncxx/types/value.hpp>
+
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+#include <mongocxx/uri.hpp>
+#include <mongocxx/logger.hpp>
+#include <mongocxx/options/client.hpp>
+#include <mongocxx/options/ssl.hpp>
+
 #endif
-
-//TODO:
-// * pgRouting driver
-// * OSRM driver
-// * GraphHopper driver
-// * ArcGIS geometric networks
-
-} /* GNMRegisterAll */

@@ -8,10 +8,17 @@ export LC_ALL=en_US.utf8
 chroot "$chroot" ccache -M 1G
 chroot "$chroot" ccache -s
 
+chroot "$chroot" sh -c "cd $PWD && tar xzf mongo-c-driver-1.13.0.tar.gz && cd mongo-c-driver-1.13.0 && mkdir build_cmake && cd build_cmake && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Debug && make -j3"
+sudo chroot "$chroot" sh -c "cd $PWD/mongo-c-driver-1.13.0/build_cmake && make -j3 install"
+
+chroot "$chroot" sh -c "cd $PWD && tar xzf r3.4.0.tar.gz && cd mongo-cxx-driver-r3.4.0 && mkdir build_cmake && cd build_cmake && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Debug && make -j3"
+# -DBSONCXX_POLY_USE_MNMLSTC=OFF -DBSONCXX_POLY_USE_STD=OFF -DBSONCXX_POLY_USE_STD_EXPERIMENTAL=OFF -DBSONCXX_POLY_USE_SYSTEM_MNMLSTC=OFF
+sudo chroot "$chroot" sh -c "cd $PWD/mongo-cxx-driver-r3.4.0/build_cmake && make -j3 install"
+
 chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && cd sl && fossil open ../libspatialite.fossil && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' ./configure --prefix=/usr --disable-geos370 && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD && cd sl && make -j3 install"
 
-chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && cd rl2 && fossil open ../librasterlite2.fossil && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' ./configure --prefix=/usr && CCACHE_CPP2=yes make -j3"
+chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && cd rl2 && fossil open ../librasterlite2.fossil && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' ./configure --prefix=/usr --disable-lz4 --disable-zstd && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD && cd rl2 && make -j3 install"
 
 chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-static-proj4 --with-poppler --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=$PWD/FileGDB_API-64gcc51"

@@ -311,7 +311,7 @@ def test_pds_line_offset_not_multiple_of_record():
 
 def test_pds_band_storage_type_line_interleaved():
 
-    tst = gdaltest.GDALTest('PDS', 'pds/hsp00017ba0_01_ra218s_trr3_truncated.lbl', 1, 364)
+    tst = gdaltest.GDALTest('PDS', 'pds/hsp00017ba0_01_ra218s_trr3_truncated.lbl', 1, 64740)
     return tst.testOpen()
 
 

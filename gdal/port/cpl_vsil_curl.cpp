@@ -485,6 +485,10 @@ void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
     psStruct->pfnReadCbk = pfnReadCbk;
     psStruct->pReadCbkUserData = pReadCbkUserData;
     psStruct->bInterrupted = false;
+
+#if LIBCURL_VERSION_NUM < 0x073600
+    psStruct->bIsProxyConnectHeader = false;
+#endif
 }
 
 /************************************************************************/
@@ -509,10 +513,31 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
             char* pszLine = psStruct->pBuffer + psStruct->nSize;
             if( STARTS_WITH_CI(pszLine, "HTTP/") )
             {
-                const char* pszSpace = strchr(
-                    const_cast<const char*>(pszLine), ' ');
+                char* pszSpace = strchr(pszLine, ' ');
                 if( pszSpace )
+                {
                     psStruct->nHTTPCode = atoi(pszSpace + 1);
+
+#if LIBCURL_VERSION_NUM < 0x073600
+                    // Workaround to ignore extra HTTP response headers from
+                    // proxies in older versions of curl.
+                    // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
+                    if( psStruct->nHTTPCode >= 200 &&
+                        psStruct->nHTTPCode < 300 )
+                    {
+                        pszSpace = strchr(pszSpace + 1, ' ');
+                        if( pszSpace &&
+                            // This could be any string really, but we don't
+                            // have an easy way to distinguish between proxies
+                            // and upstream responses...
+                            STARTS_WITH_CI( pszSpace + 1,
+                                            "Connection established") )
+                        {
+                            psStruct->bIsProxyConnectHeader = true;
+                        }
+                    }
+#endif
+                }
             }
             else if( STARTS_WITH_CI(pszLine, "Content-Length: ") )
             {
@@ -563,6 +588,12 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                           psStruct->nHTTPCode == 302) )
                         return 0;
                 }
+#if LIBCURL_VERSION_NUM < 0x073600
+                else if( psStruct->bIsProxyConnectHeader )
+                {
+                    psStruct->bIsProxyConnectHeader = false;
+                }
+#endif
                 else
                 {
                     psStruct->bIsInHeader = false;
@@ -1647,7 +1678,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         // dubious now. We could probably remove it
         return ReadMultiRangeSingleGet(nRanges, ppData, panOffsets, panSizes);
     }
-    else if( EQUAL(pszMultiRangeStrategy, "SERIAL") )
+    else if( nRanges == 1 || EQUAL(pszMultiRangeStrategy, "SERIAL") )
     {
         return VSIVirtualHandle::ReadMultiRange(
                                     nRanges, ppData, panOffsets, panSizes);

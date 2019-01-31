@@ -3222,6 +3222,13 @@ def test_ogr_geom_force_polygonzm_to_linestring():
     assert wkt == 'LINESTRING ZM (0 0 10 20,0 1 30 40,1 1 50 60,0 0 10 70)'
 
 ###############################################################################
+
+
+def test_ogr_geom_create_from_wkt_polyhedrasurface():
+    g = ogr.CreateGeometryFromWkt('POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))')
+    assert g.ExportToWkt() == 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))'
+
+###############################################################################
 # cleanup
 
 

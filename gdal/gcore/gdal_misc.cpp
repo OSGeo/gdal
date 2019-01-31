@@ -2787,7 +2787,7 @@ static void StripIrrelevantOptions(CPLXMLNode* psCOL, int nOptions)
                 if( psPrev )
                     psPrev->psNext = psNext;
                 else if( psCOL->psChild == psIter )
-                    psCOL->psChild->psNext = psNext;
+                    psCOL->psChild = psNext;
                 psIter->psNext = nullptr;
                 CPLDestroyXMLNode(psIter);
                 psIter = psNext;

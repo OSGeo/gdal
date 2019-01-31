@@ -1696,6 +1696,12 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
 
     GIntBig nFID2;
     GIntBig nFID5;
+
+    CPLString os_Id2;
+    CPLString os_Id5;
+
+    const bool bHas_Id = poLayer->GetLayerDefn()->GetFieldIndex("_id") == 0;
+
 /* -------------------------------------------------------------------- */
 /*      Fetch five features.                                            */
 /* -------------------------------------------------------------------- */
@@ -1720,6 +1726,15 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
 
     papoFeatures[1]->SetFID(nFID5);
     papoFeatures[4]->SetFID(nFID2);
+
+    if( bHas_Id )
+    {
+        os_Id2 = papoFeatures[1]->GetFieldAsString(0);
+        os_Id5 = papoFeatures[4]->GetFieldAsString(0);
+
+        papoFeatures[1]->SetField(0, os_Id5);
+        papoFeatures[4]->SetField(0, os_Id2);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Rewrite them.                                                   */
@@ -1766,6 +1781,12 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
 
     papoFeatures[1]->SetFID(nFID2);
     papoFeatures[4]->SetFID(nFID5);
+
+    if( bHas_Id )
+    {
+        papoFeatures[1]->SetField(0, os_Id2);
+        papoFeatures[4]->SetField(0, os_Id5);
+    }
 
     if( LOG_ACTION(poLayer->SetFeature(papoFeatures[1])) != OGRERR_NONE )
     {

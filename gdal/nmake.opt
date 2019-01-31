@@ -640,20 +640,11 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #ZLIB_INC = -IC:\projects\zlib
 #ZLIB_LIB = C:\projects\lib\Release\zlib.lib
 
-# Uncomment for PDF support
-# Uncomment POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES for Poppler >= 0.16.0
-# Uncomment POPPLER_0_20_OR_LATER = YES for Poppler >= 0.20.0
-# Uncomment POPPLER_0_23_OR_LATER = YES for Poppler >= 0.23.0
-# Uncomment POPPLER_0_58_OR_LATER = YES for Poppler >= 0.58.0
-# Uncomment POPPLER_0_69_OR_LATER = YES for Poppler >= 0.69.0
+# Uncomment for PDF support, and update version numbers (poppler 0.23 or later required)
 #POPPLER_ENABLED = YES
 #POPPLER_CFLAGS = -Ie:/kde/include -Ie:/kde/include/poppler
-#POPPLER_HAS_OPTCONTENT = YES
-#POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES
-#POPPLER_0_20_OR_LATER = YES
-#POPPLER_0_23_OR_LATER = YES
-#POPPLER_0_58_OR_LATER = YES
-#POPPLER_0_69_OR_LATER = YES
+#POPPLER_MAJOR_VERSION = 0
+#POPPLER_MINOR_VERSION = 69
 #POPPLER_LIBS = e:/kde/lib/poppler.lib e:/kde/lib/freetype.lib e:/kde/lib/liblcms-1.lib advapi32.lib gdi32.lib
 
 # Uncomment for PDF support
@@ -742,6 +733,13 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # BOOST_INC = c:/users/even/dev/boost_1_55_0_32bit
 # BOOST_LIB_PATH= c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0
 # MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/libmongoclient.lib $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_regex-vc100-mt-s-1_55.lib /nodefaultlib:msvcprt /nodefaultlib:libcmt
+
+# Uncomment for MongoDBv3 support
+# Uncomment following line if plugin is preferred
+#MONGODBV3_PLUGIN = YES
+#BOOST_INC=E:/boost_1_69_0
+#MONGOCXXV3_CFLAGS = -IE:/dev/install-mongocxx-3.4.0/include/mongocxx/v_noabi -IE:/dev/install-mongocxx-3.4.0/include/bsoncxx/v_noabi
+#MONGOCXXV3_LIBS = E:/dev/install-mongocxx-3.4.0/lib/mongocxx.lib E:/dev/install-mongocxx-3.4.0/lib/bsoncxx.lib
 
 # QHull configuration. By default use internal libqhull.
 # QHULL_SETTING can be set to INTERNAL, EXTERNAL or NO
@@ -962,6 +960,14 @@ MONGODB_LIB_LINK =
 !ENDIF
 !ENDIF
 
+!IFDEF MONGOCXXV3_CFLAGS
+!IF "$(MONGODBV3_PLUGIN)" != "YES"
+MONGODBV3_LIB_LINK = $(MONGOCXXV3_LIBS)
+!ELSE
+MONGODBV3_LIB_LINK =
+!ENDIF
+!ENDIF
+
 !IFDEF XERCES_DIR
 NAS_ENABLED = YES
 !ENDIF
@@ -991,5 +997,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) $(CHARLS_LIB) ws2_32.lib \
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) $(CHARLS_LIB) ws2_32.lib \
     kernel32.lib psapi.lib

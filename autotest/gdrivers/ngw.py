@@ -39,8 +39,16 @@ import gdaltest
 import time
 import json
 import pytest
+import random
+from datetime import datetime
 
 def check_availability(url):
+    # Sandbox cleans at 1:05 on monday (UTC)
+    now = datetime.utcnow()
+    if now.weekday() == 0:
+        if now.hour >= 1 and now.hour < 3:
+            return False
+
     version_url = url + '/api/component/pyramid/pkg_version'
 
     if gdaltest.gdalurlopen(version_url) is None:
@@ -59,6 +67,9 @@ def check_availability(url):
         return limit - count > 10
     except:
         return False
+
+def get_new_name():
+    return 'gdaltest_group_' + str(int(time.time())) + '_' + str(random.randint(10, 99))
 
 ###############################################################################
 # Verify we have the driver.
@@ -92,7 +103,7 @@ def test_ngw_2():
         gdaltest.ngw_drv = None
         pytest.skip()
 
-    create_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/0/gdaltest_group_' + str(int(time.time()))
+    create_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/0/' + get_new_name()
     gdal.PushErrorHandler()
     description = 'GDAL Raster test group'
     gdaltest.ngw_ds = gdaltest.ngw_drv.Create(create_url, 0, 0, 0, gdal.GDT_Unknown, \
@@ -118,7 +129,7 @@ def test_ngw_3():
         gdaltest.ngw_drv = None
         pytest.skip()
 
-    new_name = 'gdaltest_group_' + str(int(time.time()) - 2)
+    new_name = get_new_name() + '_2'
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     rename_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
 

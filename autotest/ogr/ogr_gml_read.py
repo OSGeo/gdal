@@ -3532,6 +3532,49 @@ def test_ogr_gml_gml2_write_geometry_error():
     gdal.Unlink('/vsimem/ogr_gml_83.xsd')
 
 ###############################################################################
+
+
+def test_ogr_gml_srsname_only_on_top_bounded_by():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    tmpname = '/vsimem/test_ogr_gml_srsname_only_on_top_bounded_by.xml'
+    gdal.FileFromMemBuffer(tmpname, """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:boundedBy>
+    <gml:Envelope srsName="EPSG:27700">
+      <gml:lowerCorner>0 0</gml:lowerCorner>
+      <gml:upperCorner>1 1</gml:upperCorner>
+    </gml:Envelope>
+  </gml:boundedBy>
+  <gml:featureMember>
+    <ogr:poly fid="poly.0">
+      <ogr:geometryProperty><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 1,0 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>
+    </ogr:poly>
+  </gml:featureMember>
+</<ogr:FeatureCollection>""")
+
+    # Open once to generate .gfs
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert '27700' in lyr.GetSpatialRef().ExportToWkt()
+    ds = None
+
+    # Open another time to read .gfs
+    ds = ogr.Open(tmpname)
+    lyr = ds.GetLayer(0)
+    assert '27700' in lyr.GetSpatialRef().ExportToWkt()
+    ds = None
+
+    gdal.Unlink(tmpname)
+    gdal.Unlink(tmpname[0:-3] + "gfs")
+
+###############################################################################
 #  Cleanup
 
 

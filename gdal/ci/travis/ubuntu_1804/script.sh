@@ -29,6 +29,9 @@ chroot "$chroot" sh -c "cd $PWD/autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysq
 chroot "$chroot" sh -c "cd $PWD/autotest/ogr && OGR_PG_CONNECTION_STRING='host=127.0.0.1 port=25432 dbname=autotest user=docker password=docker' $PYTEST ogr_pg.py"
 chroot "$chroot" sh -c "cd $PWD/autotest/gdrivers && PGHOST=127.0.0.1 PGPORT=25432 PGUSER=docker PGPASSWORD=docker $PYTEST postgisraster.py"
 
+# MongoDB v3
+chroot "$chroot" sh -c "cd $PWD/autotest/ogr && MONGODBV3_TEST_PORT=27018 MONGODBV3_TEST_HOST=localhost $PYTEST ogr_mongodbv3.py"
+
 # for some reason connection to the DB requires sudo chroot
 # WARNING: unfortunately this doesn't even work from the ubuntu 18.04 chroot, but it
 # does from the ubuntu 16.04 one

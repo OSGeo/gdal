@@ -2251,6 +2251,35 @@ AC_SUBST(MONGODB_ENABLED, $MONGODB_ENABLED)
 AC_SUBST(MONGODB_LIB, $MONGODB_LIB)
 AC_SUBST(MONGODB_INC, $MONGODB_INC)
 
+
+dnl ---------------------------------------------------------------------------
+dnl MongoCXXv3 driver
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(mongocxxv3,[  --with-mongocxxv3[=ARG]        Include MongoCXXv3 support (ARG=yes or no)],,)
+
+MONGOCXXV3_ENABLED=no
+
+if test "$with_mongocxxv3" = "no" ; then
+
+  echo "MONGODBv3 support disabled."
+
+elif test "$with_mongocxxv3" = "yes" -o "$with_mongocxxv3" = "" ; then
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([MONGOCXXV3], [libmongocxx >= 3.4.0], [MONGOCXXV3_ENABLED=yes], [MONGOCXXV3_ENABLED=no])
+
+  if test "$MONGOCXXV3_ENABLED" = "no" -a "$with_mongocxxv3" = "yes" ; then
+    AC_MSG_ERROR([mongocxxv3 requested but no found])
+  fi
+
+fi
+
+AC_SUBST(MONGOCXXV3_ENABLED, $MONGOCXXV3_ENABLED)
+AC_SUBST(MONGOCXXV3_LIBS, $MONGOCXXV3_LIBS)
+AC_SUBST(MONGOCXXV3_CFLAGS, $MONGOCXXV3_CFLAGS)
+
+
 dnl ---------------------------------------------------------------------------
 dnl Select an HDF4 Library to use, or disable driver.
 dnl
@@ -4510,178 +4539,35 @@ dnl ---------------------------------------------------------------------------
 AC_ARG_WITH(poppler,[  --with-poppler[=ARG]    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)],,)
 
 HAVE_POPPLER=no
-POPPLER_HAS_OPTCONTENT=no
-POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
-POPPLER_0_20_OR_LATER=no
-POPPLER_0_23_OR_LATER=no
-POPPLER_0_58_OR_LATER=no
-POPPLER_0_69_OR_LATER=no
+POPPLER_MAJOR_VERSION=
+POPPLER_MINOR_VERSION=
 
 AC_MSG_CHECKING([for poppler])
 
 if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
 
-    if test "$with_poppler" = "yes" ; then
-        TEST_POPPLER_INC="-I/usr/include -I/usr/include/poppler"
-        TEST_POPPLER_LIB="-lpoppler"
-    else
-        TEST_POPPLER_INC="-I$with_poppler/include -I$with_poppler/include/poppler"
-        TEST_POPPLER_LIB="-L$with_poppler/lib -lpoppler"
-    fi
-
-    # Check that we can accept Page::pageObj private member
-    rm -f testpoppler.*
-    echo '#define private public' > testpoppler.cpp
-    echo '#include <poppler/Page.h>' >> testpoppler.cpp
-    echo '#include <poppler/splash/SplashBitmap.h>' >> testpoppler.cpp
-    echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
-
-    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
+    PKG_PROG_PKG_CONFIG([0.21])
+    PKG_CHECK_MODULES([POPPLER], [poppler >= 0.23.0],
+            [POPPLER_VERSION=`$PKG_CONFIG --modversion poppler`], [POPPLER_VERSION=])
+    if test "$POPPLER_VERSION" != ""; then
         HAVE_POPPLER=yes
-    else
-        # poppler 0.23.0 needs to be linked against pthread
-        TEST_POPPLER_LIB="${TEST_POPPLER_LIB} -lpthread"
-        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
-            HAVE_POPPLER=yes
-        fi
+        POPPLER_MAJOR_VERSION=`expr $POPPLER_VERSION : '\([[0-9]]*\)'`
+        POPPLER_MINOR_VERSION=`expr $POPPLER_VERSION : '[[0-9]]*\.\([[0-9]]*\)'`
+        POPPLER_CFLAGS=`echo $POPPLER_CFLAGS $POPPLER_CFLAGS | sed "s/include\/poppler/include/"`
     fi
-
-    if test "$HAVE_POPPLER" = "yes"; then
-        if test "$PDF_PLUGIN" = "no"; then
-            LIBS="${TEST_POPPLER_LIB} ${LIBS}"
-        fi
-        AC_MSG_RESULT([yes])
-        POPPLER_INC=$TEST_POPPLER_INC
-        POPPLER_PLUGIN_LIB="${TEST_POPPLER_LIB}"
-
-        CHECK_OTHER_POPPLER_VERSION=yes
-
-        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
-            AC_MSG_CHECKING([if OptionalContent has API >= 0.69.0])
-            rm -f testpoppler.*
-            echo '#include <poppler/OptionalContent.h>' > testpoppler.cpp
-            echo 'int main(int argc, char** argv) {' >> testpoppler.cpp
-            echo 'OCGs ocg(nullptr, nullptr);' >> testpoppler.cpp
-            echo 'ocg.getOCGs().size();' >> testpoppler.cpp
-            echo 'return 0; }' >> testpoppler.cpp
-            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                POPPLER_0_69_OR_LATER=yes
-                POPPLER_0_58_OR_LATER=yes
-                POPPLER_0_23_OR_LATER=yes
-                POPPLER_0_20_OR_LATER=yes
-                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-                POPPLER_HAS_OPTCONTENT=yes
-                CHECK_OTHER_POPPLER_VERSION=no
-                AC_MSG_RESULT([yes])
-            else
-                AC_MSG_RESULT([no])
-            fi
-        fi
-
-        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
-            # And now we check if we have Poppler >= 0.58.0
-            AC_MSG_CHECKING([if Object does have new API (>= 0.58.0)])
-            rm -f testpoppler.*
-            echo '#include <poppler/Object.h>' > testpoppler.cpp
-            echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
-            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                POPPLER_0_58_OR_LATER=yes
-                POPPLER_0_23_OR_LATER=yes
-                POPPLER_0_20_OR_LATER=yes
-                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-                POPPLER_HAS_OPTCONTENT=yes
-                CHECK_OTHER_POPPLER_VERSION=no
-                AC_MSG_RESULT([yes])
-            else
-                AC_MSG_RESULT([no])
-            fi
-        fi
-
-        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
-
-            # And now try another dirty thing, but this one is
-            # optional.
-            AC_MSG_CHECKING([if Catalog::optContent exists])
-            rm -f testpoppler.*
-            echo '#define private public' > testpoppler.cpp
-            echo '#include <poppler/Object.h>' >> testpoppler.cpp
-            echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
-            echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
-            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                POPPLER_HAS_OPTCONTENT=yes
-                AC_MSG_RESULT([yes])
-            else
-                AC_MSG_RESULT([no])
-            fi
-
-            # And now we check if we have Poppler >= 0.16.0
-            AC_MSG_CHECKING([if BaseStream constructor needs 2 arguments])
-            rm -f testpoppler.*
-            echo '#include <poppler/Object.h>' > testpoppler.cpp
-            echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-            echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-            echo 'public:' >> testpoppler.cpp
-            echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-            echo '};' >> testpoppler.cpp
-            echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
-            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-                AC_MSG_RESULT([yes])
-
-                # And now we check if we have Poppler >= 0.20.0
-                AC_MSG_CHECKING([if we have Poppler >= 0.20.0])
-                rm -f testpoppler.*
-                echo '#include <poppler/Error.h>' > testpoppler.cpp
-                echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
-                if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                    POPPLER_0_20_OR_LATER=yes
-                    AC_MSG_RESULT([yes])
-
-                    # And now we check if we have Poppler >= 0.23.0
-                    AC_MSG_CHECKING([if we have Poppler >= 0.23.0])
-                    rm -f testpoppler.*
-                    echo '#include <poppler/Object.h>' > testpoppler.cpp
-                    echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-                    echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-                    echo 'public:' >> testpoppler.cpp
-                    echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-                    echo '  ~TestStream() {}' >> testpoppler.cpp
-                    echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
-                    echo '};' >> testpoppler.cpp
-                    echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
-                    if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                        POPPLER_0_23_OR_LATER=yes
-                        AC_MSG_RESULT([yes])
-                    else
-                        AC_MSG_RESULT([no])
-                    fi
-
-                else
-                    AC_MSG_RESULT([no])
-                fi
-
-            else
-                AC_MSG_RESULT([no])
-            fi
-        fi
-    else
-        AC_MSG_RESULT([no])
-    fi
-    rm -f testpoppler.*
-    rm -f testpoppler
 else
     AC_MSG_RESULT([disabled])
 fi
 
+if test "$HAVE_POPPLER" = "yes" -a "$PDF_PLUGIN" = "no"; then
+    LIBS="${POPPLER_LIBS} ${LIBS}"
+fi
+
 AC_SUBST(HAVE_POPPLER, $HAVE_POPPLER)
-AC_SUBST(POPPLER_HAS_OPTCONTENT, $POPPLER_HAS_OPTCONTENT)
-AC_SUBST(POPPLER_BASE_STREAM_HAS_TWO_ARGS, $POPPLER_BASE_STREAM_HAS_TWO_ARGS)
-AC_SUBST(POPPLER_0_20_OR_LATER, $POPPLER_0_20_OR_LATER)
-AC_SUBST(POPPLER_0_23_OR_LATER, $POPPLER_0_23_OR_LATER)
-AC_SUBST(POPPLER_0_58_OR_LATER, $POPPLER_0_58_OR_LATER)
-AC_SUBST(POPPLER_0_69_OR_LATER, $POPPLER_0_69_OR_LATER)
-AC_SUBST(POPPLER_INC, $POPPLER_INC)
-AC_SUBST(POPPLER_PLUGIN_LIB, $POPPLER_PLUGIN_LIB)
+AC_SUBST(POPPLER_MAJOR_VERSION, $POPPLER_MAJOR_VERSION)
+AC_SUBST(POPPLER_MINOR_VERSION, $POPPLER_MINOR_VERSION)
+AC_SUBST(POPPLER_CFLAGS, $POPPLER_CFLAGS)
+AC_SUBST(POPPLER_PLUGIN_LIB, $POPPLER_LIBS)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if libpodofo is available
@@ -5941,6 +5827,7 @@ LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
+LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 

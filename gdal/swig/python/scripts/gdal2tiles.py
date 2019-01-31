@@ -2638,8 +2638,8 @@ class GDAL2Tiles(object):
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
                   var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tile_size.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tile_size.h));
+                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom();
                   if (this.map.baseLayer.CLASS_NAME === 'OpenLayers.Layer.Bing') {
                       z+=1;
@@ -2662,8 +2662,8 @@ class GDAL2Tiles(object):
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
                   var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tile_size.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tile_size.h));
+                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom()%(tmsoffset)s;
                   var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
                   var url = this.url;
@@ -2683,8 +2683,8 @@ class GDAL2Tiles(object):
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
                   var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tile_size.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tile_size.h));
+                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom();
                   var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
                   var url = this.url;
