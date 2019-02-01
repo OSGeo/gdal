@@ -1,14 +1,12 @@
-GDAL_ROOT	=	..\..
+GDAL_ROOT       = ..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-
-OBJ	=    jpgdataset.obj jpgdataset_12.obj vsidataio.obj vsidataio_12.obj
-
+OBJ             = jpgdataset.obj jpgdataset_12.obj vsidataio.obj vsidataio_12.obj
 
 !IFDEF JPEG_EXTERNAL_LIB
-EXTRAFLAGS      = -I$(JPEGDIR) $(JPEG12_FLAGS) -I..\mem
+EXTRAFLAGS      = -I..\mem -I$(JPEGDIR) $(JPEG12_FLAGS)
 !ELSE
-EXTRAFLAGS = 	-Ilibjpeg $(JPEG12_FLAGS) -I..\mem
+EXTRAFLAGS      = -I..\mem -Ilibjpeg $(JPEG12_FLAGS)
 !ENDIF
 
 !IFDEF JPEG12_SUPPORTED
