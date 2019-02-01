@@ -23553,6 +23553,12 @@ else
   if test "x$with_proj" = "xyes" -o "x$with_proj" = "x"; then
     ORIG_LIBS="$LIBS"
     LIBS="-lproj $ORIG_LIBS"
+    ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create_from_wkt in -lproj" >&5
 $as_echo_n "checking for proj_create_from_wkt in -lproj... " >&6; }
 if ${ac_cv_lib_proj_proj_create_from_wkt+:} false; then :
@@ -23578,7 +23584,7 @@ return proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_proj_proj_create_from_wkt=yes
 else
   ac_cv_lib_proj_proj_create_from_wkt=no
@@ -23595,7 +23601,19 @@ else
   PROJ_FOUND=no
 fi
 
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
     if test "$PROJ_FOUND" = "no"; then
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -lproj" >&5
 $as_echo_n "checking for internal_proj_create_from_wkt in -lproj... " >&6; }
 if ${ac_cv_lib_proj_internal_proj_create_from_wkt+:} false; then :
@@ -23621,7 +23639,7 @@ return internal_proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_proj_internal_proj_create_from_wkt=yes
 else
   ac_cv_lib_proj_internal_proj_create_from_wkt=no
@@ -23638,12 +23656,24 @@ else
   PROJ_FOUND=no
 fi
 
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
         if test "$PROJ_FOUND" = "yes"; then
             PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-linternalproj $ORIG_LIBS"
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -linternalproj" >&5
 $as_echo_n "checking for internal_proj_create_from_wkt in -linternalproj... " >&6; }
 if ${ac_cv_lib_internalproj_internal_proj_create_from_wkt+:} false; then :
@@ -23669,7 +23699,7 @@ return internal_proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_internalproj_internal_proj_create_from_wkt=yes
 else
   ac_cv_lib_internalproj_internal_proj_create_from_wkt=no
@@ -23685,6 +23715,12 @@ if test "x$ac_cv_lib_internalproj_internal_proj_create_from_wkt" = xyes; then :
 else
   PROJ_FOUND=no
 fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         if test "$PROJ_FOUND" = "yes"; then
             PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
@@ -23715,6 +23751,12 @@ $as_echo "$as_me: proj.h found" >&6;}
 
     ORIG_LIBS="$LIBS"
     LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+    ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create_from_wkt in -lproj" >&5
 $as_echo_n "checking for proj_create_from_wkt in -lproj... " >&6; }
 if ${ac_cv_lib_proj_proj_create_from_wkt+:} false; then :
@@ -23740,7 +23782,7 @@ return proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_proj_proj_create_from_wkt=yes
 else
   ac_cv_lib_proj_proj_create_from_wkt=no
@@ -23757,9 +23799,21 @@ else
   PROJ_FOUND=no
 fi
 
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create_from_wkt in -lproj" >&5
 $as_echo_n "checking for proj_create_from_wkt in -lproj... " >&6; }
 if ${ac_cv_lib_proj_proj_create_from_wkt+:} false; then :
@@ -23785,7 +23839,7 @@ return proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_proj_proj_create_from_wkt=yes
 else
   ac_cv_lib_proj_proj_create_from_wkt=no
@@ -23802,9 +23856,21 @@ else
   PROJ_FOUND=no
 fi
 
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
     fi
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -lproj" >&5
 $as_echo_n "checking for internal_proj_create_from_wkt in -lproj... " >&6; }
 if ${ac_cv_lib_proj_internal_proj_create_from_wkt+:} false; then :
@@ -23830,7 +23896,7 @@ return internal_proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_proj_internal_proj_create_from_wkt=yes
 else
   ac_cv_lib_proj_internal_proj_create_from_wkt=no
@@ -23847,9 +23913,21 @@ else
   PROJ_FOUND=no
 fi
 
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
         if test "$PROJ_FOUND" = "no"; then
             LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -lproj" >&5
 $as_echo_n "checking for internal_proj_create_from_wkt in -lproj... " >&6; }
 if ${ac_cv_lib_proj_internal_proj_create_from_wkt+:} false; then :
@@ -23875,7 +23953,7 @@ return internal_proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_proj_internal_proj_create_from_wkt=yes
 else
   ac_cv_lib_proj_internal_proj_create_from_wkt=no
@@ -23892,6 +23970,12 @@ else
   PROJ_FOUND=no
 fi
 
+            ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
         fi
         if test "$PROJ_FOUND" = "yes"; then
             PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
@@ -23899,6 +23983,12 @@ fi
     fi
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-L$with_proj/lib -linternalproj $ORIG_LIBS"
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -linternalproj" >&5
 $as_echo_n "checking for internal_proj_create_from_wkt in -linternalproj... " >&6; }
 if ${ac_cv_lib_internalproj_internal_proj_create_from_wkt+:} false; then :
@@ -23924,7 +24014,7 @@ return internal_proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_internalproj_internal_proj_create_from_wkt=yes
 else
   ac_cv_lib_internalproj_internal_proj_create_from_wkt=no
@@ -23941,9 +24031,21 @@ else
   PROJ_FOUND=no
 fi
 
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
         if test "$PROJ_FOUND" = "no"; then
             LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -linternalproj" >&5
 $as_echo_n "checking for internal_proj_create_from_wkt in -linternalproj... " >&6; }
 if ${ac_cv_lib_internalproj_internal_proj_create_from_wkt+:} false; then :
@@ -23969,7 +24071,7 @@ return internal_proj_create_from_wkt ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_internalproj_internal_proj_create_from_wkt=yes
 else
   ac_cv_lib_internalproj_internal_proj_create_from_wkt=no
@@ -23985,6 +24087,12 @@ if test "x$ac_cv_lib_internalproj_internal_proj_create_from_wkt" = xyes; then :
 else
   PROJ_FOUND=no
 fi
+
+            ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         fi
         if test "$PROJ_FOUND" = "yes"; then

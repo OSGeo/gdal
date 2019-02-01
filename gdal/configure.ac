@@ -1201,16 +1201,22 @@ else
   if test "x$with_proj" = "xyes" -o "x$with_proj" = "x"; then
     ORIG_LIBS="$LIBS"
     LIBS="-lproj $ORIG_LIBS"
+    AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+    AC_LANG_POP([C++])
     if test "$PROJ_FOUND" = "no"; then
+        AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+        AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "yes"; then
             PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-linternalproj $ORIG_LIBS"
+        AC_LANG_PUSH([C++])
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+        AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "yes"; then
             PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
         fi
@@ -1228,19 +1234,27 @@ else
 
     ORIG_LIBS="$LIBS"
     LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+    AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+    AC_LANG_POP([C++])
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
+        AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+        AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+        AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+        AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
             LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
+            AC_LANG_PUSH([C++])
             AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+            AC_LANG_POP([C++])
         fi
         if test "$PROJ_FOUND" = "yes"; then
             PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
@@ -1248,11 +1262,15 @@ else
     fi
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-L$with_proj/lib -linternalproj $ORIG_LIBS"
+        AC_LANG_PUSH([C++])
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+        AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
             LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
+            AC_LANG_PUSH([C++])
             AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+            AC_LANG_POP([C++])
         fi
         if test "$PROJ_FOUND" = "yes"; then
             PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
