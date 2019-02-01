@@ -232,7 +232,6 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 
 {
     CPLErr       eErr = CE_None;
-
     CPLDebug("MRF_OVERLAY", "IBuildOverviews %d, bands %d\n", nOverviews, nBandsIn);
 
     if( nBands != nBandsIn )
@@ -248,7 +247,6 @@ CPLErr GDALMRFDataset::IBuildOverviews(
     if (GetAccess() != GA_Update)
     {
         CPLDebug("MRF", "File open read-only, creating overviews externally.");
-
         return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
             nBands, panBandList, pfnProgress, pProgressData);
@@ -300,6 +298,12 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 scale = strtod(CPLGetXMLValue(config, "Rsets.scale",
                     CPLString().Printf("%d", panOverviewList[0]).c_str()), nullptr);
 
+                if (static_cast<int>(scale) != 2 &&
+                    (EQUALN("Avg", pszResampling, 3) || EQUALN("Nnb", pszResampling, 3))) {
+                    CPLError(CE_Failure, CPLE_IllegalArg, "MRF internal resampling only works for a scale factor of two");
+                    throw CE_Failure;
+                }
+
                 // Initialize the empty overlays, all of them for a given scale
                 // They could already exist, in which case they are not erased
                 idxSize = AddOverviews(int(scale));
@@ -325,32 +329,39 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 throw; // Rethrow
             }
 
-            // To avoid issues with blacks overviews, if the user asked to
-            // generate overviews 2, 4, ..., we finish the sequence until the
-            // last level that will be otherwised initialized to black
+            // To avoid issues with blacks overviews, generate all of them
+            // if the user asked for a couple of overviews in the correct sequence
+            // and starting with the lowest one
             if( !EQUAL(pszResampling, "NONE") &&
                 nOverviews != GetRasterBand(1)->GetOverviewCount() &&
                 BOOLTEST(CPLGetConfigOption("MRF_ALL_OVERVIEW_LEVELS",
                                                "YES")) )
             {
-                bool bIncreasingPowers = true;
-                for (int i = 1; i < nOverviews; i++) {
-                    if (panOverviewList[i] != (panOverviewList[0] << i)) {
-                        bIncreasingPowers = false;
-                    }
-                }
-                if( bIncreasingPowers )
+                bool bIncreasingPowers = (panOverviewList[0] == static_cast<int>(scale));
+                bIncreasingPowers = (bIncreasingPowers && nOverviews > 1);
+                for (int i = 1; i < nOverviews; i++)
+                    bIncreasingPowers = bIncreasingPowers &&
+                        (panOverviewList[i] == static_cast<int>(scale * panOverviewList[i - 1]));
+
+                int ovrcount = GetRasterBand(1)->GetOverviewCount();
+                if (bIncreasingPowers && nOverviews != ovrcount)
                 {
-                    CPLDebug("MRF", "Generating %d levels instead of the %d required",
-                             GetRasterBand(1)->GetOverviewCount(), nOverviews);
-                    nOverviews = GetRasterBand(1)->GetOverviewCount();
-                    panOverviewListNew = (int*) CPLRealloc(panOverviewListNew,
-                                                    sizeof(int) * nOverviews );
-                    for (int i = 1; i < nOverviews; i++) {
-                        panOverviewListNew[i] = panOverviewListNew[0] << i;
-                    }
+                    CPLDebug("MRF", "Generating %d levels instead of the %d requested",
+                             ovrcount, nOverviews);
+                    nOverviews = ovrcount;
+                    panOverviewListNew = reinterpret_cast<int*>(CPLRealloc(panOverviewListNew,
+                                                    sizeof(int) * nOverviews ));
+                    panOverviewListNew[0] = static_cast<int>(scale);
+                    for (int i = 1; i < nOverviews; i++)
+                        panOverviewListNew[i] = static_cast<int>(scale * panOverviewListNew[i - 1]);
                 }
             }
+        }
+
+        if (static_cast<int>(scale) != 2 &&
+            (EQUALN("Avg", pszResampling, 3) || EQUALN("Nnb", pszResampling, 3))) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "MRF internal resampling only works for a scale factor of two");
+            throw CE_Failure;
         }
 
         for (int i = 0; i < nOverviews; i++) {
@@ -377,8 +388,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             // Generate the overview using the previous level as the source
 
             // Use "avg" flag to trigger the internal average sampling
-            if (EQUALN("Avg", pszResampling, 3) || EQUALN("NearNb", pszResampling, 6)) {
-
+            if (EQUALN("Avg", pszResampling, 3) || EQUALN("Nnb", pszResampling, 3)) {
                 int sampling = EQUALN("Avg", pszResampling, 3) ? SAMPLING_Avg : SAMPLING_Near;
                 // Internal, using PatchOverview
                 if (srclevel > 0)
