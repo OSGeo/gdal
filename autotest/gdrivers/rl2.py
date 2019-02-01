@@ -103,9 +103,6 @@ def test_rl2_3():
     if gdaltest.rl2_drv is None:
         pytest.skip()
 
-    # FIXME See https://github.com/OSGeo/gdal/issues/1241
-    pytest.skip()
-
     ds = gdal.Open('data/small_world.rl2')
 
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
