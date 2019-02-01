@@ -191,6 +191,8 @@ class OGRODSDataSource final: public GDALDataset
 
     void                DeleteLayer( const char *pszLayerName );
 
+    void                FillRepeatedCells(bool wasLastCell);
+
   public:
                         OGRODSDataSource();
                         virtual ~OGRODSDataSource();
