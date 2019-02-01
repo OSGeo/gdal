@@ -32274,7 +32274,7 @@ if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lspatialite  $LIBS"
+LIBS="-lspatialite -lsqlite3 -lproj $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -32312,7 +32312,7 @@ fi
 
             if test "$SPATIALITE_INIT_FOUND" = "yes"; then
                 HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                SPATIALITE_LIBS="-lspatialite -lsqlite3 -lproj"
                 LIBS="$LIBS $SPATIALITE_LIBS"
                 HAVE_SQLITE3=yes
             fi
