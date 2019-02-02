@@ -19,6 +19,6 @@ clean:
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ) $(O_OBJ):	rawdataset.h
+$(OBJ) $(O_OBJ):
 
 install:
