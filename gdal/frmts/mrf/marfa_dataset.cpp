@@ -232,7 +232,6 @@ CPLErr GDALMRFDataset::IBuildOverviews(
 
 {
     CPLErr       eErr = CE_None;
-
     CPLDebug("MRF_OVERLAY", "IBuildOverviews %d, bands %d\n", nOverviews, nBandsIn);
 
     if( nBands != nBandsIn )
@@ -248,7 +247,6 @@ CPLErr GDALMRFDataset::IBuildOverviews(
     if (GetAccess() != GA_Update)
     {
         CPLDebug("MRF", "File open read-only, creating overviews externally.");
-
         return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
             nBands, panBandList, pfnProgress, pProgressData);
@@ -300,6 +298,12 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 scale = strtod(CPLGetXMLValue(config, "Rsets.scale",
                     CPLString().Printf("%d", panOverviewList[0]).c_str()), nullptr);
 
+                if (static_cast<int>(scale) != 2 &&
+                    (EQUALN("Avg", pszResampling, 3) || EQUALN("Nnb", pszResampling, 3))) {
+                    CPLError(CE_Failure, CPLE_IllegalArg, "MRF internal resampling only works for a scale factor of two");
+                    throw CE_Failure;
+                }
+
                 // Initialize the empty overlays, all of them for a given scale
                 // They could already exist, in which case they are not erased
                 idxSize = AddOverviews(int(scale));
@@ -325,32 +329,38 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 throw; // Rethrow
             }
 
-            // To avoid issues with blacks overviews, if the user asked to
-            // generate overviews 2, 4, ..., we finish the sequence until the
-            // last level that will be otherwised initialized to black
+            // To avoid issues with blacks overviews, generate all of them
+            // if the user asked for a couple of overviews in the correct sequence
+            // and starting with the lowest one
             if( !EQUAL(pszResampling, "NONE") &&
                 nOverviews != GetRasterBand(1)->GetOverviewCount() &&
                 BOOLTEST(CPLGetConfigOption("MRF_ALL_OVERVIEW_LEVELS",
                                                "YES")) )
             {
-                bool bIncreasingPowers = true;
-                for (int i = 1; i < nOverviews; i++) {
-                    if (panOverviewList[i] != (panOverviewList[0] << i)) {
-                        bIncreasingPowers = false;
-                    }
-                }
-                if( bIncreasingPowers )
+                bool bIncreasingPowers = (panOverviewList[0] == static_cast<int>(scale));
+                for (int i = 1; i < nOverviews; i++)
+                    bIncreasingPowers = bIncreasingPowers &&
+                        (panOverviewList[i] == static_cast<int>(scale * panOverviewList[i - 1]));
+
+                int ovrcount = GetRasterBand(1)->GetOverviewCount();
+                if (bIncreasingPowers && nOverviews != ovrcount)
                 {
-                    CPLDebug("MRF", "Generating %d levels instead of the %d required",
-                             GetRasterBand(1)->GetOverviewCount(), nOverviews);
-                    nOverviews = GetRasterBand(1)->GetOverviewCount();
-                    panOverviewListNew = (int*) CPLRealloc(panOverviewListNew,
-                                                    sizeof(int) * nOverviews );
-                    for (int i = 1; i < nOverviews; i++) {
-                        panOverviewListNew[i] = panOverviewListNew[0] << i;
-                    }
+                    CPLDebug("MRF", "Generating %d levels instead of the %d requested",
+                             ovrcount, nOverviews);
+                    nOverviews = ovrcount;
+                    panOverviewListNew = reinterpret_cast<int*>(CPLRealloc(panOverviewListNew,
+                                                    sizeof(int) * nOverviews ));
+                    panOverviewListNew[0] = static_cast<int>(scale);
+                    for (int i = 1; i < nOverviews; i++)
+                        panOverviewListNew[i] = static_cast<int>(scale * panOverviewListNew[i - 1]);
                 }
             }
+        }
+
+        if (static_cast<int>(scale) != 2 &&
+            (EQUALN("Avg", pszResampling, 3) || EQUALN("Nnb", pszResampling, 3))) {
+            CPLError(CE_Failure, CPLE_IllegalArg, "MRF internal resampling only works for a scale factor of two");
+            throw CE_Failure;
         }
 
         for (int i = 0; i < nOverviews; i++) {
@@ -377,8 +387,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             // Generate the overview using the previous level as the source
 
             // Use "avg" flag to trigger the internal average sampling
-            if (EQUALN("Avg", pszResampling, 3) || EQUALN("NearNb", pszResampling, 4)) {
-
+            if (EQUALN("Avg", pszResampling, 3) || EQUALN("Nnb", pszResampling, 3)) {
                 int sampling = EQUALN("Avg", pszResampling, 3) ? SAMPLING_Avg : SAMPLING_Near;
                 // Internal, using PatchOverview
                 if (srclevel > 0)
@@ -1463,18 +1472,23 @@ static inline bool has_path(const CPLString &name)
     return name.find_first_of("/\\") != string::npos;
 }
 
+// Does name look like an absolute gdal file name?
 static inline bool is_absolute(const CPLString &name)
 {
-    return (name.find_first_of("/\\") == 0) ||
-        (name[1] == ':' && isalpha(name[0])) ||
-        name.find("<MRF_META>") != string::npos;
+    return (name.find_first_of("/\\") == 0) // Starts with root
+        || (name.size() > 1 && name[1] == ':' && isalpha(name[0])) // Starts with drive letter
+        || (name[0] == '<'); // Maybe it is XML
 }
 
-// Add the folder part of path to the beginning of the source, if it is relative
-static inline void make_absolute(CPLString &name, const CPLString &path)
+// Add the dirname of path to the beginning of name, if it is relative
+// returns true if name was modified
+static inline bool make_absolute(CPLString &name, const CPLString &path)
 {
-    if (!is_absolute(path) && (path.find_first_of("/\\") != string::npos))
+    if (!is_absolute(path) && (path.find_first_of("/\\") != string::npos)) {
         name = path.substr(0, path.find_last_of("/\\") + 1) + name;
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -1483,11 +1497,16 @@ static inline void make_absolute(CPLString &name, const CPLString &path)
 GDALDataset *GDALMRFDataset::GetSrcDS() {
     if (poSrcDS) return poSrcDS;
     if (source.empty()) return nullptr;
-    // Make the source absolute path
-    if (has_path(fname)) make_absolute(source, fname);
-    poSrcDS = (GDALDataset *)GDALOpenShared(source.c_str(), GA_ReadOnly);
+
+    // Try open the source dataset as is
+    poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+
+    // It the open failes, try again with the current dataset path prepended
+    if (!poSrcDS && make_absolute(source, fname))
+        poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+
     if (0 == source.find("<MRF_META>") && has_path(fname))
-    {// XML MRF source, might need to patch the file names with the current one
+    {   // MRF XML source, might need to patch the file names with the current one
         GDALMRFDataset *psDS = reinterpret_cast<GDALMRFDataset *>(poSrcDS);
         make_absolute(psDS->current.datfname, fname);
         make_absolute(psDS->current.idxfname, fname);
@@ -2086,10 +2105,11 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     if (l_ifp == nullptr || l_dfp == nullptr)
         return CE_Failure;
 
+    // Flag that versioned access requires a write even if empty
+    int new_tile = false;
     // If it has versions, might need to start a new one
     if (hasVersions) {
         int new_version = false; // Assume no need to build new version
-        int new_tile = false;
 
         // Read the current tile info
         VSIFSeekL(l_ifp, infooffset, SEEK_SET);
@@ -2192,6 +2212,14 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     } while (tbuff);
 
     // At this point, the data is in the datafile
+
+    // Do nothing if the tile is empty and the file record is also empty
+    if (!new_tile && 0 == size && nullptr == buff) {
+        VSIFSeekL(l_ifp, infooffset, SEEK_SET);
+        VSIFReadL(&tinfo, 1, sizeof(ILIdx), l_ifp);
+        if (0 == tinfo.offset && 0 == tinfo.size)
+            return ret;
+    }
 
     // Special case
     // Any non-zero will do, use 1 to only consume one bit
