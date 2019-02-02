@@ -338,7 +338,6 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                                                "YES")) )
             {
                 bool bIncreasingPowers = (panOverviewList[0] == static_cast<int>(scale));
-                bIncreasingPowers = (bIncreasingPowers && nOverviews > 1);
                 for (int i = 1; i < nOverviews; i++)
                     bIncreasingPowers = bIncreasingPowers &&
                         (panOverviewList[i] == static_cast<int>(scale * panOverviewList[i - 1]));
