@@ -3,8 +3,6 @@ OBJ	=	envisatdataset.obj EnvisatFile.obj records.obj adsrange.obj unwrapgcps.obj
 
 GDAL_ROOT	=	..\..
 
-EXTRAFLAGS = 	-I..\raw
-
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)

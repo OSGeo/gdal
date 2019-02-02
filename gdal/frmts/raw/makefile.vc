@@ -1,5 +1,5 @@
 
-OBJ	=	rawdataset.obj ehdrdataset.obj pauxdataset.obj doq1dataset.obj\
+OBJ	=	ehdrdataset.obj pauxdataset.obj doq1dataset.obj\
 		hkvdataset.obj mffdataset.obj pnmdataset.obj \
 		fujibasdataset.obj doq2dataset.obj envidataset.obj \
 		gscdataset.obj fastdataset.obj atlsci_spheroid.obj \
