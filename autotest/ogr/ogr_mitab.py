@@ -2292,6 +2292,36 @@ def test_ogr_mitab_tab_write_field_name_with_dot():
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(tmpfile)
 
 ###############################################################################
+# Check fix for https://github.com/OSGeo/gdal/issues/1232
+
+def test_ogr_mitab_delete_feature_no_geometry():
+
+    filename = '/vsimem/test.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 1
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 2
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.DeleteFeature(1) == 0
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['id'] == 2
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+###############################################################################
 #
 
 
