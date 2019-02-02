@@ -9588,7 +9588,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     std::lock_guard<std::mutex> oLock(d->m_mutex);
 
     d->refreshProjObj();
-    if( d->m_pj_crs == nullptr )
+    if( d->m_pj_crs == nullptr ||
+        d->m_pjType == PJ_TYPE_ENGINEERING_CRS )
     {
         *ppszProj4 = CPLStrdup("");
         return OGRERR_FAILURE;
