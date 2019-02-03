@@ -1151,8 +1151,10 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     zi->ci.totalUncompressedData = 0;
     zi->ci.pos_zip64extrainfo = 0;
 
-    // For now always generate zip64 extra fields
-    err = Write_LocalFileHeader(zi, filename, size_extrafield_local, extrafield_local, /* zip64 */ 1);
+    // For now default is to generate zip64 extra fields
+    const bool bZip64 = CPLTestBool(CPLGetConfigOption("CPL_CREATE_ZIP64", "ON"));
+    err = Write_LocalFileHeader(zi, filename, size_extrafield_local,
+        extrafield_local, bZip64 ? 1 : 0);
 
     zi->ci.stream.avail_in = 0;
     zi->ci.stream.avail_out = Z_BUFSIZE;
