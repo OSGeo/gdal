@@ -1031,6 +1031,7 @@ enable_driver_northwood
 enable_driver_pds
 enable_driver_prf
 enable_driver_r
+enable_driver_raw
 enable_driver_rmf
 enable_driver_rs2
 enable_driver_safe
@@ -1919,6 +1920,7 @@ Optional Features:
   --disable-driver-pds    disable pds driver support (enabled by default)
   --disable-driver-prf    disable prf driver support (enabled by default)
   --disable-driver-r      disable r driver support (enabled by default)
+  --disable-driver-raw    disable raw driver support (enabled by default)
   --disable-driver-rmf    disable rmf driver support (enabled by default)
   --disable-driver-rs2    disable rs2 driver support (enabled by default)
   --disable-driver-safe   disable safe driver support (enabled by default)
@@ -25820,6 +25822,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED r"
   INTERNAL_FORMAT_r_ENABLED=no
+fi
+
+# Check whether --enable-driver-raw was given.
+if test "${enable_driver_raw+set}" = set; then :
+  enableval=$enable_driver_raw;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_raw
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED raw"
+  INTERNAL_FORMAT_raw_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED raw"
+  INTERNAL_FORMAT_raw_ENABLED=no
 fi
 
 # Check whether --enable-driver-rmf was given.
